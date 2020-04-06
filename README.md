@@ -1,1 +1,1 @@
-# osbuild-installer-backend
+# osbuild-installer
