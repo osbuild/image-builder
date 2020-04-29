@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-type Handlers struct { }
+type Handlers struct{}
 
 func (s *Handlers) GetVersion(w http.ResponseWriter, r *http.Request) {
 	spec, err := GetSwagger()
@@ -38,7 +38,7 @@ func (s *Handlers) GetOpenapiJson(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	spec.AddServer(&openapi3.Server{ URL: RoutePrefix() })
+	spec.AddServer(&openapi3.Server{URL: RoutePrefix()})
 
 	specEncoded, err := json.Marshal(spec)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s *Handlers) ComposeImage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	resp, err := http.Post(socket + endpoint, "application/json", bytes.NewBuffer(composeRequestEncoded))
+	resp, err := http.Post(socket+endpoint, "application/json", bytes.NewBuffer(composeRequestEncoded))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -134,5 +134,5 @@ func Run(address string) {
 	router.Route(RoutePrefix(), func (r chi.Router) {
 		HandlerFromMux(&s, r)
 	})
-	http.ListenAndServe(address, router);
+	http.ListenAndServe(address, router)
 }
