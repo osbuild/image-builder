@@ -27,3 +27,9 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--with tests \
 		$(RPM_SPECFILE)
+
+.PHONY: container
+container: rpm
+	mkdir -p distribution/rpms
+	cp -rf rpmbuild/RPMS/x86_64/* distribution/rpms/
+	podman build -t osbuild/osbuild-installer ./distribution
