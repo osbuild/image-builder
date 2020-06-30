@@ -1,13 +1,16 @@
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,client -o ../cloudapi/cloudapi_client.go ../cloudapi/cloudapi_client.yml
 //go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=server --generate types,chi-server,spec -o api.go api.yaml
 package server
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/osbuild/osbuild-installer/internal/cloudapi"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi"
@@ -54,8 +57,7 @@ func (s *Handlers) GetComposeStatus(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		socket = "http://127.0.0.1:80/"
 	}
-	endpoint := "v1/compose/" + r.Context().Value("composeId").(string)
-	log.Println(r.Context().Value("composeId").(string))
+	endpoint := "compose/" + r.Context().Value("composeId").(string)
 
 	resp, err := http.Get(socket + endpoint)
 	if err != nil {
@@ -79,37 +81,61 @@ func (s *Handlers) ComposeImage(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		socket = "http://127.0.0.1:80/"
 	}
-	endpoint := "v1/compose"
 
-	var composeRequest ComposeRequest
-	err := json.NewDecoder(r.Body).Decode(&composeRequest)
+	decoder := json.NewDecoder(r.Body)
+	var composeRequest cloudapi.ComposeJSONRequestBody
+	err := decoder.Decode(&composeRequest)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Failed decoding the compose request %s", err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	log.Println("Starting compose")
-	composeRequestEncoded, err := json.Marshal(composeRequest)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if len(composeRequest.ImageRequests) != 1 {
+		http.Error(w, "Exactly one image request should be included", http.StatusBadRequest)
 		return
 	}
-	resp, err := http.Post(socket+endpoint, "application/json", bytes.NewBuffer(composeRequestEncoded))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	if len(composeRequest.ImageRequests[0].Repositories) != 0 {
+		http.Error(w, "Repositories are specified by osbuild-installer itself", http.StatusBadRequest)
 		return
 	}
-	log.Println("Finished compose post, writing response")
+
+	repositories, err := RepositoriesForImage(composeRequest.Distribution, composeRequest.ImageRequests[0].Architecture)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Unable to retrieve repositories for image %s", err), http.StatusInternalServerError)
+		return
+	}
+	composeRequest.ImageRequests[0].Repositories = repositories
+
+	client, err := cloudapi.NewClient(socket)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed constructing http client %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := client.Compose(context.Background(), composeRequest)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed posting compose request to osbuild-composer %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+	if resp.StatusCode != http.StatusCreated {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			http.Error(w, "Failed posting compose request to osbuild-composer", resp.StatusCode)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Failed posting compose request to osbuild-composer: %s", body), resp.StatusCode)
+		return
+	}
 
 	var composeResponse ComposeResponse
 	json.NewDecoder(resp.Body).Decode(&composeResponse)
-	encoded, err := json.Marshal(composeResponse)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(encoded)
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(composeResponse)
+	if err != nil {
+		panic("Failed to write response")
+	}
 }
 
 func RoutePrefix() string {

@@ -1,0 +1,5 @@
+{
+  "x86_64": [{
+    "baseurl": "http://mirrors.kernel.org/fedora/releases/31/Everything/x86_64/os/"
+  }]
+}

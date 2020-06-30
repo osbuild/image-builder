@@ -40,6 +40,9 @@ install -m 0755 -vp _bin/osbuild-installer           %{buildroot}%{_libexecdir}/
 install -m 0755 -vd				     %{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}  %{buildroot}%{_unitdir}/
 
+install -m 0755 -vd                                  %{buildroot}%{_datadir}/osbuild-installer/repositories
+install -m 0644 -vp repositories/*                   %{buildroot}%{_datadir}/osbuild-installer/repositories/
+
 %files
 %{_libexecdir}/osbuild-installer/osbuild-installer
 %{_unitdir}/osbuild-installer.service

@@ -16,22 +16,36 @@ import (
 	"strings"
 )
 
-// Compose defines model for Compose.
-type Compose struct {
-	Architecture string       `json:"architecture"`
-	Distribution string       `json:"distribution"`
-	ImageType    string       `json:"image_type"`
-	Repositories []Repository `json:"repositories"`
+// AWSUploadRequestOptions defines model for AWSUploadRequestOptions.
+type AWSUploadRequestOptions struct {
+	Ec2    AWSUploadRequestOptionsEc2 `json:"ec2"`
+	Region string                     `json:"region"`
+	S3     AWSUploadRequestOptionsS3  `json:"s3"`
+}
+
+// AWSUploadRequestOptionsEc2 defines model for AWSUploadRequestOptionsEc2.
+type AWSUploadRequestOptionsEc2 struct {
+	AccessKeyId     string `json:"access_key_id"`
+	SecretAccessKey string `json:"secret_access_key"`
+}
+
+// AWSUploadRequestOptionsS3 defines model for AWSUploadRequestOptionsS3.
+type AWSUploadRequestOptionsS3 struct {
+	AccessKeyId     string `json:"access_key_id"`
+	Bucket          string `json:"bucket"`
+	SecretAccessKey string `json:"secret_access_key"`
 }
 
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
-	ImageBuilds []Compose `json:"image_builds"`
+	Customizations *Customizations `json:"customizations,omitempty"`
+	Distribution   string          `json:"distribution"`
+	ImageRequests  []ImageRequest  `json:"image_requests"`
 }
 
 // ComposeResponse defines model for ComposeResponse.
 type ComposeResponse struct {
-	ComposeId string `json:"compose_id"`
+	Id string `json:"id"`
 }
 
 // ComposeStatus defines model for ComposeStatus.
@@ -39,9 +53,31 @@ type ComposeStatus struct {
 	Status string `json:"status"`
 }
 
-// Repository defines model for Repository.
-type Repository struct {
-	Baseurl string `json:"baseurl"`
+// Customizations defines model for Customizations.
+type Customizations struct {
+	Subscription *Subscription `json:"subscription,omitempty"`
+}
+
+// ImageRequest defines model for ImageRequest.
+type ImageRequest struct {
+	Architecture   string           `json:"architecture"`
+	ImageType      string           `json:"image_type"`
+	UploadRequests *[]UploadRequest `json:"upload_requests,omitempty"`
+}
+
+// Subscription defines model for Subscription.
+type Subscription struct {
+	ActivationKey string `json:"activation-key"`
+	BaseUrl       string `json:"base-url"`
+	Insights      bool   `json:"insights"`
+	Organization  int    `json:"organization"`
+	ServerUrl     string `json:"server-url"`
+}
+
+// UploadRequest defines model for UploadRequest.
+type UploadRequest struct {
+	Options AWSUploadRequestOptions `json:"options"`
+	Type    string                  `json:"type"`
 }
 
 // Version defines model for Version.
@@ -145,18 +181,25 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"7wAAAP//GG7NPYkPAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
