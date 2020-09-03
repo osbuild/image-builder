@@ -129,9 +129,10 @@ func RoutePrefix() string {
 }
 
 func Run(address string) {
+	fmt.Printf("🚀 Starting osbuild-installer server on %s ...\n", address)
 	var s Handlers
 	router := chi.NewRouter()
-	router.Route(RoutePrefix(), func (r chi.Router) {
+	router.Route(RoutePrefix(), func(r chi.Router) {
 		HandlerFromMux(&s, r)
 	})
 	http.ListenAndServe(address, router)
