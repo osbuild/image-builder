@@ -1,0 +1,15 @@
+# Use a builder container to build the Go application (which we extract in
+# the second container).
+FROM registry.access.redhat.com/ubi8/ubi:latest AS builder
+RUN dnf -y install /usr/bin/go
+WORKDIR $GOPATH/src/github.com/osbuild/osbuild-installer
+COPY . .
+ENV GOFLAGS=-mod=vendor
+RUN go install -v ./...
+
+# Build an extremely minimal container that only contains our Go application.
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+RUN mkdir /app
+COPY --from=builder /root/go/bin/osbuild-installer /app/
+EXPOSE 8086
+CMD ["/app/osbuild-installer", "-v"]
