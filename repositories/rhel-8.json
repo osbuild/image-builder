@@ -1,7 +1,9 @@
 {
   "x86_64": [{
-    "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"
+    "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os",
+    "rhsm": true
   }, {
-    "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"
+    "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os",
+    "rhsm": true
   }]
 }
