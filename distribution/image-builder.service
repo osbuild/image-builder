@@ -1,0 +1,16 @@
+[Unit]
+Description=Image Builder service
+After=multi-user.target
+Requires=image-builder.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/image-builder/image-builder
+CacheDirectory=image-builder
+StateDirectory=image-builder
+WorkingDirectory=/usr/libexec/image-builder/
+User=_osbuild-composer
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

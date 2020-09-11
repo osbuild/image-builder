@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/osbuild/osbuild-installer/internal/server"
+	"github.com/osbuild/image-builder/internal/server"
 )
 
 func main() {

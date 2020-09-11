@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/osbuild/osbuild-installer/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/cloudapi"
 )
 
 func RepositoriesForImage(distro string, arch string) ([]cloudapi.Repository, error) {
-	confPaths := [2]string{"/usr/share/osbuild-installer", "."}
+	confPaths := [2]string{"/usr/share/image-builder", "."}
 	path := "/repositories/" + distro + ".json"
 
 	var f *os.File

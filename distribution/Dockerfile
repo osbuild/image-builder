@@ -7,4 +7,4 @@ RUN dnf localinstall -y /rpms/*
 
 EXPOSE 8086
 
-CMD [ "/usr/libexec/osbuild-installer/osbuild-installer" ]
+CMD [ "/usr/libexec/image-builder/image-builder" ]

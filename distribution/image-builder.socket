@@ -1,0 +1,9 @@
+[Unit]
+Description=Image Builder socket
+
+[Socket]
+Service=image-builder.service
+ListenStream=8086
+
+[Install]
+WantedBy=sockets.target

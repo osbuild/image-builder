@@ -14,19 +14,19 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build the container
-        run: docker build -t osbuild-installer -f distribution/Dockerfile-ubi .
+        run: docker build -t image-builder -f distribution/Dockerfile-ubi .
 
       - name: Run the container
         run: |
-          docker run -d --net=host --name osbuild-installer osbuild-installer
+          docker run -d --net=host --name image-builder image-builder
           docker ps
 
       - name: Verify that the startup log line is in the logs
         run: |
-          docker logs osbuild-installer | grep "Starting osbuild-installer server"
+          docker logs image-builder | grep "Starting image-builder server"
 
       - name: Check that the API is responding
-        run: curl -sv http://127.0.0.1:8086/api/osbuild-installer/v1/version
+        run: curl -sv http://127.0.0.1:8086/api/image-builder/v1/version
 
       - name: Stop the container
-        run: docker stop --time 1 osbuild-installer
+        run: docker stop --time 1 image-builder

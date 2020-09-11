@@ -1,9 +1,0 @@
-[Unit]
-Description=OSBuild Installer socket
-
-[Socket]
-Service=osbuild-installer.service
-ListenStream=8086
-
-[Install]
-WantedBy=sockets.target

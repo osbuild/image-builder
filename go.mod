@@ -1,4 +1,4 @@
-module github.com/osbuild/osbuild-installer
+module github.com/osbuild/image-builder
 
 go 1.13
 

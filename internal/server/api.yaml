@@ -2,7 +2,7 @@
 openapi: 3.0.1
 info:
   version: "1"
-  title: Osbuild-installer service
+  title: Image-builder service
   description: Service that relays image build requests
   license:
     name: Apache 2.0
