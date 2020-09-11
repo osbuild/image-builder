@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/osbuild/osbuild-installer/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/cloudapi"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi"
@@ -96,7 +96,7 @@ func (s *Handlers) ComposeImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(composeRequest.ImageRequests[0].Repositories) != 0 {
-		http.Error(w, "Repositories are specified by osbuild-installer itself", http.StatusBadRequest)
+		http.Error(w, "Repositories are specified by image-builder itself", http.StatusBadRequest)
 		return
 	}
 
@@ -145,7 +145,7 @@ func RoutePrefix() string {
 	}
 	appName, ok := os.LookupEnv("APP_NAME")
 	if !ok {
-		appName = "osbuild-installer"
+		appName = "image-builder"
 	}
 	spec, err := GetSwagger()
 	if err != nil {
@@ -155,7 +155,7 @@ func RoutePrefix() string {
 }
 
 func Run(address string) {
-	fmt.Printf("🚀 Starting osbuild-installer server on %s ...\n", address)
+	fmt.Printf("🚀 Starting image-builder server on %s ...\n", address)
 	var s Handlers
 	router := chi.NewRouter()
 	router.Route(RoutePrefix(), func(r chi.Router) {

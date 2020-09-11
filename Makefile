@@ -1,8 +1,8 @@
-PACKAGE_NAME = osbuild-installer
+PACKAGE_NAME = image-builder
 
 .PHONY: build
 build:
-	go build -o osbuild-installer ./cmd/osbuild-installer/
+	go build -o image-builder ./cmd/image-builder/
 
 # pip3 install openapi-spec-validator
 .PHONY: check-api-spec
@@ -10,16 +10,16 @@ check-api-spec:
 	 openapi-spec-validator openapi/api.spec.yaml
 
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
-RPM_SPECFILE=rpmbuild/SPECS/osbuild-installer-$(COMMIT).spec
-RPM_TARBALL=rpmbuild/SOURCES/osbuild-installer-$(COMMIT).tar.gz
+RPM_SPECFILE=rpmbuild/SPECS/image-builder-$(COMMIT).spec
+RPM_TARBALL=rpmbuild/SOURCES/image-builder-$(COMMIT).tar.gz
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
-	(echo "%global commit $(COMMIT)"; git show HEAD:osbuild-installer.spec) > $(RPM_SPECFILE)
+	(echo "%global commit $(COMMIT)"; git show HEAD:image-builder.spec) > $(RPM_SPECFILE)
 
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
-	git archive --prefix=osbuild-installer-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+	git archive --prefix=image-builder-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
 
 .PHONY: rpm
 rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
@@ -32,4 +32,4 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 container: rpm
 	mkdir -p distribution/rpms
 	cp -rf rpmbuild/RPMS/x86_64/* distribution/rpms/
-	podman build -t osbuild/osbuild-installer ./distribution
+	podman build -t osbuild/image-builder ./distribution
