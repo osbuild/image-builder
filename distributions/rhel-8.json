@@ -1,0 +1,16 @@
+{
+  "distribution": {
+    "name": "rhel-8",
+    "description": "Red Hat Enterprise Linux (RHEL) 8.2"
+  },
+  "x86_64": {
+    "image_types": [ "qcow2" ],
+    "repositories": [{
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os",
+      "rhsm": true
+    }, {
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os",
+      "rhsm": true
+    }]
+  }
+}

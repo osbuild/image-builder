@@ -58,6 +58,15 @@ type Customizations struct {
 	Subscription *Subscription `json:"subscription,omitempty"`
 }
 
+// DistributionItem defines model for DistributionItem.
+type DistributionItem struct {
+	Description string `json:"description"`
+	Name        string `json:"name"`
+}
+
+// Distributions defines model for Distributions.
+type Distributions []DistributionItem
+
 // ImageRequest defines model for ImageRequest.
 type ImageRequest struct {
 	Architecture   string           `json:"architecture"`
@@ -96,6 +105,8 @@ type ServerInterface interface {
 	ComposeImage(w http.ResponseWriter, r *http.Request)
 	// get status of an image compose (GET /compose/{composeId})
 	GetComposeStatus(w http.ResponseWriter, r *http.Request)
+	// get the available distributions (GET /distributions)
+	GetDistributions(w http.ResponseWriter, r *http.Request)
 	// get the openapi json specification (GET /openapi.json)
 	GetOpenapiJson(w http.ResponseWriter, r *http.Request)
 	// get the service version (GET /version)
@@ -128,6 +139,15 @@ func GetComposeStatusCtx(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(ctx, "composeId", composeId)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetDistributions operation middleware
+func GetDistributionsCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -167,6 +187,10 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 		r.Get("/compose/{composeId}", si.GetComposeStatus)
 	})
 	r.Group(func(r chi.Router) {
+		r.Use(GetDistributionsCtx)
+		r.Get("/distributions", si.GetDistributions)
+	})
+	r.Group(func(r chi.Router) {
 		r.Use(GetOpenapiJsonCtx)
 		r.Get("/openapi.json", si.GetOpenapiJson)
 	})
@@ -181,25 +205,26 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RWQW/bOBP9KwK/7yhLrlOgC9+yWXfhpk2KGtttUQQBTY4ltpKokKOo3kD/fUGKkkVL",
-	"cdrF5rCnpuJw5s17b4Z+IEzmpSygQE2WD0SzFHJq/zz/c/NHmUnKP8BdBRqvSxSysEelkiUoFGD/B2xh",
-	"/vm/gh1Zkv/Fh4yxSxc/kmvFFqQJiYJEyMKm+k7zMgOyJFDNatA4e0FCgvvSfNKoRJGYC/rsHxbcnJHG",
-	"FryrhAJOll+64jZpaHu56SvK7VdgaCqeaGDEB2UMtL79Bvtbwf2uzi/X5+vrzevr366uXq0+nb97/3Y1",
-	"2SAwBXh7yOSnqd/QTH26q7m4q/nr1bt1fPnqTtQ83r7//mEnLj671JerzyQkO6lyimRJSqp1LRUfVzzi",
-	"xO9gCs5PcLQ5exaKthX7Bujfzfcz9/m/yGnf0xS5F8bjGhy1Y0ZZpVHm4i/aD+mp8bjwo5uQcGFwbysc",
-	"TaJKIZv9MsWoyGkCt6qFZGsKhPzJ4mtzrWuk6fNSpeh+RJuHa1TyJFO6lIWGMVWt406rJTi5OeTaIMVq",
-	"YvPp/vvpbC7OZhzpdJSy2mqmRNnpcIrIzTC2aSa48KgeT6FiqUBgWCmYaKJju/08cVzZaf95A3hb4kkH",
-	"eCg9TIbPzRFfx3sGxb2lejYa+Hw/a2dw1g7fD4x0SLZUw6xSmZ8qRSyXccx4ESngKcWIyTwe5jRXpiao",
-	"0CJJW+r6dKgq6GO3UmZACxMsVUIL5xzvwmL+cn62eNnfEQVCAqpdeuoe1Bjx0GaRSnU+AP7kKvOAhMck",
-	"e0UHjA26nRpb3xQjJWX5Q4vtsR8tvckeCBRVbn1VD4E80qo9DfvqU8A/gtKT5rs/HJwu0gXeNI31xE6a",
-	"OxwGxiYbUPeCQYApxUBBRvc6sKMQbCuR8aAfwpBkgoFbfAXN7ZtaUpZCsIjmJLRWbC2rl3Fc13VE7XEk",
-	"VRK7uzp+u75YXW1Ws0U0j1LMM8ugQGuea21rzkShkWYZqEC36Eh4aJq8sJ4toaClIEtyFs0j82OupJha",
-	"elr53IKWreZ+zy6g7dOqAMr6bM3JstvNa3foCPhVcjvnTBYIhU1KyzITzF6Mv+pWkNYvTz6T/qNr5fEh",
-	"ckAqMh3InVMDZbCFwCHnZCi0mWurfPswWRIW8/m/j9Y9fBNwO0ZTqgONVCFw60Zd5TlV+xHn5qzTKX5w",
-	"f6x5Y6AkMCFZ+9IZOmjhGOlkPtbvd0D/eTXeUDQHBKXJ8stx6jU3aTt8rhDKILE/90RhNzemJOxc38Md",
-	"qRAOGD0ezZvnV8j1e0If3UUMpUkAgxP8Wq3cvEUdLifSiPnrNu6Ntht8qmEfmAKsVKEDTIUOuGRVbsgY",
-	"48MUAochMBgCXQITO0eXeVloYsQlOSA1Cy8k8WBPTnqqy+uWTNDFTxjqY3/0bBp2JSbUoyOI0wSNo5rm",
-	"7wAAAP//GG7NPYkPAAA=",
+	"H4sIAAAAAAAC/9RWUW/bNhD+KwS3hw2QJdcp0MJvWequbtKkiLGuRREEtHi22EqiQp7ieIH/+yCKkkWJ",
+	"cdJheehTHJG8++77vjvynsYyK2QOOWo6vac6TiBj5ufx34u/ilQyfgk3JWi8KFDI3CwVShagUID5D+JJ",
+	"9edXBSs6pb9E+4iRDRc9EGsWT+guoArWQuYm1B3LihTolEI52oDG0QsaUNwW1SeNSuTr6oA++o8JF0d0",
+	"ZxLelEIBp9OvTXITNDC1XLUZ5fIbxFhlPFDAgA8Wx6D19XfYXgvuVnV8Oj+eXyzeXrw5P381+3z84ePZ",
+	"zFsgxArweh/JDbN5z1L1+WbDxc2Gv519mEenr27EhkfLj3eXK3HyxYY+nX2hAV1JlTGkU1owrTdS8WHG",
+	"HiduBT44P8DR4uhZKFqW8XdA92y2HdnPPyOnbU0+ck8qj2uw1A4ZjUuNMhP/sLZJD7XHibt7F1AuKtzL",
+	"EgedqBJIR699jIqMreFa1ZBMToGQPZp8Xh1rCtm1cZlSbDugzcE1SHmQKV3IXMOQqtpxh9USnF7tYy2Q",
+	"YemZfLr9fjia3WciDnTqhSyXOlaiaHQ4ROSiu3e383DxpsPeHCEb5uPgpNvLfgmcvGNIZjmCKpTQQM5E",
+	"Xt6R3y7fzc5+J6/Dic8TOcvgaf7pcWQOBg6eq0cqerrlBjwMbBdQx5bDiaXiRCDEWCrwCN44s/7sWS7N",
+	"ZPzxZnEm6qPd4qB0MFXeW/S81Z/JKG6NLUeD4ZhtR/W8GtWD6gnjL6BLpmFUqtQNlSAW0yiKeR4q4AnD",
+	"MJZZ1I1ZHfFNm1yLdVJT14ZDVUK7dyllCiyvNku1ZrntMufAZPxyfDR52Z4ROcIaVH1BqFtQQ8TdlgxV",
+	"orMO8Edt7QAJ+iQ7STuMdar1NYFrioGSsnjSJfDQA6812T2FvMyMrzZdIA+UalaDNrsP+CdQ2mu+2/3C",
+	"4STNxqvdznhiJQdTjC5A3YoYCCYMiYKUbTUxrUCWpUg5aZswoKmIwV4S9eSixwWLEyCTcEwDY8Xasnoa",
+	"RZvNJmRmOZRqHdmzOjqbn8zOF7PRJByHCWapYVCgMc+FNjlHItfI0hQU0TU6GuyLpi+MZwvIWSHolB6F",
+	"47B6+BYME0NPLZ+9zGStuVuz3VDXaVQAZXw253Ta3GNzu2gJ+ENy0+exzBFyE5QVRSpiczD6pmtBar88",
+	"+qRwHyhGHhciB2Qi1USurBooyRKIRc5pV+iqr43y9SVuSJiMx/8/WvtI8MBtGE2YJhqZQuDGjbrMMqa2",
+	"A86rtUan6N7+mPNdBWUNHsnqV0FFB8stI43Mff3+BHSfIpU3FMsAQWk6/doPPedV2AafTYSSrM3TWORm",
+	"cmNCm/uatnAHKgQdRvutefX8Ctl6D+ijmx1dadaA5AC/Rivef0pYlQbUu2+OZ6zZTeSpmZFUaDQl3TKR",
+	"smUKhPcO9WnABA7ujuzcCRusD9FwUe97r81N5iPBBasAS5VrgonQhMu4zCqC/AAtBlJhILqAWKwshdUN",
+	"y9aVyWkGyKrBH9Coc194e6uJa4ctafZ7GutTu/RsujYpvIr2IfoJGu7a7f4NAAD//xgDYpm9EQAA",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

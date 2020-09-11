@@ -52,6 +52,22 @@ func (s *Handlers) GetOpenapiJson(w http.ResponseWriter, r *http.Request) {
 	w.Write(specEncoded)
 }
 
+func (s *Handlers) GetDistributions(w http.ResponseWriter, r *http.Request) {
+	distributions,err := AvailableDistributions()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	distributionsEncoded, err := json.Marshal(distributions)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(distributionsEncoded)
+}
+
 func (s *Handlers) GetComposeStatus(w http.ResponseWriter, r *http.Request) {
 	socket, ok := os.LookupEnv("OSBUILD_SERVICE")
 	if !ok {

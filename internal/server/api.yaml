@@ -30,6 +30,17 @@ paths:
       responses:
         '200':
           description: returns this document
+  /distributions:
+    get:
+      summary: get the available distributions
+      operationId: getDistributions
+      responses:
+        '200':
+          description: a list of available distributions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Distributions'
   /compose/{composeId}:
     get:
       summary: get status of an image compose
@@ -77,6 +88,22 @@ components:
       properties:
         version:
           type: string
+    Distributions:
+      type: array
+      items:
+        $ref: '#/components/schemas/DistributionItem'
+    DistributionItem:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        description:
+          type: string
+          example: 'Red Hat Enterprise Linux (RHEL) 8.2'
+        name:
+          type: string
+          example: 'rhel-8'
     ComposeStatus:
       required:
         - status
@@ -93,8 +120,7 @@ components:
           type: string
           example: 'rhel-8'
         image_requests:
-          type:
-            array
+          type: array
           items:
             $ref: '#/components/schemas/ImageRequest'
         customizations:
