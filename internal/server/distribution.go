@@ -89,3 +89,20 @@ func AvailableDistributions() (Distributions, error) {
 	}
 	return availableDistributions, nil
 }
+
+func ArchitecturesForImage(distro string) (Architectures, error) {
+	distributions, err := ReadDistributions(distro)
+	if err != nil {
+		return nil, err
+	}
+	d := distributions[0]
+
+	var archs Architectures
+	if d.ArchX86 != nil {
+		archs = append(archs, ArchitectureItem{
+			Arch: "x86_64",
+			ImageTypes: d.ArchX86.ImageTypes,
+		})
+	}
+	return archs, nil
+}

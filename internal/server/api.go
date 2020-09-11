@@ -36,6 +36,15 @@ type AWSUploadRequestOptionsS3 struct {
 	SecretAccessKey string `json:"secret_access_key"`
 }
 
+// ArchitectureItem defines model for ArchitectureItem.
+type ArchitectureItem struct {
+	Arch       string   `json:"arch"`
+	ImageTypes []string `json:"image_types"`
+}
+
+// Architectures defines model for Architectures.
+type Architectures []ArchitectureItem
+
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
 	Customizations *Customizations `json:"customizations,omitempty"`
@@ -101,6 +110,8 @@ type ComposeImageJSONBody ComposeRequest
 type ComposeImageJSONRequestBody ComposeImageJSONBody
 
 type ServerInterface interface {
+	// get the architectures and their image types available for a given distribution (GET /architectures/{distribution})
+	GetArchitectures(w http.ResponseWriter, r *http.Request)
 	// compose image (POST /compose)
 	ComposeImage(w http.ResponseWriter, r *http.Request)
 	// get status of an image compose (GET /compose/{composeId})
@@ -111,6 +122,28 @@ type ServerInterface interface {
 	GetOpenapiJson(w http.ResponseWriter, r *http.Request)
 	// get the service version (GET /version)
 	GetVersion(w http.ResponseWriter, r *http.Request)
+}
+
+// GetArchitectures operation middleware
+func GetArchitecturesCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		var err error
+
+		// ------------- Path parameter "distribution" -------------
+		var distribution string
+
+		err = runtime.BindStyledParameter("simple", false, "distribution", chi.URLParam(r, "distribution"), &distribution)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter distribution: %s", err), http.StatusBadRequest)
+			return
+		}
+
+		ctx = context.WithValue(ctx, "distribution", distribution)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 // ComposeImage operation middleware
@@ -179,6 +212,10 @@ func Handler(si ServerInterface) http.Handler {
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
 func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 	r.Group(func(r chi.Router) {
+		r.Use(GetArchitecturesCtx)
+		r.Get("/architectures/{distribution}", si.GetArchitectures)
+	})
+	r.Group(func(r chi.Router) {
 		r.Use(ComposeImageCtx)
 		r.Post("/compose", si.ComposeImage)
 	})
@@ -205,26 +242,29 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"+3cAAAD//4F+hcTzFAAA",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

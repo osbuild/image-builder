@@ -41,6 +41,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Distributions'
+  /architectures/{distribution}:
+    get:
+      summary: get the architectures and their image types available for a given distribution
+      parameters:
+        - in: path
+          name: distribution
+          schema:
+            type: string
+          required: true
+          description: distribution for which to look up available architectures
+      operationId: getArchitectures
+      responses:
+        '200':
+          description: a list of available architectures and their associated image types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Architectures'
   /compose/{composeId}:
     get:
       summary: get status of an image compose
@@ -104,6 +122,24 @@ components:
         name:
           type: string
           example: 'rhel-8'
+    Architectures:
+      type: array
+      items:
+        $ref: '#/components/schemas/ArchitectureItem'
+    ArchitectureItem:
+      type: object
+      required:
+        - arch
+        - image_types
+      properties:
+        arch:
+          type: string
+          example: 'x86_64'
+        image_types:
+          type: array
+          items:
+            type: string
+            example: 'qcow2'
     ComposeStatus:
       required:
         - status
