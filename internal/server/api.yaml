@@ -30,6 +30,35 @@ paths:
       responses:
         '200':
           description: returns this document
+  /distributions:
+    get:
+      summary: get the available distributions
+      operationId: getDistributions
+      responses:
+        '200':
+          description: a list of available distributions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Distributions'
+  /architectures/{distribution}:
+    get:
+      summary: get the architectures and their image types available for a given distribution
+      parameters:
+        - in: path
+          name: distribution
+          schema:
+            type: string
+          required: true
+          description: distribution for which to look up available architectures
+      operationId: getArchitectures
+      responses:
+        '200':
+          description: a list of available architectures and their associated image types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Architectures'
   /compose/{composeId}:
     get:
       summary: get status of an image compose
@@ -77,6 +106,40 @@ components:
       properties:
         version:
           type: string
+    Distributions:
+      type: array
+      items:
+        $ref: '#/components/schemas/DistributionItem'
+    DistributionItem:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        description:
+          type: string
+          example: 'Red Hat Enterprise Linux (RHEL) 8.2'
+        name:
+          type: string
+          example: 'rhel-8'
+    Architectures:
+      type: array
+      items:
+        $ref: '#/components/schemas/ArchitectureItem'
+    ArchitectureItem:
+      type: object
+      required:
+        - arch
+        - image_types
+      properties:
+        arch:
+          type: string
+          example: 'x86_64'
+        image_types:
+          type: array
+          items:
+            type: string
+            example: 'qcow2'
     ComposeStatus:
       required:
         - status
@@ -93,8 +156,7 @@ components:
           type: string
           example: 'rhel-8'
         image_requests:
-          type:
-            array
+          type: array
           items:
             $ref: '#/components/schemas/ImageRequest'
         customizations:

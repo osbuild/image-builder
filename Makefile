@@ -1,4 +1,4 @@
-PACKAGE_NAME = image-builder
+sPACKAGE_NAME = image-builder
 
 .PHONY: build
 build:
@@ -20,6 +20,13 @@ $(RPM_SPECFILE):
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
 	git archive --prefix=image-builder-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+
+.PHONY: srpm
+srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+	rpmbuild -bs \
+		--define "_topdir $(CURDIR)/rpmbuild" \
+		--with tests \
+		$(RPM_SPECFILE)
 
 .PHONY: rpm
 rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
