@@ -29,6 +29,13 @@ Requires: systemd
 %forgeautosetup -p1
 
 %build
+GO_BUILD_PATH=$PWD/_build
+install -m 0755 -vd $(dirname $GO_BUILD_PATH/src/%{goipath})
+ln -fs $PWD $GO_BUILD_PATH/src/%{goipath}
+cd $GO_BUILD_PATH/src/%{goipath}
+install -m 0755 -vd _bin
+export PATH=$PWD/_bin${PATH:+:$PATH}
+export GOPATH=$GO_BUILD_PATH:%{gopath}
 export GOFLAGS=-mod=vendor
 
 %gobuild -o _bin/image-builder                        %{goipath}/cmd/image-builder
