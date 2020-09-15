@@ -1,3 +1,7 @@
+# Do not build with tests by default
+# Pass --with tests to rpmbuild to override
+%bcond_with tests
+
 %global goipath github.com/osbuild/image-builder
 
 Version:	1
@@ -40,6 +44,12 @@ export GOFLAGS=-mod=vendor
 
 %gobuild -o _bin/image-builder                        %{goipath}/cmd/image-builder
 
+%if %{with tests} || 0%{?rhel}
+TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
+
+go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/image-builder-tests %{goipath}/cmd/image-builder-tests
+%endif
+
 %install
 install -m 0755 -vd                                   %{buildroot}%{_libexecdir}/image-builder
 install -m 0755 -vp _bin/image-builder                %{buildroot}%{_libexecdir}/image-builder/
@@ -50,11 +60,10 @@ install -m 0644 -vp distribution/*.{service,socket}   %{buildroot}%{_unitdir}/
 install -m 0755 -vd                                   %{buildroot}%{_datadir}/image-builder/distributions
 install -m 0644 -vp distributions/*                   %{buildroot}%{_datadir}/image-builder/distributions/
 
-%files
-%{_libexecdir}/image-builder/image-builder
-%{_unitdir}/image-builder.service
-%{_unitdir}/image-builder.socket
-%{_datadir}/image-builder/distributions/
+%if %{with tests} || 0%{?rhel}
+install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/image-builder
+install -m 0755 -vp _bin/image-builder-tests                %{buildroot}%{_libexecdir}/tests/image-builder/
+%endif
 
 %post
 %systemd_post image-builder.service
@@ -64,6 +73,24 @@ install -m 0644 -vp distributions/*                   %{buildroot}%{_datadir}/im
 
 %postun
 %systemd_postun_with_restart image-builder.service
+
+%files
+%{_libexecdir}/image-builder/image-builder
+%{_unitdir}/image-builder.service
+%{_unitdir}/image-builder.socket
+%{_datadir}/image-builder/distributions/
+
+%if %{with tests} || 0%{?rhel}
+%package tests
+Summary:    Integration tests
+Requires:   %{name} = %{version}-%{release}
+
+%description tests
+Integration tests to be run on a system with image-builder installed.
+
+%files tests
+%{_libexecdir}/tests/image-builder
+%endif
 
 %changelog
 # None

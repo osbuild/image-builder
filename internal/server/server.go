@@ -1,5 +1,5 @@
 //go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,client -o ../cloudapi/cloudapi_client.go ../cloudapi/cloudapi_client.yml
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=server --generate types,chi-server,spec -o api.go api.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=server --generate types,chi-server,spec,client -o api.go api.yaml
 package server
 
 import (
