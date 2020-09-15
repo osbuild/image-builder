@@ -8,11 +8,15 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -108,6 +112,760 @@ type ComposeImageJSONBody ComposeRequest
 
 // ComposeImageRequestBody defines body for ComposeImage for application/json ContentType.
 type ComposeImageJSONRequestBody ComposeImageJSONBody
+
+// RequestEditorFn  is the function signature for the RequestEditor callback function
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
+
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type HttpRequestDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// Client which conforms to the OpenAPI3 specification for this service.
+type Client struct {
+	// The endpoint of the server conforming to this interface, with scheme,
+	// https://api.deepmap.com for example.
+	Server string
+
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
+
+	// A callback for modifying requests which are generated before sending over
+	// the network.
+	RequestEditor RequestEditorFn
+}
+
+// ClientOption allows setting custom parameters during construction
+type ClientOption func(*Client) error
+
+// Creates a new Client, with reasonable defaults
+func NewClient(server string, opts ...ClientOption) (*Client, error) {
+	// create a client with sane default values
+	client := Client{
+		Server: server,
+	}
+	// mutate client and add all optional params
+	for _, o := range opts {
+		if err := o(&client); err != nil {
+			return nil, err
+		}
+	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
+	}
+	// create httpClient, if not already present
+	if client.Client == nil {
+		client.Client = http.DefaultClient
+	}
+	return &client, nil
+}
+
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+	return func(c *Client) error {
+		c.Client = doer
+		return nil
+	}
+}
+
+// WithRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return func(c *Client) error {
+		c.RequestEditor = fn
+		return nil
+	}
+}
+
+// The interface specification for the client above.
+type ClientInterface interface {
+	// GetArchitectures request
+	GetArchitectures(ctx context.Context, distribution string) (*http.Response, error)
+
+	// ComposeImage request  with any body
+	ComposeImageWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	ComposeImage(ctx context.Context, body ComposeImageJSONRequestBody) (*http.Response, error)
+
+	// GetComposeStatus request
+	GetComposeStatus(ctx context.Context, composeId string) (*http.Response, error)
+
+	// GetDistributions request
+	GetDistributions(ctx context.Context) (*http.Response, error)
+
+	// GetOpenapiJson request
+	GetOpenapiJson(ctx context.Context) (*http.Response, error)
+
+	// GetVersion request
+	GetVersion(ctx context.Context) (*http.Response, error)
+}
+
+func (c *Client) GetArchitectures(ctx context.Context, distribution string) (*http.Response, error) {
+	req, err := NewGetArchitecturesRequest(c.Server, distribution)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ComposeImageWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewComposeImageRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ComposeImage(ctx context.Context, body ComposeImageJSONRequestBody) (*http.Response, error) {
+	req, err := NewComposeImageRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetComposeStatus(ctx context.Context, composeId string) (*http.Response, error) {
+	req, err := NewGetComposeStatusRequest(c.Server, composeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDistributions(ctx context.Context) (*http.Response, error) {
+	req, err := NewGetDistributionsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetOpenapiJson(ctx context.Context) (*http.Response, error) {
+	req, err := NewGetOpenapiJsonRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetVersion(ctx context.Context) (*http.Response, error) {
+	req, err := NewGetVersionRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+// NewGetArchitecturesRequest generates requests for GetArchitectures
+func NewGetArchitecturesRequest(server string, distribution string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "distribution", distribution)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/architectures/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewComposeImageRequest calls the generic ComposeImage builder with application/json body
+func NewComposeImageRequest(server string, body ComposeImageJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewComposeImageRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewComposeImageRequestWithBody generates requests for ComposeImage with any type of body
+func NewComposeImageRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/compose")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewGetComposeStatusRequest generates requests for GetComposeStatus
+func NewGetComposeStatusRequest(server string, composeId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "composeId", composeId)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/compose/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetDistributionsRequest generates requests for GetDistributions
+func NewGetDistributionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/distributions")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOpenapiJsonRequest generates requests for GetOpenapiJson
+func NewGetOpenapiJsonRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/openapi.json")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetVersionRequest generates requests for GetVersion
+func NewGetVersionRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/version")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	ClientInterface
+}
+
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &ClientWithResponses{client}, nil
+}
+
+// WithBaseURL overrides the baseURL.
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		newBaseURL, err := url.Parse(baseURL)
+		if err != nil {
+			return err
+		}
+		c.Server = newBaseURL.String()
+		return nil
+	}
+}
+
+type getArchitecturesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Architectures
+}
+
+// Status returns HTTPResponse.Status
+func (r getArchitecturesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getArchitecturesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type composeImageResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ComposeResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r composeImageResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r composeImageResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getComposeStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ComposeStatus
+}
+
+// Status returns HTTPResponse.Status
+func (r getComposeStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getComposeStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getDistributionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Distributions
+}
+
+// Status returns HTTPResponse.Status
+func (r getDistributionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getDistributionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getOpenapiJsonResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r getOpenapiJsonResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getOpenapiJsonResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getVersionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Version
+}
+
+// Status returns HTTPResponse.Status
+func (r getVersionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getVersionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// GetArchitecturesWithResponse request returning *GetArchitecturesResponse
+func (c *ClientWithResponses) GetArchitecturesWithResponse(ctx context.Context, distribution string) (*getArchitecturesResponse, error) {
+	rsp, err := c.GetArchitectures(ctx, distribution)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetArchitecturesResponse(rsp)
+}
+
+// ComposeImageWithBodyWithResponse request with arbitrary body returning *ComposeImageResponse
+func (c *ClientWithResponses) ComposeImageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*composeImageResponse, error) {
+	rsp, err := c.ComposeImageWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseComposeImageResponse(rsp)
+}
+
+func (c *ClientWithResponses) ComposeImageWithResponse(ctx context.Context, body ComposeImageJSONRequestBody) (*composeImageResponse, error) {
+	rsp, err := c.ComposeImage(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseComposeImageResponse(rsp)
+}
+
+// GetComposeStatusWithResponse request returning *GetComposeStatusResponse
+func (c *ClientWithResponses) GetComposeStatusWithResponse(ctx context.Context, composeId string) (*getComposeStatusResponse, error) {
+	rsp, err := c.GetComposeStatus(ctx, composeId)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetComposeStatusResponse(rsp)
+}
+
+// GetDistributionsWithResponse request returning *GetDistributionsResponse
+func (c *ClientWithResponses) GetDistributionsWithResponse(ctx context.Context) (*getDistributionsResponse, error) {
+	rsp, err := c.GetDistributions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDistributionsResponse(rsp)
+}
+
+// GetOpenapiJsonWithResponse request returning *GetOpenapiJsonResponse
+func (c *ClientWithResponses) GetOpenapiJsonWithResponse(ctx context.Context) (*getOpenapiJsonResponse, error) {
+	rsp, err := c.GetOpenapiJson(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOpenapiJsonResponse(rsp)
+}
+
+// GetVersionWithResponse request returning *GetVersionResponse
+func (c *ClientWithResponses) GetVersionWithResponse(ctx context.Context) (*getVersionResponse, error) {
+	rsp, err := c.GetVersion(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetVersionResponse(rsp)
+}
+
+// ParseGetArchitecturesResponse parses an HTTP response from a GetArchitecturesWithResponse call
+func ParseGetArchitecturesResponse(rsp *http.Response) (*getArchitecturesResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getArchitecturesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Architectures
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseComposeImageResponse parses an HTTP response from a ComposeImageWithResponse call
+func ParseComposeImageResponse(rsp *http.Response) (*composeImageResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &composeImageResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ComposeResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetComposeStatusResponse parses an HTTP response from a GetComposeStatusWithResponse call
+func ParseGetComposeStatusResponse(rsp *http.Response) (*getComposeStatusResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getComposeStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ComposeStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDistributionsResponse parses an HTTP response from a GetDistributionsWithResponse call
+func ParseGetDistributionsResponse(rsp *http.Response) (*getDistributionsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getDistributionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Distributions
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetOpenapiJsonResponse parses an HTTP response from a GetOpenapiJsonWithResponse call
+func ParseGetOpenapiJsonResponse(rsp *http.Response) (*getOpenapiJsonResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getOpenapiJsonResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParseGetVersionResponse parses an HTTP response from a GetVersionWithResponse call
+func ParseGetVersionResponse(rsp *http.Response) (*getVersionResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getVersionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Version
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
 
 type ServerInterface interface {
 	// get the architectures and their image types available for a given distribution (GET /architectures/{distribution})
@@ -256,15 +1014,15 @@ var swaggerSpec = []string{
 	"17KERnYhRAokN8JCrkjuusxTGI+ej07GzxsdnmtYgaz2qLwD2Y+43ZJDmaisFfijtPYCiboge05biLWy",
 	"DTWBT4peJUVx1BLYdwc3JHvAkJeZ5dW6HcieVO1r1HgPBf4ZpAqS7273cNhJLXi13VpOLEVviuE5yDtO",
 	"AemEaCQhJRuFbCugRclThpomjHDKKbglUU0ufFoQmgAaD0c4slSsKKsmcbxer4fEPg+FXMVOV8Xns7Pp",
-	"x/l0MB6OhonOUosg15Y8F8r6HPBcaZKmIJGqosPRLmn8zHK2gJwUHE/wyXA0NL8PCqITC0/cbmwVP7S3",
-	"4tYIrKqL0UBq2TVjeIJ/B+0fJMaiJBlokApPvnVxa1tFSyHROuE0QVqgVIgbVBaI3BGekkUKiHQM89xO",
-	"A22uJIdkZ3Xvqlg1bUXDUMWvjHC1vW3249HInjgi15DbPElRpJzaTOPvquLNzt6xt5bClkQ+CASlXGkk",
-	"lvuSRSRnSCfAJSJKCcqJBub4VV2Gxqgqs4zIDZ6Y0hjxvUZami2XBn6CVvwOcuQBaYxXibnbRlQjwM/C",
-	"CVTGbVO2ieHOmpl7dP3wm2Cbfw3nzr0aAJqBJjxVBmkHgUALQC5y1mPM9glZ0b0ZA+HWiCZEIaWJ1MA6",
-	"hfYxb9cpfnB/zFi7W30H1ZFoiZc7ROoyR/3G9i/TRxp7xozZOj7nSAu0sj8oA63bhPuf6Vs/3wP1UbVE",
-	"twcP4GtrxbqX5b6Z6p+gT5iz7+jIWcU6SsFRdEA6dmtoWMe6D4aLSu6dctO9D4IfrARdylwhnXCFmKBl",
-	"ZgAKB+hiQCYGpAqgfOkgNAcXWRmS4ww0MXdAhOPW+RDsrdqu272olg801ufm6cnqWrsIVrQbYhigvtR2",
-	"+3cAAAD//4F+hcTzFAAA",
+	"x/l0MB6OhonOUosg15Y8dqoMrF+QSFWR4WiXMH5m+VpATgqOJ/hkOBqa3wYF0YmFJm43tYof2htxawRW",
+	"1bVo4LTMmjE8wb+D9o8RY1GSDDRIhSffupi1raKlkGidcJogLVAqxA0qC0TuCE/JIgVEOoZ5bieBNheS",
+	"Q7GztncVrBq2omCo2ldGuNrcNvvxaGTPG5FryG2epChSTm2m8XdVcWZn79g7S2FLIB8EglKuNBLLfcki",
+	"kjOkE+ASEaUE5UQDc9yqrkJjVJVZRuQGT0xpjPheIy3NlksDP0Erfgc58oA0xqvE3F0jqvb3s3AClXHb",
+	"kG1iuJNm5h5dL/wm2OZfw7lzqwaAZqAJT5VB2kEg0AKQi5z1GLN9QlZ078VAuDWiCVFIaSI1sE6hfczb",
+	"dYof3B8z1u5W30F1IFri5Q6RusxRv7H9q/SRxp4xY7aOzznSAq3sj8lA6zbh/mf61s/3QH1ULdHtwQP4",
+	"2lqx7lW5b6b65+cT5uw7OnJWsY5ScBQdkI7dGhrWse6D4aKSe6fcdO+D4AcrQZcyV0gnXCEmaJkZgMIB",
+	"uhiQiQGpAihfOgjNsUVWhuQ4A03MDRDhuHU6BHurtut2L6rlA431uXl6srrWLoIV7YYYBqgvtd3+HQAA",
+	"//+ZMyer7xQAAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

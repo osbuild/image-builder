@@ -52,3 +52,5 @@ make srpm
 greenprint "🎁 Building RPMs with mock"
 sudo mock -v -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
     rpmbuild/SRPMS/*.src.rpm
+
+sudo dnf localinstall -y $REPO_DIR/*x86_64.rpm

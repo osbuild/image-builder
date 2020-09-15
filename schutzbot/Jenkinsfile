@@ -40,6 +40,7 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
+                        sh "schutzbot/run_tests.sh"
                     }
                 }
                 stage('EL8') {
@@ -52,6 +53,7 @@ pipeline {
                         retry(3) {
                             sh "schutzbot/mockbuild.sh"
                         }
+                        sh "schutzbot/run_tests.sh"
                     }
                 }
             }

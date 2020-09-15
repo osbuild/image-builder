@@ -1,2 +1,3 @@
 /image-builder
 rpmbuild
+/image-builder-tests

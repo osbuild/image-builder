@@ -3,6 +3,7 @@ PACKAGE_NAME = image-builder
 .PHONY: build
 build:
 	go build -o image-builder ./cmd/image-builder/
+	go test -c -tags=integration -o image-builder-tests ./cmd/image-builder-tests/main_test.go
 
 # pip3 install openapi-spec-validator
 .PHONY: check-api-spec
