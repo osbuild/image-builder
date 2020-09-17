@@ -1,4 +1,4 @@
-sPACKAGE_NAME = image-builder
+PACKAGE_NAME = image-builder
 
 .PHONY: build
 build:
