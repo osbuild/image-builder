@@ -8,8 +8,15 @@ github.com/getkin/kin-openapi/openapi3
 github.com/getkin/kin-openapi/jsoninfo
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
-# github.com/go-chi/chi v4.1.0+incompatible
-github.com/go-chi/chi
+# github.com/labstack/echo/v4 v4.1.11
+github.com/labstack/echo/v4
+# github.com/labstack/gommon v0.3.0
+github.com/labstack/gommon/color
+github.com/labstack/gommon/log
+# github.com/mattn/go-colorable v0.1.4
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.10
+github.com/mattn/go-isatty
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
@@ -17,5 +24,21 @@ github.com/pmezard/go-difflib/difflib
 # github.com/stretchr/testify v1.5.1
 github.com/stretchr/testify/require
 github.com/stretchr/testify/assert
+# github.com/valyala/bytebufferpool v1.0.0
+github.com/valyala/bytebufferpool
+# github.com/valyala/fasttemplate v1.1.0
+github.com/valyala/fasttemplate
+# golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708
+golang.org/x/crypto/acme
+golang.org/x/crypto/acme/autocert
+# golang.org/x/net v0.0.0-20191112182307-2180aed22343
+golang.org/x/net/idna
+# golang.org/x/sys v0.0.0-20191115151921-52ab43148777
+golang.org/x/sys/unix
+# golang.org/x/text v0.3.2
+golang.org/x/text/secure/bidirule
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+golang.org/x/text/transform
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2

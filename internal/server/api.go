@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi"
+	"github.com/labstack/echo/v4"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -867,134 +867,130 @@ func ParseGetVersionResponse(rsp *http.Response) (*getVersionResponse, error) {
 	return response, nil
 }
 
+// ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// get the architectures and their image types available for a given distribution (GET /architectures/{distribution})
-	GetArchitectures(w http.ResponseWriter, r *http.Request)
-	// compose image (POST /compose)
-	ComposeImage(w http.ResponseWriter, r *http.Request)
-	// get status of an image compose (GET /compose/{composeId})
-	GetComposeStatus(w http.ResponseWriter, r *http.Request)
-	// get the available distributions (GET /distributions)
-	GetDistributions(w http.ResponseWriter, r *http.Request)
-	// get the openapi json specification (GET /openapi.json)
-	GetOpenapiJson(w http.ResponseWriter, r *http.Request)
-	// get the service version (GET /version)
-	GetVersion(w http.ResponseWriter, r *http.Request)
+	// get the architectures and their image types available for a given distribution
+	// (GET /architectures/{distribution})
+	GetArchitectures(ctx echo.Context, distribution string) error
+	// compose image
+	// (POST /compose)
+	ComposeImage(ctx echo.Context) error
+	// get status of an image compose
+	// (GET /compose/{composeId})
+	GetComposeStatus(ctx echo.Context, composeId string) error
+	// get the available distributions
+	// (GET /distributions)
+	GetDistributions(ctx echo.Context) error
+	// get the openapi json specification
+	// (GET /openapi.json)
+	GetOpenapiJson(ctx echo.Context) error
+	// get the service version
+	// (GET /version)
+	GetVersion(ctx echo.Context) error
 }
 
-// GetArchitectures operation middleware
-func GetArchitecturesCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		var err error
-
-		// ------------- Path parameter "distribution" -------------
-		var distribution string
-
-		err = runtime.BindStyledParameter("simple", false, "distribution", chi.URLParam(r, "distribution"), &distribution)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter distribution: %s", err), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(ctx, "distribution", distribution)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+// ServerInterfaceWrapper converts echo contexts to parameters.
+type ServerInterfaceWrapper struct {
+	Handler ServerInterface
 }
 
-// ComposeImage operation middleware
-func ComposeImageCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+// GetArchitectures converts echo context to params.
+func (w *ServerInterfaceWrapper) GetArchitectures(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "distribution" -------------
+	var distribution string
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	err = runtime.BindStyledParameter("simple", false, "distribution", ctx.Param("distribution"), &distribution)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter distribution: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetArchitectures(ctx, distribution)
+	return err
 }
 
-// GetComposeStatus operation middleware
-func GetComposeStatusCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+// ComposeImage converts echo context to params.
+func (w *ServerInterfaceWrapper) ComposeImage(ctx echo.Context) error {
+	var err error
 
-		var err error
-
-		// ------------- Path parameter "composeId" -------------
-		var composeId string
-
-		err = runtime.BindStyledParameter("simple", false, "composeId", chi.URLParam(r, "composeId"), &composeId)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter composeId: %s", err), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(ctx, "composeId", composeId)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ComposeImage(ctx)
+	return err
 }
 
-// GetDistributions operation middleware
-func GetDistributionsCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+// GetComposeStatus converts echo context to params.
+func (w *ServerInterfaceWrapper) GetComposeStatus(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "composeId" -------------
+	var composeId string
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	err = runtime.BindStyledParameter("simple", false, "composeId", ctx.Param("composeId"), &composeId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter composeId: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetComposeStatus(ctx, composeId)
+	return err
 }
 
-// GetOpenapiJson operation middleware
-func GetOpenapiJsonCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+// GetDistributions converts echo context to params.
+func (w *ServerInterfaceWrapper) GetDistributions(ctx echo.Context) error {
+	var err error
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetDistributions(ctx)
+	return err
 }
 
-// GetVersion operation middleware
-func GetVersionCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+// GetOpenapiJson converts echo context to params.
+func (w *ServerInterfaceWrapper) GetOpenapiJson(ctx echo.Context) error {
+	var err error
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetOpenapiJson(ctx)
+	return err
 }
 
-// Handler creates http.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) http.Handler {
-	return HandlerFromMux(si, chi.NewRouter())
+// GetVersion converts echo context to params.
+func (w *ServerInterfaceWrapper) GetVersion(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetVersion(ctx)
+	return err
 }
 
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
-	r.Group(func(r chi.Router) {
-		r.Use(GetArchitecturesCtx)
-		r.Get("/architectures/{distribution}", si.GetArchitectures)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(ComposeImageCtx)
-		r.Post("/compose", si.ComposeImage)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetComposeStatusCtx)
-		r.Get("/compose/{composeId}", si.GetComposeStatus)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetDistributionsCtx)
-		r.Get("/distributions", si.GetDistributions)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetOpenapiJsonCtx)
-		r.Get("/openapi.json", si.GetOpenapiJson)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetVersionCtx)
-		r.Get("/version", si.GetVersion)
-	})
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}
 
-	return r
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+
+	wrapper := ServerInterfaceWrapper{
+		Handler: si,
+	}
+
+	router.GET("/architectures/:distribution", wrapper.GetArchitectures)
+	router.POST("/compose", wrapper.ComposeImage)
+	router.GET("/compose/:composeId", wrapper.GetComposeStatus)
+	router.GET("/distributions", wrapper.GetDistributions)
+	router.GET("/openapi.json", wrapper.GetOpenapiJson)
+	router.GET("/version", wrapper.GetVersion)
+
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
