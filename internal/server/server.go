@@ -1,5 +1,5 @@
 //go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,client -o ../cloudapi/cloudapi_client.go ../cloudapi/cloudapi_client.yml
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=server --generate types,chi-server,spec,client -o api.go api.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=server --generate types,server,spec,client -o api.go api.yaml
 package server
 
 import (
@@ -13,161 +13,116 @@ import (
 	"github.com/osbuild/image-builder/internal/cloudapi"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi"
+	"github.com/labstack/echo/v4"
 )
 
 type Handlers struct{}
 
-func (s *Handlers) GetVersion(w http.ResponseWriter, r *http.Request) {
+func (s *Handlers) GetVersion(ctx echo.Context) error {
 	spec, err := GetSwagger()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	version := Version{spec.Info.Version}
-
-	versionEncoded, err := json.Marshal(version)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(versionEncoded)
+	return ctx.JSON(http.StatusOK, version)
 }
 
-func (s *Handlers) GetOpenapiJson(w http.ResponseWriter, r *http.Request) {
+func (s *Handlers) GetOpenapiJson(ctx echo.Context) error {
 	spec, err := GetSwagger()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	spec.AddServer(&openapi3.Server{URL: RoutePrefix()})
-
-	specEncoded, err := json.Marshal(spec)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(specEncoded)
+	return ctx.JSON(http.StatusOK, spec)
 }
 
-func (s *Handlers) GetDistributions(w http.ResponseWriter, r *http.Request) {
-	distributions,err := AvailableDistributions()
+func (s *Handlers) GetDistributions(ctx echo.Context) error {
+	distributions, err := AvailableDistributions()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
-
-	distributionsEncoded, err := json.Marshal(distributions)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(distributionsEncoded)
+	return ctx.JSON(http.StatusOK, distributions)
 }
 
-func (s *Handlers) GetArchitectures(w http.ResponseWriter, r *http.Request) {
-	archs, err := ArchitecturesForImage(r.Context().Value("distribution").(string))
+func (s *Handlers) GetArchitectures(ctx echo.Context, distribution string) error {
+	archs, err := ArchitecturesForImage(distribution)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
-
-	archsEncoded, err := json.Marshal(archs)
-	if err != nil {
-	http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(archsEncoded)
+	return ctx.JSON(http.StatusOK, archs)
 }
 
-func (s *Handlers) GetComposeStatus(w http.ResponseWriter, r *http.Request) {
+func (s *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	socket, ok := os.LookupEnv("OSBUILD_SERVICE")
 	if !ok {
-		socket = "http://127.0.0.1:80/"
+		socket = "http://127.0.0.1:80"
 	}
-	endpoint := "compose/" + r.Context().Value("composeId").(string)
+	endpoint := "compose/" + composeId
 
-	resp, err := http.Get(socket + endpoint)
+	resp, err := http.Get(fmt.Sprintf("%s/%s", socket, endpoint))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	var composeStatus ComposeStatus
-	json.NewDecoder(resp.Body).Decode(&composeStatus)
-	encoded, err := json.Marshal(composeStatus)
+	err = json.NewDecoder(resp.Body).Decode(&composeStatus)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(encoded)
+	return ctx.JSON(http.StatusOK, composeStatus)
 }
 
-func (s *Handlers) ComposeImage(w http.ResponseWriter, r *http.Request) {
+func (s *Handlers) ComposeImage(ctx echo.Context) error {
 	socket, ok := os.LookupEnv("OSBUILD_SERVICE")
 	if !ok {
 		socket = "http://127.0.0.1:80/"
 	}
 
-	decoder := json.NewDecoder(r.Body)
+	decoder := json.NewDecoder(ctx.Request().Body)
 	var composeRequest cloudapi.ComposeJSONRequestBody
 	err := decoder.Decode(&composeRequest)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed decoding the compose request %s", err.Error()), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed decoding the compose request %v", err))
 	}
 
 	if len(composeRequest.ImageRequests) != 1 {
-		http.Error(w, "Exactly one image request should be included", http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one image request should be included")
 	}
 
 	if len(composeRequest.ImageRequests[0].Repositories) != 0 {
-		http.Error(w, "Repositories are specified by image-builder itself", http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Repositories are specified by image-builder itself")
 	}
 
 	repositories, err := RepositoriesForImage(composeRequest.Distribution, composeRequest.ImageRequests[0].Architecture)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Unable to retrieve repositories for image %s", err), http.StatusInternalServerError)
-		return
+		return err
+
 	}
 	composeRequest.ImageRequests[0].Repositories = repositories
 
 	client, err := cloudapi.NewClient(socket)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed constructing http client %s", err.Error()), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	resp, err := client.Compose(context.Background(), composeRequest)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed posting compose request to osbuild-composer %s", err.Error()), http.StatusInternalServerError)
-		return
+		return err
 	}
 	if resp.StatusCode != http.StatusCreated {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			http.Error(w, "Failed posting compose request to osbuild-composer", resp.StatusCode)
-			return
+			return echo.NewHTTPError(resp.StatusCode, "Failed posting compose request to osbuild-composer")
 		}
-		http.Error(w, fmt.Sprintf("Failed posting compose request to osbuild-composer: %s", body), resp.StatusCode)
-		return
+		return echo.NewHTTPError(resp.StatusCode, fmt.Sprintf("Failed posting compose request to osbuild-composer: %v", body))
 	}
 
 	var composeResponse ComposeResponse
-	json.NewDecoder(resp.Body).Decode(&composeResponse)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(composeResponse)
+	err = json.NewDecoder(resp.Body).Decode(&composeResponse)
 	if err != nil {
-		panic("Failed to write response")
+		return err
 	}
+	return ctx.JSON(http.StatusCreated, composeResponse)
 }
 
 func RoutePrefix() string {
@@ -186,12 +141,33 @@ func RoutePrefix() string {
 	return fmt.Sprintf("/%s/%s/v%s", pathPrefix, appName, spec.Info.Version)
 }
 
+// A simple echo.Binder(), which only accepts application/json, but is more
+// strict than echo's DefaultBinder. It does not handle binding query
+// parameters either.
+type binder struct{}
+
+func (b binder) Bind(i interface{}, ctx echo.Context) error {
+	request := ctx.Request()
+
+	contentType := request.Header["Content-Type"]
+	if len(contentType) != 1 || contentType[0] != "application/json" {
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, "request must be json-encoded")
+	}
+
+	err := json.NewDecoder(request.Body).Decode(i)
+	if err != nil {
+		panic("Failed to write response")
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("cannot parse request body: %v", err))
+	}
+
+	return nil
+}
+
 func Run(address string) {
 	fmt.Printf("🚀 Starting image-builder server on %s ...\n", address)
 	var s Handlers
-	router := chi.NewRouter()
-	router.Route(RoutePrefix(), func(r chi.Router) {
-		HandlerFromMux(&s, r)
-	})
-	http.ListenAndServe(address, router)
+	e := echo.New()
+	e.Binder = binder{}
+	RegisterHandlers(e.Group(RoutePrefix()), &s)
+	e.Start(address)
 }

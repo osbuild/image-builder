@@ -12,11 +12,11 @@ import (
 
 type Distribution struct {
 	Distribution DistributionItem `json:"distribution"`
-	ArchX86 *X86_64 `json:"x86_64,omitempty"`
+	ArchX86      *X86_64          `json:"x86_64,omitempty"`
 }
 
 type X86_64 struct {
-	ImageTypes []string `json:"image_types"`
+	ImageTypes   []string              `json:"image_types"`
 	Repositories []cloudapi.Repository `json:"repositories"`
 }
 
@@ -100,7 +100,7 @@ func ArchitecturesForImage(distro string) (Architectures, error) {
 	var archs Architectures
 	if d.ArchX86 != nil {
 		archs = append(archs, ArchitectureItem{
-			Arch: "x86_64",
+			Arch:       "x86_64",
 			ImageTypes: d.ArchX86.ImageTypes,
 		})
 	}
