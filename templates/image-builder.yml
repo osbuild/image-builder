@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Template
+labels:
+  app: image-builder
+  template: image-builder
+metadata:
+  annotations:
+    description: Backend service for image-builder in cloud.redhat.com
+  name: image-builder
+objects:
+
+# NOTE(mhayden): This came from the example in the documentation and I felt
+# like it would be useful to maintain it here so it's easier to add our own
+# variables later.
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    labels:
+      app: image-builder
+    name: image-builder-config
+  data:
+    example: "${EXAMPLE}"
+
+# Deploy the image-builder container, add an environment variable from the
+# configmap, and open a port.
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      service: image-builder
+    name: image-builder
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: image-builder
+    template:
+      metadata:
+        labels:
+          name: image-builder
+      spec:
+        containers:
+        - image: "${IMAGE_NAME}:${IMAGE_TAG}"
+          name: image-builder
+          ports:
+          - containerPort: ${BACKEND_LISTENER_PORT}
+            protocol: TCP
+          env:
+            - name: EXAMPLE
+              valueFrom:
+                configMapKeyRef:
+                  key: example
+                  name: image-builder-config
+
+# Set up a service within the namespace for the backend.
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: image-builder-backend
+  spec:
+    ports:
+      - protocol: TCP
+        port: ${BACKEND_LISTENER_PORT}
+        targetPort: ${BACKEND_LISTENER_PORT}
+    selector:
+      name: image-builder
+
+# Parameters for the various configurations shown above.
+parameters:
+  - description: Example configmap variable
+    name: EXAMPLE
+    value: "EXAMPLE_DATA"
+  - description: image-builder backend listening port
+    name: BACKEND_LISTENER_PORT
+    value: 8086
+  - description: image-builder image name
+    name: IMAGE_NAME
+    value: quay.io/cloudservices/image-builder
+    required: true
+  - description: image-builder image tag
+    name: IMAGE_TAG
+    required: true
