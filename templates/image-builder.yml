@@ -23,8 +23,8 @@ objects:
 
 # Deploy the image-builder container, add an environment variable from the
 # configmap, and open a port.
-- apiVersion: apps/v1
-  kind: Deployment
+- apiVersion: v1
+  kind: DeploymentConfig
   metadata:
     labels:
       service: image-builder
