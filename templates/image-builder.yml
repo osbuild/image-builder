@@ -43,7 +43,7 @@ objects:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: image-builder
           ports:
-          - containerPort: "${BACKEND_LISTENER_PORT}"
+          - containerPort: 8086
             protocol: TCP
           env:
             - name: EXAMPLE
@@ -60,8 +60,8 @@ objects:
   spec:
     ports:
       - protocol: TCP
-        port: "${BACKEND_LISTENER_PORT}"
-        targetPort: "${BACKEND_LISTENER_PORT}"
+        port: 8086
+        targetPort: 8086
     selector:
       name: image-builder
 
@@ -70,9 +70,6 @@ parameters:
   - description: Example configmap variable
     name: EXAMPLE
     value: "EXAMPLE_DATA"
-  - description: image-builder backend listening port
-    name: BACKEND_LISTENER_PORT
-    value: "8086"
   - description: image-builder image name
     name: IMAGE_NAME
     value: quay.io/cloudservices/image-builder
