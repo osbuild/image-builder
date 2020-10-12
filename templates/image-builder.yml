@@ -72,7 +72,7 @@ parameters:
     value: "EXAMPLE_DATA"
   - description: image-builder backend listening port
     name: BACKEND_LISTENER_PORT
-    value: 8086
+    value: "8086"
   - description: image-builder image name
     name: IMAGE_NAME
     value: quay.io/cloudservices/image-builder
