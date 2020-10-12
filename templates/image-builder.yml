@@ -43,7 +43,7 @@ objects:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: image-builder
           ports:
-          - containerPort: ${BACKEND_LISTENER_PORT}
+          - containerPort: "${BACKEND_LISTENER_PORT}"
             protocol: TCP
           env:
             - name: EXAMPLE
@@ -60,8 +60,8 @@ objects:
   spec:
     ports:
       - protocol: TCP
-        port: ${BACKEND_LISTENER_PORT}
-        targetPort: ${BACKEND_LISTENER_PORT}
+        port: "${BACKEND_LISTENER_PORT}"
+        targetPort: "${BACKEND_LISTENER_PORT}"
     selector:
       name: image-builder
 
