@@ -43,7 +43,7 @@ objects:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: image-builder
           ports:
-          - containerPort: ${{BACKEND_LISTENER_PORT}}
+          - containerPort: 8086
             protocol: TCP
           env:
             - name: EXAMPLE
@@ -56,12 +56,14 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: image-builder-backend
+    labels:
+      service: image-builder
+    name: image-builder
   spec:
     ports:
       - protocol: TCP
         port: ${{BACKEND_LISTENER_PORT}}
-        targetPort: ${{BACKEND_LISTENER_PORT}}
+        targetPort: 8086
     selector:
       name: image-builder
 
@@ -70,9 +72,6 @@ parameters:
   - description: Example configmap variable
     name: EXAMPLE
     value: "EXAMPLE_DATA"
-  - description: Backend listener port
-    name: BACKEND_LISTENER_PORT
-    value: "8086"
   - description: image-builder image name
     name: IMAGE_NAME
     value: quay.io/cloudservices/image-builder
@@ -80,3 +79,7 @@ parameters:
   - description: image-builder image tag
     name: IMAGE_TAG
     required: true
+  # NOTE(mhayden): This is set to match the ports set up in RHIOPS-953.
+  - description: Backend listener port
+    name: BACKEND_LISTENER_PORT
+    value: "8080"
