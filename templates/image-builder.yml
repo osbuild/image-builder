@@ -61,7 +61,8 @@ objects:
     name: image-builder
   spec:
     ports:
-      - protocol: TCP
+      - name: image-builder
+        protocol: TCP
         port: ${{BACKEND_LISTENER_PORT}}
         targetPort: 8086
     selector:
