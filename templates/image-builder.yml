@@ -23,8 +23,8 @@ objects:
 
 # Deploy the image-builder container, add an environment variable from the
 # configmap, and open a port.
-- apiVersion: v1
-  kind: DeploymentConfig
+- apiVersion: apps/v1
+  kind: Deployment
   metadata:
     labels:
       service: image-builder
@@ -43,7 +43,7 @@ objects:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: image-builder
           ports:
-          - containerPort: 8086
+          - containerPort: ${{BACKEND_LISTENER_PORT}}
             protocol: TCP
           env:
             - name: EXAMPLE
@@ -60,8 +60,8 @@ objects:
   spec:
     ports:
       - protocol: TCP
-        port: 8086
-        targetPort: 8086
+        port: ${{BACKEND_LISTENER_PORT}}
+        targetPort: ${{BACKEND_LISTENER_PORT}}
     selector:
       name: image-builder
 
@@ -70,6 +70,9 @@ parameters:
   - description: Example configmap variable
     name: EXAMPLE
     value: "EXAMPLE_DATA"
+  - description: Backend listener port
+    name: BACKEND_LISTENER_PORT
+    value: "8086"
   - description: image-builder image name
     name: IMAGE_NAME
     value: quay.io/cloudservices/image-builder
