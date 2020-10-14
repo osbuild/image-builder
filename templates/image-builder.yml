@@ -61,7 +61,7 @@ objects:
             successThreshold: 1
             timeoutSeconds: 1
           ports:
-          - name: image-builder-api
+          - name: api
             containerPort: 8086
             protocol: TCP
           env:
