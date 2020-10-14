@@ -14,6 +14,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type Handlers struct{}
@@ -182,6 +183,7 @@ func Run(address string) {
 	fmt.Printf("🚀 Starting image-builder server on %s ...\n", address)
 	var s Handlers
 	e := echo.New()
+	e.Use(middleware.Logger())
 	e.Binder = binder{}
 	e.Pre(VerifyIdentityHeader)
 	RegisterHandlers(e.Group(RoutePrefix()), &s)
