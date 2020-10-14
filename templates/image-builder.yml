@@ -48,6 +48,9 @@ objects:
               path: ${HEALTHCHECK_URI}
               port: 8086
               scheme: HTTP
+              httpHeaders:
+                - name: X-Rh-Identity
+                  value: health-check
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
@@ -57,6 +60,9 @@ objects:
               path: ${HEALTHCHECK_URI}
               port: 8086
               scheme: HTTP
+              httpHeaders:
+                - name: X-Rh-Identity
+                  value: health-check
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
