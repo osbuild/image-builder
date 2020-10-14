@@ -65,6 +65,8 @@ objects:
             containerPort: 8086
             protocol: TCP
           env:
+            - name: LISTEN_ADDRESS
+              value: "${LISTEN_ADDRESS}"
             - name: EXAMPLE
               valueFrom:
                 configMapKeyRef:
@@ -108,3 +110,6 @@ parameters:
   - name: HEALTHCHECK_URI
     description: URI to query for the health check
     value: "/api/image-builder/v1/version"
+  - name: LISTEN_ADDRESS
+    description: Listening address and port
+    value: "0.0.0.0:8086"
