@@ -42,8 +42,27 @@ objects:
         containers:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: image-builder
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: ${HEALTHCHECK_URI}
+              port: 8086
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: ${HEALTHCHECK_URI}
+              port: 8086
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
           ports:
-          - containerPort: 8086
+          - name: image-builder-api
+            containerPort: 8086
             protocol: TCP
           env:
             - name: EXAMPLE
@@ -84,3 +103,8 @@ parameters:
   - description: Backend listener port
     name: BACKEND_LISTENER_PORT
     value: "8080"
+  # NOTE(mhayden): Change this later once we add a real health check to
+  # image-builder that verifies connectivity, etc.
+  - name: HEALTHCHECK_URI
+    description: URI to query for the health check
+    value: "/api/image-builder/v1/version"
