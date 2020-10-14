@@ -41,3 +41,8 @@ container: rpm
 	mkdir -p distribution/rpms
 	cp -rf rpmbuild/RPMS/x86_64/* distribution/rpms/
 	podman build -t osbuild/image-builder ./distribution
+
+.PHONY: update-cloudapi
+update-cloudapi:
+	curl https://raw.githubusercontent.com/osbuild/osbuild-composer/master/internal/cloudapi/openapi.yml -o internal/cloudapi/cloudapi_client.yml
+	tools/prepare-source.sh

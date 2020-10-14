@@ -163,11 +163,27 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	return nil
 }
 
+func VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		request := ctx.Request()
+
+		// For now just check it's there, in future we might want to
+		// decode the b64 string and check a specific entitlement
+		identityHeader := request.Header["X-Rh-Identity"]
+		if len(identityHeader) != 1 {
+			return echo.NewHTTPError(http.StatusUnauthorized, "x-rh-identity header is not present")
+		}
+
+		return nextHandler(ctx)
+	}
+}
+
 func Run(address string) {
 	fmt.Printf("🚀 Starting image-builder server on %s ...\n", address)
 	var s Handlers
 	e := echo.New()
 	e.Binder = binder{}
+	e.Pre(VerifyIdentityHeader)
 	RegisterHandlers(e.Group(RoutePrefix()), &s)
 	e.Start(address)
 }
