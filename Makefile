@@ -36,6 +36,9 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		--with tests \
 		$(RPM_SPECFILE)
 
+.PHONY: ubi-container
+ubi-container:
+	podman build -t osbuild/image-builder -f distribution/Dockerfile-ubi .
 
 .PHONY: update-cloudapi
 update-cloudapi:
