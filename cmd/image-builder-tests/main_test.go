@@ -62,5 +62,10 @@ func TestImageBuilder(t *testing.T) {
 	client, err = server.NewClientWithResponses("http://127.0.0.1:8086/api/image-builder/v1")
 	versionResp, err := client.GetVersionWithResponse(ctx)
 	require.NoError(t, err)
-	require.Equalf(t, http.StatusUnauthorized, versionResp.StatusCode(), "Error: got non-401 status. Full response: %s", versionResp.Body)
+	require.Equalf(t, http.StatusNotFound, versionResp.StatusCode(), "Error: got non-401 status. Full response: %s", versionResp.Body)
+
+	client, err = server.NewClientWithResponses("http://127.0.0.1:8086/api/image-builder/v1.0", ConfigureClient)
+	versionResp, err = client.GetVersionWithResponse(ctx)
+	require.NoError(t, err)
+	require.Equalf(t, http.StatusOK, versionResp.StatusCode(), "Error: got non-200 status. Full response: %s", versionResp.Body)
 }

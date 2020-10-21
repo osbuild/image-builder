@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/osbuild/image-builder/internal/cloudapi"
 
@@ -27,12 +29,19 @@ type Handlers struct {
 }
 
 func NewServer(logger *logrus.Logger) *Server {
+	spec, err := GetSwagger()
+	if err != nil {
+		panic(err)
+	}
+	majorVersion := strings.Split(spec.Info.Version, ".")[0]
+
 	s := Server{logger, echo.New()}
 	var h Handlers
-
 	s.echo.Binder = binder{}
+	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
 	s.echo.Pre(VerifyIdentityHeader)
-	RegisterHandlers(s.echo.Group(RoutePrefix()), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion)), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)), &h)
 	return &s
 
 }
@@ -56,7 +65,7 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	spec.AddServer(&openapi3.Server{URL: RoutePrefix()})
+	spec.AddServer(&openapi3.Server{URL: fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)})
 	return ctx.JSON(http.StatusOK, spec)
 }
 
@@ -102,11 +111,10 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		socket = "http://127.0.0.1:80/"
 	}
 
-	decoder := json.NewDecoder(ctx.Request().Body)
-	var composeRequest cloudapi.ComposeJSONRequestBody
-	err := decoder.Decode(&composeRequest)
+	composeRequest := &cloudapi.ComposeJSONRequestBody{}
+	err := ctx.Bind(composeRequest)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed decoding the compose request %v", err))
+		return err
 	}
 
 	if len(composeRequest.ImageRequests) != 1 {
@@ -129,7 +137,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	resp, err := client.Compose(context.Background(), composeRequest)
+	resp, err := client.Compose(context.Background(), *composeRequest)
 	if err != nil {
 		return err
 	}
@@ -158,11 +166,7 @@ func RoutePrefix() string {
 	if !ok {
 		appName = "image-builder"
 	}
-	spec, err := GetSwagger()
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("/%s/%s/v%s", pathPrefix, appName, spec.Info.Version)
+	return fmt.Sprintf("/%s/%s", pathPrefix, appName)
 }
 
 // A simple echo.Binder(), which only accepts application/json, but is more
@@ -195,9 +199,52 @@ func VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 		// decode the b64 string and check a specific entitlement
 		identityHeader := request.Header["X-Rh-Identity"]
 		if len(identityHeader) != 1 {
-			return echo.NewHTTPError(http.StatusUnauthorized, "x-rh-identity header is not present")
+			// clouddot guidelines requires 404 instead of 403
+			return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header is not present")
 		}
 
 		return nextHandler(ctx)
+	}
+}
+
+func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
+	var errors []HTTPError
+	he, ok := err.(*echo.HTTPError)
+	if ok {
+		if he.Internal != nil {
+			if herr, ok := he.Internal.(*echo.HTTPError); ok {
+				he = herr
+			}
+		}
+	} else {
+		he = &echo.HTTPError{
+			Code:    http.StatusInternalServerError,
+			Message: http.StatusText(http.StatusInternalServerError),
+		}
+	}
+
+	// Only log internal errors
+	if he.Code == http.StatusInternalServerError {
+		s.logger.Errorln(fmt.Sprintf("Internal error %v: %v", he.Code, he.Message))
+
+	}
+
+	errors = append(errors, HTTPError{
+		Title:  strconv.Itoa(he.Code),
+		Detail: fmt.Sprintf("%v", he.Message),
+	})
+
+	// Send response
+	if !c.Response().Committed {
+		if c.Request().Method == http.MethodHead {
+			err = c.NoContent(he.Code)
+		} else {
+			err = c.JSON(he.Code, &HTTPErrorList{
+				errors,
+			})
+		}
+		if err != nil {
+			s.logger.Errorln(err)
+		}
 	}
 }

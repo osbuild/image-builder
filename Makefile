@@ -8,7 +8,7 @@ build:
 # pip3 install openapi-spec-validator
 .PHONY: check-api-spec
 check-api-spec:
-	 openapi-spec-validator openapi/api.spec.yaml
+	 openapi-spec-validator internal/server/api.yaml
 
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
 RPM_SPECFILE=rpmbuild/SPECS/image-builder-$(COMMIT).spec
