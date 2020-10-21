@@ -80,6 +80,17 @@ type DistributionItem struct {
 // Distributions defines model for Distributions.
 type Distributions []DistributionItem
 
+// HTTPError defines model for HTTPError.
+type HTTPError struct {
+	Detail string `json:"detail"`
+	Title  string `json:"title"`
+}
+
+// HTTPErrorList defines model for HTTPErrorList.
+type HTTPErrorList struct {
+	Errors []HTTPError `json:"errors"`
+}
+
 // ImageRequest defines model for ImageRequest.
 type ImageRequest struct {
 	Architecture   string           `json:"architecture"`
@@ -399,7 +410,7 @@ func NewGetComposeStatusRequest(server string, composeId string) (*http.Request,
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/compose/%s", pathParam0)
+	basePath := fmt.Sprintf("/composes/%s", pathParam0)
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -551,6 +562,7 @@ type composeImageResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ComposeResponse
+	JSON400      *HTTPErrorList
 }
 
 // Status returns HTTPResponse.Status
@@ -765,6 +777,13 @@ func ParseComposeImageResponse(rsp *http.Response) (*composeImageResponse, error
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest HTTPErrorList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
 	}
 
 	return response, nil
@@ -876,7 +895,7 @@ type ServerInterface interface {
 	// (POST /compose)
 	ComposeImage(ctx echo.Context) error
 	// get status of an image compose
-	// (GET /compose/{composeId})
+	// (GET /composes/{composeId})
 	GetComposeStatus(ctx echo.Context, composeId string) error
 	// get the available distributions
 	// (GET /distributions)
@@ -986,7 +1005,7 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 
 	router.GET("/architectures/:distribution", wrapper.GetArchitectures)
 	router.POST("/compose", wrapper.ComposeImage)
-	router.GET("/compose/:composeId", wrapper.GetComposeStatus)
+	router.GET("/composes/:composeId", wrapper.GetComposeStatus)
 	router.GET("/distributions", wrapper.GetDistributions)
 	router.GET("/openapi.json", wrapper.GetOpenapiJson)
 	router.GET("/version", wrapper.GetVersion)
@@ -996,29 +1015,30 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RX3W7bNhR+FYLbxQbIlusUbeG7LHVXt2lTxFjXoggCmjy22EiiQlJxvMDvPpCiZFGi",
-	"HXdYgO2qqXh+v/OdHz9gKrJC5JBrhScPWNEEMmL/PP1z/keRCsIu4bYEpS8KzUVunwopCpCag/0f0LH5",
-	"52cJSzzBP8U7i7EzF++xNaVjvI2whBUXuTV1T7IiBTzBUA7WoPTgGY6w3hTmk9KS5yujoE7+ocP5Cd5a",
-	"h7cll8Dw5Fvt3BqNbC5XjUex+A5UG48HEujhQSgFpa5vYHPNmZ/V6fvZ6exi/ubi9cePL6dfTj98Op8G",
-	"EwQqQV/vLPlm1u9IKr/crhm/XbM30w+z+P3LW75m8eLT/eWSn311pt9Pv+IIL4XMiMYTXBCl1kKyvscO",
-	"Jn4GoXB+AKP5yZNAtCjpDWhfN9sM3Of/I6ZNTkFwJU24BqpLCTMNWQBTSRM/pftXL65fPA9hwTOygmvz",
-	"2apyDZnydW+pWI9Dqu4DkZJs+kmaGHzzjyXjB3Cwp7sQ9KKJ8JlRU+AY2AeJlkqLjP9Fmll2yOOZL72N",
-	"MOMGiUWpewNLJpAOXu0HW1YhHZ/uzKjViTwGvBdXz2WoBg1SqhC5gj5UVWMeJjVn+Gpna66JLgMLQjXf",
-	"D1tzctZir04dk+VCUcmLug6HgJy3ZbfbABavW+iFm4uB525X9ktg6C3RaJprkIXkCtA5z8t79Mvl2+n5",
-	"r+jVMNhFOcngOP50MLKKkRfP1SMZHU+5Hg6BDvNoGRxCdY8GCt4eDcHn0i6QH28Wb/EcNaaaKL2YDPfm",
-	"HW51V5fmd5aWg94OyTaDaqwPqnl+xJaI8IIoGJQy9U0lWheTOKYsH0pgCdFDKrK4bdOohKZNrvgq0f44",
-	"17KERnYhRAokN8JCrkjuusxTGI+ej07GzxsdnmtYgaz2qLwD2Y+43ZJDmaisFfijtPYCiboge05biLWy",
-	"DTWBT4peJUVx1BLYdwc3JHvAkJeZ5dW6HcieVO1r1HgPBf4ZpAqS7273cNhJLXi13VpOLEVviuE5yDtO",
-	"AemEaCQhJRuFbCugRclThpomjHDKKbglUU0ufFoQmgAaD0c4slSsKKsmcbxer4fEPg+FXMVOV8Xns7Pp",
-	"x/l0MB6OhonOUosg15Y8dqoMrF+QSFWR4WiXMH5m+VpATgqOJ/hkOBqa3wYF0YmFJm43tYof2htxawRW",
-	"1bVo4LTMmjE8wb+D9o8RY1GSDDRIhSffupi1raKlkGidcJogLVAqxA0qC0TuCE/JIgVEOoZ5bieBNheS",
-	"Q7GztncVrBq2omCo2ldGuNrcNvvxaGTPG5FryG2epChSTm2m8XdVcWZn79g7S2FLIB8EglKuNBLLfcki",
-	"kjOkE+ASEaUE5UQDc9yqrkJjVJVZRuQGT0xpjPheIy3NlksDP0Erfgc58oA0xqvE3F0jqvb3s3AClXHb",
-	"kG1iuJNm5h5dL/wm2OZfw7lzqwaAZqAJT5VB2kEg0AKQi5z1GLN9QlZ078VAuDWiCVFIaSI1sE6hfczb",
-	"dYof3B8z1u5W30F1IFri5Q6RusxRv7H9q/SRxp4xY7aOzznSAq3sj8lA6zbh/mf61s/3QH1ULdHtwQP4",
-	"2lqx7lW5b6b65+cT5uw7OnJWsY5ScBQdkI7dGhrWse6D4aKSe6fcdO+D4AcrQZcyV0gnXCEmaJkZgMIB",
-	"uhiQiQGpAihfOgjNsUVWhuQ4A03MDRDhuHU6BHurtut2L6rlA431uXl6srrWLoIV7YYYBqgvtd3+HQAA",
-	"//+ZMyer7xQAAA==",
+	"H4sIAAAAAAAC/9RXXW/bNhf+KwTf92IDZMl1grbwXZa6q9u0KeKua1EEAS0eW2wkUSGpOF7g/z6QomRR",
+	"oj86NMB21VQ8POc5D5/z4Ucc86zgOeRK4vEjlnECGTF/nv05+6NIOaFXcFeCVJeFYjw3R4XgBQjFwPwP",
+	"4pH+5/8CFniM/xdtPUbWXbTD1yQe4U2ABSwZz42rB5IVKeAxhnKwAqkGz3CA1brQn6QSLF/qC/LkHwac",
+	"neCNCXhXMgEUj7/VwY3TwORy3UTk8+8QKx1xTwI9Pkgcg5Q3t7C+YdTN6uzd9Gx6OXt9+erDhxeTL2fv",
+	"P15MvAlCLEDdbD25blZvSSq+3K0ou1vR15P30+jdizu2otH848PVgp1/ta7fTb7iAC+4yIjCY1wQKVdc",
+	"0H7EDiduBj44P8DR7ORJKJqX8S0o9262HtjP/0VOm5y85Io4YQpiVQqYKsg8nIo4cVN6ePn85vmpjwuW",
+	"kSXc6M/mKlOQSffuXcxXI99V+4EIQdb9JDUG1/2hZFwAe2u6S0EPTYDP9TUJVoF9kuJSKp6xv0jTy/ZF",
+	"PHetNwGmTDMxL1WvYYkE0sHL3WSLCtLx6U71tTqRQ8Q7uHohfW/QMCULnkvoU1UV5n5RM4qvt75miqjS",
+	"MyBk832/N2tnPPbeqeOynMtYsKJ+h31Eztq2m42Hi1ct9vzFRcEJt332K6DoDVFokisQhWAS0AXLywf0",
+	"y9WbycWv6GXoraKcZHCcfjocmYuBg+f6QEbHS67Hg6fC3nz69HEiBBc+khRhqeedA6yYSuGwAiqzoPZ0",
+	"3Y53wXwFDfro+Ay36A9VlHWsITiV6O27dVvy5r7tht7j0szMH+8Pzqw9qjM3KB1MOsNZp5y601qxe1OJ",
+	"g97YzNaDapINqhF2xGAM8JxIGJQidV0lShXjKIppHgqgCVFhzLOo7VNf8TXYXLJlotwJpkQJje2c8xRI",
+	"ro25WJLcNhbnwmh4OjwZnTZ3WK5gCaJaHcQ9iD7idhcKRSKzFvCDlewACbokO0FbjLWy9dW9K4reS/Li",
+	"qLm3a/VvRPaIIS8zo6tVG8iustanQRPdB/wzCOkV3/32YH+Q2vB6szGaWPBe48YzEPcsBqQSopCAlKwl",
+	"MqWA5iVLKWqKMMApi8HOxapZ47OCxAmgUTjEgZFiJVk5jqLVahUScxxysYzsXRldTM8nH2aTwSgchonK",
+	"0lYrrLrKwMQFgWSFDAfbhPGzcGgUW0BOCobH+CQchvoHUUFUYsiJ2mUto8f2GrDRBstqRdaEGm1NKR7j",
+	"30G5G5j2KEgGCnQr/dZlre0VLbhAq4TFCVIcpZzforJA5J6wlMxTQKTjmOWmFyi9FloeO7vK9g2rkq1E",
+	"6Hvva21crSsm+9FwaHY6nivITZ6kKFIWm0yj77JSzdbfsculxEZCLgkEpUwqxBe7kkUkp0glwAQiUvKY",
+	"EQXUqqtahbVTWWYZEWs81k+jzXc6ad1shdT0E7Rk95Ajh0jtvErMLnO8agBuFtagcm5Ksi0Mu8dN7aGt",
+	"ht84Xf80njsLuofoavZLzbSlgKM5IIuc9hSzeUJVdJdkD9ya0YRIJBURCqgu2tOfiMJdgTwYtIxqHPbR",
+	"EJMoI6kenRqQozxXBG3hyOjR/jWl7f7hhqv2dFMKuX2jWnhBv9W4Pw4OtJop1W5rgDaQ4mhpftN7mkkD",
+	"91/TSdx89yhG1hbdrrCHX/NYtLvc7+ry7q+AJ8zZDXRk96SdS97muMc6soMxrLHuouGysnsr7bzpk+CC",
+	"FaBKkUukEiYR5XGZaYL8AC0GpDEgWUDMFpZCvQCSpRY5zkARvZcEOGqtM97aqv3afQDV9p7C+twcPdm7",
+	"1iG8L9qF6Ceob7XZ/B0AAP//vX+UyHYWAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

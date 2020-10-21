@@ -1,7 +1,7 @@
 ---
 openapi: 3.0.1
 info:
-  version: "1"
+  version: "1.0"
   title: Image-builder service
   description: Service that relays image build requests
   license:
@@ -59,7 +59,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Architectures'
-  /compose/{composeId}:
+  /composes/{composeId}:
     get:
       summary: get status of an image compose
       parameters:
@@ -97,9 +97,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ComposeResponse'
-
+        '400':
+          description: the compose request is malformed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
 components:
   schemas:
+    HTTPError:
+      required:
+        - title
+        - detail
+      properties:
+        title:
+          type: string
+        detail:
+          type: string
+    HTTPErrorList:
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/HTTPError'
     Version:
       required:
         - version
