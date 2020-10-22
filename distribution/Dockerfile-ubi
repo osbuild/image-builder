@@ -10,5 +10,6 @@ RUN go install ./...
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN mkdir /app
 COPY --from=builder /opt/app-root/src/go/bin/image-builder /app/
+COPY ./distributions /app/distributions
 EXPOSE 8086
 CMD ["/app/image-builder", "-v"]
