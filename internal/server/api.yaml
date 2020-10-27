@@ -91,7 +91,7 @@ paths:
             schema:
               $ref: "#/components/schemas/ComposeRequest"
       responses:
-        '200':
+        '201':
           description: compose has started
           content:
             application/json:

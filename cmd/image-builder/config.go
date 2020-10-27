@@ -8,4 +8,8 @@ type ImageBuilderConfig struct {
 	Region          *string `env:"CW_AWS_REGION"`
 	AccessKeyID     *string `env:"CW_AWS_ACCESS_KEY_ID"`
 	SecretAccessKey *string `env:"CW_AWS_SECRET_ACCESS_KEY"`
+	OsbuildURL      string  `env:"OSBUILD_URL"`
+	OsbuildCert     *string `env:"OSBUILD_CERT_PATH"`
+	OsbuildKey      *string `env:"OSBUILD_KEY_PATH"`
+	OsbuildCA       *string `env:"OSBUILD_CA_PATH"`
 }

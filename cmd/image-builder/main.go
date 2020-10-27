@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/osbuild/image-builder/internal/cloudapi"
 	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/server"
 )
@@ -45,7 +46,7 @@ func LoadConfigFromEnv(intf interface{}) error {
 func main() {
 	config := ImageBuilderConfig{
 		ListenAddress: "localhost:8086",
-		LogLevel: "INFO",
+		LogLevel:      "INFO",
 	}
 
 	err := LoadConfigFromEnv(&config)
@@ -58,6 +59,8 @@ func main() {
 		panic(err)
 	}
 
-	s := server.NewServer(log)
+	client := cloudapi.NewOsbuildClient(config.OsbuildURL, config.OsbuildCert, config.OsbuildKey, config.OsbuildCA)
+
+	s := server.NewServer(log, client)
 	s.Run(config.ListenAddress)
 }

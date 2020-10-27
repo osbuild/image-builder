@@ -4,9 +4,9 @@ pipeline {
     options {
         timestamps()
         ansiColor('xterm')
-        // Cancel the pipeline if it runs for more than three hours.
+        // Cancel the pipeline if it runs for more than 30 minutes.
         timeout(
-            time: 10,
+            time: 30,
             unit: "MINUTES"
         )
     }
@@ -33,29 +33,32 @@ pipeline {
             // investigated.
             failFast true
             parallel {
-                stage('F31') {
-                    agent { label "f31cloudbase && x86_64" }
+                stage('F32') {
+                    agent { label "f32cloudbase && x86_64 && aws" }
                     steps {
                         sh "schutzbot/ci_details.sh"
                         retry(3) {
-                            sh "schutzbot/mockbuild.sh"
+                            sh "schutzbot/build.sh"
                         }
+                        sh "schutzbot/provision-composer.sh"
                         sh "schutzbot/run_tests.sh"
                     }
                 }
-                stage('EL8') {
-                    agent { label "rhel8cloudbase && x86_64 && aws" }
-                    environment {
-                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
-                    }
-                    steps {
-                        sh "schutzbot/ci_details.sh"
-                        retry(3) {
-                            sh "schutzbot/mockbuild.sh"
-                        }
-                        sh "schutzbot/run_tests.sh"
-                    }
-                }
+                // TODO osbuild-composer-api isn't available in rhel8
+                // stage('EL8') {
+                //     agent { label "rhel8cloudbase && x86_64 && aws" }
+                //     environment {
+                //         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                //     }
+                //     steps {
+                //         sh "schutzbot/ci_details.sh"
+                //         retry(3) {
+                //             sh "schutzbot/build.sh"
+                //         }
+                //         sh "schutzbot/provision-composer.sh"
+                //         sh "schutzbot/run_tests.sh"
+                //     }
+                // }
             }
         }
     }

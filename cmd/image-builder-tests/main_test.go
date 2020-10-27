@@ -3,13 +3,17 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"testing"
 	"time"
 
 	"github.com/osbuild/image-builder/internal/server"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,14 +27,8 @@ func ConfigureClient(client *server.Client) error {
 	return nil
 }
 
-func TestImageBuilder(t *testing.T) {
-	// run image builder
-	cmd := exec.Command("/usr/libexec/image-builder/image-builder")
-	err := cmd.Start()
-	require.NoError(t, err)
-	defer cmd.Process.Kill()
-
-	client, err := server.NewClientWithResponses("http://127.0.0.1:8086/api/image-builder/v1", ConfigureClient)
+func RunTestWithClient(t *testing.T, ib string)  {
+	client, err := server.NewClientWithResponses(ib, ConfigureClient)
 	require.NoError(t, err)
 
 	// wait until server is reachable
@@ -59,13 +57,85 @@ func TestImageBuilder(t *testing.T) {
 	require.Equalf(t, http.StatusOK, archResp.StatusCode(), "Error: got non-200 status. Full response: %s", archResp.Body)
 	require.NotEmpty(t, archResp.JSON200)
 
-	client, err = server.NewClientWithResponses("http://127.0.0.1:8086/api/image-builder/v1")
+
+	// Build a composerequest
+	composeRequest := server.ComposeImageJSONRequestBody{
+		Distribution: distro,
+		ImageRequests: []server.ImageRequest{
+			server.ImageRequest{
+				Architecture: (*archResp.JSON200)[0].Arch,
+				ImageType: (*archResp.JSON200)[0].ImageTypes[0],
+				UploadRequests: &[]server.UploadRequest{
+					{
+						Type: "aws",
+						Options: server.AWSUploadRequestOptions{
+							Ec2: server.AWSUploadRequestOptionsEc2{
+								AccessKeyId: "invalid",
+								SecretAccessKey: "invalid",
+							},
+							S3: server.AWSUploadRequestOptionsS3{
+								AccessKeyId: "invalid",
+								SecretAccessKey: "invalid",
+								Bucket: "invalid",
+							},
+							Region: "invalid",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	composeResp, err := client.ComposeImageWithResponse(ctx, composeRequest)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusCreated, composeResp.StatusCode(), "Error: got non-201 status. Full response: %s", composeResp.Body)
+	require.NotNil(t, composeResp.JSON201)
+	id := composeResp.JSON201.Id
+
+	statusResp, err := client.GetComposeStatusWithResponse(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusCreated, composeResp.StatusCode(), "Error: got non-201 status. Full response: %s", composeResp.Body)
+	require.NotEmpty(t, statusResp.JSON200)
+	require.Contains(t, []string{"WAITING", "RUNNING"}, statusResp.JSON200.Status)
+
+	// Check if we get 404 without the identity header
+	client, err = server.NewClientWithResponses(ib)
 	versionResp, err := client.GetVersionWithResponse(ctx)
 	require.NoError(t, err)
-	require.Equalf(t, http.StatusNotFound, versionResp.StatusCode(), "Error: got non-401 status. Full response: %s", versionResp.Body)
+	require.Equalf(t, http.StatusNotFound, versionResp.StatusCode(), "Error: got non-404 status. Full response: %s", versionResp.Body)
+}
 
-	client, err = server.NewClientWithResponses("http://127.0.0.1:8086/api/image-builder/v1.0", ConfigureClient)
-	versionResp, err = client.GetVersionWithResponse(ctx)
+func TestImageBuilder(t *testing.T) {
+	// allow to run against existing instance
+	// run image builder
+
+	/* OsbuildURL      string  `env:"OSBUILD_URL"`
+	   OsbuildCert     string  `env:"OSBUILD_CERT_PATH"`
+	   OsbuildKey      string  `env:"OSBUILD_KEY_PATH"`
+	   OsbuildCA       string  `env:"OSBUILD_CA_PATH"` */
+	cmd := exec.Command("/usr/libexec/image-builder/image-builder")
+	cmd.Env = append(os.Environ(),
+		"OSBUILD_URL=https://localhost:443/api/composer/v1",
+		"OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem",
+		"OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem",
+		"OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem",
+	)
+
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	err := cmd.Start()
 	require.NoError(t, err)
-	require.Equalf(t, http.StatusOK, versionResp.StatusCode(), "Error: got non-200 status. Full response: %s", versionResp.Body)
+	defer func() {
+		fmt.Println("Out: ", buf.String())
+		cmd.Process.Kill()
+	}()
+
+	RunTestWithClient(t, "http://127.0.0.1:8086/api/image-builder/v1")
+	RunTestWithClient(t, "http://127.0.0.1:8086/api/image-builder/v1.0")
+}
+
+// Same test as above but against existing contain on localhost:8087
+func TestImageBuilderContainer(t *testing.T) {
+	RunTestWithClient(t, "http://127.0.0.1:8087/api/image-builder/v1")
+	RunTestWithClient(t, "http://127.0.0.1:8087/api/image-builder/v1.0")
 }

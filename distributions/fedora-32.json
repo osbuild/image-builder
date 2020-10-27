@@ -1,0 +1,13 @@
+{
+  "distribution": {
+    "name": "fedora-32",
+    "description": "Fedora 32"
+  },
+  "x86_64": {
+    "image_types": [ "qcow2" ],
+    "repositories": [{
+      "baseurl": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/",
+      "rhsm": false
+    }]
+  }
+}

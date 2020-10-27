@@ -48,6 +48,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -59,6 +60,8 @@ import (
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 type (
@@ -88,6 +91,7 @@ type (
 		Validator        Validator
 		Renderer         Renderer
 		Logger           Logger
+		IPExtractor      IPExtractor
 	}
 
 	// Route contains a handler and information for matching against requests.
@@ -227,7 +231,7 @@ const (
 
 const (
 	// Version of Echo
-	Version = "4.1.11"
+	Version = "4.1.17"
 	website = "https://echo.labstack.com"
 	// http://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=Echo
 	banner = `
@@ -354,10 +358,14 @@ func (e *Echo) DefaultHTTPErrorHandler(err error, c Context) {
 			Message: http.StatusText(http.StatusInternalServerError),
 		}
 	}
+
+	// Issue #1426
+	code := he.Code
+	message := he.Message
 	if e.Debug {
-		he.Message = err.Error()
-	} else if m, ok := he.Message.(string); ok {
-		he.Message = Map{"message": m}
+		message = err.Error()
+	} else if m, ok := message.(string); ok {
+		message = Map{"message": m}
 	}
 
 	// Send response
@@ -365,7 +373,7 @@ func (e *Echo) DefaultHTTPErrorHandler(err error, c Context) {
 		if c.Request().Method == http.MethodHead { // Issue #608
 			err = c.NoContent(he.Code)
 		} else {
-			err = c.JSON(he.Code, he.Message)
+			err = c.JSON(code, message)
 		}
 		if err != nil {
 			e.Logger.Error(err)
@@ -472,7 +480,20 @@ func (common) static(prefix, root string, get func(string, HandlerFunc, ...Middl
 		if err != nil {
 			return err
 		}
+
 		name := filepath.Join(root, path.Clean("/"+p)) // "/"+ for security
+		fi, err := os.Stat(name)
+		if err != nil {
+			// The access path does not exist
+			return NotFoundHandler(c)
+		}
+
+		// If the request is for a directory and does not end with "/"
+		p = c.Request().URL.Path // path must not be empty.
+		if fi.IsDir() && p[len(p)-1] != '/' {
+			// Redirect to ends with "/"
+			return c.Redirect(http.StatusMovedPermanently, p+"/")
+		}
 		return c.File(name)
 	}
 	if prefix == "/" {
@@ -497,11 +518,7 @@ func (e *Echo) add(host, method, path string, handler HandlerFunc, middleware ..
 	name := handlerName(handler)
 	router := e.findRouter(host)
 	router.Add(method, path, func(c Context) error {
-		h := handler
-		// Chain middleware
-		for i := len(middleware) - 1; i >= 0; i-- {
-			h = middleware[i](h)
-		}
+		h := applyMiddleware(handler, middleware...)
 		return h(c)
 	})
 	r := &Route{
@@ -599,12 +616,12 @@ func (e *Echo) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h := NotFoundHandler
 
 	if e.premiddleware == nil {
-		e.findRouter(r.Host).Find(r.Method, getPath(r), c)
+		e.findRouter(r.Host).Find(r.Method, GetPath(r), c)
 		h = c.Handler()
 		h = applyMiddleware(h, e.middleware...)
 	} else {
 		h = func(c Context) error {
-			e.findRouter(r.Host).Find(r.Method, getPath(r), c)
+			e.findRouter(r.Host).Find(r.Method, GetPath(r), c)
 			h := c.Handler()
 			h = applyMiddleware(h, e.middleware...)
 			return h(c)
@@ -719,6 +736,34 @@ func (e *Echo) StartServer(s *http.Server) (err error) {
 	return s.Serve(e.TLSListener)
 }
 
+// StartH2CServer starts a custom http/2 server with h2c (HTTP/2 Cleartext).
+func (e *Echo) StartH2CServer(address string, h2s *http2.Server) (err error) {
+	// Setup
+	s := e.Server
+	s.Addr = address
+	e.colorer.SetOutput(e.Logger.Output())
+	s.ErrorLog = e.StdLogger
+	s.Handler = h2c.NewHandler(e, h2s)
+	if e.Debug {
+		e.Logger.SetLevel(log.DEBUG)
+	}
+
+	if !e.HideBanner {
+		e.colorer.Printf(banner, e.colorer.Red("v"+Version), e.colorer.Blue(website))
+	}
+
+	if e.Listener == nil {
+		e.Listener, err = newListener(s.Addr)
+		if err != nil {
+			return err
+		}
+	}
+	if !e.HidePort {
+		e.colorer.Printf("⇨ http server started on %s\n", e.colorer.Green(e.Listener.Addr()))
+	}
+	return s.Serve(e.Listener)
+}
+
 // Close immediately stops the server.
 // It internally calls `http.Server#Close()`.
 func (e *Echo) Close() error {
@@ -748,6 +793,9 @@ func NewHTTPError(code int, message ...interface{}) *HTTPError {
 
 // Error makes it compatible with `error` interface.
 func (he *HTTPError) Error() string {
+	if he.Internal == nil {
+		return fmt.Sprintf("code=%d, message=%v", he.Code, he.Message)
+	}
 	return fmt.Sprintf("code=%d, message=%v, internal=%v", he.Code, he.Message, he.Internal)
 }
 
@@ -755,6 +803,11 @@ func (he *HTTPError) Error() string {
 func (he *HTTPError) SetInternal(err error) *HTTPError {
 	he.Internal = err
 	return he
+}
+
+// Unwrap satisfies the Go 1.13 error wrapper interface.
+func (he *HTTPError) Unwrap() error {
+	return he.Internal
 }
 
 // WrapHandler wraps `http.Handler` into `echo.HandlerFunc`.
@@ -779,7 +832,8 @@ func WrapMiddleware(m func(http.Handler) http.Handler) MiddlewareFunc {
 	}
 }
 
-func getPath(r *http.Request) string {
+// GetPath returns RawPath, if it's empty returns Path from URL
+func GetPath(r *http.Request) string {
 	path := r.URL.RawPath
 	if path == "" {
 		path = r.URL.Path
@@ -822,9 +876,10 @@ func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 		return
 	} else if err = c.(*net.TCPConn).SetKeepAlive(true); err != nil {
 		return
-	} else if err = c.(*net.TCPConn).SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		return
 	}
+	// Ignore error from setting the KeepAlivePeriod as some systems, such as
+	// OpenBSD, do not support setting TCP_USER_TIMEOUT on IPPROTO_TCP
+	_ = c.(*net.TCPConn).SetKeepAlivePeriod(3 * time.Minute)
 	return
 }
 
