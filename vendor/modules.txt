@@ -48,14 +48,14 @@ github.com/getkin/kin-openapi/jsoninfo
 github.com/ghodss/yaml
 # github.com/jmespath/go-jmespath v0.4.0
 github.com/jmespath/go-jmespath
-# github.com/labstack/echo/v4 v4.1.11
+# github.com/labstack/echo/v4 v4.1.17
 github.com/labstack/echo/v4
 # github.com/labstack/gommon v0.3.0
 github.com/labstack/gommon/color
 github.com/labstack/gommon/log
-# github.com/mattn/go-colorable v0.1.4
+# github.com/mattn/go-colorable v0.1.7
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.10
+# github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
@@ -70,17 +70,22 @@ github.com/stretchr/testify/require
 github.com/stretchr/testify/assert
 # github.com/valyala/bytebufferpool v1.0.0
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasttemplate v1.1.0
+# github.com/valyala/fasttemplate v1.2.1
 github.com/valyala/fasttemplate
-# golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708
+# golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
-# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
+# golang.org/x/net v0.0.0-20200822124328-c89045814202
+golang.org/x/net/http2
+golang.org/x/net/http2/h2c
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20191115151921-52ab43148777
+golang.org/x/net/http/httpguts
+golang.org/x/net/http2/hpack
+# golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.2
+golang.org/x/sys/internal/unsafeheader
+# golang.org/x/text v0.3.3
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm

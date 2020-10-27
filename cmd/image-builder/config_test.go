@@ -12,7 +12,7 @@ func TestDefault(t *testing.T) {
 
 	config := ImageBuilderConfig{
 		ListenAddress: "localhost",
-		LogLevel: "DEBUG",
+		LogLevel:      "DEBUG",
 	}
 	err := LoadConfigFromEnv(&config)
 	require.NoError(t, err)
@@ -31,7 +31,7 @@ func TestEnv(t *testing.T) {
 
 	config := ImageBuilderConfig{
 		ListenAddress: "localhost",
-		LogLevel: "DEBUG",
+		LogLevel:      "DEBUG",
 	}
 	err := LoadConfigFromEnv(&config)
 	require.NoError(t, err)

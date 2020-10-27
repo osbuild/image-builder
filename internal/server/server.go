@@ -22,28 +22,29 @@ import (
 type Server struct {
 	logger *logrus.Logger
 	echo   *echo.Echo
+	client *cloudapi.OsbuildClient
 }
 
 type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger) *Server {
+func NewServer(logger *logrus.Logger, client *cloudapi.OsbuildClient) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
 	}
 	majorVersion := strings.Split(spec.Info.Version, ".")[0]
 
-	s := Server{logger, echo.New()}
+	s := Server{logger, echo.New(), client}
 	var h Handlers
+	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
 	s.echo.Pre(VerifyIdentityHeader)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion)), &h)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)), &h)
 	return &s
-
 }
 
 func (s *Server) Run(address string) {
@@ -89,15 +90,22 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distribution string) error
 }
 
 func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
-	socket, ok := os.LookupEnv("OSBUILD_SERVICE")
-	if !ok {
-		socket = "http://127.0.0.1:80"
-	}
-	endpoint := "compose/" + composeId
-
-	resp, err := http.Get(fmt.Sprintf("%s/%s", socket, endpoint))
+	client, err := h.server.client.Get()
 	if err != nil {
 		return err
+	}
+
+	resp, err := client.ComposeStatus(context.Background(), composeId)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == 404 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
 	}
 
 	var composeStatus ComposeStatus
@@ -109,11 +117,6 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 }
 
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
-	socket, ok := os.LookupEnv("OSBUILD_SERVICE")
-	if !ok {
-		socket = "http://127.0.0.1:80/"
-	}
-
 	composeRequest := &cloudapi.ComposeJSONRequestBody{}
 	err := ctx.Bind(composeRequest)
 	if err != nil {
@@ -135,7 +138,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 	composeRequest.ImageRequests[0].Repositories = repositories
 
-	client, err := cloudapi.NewClient(socket)
+	client, err := h.server.client.Get()
 	if err != nil {
 		return err
 	}
@@ -149,7 +152,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(resp.StatusCode, "Failed posting compose request to osbuild-composer")
 		}
-		return echo.NewHTTPError(resp.StatusCode, fmt.Sprintf("Failed posting compose request to osbuild-composer: %v", body))
+		return echo.NewHTTPError(resp.StatusCode, fmt.Sprintf("Failed posting compose request to osbuild-composer: %s", body))
 	}
 
 	var composeResponse ComposeResponse
@@ -187,7 +190,6 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 
 	err := json.NewDecoder(request.Body).Decode(i)
 	if err != nil {
-		panic("Failed to write response")
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("cannot parse request body: %v", err))
 	}
 
@@ -228,7 +230,7 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 
 	// Only log internal errors
 	if he.Code == http.StatusInternalServerError {
-		s.logger.Errorln(fmt.Sprintf("Internal error %v: %v", he.Code, he.Message))
+		s.logger.Errorln(fmt.Sprintf("Internal error %v: %v, %v", he.Code, he.Message, err))
 
 	}
 

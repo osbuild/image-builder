@@ -21,7 +21,7 @@ type X86_64 struct {
 }
 
 func ReadDistributions(distro string) ([]Distribution, error) {
-	confPaths := [2]string{"/usr/share/image-builder/distributions", "./distributions"}
+	confPaths := [3]string{"/usr/share/image-builder/distributions", "/app/distributions", "./distributions"}
 	var distributions []Distribution
 
 	var err error
@@ -38,7 +38,7 @@ func ReadDistributions(distro string) ([]Distribution, error) {
 			}
 
 			f, err := os.Open(path) // #nosec G304
-			defer f.Close() // #nosec G307
+			defer f.Close()         // #nosec G307
 			if err != nil {
 				return err
 			}
