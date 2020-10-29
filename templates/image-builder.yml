@@ -73,11 +73,25 @@ objects:
           env:
             - name: LISTEN_ADDRESS
               value: "${LISTEN_ADDRESS}"
+            - name: CW_LOG_GROUP
+              value: "${CW_LOG_GROUP}"
+            - name: CW_AWS_REGION
+              value: "${CW_AWS_REGION}"
             - name: EXAMPLE
               valueFrom:
                 configMapKeyRef:
                   key: example
                   name: image-builder-config
+            - name: CW_AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: CW_AWS_ACCESS_KEY_ID
+                  name: cloudwatch
+            - name: CW_AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: CW_AWS_SECRET_ACCESS_KEY
+                  name: cloudwatch
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
@@ -119,3 +133,9 @@ parameters:
   - name: LISTEN_ADDRESS
     description: Listening address and port
     value: "0.0.0.0:8086"
+  - name: CW_LOG_GROUP
+    description: CloudWatch log group
+    value: "platform-dev"
+  - name: CW_AWS_REGION
+    description: CloudWatch region
+    value: "us-east-1"

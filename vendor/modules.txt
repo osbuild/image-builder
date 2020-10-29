@@ -1,31 +1,70 @@
+# github.com/aws/aws-sdk-go v1.34.34
+github.com/aws/aws-sdk-go/aws
+github.com/aws/aws-sdk-go/aws/credentials
+github.com/aws/aws-sdk-go/aws/awserr
+github.com/aws/aws-sdk-go/aws/endpoints
+github.com/aws/aws-sdk-go/internal/context
+github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/ini
+github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/internal/sync/singleflight
+github.com/aws/aws-sdk-go/aws/session
+github.com/aws/aws-sdk-go/service/cloudwatchlogs
+github.com/aws/aws-sdk-go/aws/client
+github.com/aws/aws-sdk-go/aws/corehandlers
+github.com/aws/aws-sdk-go/aws/credentials/processcreds
+github.com/aws/aws-sdk-go/aws/credentials/stscreds
+github.com/aws/aws-sdk-go/aws/csm
+github.com/aws/aws-sdk-go/aws/defaults
+github.com/aws/aws-sdk-go/aws/request
+github.com/aws/aws-sdk-go/aws/awsutil
+github.com/aws/aws-sdk-go/aws/client/metadata
+github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/private/protocol
+github.com/aws/aws-sdk-go/private/protocol/jsonrpc
+github.com/aws/aws-sdk-go/internal/sdkrand
+github.com/aws/aws-sdk-go/service/sts
+github.com/aws/aws-sdk-go/service/sts/stsiface
+github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
+github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
+github.com/aws/aws-sdk-go/aws/ec2metadata
+github.com/aws/aws-sdk-go/internal/strings
+github.com/aws/aws-sdk-go/private/protocol/rest
+github.com/aws/aws-sdk-go/internal/sdkmath
+github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
+github.com/aws/aws-sdk-go/private/protocol/query
+github.com/aws/aws-sdk-go/internal/sdkuri
+github.com/aws/aws-sdk-go/private/protocol/query/queryutil
+github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/deepmap/oapi-codegen v1.3.7
 github.com/deepmap/oapi-codegen/pkg/runtime
 github.com/deepmap/oapi-codegen/pkg/types
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
-github.com/dgrijalva/jwt-go
 # github.com/getkin/kin-openapi v0.8.0
 github.com/getkin/kin-openapi/openapi3
 github.com/getkin/kin-openapi/jsoninfo
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
+# github.com/jmespath/go-jmespath v0.4.0
+github.com/jmespath/go-jmespath
 # github.com/labstack/echo/v4 v4.1.11
 github.com/labstack/echo/v4
-github.com/labstack/echo/v4/middleware
 # github.com/labstack/gommon v0.3.0
 github.com/labstack/gommon/color
 github.com/labstack/gommon/log
-github.com/labstack/gommon/bytes
-github.com/labstack/gommon/random
 # github.com/mattn/go-colorable v0.1.4
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.10
 github.com/mattn/go-isatty
-# github.com/pkg/errors v0.8.1
+# github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
+# github.com/redhatinsights/platform-go-middlewares v0.7.0
+github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch
+# github.com/sirupsen/logrus v1.7.0
+github.com/sirupsen/logrus
 # github.com/stretchr/testify v1.5.1
 github.com/stretchr/testify/require
 github.com/stretchr/testify/assert
@@ -36,10 +75,11 @@ github.com/valyala/fasttemplate
 # golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
-# golang.org/x/net v0.0.0-20191112182307-2180aed22343
+# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 golang.org/x/net/idna
 # golang.org/x/sys v0.0.0-20191115151921-52ab43148777
 golang.org/x/sys/unix
+golang.org/x/sys/windows
 # golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi

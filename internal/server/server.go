@@ -14,12 +14,35 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/sirupsen/logrus"
 )
 
-type Handlers struct{}
+type Server struct {
+	logger *logrus.Logger
+	echo   *echo.Echo
+}
 
-func (s *Handlers) GetVersion(ctx echo.Context) error {
+type Handlers struct {
+	server *Server
+}
+
+func NewServer(logger *logrus.Logger) *Server {
+	s := Server{logger, echo.New()}
+	var h Handlers
+
+	s.echo.Binder = binder{}
+	s.echo.Pre(VerifyIdentityHeader)
+	RegisterHandlers(s.echo.Group(RoutePrefix()), &h)
+	return &s
+
+}
+
+func (s *Server) Run(address string) {
+	s.logger.Infoln("🚀 Starting image-builder server on %s ...\n", address)
+	s.echo.Start(address)
+}
+
+func (h *Handlers) GetVersion(ctx echo.Context) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -28,7 +51,7 @@ func (s *Handlers) GetVersion(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, version)
 }
 
-func (s *Handlers) GetOpenapiJson(ctx echo.Context) error {
+func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -37,7 +60,7 @@ func (s *Handlers) GetOpenapiJson(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, spec)
 }
 
-func (s *Handlers) GetDistributions(ctx echo.Context) error {
+func (h *Handlers) GetDistributions(ctx echo.Context) error {
 	distributions, err := AvailableDistributions()
 	if err != nil {
 		return err
@@ -45,7 +68,7 @@ func (s *Handlers) GetDistributions(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, distributions)
 }
 
-func (s *Handlers) GetArchitectures(ctx echo.Context, distribution string) error {
+func (h *Handlers) GetArchitectures(ctx echo.Context, distribution string) error {
 	archs, err := ArchitecturesForImage(distribution)
 	if err != nil {
 		return err
@@ -53,7 +76,7 @@ func (s *Handlers) GetArchitectures(ctx echo.Context, distribution string) error
 	return ctx.JSON(http.StatusOK, archs)
 }
 
-func (s *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
+func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	socket, ok := os.LookupEnv("OSBUILD_SERVICE")
 	if !ok {
 		socket = "http://127.0.0.1:80"
@@ -73,7 +96,7 @@ func (s *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	return ctx.JSON(http.StatusOK, composeStatus)
 }
 
-func (s *Handlers) ComposeImage(ctx echo.Context) error {
+func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	socket, ok := os.LookupEnv("OSBUILD_SERVICE")
 	if !ok {
 		socket = "http://127.0.0.1:80/"
@@ -177,15 +200,4 @@ func VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 
 		return nextHandler(ctx)
 	}
-}
-
-func Run(address string) {
-	fmt.Printf("🚀 Starting image-builder server on %s ...\n", address)
-	var s Handlers
-	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Binder = binder{}
-	e.Pre(VerifyIdentityHeader)
-	RegisterHandlers(e.Group(RoutePrefix()), &s)
-	e.Start(address)
 }
