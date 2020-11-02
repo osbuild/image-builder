@@ -30,7 +30,7 @@ objects:
       service: image-builder
     name: image-builder
   spec:
-    replicas: 1
+    replicas: 2
     selector:
       matchLabels:
         name: image-builder
