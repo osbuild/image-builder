@@ -23,31 +23,31 @@ func LoadConfigFromEnv(intf interface{}) error {
 			return fmt.Errorf("No env tag in config field")
 		}
 
-		// If no value is defined in the env try the default value
 		confV, ok := os.LookupEnv(key)
-		if !ok {
-			confV, ok = fieldT.Tag.Lookup("default")
-		}
-
 		kind := fieldV.Kind()
 		if ok {
 			switch kind {
 			case reflect.Ptr:
+				if fieldT.Type.Elem().Kind() != reflect.String {
+					return fmt.Errorf("Unsupported type")
+				}
 				fieldV.Set(reflect.ValueOf(&confV))
 			case reflect.String:
 				fieldV.SetString(confV)
 			default:
 				return fmt.Errorf("Unsupported type")
 			}
-		} else if kind == reflect.String {
-			return fmt.Errorf("Undefined non-pointer field without default value %v", fieldT)
 		}
 	}
 	return nil
 }
 
 func main() {
-	var config ImageBuilderConfig
+	config := ImageBuilderConfig{
+		ListenAddress: "localhost:8086",
+		LogLevel: "INFO",
+	}
+
 	err := LoadConfigFromEnv(&config)
 	if err != nil {
 		panic(err)
