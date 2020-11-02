@@ -82,16 +82,17 @@ objects:
                 configMapKeyRef:
                   key: example
                   name: image-builder-config
-            - name: CW_AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  key: CW_AWS_ACCESS_KEY_ID
-                  name: cloudwatch
-            - name: CW_AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  key: CW_AWS_SECRET_ACCESS_KEY
-                  name: cloudwatch
+# Wait until these secrets have been put in place before uncommenting them
+            # - name: CW_AWS_ACCESS_KEY_ID
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: CW_AWS_ACCESS_KEY_ID
+            #       name: cloudwatch
+            # - name: CW_AWS_SECRET_ACCESS_KEY
+            #   valueFrom:
+            #     secretKeyRef:
+            #       key: CW_AWS_SECRET_ACCESS_KEY
+            #       name: cloudwatch
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
