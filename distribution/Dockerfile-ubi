@@ -11,5 +11,6 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN mkdir /app
 COPY --from=builder /opt/app-root/src/go/bin/image-builder /app/
 COPY ./distributions /app/distributions
+COPY ./distribution/openshift-startup.sh /opt/openshift-startup.sh
 EXPOSE 8086
-CMD ["/app/image-builder", "-v"]
+CMD ["/opt/openshift-startup.sh"]
