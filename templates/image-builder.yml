@@ -73,10 +73,6 @@ objects:
           env:
             - name: LISTEN_ADDRESS
               value: "${LISTEN_ADDRESS}"
-            - name: CW_LOG_GROUP
-              value: "${CW_LOG_GROUP}"
-            - name: CW_AWS_REGION
-              value: "${CW_AWS_REGION}"
             # Credentials/configuration for AWS RDS.
             - name: PGHOST
               valueFrom:
