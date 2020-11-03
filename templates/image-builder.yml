@@ -77,11 +77,31 @@ objects:
               value: "${CW_LOG_GROUP}"
             - name: CW_AWS_REGION
               value: "${CW_AWS_REGION}"
-            - name: EXAMPLE
+            - name: PGHOST
               valueFrom:
-                configMapKeyRef:
-                  key: example
-                  name: image-builder-config
+                secretKeyRef:
+                  name: image-builder-db
+                  key: db.host
+            - name: PGPORT
+              valueFrom:
+                secretKeyRef:
+                  name: image-builder-db
+                  key: db.port
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: image-builder-db
+                  key: db.name
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: image-builder-db
+                  key: db.user
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: image-builder-db
+                  key: db.password
 # Wait until these secrets have been put in place before uncommenting them
             # - name: CW_AWS_ACCESS_KEY_ID
             #   valueFrom:
