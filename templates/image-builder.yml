@@ -77,6 +77,7 @@ objects:
               value: "${CW_LOG_GROUP}"
             - name: CW_AWS_REGION
               value: "${CW_AWS_REGION}"
+            # Credentials/configuration for AWS RDS.
             - name: PGHOST
               valueFrom:
                 secretKeyRef:
@@ -102,17 +103,27 @@ objects:
                 secretKeyRef:
                   name: image-builder-db
                   key: db.password
-# Wait until these secrets have been put in place before uncommenting them
-            # - name: CW_AWS_ACCESS_KEY_ID
-            #   valueFrom:
-            #     secretKeyRef:
-            #       key: CW_AWS_ACCESS_KEY_ID
-            #       name: cloudwatch
-            # - name: CW_AWS_SECRET_ACCESS_KEY
-            #   valueFrom:
-            #     secretKeyRef:
-            #       key: CW_AWS_SECRET_ACCESS_KEY
-            #       name: cloudwatch
+            # Credentials/configuration for AWS cloudwatch.
+            - name: CW_AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: aws_access_key_id
+                  name: image-builder-cloudwatch
+            - name: CW_AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: aws_secret_access_key
+                  name: image-builder-cloudwatch
+            - name: CW_LOG_GROUP_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: log_group_name
+                  name: image-builder-cloudwatch
+            - name: CW_AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  key: aws_region
+                  name: image-builder-cloudwatch
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
@@ -154,9 +165,3 @@ parameters:
   - name: LISTEN_ADDRESS
     description: Listening address and port
     value: "0.0.0.0:8086"
-  - name: CW_LOG_GROUP
-    description: CloudWatch log group
-    value: "platform-dev"
-  - name: CW_AWS_REGION
-    description: CloudWatch region
-    value: "us-east-1"
