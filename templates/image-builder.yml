@@ -110,7 +110,7 @@ objects:
                 secretKeyRef:
                   key: aws_secret_access_key
                   name: image-builder-cloudwatch
-            - name: CW_LOG_GROUP_NAME
+            - name: CW_LOG_GROUP
               valueFrom:
                 secretKeyRef:
                   key: log_group_name
