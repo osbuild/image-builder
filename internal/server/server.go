@@ -48,7 +48,10 @@ func NewServer(logger *logrus.Logger) *Server {
 
 func (s *Server) Run(address string) {
 	s.logger.Infoln("🚀 Starting image-builder server on %s ...\n", address)
-	s.echo.Start(address)
+	err := s.echo.Start(address)
+	if err != nil {
+		s.logger.Errorln(fmt.Sprintf("Error starting echo server: %v", err))
+	}
 }
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {

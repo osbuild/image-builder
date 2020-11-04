@@ -37,8 +37,8 @@ func ReadDistributions(distro string) ([]Distribution, error) {
 				return nil
 			}
 
-			f, err := os.Open(path)
-			defer f.Close()
+			f, err := os.Open(path) // #nosec G304
+			defer f.Close() // #nosec G307
 			if err != nil {
 				return err
 			}
