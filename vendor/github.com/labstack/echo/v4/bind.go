@@ -90,15 +90,13 @@ func (b *DefaultBinder) bindData(ptr interface{}, data map[string][]string, tag 
 	typ := reflect.TypeOf(ptr).Elem()
 	val := reflect.ValueOf(ptr).Elem()
 
-	// Map
-	if typ.Kind() == reflect.Map {
+	if m, ok := ptr.(*map[string]interface{}); ok {
 		for k, v := range data {
-			val.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v[0]))
+			(*m)[k] = v[0]
 		}
 		return nil
 	}
 
-	// !struct
 	if typ.Kind() != reflect.Struct {
 		return errors.New("binding element must be a struct")
 	}
@@ -115,7 +113,7 @@ func (b *DefaultBinder) bindData(ptr interface{}, data map[string][]string, tag 
 		if inputFieldName == "" {
 			inputFieldName = typeField.Name
 			// If tag is nil, we inspect if the field is a struct.
-			if _, ok := structField.Addr().Interface().(BindUnmarshaler); !ok && structFieldKind == reflect.Struct {
+			if _, ok := bindUnmarshaler(structField); !ok && structFieldKind == reflect.Struct {
 				if err := b.bindData(structField.Addr().Interface(), data, tag); err != nil {
 					return err
 				}
@@ -129,8 +127,9 @@ func (b *DefaultBinder) bindData(ptr interface{}, data map[string][]string, tag 
 			// url params are bound case sensitive which is inconsistent.  To
 			// fix this we must check all of the map values in a
 			// case-insensitive search.
+			inputFieldName = strings.ToLower(inputFieldName)
 			for k, v := range data {
-				if strings.EqualFold(k, inputFieldName) {
+				if strings.ToLower(k) == inputFieldName {
 					inputValue = v
 					exists = true
 					break
@@ -220,13 +219,40 @@ func unmarshalField(valueKind reflect.Kind, val string, field reflect.Value) (bo
 	}
 }
 
-func unmarshalFieldNonPtr(value string, field reflect.Value) (bool, error) {
-	fieldIValue := field.Addr().Interface()
-	if unmarshaler, ok := fieldIValue.(BindUnmarshaler); ok {
-		return true, unmarshaler.UnmarshalParam(value)
+// bindUnmarshaler attempts to unmarshal a reflect.Value into a BindUnmarshaler
+func bindUnmarshaler(field reflect.Value) (BindUnmarshaler, bool) {
+	ptr := reflect.New(field.Type())
+	if ptr.CanInterface() {
+		iface := ptr.Interface()
+		if unmarshaler, ok := iface.(BindUnmarshaler); ok {
+			return unmarshaler, ok
+		}
 	}
-	if unmarshaler, ok := fieldIValue.(encoding.TextUnmarshaler); ok {
-		return true, unmarshaler.UnmarshalText([]byte(value))
+	return nil, false
+}
+
+// textUnmarshaler attempts to unmarshal a reflect.Value into a TextUnmarshaler
+func textUnmarshaler(field reflect.Value) (encoding.TextUnmarshaler, bool) {
+	ptr := reflect.New(field.Type())
+	if ptr.CanInterface() {
+		iface := ptr.Interface()
+		if unmarshaler, ok := iface.(encoding.TextUnmarshaler); ok {
+			return unmarshaler, ok
+		}
+	}
+	return nil, false
+}
+
+func unmarshalFieldNonPtr(value string, field reflect.Value) (bool, error) {
+	if unmarshaler, ok := bindUnmarshaler(field); ok {
+		err := unmarshaler.UnmarshalParam(value)
+		field.Set(reflect.ValueOf(unmarshaler).Elem())
+		return true, err
+	}
+	if unmarshaler, ok := textUnmarshaler(field); ok {
+		err := unmarshaler.UnmarshalText([]byte(value))
+		field.Set(reflect.ValueOf(unmarshaler).Elem())
+		return true, err
 	}
 
 	return false, nil

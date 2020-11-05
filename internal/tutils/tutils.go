@@ -6,7 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 
+	"github.com/osbuild/image-builder/internal/db"
+
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,4 +72,29 @@ func PostResponseBody(t *testing.T, url string, compose interface{}) (*http.Resp
 	require.NoError(t, err)
 
 	return response, string(body)
+}
+
+type dB struct {
+	entries []db.ComposeEntry
+}
+
+func InitDB() db.DB {
+	return &dB{[]db.ComposeEntry{}}
+}
+
+func (d *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMessage) error {
+	id, err := uuid.Parse(jobId)
+	if err != nil {
+		return err
+	}
+	d.entries = append(d.entries, db.ComposeEntry{
+		Id:        id,
+		Request:   request,
+		CreatedAt: time.Now(),
+	})
+	return nil
+}
+
+func (d *dB) GetComposes(accountId string, limit, offset int) ([]db.ComposeEntry, int, error) {
+	return d.entries, len(d.entries), nil
 }

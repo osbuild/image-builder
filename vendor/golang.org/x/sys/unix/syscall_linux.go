@@ -82,6 +82,15 @@ func IoctlRetInt(fd int, req uint) (int, error) {
 	return int(ret), nil
 }
 
+// IoctlSetPointerInt performs an ioctl operation which sets an
+// integer value on fd, using the specified request number. The ioctl
+// argument is called with a pointer to the integer value, rather than
+// passing the integer value directly.
+func IoctlSetPointerInt(fd int, req uint, value int) error {
+	v := int32(value)
+	return ioctl(fd, req, uintptr(unsafe.Pointer(&v)))
+}
+
 func IoctlSetRTCTime(fd int, value *RTCTime) error {
 	err := ioctl(fd, RTC_SET_TIME, uintptr(unsafe.Pointer(value)))
 	runtime.KeepAlive(value)
@@ -1099,21 +1108,6 @@ func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 		sa := &SockaddrIUCV{
 			UserID: string(user[:]),
 			Name:   string(name[:]),
-		}
-		return sa, nil
-
-	case AF_CAN:
-		pp := (*RawSockaddrCAN)(unsafe.Pointer(rsa))
-		sa := &SockaddrCAN{
-			Ifindex: int(pp.Ifindex),
-		}
-		rx := (*[4]byte)(unsafe.Pointer(&sa.RxID))
-		for i := 0; i < 4; i++ {
-			rx[i] = pp.Addr[i]
-		}
-		tx := (*[4]byte)(unsafe.Pointer(&sa.TxID))
-		for i := 0; i < 4; i++ {
-			tx[i] = pp.Addr[i+4]
 		}
 		return sa, nil
 

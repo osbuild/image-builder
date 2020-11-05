@@ -70,6 +70,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Architectures'
+  /composes:
+    get:
+      summary: get a collection of previous compose requests for the logged in user
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: max amount of composes, default 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: composes page offset, default 0
+      responses:
+        '200':
+          description: a list of composes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposesResponse'
   /composes/{composeId}:
     get:
       summary: get status of an image compose
@@ -310,6 +331,46 @@ components:
           type: string
         upload_request:
           $ref: '#/components/schemas/UploadRequest'
+    ComposesResponse:
+      required:
+        - meta
+        - links
+        - data
+      properties:
+        meta:
+          type: object
+          required:
+            - count
+          properties:
+            count:
+              type: integer
+        links:
+          type: object
+          required:
+            - first
+            - last
+          properties:
+            first:
+              type: string
+              example: "/api/image-builder/v1/composes?limit=10&offset=0"
+            last:
+              type: string
+              example: "/api/image-builder/v1/composes?limit=10&offset=10"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComposesResponseItem'
+    ComposesResponseItem:
+      required:
+        - id
+        - request
+        - created_at
+      properties:
+        id:
+          type: string
+        request: {}
+        created_at:
+          type: string
     ComposeResponse:
       required:
         - id

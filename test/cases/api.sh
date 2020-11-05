@@ -504,6 +504,15 @@ function Test_verifyComposeResult() {
   esac
 }
 
+function Test_getComposes() {
+  RESULT=$($CURLCMD -H "$HEADER" -H 'Content-Type: application/json' "$BASEURL/composes")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ "$EXIT_CODE" == 200 ]]
+  RESPONSE=$(getResponse "$RESULT" | jq -r '.data[0]')
+  [[ $(echo "$RESPONSE" | jq -r '.id') == "$COMPOSE_ID" ]]
+  diff <(echo "$RESPONSE" | jq -Sr '.request') <(jq -Sr '.' "$REQUEST_FILE")
+}
+
 function Test_getOpenapiWithWrongOrgId() {
   RESULT=$($CURLCMD -H "x-rh-identity: $INVALIDAUTHSTRING" "$BASEURL/openapi.json")
   EXIT_CODE=$(getExitCode "$RESULT")
@@ -559,6 +568,7 @@ Test_getOpenapi "$BASEURLMAJORVERSION"
 Test_postToComposer
 Test_waitForCompose
 Test_verifyComposeResult
+Test_getComposes
 Test_getOpenapiWithWrongOrgId
 Test_postToComposerWithWrongOrgId
 

@@ -24,7 +24,7 @@ func startServer(t *testing.T, url string, orgIds string) *Server {
 	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
-	srv := NewServer(logger, client, AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"), "../../distributions")
+	srv := NewServer(logger, client, tutils.InitDB(), AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"), "../../distributions")
 	// execute in parallel b/c .Run() will block execution
 	go srv.Run("localhost:8086")
 
@@ -441,7 +441,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := cloudapi.ComposeResult{
-			Id: "a-new-test-compose-id",
+			Id: "3aa7375a-534a-4de3-8caf-011e04f402d3",
 		}
 		err := json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
@@ -476,7 +476,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	var result ComposeResponse
 	err := json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, "a-new-test-compose-id", result.Id)
+	require.Equal(t, "3aa7375a-534a-4de3-8caf-011e04f402d3", result.Id)
 }
 
 func TestOrgIdAllowed(t *testing.T) {

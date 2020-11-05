@@ -43,16 +43,21 @@ export GOPATH=$GO_BUILD_PATH:%{gopath}
 export GOFLAGS=-mod=vendor
 
 %gobuild -o _bin/image-builder %{goipath}/cmd/image-builder
+%gobuild -o _bin/image-builder-migrate-db %{goipath}/cmd/image-builder-migrate-db
 
 %install
 install -m 0755 -vd					%{buildroot}%{_libexecdir}/image-builder
 install -m 0755 -vp _bin/image-builder			%{buildroot}%{_libexecdir}/image-builder/
+install -m 0755 -vp _bin/image-builder-migrate-db       %{buildroot}%{_libexecdir}/image-builder/
 
 install -m 0755 -vd					%{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}	%{buildroot}%{_unitdir}/
 
 install -m 0755 -vd					%{buildroot}%{_datadir}/image-builder/distributions
 install -m 0644 -vp distributions/*			%{buildroot}%{_datadir}/image-builder/distributions/
+
+install -m 0755 -vd                                   %{buildroot}%{_datadir}/image-builder/migrations
+install -m 0644 -vp internal/db/migrations/*          %{buildroot}%{_datadir}/image-builder/migrations/
 
 %if %{with tests} || 0%{?rhel}
 install -m 0755 -vd					%{buildroot}%{_libexecdir}/tests/image-builder
@@ -70,9 +75,11 @@ install -m 0755 -vp test/cases/*                        %{buildroot}%{_libexecdi
 
 %files
 %{_libexecdir}/image-builder/image-builder
+%{_libexecdir}/image-builder/image-builder-migrate-db
 %{_unitdir}/image-builder.service
 %{_unitdir}/image-builder.socket
 %{_datadir}/image-builder/distributions/
+%{_datadir}/image-builder/migrations/
 
 %if %{with tests} || 0%{?rhel}
 %package tests

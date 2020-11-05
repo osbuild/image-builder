@@ -122,8 +122,34 @@ for SOURCE in $(sudo composer-cli sources list); do
     sudo composer-cli sources info "$SOURCE"
 done
 
+# Start Postgres container
+sudo podman run -p 5432:5432 --name image-builder-db \
+      --health-cmd "pg_isready -U postgres -d imagebuilder" --health-interval 2s \
+      --health-timeout 2s --health-retries 10 \
+      -e POSTGRES_USER=postgres \
+      -e POSTGRES_PASSWORD=foobar \
+      -e POSTGRES_DB=imagebuilder \
+      -d postgres
+
+for RETRY in {1..10}; do
+    if sudo podman healthcheck run image-builder-db  > /dev/null 2>&1; then
+       break
+    fi
+    echo "Retrying in 2 seconds... $RETRY"
+    sleep 2
+done
+
+# Migrate
+sudo podman run --pull=never --security-opt "label=disable" --net=host \
+     -e PGHOST=localhost -e PGPORT=5432 -e PGDATABASE=imagebuilder \
+     -e PGUSER=postgres -e PGPASSWORD=foobar \
+     -e MIGRATIONS_DIR="/app/migrations" \
+     --name image-builder-migrate \
+     image-builder /app/image-builder-migrate-db
+
+
 # Start Image Builder container
-sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
+sudo podman run -d -p 8086:8086 --pull=never --security-opt "label=disable" --net=host \
      -e OSBUILD_URL=https://localhost:443 \
      -e OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem \
      -e OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem \
@@ -135,7 +161,10 @@ sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
      -e OSBUILD_GCP_REGION="${GCP_REGION:-}" \
      -e OSBUILD_GCP_BUCKET="${GCP_BUCKET:-}" \
      -e OSBUILD_AZURE_LOCATION="${AZURE_LOCATION:-}" \
+     -e PGHOST=localhost -e PGPORT=5432 -e PGDATABASE=imagebuilder \
+     -e PGUSER=postgres -e PGPASSWORD=foobar \
      -e ALLOWED_ORG_IDS="000000" \
      -e DISTRIBUTIONS_DIR="/app/distributions" \
      -v /etc/osbuild-composer:/etc/osbuild-composer \
+     --name image-builder \
      image-builder
