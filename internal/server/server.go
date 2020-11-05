@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/image-builder/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -22,6 +23,7 @@ type Server struct {
 	logger   *logrus.Logger
 	echo     *echo.Echo
 	client   cloudapi.OsbuildClient
+	db       db.DB
 	aws      AWSConfig
 	gcp      GCPConfig
 	azure    AzureConfig
@@ -49,7 +51,16 @@ type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, distsDir string) *Server {
+type IdentityHeader struct {
+	Identity struct {
+		AccountNumber string `json:"account_number"`
+		Internal      struct {
+			OrgId string `json:"org_id"`
+		} `json:"internal"`
+	} `json:"identity"`
+}
+
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, distsDir string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -60,6 +71,7 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, awsConfig A
 		logger,
 		echo.New(),
 		client,
+		dbase,
 		awsConfig,
 		gcpConfig,
 		azureConfig,
@@ -197,6 +209,71 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	return ctx.JSON(http.StatusOK, status)
 }
 
+func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error {
+	spec, err := GetSwagger()
+	if err != nil {
+		return err
+	}
+
+	ih := ctx.Get("IdentityHeader")
+	if ih == nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
+	}
+	idHeader, ok := ih.(IdentityHeader)
+	if !ok {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Identity Header invalid in request handler")
+	}
+
+	limit := 100
+	if params.Limit != nil {
+		if *params.Limit > 0 {
+			limit = *params.Limit
+		}
+	}
+
+	offset := 0
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+
+	composes, count, err := h.server.db.GetComposes(idHeader.Identity.AccountNumber, limit, offset)
+	if err != nil {
+		return err
+	}
+
+	var data []ComposesResponseItem
+	for _, c := range composes {
+		data = append(data, ComposesResponseItem{
+			CreatedAt: c.CreatedAt.String(),
+			Id:        c.Id.String(),
+			Request:   c.Request,
+		})
+	}
+
+	lastOffset := count - 1
+	if lastOffset < 0 {
+		lastOffset = 0
+	}
+
+	return ctx.JSON(http.StatusOK, ComposesResponse{
+		Meta: struct {
+			Count int `json:"count"`
+		}{
+			count,
+		},
+		Links: struct {
+			First string `json:"first"`
+			Last  string `json:"last"`
+		}{
+			fmt.Sprintf("%v/v%v/composes?offset=%v&limit=%v",
+				RoutePrefix(), spec.Info.Version, offset, limit),
+			fmt.Sprintf("%v/v%v/composes?offset=%v&limit=%v",
+				RoutePrefix(), spec.Info.Version, lastOffset, limit),
+		},
+		Data: data,
+	})
+}
+
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	var composeRequest ComposeRequest
 	err := ctx.Bind(&composeRequest)
@@ -258,6 +335,26 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	rawCR, err := json.Marshal(composeRequest)
+	if err != nil {
+		return err
+	}
+
+	ih := ctx.Get("IdentityHeader")
+	if ih == nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
+	}
+	idHeader, ok := ih.(IdentityHeader)
+	if !ok {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Identity Header invalid in request handler")
+	}
+
+	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgId, rawCR)
+	if err != nil {
+		return err
+	}
+
 	return ctx.JSON(http.StatusCreated, ComposeResponse{
 		Id: composeResult.Id,
 	})
@@ -433,14 +530,6 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	return nil
 }
 
-type IdentityHeader struct {
-	Identity struct {
-		Internal struct {
-			OrgId string `json:"org_id"`
-		} `json:"internal"`
-	} `json:"identity"`
-}
-
 func orgIdAllowed(header IdentityHeader, orgIds []string) bool {
 	for _, org := range orgIds {
 		if org == "*" {
@@ -479,6 +568,8 @@ func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 		if !orgIdAllowed(idHeader, s.orgIds) {
 			return echo.NewHTTPError(http.StatusNotFound, "Organization not allowed")
 		}
+
+		ctx.Set("IdentityHeader", idHeader)
 
 		return nextHandler(ctx)
 	}

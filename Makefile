@@ -3,6 +3,7 @@ PACKAGE_NAME = image-builder
 .PHONY: build
 build:
 	go build -o image-builder ./cmd/image-builder/
+	go build -o image-builder-migrate-db ./cmd/image-builder-migrate-db/
 
 # pip3 install openapi-spec-validator
 .PHONY: check-api-spec
