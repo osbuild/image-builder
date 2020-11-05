@@ -10,7 +10,10 @@ RUN go install ./...
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN mkdir /app
 COPY --from=builder /opt/app-root/src/go/bin/image-builder /app/
+COPY --from=builder /opt/app-root/src/go/bin/image-builder-migrate-db /app/
 COPY ./distributions /app/distributions
+COPY ./internal/db/migrations /app/migrations
 COPY ./distribution/openshift-startup.sh /opt/openshift-startup.sh
+ENV MIGRATIONS_DIR=/app/migrations
 EXPOSE 8086
 CMD ["/opt/openshift-startup.sh"]

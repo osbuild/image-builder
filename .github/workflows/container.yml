@@ -8,8 +8,21 @@ jobs:
   build:
     name: "📦 Build container"
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: foobar
+          POSTGRES_DB: imagebuilder
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-
       - name: Clone repository
         uses: actions/checkout@v2
 
@@ -18,7 +31,7 @@ jobs:
 
       - name: Run the container
         run: |
-          docker run -d --net=host --name image-builder image-builder
+          docker run -d --env PGHOST=localhost --net=host --name image-builder image-builder
           docker ps
 
       - name: Verify that the startup log line is in the logs
@@ -26,7 +39,7 @@ jobs:
           docker logs image-builder | grep "Starting image-builder server"
 
       - name: Check that the API is responding
-        run: curl -sv http://127.0.0.1:8086/api/image-builder/v1/version
+        run: curl -H "x-rh-identity: fakeid" -sv http://127.0.0.1:8086/api/image-builder/v1/version
 
       - name: Stop the container
         run: docker stop --time 1 image-builder

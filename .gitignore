@@ -1,3 +1,4 @@
 /image-builder
 rpmbuild
 /image-builder-tests
+/image-builder-migrate-db

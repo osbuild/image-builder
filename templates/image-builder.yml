@@ -34,6 +34,14 @@ objects:
     selector:
       matchLabels:
         name: image-builder
+    strategy:
+      # Update pods 1 at a time
+      type: RollingUpdate
+      rollingUpdate:
+        # Create at most 1 extra pod over .spec.replicas
+        maxSurge: 1
+        # At all times there should be .spec.replicas available
+        maxUnavailable: 0
     template:
       metadata:
         labels:
@@ -120,6 +128,60 @@ objects:
                 secretKeyRef:
                   key: aws_region
                   name: image-builder-cloudwatch
+        initContainers:
+        - name: image-builder
+          image: "${IMAGE_NAME}:${IMAGE_TAG}"
+          command: [ "/app/image-builder-migrate-db" ]
+          env:
+          - name: MIGRATIONS_DIR
+            value: "${MIGRATIONS_DIR}"
+          # Credentials/configuration for AWS RDS.
+          - name: PGHOST
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.host
+          - name: PGPORT
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.port
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.name
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.user
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.password
+          # Credentials/configuration for AWS cloudwatch.
+          - name: CW_AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: image-builder-cloudwatch
+          - name: CW_AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: image-builder-cloudwatch
+          - name: CW_LOG_GROUP
+            valueFrom:
+              secretKeyRef:
+                key: log_group_name
+                name: image-builder-cloudwatch
+          - name: CW_AWS_REGION
+            valueFrom:
+              secretKeyRef:
+                key: aws_region
+                name: image-builder-cloudwatch
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
@@ -161,3 +223,6 @@ parameters:
   - name: LISTEN_ADDRESS
     description: Listening address and port
     value: "0.0.0.0:8086"
+  - name: MIGRATIONS_DIR
+    description: Directory containing migration files for aws rds
+    value: "/app/migrations"

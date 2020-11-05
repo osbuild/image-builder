@@ -97,19 +97,17 @@ func RunTestWithClient(t *testing.T, ib string)  {
 }
 
 func TestImageBuilder(t *testing.T) {
-	// allow to run against existing instance
-	// run image builder
-
-	/* OsbuildURL      string  `env:"OSBUILD_URL"`
-	   OsbuildCert     string  `env:"OSBUILD_CERT_PATH"`
-	   OsbuildKey      string  `env:"OSBUILD_KEY_PATH"`
-	   OsbuildCA       string  `env:"OSBUILD_CA_PATH"` */
 	cmd := exec.Command("/usr/libexec/image-builder/image-builder")
 	cmd.Env = append(os.Environ(),
 		"OSBUILD_URL=https://localhost:443/api/composer/v1",
 		"OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem",
 		"OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem",
 		"OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem",
+		"PGHOST=localhost",
+		"PGPORT=5432",
+		"PGUSER=postgres",
+		"PGPASSWORD=foobar",
+		"PGDATABASE=imagebuilder",
 	)
 
 	var buf bytes.Buffer
@@ -129,4 +127,23 @@ func TestImageBuilder(t *testing.T) {
 func TestImageBuilderContainer(t *testing.T) {
 	RunTestWithClient(t, "http://127.0.0.1:8087/api/image-builder/v1")
 	RunTestWithClient(t, "http://127.0.0.1:8087/api/image-builder/v1.0")
+}
+
+func TestMain(m *testing.M) {
+	// Migrate image builder db
+	cmd := exec.Command("/usr/libexec/image-builder/image-builder-migrate-db")
+	cmd.Env = append(os.Environ(),
+		"PGHOST=localhost",
+		"PGPORT=5432",
+		"PGUSER=postgres",
+		"PGPASSWORD=foobar",
+		"PGDATABASE=imagebuilder",
+	)
+	err := cmd.Run()
+	if err != nil {
+		panic (err)
+	}
+
+	// Run the tests
+	os.Exit(m.Run())
 }

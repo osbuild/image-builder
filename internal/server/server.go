@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/image-builder/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -22,6 +23,7 @@ type Server struct {
 	echo     *echo.Echo
 	client   cloudapi.OsbuildClient
 	awsCreds *awsCreds
+	db       *db.DB
 }
 
 type awsCreds struct {
@@ -35,7 +37,7 @@ type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string) *Server {
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string, d *db.DB) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -52,6 +54,7 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region stri
 			secret,
 			s3Bucket,
 		},
+		d,
 	}
 	var h Handlers
 	h.server = &s

@@ -37,13 +37,32 @@ run_test_case () {
 # Check if iamge-builder-tests is installed.
 sudo dnf -y install image-builder-tests
 
+
+# Run postgres container and create imagebuilzder database
+sudo podman run --security-opt "label=disable" -p5432:5432 --name imagebuilder -ePOSTGRES_PASSWORD=foobar -d postgres
+journalctl -n30 --no-pager
+TRIES=0
+until sudo podman exec -u postgres imagebuilder psql -c "CREATE DATABASE imagebuilder;"; do
+    sudo podman logs imagebuilder
+    let TRIES="$TRIES + 1"
+    if [ "$TRIES" -eq 3 ]; then
+        echo "Unable to reach psql container ☹"
+        exit 1
+    fi
+    sleep 3
+done
+
 # The integration test also runs a test against an image-builder container
-# IMAGES
 sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
      -e LISTEN_ADDRESS=localhost:8087 -e OSBUILD_URL=https://localhost:443/api/composer/v1 \
      -e OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem \
      -e OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem \
      -e OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem \
+     -e PGHOST=localhost \
+     -e PGPORT=5432 \
+     -e PGUSER=postgres \
+     -e PGPASSWORD=foobar \
+     -e PGDATABASE=imagebuilder \
      -v /etc/osbuild-composer:/etc/osbuild-composer \
      image-builder
 

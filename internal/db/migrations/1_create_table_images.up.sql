@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS Images(
+       Job UUID PRIMARY KEY
+);
