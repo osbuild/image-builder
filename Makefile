@@ -42,5 +42,5 @@ ubi-container:
 
 .PHONY: update-cloudapi
 update-cloudapi:
-	curl https://raw.githubusercontent.com/osbuild/osbuild-composer/master/internal/cloudapi/openapi.yml -o internal/cloudapi/cloudapi_client.yml
+	curl https://raw.githubusercontent.com/osbuild/osbuild-composer/main/internal/cloudapi/openapi.yml -o internal/cloudapi/cloudapi_client.yml
 	tools/prepare-source.sh

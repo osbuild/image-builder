@@ -35,10 +35,10 @@ WORKSPACE=${WORKSPACE:-$(pwd)}
 # Mock configuration file to use for building RPMs.
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
-# Jenkins takes the proposed PR and merges it onto master. Although this
+# Jenkins takes the proposed PR and merges it onto main. Although this
 # creates a new SHA (which is slightly confusing), it ensures that the code
-# merges properly against master and it tests the code against the latest
-# commit in master, which is certainly good.
+# merges properly against main and it tests the code against the latest
+# commit in main, which is certainly good.
 POST_MERGE_SHA=$(git rev-parse --short HEAD)
 
 # Directory to hold the RPMs temporarily before we upload them.
