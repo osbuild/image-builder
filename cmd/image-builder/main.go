@@ -54,13 +54,13 @@ func main() {
 		panic(err)
 	}
 
-	log, err := logger.NewLogger(config.LogLevel, config.AccessKeyID, config.SecretAccessKey, config.Region, config.LogGroup)
+	log, err := logger.NewLogger(config.LogLevel, config.CwAccessKeyID, config.CwSecretAccessKey, config.CwRegion, config.LogGroup)
 	if err != nil {
 		panic(err)
 	}
 
 	client := cloudapi.NewOsbuildClient(config.OsbuildURL, config.OsbuildCert, config.OsbuildKey, config.OsbuildCA)
 
-	s := server.NewServer(log, client)
+	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket)
 	s.Run(config.ListenAddress)
 }

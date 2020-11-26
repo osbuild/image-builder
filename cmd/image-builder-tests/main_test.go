@@ -65,20 +65,11 @@ func RunTestWithClient(t *testing.T, ib string)  {
 			server.ImageRequest{
 				Architecture: (*archResp.JSON200)[0].Arch,
 				ImageType: (*archResp.JSON200)[0].ImageTypes[0],
-				UploadRequests: &[]server.UploadRequest{
+				UploadRequests: []server.UploadRequest{
 					{
 						Type: "aws",
 						Options: server.AWSUploadRequestOptions{
-							Ec2: server.AWSUploadRequestOptionsEc2{
-								AccessKeyId: "invalid",
-								SecretAccessKey: "invalid",
-							},
-							S3: server.AWSUploadRequestOptionsS3{
-								AccessKeyId: "invalid",
-								SecretAccessKey: "invalid",
-								Bucket: "invalid",
-							},
-							Region: "invalid",
+							ShareWithAccounts: []string{"012345678912"},
 						},
 					},
 				},
@@ -96,7 +87,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, composeResp.StatusCode(), "Error: got non-201 status. Full response: %s", composeResp.Body)
 	require.NotEmpty(t, statusResp.JSON200)
-	require.Contains(t, []string{"WAITING", "RUNNING"}, statusResp.JSON200.Status)
+	require.Contains(t, []string{"pending", "running"}, statusResp.JSON200.Status)
 
 	// Check if we get 404 without the identity header
 	client, err = server.NewClientWithResponses(ib)

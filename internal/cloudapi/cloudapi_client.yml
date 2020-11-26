@@ -69,7 +69,7 @@ components:
       properties:
         status:
           type: string
-          enum: ['success', 'failure', 'pending']
+          enum: ['success', 'failure', 'pending', 'running']
           example: 'success'
         image_statuses:
           type: array
@@ -135,15 +135,22 @@ components:
     Repository:
       type: object
       required:
-        - baseurl
         - rhsm
       properties:
+        rhsm:
+          type: boolean
         baseurl:
           type: string
           format: url
           example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
-        rhsm:
-          type: boolean
+        mirrorlist:
+          type: string
+          format: url
+          example: 'https://mirrors.fedoraproject.org/mirrorlist?repo=fedora-33&arch=x86_64'
+        metalink:
+          type: string
+          format: url
+          example: 'https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=x86_64'
     UploadRequest:
       type: object
       required:
@@ -203,6 +210,11 @@ components:
         snapshot_name:
           type: string
           example: 'my-snapshot'
+        share_with_accounts:
+          type: array
+          example: ['123456789012']
+          items:
+            type: string
     Customizations:
       type: object
       properties:

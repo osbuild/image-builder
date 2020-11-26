@@ -4,7 +4,7 @@
     "description": "Fedora 32"
   },
   "x86_64": {
-    "image_types": [ "qcow2" ],
+    "image_types": [ "ami" ],
     "repositories": [{
       "baseurl": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/",
       "rhsm": false
