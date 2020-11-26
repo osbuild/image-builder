@@ -1,6 +1,32 @@
 #!/bin/bash
 set -euxo pipefail
 
+# Get OS and architecture details.
+source /etc/os-release
+ARCH=$(uname -m)
+
+echo "Enabling fastestmirror to speed up dnf 🏎️"
+echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
+
+# Set up osbuild-composer repo
+DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
+OSBUILD_COMMIT=f5bfb22355befeddfc4f313b753f81fe919b8e98
+OSBUILD_COMPOSER_COMMIT=22c9f6af616ef2dd2704a3b1c1f2db3248f7110c
+sudo tee /etc/yum.repos.d/osbuild.repo << EOF
+[osbuild]
+name=osbuild ${OSBUILD_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMMIT}
+enabled=1
+gpgcheck=0
+priority=5
+[osbuild-composer]
+name=osbuild-composer ${OSBUILD_COMPOSER_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
+enabled=1
+gpgcheck=0
+priority=6
+EOF
+
 # Install osbuild-composer
 sudo dnf install -y osbuild-composer composer-cli
 

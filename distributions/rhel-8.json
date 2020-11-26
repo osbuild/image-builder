@@ -4,7 +4,7 @@
     "description": "Red Hat Enterprise Linux (RHEL) 8.2"
   },
   "x86_64": {
-    "image_types": [ "qcow2" ],
+    "image_types": [ "ami" ],
     "repositories": [{
       "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os",
       "rhsm": true

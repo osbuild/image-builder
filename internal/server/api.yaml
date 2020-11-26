@@ -187,6 +187,7 @@ components:
       required:
         - architecture
         - image_type
+        - upload_requests
       properties:
         architecture:
           type: string
@@ -216,47 +217,13 @@ components:
     AWSUploadRequestOptions:
       type: object
       required:
-        - region
-        - s3
-        - ec2
+        - share_with_accounts
       properties:
-        region:
-          type: string
-          example: 'eu-west-1'
-        s3:
-          $ref: '#/components/schemas/AWSUploadRequestOptionsS3'
-        ec2:
-          $ref: '#/components/schemas/AWSUploadRequestOptionsEc2'
-    AWSUploadRequestOptionsS3:
-      type: object
-      required:
-        - access_key_id
-        - secret_access_key
-        - bucket
-      properties:
-        access_key_id:
-          type: string
-          example: 'AKIAIOSFODNN7EXAMPLE'
-        secret_access_key:
-          type: string
-          format: password
-          example: 'wJalrXqwdiqwdFEMI/K7qiwd/bPxRfiCYEXAMPLEKEY'
-        bucket:
-          type: string
-          example: 'my-bucket'
-    AWSUploadRequestOptionsEc2:
-      type: object
-      required:
-        - access_key_id
-        - secret_access_key
-      properties:
-        access_key_id:
-          type: string
-          example: 'AKIAIOSFODNN7EXAMPLE'
-        secret_access_key:
-          type: string
-          format: password
-          example: 'wJalrXqwdiqwdFEMI/K7qiwd/bPxRfiCYEXAMPLEKEY'
+        share_with_accounts:
+          type: array
+          example: ['123456789012']
+          items:
+            type: string
     Customizations:
       type: object
       properties:

@@ -25,9 +25,10 @@ type AWSUploadRequestOptions struct {
 
 // AWSUploadRequestOptionsEc2 defines model for AWSUploadRequestOptionsEc2.
 type AWSUploadRequestOptionsEc2 struct {
-	AccessKeyId     string  `json:"access_key_id"`
-	SecretAccessKey string  `json:"secret_access_key"`
-	SnapshotName    *string `json:"snapshot_name,omitempty"`
+	AccessKeyId       string    `json:"access_key_id"`
+	SecretAccessKey   string    `json:"secret_access_key"`
+	ShareWithAccounts *[]string `json:"share_with_accounts,omitempty"`
+	SnapshotName      *string   `json:"snapshot_name,omitempty"`
 }
 
 // AWSUploadRequestOptionsS3 defines model for AWSUploadRequestOptionsS3.
@@ -81,8 +82,10 @@ type ImageStatus struct {
 
 // Repository defines model for Repository.
 type Repository struct {
-	Baseurl string `json:"baseurl"`
-	Rhsm    bool   `json:"rhsm"`
+	Baseurl    *string `json:"baseurl,omitempty"`
+	Metalink   *string `json:"metalink,omitempty"`
+	Mirrorlist *string `json:"mirrorlist,omitempty"`
+	Rhsm       bool    `json:"rhsm"`
 }
 
 // Subscription defines model for Subscription.

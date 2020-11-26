@@ -20,23 +20,41 @@ import (
 )
 
 type Server struct {
-	logger *logrus.Logger
-	echo   *echo.Echo
-	client *cloudapi.OsbuildClient
+	logger   *logrus.Logger
+	echo     *echo.Echo
+	client   *cloudapi.OsbuildClient
+	awsCreds *awsCreds
+}
+
+type awsCreds struct {
+	Region          string
+	AccessKeyId     string
+	SecretAccessKey string
+	S3Bucket        string
 }
 
 type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client *cloudapi.OsbuildClient) *Server {
+func NewServer(logger *logrus.Logger, client *cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
 	}
 	majorVersion := strings.Split(spec.Info.Version, ".")[0]
 
-	s := Server{logger, echo.New(), client}
+	s := Server{
+		logger,
+		echo.New(),
+		client,
+		&awsCreds{
+			region,
+			keyId,
+			secret,
+			s3Bucket,
+		},
+	}
 	var h Handlers
 	h.server = &s
 	s.echo.Binder = binder{}
@@ -117,8 +135,9 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 }
 
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
-	composeRequest := &cloudapi.ComposeJSONRequestBody{}
-	err := ctx.Bind(composeRequest)
+	// composeRequest := &cloudapi.ComposeJSONRequestBody{}
+	var composeRequest ComposeRequest
+	err := ctx.Bind(&composeRequest)
 	if err != nil {
 		return err
 	}
@@ -127,23 +146,46 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one image request should be included")
 	}
 
-	if len(composeRequest.ImageRequests[0].Repositories) != 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Repositories are specified by image-builder itself")
+	if len(composeRequest.ImageRequests[0].UploadRequests) != 1 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
 	repositories, err := RepositoriesForImage(composeRequest.Distribution, composeRequest.ImageRequests[0].Architecture)
 	if err != nil {
 		return err
-
 	}
-	composeRequest.ImageRequests[0].Repositories = repositories
+
+	uploadReq, err := h.server.buildUploadRequest(composeRequest.ImageRequests[0].UploadRequests[0])
+	if err != nil {
+		return err
+	}
+
+	custom, err := buildCustomizations(composeRequest.Customizations)
+	if err != nil {
+		return err
+	}
+
+	cloudCR := cloudapi.ComposeRequest{
+		Distribution:   composeRequest.Distribution,
+		Customizations: custom,
+		ImageRequests: []cloudapi.ImageRequest{
+			{
+				Architecture: composeRequest.ImageRequests[0].Architecture,
+				ImageType:    composeRequest.ImageRequests[0].ImageType,
+				Repositories: repositories,
+				UploadRequests: []cloudapi.UploadRequest{
+					uploadReq,
+				},
+			},
+		},
+	}
 
 	client, err := h.server.client.Get()
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Compose(context.Background(), *composeRequest)
+	resp, err := client.Compose(context.Background(), cloudapi.ComposeJSONRequestBody(cloudCR))
 	if err != nil {
 		return err
 	}
@@ -161,6 +203,47 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 	return ctx.JSON(http.StatusCreated, composeResponse)
+}
+
+func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, error) {
+	if ur.Type == "aws" {
+		awsOptions := AWSUploadRequestOptions(ur.Options)
+		return cloudapi.UploadRequest{
+			Type: ur.Type,
+			Options: cloudapi.AWSUploadRequestOptions{
+				Ec2: cloudapi.AWSUploadRequestOptionsEc2{
+					AccessKeyId:       s.awsCreds.AccessKeyId,
+					SecretAccessKey:   s.awsCreds.SecretAccessKey,
+					ShareWithAccounts: &awsOptions.ShareWithAccounts,
+				},
+				S3: cloudapi.AWSUploadRequestOptionsS3{
+					AccessKeyId:     s.awsCreds.AccessKeyId,
+					SecretAccessKey: s.awsCreds.SecretAccessKey,
+					Bucket:          s.awsCreds.S3Bucket,
+				},
+				Region: s.awsCreds.Region,
+			},
+		}, nil
+	}
+	return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
+}
+
+func buildCustomizations(cust *Customizations) (*cloudapi.Customizations, error) {
+	if cust == nil {
+		return nil, nil
+	}
+
+	res := &cloudapi.Customizations{}
+	if cust.Subscription != nil {
+		res.Subscription = &cloudapi.Subscription{
+			ActivationKey: cust.Subscription.ActivationKey,
+			BaseUrl:       cust.Subscription.BaseUrl,
+			Insights:      cust.Subscription.Insights,
+			Organization:  cust.Subscription.Organization,
+			ServerUrl:     cust.Subscription.ServerUrl,
+		}
+	}
+	return res, nil
 }
 
 func RoutePrefix() string {

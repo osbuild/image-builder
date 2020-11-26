@@ -19,9 +19,9 @@ func TestDefault(t *testing.T) {
 	require.Equal(t, config.ListenAddress, "localhost")
 	require.Equal(t, config.LogLevel, "DEBUG")
 	require.Nil(t, config.LogGroup)
-	require.Nil(t, config.Region)
-	require.Nil(t, config.AccessKeyID)
-	require.Nil(t, config.SecretAccessKey)
+	require.Nil(t, config.CwRegion)
+	require.Nil(t, config.CwAccessKeyID)
+	require.Nil(t, config.CwSecretAccessKey)
 }
 
 func TestEnv(t *testing.T) {
@@ -38,9 +38,9 @@ func TestEnv(t *testing.T) {
 	require.Equal(t, config.ListenAddress, "localhost:8000")
 	require.Equal(t, config.LogLevel, "INFO")
 	require.Nil(t, config.LogGroup)
-	require.Nil(t, config.Region)
-	require.Nil(t, config.AccessKeyID)
-	require.Nil(t, config.SecretAccessKey)
+	require.Nil(t, config.CwRegion)
+	require.Nil(t, config.CwAccessKeyID)
+	require.Nil(t, config.CwSecretAccessKey)
 }
 
 func TestEnvPointerValues(t *testing.T) {
@@ -54,9 +54,9 @@ func TestEnvPointerValues(t *testing.T) {
 	require.Empty(t, config.ListenAddress)
 	require.Empty(t, config.LogLevel)
 	require.Equal(t, *config.LogGroup, "somegroup")
-	require.Equal(t, *config.Region, "us-east-1")
-	require.Nil(t, config.AccessKeyID)
-	require.Nil(t, config.SecretAccessKey)
+	require.Equal(t, *config.CwRegion, "us-east-1")
+	require.Nil(t, config.CwAccessKeyID)
+	require.Nil(t, config.CwSecretAccessKey)
 }
 
 func TestErrors(t *testing.T) {
