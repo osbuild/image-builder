@@ -19,7 +19,7 @@ Summary:	A web service which relays requests to osbuild-composer
 # Upstream license specification: Apache-2.0
 License:	ASL 2.0
 URL:		%{gourl}
-Source0:        %{gosource}
+Source0:	%{gosource}
 
 BuildRequires:	%{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
 BuildRequires:	systemd
@@ -42,7 +42,7 @@ export PATH=$PWD/_bin${PATH:+:$PATH}
 export GOPATH=$GO_BUILD_PATH:%{gopath}
 export GOFLAGS=-mod=vendor
 
-%gobuild -o _bin/image-builder                        %{goipath}/cmd/image-builder
+%gobuild -o _bin/image-builder %{goipath}/cmd/image-builder
 
 %if %{with tests} || 0%{?rhel}
 TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
@@ -51,18 +51,18 @@ go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/image-builder-te
 %endif
 
 %install
-install -m 0755 -vd                                   %{buildroot}%{_libexecdir}/image-builder
-install -m 0755 -vp _bin/image-builder                %{buildroot}%{_libexecdir}/image-builder/
+install -m 0755 -vd					%{buildroot}%{_libexecdir}/image-builder
+install -m 0755 -vp _bin/image-builder			%{buildroot}%{_libexecdir}/image-builder/
 
-install -m 0755 -vd				      %{buildroot}%{_unitdir}
-install -m 0644 -vp distribution/*.{service,socket}   %{buildroot}%{_unitdir}/
+install -m 0755 -vd					%{buildroot}%{_unitdir}
+install -m 0644 -vp distribution/*.{service,socket}	%{buildroot}%{_unitdir}/
 
-install -m 0755 -vd                                   %{buildroot}%{_datadir}/image-builder/distributions
-install -m 0644 -vp distributions/*                   %{buildroot}%{_datadir}/image-builder/distributions/
+install -m 0755 -vd					%{buildroot}%{_datadir}/image-builder/distributions
+install -m 0644 -vp distributions/*			%{buildroot}%{_datadir}/image-builder/distributions/
 
 %if %{with tests} || 0%{?rhel}
-install -m 0755 -vd                                         %{buildroot}%{_libexecdir}/tests/image-builder
-install -m 0755 -vp _bin/image-builder-tests                %{buildroot}%{_libexecdir}/tests/image-builder/
+install -m 0755 -vd					%{buildroot}%{_libexecdir}/tests/image-builder
+install -m 0755 -vp _bin/image-builder-tests		%{buildroot}%{_libexecdir}/tests/image-builder/
 %endif
 
 %post
