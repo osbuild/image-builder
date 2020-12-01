@@ -48,7 +48,7 @@ func NewServer(logger *logrus.Logger, client *cloudapi.OsbuildClient) *Server {
 }
 
 func (s *Server) Run(address string) {
-	s.logger.Infoln("🚀 Starting image-builder server on %s ...\n", address)
+	s.logger.Infof("🚀 Starting image-builder server on %v ...\n", address)
 	err := s.echo.Start(address)
 	if err != nil {
 		s.logger.Errorln(fmt.Sprintf("Error starting echo server: %v", err))
