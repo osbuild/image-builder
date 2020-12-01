@@ -48,6 +48,10 @@ REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 greenprint "🔧 Building source RPMs."
 make srpm
 
+greenprint "📦 RPMlint"
+sudo dnf install -y rpmlint rpm-build make git-core
+rpmlint rpmbuild/SRPMS/*
+
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
 sudo mock -v -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
