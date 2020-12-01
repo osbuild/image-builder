@@ -38,10 +38,10 @@ func ReadDistributions(distro string) ([]Distribution, error) {
 			}
 
 			f, err := os.Open(path) // #nosec G304
-			defer f.Close()         // #nosec G307
 			if err != nil {
 				return err
 			}
+			defer f.Close() // #nosec G307
 			var d Distribution
 			err = json.NewDecoder(f).Decode(&d)
 			if err != nil {
