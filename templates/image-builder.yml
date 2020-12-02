@@ -70,6 +70,10 @@ objects:
           - name: api
             containerPort: 8086
             protocol: TCP
+          volumeMounts:
+            - name: composer-secrets
+              mountpath: "/app/composer-secrets"
+              readOnly: true
           env:
             - name: LISTEN_ADDRESS
               value: "${LISTEN_ADDRESS}"
@@ -120,6 +124,93 @@ objects:
                 secretKeyRef:
                   key: aws_region
                   name: image-builder-cloudwatch
+            - name: OSBUILD_AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  key: aws_region
+                  name: composer
+
+            - name: OSBUILD_AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: aws_access_key_id
+                  name: composer
+            - name: OSBUILD_AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: aws_secret_access_key
+                  name: composer
+            - name: OSBUILD_AWS_S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  key: aws_s3_bucket
+                  name: composer
+            - name: OSBUILD_URL
+              value: "${OSBUILD_URL}"
+            - name: OSBUILD_CERT_PATH
+              value: "${OSBUILD_CERT_PATH}"
+            - name: OSBUILD_KEY_PATH
+              value: "${OSBUILD_KEY_PATH}"
+            - name: OSBUILD_CA_PATH
+              value: "${OSBUILD_CA_PATH}"
+        volumes:
+        - name: composer-secrets
+          secret:
+            secretName: composer
+        initContainers:
+        - name: image-builder
+          image: "${IMAGE_NAME}:${IMAGE_TAG}"
+          command: [ "/app/image-builder-migrate-db" ]
+          env:
+          - name: MIGRATIONS_DIR
+            value: "${MIGRATIONS_DIR}"
+          # Credentials/configuration for AWS RDS.
+          - name: PGHOST
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.host
+          - name: PGPORT
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.port
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.name
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.user
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: image-builder-db
+                key: db.password
+          # Credentials/configuration for AWS cloudwatch.
+          - name: CW_AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: image-builder-cloudwatch
+          - name: CW_AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: image-builder-cloudwatch
+          - name: CW_LOG_GROUP
+            valueFrom:
+              secretKeyRef:
+                key: log_group_name
+                name: image-builder-cloudwatch
+          - name: CW_AWS_REGION
+            valueFrom:
+              secretKeyRef:
+                key: aws_region
+                name: image-builder-cloudwatch
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
@@ -161,3 +252,18 @@ parameters:
   - name: LISTEN_ADDRESS
     description: Listening address and port
     value: "0.0.0.0:8086"
+  - name: MIGRATIONS_DIR
+    description: Directory containing migration files for aws rds
+    value: "/app/migrations"
+  - name: OSBUILD_CERT_PATH
+    description: Path to certificate for ssl client auth to osbuild-composer instance
+    value: "/app/composer-secrets/osbuild-client-cert.pem"
+  - name: OSBUILD_KEY_PATH
+    description: Path to key for ssl client auth to osbuild-composer instance
+    value: "/app/composer-secrets/osbuild-client-key.pem"
+  - name: OSBUILD_CA_PATH
+    description: Path to ca for ssl client auth to osbuild-composer instance
+    value: "/app/composer-secrets/osbuild-client-ca.pem"
+  - name: OSBUILD_URL
+    description: Url to osbuild-composer instance
+    value: "https://osbuild-composer.org"
