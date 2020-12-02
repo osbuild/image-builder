@@ -11,7 +11,7 @@ check-api-spec:
 	 openapi-spec-validator internal/server/api.yaml
 
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
-RPM_SPECFILE=rpmbuild/SPECS/image-builder-$(COMMIT).spec
+RPM_SPECFILE=rpmbuild/SPECS/image-builder.spec
 RPM_TARBALL=rpmbuild/SOURCES/image-builder-$(COMMIT).tar.gz
 
 $(RPM_SPECFILE):
