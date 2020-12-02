@@ -93,4 +93,8 @@ Integration tests to be run on a system with image-builder installed.
 %endif
 
 %changelog
-# None
+# the changelog is distribution-specific, therefore there's just one entry
+# to make rpmlint happy.
+
+* Fri Mar 27 2020 Image Builder team <osbuilders@redhat.com> - 0-1
+- On this day, this project was born.
