@@ -70,6 +70,10 @@ objects:
           - name: api
             containerPort: 8086
             protocol: TCP
+          volumeMounts:
+            - name: composer-secrets
+              mountpath: "/app/composer-secrets"
+              readOnly: true
           env:
             - name: LISTEN_ADDRESS
               value: "${LISTEN_ADDRESS}"
@@ -120,6 +124,48 @@ objects:
                 secretKeyRef:
                   key: aws_region
                   name: image-builder-cloudwatch
+            - name: OSBUILD_AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  key: aws_region
+                  name: composer
+            - name: OSBUILD_AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: aws_access_key_id
+                  name: composer
+            - name: OSBUILD_AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: aws_secret_access_key
+                  name: composer
+            - name: OSBUILD_AWS_S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  key: aws_s3_bucket
+                  name: composer
+            - name: OSBUILD_URL
+              value: "${OSBUILD_URL}"
+            - name: OSBUILD_CERT_PATH
+              value: "${OSBUILD_CERT_PATH}"
+            - name: OSBUILD_KEY_PATH
+              value: "${OSBUILD_KEY_PATH}"
+            - name: OSBUILD_CA_PATH
+              value: "${OSBUILD_CA_PATH}"
+        - image: "${COMPOSER_IMAGE}:${COMPOSER_TAG}"
+          name: osbuild-composer
+          ports:
+          - name: api
+            containerPort: 443
+            protocol: TCP
+          volumeMounts:
+            - name: composer-secrets
+              mountpath: "/etc/osbuild-composer"
+              readOnly: true
+        volumes:
+        - name: composer-secrets
+          secret:
+            secretName: composer
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
@@ -134,6 +180,26 @@ objects:
         protocol: TCP
         port: ${{BACKEND_LISTENER_PORT}}
         targetPort: 8086
+    selector:
+      name: image-builder
+
+# Service for composer
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      service: osbuild-composer
+    name: osbuild-composer
+  spec:
+    ports:
+      - name: osbuild-composer-cloudapi
+        protocol: TCP
+        port: ${{BACKEND_LISTENER_PORT}}
+        targetPort: 443
+      - name: osbuild-composer-remote-worker
+        protocol: TCP
+        port: ${{OSBUILD_REMOTE_WORKER_PORT}}
+        targetPort: 8700
     selector:
       name: image-builder
 
@@ -153,6 +219,9 @@ parameters:
   - description: Backend listener port
     name: BACKEND_LISTENER_PORT
     value: "8080"
+  - description: Composer remote worker port
+    name: COMPOSER_REMOTE_WORKER_PORT
+    value: "8700"
   # NOTE(mhayden): Change this later once we add a real health check to
   # image-builder that verifies connectivity, etc.
   - name: HEALTHCHECK_URI
@@ -161,3 +230,15 @@ parameters:
   - name: LISTEN_ADDRESS
     description: Listening address and port
     value: "0.0.0.0:8086"
+  - name: OSBUILD_CERT_PATH
+    description: Path to certificate for ssl client auth to osbuild-composer instance
+    value: "/app/composer-secrets/osbuild-client-cert.pem"
+  - name: OSBUILD_KEY_PATH
+    description: Path to key for ssl client auth to osbuild-composer instance
+    value: "/app/composer-secrets/osbuild-client-key.pem"
+  - name: OSBUILD_CA_PATH
+    description: Path to ca for ssl client auth to osbuild-composer instance
+    value: "/app/composer-secrets/osbuild-client-ca.pem"
+  - name: OSBUILD_URL
+    description: Url to osbuild-composer instance
+    value: "https://osbuild-composer.org"
