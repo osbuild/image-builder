@@ -18,16 +18,16 @@ test_divider () {
 
 # Run a test case and store the result as passed or failed.
 run_test_case () {
-    TEST_NAME=$(basename $1)
+    TEST_NAME=$(basename "$1")
     echo
     test_divider
     echo "🏃🏻 Running test: ${TEST_NAME}"
     test_divider
 
-    if sudo ${1} -test.v | tee ${WORKSPACE}/${TEST_NAME}.log; then
-        PASSED_TESTS+=($TEST_NAME)
+    if sudo "${1}" -test.v | tee "${WORKSPACE}/${TEST_NAME}.log"; then
+        PASSED_TESTS+=("$TEST_NAME")
     else
-        FAILED_TESTS+=($TEST_NAME)
+        FAILED_TESTS+=("$TEST_NAME")
     fi
 
     test_divider
@@ -53,13 +53,13 @@ cd $WORKING_DIRECTORY
 
 # Run each test case.
 for TEST_CASE in "${TEST_CASES[@]}"; do
-    run_test_case ${TESTS_PATH}/$TEST_CASE
+    run_test_case "${TESTS_PATH}/$TEST_CASE"
 done
 
 # Print a report of the test results.
 test_divider
-echo "😃 Passed tests: ${PASSED_TESTS[@]}"
-echo "☹ Failed tests: ${FAILED_TESTS[@]}"
+echo "😃 Passed tests: " "${PASSED_TESTS[@]}"
+echo "☹ Failed tests: " "${FAILED_TESTS[@]}"
 test_divider
 
 # Exit with a failure if any tests failed.

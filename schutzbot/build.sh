@@ -21,8 +21,8 @@ fi
 # Register RHEL if we are provided with a registration script.
 if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status; then
     greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x $RHN_REGISTRATION_SCRIPT
-    sudo $RHN_REGISTRATION_SCRIPT
+    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
+    sudo "$RHN_REGISTRATION_SCRIPT"
 fi
 
 # Install requirements for building RPMs in mock.
@@ -54,10 +54,10 @@ rpmlint rpmbuild/SRPMS/*
 
 # Compile RPMs in a mock chroot
 greenprint "🎁 Building RPMs with mock"
-sudo mock -v -r $MOCK_CONFIG --resultdir $REPO_DIR --with=tests \
+sudo mock -v -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
     rpmbuild/SRPMS/*.src.rpm
 
-sudo dnf localinstall -y $REPO_DIR/*x86_64.rpm
+sudo dnf localinstall -y "$REPO_DIR"/*x86_64.rpm
 
 # Build the container
 sudo dnf install -y podman
