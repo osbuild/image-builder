@@ -30,13 +30,3 @@ jobs:
 
       - name: Stop the container
         run: docker stop --time 1 image-builder
-  prepare:
-    name: "📦 Prepare source"
-    runs-on: ubuntu-latest
-    steps:
-
-      - name: Clone repository
-        uses: actions/checkout@v2
-
-      - name: Run prepare-source.sh
-        run: tools/prepare-source.sh
