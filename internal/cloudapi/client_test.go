@@ -33,3 +33,15 @@ func TestOsbuildClientGetNoError(t *testing.T) {
 	require.NotNil(t, new_client)
 	require.Equal(t, "localhost:8086/", new_client.Server)
 }
+
+func TestOsbuildClientConfigureClientReturnsNilWhenNotUsingHttps(t *testing.T) {
+	// we're not using HTTPS URL on purpose
+	osbuild_client := NewOsbuildClient("localhost:8086/", nil, nil, nil)
+
+	openapi_client := Client{
+		Server: osbuild_client.osbuildURL,
+	}
+
+	result := osbuild_client.ConfigureClient(&openapi_client)
+	require.Nil(t, result)
+}
