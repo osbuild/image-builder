@@ -41,6 +41,11 @@ jobs:
       - name: Run golangci-lint
         run: $(go env GOPATH)/bin/golangci-lint run --timeout 5m0s
 
+      - name: Generate certs for testing
+        run: |
+          ./schutzbot/generate-certs.sh
+          ls -lR /etc/osbuild-composer-test/ca
+
       - name: Run unit tests
         run: go test -v -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...
 

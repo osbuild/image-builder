@@ -5,6 +5,12 @@ set -euxo pipefail
 # The whole generation is done in a $CADIR to better represent how osbuild-ca
 # it.
 CERTDIR=/etc/osbuild-composer
+
+# create this directory b/c it doesn't exist if running in GitHub CI
+if [ ! -d "$CERTDIR" ]; then
+    sudo mkdir -p $CERTDIR
+fi
+
 OPENSSL_CONFIG=$(readlink -f schutzbot/openssl.cnf)
 CADIR=/etc/osbuild-composer-test/ca
 
@@ -38,7 +44,11 @@ pushd $CADIR
         -in /tmp/composer-csr.pem \
         -out "$CERTDIR"/composer-crt.pem
 
-    sudo chown _osbuild-composer "$CERTDIR"/composer-*.pem
+    # user may not exist in GitHub CI but we don't care about file
+    # ownership there
+    if getent passwd _osbuild-composer; then
+        sudo chown _osbuild-composer "$CERTDIR"/composer-*.pem
+    fi
 
     # Generate a worker certificate.
     sudo openssl req -config "$OPENSSL_CONFIG" \
