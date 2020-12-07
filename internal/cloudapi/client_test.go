@@ -25,7 +25,7 @@ func TestNewOsbuildClientWithCerts(t *testing.T) {
 	require.NotEqual(t, "", client.key)
 }
 
-func TestOsbuildClientGetNoError(t *testing.T) {
+func TestGetNoError(t *testing.T) {
 	// we're not using HTTPS URL on purpose
 	client := NewOsbuildClient("localhost:8086/", nil, nil, nil)
 	new_client, err := client.Get()
@@ -35,7 +35,7 @@ func TestOsbuildClientGetNoError(t *testing.T) {
 	require.Equal(t, "localhost:8086/", new_client.Server)
 }
 
-func TestOsbuildClientConfigureClientReturnsNilWhenNotUsingHttps(t *testing.T) {
+func TestConfigureClientReturnsNilWhenNotUsingHttps(t *testing.T) {
 	// we're not using HTTPS URL on purpose
 	osbuild_client := NewOsbuildClient("localhost:8086/", nil, nil, nil)
 
@@ -47,7 +47,7 @@ func TestOsbuildClientConfigureClientReturnsNilWhenNotUsingHttps(t *testing.T) {
 	require.Nil(t, result)
 }
 
-func TestOsbuildClientConfigureClientWithValidCertsAndHttps(t *testing.T) {
+func TestConfigureClientWithValidCertsAndHttps(t *testing.T) {
 	myCert := "/etc/osbuild-composer/client-crt.pem"
 	myKey := "/etc/osbuild-composer/client-key.pem"
 	myCA := "/etc/osbuild-composer-test/ca/ca.cert.pem"
