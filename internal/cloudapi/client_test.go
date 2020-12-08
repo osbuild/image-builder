@@ -1,6 +1,7 @@
 package cloudapi
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -49,6 +50,7 @@ func TestConfigureClientWithValidCertsAndHttps(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, client.client)
 	require.IsType(t, &http.Client{}, client.client)
+	require.IsType(t, &tls.Config{}, client.client.Transport.TLSClientConfig)
 }
 
 func TestComposeStatusWithHTTPServer(t *testing.T) {
