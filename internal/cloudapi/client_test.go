@@ -3,6 +3,7 @@ package cloudapi
 import (
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"reflect"
 	"testing"
 )
 
@@ -61,4 +62,17 @@ func TestConfigureClientWithValidCertsAndHttps(t *testing.T) {
 	require.Nil(t, result)
 	require.NotNil(t, openapi_client.Client)
 	require.IsType(t, &http.Client{}, openapi_client.Client)
+
+	// using reflection b/c cloudapi_client.go defines the Client struct as
+	// having HttpRequestDoer, yet at runtime that's overwritten with the http.Client
+
+	// make sure .Client has a field named .Transport
+	clientValue := reflect.ValueOf(openapi_client.Client).Elem()
+	transportField := clientValue.FieldByName("Transport")
+	require.True(t, transportField.IsValid())
+
+	// make sure Transport has a field named .TLSClientConfig
+	tlsValue := reflect.ValueOf(transportField.Interface()).Elem()
+	tlsField := tlsValue.FieldByName("TLSClientConfig")
+	require.True(t, tlsField.IsValid())
 }
