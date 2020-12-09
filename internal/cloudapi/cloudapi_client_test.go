@@ -3,7 +3,9 @@ package cloudapi
 import (
 	"errors"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -34,4 +36,21 @@ func TestNewComposeStatusRequest(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "GET", request.Method)
 	require.Equal(t, "/compose/dummy-compose-id", request.URL.Path)
+}
+
+func TestNewComposeRequestWithBody(t *testing.T) {
+	request, err := NewComposeRequestWithBody(
+		"example.com",
+		"text/plain",
+		strings.NewReader("body contents"),
+	)
+	require.NotNil(t, request)
+	require.NoError(t, err)
+	require.Equal(t, "POST", request.Method)
+	require.Equal(t, "/compose", request.URL.Path)
+	require.Equal(t, request.Header.Get("Content-Type"), "text/plain")
+
+	body, err := ioutil.ReadAll(request.Body)
+	require.NoError(t, err)
+	require.Equal(t, "body contents", string(body))
 }
