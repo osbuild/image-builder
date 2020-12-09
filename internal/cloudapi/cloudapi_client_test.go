@@ -54,3 +54,23 @@ func TestNewComposeRequestWithBody(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "body contents", string(body))
 }
+
+func TestNewComposeRequest(t *testing.T) {
+	request, err := NewComposeRequest(
+		"example.com",
+		ComposeJSONRequestBody{
+			Distribution:   "fedora-33",
+			Customizations: nil,
+			ImageRequests:  []ImageRequest{},
+		},
+	)
+	require.NotNil(t, request)
+	require.NoError(t, err)
+	require.Equal(t, "POST", request.Method)
+	require.Equal(t, "/compose", request.URL.Path)
+	require.Equal(t, request.Header.Get("Content-Type"), "application/json")
+
+	body, err := ioutil.ReadAll(request.Body)
+	require.NoError(t, err)
+	require.Equal(t, `{"distribution":"fedora-33","image_requests":[]}`, string(body))
+}
