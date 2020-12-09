@@ -1,9 +1,7 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types,client -o ../cloudapi/cloudapi_client.go ../cloudapi/cloudapi_client.yml
 //go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=server --generate types,server,spec,client -o api.go api.yaml
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -22,7 +20,7 @@ import (
 type Server struct {
 	logger   *logrus.Logger
 	echo     *echo.Echo
-	client   *cloudapi.OsbuildClient
+	client   cloudapi.OsbuildClient
 	awsCreds *awsCreds
 }
 
@@ -37,7 +35,7 @@ type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client *cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string) *Server {
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -108,12 +106,7 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distribution string) error
 }
 
 func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
-	client, err := h.server.client.Get()
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.ComposeStatus(context.Background(), composeId)
+	resp, err := h.server.client.ComposeStatus(composeId)
 	if err != nil {
 		return err
 	}
@@ -126,16 +119,17 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
 	}
 
-	var composeStatus ComposeStatus
+	var composeStatus cloudapi.ComposeStatus
 	err = json.NewDecoder(resp.Body).Decode(&composeStatus)
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, composeStatus)
+	return ctx.JSON(http.StatusOK, ComposeStatus{
+		Status: composeStatus.Status,
+	})
 }
 
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
-	// composeRequest := &cloudapi.ComposeJSONRequestBody{}
 	var composeRequest ComposeRequest
 	err := ctx.Bind(&composeRequest)
 	if err != nil {
@@ -180,12 +174,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		},
 	}
 
-	client, err := h.server.client.Get()
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Compose(context.Background(), cloudapi.ComposeJSONRequestBody(cloudCR))
+	resp, err := h.server.client.Compose(cloudCR)
 	if err != nil {
 		return err
 	}
@@ -197,12 +186,14 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(resp.StatusCode, fmt.Sprintf("Failed posting compose request to osbuild-composer: %s", body))
 	}
 
-	var composeResponse ComposeResponse
-	err = json.NewDecoder(resp.Body).Decode(&composeResponse)
+	var composeResult cloudapi.ComposeResult
+	err = json.NewDecoder(resp.Body).Decode(&composeResult)
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusCreated, composeResponse)
+	return ctx.JSON(http.StatusCreated, ComposeResponse{
+		Id: composeResult.Id,
+	})
 }
 
 func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, error) {

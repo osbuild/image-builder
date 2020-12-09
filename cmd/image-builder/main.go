@@ -59,7 +59,10 @@ func main() {
 		panic(err)
 	}
 
-	client := cloudapi.NewOsbuildClient(config.OsbuildURL, config.OsbuildCert, config.OsbuildKey, config.OsbuildCA)
+	client, err := cloudapi.NewOsbuildClient(config.OsbuildURL, config.OsbuildCert, config.OsbuildKey, config.OsbuildCA)
+	if err != nil {
+		panic(err)
+	}
 
 	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket)
 	s.Run(config.ListenAddress)

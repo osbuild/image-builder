@@ -1,8 +1,13 @@
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=cloudapi --generate types -o cloudapi_types.go cloudapi_types.yml
+
 package cloudapi
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -13,42 +18,34 @@ type OsbuildClient struct {
 	cert       string
 	key        string
 	ca         string
+	client     *http.Client
 }
 
-func NewOsbuildClient(osbuildURL string, cert *string, key *string, ca *string) *OsbuildClient {
-	client := &OsbuildClient{}
-	client.osbuildURL = osbuildURL
+func NewOsbuildClient(osbuildURL string, cert *string, key *string, ca *string) (OsbuildClient, error) {
+	oc := OsbuildClient{}
+	oc.osbuildURL = osbuildURL
 
 	if cert != nil {
-		client.cert = *cert
+		oc.cert = *cert
 	}
 	if key != nil {
-		client.key = *key
+		oc.key = *key
 	}
 	if ca != nil {
-		client.ca = *ca
+		oc.ca = *ca
 	}
 
-	return client
-}
-
-func (c *OsbuildClient) Get() (*Client, error) {
-	return NewClient(c.osbuildURL, c.ConfigureClient)
-}
-
-func (c *OsbuildClient) ConfigureClient(client *Client) error {
-	// set up client certificate authentication
-	if strings.HasPrefix(client.Server, "https") {
+	if strings.HasPrefix(osbuildURL, "https") {
 		// Load client cert
-		cert, err := tls.LoadX509KeyPair(c.cert, c.key)
+		cert, err := tls.LoadX509KeyPair(oc.cert, oc.key)
 		if err != nil {
-			return err
+			return oc, err
 		}
 
 		var tlsConfig *tls.Config
-		caCert, err := ioutil.ReadFile(c.ca)
+		caCert, err := ioutil.ReadFile(oc.ca)
 		if err != nil {
-			return err
+			return oc, err
 		}
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
@@ -60,7 +57,34 @@ func (c *OsbuildClient) ConfigureClient(client *Client) error {
 
 		tlsConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
-		client.Client = &http.Client{Transport: transport}
+		oc.client = &http.Client{Transport: transport}
+	} else {
+		oc.client = &http.Client{}
 	}
-	return nil
+
+	return oc, nil
+}
+
+func (oc *OsbuildClient) ComposeStatus(id string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/compose/%s", oc.osbuildURL, id), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return oc.client.Do(req)
+}
+
+func (oc *OsbuildClient) Compose(compose ComposeRequest) (*http.Response, error) {
+	buf, err := json.Marshal(compose)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/compose", oc.osbuildURL), bytes.NewReader(buf))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	return oc.client.Do(req)
 }
