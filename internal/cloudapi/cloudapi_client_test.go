@@ -27,3 +27,11 @@ func TestNewClientErrorHandlingFromClientOptions(t *testing.T) {
 	require.Nil(t, result)
 	require.EqualError(t, err, "Expected during testing")
 }
+
+func TestNewComposeStatusRequest(t *testing.T) {
+	request, err := NewComposeStatusRequest("example.com", "dummy-compose-id")
+	require.NotNil(t, request)
+	require.NoError(t, err)
+	require.Equal(t, "GET", request.Method)
+	require.Equal(t, "/compose/dummy-compose-id", request.URL.Path)
+}
