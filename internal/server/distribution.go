@@ -21,7 +21,8 @@ type X86_64 struct {
 }
 
 func ReadDistributions(distro string) ([]Distribution, error) {
-	confPaths := [3]string{"/usr/share/image-builder/distributions", "/app/distributions", "./distributions"}
+	// note: last value is because tests' pwd is not the repository root !!!
+	confPaths := [4]string{"/usr/share/image-builder/distributions", "/app/distributions", "./distributions", "../../distributions"}
 	var distributions []Distribution
 
 	var err error
