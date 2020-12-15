@@ -22,6 +22,12 @@ func TestRepositoriesForImage(t *testing.T) {
 		}}, result)
 }
 
+func TestRepositoriesForImageWithUnsupportedArch(t *testing.T) {
+	result, err := RepositoriesForImage("fedora-32", "unsupported")
+	require.Nil(t, result)
+	require.Error(t, err, "Architecture not supported")
+}
+
 func TestAvailableDistributions(t *testing.T) {
 	result, err := AvailableDistributions()
 	require.NoError(t, err)
