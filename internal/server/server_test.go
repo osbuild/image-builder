@@ -19,6 +19,7 @@ func getResponseBody(t *testing.T, path string, auth bool) (*http.Response, stri
 	request, err := http.NewRequest("GET", "http://localhost:8086"+path, nil)
 	require.NoError(t, err)
 	if auth {
+		// also see AddDummyIdentityHeader() in main_test.go
 		request.Header.Add("X-Rh-Identity", "tester")
 	}
 
