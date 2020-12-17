@@ -1,11 +1,10 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,71 +31,77 @@ func getResponseBody(t *testing.T, path string, auth bool) (*http.Response, stri
 	return response, string(body)
 }
 
-func TestMain(m *testing.M) {
+func startServer(t *testing.T) *Server {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
-	if err != nil {
-		log.Fatalf("ERROR: logger setup failed: %v\n", err)
-	}
+	require.NoError(t, err)
 
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
 	client, err := cloudapi.NewOsbuildClient("http://example.com", nil, nil, nil)
-	if err != nil {
-		log.Fatalf("ERROR: client setup failed: %v\n", err)
-	}
+	require.NoError(t, err)
 
 	srv := NewServer(logger, client, "", "", "", "")
 	// execute in parallel b/c .Run() will block execution
 	go srv.Run("localhost:8086")
 
-	os.Exit(m.Run())
+	return srv
 }
 
-func TestVerifyIdentityHeaderMissing(t *testing.T) {
-	response, body := getResponseBody(t, "/api/image-builder/v1/version", false)
-	require.Equal(t, 404, response.StatusCode)
-	require.Contains(t, body, "x-rh-identity header is not present")
-}
+// note: all of the sub-tests below don't actually talk to
+// osbuild-composer API that's why they are groupped together
+func TestWithoutOsbuildComposerBackend(t *testing.T) {
+	srv := startServer(t)
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
 
-func TestGetVersion(t *testing.T) {
-	response, body := getResponseBody(t, "/api/image-builder/v1/version", true)
-	require.Equal(t, 200, response.StatusCode)
+	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
+		response, body := getResponseBody(t, "/api/image-builder/v1/version", false)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "x-rh-identity header is not present")
+	})
 
-	var result Version
-	err := json.Unmarshal([]byte(body), &result)
-	require.NoError(t, err)
-	require.Equal(t, "1.0", result.Version)
-}
+	t.Run("GetVersion", func(t *testing.T) {
+		response, body := getResponseBody(t, "/api/image-builder/v1/version", true)
+		require.Equal(t, 200, response.StatusCode)
 
-func TestGetOpenapiJson(t *testing.T) {
-	response, _ := getResponseBody(t, "/api/image-builder/v1/openapi.json", true)
-	require.Equal(t, 200, response.StatusCode)
-	// note: not asserting body b/c response is too big
-}
+		var result Version
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, "1.0", result.Version)
+	})
 
-func TestGetDistributions(t *testing.T) {
-	response, body := getResponseBody(t, "/api/image-builder/v1/distributions", true)
-	require.Equal(t, 200, response.StatusCode)
+	t.Run("GetOpenapiJson", func(t *testing.T) {
+		response, _ := getResponseBody(t, "/api/image-builder/v1/openapi.json", true)
+		require.Equal(t, 200, response.StatusCode)
+		// note: not asserting body b/c response is too big
+	})
 
-	var result Distributions
-	err := json.Unmarshal([]byte(body), &result)
-	require.NoError(t, err)
+	t.Run("GetDistributions", func(t *testing.T) {
+		response, body := getResponseBody(t, "/api/image-builder/v1/distributions", true)
+		require.Equal(t, 200, response.StatusCode)
 
-	for _, distro := range result {
-		require.Contains(t, []string{"fedora-32", "rhel-8"}, distro.Name)
-	}
-}
+		var result Distributions
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
 
-func TestGetArchitectures(t *testing.T) {
-	response, body := getResponseBody(t, "/api/image-builder/v1/architectures/fedora-32", true)
-	require.Equal(t, 200, response.StatusCode)
+		for _, distro := range result {
+			require.Contains(t, []string{"fedora-32", "rhel-8"}, distro.Name)
+		}
+	})
 
-	var result Architectures
-	err := json.Unmarshal([]byte(body), &result)
-	require.NoError(t, err)
-	require.Equal(t, Architectures{
-		ArchitectureItem{
-			Arch:       "x86_64",
-			ImageTypes: []string{"ami"},
-		}}, result)
+	t.Run("GetArchitectures", func(t *testing.T) {
+		response, body := getResponseBody(t, "/api/image-builder/v1/architectures/fedora-32", true)
+		require.Equal(t, 200, response.StatusCode)
+
+		var result Architectures
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, Architectures{
+			ArchitectureItem{
+				Arch:       "x86_64",
+				ImageTypes: []string{"ami"},
+			}}, result)
+	})
 }
