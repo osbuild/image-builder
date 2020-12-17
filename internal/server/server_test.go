@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,13 +33,11 @@ func getResponseBody(t *testing.T, path string, auth bool) (*http.Response, stri
 	return response, string(body)
 }
 
-func startServer(t *testing.T) *Server {
+func startServer(t *testing.T, url string) *Server {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
 
-	// note: any url will work, it'll only try to contact the osbuild-composer
-	// instance when calling /compose or /compose/$uuid
-	client, err := cloudapi.NewOsbuildClient("http://example.com", nil, nil, nil)
+	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
 	srv := NewServer(logger, client, "", "", "", "")
@@ -50,7 +50,9 @@ func startServer(t *testing.T) *Server {
 // note: all of the sub-tests below don't actually talk to
 // osbuild-composer API that's why they are groupped together
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
-	srv := startServer(t)
+	// note: any url will work, it'll only try to contact the osbuild-composer
+	// instance when calling /compose or /compose/$uuid
+	srv := startServer(t, "http://example.com")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -104,4 +106,55 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 				ImageTypes: []string{"ami"},
 			}}, result)
 	})
+}
+
+// note: this scenario needs to talk to a simulated osbuild-composer API
+func TestGetComposeStatus(t *testing.T) {
+	// simulate osbuild-composer API
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		s := ComposeStatus{
+			Status: "running",
+		}
+		err := json.NewEncoder(w).Encode(s)
+		require.NoError(t, err)
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL)
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	response, body := getResponseBody(t, "/api/image-builder/v1/composes/xyz-123-test", true)
+	require.Equal(t, 200, response.StatusCode)
+
+	var result cloudapi.ComposeStatus
+	err := json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, cloudapi.ComposeStatus{
+		Status: "running",
+	}, result)
+}
+
+// note: this scenario needs to talk to a simulated osbuild-composer API
+func TestGetComposeStatus404(t *testing.T) {
+	// simulate osbuild-composer API
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprint(w, "404 during tests")
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL)
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	response, body := getResponseBody(t, "/api/image-builder/v1/composes/xyz-123-test", true)
+	require.Equal(t, 404, response.StatusCode)
+	require.Contains(t, body, "404 during tests")
 }
