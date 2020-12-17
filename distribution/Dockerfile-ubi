@@ -4,7 +4,7 @@ FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
 WORKDIR $GOPATH/go/src/github.com/osbuild/image-builder
 COPY . .
 ENV GOFLAGS=-mod=vendor
-RUN go install ./...
+RUN go install ./cmd/image-builder
 
 # Build an extremely minimal container that only contains our Go application.
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
