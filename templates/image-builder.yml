@@ -241,7 +241,7 @@ parameters:
     value: "/app/composer-secrets/osbuild-client-ca.pem"
   - name: OSBUILD_URL
     description: Url to osbuild-composer instance
-    value: "https://osbuild-composer.org"
+    value: "https://osbuild-composer.image-builder-stage.svc.cluster.local:8080"
   - name: COMPOSER_IMAGE
     value: "quay.io/cloudservices/osbuild-composer"
     description: osbuild-composer image name
