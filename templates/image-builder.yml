@@ -72,7 +72,7 @@ objects:
             protocol: TCP
           volumeMounts:
             - name: composer-secrets
-              mountpath: "/app/composer-secrets"
+              mountPath: "/app/composer-secrets"
               readOnly: true
           env:
             - name: LISTEN_ADDRESS
@@ -160,7 +160,7 @@ objects:
             protocol: TCP
           volumeMounts:
             - name: composer-secrets
-              mountpath: "/etc/osbuild-composer"
+              mountPath: "/etc/osbuild-composer"
               readOnly: true
         volumes:
         - name: composer-secrets
@@ -198,7 +198,7 @@ objects:
         targetPort: 443
       - name: osbuild-composer-remote-worker
         protocol: TCP
-        port: ${{OSBUILD_REMOTE_WORKER_PORT}}
+        port: ${{COMPOSER_REMOTE_WORKER_PORT}}
         targetPort: 8700
     selector:
       name: image-builder
