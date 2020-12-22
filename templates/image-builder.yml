@@ -128,22 +128,22 @@ objects:
               valueFrom:
                 secretKeyRef:
                   key: aws_region
-                  name: composer
+                  name: composer-secrets
             - name: OSBUILD_AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   key: aws_access_key_id
-                  name: composer
+                  name: composer-secrets
             - name: OSBUILD_AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   key: aws_secret_access_key
-                  name: composer
+                  name: composer-secrets
             - name: OSBUILD_AWS_S3_BUCKET
               valueFrom:
                 secretKeyRef:
                   key: aws_s3_bucket
-                  name: composer
+                  name: composer-secrets
             - name: OSBUILD_URL
               value: "${OSBUILD_URL}"
             - name: OSBUILD_CERT_PATH
@@ -165,7 +165,7 @@ objects:
         volumes:
         - name: composer-secrets
           secret:
-            secretName: composer
+            secretName: composer-secrets
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
