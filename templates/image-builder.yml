@@ -242,3 +242,9 @@ parameters:
   - name: OSBUILD_URL
     description: Url to osbuild-composer instance
     value: "https://osbuild-composer.org"
+  - name: COMPOSER_IMAGE
+    value: "quay.io/cloudservices/osbuild-composer"
+    description: osbuild-composer image name
+  - name: COMPOSER_TAG
+    value: "73deee0"
+    description: osbuild-composer version
