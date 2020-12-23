@@ -162,10 +162,18 @@ objects:
             - name: composer-secrets
               mountPath: "/etc/osbuild-composer"
               readOnly: true
+            - name: osbuild-state-dir
+              mountPath: "/var/lib/osbuild-composer"
+            - name: osbuild-cache-dir
+              mountPath: "/var/cache/osbuild-composer"
         volumes:
         - name: composer-secrets
           secret:
             secretName: composer-secrets
+        - emptyDir: {}
+          name: osbuild-state-dir
+        - emptyDir: {}
+          name: osbuild-cache-dir
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
