@@ -232,13 +232,13 @@ parameters:
     value: "0.0.0.0:8086"
   - name: OSBUILD_CERT_PATH
     description: Path to certificate for ssl client auth to osbuild-composer instance
-    value: "/app/composer-secrets/osbuild-client-cert.pem"
+    value: "/app/composer-secrets/client-crt.pem"
   - name: OSBUILD_KEY_PATH
     description: Path to key for ssl client auth to osbuild-composer instance
-    value: "/app/composer-secrets/osbuild-client-key.pem"
+    value: "/app/composer-secrets/client-key.pem"
   - name: OSBUILD_CA_PATH
     description: Path to ca for ssl client auth to osbuild-composer instance
-    value: "/app/composer-secrets/osbuild-client-ca.pem"
+    value: "/app/composer-secrets/ca-crt.pem"
   - name: OSBUILD_URL
     description: Url to osbuild-composer instance
     value: "https://osbuild-composer.image-builder-stage.svc.cluster.local:8080"
