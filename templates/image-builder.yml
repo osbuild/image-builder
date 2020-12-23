@@ -246,5 +246,5 @@ parameters:
     value: "quay.io/cloudservices/osbuild-composer"
     description: osbuild-composer image name
   - name: COMPOSER_TAG
-    value: "73deee0"
+    value: "946a0b4"
     description: osbuild-composer version
