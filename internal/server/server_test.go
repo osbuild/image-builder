@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -23,6 +24,26 @@ func getResponseBody(t *testing.T, path string, auth bool) (*http.Response, stri
 		// also see AddDummyIdentityHeader() in main_test.go
 		request.Header.Add("X-Rh-Identity", "tester")
 	}
+
+	response, err := client.Do(request)
+	require.NoError(t, err)
+
+	body, err := ioutil.ReadAll(response.Body)
+	response.Body.Close()
+	require.NoError(t, err)
+	return response, string(body)
+}
+
+func postResponseBody(t *testing.T, path string, compose ComposeRequest) (*http.Response, string) {
+	buf, err := json.Marshal(compose)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	request, err := http.NewRequest("POST", "http://localhost:8086"+path, bytes.NewReader(buf))
+	require.NoError(t, err)
+	request.Header.Add("Content-Type", "application/json")
+	// also see AddDummyIdentityHeader() in main_test.go
+	request.Header.Add("X-Rh-Identity", "tester")
 
 	response, err := client.Do(request)
 	require.NoError(t, err)
@@ -157,4 +178,272 @@ func TestGetComposeStatus404(t *testing.T) {
 	response, body := getResponseBody(t, "/api/image-builder/v1/composes/xyz-123-test", true)
 	require.Equal(t, 404, response.StatusCode)
 	require.Contains(t, body, "404 during tests")
+}
+
+// note: these scenarios don't needs to talk to a simulated osbuild-composer API
+func TestComposeImage(t *testing.T) {
+	// note: any url will work, it'll only try to contact the osbuild-composer
+	// instance when calling /compose or /compose/$uuid
+	srv := startServer(t, "http://example.com")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	t.Run("ErrorsForZeroImageRequests", func(t *testing.T) {
+		payload := ComposeRequest{
+			Customizations: nil,
+			Distribution:   "fedora-32",
+			ImageRequests:  []ImageRequest{},
+		}
+		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "Exactly one image request should be included")
+	})
+
+	t.Run("ErrorsForTwoImageRequests", func(t *testing.T) {
+		payload := ComposeRequest{
+			Customizations: nil,
+			Distribution:   "fedora-32",
+			ImageRequests: []ImageRequest{
+				ImageRequest{
+					Architecture:   "x86_64",
+					ImageType:      "qcow2",
+					UploadRequests: nil,
+				},
+				ImageRequest{
+					Architecture:   "x86_64",
+					ImageType:      "ami",
+					UploadRequests: nil,
+				},
+			},
+		}
+		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "Exactly one image request should be included")
+	})
+
+	t.Run("ErrorsForZeroUploadRequests", func(t *testing.T) {
+		payload := ComposeRequest{
+			Customizations: nil,
+			Distribution:   "fedora-32",
+			ImageRequests: []ImageRequest{
+				ImageRequest{
+					Architecture:   "x86_64",
+					ImageType:      "qcow2",
+					UploadRequests: []UploadRequest{},
+				},
+			},
+		}
+		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "Exactly one upload request should be included")
+	})
+
+	t.Run("ErrorsForTwoUploadRequests", func(t *testing.T) {
+		payload := ComposeRequest{
+			Customizations: nil,
+			Distribution:   "fedora-32",
+			ImageRequests: []ImageRequest{
+				ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    "qcow2",
+					UploadRequests: []UploadRequest{
+						UploadRequest{
+							Type: "aws",
+							Options: AWSUploadRequestOptions{
+								ShareWithAccounts: []string{"test-account"},
+							},
+						},
+						UploadRequest{
+							Type: "aws",
+							Options: AWSUploadRequestOptions{
+								ShareWithAccounts: []string{"test-account"},
+							},
+						},
+					},
+				},
+			},
+		}
+		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "Exactly one upload request should be included")
+	})
+
+	t.Run("ISEWhenRepositoriesNotFound", func(t *testing.T) {
+		// Distro arch isn't supported which triggers error when searching
+		// for repositories
+		payload := ComposeRequest{
+			Customizations: nil,
+			Distribution:   "fedora-32",
+			ImageRequests: []ImageRequest{
+				ImageRequest{
+					Architecture: "unsupported-arch",
+					ImageType:    "qcow2",
+					UploadRequests: []UploadRequest{
+						UploadRequest{
+							Type: "aws",
+							Options: AWSUploadRequestOptions{
+								ShareWithAccounts: []string{"test-account"},
+							},
+						},
+					},
+				},
+			},
+		}
+		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		require.Equal(t, 500, response.StatusCode)
+		require.Contains(t, body, "Internal Server Error")
+	})
+
+	t.Run("ErrorsForUnknownUploadType", func(t *testing.T) {
+		// UploadRequest Type isn't supported
+		payload := ComposeRequest{
+			Customizations: nil,
+			Distribution:   "fedora-32",
+			ImageRequests: []ImageRequest{
+				ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    "qcow2",
+					UploadRequests: []UploadRequest{
+						UploadRequest{
+							Type: "unknown",
+							Options: AWSUploadRequestOptions{
+								ShareWithAccounts: []string{"test-account"},
+							},
+						},
+					},
+				},
+			},
+		}
+		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "Unknown UploadRequest type")
+	})
+}
+
+func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
+	// simulate osbuild-composer API
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusTeapot)
+		s := "deliberately returning !201 during tests"
+		err := json.NewEncoder(w).Encode(s)
+		require.NoError(t, err)
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL)
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	payload := ComposeRequest{
+		Customizations: nil,
+		Distribution:   "fedora-32",
+		ImageRequests: []ImageRequest{
+			ImageRequest{
+				Architecture: "x86_64",
+				ImageType:    "qcow2",
+				UploadRequests: []UploadRequest{
+					UploadRequest{
+						Type: "aws",
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
+						},
+					},
+				},
+			},
+		},
+	}
+	response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+	require.Equal(t, http.StatusTeapot, response.StatusCode)
+	require.Contains(t, body, "Failed posting compose request to osbuild-composer")
+}
+
+func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
+	// simulate osbuild-composer API
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		s := "not a cloudapi.ComposeResult data structure"
+		err := json.NewEncoder(w).Encode(s)
+		require.NoError(t, err)
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL)
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	payload := ComposeRequest{
+		Customizations: nil,
+		Distribution:   "fedora-32",
+		ImageRequests: []ImageRequest{
+			ImageRequest{
+				Architecture: "x86_64",
+				ImageType:    "qcow2",
+				UploadRequests: []UploadRequest{
+					UploadRequest{
+						Type: "aws",
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
+						},
+					},
+				},
+			},
+		},
+	}
+	response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+	require.Equal(t, 500, response.StatusCode)
+	require.Contains(t, body, "Internal Server Error")
+}
+
+func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
+	// simulate osbuild-composer API
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		result := cloudapi.ComposeResult{
+			Id: "a-new-test-compose-id",
+		}
+		err := json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL)
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	payload := ComposeRequest{
+		Customizations: nil,
+		Distribution:   "fedora-32",
+		ImageRequests: []ImageRequest{
+			ImageRequest{
+				Architecture: "x86_64",
+				ImageType:    "qcow2",
+				UploadRequests: []UploadRequest{
+					UploadRequest{
+						Type: "aws",
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
+						},
+					},
+				},
+			},
+		},
+	}
+	response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	var result ComposeResponse
+	err := json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, "a-new-test-compose-id", result.Id)
 }
