@@ -167,21 +167,21 @@ objects:
           name: osbuild-composer
       spec:
         containers:
-          - image: "${COMPOSER_IMAGE}:${COMPOSER_TAG}"
-            name: osbuild-composer
-            ports:
-            - name: api
-              containerPort: 443
-              protocol: TCP
-            env:
-              - name: OSBUILD_URL
-                value: "${OSBUILD_URL}"
-              - name: OSBUILD_CERT_PATH
-                value: "${OSBUILD_CERT_PATH}"
-              - name: OSBUILD_KEY_PATH
-                value: "${OSBUILD_KEY_PATH}"
-              - name: OSBUILD_CA_PATH
-                value: "${OSBUILD_CA_PATH}"
+        - image: "${COMPOSER_IMAGE}:${COMPOSER_TAG}"
+          name: osbuild-composer
+          ports:
+          - name: api
+            containerPort: 443
+            protocol: TCP
+          env:
+            - name: OSBUILD_URL
+              value: "${OSBUILD_URL}"
+            - name: OSBUILD_CERT_PATH
+              value: "${OSBUILD_CERT_PATH}"
+            - name: OSBUILD_KEY_PATH
+              value: "${OSBUILD_KEY_PATH}"
+            - name: OSBUILD_CA_PATH
+              value: "${OSBUILD_CA_PATH}"
           volumeMounts:
             - name: composer-secrets
               mountPath: "/etc/osbuild-composer"
