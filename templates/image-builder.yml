@@ -144,10 +144,10 @@ objects:
                 secretKeyRef:
                   key: aws_s3_bucket
                   name: composer-secrets
-          volumes:
-            - name: composer-secrets
-              secret:
-                secretName: composer-secrets
+        volumes:
+          - name: composer-secrets
+            secret:
+              secretName: composer-secrets
 
 # Deploy the osbuild-composer container.
 - apiVersion: apps/v1
