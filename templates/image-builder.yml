@@ -229,6 +229,25 @@ objects:
     selector:
       name: image-builder
 
+# Set up a route for osbuild-composer with IP restrictions. This allows
+# traffic from external workers to reach osbuild-composer via a route.
+# NOTE(mhayden): Allow access from osbuildci Jenkins temporarily until we know
+# the IP limitations actually work. 😉
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: osbuild-composer
+    annotations:
+      haproxy.router.openshift.io/ip_whitelist: 66.187.232.129
+  spec:
+    to:
+      kind: Service
+      name: osbuild-composer
+    tls:
+      termination: passthrough
+    port:
+      targetPort: ${{COMPOSER_REMOTE_WORKER_PORT}}
+
 # Parameters for the various configurations shown above.
 parameters:
   - description: Example configmap variable
