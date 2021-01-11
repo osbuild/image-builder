@@ -226,7 +226,7 @@ objects:
     ports:
       - name: osbuild-composer-cloudapi
         protocol: TCP
-        port: ${{BACKEND_LISTENER_PORT}}
+        port: ${{COMPOSER_API_PORT}}
         targetPort: 443
       - name: osbuild-composer-remote-worker
         protocol: TCP
@@ -270,6 +270,11 @@ parameters:
   - description: Backend listener port
     name: BACKEND_LISTENER_PORT
     value: "8080"
+  # For communication from image-builder to osbuild-composer.
+  - description: Composer API port
+    name: COMPOSER_API_PORT
+    value: "443"
+  # For communication from workers in AWS to osbuild-composer in clouddot.
   - description: Composer remote worker port
     name: COMPOSER_REMOTE_WORKER_PORT
     value: "8700"
@@ -292,7 +297,7 @@ parameters:
     value: "/app/composer-secrets/ca-crt.pem"
   - name: OSBUILD_URL
     description: Url to osbuild-composer instance
-    value: "https://osbuild-composer.image-builder-stage.svc.cluster.local:8080"
+    value: "https://osbuild-composer-cloudapi.image-builder-stage.svc.cluster.local"
   - name: COMPOSER_IMAGE
     value: "quay.io/cloudservices/osbuild-composer"
     description: osbuild-composer image name
