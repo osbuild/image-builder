@@ -21,8 +21,7 @@ objects:
   data:
     example: "${EXAMPLE}"
 
-# Deploy the image-builder container, add an environment variable from the
-# configmap, and open a port.
+# Deploy the image-builder container.
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -152,6 +151,25 @@ objects:
               value: "${OSBUILD_KEY_PATH}"
             - name: OSBUILD_CA_PATH
               value: "${OSBUILD_CA_PATH}"
+
+# Deploy the osbuild-composer container.
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      service: osbuild-composer
+    name: osbuild-composer
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: osbuild-composer
+    template:
+      metadata:
+        labels:
+          name: osbuild-composer
+      spec:
+        containers:
         - image: "${COMPOSER_IMAGE}:${COMPOSER_TAG}"
           name: osbuild-composer
           ports:
