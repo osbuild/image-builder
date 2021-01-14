@@ -7,14 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReadNameSpace(t *testing.T) {
-	// during testing this file doesn't exist
-	// /run/secrets/kubernetes.io/serviceaccount/namespace
-	result := ReadNameSpace()
-
-	require.Equal(t, "image-builder", result)
-}
-
 func TestNewLoggerDEBUG(t *testing.T) {
 	result, err := NewLogger("DEBUG", nil, nil, nil, nil)
 
