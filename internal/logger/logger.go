@@ -3,7 +3,6 @@ package logger
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -84,16 +83,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func ReadNameSpace() string {
-	namespace, err := ioutil.ReadFile("/run/secrets/kubernetes.io/serviceaccount/namespace")
-	if err != nil {
-		return "image-builder"
-	}
-	return string(namespace)
-}
-
 func NewLogger(level string, key *string, secret *string, region *string, group *string) (*logrus.Logger, error) {
-	stream := ReadNameSpace()
 
 	switch level {
 	case "DEBUG":
@@ -114,10 +104,12 @@ func NewLogger(level string, key *string, secret *string, region *string, group 
 	}
 
 	if key != nil {
-		log.SetFormatter(NewCloudwatchFormatter())
+		f := NewCloudwatchFormatter()
+		log.SetFormatter(f)
 		cred := credentials.NewStaticCredentials(*key, *secret, "")
 		awsconf := aws.NewConfig().WithRegion(*region).WithCredentials(cred)
-		hook, err := cloudwatch.NewBatchingHook(*group, stream, awsconf, 10*time.Second)
+		// avoid the cloudwatch sequence token to get out of sync using the unique hostname per pod
+		hook, err := cloudwatch.NewBatchingHook(*group, f.Hostname, awsconf, 10*time.Second)
 		if err != nil {
 			return nil, err
 		}
