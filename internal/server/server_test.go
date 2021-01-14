@@ -1,11 +1,9 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,45 +12,8 @@ import (
 
 	"github.com/osbuild/image-builder/internal/cloudapi"
 	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/osbuild/image-builder/internal/tutils"
 )
-
-func getResponseBody(t *testing.T, path string, auth bool) (*http.Response, string) {
-	client := &http.Client{}
-	request, err := http.NewRequest("GET", "http://localhost:8086"+path, nil)
-	require.NoError(t, err)
-	if auth {
-		// also see AddDummyIdentityHeader() in main_test.go
-		request.Header.Add("X-Rh-Identity", "tester")
-	}
-
-	response, err := client.Do(request)
-	require.NoError(t, err)
-
-	body, err := ioutil.ReadAll(response.Body)
-	response.Body.Close()
-	require.NoError(t, err)
-	return response, string(body)
-}
-
-func postResponseBody(t *testing.T, path string, compose ComposeRequest) (*http.Response, string) {
-	buf, err := json.Marshal(compose)
-	require.NoError(t, err)
-
-	client := &http.Client{}
-	request, err := http.NewRequest("POST", "http://localhost:8086"+path, bytes.NewReader(buf))
-	require.NoError(t, err)
-	request.Header.Add("Content-Type", "application/json")
-	// also see AddDummyIdentityHeader() in main_test.go
-	request.Header.Add("X-Rh-Identity", "tester")
-
-	response, err := client.Do(request)
-	require.NoError(t, err)
-
-	body, err := ioutil.ReadAll(response.Body)
-	response.Body.Close()
-	require.NoError(t, err)
-	return response, string(body)
-}
 
 func startServer(t *testing.T, url string) *Server {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
@@ -80,13 +41,13 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	}()
 
 	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
-		response, body := getResponseBody(t, "/api/image-builder/v1/version", false)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", false)
 		require.Equal(t, 404, response.StatusCode)
 		require.Contains(t, body, "x-rh-identity header is not present")
 	})
 
 	t.Run("GetVersion", func(t *testing.T) {
-		response, body := getResponseBody(t, "/api/image-builder/v1/version", true)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", true)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result Version
@@ -96,13 +57,13 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetOpenapiJson", func(t *testing.T) {
-		response, _ := getResponseBody(t, "/api/image-builder/v1/openapi.json", true)
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/openapi.json", true)
 		require.Equal(t, 200, response.StatusCode)
 		// note: not asserting body b/c response is too big
 	})
 
 	t.Run("GetDistributions", func(t *testing.T) {
-		response, body := getResponseBody(t, "/api/image-builder/v1/distributions", true)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", true)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result Distributions
@@ -115,7 +76,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetArchitectures", func(t *testing.T) {
-		response, body := getResponseBody(t, "/api/image-builder/v1/architectures/fedora-32", true)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/fedora-32", true)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result Architectures
@@ -148,7 +109,7 @@ func TestGetComposeStatus(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	response, body := getResponseBody(t, "/api/image-builder/v1/composes/xyz-123-test", true)
+	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", true)
 	require.Equal(t, 200, response.StatusCode)
 
 	var result cloudapi.ComposeStatus
@@ -175,7 +136,7 @@ func TestGetComposeStatus404(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	response, body := getResponseBody(t, "/api/image-builder/v1/composes/xyz-123-test", true)
+	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", true)
 	require.Equal(t, 404, response.StatusCode)
 	require.Contains(t, body, "404 during tests")
 }
@@ -196,7 +157,7 @@ func TestComposeImage(t *testing.T) {
 			Distribution:   "fedora-32",
 			ImageRequests:  []ImageRequest{},
 		}
-		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
 		require.Contains(t, body, "Exactly one image request should be included")
 	})
@@ -218,7 +179,7 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
 		require.Contains(t, body, "Exactly one image request should be included")
 	})
@@ -235,7 +196,7 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
 		require.Contains(t, body, "Exactly one upload request should be included")
 	})
@@ -265,7 +226,7 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
 		require.Contains(t, body, "Exactly one upload request should be included")
 	})
@@ -291,7 +252,7 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 500, response.StatusCode)
 		require.Contains(t, body, "Internal Server Error")
 	})
@@ -316,7 +277,7 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
 		require.Contains(t, body, "Unknown UploadRequest type")
 	})
@@ -357,7 +318,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 			},
 		},
 	}
-	response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 	require.Equal(t, http.StatusTeapot, response.StatusCode)
 	require.Contains(t, body, "Failed posting compose request to osbuild-composer")
 }
@@ -397,7 +358,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 			},
 		},
 	}
-	response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 	require.Equal(t, 500, response.StatusCode)
 	require.Contains(t, body, "Internal Server Error")
 }
@@ -439,7 +400,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 			},
 		},
 	}
-	response, body := postResponseBody(t, "/api/image-builder/v1/compose", payload)
+	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 	require.Equal(t, http.StatusCreated, response.StatusCode)
 
 	var result ComposeResponse
