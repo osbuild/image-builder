@@ -102,6 +102,15 @@ objects:
                 secretKeyRef:
                   name: image-builder-db
                   key: db.password
+            # Configuration for the osbuild client within image-builder
+            - name: OSBUILD_URL
+              value: "${OSBUILD_URL}"
+            - name: OSBUILD_CERT_PATH
+              value: "${OSBUILD_CERT_PATH}"
+            - name: OSBUILD_KEY_PATH
+              value: "${OSBUILD_KEY_PATH}"
+            - name: OSBUILD_CA_PATH
+              value: "${OSBUILD_CA_PATH}"
             # Credentials/configuration for AWS cloudwatch.
             - name: CW_AWS_ACCESS_KEY_ID
               valueFrom:
@@ -173,15 +182,6 @@ objects:
           - name: api
             containerPort: 443
             protocol: TCP
-          env:
-            - name: OSBUILD_URL
-              value: "${OSBUILD_URL}"
-            - name: OSBUILD_CERT_PATH
-              value: "${OSBUILD_CERT_PATH}"
-            - name: OSBUILD_KEY_PATH
-              value: "${OSBUILD_KEY_PATH}"
-            - name: OSBUILD_CA_PATH
-              value: "${OSBUILD_CA_PATH}"
           volumeMounts:
             - name: composer-secrets
               mountPath: "/etc/osbuild-composer"
@@ -297,7 +297,7 @@ parameters:
     value: "/app/composer-secrets/ca-crt.pem"
   - name: OSBUILD_URL
     description: Url to osbuild-composer instance
-    value: "https://osbuild-composer-cloudapi.image-builder-stage.svc.cluster.local"
+    value: "https://osbuild-composer-cloudapi.image-builder-stage.svc.cluster.local/api/composer/v1"
   - name: COMPOSER_IMAGE
     value: "quay.io/cloudservices/osbuild-composer"
     description: osbuild-composer image name
