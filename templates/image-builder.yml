@@ -295,9 +295,15 @@ parameters:
   - name: OSBUILD_CA_PATH
     description: Path to ca for ssl client auth to osbuild-composer instance
     value: "/app/composer-secrets/ca-crt.pem"
+  # NOTE(mhayden): Use this OSBUILD_URL for talking to osbuild-composer
+  # deployed in OpenShift.
+  # - name: OSBUILD_URL
+  #   description: Url to osbuild-composer instance
+  #   value: "https://osbuild-composer-cloudapi.image-builder-stage.svc.cluster.local/api/composer/v1"
+  # NOTE(mhayden): Use this OSBUILD_URL for talking to osbuild-composer at AWS.
   - name: OSBUILD_URL
     description: Url to osbuild-composer instance
-    value: "https://osbuild-composer-cloudapi.image-builder-stage.svc.cluster.local/api/composer/v1"
+    value: "https://aws.composer.osbuild.org:9876/api/composer/v1"
   - name: COMPOSER_IMAGE
     value: "quay.io/cloudservices/osbuild-composer"
     description: osbuild-composer image name
