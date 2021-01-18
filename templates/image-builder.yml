@@ -158,47 +158,6 @@ objects:
             secret:
               secretName: composer-secrets
 
-# Deploy the osbuild-composer container.
-- apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    labels:
-      service: osbuild-composer
-    name: osbuild-composer
-  spec:
-    replicas: 1
-    selector:
-      matchLabels:
-        name: osbuild-composer
-    template:
-      metadata:
-        labels:
-          name: osbuild-composer
-      spec:
-        containers:
-        - image: "${COMPOSER_IMAGE}:${COMPOSER_TAG}"
-          name: osbuild-composer
-          ports:
-          - name: api
-            containerPort: 443
-            protocol: TCP
-          volumeMounts:
-            - name: composer-secrets
-              mountPath: "/etc/osbuild-composer"
-              readOnly: true
-            - name: osbuild-state-dir
-              mountPath: "/var/lib/osbuild-composer"
-            - name: osbuild-cache-dir
-              mountPath: "/var/cache/osbuild-composer"
-        volumes:
-          - name: composer-secrets
-            secret:
-              secretName: composer-secrets
-          - emptyDir: {}
-            name: osbuild-state-dir
-          - emptyDir: {}
-            name: osbuild-cache-dir
-
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
   kind: Service
@@ -214,45 +173,6 @@ objects:
         targetPort: 8086
     selector:
       name: image-builder
-
-# Service for composer
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      service: osbuild-composer
-    name: osbuild-composer
-  spec:
-    ports:
-      - name: osbuild-composer-cloudapi
-        protocol: TCP
-        port: ${{COMPOSER_API_PORT}}
-        targetPort: 443
-      - name: osbuild-composer-remote-worker
-        protocol: TCP
-        port: ${{COMPOSER_REMOTE_WORKER_PORT}}
-        targetPort: 8700
-    selector:
-      name: image-builder
-
-# Set up a route for osbuild-composer with IP restrictions. This allows
-# traffic from external workers to reach osbuild-composer via a route.
-# NOTE(mhayden): Allow access from osbuildci Jenkins temporarily until we know
-# the IP limitations actually work. 😉
-- apiVersion: v1
-  kind: Route
-  metadata:
-    name: osbuild-composer
-    annotations:
-      haproxy.router.openshift.io/ip_whitelist: 66.187.232.129
-  spec:
-    to:
-      kind: Service
-      name: osbuild-composer
-    tls:
-      termination: passthrough
-    port:
-      targetPort: ${{COMPOSER_REMOTE_WORKER_PORT}}
 
 # Parameters for the various configurations shown above.
 parameters:
@@ -270,14 +190,6 @@ parameters:
   - description: Backend listener port
     name: BACKEND_LISTENER_PORT
     value: "8080"
-  # For communication from image-builder to osbuild-composer.
-  - description: Composer API port
-    name: COMPOSER_API_PORT
-    value: "443"
-  # For communication from workers in AWS to osbuild-composer in clouddot.
-  - description: Composer remote worker port
-    name: COMPOSER_REMOTE_WORKER_PORT
-    value: "8700"
   # NOTE(mhayden): Change this later once we add a real health check to
   # image-builder that verifies connectivity, etc.
   - name: HEALTHCHECK_URI
@@ -295,18 +207,6 @@ parameters:
   - name: OSBUILD_CA_PATH
     description: Path to ca for ssl client auth to osbuild-composer instance
     value: "/app/composer-secrets/ca-crt.pem"
-  # NOTE(mhayden): Use this OSBUILD_URL for talking to osbuild-composer
-  # deployed in OpenShift.
-  # - name: OSBUILD_URL
-  #   description: Url to osbuild-composer instance
-  #   value: "https://osbuild-composer-cloudapi.image-builder-stage.svc.cluster.local/api/composer/v1"
-  # NOTE(mhayden): Use this OSBUILD_URL for talking to osbuild-composer at AWS.
   - name: OSBUILD_URL
     description: Url to osbuild-composer instance
     value: "https://aws.composer.osbuild.org:9876/api/composer/v1"
-  - name: COMPOSER_IMAGE
-    value: "quay.io/cloudservices/osbuild-composer"
-    description: osbuild-composer image name
-  - name: COMPOSER_TAG
-    value: "946a0b4"
-    description: osbuild-composer version
