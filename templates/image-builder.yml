@@ -208,5 +208,5 @@ parameters:
     description: Path to ca for ssl client auth to osbuild-composer instance
     value: "/app/composer-secrets/ca-crt.pem"
   - name: OSBUILD_URL
-    description: Url to osbuild-composer instance
+    description: Url to osbuild-composer instance in AWS
     value: "https://aws.composer.osbuild.org:9876/api/composer/v1"
