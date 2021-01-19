@@ -15,14 +15,14 @@ import (
 	"github.com/osbuild/image-builder/internal/tutils"
 )
 
-func startServer(t *testing.T, url string) *Server {
+func startServer(t *testing.T, url string, orgIds string) *Server {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
-	srv := NewServer(logger, client, "", "", "", "")
+	srv := NewServer(logger, client, "", "", "", "", orgIds)
 	// execute in parallel b/c .Run() will block execution
 	go srv.Run("localhost:8086")
 
@@ -34,20 +34,20 @@ func startServer(t *testing.T, url string) *Server {
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv := startServer(t, "http://example.com")
+	srv := startServer(t, "http://example.com", "000000")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
 	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", false)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", nil)
 		require.Equal(t, 404, response.StatusCode)
 		require.Contains(t, body, "x-rh-identity header is not present")
 	})
 
 	t.Run("GetVersion", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", true)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result Version
@@ -57,13 +57,13 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetOpenapiJson", func(t *testing.T) {
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/openapi.json", true)
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/openapi.json", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 		// note: not asserting body b/c response is too big
 	})
 
 	t.Run("GetDistributions", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", true)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result Distributions
@@ -76,7 +76,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetArchitectures", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/fedora-32", true)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/fedora-32", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result Architectures
@@ -87,6 +87,48 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 				Arch:       "x86_64",
 				ImageTypes: []string{"ami"},
 			}}, result)
+	})
+
+	t.Run("BogusAuthString", func(t *testing.T) {
+		auth := "notbase64"
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "x-rh-identity header doesn't seem to be a base64 string")
+	})
+
+	t.Run("BogusBase64AuthString", func(t *testing.T) {
+		auth := "dGhpcyBpcyBkZWZpbml0ZWx5IG5vdCBqc29uCg=="
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "x-rh-identity header isn't json")
+	})
+
+	t.Run("NoOrgId", func(t *testing.T) {
+		// no org_id key is present
+		auth := "eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnt9fX0="
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "x-rh-identity header doesn't contain valid orgId")
+	})
+
+	t.Run("OrgIdNotAuthorized", func(t *testing.T) {
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "x-rh-identity not authorized")
+	})
+}
+
+func TestEmptyOrgIds(t *testing.T) {
+	srv := startServer(t, "http://example.com", "")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	t.Run("OrgIdNotAuthorized", func(t *testing.T) {
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "x-rh-identity not authorized")
 	})
 }
 
@@ -103,17 +145,26 @@ func TestGetComposeStatus(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL)
+	srv := startServer(t, api_srv.URL, "*")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
-	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", true)
+	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", &tutils.AuthString0)
 	require.Equal(t, 200, response.StatusCode)
 
 	var result cloudapi.ComposeStatus
 	err := json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, cloudapi.ComposeStatus{
+		Status: "running",
+	}, result)
+
+	// With a wildcard orgIds either auth should work
+	response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", &tutils.AuthString1)
+	require.Equal(t, 200, response.StatusCode)
+	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, cloudapi.ComposeStatus{
 		Status: "running",
@@ -130,13 +181,13 @@ func TestGetComposeStatus404(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL)
+	srv := startServer(t, api_srv.URL, "*")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
-	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", true)
+	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", &tutils.AuthString0)
 	require.Equal(t, 404, response.StatusCode)
 	require.Contains(t, body, "404 during tests")
 }
@@ -145,7 +196,7 @@ func TestGetComposeStatus404(t *testing.T) {
 func TestComposeImage(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv := startServer(t, "http://example.com")
+	srv := startServer(t, "http://example.com", "*")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -294,7 +345,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL)
+	srv := startServer(t, api_srv.URL, "*")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -334,7 +385,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL)
+	srv := startServer(t, api_srv.URL, "*")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -376,7 +427,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL)
+	srv := startServer(t, api_srv.URL, "*")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)

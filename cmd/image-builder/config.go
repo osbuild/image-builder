@@ -16,4 +16,5 @@ type ImageBuilderConfig struct {
 	OsbuildCert            *string `env:"OSBUILD_CERT_PATH"`
 	OsbuildKey             *string `env:"OSBUILD_KEY_PATH"`
 	OsbuildCA              *string `env:"OSBUILD_CA_PATH"`
+	OrgIds                 string  `env:"ALLOWED_ORG_IDS"`
 }

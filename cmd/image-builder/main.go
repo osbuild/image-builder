@@ -64,6 +64,6 @@ func main() {
 		panic(err)
 	}
 
-	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket)
+	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket, config.OrgIds)
 	s.Run(config.ListenAddress)
 }
