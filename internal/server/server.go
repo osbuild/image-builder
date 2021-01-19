@@ -2,6 +2,7 @@
 package server
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -22,6 +23,7 @@ type Server struct {
 	echo     *echo.Echo
 	client   cloudapi.OsbuildClient
 	awsCreds *awsCreds
+	orgIds   string
 }
 
 type awsCreds struct {
@@ -35,7 +37,7 @@ type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string) *Server {
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string, orgIds string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -52,12 +54,13 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region stri
 			secret,
 			s3Bucket,
 		},
+		orgIds,
 	}
 	var h Handlers
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
-	s.echo.Pre(VerifyIdentityHeader)
+	s.echo.Pre(s.VerifyIdentityHeader)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion)), &h)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)), &h)
 	return &s
@@ -270,16 +273,43 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	return nil
 }
 
-func VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+type IdentityHeader struct {
+	Identity struct {
+		Internal struct {
+			OrgId *string `json:"org_id"`
+		} `json:"internal"`
+	} `json:"identity"`
+}
+
+// clouddot guidelines requires 404 instead of 403 when unauthorized
+func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		request := ctx.Request()
 
-		// For now just check it's there, in future we might want to
-		// decode the b64 string and check a specific entitlement
-		identityHeader := request.Header["X-Rh-Identity"]
-		if len(identityHeader) != 1 {
-			// clouddot guidelines requires 404 instead of 403
+		idHeaderB64 := request.Header["X-Rh-Identity"]
+		if len(idHeaderB64) != 1 {
 			return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header is not present")
+		}
+
+		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64[0])
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header doesn't seem to be a base64 string")
+		}
+
+		if s.orgIds != "*" {
+			var idHeader IdentityHeader
+			err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header isn't json")
+			}
+
+			if idHeader.Identity.Internal.OrgId == nil {
+				return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header doesn't contain valid orgId")
+			}
+
+			if !strings.Contains(s.orgIds, *idHeader.Identity.Internal.OrgId) {
+				return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity not authorized")
+			}
 		}
 
 		return nextHandler(ctx)

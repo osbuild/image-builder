@@ -153,6 +153,8 @@ objects:
                 secretKeyRef:
                   key: aws_s3_bucket
                   name: composer-secrets
+            - name: ALLOWED_ORG_IDS
+              value: "${ALLOWED_ORG_IDS}"
         volumes:
           - name: composer-secrets
             secret:
@@ -210,3 +212,6 @@ parameters:
   - name: OSBUILD_URL
     description: Url to osbuild-composer instance in AWS
     value: "https://aws.composer.osbuild.org:9876/api/composer/v1"
+  - name: ALLOWED_ORG_IDS
+    description: Organization ids allowed to access the api, wildcard means everyone
+    value: "*"

@@ -33,7 +33,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 		tries += 1
 	}
 
-	response, body := tutils.GetResponseBody(t, ib + "/distributions", true)
+	response, body := tutils.GetResponseBody(t, ib + "/distributions", &tutils.AuthString0)
 	require.Equalf(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
 
 	require.NotNil(t, body)
@@ -44,7 +44,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	require.NoError(t, err)
 
 	distro := distributions[0].Name
-	response, body = tutils.GetResponseBody(t, ib + "/architectures/" + distro, true)
+	response, body = tutils.GetResponseBody(t, ib + "/architectures/" + distro, &tutils.AuthString0)
 	require.Equalf(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
 
 	require.NotNil(t, body)
@@ -86,7 +86,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 
 	id := composeResp.Id
 
-	response, body = tutils.GetResponseBody(t, ib + "/composes/" + id, true)
+	response, body = tutils.GetResponseBody(t, ib + "/composes/" + id, &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
 
 	require.NotNil(t, body)
@@ -99,7 +99,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	require.Contains(t, []string{"pending", "running"}, composeStatus.Status)
 
 	// Check if we get 404 without the identity header
-	response, body = tutils.GetResponseBody(t, ib + "/version", false)
+	response, body = tutils.GetResponseBody(t, ib + "/version", nil)
 	require.Equalf(t, http.StatusNotFound, response.StatusCode, "Error: got non-404 status. Full response: %s", body)
 }
 
@@ -117,6 +117,7 @@ func TestImageBuilder(t *testing.T) {
 		"OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem",
 		"OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem",
 		"OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem",
+		"ALLOWED_ORG_IDS=*",
 	)
 
 	var buf bytes.Buffer
