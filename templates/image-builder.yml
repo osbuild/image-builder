@@ -214,4 +214,4 @@ parameters:
     value: "https://aws.composer.osbuild.org:9876/api/composer/v1"
   - name: ALLOWED_ORG_IDS
     description: Organization ids allowed to access the api, wildcard means everyone
-    value: "*"
+    value: ""
