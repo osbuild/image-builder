@@ -60,9 +60,14 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region stri
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
-	s.echo.Pre(s.VerifyIdentityHeader)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion)), &h)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.VerifyIdentityHeader), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.VerifyIdentityHeader), &h)
+
+	/* Used for the liveness- and readinessProbe */
+	s.echo.GET("/status", func(c echo.Context) error {
+		return h.GetVersion(c)
+	})
+
 	return &s
 }
 

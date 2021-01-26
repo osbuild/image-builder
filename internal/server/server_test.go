@@ -116,6 +116,11 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.Equal(t, 404, response.StatusCode)
 		require.Contains(t, body, "x-rh-identity not authorized")
 	})
+
+	t.Run("StatusCheck", func(t *testing.T) {
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/status", nil)
+		require.Equal(t, 200, response.StatusCode)
+	})
 }
 
 func TestEmptyOrgIds(t *testing.T) {
