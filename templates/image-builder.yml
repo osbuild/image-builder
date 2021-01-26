@@ -47,9 +47,6 @@ objects:
               path: ${HEALTHCHECK_URI}
               port: 8086
               scheme: HTTP
-              httpHeaders:
-                - name: X-Rh-Identity
-                  value: health-check
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
@@ -59,9 +56,6 @@ objects:
               path: ${HEALTHCHECK_URI}
               port: 8086
               scheme: HTTP
-              httpHeaders:
-                - name: X-Rh-Identity
-                  value: health-check
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
@@ -196,7 +190,7 @@ parameters:
   # image-builder that verifies connectivity, etc.
   - name: HEALTHCHECK_URI
     description: URI to query for the health check
-    value: "/api/image-builder/v1/version"
+    value: "/status"
   - name: LISTEN_ADDRESS
     description: Listening address and port
     value: "0.0.0.0:8086"
