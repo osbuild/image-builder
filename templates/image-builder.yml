@@ -71,31 +71,32 @@ objects:
             - name: LISTEN_ADDRESS
               value: "${LISTEN_ADDRESS}"
             # Credentials/configuration for AWS RDS.
-            - name: PGHOST
-              valueFrom:
-                secretKeyRef:
-                  name: image-builder-db
-                  key: db.host
-            - name: PGPORT
-              valueFrom:
-                secretKeyRef:
-                  name: image-builder-db
-                  key: db.port
-            - name: PGDATABASE
-              valueFrom:
-                secretKeyRef:
-                  name: image-builder-db
-                  key: db.name
-            - name: PGUSER
-              valueFrom:
-                secretKeyRef:
-                  name: image-builder-db
-                  key: db.user
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: image-builder-db
-                  key: db.password
+            # TODO uncomment this when needed for the DB work
+            # - name: PGHOST
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: image-builder-db
+            #       key: db.host
+            # - name: PGPORT
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: image-builder-db
+            #       key: db.port
+            # - name: PGDATABASE
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: image-builder-db
+            #       key: db.name
+            # - name: PGUSER
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: image-builder-db
+            #       key: db.user
+            # - name: PGPASSWORD
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: image-builder-db
+            #       key: db.password
             # Configuration for the osbuild client within image-builder
             - name: OSBUILD_URL
               value: "${OSBUILD_URL}"
