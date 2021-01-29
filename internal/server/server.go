@@ -23,7 +23,7 @@ type Server struct {
 	echo     *echo.Echo
 	client   cloudapi.OsbuildClient
 	awsCreds *awsCreds
-	orgIds   string
+	orgIds   []string
 }
 
 type awsCreds struct {
@@ -37,7 +37,7 @@ type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string, orgIds string) *Server {
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string, orgIds []string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -281,9 +281,21 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 type IdentityHeader struct {
 	Identity struct {
 		Internal struct {
-			OrgId *string `json:"org_id"`
+			OrgId string `json:"org_id"`
 		} `json:"internal"`
 	} `json:"identity"`
+}
+
+func orgIdAllowed(header IdentityHeader, orgIds []string) bool {
+	for _, org := range orgIds {
+		if org == "*" {
+			return true
+		}
+		if header.Identity.Internal.OrgId == org {
+			return true
+		}
+	}
+	return false
 }
 
 // clouddot guidelines requires 404 instead of 403 when unauthorized
@@ -293,28 +305,22 @@ func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 
 		idHeaderB64 := request.Header["X-Rh-Identity"]
 		if len(idHeaderB64) != 1 {
-			return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header is not present")
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header is not present")
 		}
 
 		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64[0])
 		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header doesn't seem to be a base64 string")
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
 		}
 
-		if s.orgIds != "*" {
-			var idHeader IdentityHeader
-			err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header isn't json")
-			}
+		var idHeader IdentityHeader
+		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
+		}
 
-			if idHeader.Identity.Internal.OrgId == nil {
-				return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity header doesn't contain valid orgId")
-			}
-
-			if !strings.Contains(s.orgIds, *idHeader.Identity.Internal.OrgId) {
-				return echo.NewHTTPError(http.StatusNotFound, "x-rh-identity not authorized")
-			}
+		if !orgIdAllowed(idHeader, s.orgIds) {
+			return echo.NewHTTPError(http.StatusNotFound, "Organization not allowed")
 		}
 
 		return nextHandler(ctx)

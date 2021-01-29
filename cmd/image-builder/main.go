@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/osbuild/image-builder/internal/cloudapi"
 	"github.com/osbuild/image-builder/internal/logger"
@@ -64,6 +65,12 @@ func main() {
 		panic(err)
 	}
 
-	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket, config.OrgIds)
+	// Make a slice of allowed organization ids, '*' in the slice means blanket permission
+	orgIds := []string{}
+	if config.OrgIds != "" {
+		orgIds = strings.Split(config.OrgIds, ";")
+	}
+
+	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket, orgIds)
 	s.Run(config.ListenAddress)
 }
