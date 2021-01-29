@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,7 +23,7 @@ func startServer(t *testing.T, url string, orgIds string) *Server {
 	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
-	srv := NewServer(logger, client, "", "", "", "", orgIds)
+	srv := NewServer(logger, client, "", "", "", "", strings.Split(orgIds, ";"))
 	// execute in parallel b/c .Run() will block execution
 	go srv.Run("localhost:8086")
 
@@ -43,7 +44,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", nil)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "x-rh-identity header is not present")
+		require.Contains(t, body, "Auth header is not present")
 	})
 
 	t.Run("GetVersion", func(t *testing.T) {
@@ -93,14 +94,14 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		auth := "notbase64"
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "x-rh-identity header doesn't seem to be a base64 string")
+		require.Contains(t, body, "Auth header has incorrect format")
 	})
 
 	t.Run("BogusBase64AuthString", func(t *testing.T) {
 		auth := "dGhpcyBpcyBkZWZpbml0ZWx5IG5vdCBqc29uCg=="
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "x-rh-identity header isn't json")
+		require.Contains(t, body, "Auth header has incorrect format")
 	})
 
 	t.Run("NoOrgId", func(t *testing.T) {
@@ -108,13 +109,13 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		auth := "eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnt9fX0="
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "x-rh-identity header doesn't contain valid orgId")
+		require.Contains(t, body, "Organization not allowed")
 	})
 
 	t.Run("OrgIdNotAuthorized", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "x-rh-identity not authorized")
+		require.Contains(t, body, "Organization not allowed")
 	})
 
 	t.Run("StatusCheck", func(t *testing.T) {
@@ -133,7 +134,7 @@ func TestEmptyOrgIds(t *testing.T) {
 	t.Run("OrgIdNotAuthorized", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "x-rh-identity not authorized")
+		require.Contains(t, body, "Organization not allowed")
 	})
 }
 
@@ -463,4 +464,19 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	err := json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, "a-new-test-compose-id", result.Id)
+}
+
+func TestOrgIdAllowed(t *testing.T) {
+	var header IdentityHeader
+
+	header.Identity.Internal.OrgId = ""
+	require.False(t, orgIdAllowed(header, []string{}))
+	require.True(t, orgIdAllowed(header, []string{"*"}))
+	header.Identity.Internal.OrgId = "12345"
+	require.False(t, orgIdAllowed(header, []string{}))
+	require.True(t, orgIdAllowed(header, []string{"*"}))
+	require.True(t, orgIdAllowed(header, []string{"12345"}))
+	require.True(t, orgIdAllowed(header, []string{"12345", "12322"}))
+	require.False(t, orgIdAllowed(header, []string{"123456"}))
+	require.True(t, orgIdAllowed(header, []string{"123456", "*"}))
 }
