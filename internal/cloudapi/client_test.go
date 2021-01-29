@@ -55,7 +55,7 @@ func TestComposeStatusWithHTTPServer(t *testing.T) {
 	uuid := "1cf31af9-d2be-4b11-bb2d-f2f2d22b0736"
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, r.URL.Path, fmt.Sprintf("/compose/%s", uuid))
+		require.Equal(t, r.URL.Path, fmt.Sprintf("/api/composer/v1/compose/%s", uuid))
 		require.Equal(t, r.Method, "GET")
 		w.Header().Set("Content-Type", "application/json")
 		s := ComposeStatus{
@@ -83,7 +83,7 @@ func TestComposeStatusWithHTTPServer(t *testing.T) {
 func TestComposeWithHTTPServer(t *testing.T) {
 	uuid := "1cf31af9-d2be-4b11-bb2d-f2f2d22b0736"
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, r.URL.Path, "/compose")
+		require.Equal(t, r.URL.Path, "/api/composer/v1/compose")
 		require.Equal(t, r.Method, "POST")
 		require.Equal(t, r.Header.Get("Content-Type"), "application/json")
 		w.WriteHeader(http.StatusCreated)

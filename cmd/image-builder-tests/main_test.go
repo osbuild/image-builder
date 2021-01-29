@@ -113,7 +113,7 @@ func TestImageBuilder(t *testing.T) {
 	   OsbuildCA       string  `env:"OSBUILD_CA_PATH"` */
 	cmd := exec.Command("/usr/libexec/image-builder/image-builder")
 	cmd.Env = append(os.Environ(),
-		"OSBUILD_URL=https://localhost:443/api/composer/v1",
+		"OSBUILD_URL=https://localhost:443",
 		"OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem",
 		"OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem",
 		"OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem",
