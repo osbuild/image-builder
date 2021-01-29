@@ -18,6 +18,7 @@ type OsbuildClient struct {
 	cert       string
 	key        string
 	ca         string
+	pathPrefix string
 	client     *http.Client
 }
 
@@ -34,6 +35,7 @@ func NewOsbuildClient(osbuildURL string, cert *string, key *string, ca *string) 
 	if ca != nil {
 		oc.ca = *ca
 	}
+	oc.pathPrefix = "/api/composer/v1"
 
 	if strings.HasPrefix(osbuildURL, "https") {
 		// Load client cert
@@ -66,7 +68,7 @@ func NewOsbuildClient(osbuildURL string, cert *string, key *string, ca *string) 
 }
 
 func (oc *OsbuildClient) ComposeStatus(id string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/compose/%s", oc.osbuildURL, id), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s/compose/%s", oc.osbuildURL, oc.pathPrefix, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +82,7 @@ func (oc *OsbuildClient) Compose(compose ComposeRequest) (*http.Response, error)
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/compose", oc.osbuildURL), bytes.NewReader(buf))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s%s/compose", oc.osbuildURL, oc.pathPrefix), bytes.NewReader(buf))
 	if err != nil {
 		return nil, err
 	}

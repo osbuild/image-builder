@@ -40,7 +40,7 @@ sudo dnf -y install image-builder-tests
 # The integration test also runs a test against an image-builder container
 # IMAGES
 sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
-     -e LISTEN_ADDRESS=localhost:8087 -e OSBUILD_URL=https://localhost:443/api/composer/v1 \
+     -e LISTEN_ADDRESS=localhost:8087 -e OSBUILD_URL=https://localhost:443 \
      -e OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem \
      -e OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem \
      -e OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem \
