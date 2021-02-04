@@ -3,12 +3,9 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"os/exec"
 	"testing"
 	"time"
 
@@ -46,13 +43,24 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	distro := distributions[0].Name
 	response, body = tutils.GetResponseBody(t, ib + "/architectures/" + distro, &tutils.AuthString0)
 	require.Equalf(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
-
 	require.NotNil(t, body)
 	require.NotEmpty(t, body)
 
 	var architectures server.Architectures
 	err = json.Unmarshal([]byte(body), &architectures)
 	require.NoError(t, err)
+	arch := architectures[0].Arch
+
+	// Get a list of packages
+	response, body = tutils.GetResponseBody(t, fmt.Sprintf("%v/packages?search=ssh&distribution=%v&architecture=%v&limit=10&offset=0", ib, distro, arch), &tutils.AuthString0)
+	require.Equalf(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
+	var packages server.PackagesResponse
+	err = json.Unmarshal([]byte(body), &packages)
+	// Make sure we get some packages
+	require.Greater(t, packages.Meta.Count, 0)
+	// The links supplied should point to the same search
+	require.Contains(t, packages.Links.First, "search=ssh")
+
 
 
 	// Build a composerequest
@@ -60,7 +68,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 		Distribution: distro,
 		ImageRequests: []server.ImageRequest{
 			server.ImageRequest{
-				Architecture: architectures[0].Arch,
+				Architecture: arch,
 				ImageType: architectures[0].ImageTypes[0],
 				UploadRequests: []server.UploadRequest{
 					{
@@ -101,36 +109,6 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	// Check if we get 404 without the identity header
 	response, body = tutils.GetResponseBody(t, ib + "/version", nil)
 	require.Equalf(t, http.StatusNotFound, response.StatusCode, "Error: got non-404 status. Full response: %s", body)
-}
-
-func TestImageBuilder(t *testing.T) {
-	// allow to run against existing instance
-	// run image builder
-
-	/* OsbuildURL      string  `env:"OSBUILD_URL"`
-	   OsbuildCert     string  `env:"OSBUILD_CERT_PATH"`
-	   OsbuildKey      string  `env:"OSBUILD_KEY_PATH"`
-	   OsbuildCA       string  `env:"OSBUILD_CA_PATH"` */
-	cmd := exec.Command("/usr/libexec/image-builder/image-builder")
-	cmd.Env = append(os.Environ(),
-		"OSBUILD_URL=https://localhost:443",
-		"OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem",
-		"OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem",
-		"OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem",
-		"ALLOWED_ORG_IDS=*",
-	)
-
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	err := cmd.Start()
-	require.NoError(t, err)
-	defer func() {
-		fmt.Println("Out: ", buf.String())
-		cmd.Process.Kill()
-	}()
-
-	RunTestWithClient(t, "http://127.0.0.1:8086/api/image-builder/v1")
-	RunTestWithClient(t, "http://127.0.0.1:8086/api/image-builder/v1.0")
 }
 
 // Same test as above but against existing contain on localhost:8087

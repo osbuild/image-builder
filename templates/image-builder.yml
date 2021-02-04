@@ -150,6 +150,8 @@ objects:
                   name: composer-secrets
             - name: ALLOWED_ORG_IDS
               value: "${ALLOWED_ORG_IDS}"
+            - name: DISTRIBUTIONS_DIR
+              value: "${DISTRIBUTIONS_DIR}"
         volumes:
           - name: composer-secrets
             secret:
@@ -210,3 +212,6 @@ parameters:
   - name: ALLOWED_ORG_IDS
     description: Organization ids allowed to access the api, wildcard means everyone
     value: ""
+  - name: DISTRIBUTIONS_DIR
+    description: Directory which contains json files detailing available distributions, their repositories, and their packages
+    value: "/app/distributions"
