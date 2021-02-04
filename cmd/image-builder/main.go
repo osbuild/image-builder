@@ -71,6 +71,6 @@ func main() {
 		orgIds = strings.Split(config.OrgIds, ";")
 	}
 
-	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket, orgIds)
+	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket, orgIds, config.DistributionsDir)
 	s.Run(config.ListenAddress)
 }

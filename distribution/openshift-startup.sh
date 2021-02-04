@@ -8,7 +8,7 @@ else
     echo "Cloudwatch: ${CW_LOG_GROUP} in ${CW_AWS_REGION}"
     echo "Upload target: ${OSBUILD_AWS_S3_BUCKET} in ${OSBUILD_AWS_REGION}"
     echo "Composer URL: ${OSBUILD_URL}"
-    subscription-manager status || true
+    echo "Distributions dir: ${DISTRIBUTIONS_DIR}"
 fi
 
 /app/image-builder -v

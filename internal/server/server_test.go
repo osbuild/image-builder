@@ -23,7 +23,7 @@ func startServer(t *testing.T, url string, orgIds string) *Server {
 	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
-	srv := NewServer(logger, client, "", "", "", "", strings.Split(orgIds, ";"))
+	srv := NewServer(logger, client, "", "", "", "", strings.Split(orgIds, ";"), "../../distributions")
 	// execute in parallel b/c .Run() will block execution
 	go srv.Run("localhost:8086")
 
@@ -88,6 +88,39 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 				Arch:       "x86_64",
 				ImageTypes: []string{"ami"},
 			}}, result)
+	})
+
+	t.Run("GetPacakges", func(t *testing.T) {
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
+
+		var result PackagesResponse
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Contains(t, result.Data[0].Name, "ssh")
+		require.Greater(t, result.Meta.Count, 0)
+		require.Contains(t, result.Links.First, "search=ssh")
+		p1 := result.Data[0]
+		p2 := result.Data[1]
+
+		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=1", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
+		err = json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, result.Meta.Count, 1)
+		require.Equal(t, result.Data[0], p1)
+
+		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=1&offset=1", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
+		err = json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, result.Meta.Count, 1)
+		require.Equal(t, result.Data[0], p2)
+
+		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=-13", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
+		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=-13&offset=-2193", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
 	})
 
 	t.Run("BogusAuthString", func(t *testing.T) {
