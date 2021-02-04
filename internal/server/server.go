@@ -319,6 +319,8 @@ func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
 		}
 
+		s.logger.Infof("Verify identity for user with internal org_id '%v' in header '%v' \n", idHeader.Identity.Internal.OrgId, idHeaderB64[0])
+
 		if !orgIdAllowed(idHeader, s.orgIds) {
 			return echo.NewHTTPError(http.StatusNotFound, "Organization not allowed")
 		}
