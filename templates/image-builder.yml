@@ -210,3 +210,6 @@ parameters:
   - name: ALLOWED_ORG_IDS
     description: Organization ids allowed to access the api, wildcard means everyone
     value: ""
+  - name: DISTRIBUTIONS_DIR
+    description: Directory which dnf-json uses as a cache
+    value: "/app/distributions"

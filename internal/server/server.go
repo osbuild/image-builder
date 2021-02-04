@@ -24,6 +24,7 @@ type Server struct {
 	client   cloudapi.OsbuildClient
 	awsCreds *awsCreds
 	orgIds   []string
+	distsDir string
 }
 
 type awsCreds struct {
@@ -37,7 +38,7 @@ type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string, orgIds []string) *Server {
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string, orgIds []string, distsDir string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -55,6 +56,7 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region stri
 			s3Bucket,
 		},
 		orgIds,
+		distsDir,
 	}
 	var h Handlers
 	h.server = &s
@@ -98,7 +100,7 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
-	distributions, err := AvailableDistributions()
+	distributions, err := AvailableDistributions(h.server.distsDir)
 	if err != nil {
 		return err
 	}
@@ -106,7 +108,7 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetArchitectures(ctx echo.Context, distribution string) error {
-	archs, err := ArchitecturesForImage(distribution)
+	archs, err := ArchitecturesForImage(h.server.distsDir, distribution)
 	if err != nil {
 		return err
 	}
@@ -152,7 +154,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
-	repositories, err := RepositoriesForImage(composeRequest.Distribution, composeRequest.ImageRequests[0].Architecture)
+	repositories, err := RepositoriesForImage(h.server.distsDir, composeRequest.Distribution, composeRequest.ImageRequests[0].Architecture)
 	if err != nil {
 		return err
 	}
@@ -243,6 +245,57 @@ func buildCustomizations(cust *Customizations) (*cloudapi.Customizations, error)
 		}
 	}
 	return res, nil
+}
+
+func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
+	packages, err := FindPackages(h.server.distsDir, params.Distribution, params.Architecture, params.Search)
+	if err != nil {
+		return err
+	}
+
+	limit := 100
+	if params.Limit != nil {
+		if *params.Limit > 0 {
+			limit = *params.Limit
+		}
+	}
+
+	offset := 0
+	if params.Offset != nil {
+		if *params.Offset >= len(packages) {
+			offset = len(packages) - 1
+		} else if *params.Offset > 0 {
+			offset = *params.Offset
+		}
+	}
+
+	upto := offset + limit
+	if upto > len(packages) {
+		upto = len(packages)
+	}
+
+	spec, err := GetSwagger()
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, PackagesResponse{
+		Meta: struct {
+			Count int `json:"count"`
+		}{
+			len(packages[offset:upto]),
+		},
+		Links: struct {
+			First string `json:"first"`
+			Last  string `json:"last"`
+		}{
+			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
+				RoutePrefix(), spec.Info.Version, params.Search, params.Distribution, params.Architecture, offset, limit),
+			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
+				RoutePrefix(), spec.Info.Version, params.Search, params.Distribution, params.Architecture, len(packages)-1, limit),
+		},
+		Data: packages[offset:upto],
+	})
 }
 
 func RoutePrefix() string {

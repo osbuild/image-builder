@@ -7,9 +7,10 @@ ENV GOFLAGS=-mod=vendor
 RUN go install ./...
 
 # Build an extremely minimal container that only contains our Go application.
-FROM registry.access.redhat.com/ubi8/ubi:latest
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN mkdir /app
 COPY --from=builder /opt/app-root/src/go/bin/image-builder /app/
+COPY ./dnf-json /app/dnf-json
 COPY ./distributions /app/distributions
 COPY ./distribution/openshift-startup.sh /opt/openshift-startup.sh
 EXPOSE 8086

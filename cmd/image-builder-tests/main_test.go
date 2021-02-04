@@ -46,13 +46,24 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	distro := distributions[0].Name
 	response, body = tutils.GetResponseBody(t, ib + "/architectures/" + distro, &tutils.AuthString0)
 	require.Equalf(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
-
 	require.NotNil(t, body)
 	require.NotEmpty(t, body)
 
 	var architectures server.Architectures
 	err = json.Unmarshal([]byte(body), &architectures)
 	require.NoError(t, err)
+	arch := architectures[0].Arch
+
+	// Get a list of packages
+	response, body = tutils.GetResponseBody(t, fmt.Sprintf("%v/packages?search=ssh&distribution=%v&architecture=%v&limit=10&offset=0", ib, distro, arch), &tutils.AuthString0)
+	require.Equalf(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
+	var packages server.PackagesResponse
+	err = json.Unmarshal([]byte(body), &packages)
+	// Make sure we get some packages
+	require.Greater(t, packages.Meta.Count, 0)
+	// The links supplied should point to the same search
+	require.Contains(t, packages.Links.First, "search=ssh")
+
 
 
 	// Build a composerequest
@@ -60,7 +71,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 		Distribution: distro,
 		ImageRequests: []server.ImageRequest{
 			server.ImageRequest{
-				Architecture: architectures[0].Arch,
+				Architecture: arch,
 				ImageType: architectures[0].ImageTypes[0],
 				UploadRequests: []server.UploadRequest{
 					{

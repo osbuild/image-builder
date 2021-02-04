@@ -103,6 +103,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+  /packages:
+    get:
+      parameters:
+        - in: query
+          name: distribution
+          required: true
+          schema:
+            type: string
+          description: distribution to look up packages for
+        - in: query
+          name: architecture
+          required: true
+          schema:
+            type: string
+          description: architecture to look up packages for
+        - in: query
+          name: search
+          required: true
+          schema:
+            type: string
+          description: packages to look for
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: max amount of packages, default 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: packages page offset, default 0
+      responses:
+        '200':
+          description: a list of packages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackagesResponse'
+
 components:
   schemas:
     HTTPError:
@@ -255,3 +294,45 @@ components:
         insights:
           type: boolean
           example: true
+    PackagesResponse:
+      type: object
+      required:
+        - meta
+        - links
+        - data
+      properties:
+        meta:
+          type: object
+          required:
+            - count
+          properties:
+            count:
+              type: integer
+        links:
+          type: object
+          required:
+            - first
+            - last
+          properties:
+            first:
+              type: string
+              example: "/api/image-builder/v1/packages?limit=10&offset=0&distribution...."
+            last:
+              type: string
+              example: "/api/image-builder/v1/packages?limit=10&offset=10&distribution...."
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Package'
+    Package:
+      required:
+        - name
+        - description
+        - version
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
