@@ -7,7 +7,7 @@ ENV GOFLAGS=-mod=vendor
 RUN go install ./...
 
 # Build an extremely minimal container that only contains our Go application.
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi8/ubi:latest
 RUN mkdir /app
 COPY --from=builder /opt/app-root/src/go/bin/image-builder /app/
 COPY ./distributions /app/distributions
