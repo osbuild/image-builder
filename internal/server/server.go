@@ -129,14 +129,27 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
 	}
 
-	var composeStatus cloudapi.ComposeStatus
-	err = json.NewDecoder(resp.Body).Decode(&composeStatus)
+	var cloudStat cloudapi.ComposeStatus
+	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, ComposeStatus{
-		Status: composeStatus.Status,
-	})
+
+	status := ComposeStatus{
+		ImageStatus: ImageStatus{
+			Status:       cloudStat.ImageStatus.Status,
+			UploadStatus: nil,
+		},
+	}
+
+	if cloudStat.ImageStatus.UploadStatus != nil {
+		status.ImageStatus.UploadStatus = &UploadStatus{
+			Status: cloudStat.ImageStatus.UploadStatus.Status,
+			Type:   UploadTypes(cloudStat.ImageStatus.UploadStatus.Type),
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, status)
 }
 
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
@@ -210,7 +223,7 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 	if ur.Type == "aws" {
 		awsOptions := AWSUploadRequestOptions(ur.Options)
 		return cloudapi.UploadRequest{
-			Type: ur.Type,
+			Type: cloudapi.UploadTypes(ur.Type),
 			Options: cloudapi.AWSUploadRequestOptions{
 				Ec2: cloudapi.AWSUploadRequestOptionsEc2{
 					AccessKeyId:       s.awsCreds.AccessKeyId,

@@ -207,6 +207,42 @@ components:
       properties:
         status:
           type: string
+      required:
+        - image_status
+      properties:
+        image_status:
+          $ref: '#/components/schemas/ImageStatus'
+        upload_status:
+          $ref: '#/components/schemas/UploadStatus'
+    ImageStatus:
+      required:
+       - status
+      properties:
+        status:
+          type: string
+          enum: ['success', 'failure', 'pending', 'building', 'uploading', 'registering']
+          example: 'success'
+        upload_status:
+          $ref: '#/components/schemas/UploadStatus'
+    UploadStatus:
+      required:
+        - status
+        - type
+      properties:
+        status:
+          type: string
+          enum: ['success', 'failure', 'pending', 'running']
+        type:
+          $ref: '#/components/schemas/UploadTypes'
+    UploadTypes:
+      type: string
+      enum: ['aws']
+    AWSUploadStatus:
+      type: object
+      properties:
+        ami_id:
+          type: string
+          example: 'ami-0c830793775595d4b'
     ComposeRequest:
       type: object
       required:
@@ -249,8 +285,7 @@ components:
         - options
       properties:
         type:
-          type: string
-          enum: ['aws']
+          $ref: '#/components/schemas/UploadTypes'
         options:
           $ref: '#/components/schemas/AWSUploadRequestOptions'
     AWSUploadRequestOptions:

@@ -84,7 +84,6 @@ func RunTestWithClient(t *testing.T, ib string)  {
 
 	response, body = tutils.PostResponseBody(t, ib + "/compose", composeRequest)
 	require.Equal(t, http.StatusCreated, response.StatusCode, "Error: got non-201 status. Full response: %s", body)
-
 	require.NotNil(t, body)
 	require.NotEmpty(t, body)
 
@@ -96,15 +95,13 @@ func RunTestWithClient(t *testing.T, ib string)  {
 
 	response, body = tutils.GetResponseBody(t, ib + "/composes/" + id, &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
-
 	require.NotNil(t, body)
 	require.NotEmpty(t, body)
 
 	var composeStatus cloudapi.ComposeStatus
 	err = json.Unmarshal([]byte(body), &composeStatus)
 	require.NoError(t, err)
-
-	require.Contains(t, []string{"pending", "running"}, composeStatus.Status)
+	require.Contains(t, []string{"pending", "running"}, composeStatus.ImageStatus.Status)
 
 	// Check if we get 404 without the identity header
 	response, body = tutils.GetResponseBody(t, ib + "/version", nil)
