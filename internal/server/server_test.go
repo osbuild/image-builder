@@ -177,7 +177,9 @@ func TestGetComposeStatus(t *testing.T) {
 	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		s := ComposeStatus{
-			Status: "running",
+			ImageStatus: ImageStatus{
+				Status: "running",
+			},
 		}
 		err := json.NewEncoder(w).Encode(s)
 		require.NoError(t, err)
@@ -197,7 +199,9 @@ func TestGetComposeStatus(t *testing.T) {
 	err := json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, cloudapi.ComposeStatus{
-		Status: "running",
+		ImageStatus: cloudapi.ImageStatus{
+			Status: "running",
+		},
 	}, result)
 
 	// With a wildcard orgIds either auth should work
@@ -206,7 +210,9 @@ func TestGetComposeStatus(t *testing.T) {
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, cloudapi.ComposeStatus{
-		Status: "running",
+		ImageStatus: cloudapi.ImageStatus{
+			Status: "running",
+		},
 	}, result)
 }
 

@@ -25,11 +25,6 @@ type AWSUploadRequestOptionsS3 struct {
 	SecretAccessKey string `json:"secret_access_key"`
 }
 
-// AWSUploadStatus defines model for AWSUploadStatus.
-type AWSUploadStatus struct {
-	AmiId *string `json:"ami_id,omitempty"`
-}
-
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
 	Customizations *Customizations `json:"customizations,omitempty"`
@@ -44,8 +39,7 @@ type ComposeResult struct {
 
 // ComposeStatus defines model for ComposeStatus.
 type ComposeStatus struct {
-	ImageStatuses *[]ImageStatus `json:"image_statuses,omitempty"`
-	Status        string         `json:"status"`
+	ImageStatus ImageStatus `json:"image_status"`
 }
 
 // Customizations defines model for Customizations.
@@ -63,8 +57,8 @@ type ImageRequest struct {
 
 // ImageStatus defines model for ImageStatus.
 type ImageStatus struct {
-	Status         string          `json:"status"`
-	UploadStatuses *[]UploadStatus `json:"upload_statuses,omitempty"`
+	Status       string        `json:"status"`
+	UploadStatus *UploadStatus `json:"upload_status,omitempty"`
 }
 
 // Repository defines model for Repository.
@@ -87,11 +81,17 @@ type Subscription struct {
 // UploadRequest defines model for UploadRequest.
 type UploadRequest struct {
 	Options interface{} `json:"options"`
-	Type    string      `json:"type"`
+	Type    UploadTypes `json:"type"`
 }
 
 // UploadStatus defines model for UploadStatus.
-type UploadStatus interface{}
+type UploadStatus struct {
+	Status string      `json:"status"`
+	Type   UploadTypes `json:"type"`
+}
+
+// UploadTypes defines model for UploadTypes.
+type UploadTypes string
 
 // ComposeJSONBody defines parameters for Compose.
 type ComposeJSONBody ComposeRequest
