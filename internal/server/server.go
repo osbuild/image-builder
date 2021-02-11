@@ -22,23 +22,29 @@ type Server struct {
 	logger   *logrus.Logger
 	echo     *echo.Echo
 	client   cloudapi.OsbuildClient
-	awsCreds *awsCreds
+	aws      AWSConfig
+	gcp      GCPConfig
 	orgIds   []string
 	distsDir string
 }
 
-type awsCreds struct {
+type AWSConfig struct {
 	Region          string
 	AccessKeyId     string
 	SecretAccessKey string
 	S3Bucket        string
 }
 
+type GCPConfig struct {
+	Region string
+	Bucket string
+}
+
 type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region string, keyId string, secret string, s3Bucket string, orgIds []string, distsDir string) *Server {
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, awsConfig AWSConfig, gcpConfig GCPConfig, orgIds []string, distsDir string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -49,12 +55,8 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region stri
 		logger,
 		echo.New(),
 		client,
-		&awsCreds{
-			region,
-			keyId,
-			secret,
-			s3Bucket,
-		},
+		awsConfig,
+		gcpConfig,
 		orgIds,
 		distsDir,
 	}
@@ -254,26 +256,51 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 }
 
 func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, error) {
-	if ur.Type == "aws" {
-		awsOptions := AWSUploadRequestOptions(ur.Options)
+	// HACK deepmap doesn't really support `oneOf`, so marshal and unmarshal into target object
+	optionsJSON, err := json.Marshal(ur.Options)
+	if err != nil {
+		return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to marshal UploadRequestOptions")
+	}
+	switch ur.Type {
+	case "aws":
+		var awsOptions AWSUploadRequestOptions
+		err = json.Unmarshal(optionsJSON, &awsOptions)
+		if err != nil {
+			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal UploadRequestOptions")
+		}
 		return cloudapi.UploadRequest{
 			Type: cloudapi.UploadTypes(ur.Type),
 			Options: cloudapi.AWSUploadRequestOptions{
 				Ec2: cloudapi.AWSUploadRequestOptionsEc2{
-					AccessKeyId:       s.awsCreds.AccessKeyId,
-					SecretAccessKey:   s.awsCreds.SecretAccessKey,
+					AccessKeyId:       s.aws.AccessKeyId,
+					SecretAccessKey:   s.aws.SecretAccessKey,
 					ShareWithAccounts: &awsOptions.ShareWithAccounts,
 				},
 				S3: cloudapi.AWSUploadRequestOptionsS3{
-					AccessKeyId:     s.awsCreds.AccessKeyId,
-					SecretAccessKey: s.awsCreds.SecretAccessKey,
-					Bucket:          s.awsCreds.S3Bucket,
+					AccessKeyId:     s.aws.AccessKeyId,
+					SecretAccessKey: s.aws.SecretAccessKey,
+					Bucket:          s.aws.S3Bucket,
 				},
-				Region: s.awsCreds.Region,
+				Region: s.aws.Region,
 			},
 		}, nil
+	case "gcp":
+		var gcpOptions GCPUploadRequestOptions
+		err = json.Unmarshal(optionsJSON, &gcpOptions)
+		if err != nil {
+			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal into GCPUploadRequestOptions")
+		}
+		return cloudapi.UploadRequest{
+			Type: cloudapi.UploadTypes(ur.Type),
+			Options: cloudapi.GCPUploadRequestOptions{
+				Bucket:            s.gcp.Bucket,
+				Region:            &s.gcp.Region,
+				ShareWithAccounts: &gcpOptions.ShareWithAccounts,
+			},
+		}, nil
+	default:
+		return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
 	}
-	return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
 }
 
 func buildCustomizations(cust *Customizations) (*cloudapi.Customizations, error) {

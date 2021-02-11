@@ -23,7 +23,7 @@ func startServer(t *testing.T, url string, orgIds string) *Server {
 	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
-	srv := NewServer(logger, client, "", "", "", "", strings.Split(orgIds, ";"), "../../distributions")
+	srv := NewServer(logger, client, AWSConfig{}, GCPConfig{}, strings.Split(orgIds, ";"), "../../distributions")
 	// execute in parallel b/c .Run() will block execution
 	go srv.Run("localhost:8086")
 
@@ -86,7 +86,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.Equal(t, Architectures{
 			ArchitectureItem{
 				Arch:       "x86_64",
-				ImageTypes: []string{"ami"},
+				ImageTypes: []string{"ami", "vhd"},
 			}}, result)
 	})
 

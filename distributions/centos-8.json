@@ -5,7 +5,7 @@
     "description": "CentOS Stream 8"
   },
   "x86_64": {
-    "image_types": [ "ami" ],
+    "image_types": [ "ami", "vhd" ],
     "repositories": [{
       "baseurl": "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/",
       "rhsm": false

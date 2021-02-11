@@ -69,7 +69,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 		ImageRequests: []server.ImageRequest{
 			server.ImageRequest{
 				Architecture: arch,
-				ImageType: architectures[0].ImageTypes[0],
+				ImageType: "ami",
 				UploadRequests: []server.UploadRequest{
 					{
 						Type: "aws",
@@ -93,7 +93,6 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	var composeResp server.ComposeResponse
 	err = json.Unmarshal([]byte(body), &composeResp)
 	require.NoError(t, err)
-
 	id := composeResp.Id
 
 	response, body = tutils.GetResponseBody(t, ib + "/composes/" + id, &tutils.AuthString0)
@@ -102,6 +101,41 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	require.NotEmpty(t, body)
 
 	var composeStatus cloudapi.ComposeStatus
+	err = json.Unmarshal([]byte(body), &composeStatus)
+	require.NoError(t, err)
+	require.Contains(t, []string{"pending", "running"}, composeStatus.ImageStatus.Status)
+
+	// A compose with gcp as a target
+	composeRequest = server.ComposeRequest{
+		Distribution: distro,
+		ImageRequests: []server.ImageRequest{
+			server.ImageRequest{
+				Architecture: arch,
+				ImageType: "vhd",
+				UploadRequests: []server.UploadRequest{
+					{
+						Type: "gcp",
+						Options: server.GCPUploadRequestOptions{
+							ShareWithAccounts: []string{"user:somebody@example.com"},
+						},
+					},
+				},
+			},
+		},
+		Customizations: &server.Customizations{
+			Packages: &[]string{"postgresql"},
+		},
+	}
+
+	err = json.Unmarshal([]byte(body), &composeResp)
+	require.NoError(t, err)
+	id = composeResp.Id
+
+	response, body = tutils.GetResponseBody(t, ib + "/composes/" + id, &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
+	require.NotNil(t, body)
+	require.NotEmpty(t, body)
+
 	err = json.Unmarshal([]byte(body), &composeStatus)
 	require.NoError(t, err)
 	require.Contains(t, []string{"pending", "running"}, composeStatus.ImageStatus.Status)
