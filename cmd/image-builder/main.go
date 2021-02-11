@@ -71,6 +71,17 @@ func main() {
 		orgIds = strings.Split(config.OrgIds, ";")
 	}
 
-	s := server.NewServer(log, client, config.OsbuildRegion, config.OsbuildAccessKeyID, config.OsbuildSecretAccessKey, config.OsbuildS3Bucket, orgIds, config.DistributionsDir)
+	aws := server.AWSConfig{
+		Region:          config.OsbuildRegion,
+		AccessKeyId:     config.OsbuildAccessKeyID,
+		SecretAccessKey: config.OsbuildSecretAccessKey,
+		S3Bucket:        config.OsbuildS3Bucket,
+	}
+	gcp := server.GCPConfig{
+		Region: config.OsbuildGCPRegion,
+		Bucket: config.OsbuildGCPBucket,
+	}
+
+	s := server.NewServer(log, client, aws, gcp, orgIds, config.DistributionsDir)
 	s.Run(config.ListenAddress)
 }

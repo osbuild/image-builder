@@ -229,7 +229,7 @@ components:
           $ref: '#/components/schemas/UploadTypes'
     UploadTypes:
       type: string
-      enum: ['aws']
+      enum: ['aws', 'gcp']
     AWSUploadStatus:
       type: object
       properties:
@@ -280,7 +280,9 @@ components:
         type:
           $ref: '#/components/schemas/UploadTypes'
         options:
-          $ref: '#/components/schemas/AWSUploadRequestOptions'
+          oneOf:
+            - $ref: '#/components/schemas/AWSUploadRequestOptions'
+            - $ref: '#/components/schemas/GCPUploadRequestOptions'
     AWSUploadRequestOptions:
       type: object
       required:
@@ -289,6 +291,34 @@ components:
         share_with_accounts:
           type: array
           example: ['123456789012']
+          items:
+            type: string
+    GCPUploadRequestOptions:
+      type: object
+      required:
+        - share_with_accounts
+      properties:
+        share_with_accounts:
+          type: array
+          example: [
+            'user:alice@example.com',
+            'serviceAccount:my-other-app@appspot.gserviceaccount.com',
+            'group:admins@example.com',
+            'domain:example.com'
+            ]
+          description: |
+            List of valid Google accounts to share the imported Compute Node image with.
+            Each string must contain a specifier of the account type. Valid formats are:
+              - 'user:{emailid}': An email address that represents a specific
+                Google account. For example, 'alice@example.com'.
+              - 'serviceAccount:{emailid}': An email address that represents a
+                service account. For example, 'my-other-app@appspot.gserviceaccount.com'.
+              - 'group:{emailid}': An email address that represents a Google group.
+                For example, 'admins@example.com'.
+              - 'domain:{domain}': The G Suite domain (primary) that represents all
+                the users of that domain. For example, 'google.com' or 'example.com'.
+                If not specified, the imported Compute Node image is not shared with any
+                account.
           items:
             type: string
     Customizations:

@@ -42,7 +42,7 @@ func TestArchitecturesForImage(t *testing.T) {
 	require.Equal(t, Architectures{
 		ArchitectureItem{
 			Arch:       "x86_64",
-			ImageTypes: []string{"ami"},
+			ImageTypes: []string{"ami", "vhd"},
 		}}, result)
 }
 

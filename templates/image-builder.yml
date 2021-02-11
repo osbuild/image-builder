@@ -148,6 +148,11 @@ objects:
                 secretKeyRef:
                   key: aws_s3_bucket
                   name: composer-secrets
+            # GCP target specific variables passed to composer
+            - name: OSBUILD_GCP_REGION
+              value: "${OSBUILD_GCP_REGION}"
+            - name: OSBUILD_GCP_BUCKET
+              value: "${OSBUILD_GCP_BUCKET}"
             - name: ALLOWED_ORG_IDS
               value: "${ALLOWED_ORG_IDS}"
             - name: DISTRIBUTIONS_DIR
@@ -216,3 +221,9 @@ parameters:
   - name: DISTRIBUTIONS_DIR
     description: Directory which contains json files detailing available distributions, their repositories, and their packages
     value: "/app/distributions"
+  - name: OSBUILD_GCP_REGION
+    description: Region in GCP to upload to
+    value: "us-east4"
+  - name: OSBUILD_GCP_BUCKET
+    description: Bucket in GCP to upload to
+    value: "image-upload-bkt-us"

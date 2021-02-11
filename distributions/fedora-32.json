@@ -5,7 +5,7 @@
     "description": "Fedora 32"
   },
   "x86_64": {
-    "image_types": [ "ami" ],
+    "image_types": [ "ami", "vhd" ],
     "repositories": [{
       "baseurl": "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/",
       "rhsm": false
