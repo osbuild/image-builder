@@ -80,6 +80,9 @@ func RunTestWithClient(t *testing.T, ib string)  {
 				},
 			},
 		},
+		Customizations: &server.Customizations{
+			Packages: &[]string{"postgresql"},
+		},
 	}
 
 	response, body = tutils.PostResponseBody(t, ib + "/compose", composeRequest)
