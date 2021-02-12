@@ -257,6 +257,11 @@ func buildCustomizations(cust *Customizations) (*cloudapi.Customizations, error)
 			ServerUrl:     cust.Subscription.ServerUrl,
 		}
 	}
+
+	if cust.Packages != nil {
+		res.Packages = cust.Packages
+	}
+
 	return res, nil
 }
 

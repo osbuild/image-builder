@@ -303,6 +303,11 @@ components:
       properties:
         subscription:
           $ref: '#/components/schemas/Subscription'
+        packages:
+          type: array
+          example: ['postgresql']
+          items:
+            type: string
     Subscription:
       type: object
       required:
