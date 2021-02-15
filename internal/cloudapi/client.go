@@ -90,3 +90,12 @@ func (oc *OsbuildClient) Compose(compose ComposeRequest) (*http.Response, error)
 
 	return oc.client.Do(req)
 }
+
+func (oc *OsbuildClient) Version() (*http.Response, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s/version", oc.osbuildURL, oc.pathPrefix), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return oc.client.Do(req)
+}

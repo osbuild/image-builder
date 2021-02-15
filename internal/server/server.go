@@ -65,9 +65,40 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region stri
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.VerifyIdentityHeader), &h)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.VerifyIdentityHeader), &h)
 
-	/* Used for the liveness- and readinessProbe */
+	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
 		return h.GetVersion(c)
+	})
+
+	/* Used for the readinessProbe */
+	s.echo.GET("/ready", func(c echo.Context) error {
+		// make sure distributions are available
+		distributions, err := AvailableDistributions(s.distsDir)
+		if err != nil {
+			return err
+		}
+		if len(distributions) == 0 {
+			return echo.NewHTTPError(http.StatusInternalServerError, "no distributions defined")
+		}
+
+		resp, err := s.client.Version()
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode != 200 {
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to contact osbuild-composer: %s", body))
+		}
+
+		ready := map[string]string{
+			"readiness": "ready",
+		}
+
+		return c.JSON(http.StatusOK, ready)
 	})
 
 	return &s
