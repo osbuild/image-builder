@@ -94,6 +94,11 @@ type UploadStatus struct {
 // UploadTypes defines model for UploadTypes.
 type UploadTypes string
 
+// Version defines model for Version.
+type Version struct {
+	Version string `json:"version"`
+}
+
 // ComposeJSONBody defines parameters for Compose.
 type ComposeJSONBody ComposeRequest
 
