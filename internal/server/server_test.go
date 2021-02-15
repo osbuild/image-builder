@@ -519,3 +519,35 @@ func TestOrgIdAllowed(t *testing.T) {
 	require.False(t, orgIdAllowed(header, []string{"123456"}))
 	require.True(t, orgIdAllowed(header, []string{"123456", "*"}))
 }
+
+func TestReadinessProbeNotReady(t *testing.T) {
+	srv := startServer(t, "http://example.com", "*")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	response, _ := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
+	require.NotEqual(t, 200, response.StatusCode)
+	require.NotEqual(t, 404, response.StatusCode)
+}
+
+func TestReadinessProbeReady(t *testing.T) {
+	// simulate osbuild-composer API
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "{\"version\":\"fake\"}")
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL, "*")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	response, body := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
+	require.Equal(t, 200, response.StatusCode)
+	require.Contains(t, body, "{\"readiness\":\"ready\"}")
+}
