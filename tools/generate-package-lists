@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+
+import argparse
+import copy
+import json
+import tempfile
+import os
+import subprocess
+import sys
+import time
+
+PROJECT_ROOT=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+DISTRIBUTION_DIR=os.path.join(PROJECT_ROOT, 'distributions')
+DNF_JSON=os.path.join(PROJECT_ROOT, "dnf-json")
+# List of archs to look for in the distro files
+SUPPORTED_ARCHS = [ 'x86_64' ]
+
+def main():
+    parser = argparse.ArgumentParser(description='Generate package list for distributions')
+    parser.add_argument('--distro', action='append', default=[], help='A json distribution file')
+    args = parser.parse_args()
+
+    tempdir = tempfile.TemporaryDirectory()
+
+    dnfjson_args_template = {
+        'command': 'dump'
+    }
+
+    for distro in args.distro:
+        distro_data = {}
+        with open(distro) as f:
+            distro_data = json.load(f)
+        # make sure it's not empty
+        print('Calling dnf-json for ', distro_data['distribution'])
+
+        for arch in SUPPORTED_ARCHS:
+            dnfjson_args = dnfjson_args_template.copy()
+            dnfjson_args['arguments'] = {
+                'module_platform_id': distro_data['module_platform_id'],
+                'repos': distro_data[arch]['repositories'],
+                'cachedir': tempdir.name,
+                'arch': arch,
+            }
+
+            # assign an ID to each repo
+            for i in range(len(dnfjson_args['arguments']['repos'])):
+                dnfjson_args['arguments']['repos'][i]['id'] = f"repo{i}"
+
+            p = subprocess.Popen(DNF_JSON, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            out, err = p.communicate(json.dumps(dnfjson_args).encode('utf-8'))
+
+            pkgdata = {
+                'data': [{"description": p["description"], "name": p["name"], "version": p["version"]} for p in json.loads(out)['packages']]
+            }
+            outfile = os.path.join(DISTRIBUTION_DIR, '%s-%s-packages.json' % (distro_data['distribution']['name'], arch))
+            with open(outfile, 'w+') as f:
+                json.dump(pkgdata, f, indent=2)
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
