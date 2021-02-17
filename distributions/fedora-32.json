@@ -1,4 +1,5 @@
 {
+  "module_platform_id": "platform:f32",
   "distribution": {
     "name": "fedora-32",
     "description": "Fedora 32"

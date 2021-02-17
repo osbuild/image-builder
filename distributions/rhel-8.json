@@ -1,4 +1,5 @@
 {
+  "module_platform_id": "platform:el8",
   "distribution": {
     "name": "rhel-8",
     "description": "Red Hat Enterprise Linux (RHEL) 8.2"
