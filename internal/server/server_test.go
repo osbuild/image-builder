@@ -72,7 +72,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, distro := range result {
-			require.Contains(t, []string{"fedora-32", "rhel-8"}, distro.Name)
+			require.Contains(t, []string{"fedora-32", "rhel-8", "centos-8"}, distro.Name)
 		}
 	})
 
