@@ -7,10 +7,10 @@
   "x86_64": {
     "image_types": [ "ami" ],
     "repositories": [{
-      "mirrorlist": "http://mirrorlist.centos.org/?release=8&arch=x86_64&repo=BaseOS",
+      "baseurl": "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/",
       "rhsm": false
     }, {
-      "mirrorlist": "http://mirrorlist.centos.org/?release=8&arch=x86_64&repo=AppStream",
+      "baseurl": "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/",
       "rhsm": false
     }]
   }
