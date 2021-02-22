@@ -50,7 +50,7 @@ def main():
             out, err = p.communicate(json.dumps(dnfjson_args).encode('utf-8'))
 
             pkgdata = {
-                'data': [{"description": p["description"], "name": p["name"], "version": p["version"]} for p in json.loads(out)['packages']]
+                'data': [{"summary": p["summary"], "name": p["name"], "version": p["version"]} for p in json.loads(out)['packages']]
             }
             outfile = os.path.join(DISTRIBUTION_DIR, '%s-%s-packages.json' % (distro_data['distribution']['name'], arch))
             with open(outfile, 'w+') as f:
