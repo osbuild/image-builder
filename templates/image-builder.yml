@@ -44,7 +44,7 @@ objects:
           livenessProbe:
             failureThreshold: 3
             httpGet:
-              path: ${HEALTHCHECK_URI}
+              path: ${LIVENESS_URI}
               port: 8086
               scheme: HTTP
             periodSeconds: 10
@@ -53,12 +53,12 @@ objects:
           readinessProbe:
             failureThreshold: 3
             httpGet:
-              path: ${HEALTHCHECK_URI}
+              path: ${READINESS_URI}
               port: 8086
               scheme: HTTP
             periodSeconds: 10
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 10 # The readiness probe is pinging osbuild-composer
           ports:
           - name: api
             containerPort: 8086
@@ -189,11 +189,12 @@ parameters:
   - description: Backend listener port
     name: BACKEND_LISTENER_PORT
     value: "8080"
-  # NOTE(mhayden): Change this later once we add a real health check to
-  # image-builder that verifies connectivity, etc.
-  - name: HEALTHCHECK_URI
-    description: URI to query for the health check
+  - name: LIVENESS_URI
+    description: URI to query for the liveness check
     value: "/status"
+  - name: READINESS_URI
+    description: URI to query for the readiness check
+    value: "/ready"
   - name: LISTEN_ADDRESS
     description: Listening address and port
     value: "0.0.0.0:8086"
