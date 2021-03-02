@@ -85,6 +85,7 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, region stri
 		if err != nil {
 			return err
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode != 200 {
 			body, err := ioutil.ReadAll(resp.Body)
@@ -151,6 +152,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode == 404 {
 		body, err := ioutil.ReadAll(resp.Body)
@@ -232,6 +234,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
