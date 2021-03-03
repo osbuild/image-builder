@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -26,6 +27,19 @@ func startServer(t *testing.T, url string, orgIds string) *Server {
 	srv := NewServer(logger, client, AWSConfig{}, GCPConfig{}, strings.Split(orgIds, ";"), "../../distributions")
 	// execute in parallel b/c .Run() will block execution
 	go srv.Run("localhost:8086")
+
+	// wait until server is ready
+	tries := 0
+	for tries < 5 {
+		resp, err := tutils.GetResponseError("http://localhost:8086/status")
+		if err == nil && resp.StatusCode == http.StatusOK {
+			break
+		} else if tries == 4 {
+			require.NoError(t, err)
+		}
+		time.Sleep(time.Second)
+		tries += 1
+	}
 
 	return srv
 }
