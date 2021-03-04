@@ -302,16 +302,14 @@ components:
       required:
         - architecture
         - image_type
-        - upload_requests
+        - upload_request
       properties:
         architecture:
           type: string
         image_type:
           type: string
-        upload_requests:
-          type: array
-          items:
-            $ref: '#/components/schemas/UploadRequest'
+        upload_request:
+          $ref: '#/components/schemas/UploadRequest'
     ComposeResponse:
       required:
         - id

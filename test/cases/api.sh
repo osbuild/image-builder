@@ -177,14 +177,12 @@ function createReqFileAWS() {
     {
       "architecture": "$ARCH",
       "image_type": "ami",
-      "upload_requests": [
-        {
-          "type": "aws",
-          "options": {
-            "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
-          }
+      "upload_request": {
+        "type": "aws",
+        "options": {
+          "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
         }
-      ]
+      }
     }
   ],
   "customizations": {
@@ -229,14 +227,12 @@ function createReqFileGCP() {
     {
       "architecture": "$ARCH",
       "image_type": "vhd",
-      "upload_requests": [
-        {
-          "type": "gcp",
-          "options": {
-            "share_with_accounts": ["${GCP_API_TEST_SHARE_ACCOUNT}"]
-          }
+      "upload_request": {
+        "type": "gcp",
+        "options": {
+          "share_with_accounts": ["${GCP_API_TEST_SHARE_ACCOUNT}"]
         }
-      ]
+      }
     }
   ],
   "customizations": {
@@ -280,16 +276,14 @@ function createReqFileAzure() {
     {
       "architecture": "$ARCH",
       "image_type": "vhd",
-      "upload_requests": [
-        {
-          "type": "azure",
-          "options": {
-            "tenant_id": "${AZURE_TENANT_ID}",
-            "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
-            "resource_group": "${AZURE_RESOURCE_GROUP}"
-          }
+      "upload_request": {
+        "type": "azure",
+        "options": {
+          "tenant_id": "${AZURE_TENANT_ID}",
+          "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
+          "resource_group": "${AZURE_RESOURCE_GROUP}"
         }
-      ]
+      }
     }
   ],
   "customizations": {

@@ -125,10 +125,10 @@ type GCPUploadStatus struct {
 
 // ImageRequest defines model for ImageRequest.
 type ImageRequest struct {
-	Architecture   string          `json:"architecture"`
-	ImageType      string          `json:"image_type"`
-	Repositories   []Repository    `json:"repositories"`
-	UploadRequests []UploadRequest `json:"upload_requests"`
+	Architecture  string        `json:"architecture"`
+	ImageType     string        `json:"image_type"`
+	Repositories  []Repository  `json:"repositories"`
+	UploadRequest UploadRequest `json:"upload_request"`
 }
 
 // ImageStatus defines model for ImageStatus.

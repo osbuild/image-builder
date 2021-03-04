@@ -278,14 +278,14 @@ func TestComposeImage(t *testing.T) {
 			Distribution:   "fedora-33",
 			ImageRequests: []ImageRequest{
 				ImageRequest{
-					Architecture:   "x86_64",
-					ImageType:      "qcow2",
-					UploadRequests: nil,
+					Architecture:  "x86_64",
+					ImageType:     "qcow2",
+					UploadRequest: UploadRequest{},
 				},
 				ImageRequest{
-					Architecture:   "x86_64",
-					ImageType:      "ami",
-					UploadRequests: nil,
+					Architecture:  "x86_64",
+					ImageType:     "ami",
+					UploadRequest: UploadRequest{},
 				},
 			},
 		}
@@ -300,39 +300,9 @@ func TestComposeImage(t *testing.T) {
 			Distribution:   "fedora-33",
 			ImageRequests: []ImageRequest{
 				ImageRequest{
-					Architecture:   "x86_64",
-					ImageType:      "qcow2",
-					UploadRequests: []UploadRequest{},
-				},
-			},
-		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, "Exactly one upload request should be included")
-	})
-
-	t.Run("ErrorsForTwoUploadRequests", func(t *testing.T) {
-		payload := ComposeRequest{
-			Customizations: nil,
-			Distribution:   "fedora-33",
-			ImageRequests: []ImageRequest{
-				ImageRequest{
-					Architecture: "x86_64",
-					ImageType:    "qcow2",
-					UploadRequests: []UploadRequest{
-						UploadRequest{
-							Type: "aws",
-							Options: AWSUploadRequestOptions{
-								ShareWithAccounts: []string{"test-account"},
-							},
-						},
-						UploadRequest{
-							Type: "aws",
-							Options: AWSUploadRequestOptions{
-								ShareWithAccounts: []string{"test-account"},
-							},
-						},
-					},
+					Architecture:  "x86_64",
+					ImageType:     "qcow2",
+					UploadRequest: UploadRequest{},
 				},
 			},
 		}
@@ -351,12 +321,10 @@ func TestComposeImage(t *testing.T) {
 				ImageRequest{
 					Architecture: "unsupported-arch",
 					ImageType:    "qcow2",
-					UploadRequests: []UploadRequest{
-						UploadRequest{
-							Type: "aws",
-							Options: AWSUploadRequestOptions{
-								ShareWithAccounts: []string{"test-account"},
-							},
+					UploadRequest: UploadRequest{
+						Type: "aws",
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
 						},
 					},
 				},
@@ -376,12 +344,10 @@ func TestComposeImage(t *testing.T) {
 				ImageRequest{
 					Architecture: "x86_64",
 					ImageType:    "qcow2",
-					UploadRequests: []UploadRequest{
-						UploadRequest{
-							Type: "unknown",
-							Options: AWSUploadRequestOptions{
-								ShareWithAccounts: []string{"test-account"},
-							},
+					UploadRequest: UploadRequest{
+						Type: "unknown",
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
 						},
 					},
 				},
@@ -417,12 +383,10 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 			ImageRequest{
 				Architecture: "x86_64",
 				ImageType:    "qcow2",
-				UploadRequests: []UploadRequest{
-					UploadRequest{
-						Type: "aws",
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
-						},
+				UploadRequest: UploadRequest{
+					Type: "aws",
+					Options: AWSUploadRequestOptions{
+						ShareWithAccounts: []string{"test-account"},
 					},
 				},
 			},
@@ -457,12 +421,10 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 			ImageRequest{
 				Architecture: "x86_64",
 				ImageType:    "qcow2",
-				UploadRequests: []UploadRequest{
-					UploadRequest{
-						Type: "aws",
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
-						},
+				UploadRequest: UploadRequest{
+					Type: "aws",
+					Options: AWSUploadRequestOptions{
+						ShareWithAccounts: []string{"test-account"},
 					},
 				},
 			},
@@ -499,12 +461,10 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 			ImageRequest{
 				Architecture: "x86_64",
 				ImageType:    "qcow2",
-				UploadRequests: []UploadRequest{
-					UploadRequest{
-						Type: "aws",
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
-						},
+				UploadRequest: UploadRequest{
+					Type: "aws",
+					Options: AWSUploadRequestOptions{
+						ShareWithAccounts: []string{"test-account"},
 					},
 				},
 			},

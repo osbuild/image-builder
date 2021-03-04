@@ -11,7 +11,7 @@ echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 # Set up osbuild-composer repo
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
 OSBUILD_COMMIT=3086c7d70c304214e2855cdcf495d4b70f4b04c6
-OSBUILD_COMPOSER_COMMIT=cc80957d1e69ef9328a7bfba3dca86c0b10390c2
+OSBUILD_COMPOSER_COMMIT=d7b0323a2dec205b7a41bd9b4c5d7e30982fc44f
 sudo tee /etc/yum.repos.d/osbuild.repo << EOF
 [osbuild]
 name=osbuild ${OSBUILD_COMMIT}
