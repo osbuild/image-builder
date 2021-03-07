@@ -259,14 +259,14 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 	// HACK deepmap doesn't really support `oneOf`, so marshal and unmarshal into target object
 	optionsJSON, err := json.Marshal(ur.Options)
 	if err != nil {
-		return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to marshal UploadRequestOptions")
+		return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to marshal UploadRequestOptions")
 	}
 	switch ur.Type {
 	case "aws":
 		var awsOptions AWSUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &awsOptions)
 		if err != nil {
-			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal UploadRequestOptions")
+			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
 		}
 		return cloudapi.UploadRequest{
 			Type: cloudapi.UploadTypes(ur.Type),
@@ -288,7 +288,7 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 		var gcpOptions GCPUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &gcpOptions)
 		if err != nil {
-			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to unmarshal into GCPUploadRequestOptions")
+			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into GCPUploadRequestOptions")
 		}
 		return cloudapi.UploadRequest{
 			Type: cloudapi.UploadTypes(ur.Type),
