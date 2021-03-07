@@ -27,11 +27,7 @@ pipeline {
             }
         }
 
-        stage("Mock build 👷🏻") {
-            // Halt the pipeline immediately if a single mock build fails.
-            // A failure to build an RPM is serious and must be
-            // investigated.
-            failFast true
+        stage("Test ✅") {
             parallel {
                 stage('F32') {
                     agent { label "f32cloudbase && x86_64 && aws" }
@@ -42,7 +38,6 @@ pipeline {
                         sh "schutzbot/run_tests.sh"
                     }
                 }
-                // TODO osbuild-composer-api isn't available in rhel8
                 stage('EL8') {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
                     environment {
