@@ -229,7 +229,7 @@ components:
           $ref: '#/components/schemas/UploadTypes'
     UploadTypes:
       type: string
-      enum: ['aws', 'gcp']
+      enum: ['aws', 'gcp', 'azure']
     AWSUploadStatus:
       type: object
       properties:
@@ -283,6 +283,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/AWSUploadRequestOptions'
             - $ref: '#/components/schemas/GCPUploadRequestOptions'
+            - $ref: '#/components/schemas/AzureUploadRequestOptions'
     AWSUploadRequestOptions:
       type: object
       required:
@@ -321,6 +322,30 @@ components:
                 account.
           items:
             type: string
+    AzureUploadRequestOptions:
+      type: object
+      required:
+        - tenant_id
+        - subscription_id
+        - resource_group
+      properties:
+        tenant_id:
+          type: string
+          example: '5c7ef5b6-1c3f-4da0-a622-0b060239d7d7'
+          description: |
+            ID of the tenant where the image should be uploaded. This link explains how
+            to find it in the Azure Portal:
+            https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant
+        subscription_id:
+          type: string
+          example: '4e5d8b2c-ab24-4413-90c5-612306e809e2'
+          description: |
+            ID of subscription where the image should be uploaded.
+        resource_group:
+          type: string
+          example: 'ToucanResourceGroup'
+          description: |
+            Name of the resource group where the image should be uploaded.
     Customizations:
       type: object
       properties:
