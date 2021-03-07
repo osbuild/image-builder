@@ -16,10 +16,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func RunTestWithClient(t *testing.T, ib string)  {
+func RunTestWithClient(t *testing.T, ib string) {
 	// wait until server is reachable
 	tries := 0
-	for tries  < 5 {
+	for tries < 5 {
 		resp, err := tutils.GetResponseError(ib + "/version")
 		if err == nil && resp.StatusCode == http.StatusOK {
 			break
@@ -30,7 +30,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 		tries += 1
 	}
 
-	response, body := tutils.GetResponseBody(t, ib + "/distributions", &tutils.AuthString0)
+	response, body := tutils.GetResponseBody(t, ib+"/distributions", &tutils.AuthString0)
 	require.Equalf(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
 
 	require.NotNil(t, body)
@@ -41,7 +41,7 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	require.NoError(t, err)
 
 	distro := distributions[0].Name
-	response, body = tutils.GetResponseBody(t, ib + "/architectures/" + distro, &tutils.AuthString0)
+	response, body = tutils.GetResponseBody(t, ib+"/architectures/"+distro, &tutils.AuthString0)
 	require.Equalf(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
 	require.NotNil(t, body)
 	require.NotEmpty(t, body)
@@ -61,87 +61,73 @@ func RunTestWithClient(t *testing.T, ib string)  {
 	// The links supplied should point to the same search
 	require.Contains(t, packages.Links.First, "search=ssh")
 
-
-
-	// Build a composerequest
-	composeRequest := server.ComposeRequest{
-		Distribution: distro,
-		ImageRequests: []server.ImageRequest{
-			server.ImageRequest{
-				Architecture: arch,
-				ImageType: "ami",
-				UploadRequests: []server.UploadRequest{
-					{
-						Type: "aws",
-						Options: server.AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"012345678912"},
-						},
-					},
+	composeRequestCases := []struct {
+		imageType     string
+		uploadRequest server.UploadRequest
+	}{
+		{
+			imageType: "ami",
+			uploadRequest: server.UploadRequest{
+				Type: "aws",
+				Options: server.AWSUploadRequestOptions{
+					ShareWithAccounts: []string{"012345678912"},
 				},
 			},
 		},
-		Customizations: &server.Customizations{
-			Packages: &[]string{"postgresql"},
-		},
-	}
-
-	response, body = tutils.PostResponseBody(t, ib + "/compose", composeRequest)
-	require.Equal(t, http.StatusCreated, response.StatusCode, "Error: got non-201 status. Full response: %s", body)
-	require.NotNil(t, body)
-	require.NotEmpty(t, body)
-
-	var composeResp server.ComposeResponse
-	err = json.Unmarshal([]byte(body), &composeResp)
-	require.NoError(t, err)
-	id := composeResp.Id
-
-	response, body = tutils.GetResponseBody(t, ib + "/composes/" + id, &tutils.AuthString0)
-	require.Equal(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
-	require.NotNil(t, body)
-	require.NotEmpty(t, body)
-
-	var composeStatus cloudapi.ComposeStatus
-	err = json.Unmarshal([]byte(body), &composeStatus)
-	require.NoError(t, err)
-	require.Contains(t, []string{"pending", "running"}, composeStatus.ImageStatus.Status)
-
-	// A compose with gcp as a target
-	composeRequest = server.ComposeRequest{
-		Distribution: distro,
-		ImageRequests: []server.ImageRequest{
-			server.ImageRequest{
-				Architecture: arch,
-				ImageType: "vhd",
-				UploadRequests: []server.UploadRequest{
-					{
-						Type: "gcp",
-						Options: server.GCPUploadRequestOptions{
-							ShareWithAccounts: []string{"user:somebody@example.com"},
-						},
-					},
+		{
+			imageType: "vhd",
+			uploadRequest: server.UploadRequest{
+				Type: "gcp",
+				Options: server.GCPUploadRequestOptions{
+					ShareWithAccounts: []string{"user:somebody@example.com"},
 				},
 			},
 		},
-		Customizations: &server.Customizations{
-			Packages: &[]string{"postgresql"},
-		},
 	}
 
-	err = json.Unmarshal([]byte(body), &composeResp)
-	require.NoError(t, err)
-	id = composeResp.Id
+	for _, c := range composeRequestCases {
+		t.Run("composeRequest/"+string(c.uploadRequest.Type), func(t *testing.T) {
 
-	response, body = tutils.GetResponseBody(t, ib + "/composes/" + id, &tutils.AuthString0)
-	require.Equal(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
-	require.NotNil(t, body)
-	require.NotEmpty(t, body)
+			composeRequest := server.ComposeRequest{
+				Distribution: distro,
+				ImageRequests: []server.ImageRequest{
+					server.ImageRequest{
+						Architecture: arch,
+						ImageType:    c.imageType,
+						UploadRequests: []server.UploadRequest{
+							c.uploadRequest,
+						},
+					},
+				},
+				Customizations: &server.Customizations{
+					Packages: &[]string{"postgresql"},
+				},
+			}
 
-	err = json.Unmarshal([]byte(body), &composeStatus)
-	require.NoError(t, err)
-	require.Contains(t, []string{"pending", "running"}, composeStatus.ImageStatus.Status)
+			response, body = tutils.PostResponseBody(t, ib+"/compose", composeRequest)
+			require.Equal(t, http.StatusCreated, response.StatusCode, "Error: got non-201 status. Full response: %s", body)
+			require.NotNil(t, body)
+			require.NotEmpty(t, body)
+
+			var composeResp server.ComposeResponse
+			err = json.Unmarshal([]byte(body), &composeResp)
+			require.NoError(t, err)
+			id := composeResp.Id
+
+			response, body = tutils.GetResponseBody(t, ib+"/composes/"+id, &tutils.AuthString0)
+			require.Equal(t, http.StatusOK, response.StatusCode, "Error: got non-200 status. Full response: %s", body)
+			require.NotNil(t, body)
+			require.NotEmpty(t, body)
+
+			var composeStatus cloudapi.ComposeStatus
+			err = json.Unmarshal([]byte(body), &composeStatus)
+			require.NoError(t, err)
+			require.Contains(t, []string{"pending", "running"}, composeStatus.ImageStatus.Status)
+		})
+	}
 
 	// Check if we get 404 without the identity header
-	response, body = tutils.GetResponseBody(t, ib + "/version", nil)
+	response, body = tutils.GetResponseBody(t, ib+"/version", nil)
 	require.Equalf(t, http.StatusNotFound, response.StatusCode, "Error: got non-404 status. Full response: %s", body)
 }
 
