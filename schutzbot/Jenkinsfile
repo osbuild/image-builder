@@ -29,8 +29,8 @@ pipeline {
 
         stage("Test ✅") {
             parallel {
-                stage('F32') {
-                    agent { label "f32cloudbase && x86_64 && aws" }
+                stage('F33') {
+                    agent { label "f33cloudbase && x86_64 && aws" }
                     steps {
                         sh "schutzbot/ci_details.sh"
                         sh "schutzbot/build.sh"

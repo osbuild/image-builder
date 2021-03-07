@@ -84,6 +84,7 @@ install -m 0755 -vp _bin/image-builder-tests		%{buildroot}%{_libexecdir}/tests/i
 %package tests
 Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
+Requires:   openssl
 
 %description tests
 Integration tests to be run on a system with image-builder installed.
