@@ -24,6 +24,7 @@ type Server struct {
 	client   cloudapi.OsbuildClient
 	aws      AWSConfig
 	gcp      GCPConfig
+	azure    AzureConfig
 	orgIds   []string
 	distsDir string
 }
@@ -40,11 +41,15 @@ type GCPConfig struct {
 	Bucket string
 }
 
+type AzureConfig struct {
+	Location string
+}
+
 type Handlers struct {
 	server *Server
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, awsConfig AWSConfig, gcpConfig GCPConfig, orgIds []string, distsDir string) *Server {
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, distsDir string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -57,6 +62,7 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, awsConfig A
 		client,
 		awsConfig,
 		gcpConfig,
+		azureConfig,
 		orgIds,
 		distsDir,
 	}
@@ -296,6 +302,21 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 				Bucket:            s.gcp.Bucket,
 				Region:            &s.gcp.Region,
 				ShareWithAccounts: &gcpOptions.ShareWithAccounts,
+			},
+		}, nil
+	case "azure":
+		var azureOptions AzureUploadRequestOptions
+		err = json.Unmarshal(optionsJSON, &azureOptions)
+		if err != nil {
+			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into AzureUploadRequestOptions")
+		}
+		return cloudapi.UploadRequest{
+			Type: cloudapi.UploadTypes(ur.Type),
+			Options: cloudapi.AzureUploadRequestOptions{
+				TenantId:       azureOptions.TenantId,
+				SubscriptionId: azureOptions.SubscriptionId,
+				ResourceGroup:  azureOptions.ResourceGroup,
+				Location:       s.azure.Location,
 			},
 		}, nil
 	default:

@@ -83,6 +83,17 @@ func RunTestWithClient(t *testing.T, ib string) {
 				},
 			},
 		},
+		{
+			imageType: "vhd",
+			uploadRequest: server.UploadRequest{
+				Type: "azure",
+				Options: server.AzureUploadRequestOptions{
+					ResourceGroup:  "",
+					SubscriptionId: "",
+					TenantId:       "",
+				},
+			},
+		},
 	}
 
 	for _, c := range composeRequestCases {

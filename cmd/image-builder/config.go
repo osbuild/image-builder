@@ -18,6 +18,7 @@ type ImageBuilderConfig struct {
 	OsbuildCA              *string `env:"OSBUILD_CA_PATH"`
 	OsbuildGCPRegion       string  `env:"OSBUILD_GCP_REGION"`
 	OsbuildGCPBucket       string  `env:"OSBUILD_GCP_BUCKET"`
+	OsbuildAzureLocation   string  `env:"OSBUILD_AZURE_LOCATION"`
 	OrgIds                 string  `env:"ALLOWED_ORG_IDS"`
 	DistributionsDir       string  `env:"DISTRIBUTIONS_DIR"`
 }

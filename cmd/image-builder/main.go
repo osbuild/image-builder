@@ -82,6 +82,10 @@ func main() {
 		Bucket: config.OsbuildGCPBucket,
 	}
 
-	s := server.NewServer(log, client, aws, gcp, orgIds, config.DistributionsDir)
+	azure := server.AzureConfig{
+		Location: config.OsbuildAzureLocation,
+	}
+
+	s := server.NewServer(log, client, aws, gcp, azure, orgIds, config.DistributionsDir)
 	s.Run(config.ListenAddress)
 }

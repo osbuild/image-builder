@@ -25,6 +25,31 @@ type AWSUploadRequestOptionsS3 struct {
 	SecretAccessKey string `json:"secret_access_key"`
 }
 
+// AzureUploadRequestOptions defines model for AzureUploadRequestOptions.
+type AzureUploadRequestOptions struct {
+
+	// Name of the uploaded image. It must be unique in the given resource group.
+	// If name is omitted from the request, a random one based on a UUID is
+	// generated.
+	ImageName *string `json:"image_name,omitempty"`
+
+	// Location where the image should be uploaded and registered. This link explain
+	// how to list all locations:
+	// https://docs.microsoft.com/en-us/cli/azure/account?view=azure-cli-latest#az_account_list_locations'
+	Location string `json:"location"`
+
+	// Name of the resource group where the image should be uploaded.
+	ResourceGroup string `json:"resource_group"`
+
+	// ID of subscription where the image should be uploaded.
+	SubscriptionId string `json:"subscription_id"`
+
+	// ID of the tenant where the image should be uploaded. This link explains how
+	// to find it in the Azure Portal:
+	// https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant
+	TenantId string `json:"tenant_id"`
+}
+
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
 	Customizations *Customizations `json:"customizations,omitempty"`
