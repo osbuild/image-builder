@@ -23,13 +23,20 @@
 
 ### Integration test
 
+* Run the following script to easily run the integration test:
+    ```
+    # test/run_integration_test.sh
+    ```
+
+* Detail steps:
+
 1. Build image-builder docker image.
 
     Call schutzbots/build.sh. It will build image-builder and image-builder-tests packages, install them into your testbed, and build an image-builder docker image
     ```
     # export WORKSPACE=.
     # export JOB_NAME=
-    # sudo schutzbots/build.sh
+    # sudo schutzbot/build.sh
     ```
 
 2. Run integration test
