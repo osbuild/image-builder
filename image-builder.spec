@@ -63,6 +63,8 @@ install -m 0644 -vp distributions/*			%{buildroot}%{_datadir}/image-builder/dist
 %if %{with tests} || 0%{?rhel}
 install -m 0755 -vd					%{buildroot}%{_libexecdir}/tests/image-builder
 install -m 0755 -vp _bin/image-builder-tests		%{buildroot}%{_libexecdir}/tests/image-builder/
+install -m 0755 -vp test/cases/*                        %{buildroot}%{_libexecdir}/tests/image-builder/
+
 %endif
 
 %post
