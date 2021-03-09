@@ -32,10 +32,7 @@ pipeline {
                 stage('F33') {
                     agent { label "f33cloudbase && x86_64 && aws" }
                     steps {
-                        sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/build.sh"
-                        sh "schutzbot/provision-composer.sh"
-                        sh "schutzbot/run_tests.sh"
+                        run_project_tests('image-builder', 'api.sh')
                     }
                 }
                 stage('EL8') {
@@ -44,13 +41,19 @@ pipeline {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
                     }
                     steps {
-                        sh "schutzbot/ci_details.sh"
-                        sh "schutzbot/build.sh"
-                        sh "schutzbot/provision-composer.sh"
-                        sh "schutzbot/run_tests.sh"
+                        run_project_tests('image-builder', 'api.sh')
                     }
                 }
             }
         }
     }
+}
+
+// Similar to run_tests, but with a more general signature: allows setting the
+// project whose -tests package to install, and the name of the test to execute
+void run_project_tests(project, test) {
+    sh "schutzbot/ci_details.sh"
+    sh "schutzbot/build.sh"
+    sh "schutzbot/provision-composer.sh"
+    sh "/usr/libexec/tests/${project}/${test}"
 }
