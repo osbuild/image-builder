@@ -1,28 +1,23 @@
 #!/usr/bin/bash
 
 #
-# Test osbuild-composer's main API endpoint by building a sample image and
-# uploading it to AWS.
+# The image-builder API integration test
 #
 # This script sets `-x` and is meant to always be run like that. This is
 # simpler than adding extensive error reporting, which would make this script
 # considerably more complex. Also, the full trace this produces is very useful
-# for the primary audience: developers of osbuild-composer looking at the log
+# for the primary audience: developers of image-builder looking at the log
 # from a run on a remote continuous integration system.
 #
 
 set -euxo pipefail
 
-#
+# Install tools
+which jq > /dev/null || sudo dnf install -y jq
+
 # Create a temporary directory and ensure it gets deleted when this script
 # terminates in any way.
-#
-
 WORKDIR=$(mktemp -d)
-
-#
-# Make sure /openapi.json and /version endpoints return success
-#
 
 # org_id 000000 (valid org_id)
 ValidAuthString="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQ=="
@@ -31,27 +26,53 @@ ValidAuthString="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV
 InvalidAuthString="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAxIn19fQ=="
 
 # Common constants
-CurlCmd='curl -s -w %{http_code}'
+Port="8087"
+CurlCmd='curl -w %{http_code}'
 Header="x-rh-identity: $ValidAuthString"
 Address="localhost"
-Port="8086"
 Version="1.0"
 MajorVersion="1"
 BaseUrl="http://$Address:$Port/api/image-builder/v$Version"
 BaseUrlMajorVersion="http://$Address:$Port/api/image-builder/v$MajorVersion"
-
 REQUEST_FILE="${WORKDIR}/request.json"
 ARCH=$(uname -m)
+
+# Start container
+sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
+     -e LISTEN_ADDRESS=localhost:"$Port" -e OSBUILD_URL=https://localhost:443 \
+     -e OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem \
+     -e OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem \
+     -e OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem \
+     -e ALLOWED_ORG_IDS="000000" \
+     -e DISTRIBUTIONS_DIR="/app/distributions" \
+     -v /etc/osbuild-composer:/etc/osbuild-composer \
+     image-builder
+
+# Verify port is ready
+ready=0
+for retry in {1..10};do
+  curl --fail -H "$Header" "http://$Address:$Port/ready" && {
+    ready=1
+    break
+  }
+  echo "Port $Port is not open. Waiting...($retry/10)"
+  sleep 1
+done
+[ "$ready" -eq 1 ] || {
+  echo "Port $Port is not open after retrying 10 times. Exit."
+  exit 1
+}
 
 case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   "rhel-8.2" | "rhel-8.3" | "rhel-8.4")
     DISTRO="rhel-8"
   ;;
-  "fedora-32")
+  "fedora-33")
     DISTRO="fedora-32"
   ;;
 esac
 
+# Abstract common functions
 function getResponse() {
   read -r -d '' -a arr <<<"$1"
   echo "${arr[@]::${#arr[@]}-1}"
