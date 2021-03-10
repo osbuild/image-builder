@@ -1,0 +1,14 @@
+{
+  "module_platform_id": "platform:f33",
+  "distribution": {
+    "name": "fedora-33",
+    "description": "Fedora 33"
+  },
+  "x86_64": {
+    "image_types": [ "ami", "vhd" ],
+    "repositories": [{
+      "baseurl": "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/",
+      "rhsm": false
+    }]
+  }
+}
