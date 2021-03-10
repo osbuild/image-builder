@@ -44,12 +44,6 @@ export GOFLAGS=-mod=vendor
 
 %gobuild -o _bin/image-builder %{goipath}/cmd/image-builder
 
-%if %{with tests} || 0%{?rhel}
-TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
-
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/image-builder-tests %{goipath}/cmd/image-builder-tests
-%endif
-
 %install
 install -m 0755 -vd					%{buildroot}%{_libexecdir}/image-builder
 install -m 0755 -vp _bin/image-builder			%{buildroot}%{_libexecdir}/image-builder/
@@ -62,9 +56,7 @@ install -m 0644 -vp distributions/*			%{buildroot}%{_datadir}/image-builder/dist
 
 %if %{with tests} || 0%{?rhel}
 install -m 0755 -vd					%{buildroot}%{_libexecdir}/tests/image-builder
-install -m 0755 -vp _bin/image-builder-tests		%{buildroot}%{_libexecdir}/tests/image-builder/
 install -m 0755 -vp test/cases/*                        %{buildroot}%{_libexecdir}/tests/image-builder/
-
 %endif
 
 %post
