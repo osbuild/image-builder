@@ -12,9 +12,6 @@
 
 set -euxo pipefail
 
-# Install tools
-which jq > /dev/null || sudo dnf install -y jq
-
 # Create a temporary directory and ensure it gets deleted when this script
 # terminates in any way.
 WORKDIR=$(mktemp -d)
@@ -26,7 +23,7 @@ ValidAuthString="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV
 InvalidAuthString="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAxIn19fQ=="
 
 # Common constants
-Port="8087"
+Port="8086"
 CurlCmd='curl -w %{http_code}'
 Header="x-rh-identity: $ValidAuthString"
 Address="localhost"
@@ -36,17 +33,6 @@ BaseUrl="http://$Address:$Port/api/image-builder/v$Version"
 BaseUrlMajorVersion="http://$Address:$Port/api/image-builder/v$MajorVersion"
 REQUEST_FILE="${WORKDIR}/request.json"
 ARCH=$(uname -m)
-
-# Start container
-sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
-     -e LISTEN_ADDRESS=localhost:"$Port" -e OSBUILD_URL=https://localhost:443 \
-     -e OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem \
-     -e OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem \
-     -e OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem \
-     -e ALLOWED_ORG_IDS="000000" \
-     -e DISTRIBUTIONS_DIR="/app/distributions" \
-     -v /etc/osbuild-composer:/etc/osbuild-composer \
-     image-builder
 
 # Verify port is ready
 ready=0

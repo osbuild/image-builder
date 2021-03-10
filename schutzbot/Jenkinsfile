@@ -54,6 +54,6 @@ pipeline {
 void run_project_tests(project, test) {
     sh "schutzbot/ci_details.sh"
     sh "schutzbot/build.sh"
-    sh "schutzbot/provision-composer.sh"
+    sh "schutzbot/deploy.sh"
     sh "/usr/libexec/tests/${project}/${test}"
 }
