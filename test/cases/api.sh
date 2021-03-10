@@ -54,7 +54,7 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
     DISTRO="rhel-8"
   ;;
   "fedora-33")
-    DISTRO="fedora-32"
+    DISTRO="fedora-33"
   ;;
 esac
 

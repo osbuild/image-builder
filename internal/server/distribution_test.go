@@ -9,10 +9,10 @@ import (
 )
 
 func TestRepositoriesForImage(t *testing.T) {
-	result, err := RepositoriesForImage("../../distributions", "fedora-32", "x86_64")
+	result, err := RepositoriesForImage("../../distributions", "fedora-33", "x86_64")
 	require.NoError(t, err)
 
-	baseurl := "http://mirrors.kernel.org/fedora/releases/32/Everything/x86_64/os/"
+	baseurl := "http://mirrors.kernel.org/fedora/releases/33/Everything/x86_64/os/"
 	require.Equal(t, []cloudapi.Repository{
 		{
 			Baseurl:    &baseurl,
@@ -23,7 +23,7 @@ func TestRepositoriesForImage(t *testing.T) {
 }
 
 func TestRepositoriesForImageWithUnsupportedArch(t *testing.T) {
-	result, err := RepositoriesForImage("../../distributions", "fedora-32", "unsupported")
+	result, err := RepositoriesForImage("../../distributions", "fedora-33", "unsupported")
 	require.Nil(t, result)
 	require.Error(t, err, "Architecture not supported")
 }
@@ -32,12 +32,12 @@ func TestAvailableDistributions(t *testing.T) {
 	result, err := AvailableDistributions("../../distributions")
 	require.NoError(t, err)
 	for _, distro := range result {
-		require.Contains(t, []string{"fedora-32", "rhel-8", "centos-8"}, distro.Name)
+		require.Contains(t, []string{"fedora-32", "fedora-33", "rhel-8", "centos-8"}, distro.Name)
 	}
 }
 
 func TestArchitecturesForImage(t *testing.T) {
-	result, err := ArchitecturesForImage("../../distributions", "fedora-32")
+	result, err := ArchitecturesForImage("../../distributions", "fedora-33")
 	require.NoError(t, err)
 	require.Equal(t, Architectures{
 		ArchitectureItem{
