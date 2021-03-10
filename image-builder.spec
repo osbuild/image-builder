@@ -79,6 +79,7 @@ install -m 0755 -vp test/cases/*                        %{buildroot}%{_libexecdi
 Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
 Requires:   openssl
+Requires:   jq
 
 %description tests
 Integration tests to be run on a system with image-builder installed.

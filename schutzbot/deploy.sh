@@ -58,3 +58,14 @@ sudo composer-cli sources list
 for SOURCE in $(sudo composer-cli sources list); do
     sudo composer-cli sources info "$SOURCE"
 done
+
+# Start Image Builder container
+sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
+     -e OSBUILD_URL=https://localhost:443 \
+     -e OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem \
+     -e OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem \
+     -e OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem \
+     -e ALLOWED_ORG_IDS="000000" \
+     -e DISTRIBUTIONS_DIR="/app/distributions" \
+     -v /etc/osbuild-composer:/etc/osbuild-composer \
+     image-builder
