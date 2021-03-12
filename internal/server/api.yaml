@@ -21,6 +21,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Version'
+  /ready:
+    get:
+      summary: return the readiness 
+      operationId: getReadiness
+      responses:
+        '200':
+          description: readiness
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
   /openapi.json:
     get:
       summary: get the openapi json specification
@@ -166,6 +177,13 @@ components:
         - version
       properties:
         version:
+          type: string
+    Readiness:
+      type: object
+      required:
+        - readiness
+      properties:
+        readiness:
           type: string
     Distributions:
       type: array

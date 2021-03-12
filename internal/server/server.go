@@ -79,37 +79,9 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, awsConfig A
 	})
 
 	/* Used for the readinessProbe */
-	s.echo.GET("/ready", func(c echo.Context) error {
-		// make sure distributions are available
-		distributions, err := AvailableDistributions(s.distsDir)
-		if err != nil {
-			return err
-		}
-		if len(distributions) == 0 {
-			return echo.NewHTTPError(http.StatusInternalServerError, "no distributions defined")
-		}
-
-		resp, err := s.client.Version()
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return err
-			}
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to contact osbuild-composer: %s", body))
-		}
-
-		ready := map[string]string{
-			"readiness": "ready",
-		}
-
-		return c.JSON(http.StatusOK, ready)
+	h.server.echo.GET("/ready", func(c echo.Context) error {
+		return h.GetReadiness(c)
 	})
-
 	return &s
 }
 
@@ -128,6 +100,37 @@ func (h *Handlers) GetVersion(ctx echo.Context) error {
 	}
 	version := Version{spec.Info.Version}
 	return ctx.JSON(http.StatusOK, version)
+}
+
+func (h *Handlers) GetReadiness(ctx echo.Context) error {
+	// make sure distributions are available
+	distributions, err := AvailableDistributions(h.server.distsDir)
+	if err != nil {
+		return err
+	}
+	if len(distributions) == 0 {
+		return echo.NewHTTPError(http.StatusInternalServerError, "no distributions defined")
+	}
+
+	resp, err := h.server.client.Version()
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to contact osbuild-composer: %s", body))
+	}
+
+	ready := map[string]string{
+		"readiness": "ready",
+	}
+
+	return ctx.JSON(http.StatusOK, ready)
 }
 
 func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
