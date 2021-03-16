@@ -110,24 +110,47 @@ components:
       required:
         - status
         - type
+        - options
       properties:
         status:
           type: string
           enum: ['success', 'failure', 'pending', 'running']
         type:
           $ref: '#/components/schemas/UploadTypes'
+        options:
+          oneOf:
+            - $ref: '#/components/schemas/AWSUploadStatus'
+            - $ref: '#/components/schemas/GCPUploadStatus'
+            - $ref: '#/components/schemas/AzureUploadStatus'
     AWSUploadStatus:
       type: object
+      required:
+        - ami
+        - region
       properties:
-        ami_id:
+        ami:
           type: string
           example: 'ami-0c830793775595d4b'
+        region:
+          type: string
+          example: 'eu-west-1'
     GCPUploadStatus:
       type: object
+      required:
+        - project_id
+        - image_name
       properties:
         project_id:
           type: string
           example: 'ascendant-braid-303513'
+        image_name:
+          type: string
+          example: 'my-image'
+    AzureUploadStatus:
+      type: object
+      required:
+        - image_name
+      properties:
         image_name:
           type: string
           example: 'my-image'

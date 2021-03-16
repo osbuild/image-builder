@@ -25,6 +25,12 @@ type AWSUploadRequestOptionsS3 struct {
 	SecretAccessKey string `json:"secret_access_key"`
 }
 
+// AWSUploadStatus defines model for AWSUploadStatus.
+type AWSUploadStatus struct {
+	Ami    string `json:"ami"`
+	Region string `json:"region"`
+}
+
 // AzureUploadRequestOptions defines model for AzureUploadRequestOptions.
 type AzureUploadRequestOptions struct {
 
@@ -48,6 +54,11 @@ type AzureUploadRequestOptions struct {
 	// to find it in the Azure Portal:
 	// https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant
 	TenantId string `json:"tenant_id"`
+}
+
+// AzureUploadStatus defines model for AzureUploadStatus.
+type AzureUploadStatus struct {
+	ImageName string `json:"image_name"`
 }
 
 // ComposeRequest defines model for ComposeRequest.
@@ -106,6 +117,12 @@ type GCPUploadRequestOptions struct {
 	ShareWithAccounts *[]string `json:"share_with_accounts,omitempty"`
 }
 
+// GCPUploadStatus defines model for GCPUploadStatus.
+type GCPUploadStatus struct {
+	ImageName string `json:"image_name"`
+	ProjectId string `json:"project_id"`
+}
+
 // ImageRequest defines model for ImageRequest.
 type ImageRequest struct {
 	Architecture   string          `json:"architecture"`
@@ -145,8 +162,9 @@ type UploadRequest struct {
 
 // UploadStatus defines model for UploadStatus.
 type UploadStatus struct {
-	Status string      `json:"status"`
-	Type   UploadTypes `json:"type"`
+	Options interface{} `json:"options"`
+	Status  string      `json:"status"`
+	Type    UploadTypes `json:"type"`
 }
 
 // UploadTypes defines model for UploadTypes.
