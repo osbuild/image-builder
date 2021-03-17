@@ -85,35 +85,33 @@ trap cleanup EXIT
 ############### Common functions and variables ################
 
 # org_id 000000 (valid org_id)
-ValidAuthString="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQ=="
+VALIDAUTHSTRING="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQ=="
 
 # org_id 000001 (invalid org_id)
-InvalidAuthString="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAxIn19fQ=="
+INVALIDAUTHSTRING="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAxIn19fQ=="
 
-# Common constants
-Port="8086"
-CurlCmd='curl -w %{http_code}'
-Header="x-rh-identity: $ValidAuthString"
-Address="localhost"
-Version="1.0"
-MajorVersion="1"
-BaseUrl="http://$Address:$Port/api/image-builder/v$Version"
-BaseUrlMajorVersion="http://$Address:$Port/api/image-builder/v$MajorVersion"
+PORT="8086"
+CURLCMD='curl -w %{http_code}'
+HEADER="x-rh-identity: $VALIDAUTHSTRING"
+ADDRESS="localhost"
+BASEURL="http://$ADDRESS:$PORT/api/image-builder/v1.0"
+BASEURLMAJORVERSION="http://$ADDRESS:$PORT/api/image-builder/v1"
 REQUEST_FILE="${WORKDIR}/request.json"
 ARCH=$(uname -m)
 
-# Verify port is ready
-ready=0
-for retry in {1..10};do
-  curl --fail -H "$Header" "http://$Address:$Port/ready" && {
-    ready=1
+# Wait until service is ready
+READY=0
+for RETRY in {1..10};do
+  curl --fail -H "$HEADER" "http://$ADDRESS:$PORT/ready" && {
+    READY=1
     break
   }
-  echo "Port $Port is not open. Waiting...($retry/10)"
+  echo "Port $PORT is not open. Waiting...($RETRY/10)"
   sleep 1
 done
-[ "$ready" -eq 1 ] || {
-  echo "Port $Port is not open after retrying 10 times. Exit."
+
+[ "$READY" -eq 1 ] || {
+  echo "Port $PORT is not open after retrying 10 times. Exit."
   exit 1
 }
 
@@ -124,15 +122,14 @@ case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   ;;
 esac
 
-# Abstract common functions
 function getResponse() {
-  read -r -d '' -a arr <<<"$1"
-  echo "${arr[@]::${#arr[@]}-1}"
+  read -r -d '' -a ARR <<<"$1"
+  echo "${ARR[@]::${#ARR[@]}-1}"
 }
 
 function getExitCode() {
-  read -r -d '' -a arr <<<"$1"
-  echo "${arr[-1]}"
+  read -r -d '' -a ARR <<<"$1"
+  echo "${ARR[-1]}"
 }
 
 function instanceWaitSSH() {
@@ -299,28 +296,28 @@ EOF
 
 ### Case: get version
 function Test_getVersion() {
-  url="$1"
-  result=$($CurlCmd -H "$Header" "$url/version")
-  ver="$(getResponse "$result" | jq .version -r)"
-  [[ $ver == "$Version" ]]
-  exit_code=$(getExitCode "$result")
-  [[ $exit_code == 200 ]]
+  URL="$1"
+  RESULT=$($CURLCMD -H "$HEADER" "$URL/version")
+  V=$(getResponse "$RESULT" | jq -r '.version')
+  [[ "$V" == "1.0" ]]
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ "$EXIT_CODE" == 200 ]]
 }
 
 ### Case: get openapi.json
 function Test_getOpenapi() {
-  url="$1"
-  result=$($CurlCmd -H "$Header" "$url/openapi.json")
-  exit_code=$(getExitCode "$result")
-  [[ $exit_code == 200 ]]
+  URL="$1"
+  RESULT=$($CURLCMD -H "$HEADER" "$URL/openapi.json")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ "$EXIT_CODE" == 200 ]]
 }
 
 ### Case: post to composer
 function Test_postToComposer() {
-  result=$($CurlCmd -H "$Header" -H 'Content-Type: application/json' --request POST --data @"$REQUEST_FILE" "$BaseUrl/compose")
-  exit_code=$(getExitCode "$result")
-  [[ $exit_code == 201 ]]
-  COMPOSE_ID=$(getResponse "$result" | jq -r '.id')
+  RESULT=$($CURLCMD -H "$HEADER" -H 'Content-Type: application/json' --request POST --data @"$REQUEST_FILE" "$BASEURL/compose")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ "$EXIT_CODE" == 201 ]]
+  COMPOSE_ID=$(getResponse "$RESULT" | jq -r '.id')
   [[ "$COMPOSE_ID" =~ ^\{?[A-F0-9a-f]{8}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{12}\}?$ ]]
 }
 
@@ -328,12 +325,12 @@ function Test_postToComposer() {
 function Test_waitForCompose() {
   while true
   do
-    result=$($CurlCmd -H "$Header" --request GET "$BaseUrl/composes/$COMPOSE_ID")
-    exit_code=$(getExitCode "$result")
-    [[ $exit_code == 200 ]]
+    RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID")
+    EXIT_CODE=$(getExitCode "$RESULT")
+    [[ $EXIT_CODE == 200 ]]
 
-    COMPOSE_STATUS=$(getResponse "$result" | jq -r '.image_status.status')
-    UPLOAD_STATUS=$(getResponse "$result" | jq -r '.image_status.upload_status.status')
+    COMPOSE_STATUS=$(getResponse "$RESULT" | jq -r '.image_status.status')
+    UPLOAD_STATUS=$(getResponse "$RESULT" | jq -r '.image_status.upload_status.status')
 
     if [[ "$COMPOSE_STATUS" != "pending" && "$COMPOSE_STATUS" != "running" ]]; then
       [[ "$COMPOSE_STATUS" = "success" ]]
@@ -484,14 +481,14 @@ function Test_verifyComposeResultAzure() {
 
 ### Case: verify the result (image) of a finished compose
 function Test_verifyComposeResult() {
-  result=$($CurlCmd -H "$Header" --request GET "$BaseUrl/composes/$COMPOSE_ID")
-  exit_code=$(getExitCode "$result")
-  [[ $exit_code == 200 ]]
+  RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ $EXIT_CODE == 200 ]]
 
-  UPLOAD_TYPE=$(getResponse "$result" | jq -r '.image_status.upload_status.type')
+  UPLOAD_TYPE=$(getResponse "$RESULT" | jq -r '.image_status.upload_status.type')
   [[ "$UPLOAD_TYPE" = "$CLOUD_PROVIDER" ]]
 
-  UPLOAD_OPTIONS=$(getResponse "$result" | jq -r '.image_status.upload_status.options')
+  UPLOAD_OPTIONS=$(getResponse "$RESULT" | jq -r '.image_status.upload_status.options')
 
   # verify upload options specific to cloud provider
   case $CLOUD_PROVIDER in
@@ -508,19 +505,19 @@ function Test_verifyComposeResult() {
 }
 
 function Test_getOpenapiWithWrongOrgId() {
-  result=$($CurlCmd -H "x-rh-identity: $InvalidAuthString" "$BaseUrl/openapi.json")
-  exit_code=$(getExitCode "$result")
-  [[ $exit_code == 404 ]]
-  msg=$(getResponse "$result" | jq -r '.errors[0].detail')
-  [[ $msg == "Organization not allowed" ]]
+  RESULT=$($CURLCMD -H "x-rh-identity: $INVALIDAUTHSTRING" "$BASEURL/openapi.json")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ "$EXIT_CODE" == 404 ]]
+  MSG=$(getResponse "$RESULT" | jq -r '.errors[0].detail')
+  [[ "$MSG" == "Organization not allowed" ]]
 }
 
 function Test_postToComposerWithWrongOrgId() {
-  result=$($CurlCmd -H "x-rh-identity: $InvalidAuthString" -H 'Content-Type: application/json' --request POST --data @"$REQUEST_FILE" "$BaseUrl/compose")
-  exit_code=$(getExitCode "$result")
-  [[ $exit_code == 404 ]]
-  msg=$(getResponse "$result" | jq -r '.errors[0].detail')
-  [[ $msg == "Organization not allowed" ]]
+  RESULT=$($CURLCMD -H "x-rh-identity: $INVALIDAUTHSTRING" -H 'Content-Type: application/json' --request POST --data @"$REQUEST_FILE" "$BASEURL/compose")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ "$EXIT_CODE" == 404 ]]
+  MSG=$(getResponse "$RESULT" | jq -r '.errors[0].detail')
+  [[ $MSG == "Organization not allowed" ]]
 }
 
 #
@@ -555,15 +552,13 @@ case $CLOUD_PROVIDER in
 esac
 
 ############### Test begin ################
-Test_getVersion "${BaseUrl}"
-Test_getVersion "${BaseUrlMajorVersion}"
-Test_getOpenapi "${BaseUrl}"
-Test_getOpenapi "${BaseUrlMajorVersion}"
-
+Test_getVersion "$BASEURL"
+Test_getVersion "$BASEURLMAJORVERSION"
+Test_getOpenapi "$BASEURL"
+Test_getOpenapi "$BASEURLMAJORVERSION"
 Test_postToComposer
 Test_waitForCompose
 Test_verifyComposeResult
-
 Test_getOpenapiWithWrongOrgId
 Test_postToComposerWithWrongOrgId
 
