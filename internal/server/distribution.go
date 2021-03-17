@@ -38,11 +38,17 @@ func ReadDistributions(distsDir, distro string) ([]DistributionFile, error) {
 			return nil
 		}
 
-		f, err := os.Open(path) // #nosec G304
+		cleanPath := filepath.Clean(path)
+		f, err := os.Open(cleanPath)
 		if err != nil {
 			return err
 		}
-		defer f.Close() // #nosec G307
+		defer func() {
+			err := f.Close()
+			if err != nil {
+				fmt.Printf("Error closing file: %v", err)
+			}
+		}()
 		var d DistributionFile
 		err = json.NewDecoder(f).Decode(&d)
 		if err != nil {
@@ -111,12 +117,17 @@ type PackagesFile struct {
 }
 
 func FindPackages(distsDir, distro, arch, search string) ([]Package, error) {
-	f, err := os.Open(path.Join(distsDir, fmt.Sprintf("%v-%v-packages.json", distro, arch))) // #nosec G304
+	cleanPath := filepath.Clean(path.Join(distsDir, fmt.Sprintf("%v-%v-packages.json", distro, arch)))
+	f, err := os.Open(cleanPath)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close() // #nosec G307
-
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			fmt.Printf("Error closing file: %v", err)
+		}
+	}()
 	var p PackagesFile
 	err = json.NewDecoder(f).Decode(&p)
 	if err != nil {
