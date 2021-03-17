@@ -33,6 +33,33 @@ sudo dnf install -y osbuild-composer composer-cli
 sudo mkdir -p /etc/osbuild-composer
 sudo cp -a schutzbot/osbuild-composer.toml /etc/osbuild-composer/
 
+sudo mkdir -p /etc/osbuild-worker
+
+# if GCP credentials are defined in the ENV, add them to the worker's configuration
+GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-}"
+if [[ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
+     # The credentials file must be copied to a different location. Jenkins places
+     # it into /tmp and as a result, the worker would not see it due to using PrivateTmp=true.
+     GCP_CREDS_WORKER_PATH="/etc/osbuild-worker/gcp-credentials.json"
+     sudo cp "$GOOGLE_APPLICATION_CREDENTIALS" "$GCP_CREDS_WORKER_PATH"
+     echo -e "\n[gcp]\ncredentials = \"$GCP_CREDS_WORKER_PATH\"\n" | sudo tee -a /etc/osbuild-worker/osbuild-worker.toml
+fi
+
+# if Azure credentials are defined in the env, create the credentials file
+AZURE_CLIENT_ID="${AZURE_CLIENT_ID:-}"
+AZURE_CLIENT_SECRET="${AZURE_CLIENT_SECRET:-}"
+if [[ -n "$AZURE_CLIENT_ID" && -n "$AZURE_CLIENT_SECRET" ]]; then
+     sudo tee /etc/osbuild-worker/azure-credentials.toml > /dev/null << EOF
+client_id =     "$AZURE_CLIENT_ID"
+client_secret = "$AZURE_CLIENT_SECRET"
+EOF
+     sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
+[azure]
+credentials = "/etc/osbuild-worker/azure-credentials.toml"
+EOF
+fi
+
 
 # Copy Fedora rpmrepo snapshots for use in weldr tests. RHEL's are usually more
 # stable, and not available publically from rpmrepo.
@@ -65,6 +92,13 @@ sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
      -e OSBUILD_CA_PATH=/etc/osbuild-composer/ca-crt.pem \
      -e OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem \
      -e OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem \
+     -e OSBUILD_AWS_REGION="${AWS_REGION:-}"\
+     -e OSBUILD_AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-}" \
+     -e OSBUILD_AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-}" \
+     -e OSBUILD_AWS_S3_BUCKET="${AWS_BUCKET:-}" \
+     -e OSBUILD_GCP_REGION="${GCP_REGION:-}" \
+     -e OSBUILD_GCP_BUCKET="${GCP_BUCKET:-}" \
+     -e OSBUILD_AZURE_LOCATION="${AZURE_LOCATION:-}" \
      -e ALLOWED_ORG_IDS="000000" \
      -e DISTRIBUTIONS_DIR="/app/distributions" \
      -v /etc/osbuild-composer:/etc/osbuild-composer \

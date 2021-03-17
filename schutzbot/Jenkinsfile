@@ -27,21 +27,58 @@ pipeline {
             }
         }
 
-        stage("Test ✅") {
+        stage("Test EL8 ✅") {
             parallel {
-                stage('F33') {
-                    agent { label "f33cloudbase && x86_64 && aws" }
-                    steps {
-                        run_project_tests('image-builder', 'api.sh')
-                    }
-                }
-                stage('EL8') {
+                stage('AWS') {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
+
                     environment {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+
+                        AWS_REGION = "us-east-2"
+                        AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
+                        AWS_CREDS = credentials('aws-credentials-osbuildci')
+                        AWS_API_TEST_SHARE_ACCOUNT = credentials('aws-credentials-share-account')
                     }
+
                     steps {
-                        run_project_tests('image-builder', 'api.sh')
+                        run_project_tests('image-builder', 'api.sh', 'aws')
+                    }
+                }
+
+                stage('GCP') {
+                    agent { label "rhel8cloudbase && x86_64 && aws" }
+
+                    environment {
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+
+                        GCP_BUCKET = "image-builder-testing"
+                        GCP_REGION = "us-east4"
+                        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-credentials-osbuildci')
+                        GCP_API_TEST_SHARE_ACCOUNT = credentials('gcp-credentials-share-account')
+                    }
+
+                    steps {
+                        run_project_tests('image-builder', 'api.sh', 'gcp')
+                    }
+                }
+
+                stage('Azure') {
+                    agent { label "rhel8cloudbase && x86_64 && aws" }
+
+                    environment {
+                        RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+
+                        AZURE_TENANT_ID = "1710d22c-ccf0-4421-8ba7-0135cfaecb90"
+                        AZURE_SUBSCRIPTION_ID = "8d026bb1-2a65-454d-a88f-c896db94c4f8"
+                        AZURE_RESOURCE_GROUP = "sharing-research"
+                        AZURE_LOCATION = "eastus"
+                        AZURE_CLIENT_ID = credentials('azure-client-id')
+                        AZURE_CLIENT_SECRET = credentials('azure-client-secret')
+                    }
+
+                    steps {
+                        run_project_tests('image-builder', 'api.sh', 'azure')
                     }
                 }
             }
@@ -51,9 +88,9 @@ pipeline {
 
 // Similar to run_tests, but with a more general signature: allows setting the
 // project whose -tests package to install, and the name of the test to execute
-void run_project_tests(project, test) {
+void run_project_tests(project, test, provider) {
     sh "schutzbot/ci_details.sh"
     sh "schutzbot/build.sh"
     sh "schutzbot/deploy.sh"
-    sh "/usr/libexec/tests/${project}/${test}"
+    sh "/usr/libexec/tests/${project}/${test} ${provider}"
 }
