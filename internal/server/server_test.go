@@ -363,8 +363,8 @@ func TestComposeImage(t *testing.T) {
 			},
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 500, response.StatusCode)
-		require.Contains(t, body, "Internal Server Error")
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "Architecture not supported")
 	})
 
 	t.Run("ErrorsForUnknownUploadType", func(t *testing.T) {

@@ -3,12 +3,14 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"sort"
 	"strings"
 
+	"github.com/labstack/echo/v4"
 	"github.com/osbuild/image-builder/internal/cloudapi"
 )
 
@@ -72,7 +74,7 @@ func RepositoriesForImage(distsDir, distro, arch string) ([]cloudapi.Repository,
 	case "x86_64":
 		return distributions[0].ArchX86.Repositories, nil
 	default:
-		return nil, fmt.Errorf("Architecture not supported")
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "Architecture not supported")
 	}
 }
 
