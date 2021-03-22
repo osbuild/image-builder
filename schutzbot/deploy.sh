@@ -10,8 +10,44 @@ echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
 # Set up osbuild-composer repo
 DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
+# Default values
 OSBUILD_COMMIT=3086c7d70c304214e2855cdcf495d4b70f4b04c6
 OSBUILD_COMPOSER_COMMIT=d7b0323a2dec205b7a41bd9b4c5d7e30982fc44f
+
+# If the GH token is defined, fetch used commits used in production / staging
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+if [[ -n $GITHUB_TOKEN ]]; then
+     # if the token is defined, fetch used commits from the respective image-builder-terraform branch
+     BRANCH_NAME=${BRANCH_NAME:-}
+     CHANGE_TARGET="${CHANGE_TARGET:-}"
+
+     # determine which image-builder-terraform branch to use
+     # first check if this is a PR to main/stable
+     # if not a PR check if running on main/stable
+     # if not, fall back to using default commit values
+     IB_TERRAFORM_BRANCH=
+     case "$CHANGE_TARGET" in
+          # PR to production / staging
+          "main"|"stable")
+               IB_TERRAFORM_BRANCH="$CHANGE_TARGET"
+               ;;
+          # Not a PR, but a regular run on a branch
+          "")
+               case "$BRANCH_NAME" in
+                    "main"|"stable")
+                         IB_TERRAFORM_BRANCH="$BRANCH_NAME"
+                         ;;
+               esac
+     esac
+
+     if [[ -n "$IB_TERRAFORM_BRANCH" ]]; then
+          CURL_URL="https://api.github.com/repos/osbuild/image-builder-terraform/contents/terraform.tfvars.json?ref=$IB_TERRAFORM_BRANCH"
+          TERRAFORM_VARS=$(curl -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3.raw" -L "$CURL_URL")
+          OSBUILD_COMMIT=$(echo "$TERRAFORM_VARS" | jq -r .osbuild_commit)
+          OSBUILD_COMPOSER_COMMIT=$(echo "$TERRAFORM_VARS" | jq -r .composer_commit)
+     fi
+fi
+
 sudo tee /etc/yum.repos.d/osbuild.repo << EOF
 [osbuild]
 name=osbuild ${OSBUILD_COMMIT}
