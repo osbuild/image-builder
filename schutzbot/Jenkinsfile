@@ -34,6 +34,7 @@ pipeline {
 
                     environment {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        GITHUB_TOKEN = credentials('github-api-token-secret-text')
 
                         AWS_REGION = "us-east-2"
                         AWS_BUCKET = "imagebuilder-jenkins-testing-use2"
@@ -51,6 +52,7 @@ pipeline {
 
                     environment {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        GITHUB_TOKEN = credentials('github-api-token-secret-text')
 
                         GCP_BUCKET = "image-builder-testing"
                         GCP_REGION = "us-east4"
@@ -68,6 +70,7 @@ pipeline {
 
                     environment {
                         RHN_REGISTRATION_SCRIPT = credentials('rhn-register-script-production')
+                        GITHUB_TOKEN = credentials('github-api-token-secret-text')
 
                         AZURE_TENANT_ID = "1710d22c-ccf0-4421-8ba7-0135cfaecb90"
                         AZURE_SUBSCRIPTION_ID = "8d026bb1-2a65-454d-a88f-c896db94c4f8"
