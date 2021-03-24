@@ -332,11 +332,26 @@ function Test_waitForCompose() {
     COMPOSE_STATUS=$(getResponse "$RESULT" | jq -r '.image_status.status')
     UPLOAD_STATUS=$(getResponse "$RESULT" | jq -r '.image_status.upload_status.status')
 
-    if [[ "$COMPOSE_STATUS" != "pending" && "$COMPOSE_STATUS" != "running" ]]; then
-      [[ "$COMPOSE_STATUS" = "success" ]]
-      [[ "$UPLOAD_STATUS" = "success" ]]
-      break
-    fi
+    case "$COMPOSE_STATUS" in
+      # "running is kept here temporarily for backward compatibility"
+      "running")
+        ;;
+      # valid status values for compose which is not yet finished
+      "pending"|"building"|"uploading"|"registering")
+        ;;
+      "success")
+        [[ "$UPLOAD_STATUS" = "success" ]]
+        break
+        ;;
+      "failure")
+        echo "Image compose failed"
+        exit 1
+        ;;
+      *)
+        echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
+        exit 1
+        ;;
+    esac
 
     sleep 30
   done

@@ -60,7 +60,7 @@ func TestComposeStatusWithHTTPServer(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		s := ComposeStatus{
 			ImageStatus: ImageStatus{
-				Status: "running",
+				Status: ImageStatusValue("building"),
 			},
 		}
 		err := json.NewEncoder(w).Encode(s)
@@ -79,7 +79,7 @@ func TestComposeStatusWithHTTPServer(t *testing.T) {
 	var s ComposeStatus
 	err = json.NewDecoder(resp.Body).Decode(&s)
 	require.NoError(t, err)
-	require.Equal(t, s.ImageStatus.Status, "running")
+	require.Equal(t, s.ImageStatus.Status, ImageStatusValue("building"))
 }
 
 func TestComposeWithHTTPServer(t *testing.T) {

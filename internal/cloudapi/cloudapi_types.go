@@ -133,9 +133,22 @@ type ImageRequest struct {
 
 // ImageStatus defines model for ImageStatus.
 type ImageStatus struct {
-	Status       string        `json:"status"`
-	UploadStatus *UploadStatus `json:"upload_status,omitempty"`
+	Status       ImageStatusValue `json:"status"`
+	UploadStatus *UploadStatus    `json:"upload_status,omitempty"`
 }
+
+// ImageStatusValue defines model for ImageStatusValue.
+type ImageStatusValue string
+
+// List of ImageStatusValue
+const (
+	ImageStatusValue_building    ImageStatusValue = "building"
+	ImageStatusValue_failure     ImageStatusValue = "failure"
+	ImageStatusValue_pending     ImageStatusValue = "pending"
+	ImageStatusValue_registering ImageStatusValue = "registering"
+	ImageStatusValue_success     ImageStatusValue = "success"
+	ImageStatusValue_uploading   ImageStatusValue = "uploading"
+)
 
 // Repository defines model for Repository.
 type Repository struct {
