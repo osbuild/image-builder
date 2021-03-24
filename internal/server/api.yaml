@@ -8,6 +8,10 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 
+servers:
+  - url: "/api/image-builder/v1"
+  - url: "/api/image-builder/v1.0"
+
 paths:
   /version:
     get:
@@ -386,7 +390,7 @@ components:
         type:
           $ref: '#/components/schemas/UploadTypes'
         options:
-          oneOf:
+          anyOf:
             - $ref: '#/components/schemas/AWSUploadRequestOptions'
             - $ref: '#/components/schemas/GCPUploadRequestOptions'
             - $ref: '#/components/schemas/AzureUploadRequestOptions'
@@ -486,7 +490,6 @@ components:
           example: 'subscription.rhsm.redhat.com'
         base-url:
           type: string
-          format: url
           example: http://cdn.redhat.com/
         insights:
           type: boolean

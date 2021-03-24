@@ -278,14 +278,24 @@ func TestComposeImage(t *testing.T) {
 			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
 				ImageRequest{
-					Architecture:  "x86_64",
-					ImageType:     "qcow2",
-					UploadRequest: UploadRequest{},
+					Architecture: "x86_64",
+					ImageType:    "qcow2",
+					UploadRequest: UploadRequest{
+						Type: "aws",
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
+						},
+					},
 				},
 				ImageRequest{
-					Architecture:  "x86_64",
-					ImageType:     "ami",
-					UploadRequest: UploadRequest{},
+					Architecture: "x86_64",
+					ImageType:    "ami",
+					UploadRequest: UploadRequest{
+						Type: "aws",
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
+						},
+					},
 				},
 			},
 		}
@@ -308,7 +318,8 @@ func TestComposeImage(t *testing.T) {
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, "Exactly one upload request should be included")
+		require.Contains(t, body, "image_requests/0/upload_request/options")
+		require.Contains(t, body, "Value is not nullable")
 	})
 
 	t.Run("ISEWhenRepositoriesNotFound", func(t *testing.T) {
@@ -355,7 +366,8 @@ func TestComposeImage(t *testing.T) {
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, "Unknown UploadRequest type")
+		require.Contains(t, body, "image_requests/0/upload_request/type")
+		require.Contains(t, body, "value is not one of the allowed values")
 	})
 }
 

@@ -45,11 +45,19 @@ github.com/davecgh/go-spew/spew
 # github.com/deepmap/oapi-codegen v1.3.12
 github.com/deepmap/oapi-codegen/pkg/runtime
 github.com/deepmap/oapi-codegen/pkg/types
-# github.com/getkin/kin-openapi v0.13.0
+# github.com/getkin/kin-openapi v0.53.0
 github.com/getkin/kin-openapi/jsoninfo
 github.com/getkin/kin-openapi/openapi3
+github.com/getkin/kin-openapi/openapi3filter
+github.com/getkin/kin-openapi/routers
+github.com/getkin/kin-openapi/routers/legacy
+github.com/getkin/kin-openapi/routers/legacy/pathpattern
 # github.com/ghodss/yaml v1.0.0
 github.com/ghodss/yaml
+# github.com/go-openapi/jsonpointer v0.19.5
+github.com/go-openapi/jsonpointer
+# github.com/go-openapi/swag v0.19.5
+github.com/go-openapi/swag
 # github.com/golang-migrate/migrate/v4 v4.13.0
 github.com/golang-migrate/migrate/v4
 github.com/golang-migrate/migrate/v4/database
@@ -103,6 +111,10 @@ github.com/labstack/gommon/log
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-colorable v0.1.6
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
