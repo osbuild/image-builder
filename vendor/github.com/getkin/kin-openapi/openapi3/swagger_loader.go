@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -285,15 +286,24 @@ func (swaggerLoader *SwaggerLoader) resolveComponent(swagger *Swagger, ref strin
 }
 
 func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, error) {
-	val := reflect.Indirect(reflect.ValueOf(cursor))
-
-	switch val.Kind() {
+	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
 	case reflect.Map:
 		elementValue := val.MapIndex(reflect.ValueOf(fieldName))
 		if !elementValue.IsValid() {
 			return nil, fmt.Errorf("Map key not found: %v", fieldName)
 		}
 		return elementValue.Interface(), nil
+
+	case reflect.Slice:
+		i, err := strconv.ParseUint(fieldName, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		index := int(i)
+		if index >= val.Len() {
+			return nil, errors.New("slice index out of bounds")
+		}
+		return val.Index(index).Interface(), nil
 
 	case reflect.Struct:
 		for i := 0; i < val.NumField(); i++ {
@@ -311,8 +321,10 @@ func drillIntoSwaggerField(cursor interface{}, fieldName string) (interface{}, e
 		}
 		// give up
 		return nil, fmt.Errorf("Struct field not found: %v", fieldName)
+
+	default:
+		return nil, errors.New("not a map, slice nor struct")
 	}
-	return nil, errors.New("Not a map or struct")
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref string, path *url.URL) (*Swagger, string, *url.URL, error) {
@@ -343,15 +355,16 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 }
 
 func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component *HeaderRef, path *url.URL) error {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
 	visited[component] = struct{}{}
 
-	// Resolve ref
 	const prefix = "#/components/headers/"
+	if component == nil {
+		return errors.New("invalid header: value MUST be a JSON object")
+	}
 	if ref := component.Ref; len(ref) > 0 {
 		if isSingleRefElement(ref) {
 			var header Header
@@ -388,15 +401,16 @@ func (swaggerLoader *SwaggerLoader) resolveHeaderRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, component *ParameterRef, documentPath *url.URL) error {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
 	visited[component] = struct{}{}
 
-	// Resolve ref
 	const prefix = "#/components/parameters/"
+	if component == nil {
+		return errors.New("invalid parameter: value MUST be a JSON object")
+	}
 	ref := component.Ref
 	if len(ref) > 0 {
 		if isSingleRefElement(ref) {
@@ -449,15 +463,16 @@ func (swaggerLoader *SwaggerLoader) resolveParameterRef(swagger *Swagger, compon
 }
 
 func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, component *RequestBodyRef, path *url.URL) error {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
 	visited[component] = struct{}{}
 
-	// Resolve ref
 	const prefix = "#/components/requestBodies/"
+	if component == nil {
+		return errors.New("invalid requestBody: value MUST be a JSON object")
+	}
 	if ref := component.Ref; len(ref) > 0 {
 		if isSingleRefElement(ref) {
 			var requestBody RequestBody
@@ -502,16 +517,17 @@ func (swaggerLoader *SwaggerLoader) resolveRequestBodyRef(swagger *Swagger, comp
 }
 
 func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, component *ResponseRef, documentPath *url.URL) error {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
 	visited[component] = struct{}{}
 
-	// Resolve ref
-	ref := component.Ref
 	const prefix = "#/components/responses/"
+	if component == nil {
+		return errors.New("invalid response: value MUST be a JSON object")
+	}
+	ref := component.Ref
 	if len(ref) > 0 {
 
 		if isSingleRefElement(ref) {
@@ -576,15 +592,16 @@ func (swaggerLoader *SwaggerLoader) resolveResponseRef(swagger *Swagger, compone
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component *SchemaRef, documentPath *url.URL) error {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
 	visited[component] = struct{}{}
 
-	// Resolve ref
 	const prefix = "#/components/schemas/"
+	if component == nil {
+		return errors.New("invalid schema: value MUST be a JSON object")
+	}
 	ref := component.Ref
 	if len(ref) > 0 {
 		if isSingleRefElement(ref) {
@@ -661,15 +678,16 @@ func (swaggerLoader *SwaggerLoader) resolveSchemaRef(swagger *Swagger, component
 }
 
 func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, component *SecuritySchemeRef, path *url.URL) error {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
 	}
 	visited[component] = struct{}{}
 
-	// Resolve ref
 	const prefix = "#/components/securitySchemes/"
+	if component == nil {
+		return errors.New("invalid securityScheme: value MUST be a JSON object")
+	}
 	if ref := component.Ref; len(ref) > 0 {
 		if isSingleRefElement(ref) {
 			var scheme SecurityScheme
@@ -697,7 +715,6 @@ func (swaggerLoader *SwaggerLoader) resolveSecuritySchemeRef(swagger *Swagger, c
 }
 
 func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, component *ExampleRef, path *url.URL) error {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
@@ -705,6 +722,9 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 	visited[component] = struct{}{}
 
 	const prefix = "#/components/examples/"
+	if component == nil {
+		return errors.New("invalid example: value MUST be a JSON object")
+	}
 	if ref := component.Ref; len(ref) > 0 {
 		if isSingleRefElement(ref) {
 			var example Example
@@ -732,7 +752,6 @@ func (swaggerLoader *SwaggerLoader) resolveExampleRef(swagger *Swagger, componen
 }
 
 func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *LinkRef, path *url.URL) error {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visited
 	if _, isVisited := visited[component]; isVisited {
 		return nil
@@ -740,6 +759,9 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 	visited[component] = struct{}{}
 
 	const prefix = "#/components/links/"
+	if component == nil {
+		return errors.New("invalid link: value MUST be a JSON object")
+	}
 	if ref := component.Ref; len(ref) > 0 {
 		if isSingleRefElement(ref) {
 			var link Link
@@ -767,7 +789,6 @@ func (swaggerLoader *SwaggerLoader) resolveLinkRef(swagger *Swagger, component *
 }
 
 func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypoint string, pathItem *PathItem, documentPath *url.URL) (err error) {
-	// Prevent infinite recursion
 	visited := swaggerLoader.visitedFiles
 	key := "_"
 	if documentPath != nil {
@@ -779,6 +800,10 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 	}
 	visited[key] = struct{}{}
 
+	const prefix = "#/paths/"
+	if pathItem == nil {
+		return errors.New("invalid path item: value MUST be a JSON object")
+	}
 	ref := pathItem.Ref
 	if ref != "" {
 		if isSingleRefElement(ref) {
@@ -792,7 +817,6 @@ func (swaggerLoader *SwaggerLoader) resolvePathItemRef(swagger *Swagger, entrypo
 				return
 			}
 
-			prefix := "#/paths/"
 			if !strings.HasPrefix(ref, prefix) {
 				err = fmt.Errorf("expected prefix '%s' in URI '%s'", prefix, ref)
 				return

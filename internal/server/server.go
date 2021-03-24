@@ -367,7 +367,7 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 		return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to marshal UploadRequestOptions")
 	}
 	switch ur.Type {
-	case "aws":
+	case UploadTypes_aws:
 		var awsOptions AWSUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &awsOptions)
 		if err != nil {
@@ -389,7 +389,7 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 				Region: s.aws.Region,
 			},
 		}, nil
-	case "gcp":
+	case UploadTypes_gcp:
 		var gcpOptions GCPUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &gcpOptions)
 		if err != nil {
@@ -403,7 +403,7 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 				ShareWithAccounts: &gcpOptions.ShareWithAccounts,
 			},
 		}, nil
-	case "azure":
+	case UploadTypes_azure:
 		var azureOptions AzureUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &azureOptions)
 		if err != nil {
