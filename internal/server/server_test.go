@@ -192,7 +192,7 @@ func TestGetComposeStatus(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		s := ComposeStatus{
 			ImageStatus: ImageStatus{
-				Status: "running",
+				Status: "building",
 			},
 		}
 		err := json.NewEncoder(w).Encode(s)
@@ -214,7 +214,7 @@ func TestGetComposeStatus(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, cloudapi.ComposeStatus{
 		ImageStatus: cloudapi.ImageStatus{
-			Status: "running",
+			Status: "building",
 		},
 	}, result)
 
@@ -225,7 +225,7 @@ func TestGetComposeStatus(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, cloudapi.ComposeStatus{
 		ImageStatus: cloudapi.ImageStatus{
-			Status: "running",
+			Status: "building",
 		},
 	}, result)
 }

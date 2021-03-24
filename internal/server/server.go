@@ -193,7 +193,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 
 	status := ComposeStatus{
 		ImageStatus: ImageStatus{
-			Status:       cloudStat.ImageStatus.Status,
+			Status:       string(cloudStat.ImageStatus.Status),
 			UploadStatus: nil,
 		},
 	}
