@@ -203,6 +203,13 @@ type UploadStatus struct {
 // UploadTypes defines model for UploadTypes.
 type UploadTypes string
 
+// List of UploadTypes
+const (
+	UploadTypes_aws   UploadTypes = "aws"
+	UploadTypes_azure UploadTypes = "azure"
+	UploadTypes_gcp   UploadTypes = "gcp"
+)
+
 // Version defines model for Version.
 type Version struct {
 	Version string `json:"version"`
