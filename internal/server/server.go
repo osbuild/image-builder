@@ -15,6 +15,9 @@ import (
 	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -24,6 +27,7 @@ type Server struct {
 	logger   *logrus.Logger
 	echo     *echo.Echo
 	client   cloudapi.OsbuildClient
+	router   routers.Router
 	db       db.DB
 	aws      AWSConfig
 	gcp      GCPConfig
@@ -66,12 +70,23 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB
 	if err != nil {
 		panic(err)
 	}
+
+	loader := openapi3.NewSwaggerLoader()
+	if err := spec.Validate(loader.Context); err != nil {
+		panic(err)
+	}
+	router, err := legacyrouter.NewRouter(spec)
+	if err != nil {
+		panic(err)
+	}
+
 	majorVersion := strings.Split(spec.Info.Version, ".")[0]
 
 	s := Server{
 		logger,
 		echo.New(),
 		client,
+		router,
 		dbase,
 		awsConfig,
 		gcpConfig,
@@ -83,8 +98,8 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.VerifyIdentityHeader, s.PrometheusMW), &h)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.VerifyIdentityHeader, s.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.VerifyIdentityHeader, s.ValidateRequest, s.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.VerifyIdentityHeader, s.ValidateRequest, s.PrometheusMW), &h)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
@@ -575,6 +590,29 @@ func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 
 		ctx.Set("IdentityHeader", idHeader)
 
+		return nextHandler(ctx)
+	}
+}
+
+func (s *Server) ValidateRequest(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		request := ctx.Request()
+
+		route, params, err := s.router.FindRoute(request)
+		if err != nil {
+			return err
+		}
+
+		requestValidationInput := &openapi3filter.RequestValidationInput{
+			Request:    request,
+			PathParams: params,
+			Route:      route,
+		}
+
+		context := request.Context()
+		if err := openapi3filter.ValidateRequest(context, requestValidationInput); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		}
 		return nextHandler(ctx)
 	}
 }

@@ -11,11 +11,11 @@ import (
 type Encoding struct {
 	ExtensionProps
 
-	ContentType   string                `json:"contentType,omitempty" yaml:"contentType,omitempty"`
-	Headers       map[string]*HeaderRef `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Style         string                `json:"style,omitempty" yaml:"style,omitempty"`
-	Explode       *bool                 `json:"explode,omitempty" yaml:"explode,omitempty"`
-	AllowReserved bool                  `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
+	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
+	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Style         string  `json:"style,omitempty" yaml:"style,omitempty"`
+	Explode       *bool   `json:"explode,omitempty" yaml:"explode,omitempty"`
+	AllowReserved bool    `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
 }
 
 func NewEncoding() *Encoding {
@@ -86,7 +86,7 @@ func (encoding *Encoding) Validate(c context.Context) error {
 		sm.Style == SerializationDeepObject && sm.Explode:
 		// it is a valid
 	default:
-		return fmt.Errorf("Serialization method with style=%q and explode=%v is not supported by media type", sm.Style, sm.Explode)
+		return fmt.Errorf("serialization method with style=%q and explode=%v is not supported by media type", sm.Style, sm.Explode)
 	}
 
 	return nil
