@@ -525,3 +525,16 @@ func TestReadinessProbeReady(t *testing.T) {
 	require.Equal(t, 200, response.StatusCode)
 	require.Contains(t, body, "{\"readiness\":\"ready\"}")
 }
+
+func TestMetrics(t *testing.T) {
+	// simulate osbuild-composer API
+	srv := startServer(t, "", "*")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	response, body := tutils.GetResponseBody(t, "http://localhost:8086/metrics", nil)
+	require.Equal(t, 200, response.StatusCode)
+	require.Contains(t, body, "image_builder_http_requests_total")
+}
