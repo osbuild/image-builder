@@ -482,7 +482,7 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 		Meta: struct {
 			Count int `json:"count"`
 		}{
-			len(packages[offset:upto]),
+			len(packages),
 		},
 		Links: struct {
 			First string `json:"first"`
