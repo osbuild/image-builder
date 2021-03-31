@@ -11,7 +11,7 @@ import (
 
 func Migrate(connStr string, migrationsDir string, logger *logrus.Logger) error {
 	fmt.Println(migrationsDir, fmt.Sprintf("file://%s", migrationsDir))
-	m, err := migrate.New(fmt.Sprintf("file://%s", migrationsDir), fmt.Sprintf("%s?sslmode=disable", connStr))
+	m, err := migrate.New(fmt.Sprintf("file://%s", migrationsDir), connStr)
 	if err != nil {
 		return err
 	}
