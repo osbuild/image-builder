@@ -235,7 +235,6 @@ objects:
     name: image-builder
     annotations:
       prometheus.io/path: /metrics
-      prometheus.io/port: '8086'
       prometheus.io/scrape: 'true'
   spec:
     ports:
