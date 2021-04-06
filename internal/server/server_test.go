@@ -86,12 +86,12 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, distro := range result {
-			require.Contains(t, []string{"fedora-32", "fedora-33", "rhel-8", "centos-8"}, distro.Name)
+			require.Contains(t, []string{"rhel-8", "centos-8"}, distro.Name)
 		}
 	})
 
 	t.Run("GetArchitectures", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/fedora-33", &tutils.AuthString0)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-8", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result Architectures
@@ -264,7 +264,7 @@ func TestComposeImage(t *testing.T) {
 	t.Run("ErrorsForZeroImageRequests", func(t *testing.T) {
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "fedora-33",
+			Distribution:   "centos-8",
 			ImageRequests:  []ImageRequest{},
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
@@ -275,7 +275,7 @@ func TestComposeImage(t *testing.T) {
 	t.Run("ErrorsForTwoImageRequests", func(t *testing.T) {
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "fedora-33",
+			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
 				ImageRequest{
 					Architecture:  "x86_64",
@@ -297,7 +297,7 @@ func TestComposeImage(t *testing.T) {
 	t.Run("ErrorsForZeroUploadRequests", func(t *testing.T) {
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "fedora-33",
+			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
 				ImageRequest{
 					Architecture:  "x86_64",
@@ -316,7 +316,7 @@ func TestComposeImage(t *testing.T) {
 		// for repositories
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "fedora-33",
+			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
 				ImageRequest{
 					Architecture: "unsupported-arch",
@@ -339,7 +339,7 @@ func TestComposeImage(t *testing.T) {
 		// UploadRequest Type isn't supported
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "fedora-33",
+			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
 				ImageRequest{
 					Architecture: "x86_64",
@@ -378,7 +378,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 
 	payload := ComposeRequest{
 		Customizations: nil,
-		Distribution:   "fedora-33",
+		Distribution:   "centos-8",
 		ImageRequests: []ImageRequest{
 			ImageRequest{
 				Architecture: "x86_64",
@@ -416,7 +416,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 
 	payload := ComposeRequest{
 		Customizations: nil,
-		Distribution:   "fedora-33",
+		Distribution:   "centos-8",
 		ImageRequests: []ImageRequest{
 			ImageRequest{
 				Architecture: "x86_64",
@@ -456,7 +456,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 
 	payload := ComposeRequest{
 		Customizations: nil,
-		Distribution:   "fedora-33",
+		Distribution:   "centos-8",
 		ImageRequests: []ImageRequest{
 			ImageRequest{
 				Architecture: "x86_64",
