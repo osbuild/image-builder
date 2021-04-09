@@ -132,9 +132,9 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.Equal(t, result.Data[0], p2)
 
 		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=-13", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
-		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=-13&offset=-2193", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
+		require.Equal(t, 400, response.StatusCode)
+		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=13&offset=-2193", &tutils.AuthString0)
+		require.Equal(t, 400, response.StatusCode)
 	})
 
 	t.Run("BogusAuthString", func(t *testing.T) {
@@ -382,8 +382,8 @@ func TestComposeImage(t *testing.T) {
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, "image_requests/0/upload_request/options")
-		require.Contains(t, body, "Value is not nullable")
+		require.Regexp(t, "image_requests/0/upload_request/options|image_requests/0/upload_request/type", body)
+		require.Regexp(t, "Value is not nullable|value is not one of the allowed values", body)
 	})
 
 	t.Run("ISEWhenRepositoriesNotFound", func(t *testing.T) {

@@ -66,6 +66,7 @@ paths:
             type: string
           required: true
           description: distribution for which to look up available architectures
+          example: 'rhel-8'
       operationId: getArchitectures
       responses:
         '200':
@@ -82,11 +83,15 @@ paths:
           name: limit
           schema:
             type: integer
+            default: 100
+            minimum: 1
           description: max amount of composes, default 100
         - in: query
           name: offset
           schema:
             type: integer
+            default: 0
+            minimum: 0
           description: composes page offset, default 0
       responses:
         '200':
@@ -147,12 +152,14 @@ paths:
           required: true
           schema:
             type: string
+            enum: ['rhel-8', centos-8']
           description: distribution to look up packages for
         - in: query
           name: architecture
           required: true
           schema:
             type: string
+            enum: ['x86_64']
           description: architecture to look up packages for
         - in: query
           name: search
@@ -164,11 +171,15 @@ paths:
           name: limit
           schema:
             type: integer
+            default: 100
+            minimum: 1
           description: max amount of packages, default 100
         - in: query
           name: offset
           schema:
             type: integer
+            default: 0
+            minimum: 0
           description: packages page offset, default 0
       responses:
         '200':
@@ -321,6 +332,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ImageRequest'
+          uniqueItems: true
         customizations:
             $ref: '#/components/schemas/Customizations'
     ImageRequest:
@@ -407,6 +419,7 @@ components:
           example: ['123456789012']
           items:
             type: string
+          uniqueItems: true
     GCPUploadRequestOptions:
       type: object
       required:
@@ -435,6 +448,7 @@ components:
                 account.
           items:
             type: string
+          uniqueItems: true
     AzureUploadRequestOptions:
       type: object
       required:
