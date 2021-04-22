@@ -533,7 +533,7 @@ function Test_getOpenapiWithWrongOrgId() {
   EXIT_CODE=$(getExitCode "$RESULT")
   [[ "$EXIT_CODE" == 404 ]]
   MSG=$(getResponse "$RESULT" | jq -r '.errors[0].detail')
-  [[ "$MSG" == "Organization not allowed" ]]
+  [[ "$MSG" == "Organization or account not allowed" ]]
 }
 
 function Test_postToComposerWithWrongOrgId() {
@@ -541,7 +541,7 @@ function Test_postToComposerWithWrongOrgId() {
   EXIT_CODE=$(getExitCode "$RESULT")
   [[ "$EXIT_CODE" == 404 ]]
   MSG=$(getResponse "$RESULT" | jq -r '.errors[0].detail')
-  [[ $MSG == "Organization not allowed" ]]
+  [[ $MSG == "Organization or account not allowed" ]]
 }
 
 #

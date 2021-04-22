@@ -49,6 +49,12 @@ func main() {
 		orgIds = strings.Split(conf.OrgIds, ";")
 	}
 
+	// Make a slice of allowed organization ids, '*' in the slice means blanket permission
+	accountNumbers := []string{}
+	if conf.AccountNumbers != "" {
+		accountNumbers = strings.Split(conf.AccountNumbers, ";")
+	}
+
 	aws := server.AWSConfig{
 		Region:          conf.OsbuildRegion,
 		AccessKeyId:     conf.OsbuildAccessKeyID,
@@ -64,6 +70,6 @@ func main() {
 		Location: conf.OsbuildAzureLocation,
 	}
 
-	s := server.NewServer(log, client, dbase, aws, gcp, azure, orgIds, conf.DistributionsDir)
+	s := server.NewServer(log, client, dbase, aws, gcp, azure, orgIds, accountNumbers, conf.DistributionsDir)
 	s.Run(conf.ListenAddress)
 }

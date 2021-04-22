@@ -17,14 +17,14 @@ import (
 	"github.com/osbuild/image-builder/internal/tutils"
 )
 
-func startServer(t *testing.T, url string, orgIds string) *Server {
+func startServer(t *testing.T, url string, orgIds string, accountIds string) *Server {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
-	srv := NewServer(logger, client, tutils.InitDB(), AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"), "../../distributions")
+	srv := NewServer(logger, client, tutils.InitDB(), AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"), strings.Split(accountIds, ";"), "../../distributions")
 	// execute in parallel b/c .Run() will block execution
 	go srv.Run("localhost:8086")
 
@@ -49,7 +49,7 @@ func startServer(t *testing.T, url string, orgIds string) *Server {
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv := startServer(t, "http://example.com", "000000")
+	srv := startServer(t, "http://example.com", "000000", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -156,13 +156,13 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		auth := "eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnt9fX0="
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Organization not allowed")
+		require.Contains(t, body, "Organization or account not allowed")
 	})
 
 	t.Run("OrgIdNotAuthorized", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Organization not allowed")
+		require.Contains(t, body, "Organization or account not allowed")
 	})
 
 	t.Run("StatusCheck", func(t *testing.T) {
@@ -171,17 +171,81 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 }
 
-func TestEmptyOrgIds(t *testing.T) {
-	srv := startServer(t, "http://example.com", "")
+func TestEmptyAllowedIds(t *testing.T) {
+	srv := startServer(t, "http://example.com", "", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
-	t.Run("OrgIdNotAuthorized", func(t *testing.T) {
+	t.Run("NotAuthorized", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
 		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Organization not allowed")
+		require.Contains(t, body, "Organization or account not allowed")
+	})
+}
+
+func TestOrgIds(t *testing.T) {
+	srv := startServer(t, "http://example.com", "000000", "")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	t.Run("Authorized", func(t *testing.T) {
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
+	})
+
+	t.Run("NotAuthorized", func(t *testing.T) {
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "Organization or account not allowed")
+	})
+}
+
+func TestAccountNumbers(t *testing.T) {
+	srv := startServer(t, "http://example.com", "", "500000")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	t.Run("Authorized", func(t *testing.T) {
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
+	})
+
+	t.Run("NotAuthorized", func(t *testing.T) {
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "Organization or account not allowed")
+	})
+}
+
+func TestOrgIdWildcard(t *testing.T) {
+	srv := startServer(t, "http://example.com", "*", "")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	t.Run("Authorized", func(t *testing.T) {
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
+	})
+}
+
+func TestAccountNumberWildcard(t *testing.T) {
+	srv := startServer(t, "http://example.com", "", "*")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	t.Run("Authorized", func(t *testing.T) {
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
+		require.Equal(t, 200, response.StatusCode)
 	})
 }
 
@@ -200,7 +264,7 @@ func TestGetComposeStatus(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*")
+	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -240,7 +304,7 @@ func TestGetComposeStatus404(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*")
+	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -255,7 +319,7 @@ func TestGetComposeStatus404(t *testing.T) {
 func TestComposeImage(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv := startServer(t, "http://example.com", "*")
+	srv := startServer(t, "http://example.com", "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -382,7 +446,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*")
+	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -420,7 +484,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*")
+	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -460,7 +524,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*")
+	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -491,23 +555,38 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	require.Equal(t, "3aa7375a-534a-4de3-8caf-011e04f402d3", result.Id)
 }
 
-func TestOrgIdAllowed(t *testing.T) {
+func TestIdentityAllowed(t *testing.T) {
 	var header IdentityHeader
 
 	header.Identity.Internal.OrgId = ""
-	require.False(t, orgIdAllowed(header, []string{}))
-	require.True(t, orgIdAllowed(header, []string{"*"}))
+	require.False(t, identityAllowed(header, []string{}, []string{}))
+	require.True(t, identityAllowed(header, []string{"*"}, []string{}))
 	header.Identity.Internal.OrgId = "12345"
-	require.False(t, orgIdAllowed(header, []string{}))
-	require.True(t, orgIdAllowed(header, []string{"*"}))
-	require.True(t, orgIdAllowed(header, []string{"12345"}))
-	require.True(t, orgIdAllowed(header, []string{"12345", "12322"}))
-	require.False(t, orgIdAllowed(header, []string{"123456"}))
-	require.True(t, orgIdAllowed(header, []string{"123456", "*"}))
+	require.False(t, identityAllowed(header, []string{}, []string{}))
+	require.True(t, identityAllowed(header, []string{"*"}, []string{}))
+	require.True(t, identityAllowed(header, []string{"12345"}, []string{}))
+	require.True(t, identityAllowed(header, []string{"12345"}, []string{"54321"}))
+	require.True(t, identityAllowed(header, []string{"12345", "12322"}, []string{}))
+	require.False(t, identityAllowed(header, []string{"123456"}, []string{}))
+	require.False(t, identityAllowed(header, []string{"123456"}, []string{"54321"}))
+	require.True(t, identityAllowed(header, []string{"123456", "*"}, []string{}))
+
+	header.Identity.AccountNumber = "54321"
+	require.False(t, identityAllowed(header, []string{}, []string{}))
+	require.True(t, identityAllowed(header, []string{"*"}, []string{}))
+	require.True(t, identityAllowed(header, []string{""}, []string{"*"}))
+	require.True(t, identityAllowed(header, []string{"*"}, []string{"*"}))
+	require.True(t, identityAllowed(header, []string{""}, []string{"54321"}))
+	require.False(t, identityAllowed(header, []string{""}, []string{"54322"}))
+	require.True(t, identityAllowed(header, []string{""}, []string{"54321", "54322"}))
+
+	header.Identity.Internal.OrgId = ""
+	require.False(t, identityAllowed(header, []string{"12345"}, []string{}))
+	require.True(t, identityAllowed(header, []string{"12345"}, []string{"54321"}))
 }
 
 func TestReadinessProbeNotReady(t *testing.T) {
-	srv := startServer(t, "http://example.com", "*")
+	srv := startServer(t, "http://example.com", "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -527,7 +606,7 @@ func TestReadinessProbeReady(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*")
+	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -540,7 +619,7 @@ func TestReadinessProbeReady(t *testing.T) {
 
 func TestMetrics(t *testing.T) {
 	// simulate osbuild-composer API
-	srv := startServer(t, "", "*")
+	srv := startServer(t, "", "*", "")
 	defer func() {
 		err := srv.echo.Server.Shutdown(context.Background())
 		require.NoError(t, err)
