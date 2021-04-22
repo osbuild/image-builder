@@ -24,16 +24,17 @@ import (
 )
 
 type Server struct {
-	logger   *logrus.Logger
-	echo     *echo.Echo
-	client   cloudapi.OsbuildClient
-	router   routers.Router
-	db       db.DB
-	aws      AWSConfig
-	gcp      GCPConfig
-	azure    AzureConfig
-	orgIds   []string
-	distsDir string
+	logger         *logrus.Logger
+	echo           *echo.Echo
+	client         cloudapi.OsbuildClient
+	router         routers.Router
+	db             db.DB
+	aws            AWSConfig
+	gcp            GCPConfig
+	azure          AzureConfig
+	orgIds         []string
+	accountNumbers []string
+	distsDir       string
 }
 
 type AWSConfig struct {
@@ -65,7 +66,7 @@ type IdentityHeader struct {
 	} `json:"identity"`
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, distsDir string) *Server {
+func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, accountNumbers []string, distsDir string) *Server {
 	spec, err := GetSwagger()
 	if err != nil {
 		panic(err)
@@ -92,6 +93,7 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB
 		gcpConfig,
 		azureConfig,
 		orgIds,
+		accountNumbers,
 		distsDir,
 	}
 	var h Handlers
@@ -549,12 +551,21 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	return nil
 }
 
-func orgIdAllowed(header IdentityHeader, orgIds []string) bool {
+func identityAllowed(header IdentityHeader, orgIds []string, accountNumbers []string) bool {
 	for _, org := range orgIds {
 		if org == "*" {
 			return true
 		}
 		if header.Identity.Internal.OrgId == org {
+			return true
+		}
+	}
+
+	for _, account := range accountNumbers {
+		if account == "*" {
+			return true
+		}
+		if header.Identity.AccountNumber == account {
 			return true
 		}
 	}
@@ -584,8 +595,8 @@ func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 
 		s.logger.Infof("Verify identity for user with internal org_id '%v' in header '%v' \n", idHeader.Identity.Internal.OrgId, idHeaderB64[0])
 
-		if !orgIdAllowed(idHeader, s.orgIds) {
-			return echo.NewHTTPError(http.StatusNotFound, "Organization not allowed")
+		if !identityAllowed(idHeader, s.orgIds, s.accountNumbers) {
+			return echo.NewHTTPError(http.StatusNotFound, "Organization or account not allowed")
 		}
 
 		ctx.Set("IdentityHeader", idHeader)

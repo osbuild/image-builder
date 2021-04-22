@@ -293,6 +293,9 @@ parameters:
   - name: ALLOWED_ORG_IDS
     description: Organization ids allowed to access the api, wildcard means everyone
     value: ""
+  - name: ALLOWED_ACCOUNT_NUMBERS
+    description: Account numbers allowed to access the api, wildcard means everyone
+    value: ""
   - name: DISTRIBUTIONS_DIR
     description: Directory which contains json files detailing available distributions, their repositories, and their packages
     value: "/app/distributions"
