@@ -8,8 +8,14 @@ sudo podman run -p 5432:5432 --name image-builder-db --health-cmd "pg_isready -u
 POSTGRES_DB=imagebuilder postgres
 ```
 
-Then simple run `make build` and start Image Builder:
+Run `make build` and migrate the db (this only needs to be done once) to the latest version:
 
+```
+PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder
+MIGRATIONS_DIR=/home/sanne/workstuff/image-builder/internal/db/migrations/ ./image-builder-migrate-db
+```
+
+Start Image Builder:
 ```
 PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder ALLOWED_ORG_IDS="*"
 DISTRIBUTIONS_DIR="/home/sanne/workstuff/image-builder/distributions" ./image-builder
