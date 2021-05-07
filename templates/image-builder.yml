@@ -165,6 +165,8 @@ objects:
               value: "${OSBUILD_AZURE_LOCATION}"
             - name: ALLOWED_ORG_IDS
               value: "${ALLOWED_ORG_IDS}"
+            - name: ALLOWED_ACCOUNT_NUMBERS
+              value: "${ALLOWED_ACCOUNT_NUMBERS}"
             - name: DISTRIBUTIONS_DIR
               value: "${DISTRIBUTIONS_DIR}"
         volumes:
