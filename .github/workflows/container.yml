@@ -39,7 +39,8 @@ jobs:
           docker logs image-builder | grep "Starting image-builder server"
 
       - name: Check that the API is responding
-        run: curl -H "x-rh-identity: fakeid" -sv http://127.0.0.1:8086/api/image-builder/v1/version
+        run: |
+          curl -H "x-rh-identity: fakeid" -sv http://127.0.0.1:8086/api/image-builder/v1/version
 
       - name: Stop the container
         run: docker stop --time 1 image-builder
