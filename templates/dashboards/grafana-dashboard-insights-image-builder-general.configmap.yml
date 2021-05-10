@@ -26,6 +26,7 @@ data:
       "gnetId": null,
       "graphTooltip": 0,
       "id": 184,
+      "iteration": 1620637984295,
       "links": [],
       "panels": [
         {
@@ -167,10 +168,30 @@ data:
       "style": "dark",
       "tags": [],
       "templating": {
-        "list": []
+        "list": [
+          {
+            "current": {
+              "selected": false,
+              "text": "crcs02ue1-prometheus",
+              "value": "crcs02ue1-prometheus"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": null,
+            "multi": false,
+            "name": "datasource",
+            "options": [],
+            "query": "prometheus",
+            "queryValue": "",
+            "refresh": 1,
+            "regex": "/crc(p01|s02)ue1-prometheus/",
+            "skipUrlSync": false,
+            "type": "datasource"
+          }
+        ]
       },
       "time": {
-        "from": "now-30m",
+        "from": "now-1h",
         "to": "now"
       },
       "timepicker": {
@@ -203,4 +224,3 @@ data:
       "uid": "91_RmVCMk",
       "version": 1
     }
-
