@@ -320,14 +320,9 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	custom, err := buildCustomizations(composeRequest.Customizations)
-	if err != nil {
-		return err
-	}
-
 	cloudCR := cloudapi.ComposeRequest{
 		Distribution:   composeRequest.Distribution,
-		Customizations: custom,
+		Customizations: buildCustomizations(composeRequest.Customizations),
 		ImageRequests: []cloudapi.ImageRequest{
 			{
 				Architecture:  composeRequest.ImageRequests[0].Architecture,
@@ -444,9 +439,9 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 	}
 }
 
-func buildCustomizations(cust *Customizations) (*cloudapi.Customizations, error) {
+func buildCustomizations(cust *Customizations) *cloudapi.Customizations {
 	if cust == nil {
-		return nil, nil
+		return nil
 	}
 
 	res := &cloudapi.Customizations{}
@@ -464,7 +459,7 @@ func buildCustomizations(cust *Customizations) (*cloudapi.Customizations, error)
 		res.Packages = cust.Packages
 	}
 
-	return res, nil
+	return res
 }
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
