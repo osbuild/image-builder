@@ -90,7 +90,7 @@ type GCPUploadRequestOptions struct {
 	// Name of an existing STANDARD Storage class Bucket.
 	Bucket string `json:"bucket"`
 
-	// The name to use for the imported and shared Compute Node image.
+	// The name to use for the imported and shared Compute Engine image.
 	// The image name must be unique within the GCP project, which is used
 	// for the OS image upload and import. If not specified a random
 	// 'composer-api-<uuid>' string is used as the image name.
@@ -102,7 +102,7 @@ type GCPUploadRequestOptions struct {
 	// (source Storage Bucket location) is chosen automatically.
 	Region *string `json:"region,omitempty"`
 
-	// List of valid Google accounts to share the imported Compute Node image with.
+	// List of valid Google accounts to share the imported Compute Engine image with.
 	// Each string must contain a specifier of the account type. Valid formats are:
 	//   - 'user:{emailid}': An email address that represents a specific
 	//     Google account. For example, 'alice@example.com'.
@@ -112,7 +112,7 @@ type GCPUploadRequestOptions struct {
 	//     For example, 'admins@example.com'.
 	//   - 'domain:{domain}': The G Suite domain (primary) that represents all
 	//     the users of that domain. For example, 'google.com' or 'example.com'.
-	// If not specified, the imported Compute Node image is not shared with any
+	// If not specified, the imported Compute Engine image is not shared with any
 	// account.
 	ShareWithAccounts *[]string `json:"share_with_accounts,omitempty"`
 }
@@ -163,7 +163,7 @@ type Subscription struct {
 	ActivationKey string `json:"activation-key"`
 	BaseUrl       string `json:"base-url"`
 	Insights      bool   `json:"insights"`
-	Organization  int    `json:"organization"`
+	Organization  string `json:"organization"`
 	ServerUrl     string `json:"server-url"`
 }
 
