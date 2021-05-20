@@ -111,6 +111,7 @@ repos = arguments.get("repos", {})
 arch = arguments["arch"]
 cachedir = arguments["cachedir"]
 module_platform_id = arguments["module_platform_id"]
+latest = arguments.get("latest", False)
 
 with tempfile.TemporaryDirectory() as persistdir:
     try:
@@ -129,7 +130,10 @@ with tempfile.TemporaryDirectory() as persistdir:
 
     if command == "dump":
         packages = []
-        for package in base.sack.query().available():
+        availablePackages = base.sack.query().available()
+        if latest:
+            availablePackages = availablePackages.filter(latest=1)
+        for package in availablePackages:
             packages.append({
                 "name": package.name,
                 "summary": package.summary,
