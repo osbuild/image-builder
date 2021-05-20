@@ -18,6 +18,8 @@ SUPPORTED_ARCHS = [ 'x86_64' ]
 def main():
     parser = argparse.ArgumentParser(description='Generate package list for distributions')
     parser.add_argument('--distro', action='append', default=[], help='A json distribution file')
+    parser.add_argument('--key', help='Key to use for the repos in the distribution (rhel)')
+    parser.add_argument('--cert', help='Cert to use for the repos in the distribution (rhel)')
     args = parser.parse_args()
 
     tempdir = tempfile.TemporaryDirectory()
@@ -35,11 +37,21 @@ def main():
 
         for arch in SUPPORTED_ARCHS:
             dnfjson_args = dnfjson_args_template.copy()
+
+            repos = distro_data[arch]['repositories']
+            if args.key:
+                repos = []
+                for repo in distro_data[arch]['repositories']:
+                    repo['ignoressl'] = True
+                    repo['sslclientkey'] = args.key
+                    repo['sslclientcert'] = args.cert
+                    repos.append(repo)
             dnfjson_args['arguments'] = {
                 'module_platform_id': distro_data['module_platform_id'],
-                'repos': distro_data[arch]['repositories'],
+                'repos': repos,
                 'cachedir': tempdir.name,
                 'arch': arch,
+                'latest': True,
             }
 
             # assign an ID to each repo
