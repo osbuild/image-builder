@@ -627,5 +627,6 @@ func TestMetrics(t *testing.T) {
 
 	response, body := tutils.GetResponseBody(t, "http://localhost:8086/metrics", nil)
 	require.Equal(t, 200, response.StatusCode)
-	require.Contains(t, body, "image_builder_http_requests_total")
+	require.Contains(t, body, "image_builder_compose_requests_total")
+	require.Contains(t, body, "image_builder_compose_errors")
 }

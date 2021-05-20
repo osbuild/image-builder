@@ -1,6 +1,8 @@
 package server
 
 import (
+	"strings"
+
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -14,22 +16,25 @@ var (
 )
 
 var (
-	totalRequests = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "image_builder_http_requests_total",
-		Help: "Total number of HTTP requests.",
-	}, []string{"path"})
+	composeRequests = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "image_builder_compose_requests_total",
+		Help: "Total number of compose requests.",
+	})
 )
 
 var (
-	serverErrors = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "image_builder_internal_server_errors",
+	composeErrors = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "image_builder_compose_errors",
 		Help: "Number of internal server errors.",
-	}, []string{"path"})
+	})
 )
 
 func (s *Server) PrometheusMW(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		totalRequests.WithLabelValues(ctx.Path()).Inc()
+		if strings.HasSuffix(ctx.Path(), "/compose") {
+			composeRequests.Inc()
+		}
+
 		timer := prometheus.NewTimer(httpDuration.WithLabelValues(ctx.Path()))
 		timer.ObserveDuration()
 		return nextHandler(ctx)
