@@ -642,7 +642,9 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 	// Only log internal errors
 	if he.Code == http.StatusInternalServerError {
 		s.logger.Errorln(fmt.Sprintf("Internal error %v: %v, %v", he.Code, he.Message, err))
-		serverErrors.WithLabelValues(c.Path()).Inc()
+		if strings.HasSuffix(c.Path(), "/compose") {
+			composeErrors.Inc()
+		}
 	}
 
 	errors = append(errors, HTTPError{
