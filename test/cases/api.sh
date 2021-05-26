@@ -145,6 +145,24 @@ function instanceWaitSSH() {
   done
 }
 
+function instanceCheck() {
+  echo "✔️ Instance checking"
+  local _ssh="$1"
+
+  # Check if postgres is installed
+  $_ssh rpm -q postgresql
+
+  # Verify subscribe status
+  subscribe_org_id=$($_ssh sudo subscription-manager identity | grep 'org ID')
+  [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]
+
+  # Verify yum install a small package. It will fail if no available repo.
+  $_ssh sudo dnf -y install dos2unix
+
+  # Unregister subscription
+  $_ssh sudo subscription-manager unregister
+}
+
 ############### AWS-specific functions ################
 
 function checkEnvAWS() {
@@ -185,7 +203,14 @@ function createReqFileAWS() {
   "customizations": {
     "packages": [
       "postgresql"
-    ]
+    ],
+    "subscription": {
+      "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
+      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "base-url": "https://cdn.redhat.com/",
+      "server-url": "subscription.rhsm.redhat.com",
+      "insights": true
+    }
   }
 }
 EOF
@@ -235,7 +260,14 @@ function createReqFileGCP() {
   "customizations": {
     "packages": [
       "postgresql"
-    ]
+    ],
+    "subscription": {
+      "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
+      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "base-url": "https://cdn.redhat.com/",
+      "server-url": "subscription.rhsm.redhat.com",
+      "insights": true
+    }
   }
 }
 EOF
@@ -286,7 +318,14 @@ function createReqFileAzure() {
   "customizations": {
     "packages": [
       "postgresql"
-    ]
+    ],
+    "subscription": {
+      "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
+      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "base-url": "https://cdn.redhat.com/",
+      "server-url": "subscription.rhsm.redhat.com",
+      "insights": true
+    }
   }
 }
 EOF
@@ -412,8 +451,9 @@ function Test_verifyComposeResultAWS() {
   echo "⏱ Waiting for AWS instance to respond to ssh"
   instanceWaitSSH "$HOST"
 
-  # Check if postgres is installed
-  ssh -oStrictHostKeyChecking=no -i ./keypair.pem "$SSH_USER"@"$HOST" rpm -q postgresql
+  # Verify image
+  _ssh="ssh -oStrictHostKeyChecking=no -i ./keypair.pem $SSH_USER@$HOST"
+  instanceCheck "$_ssh"
 }
 
 ### Case: verify the result (image) of a finished compose in GCP
@@ -470,8 +510,9 @@ function Test_verifyComposeResultGCP() {
   echo "⏱ Waiting for GCP instance to respond to ssh"
   instanceWaitSSH "$HOST"
 
-  # Check if postgres is installed
-  ssh -oStrictHostKeyChecking=no -i "$GCP_SSH_KEY" "$SSH_USER"@"$HOST" rpm -q postgresql
+  # Verify image
+  _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
+  instanceCheck "$_ssh"
 }
 
 ### Case: verify the result (image) of a finished compose in Azure
