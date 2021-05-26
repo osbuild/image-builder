@@ -28,6 +28,10 @@ pipeline {
         }
 
         stage("Test EL8 ✅") {
+            environment {
+                API_TEST_SUBSCRIPTION_ORG_ID = credentials('api-test-subscription-org-id')
+                API_TEST_SUBSCRIPTION_ACTIVATION_KEY = credentials('api-test-subscription-activation-key')
+            }
             parallel {
                 stage('AWS') {
                     agent { label "rhel8cloudbase && x86_64 && aws" }
