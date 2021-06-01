@@ -121,6 +121,7 @@ components:
         options:
           oneOf:
             - $ref: '#/components/schemas/AWSUploadStatus'
+            - $ref: '#/components/schemas/AWSS3UploadStatus'
             - $ref: '#/components/schemas/GCPUploadStatus'
             - $ref: '#/components/schemas/AzureUploadStatus'
     AWSUploadStatus:
@@ -135,6 +136,13 @@ components:
         region:
           type: string
           example: 'eu-west-1'
+    AWSS3UploadStatus:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
     GCPUploadStatus:
       type: object
       required:
@@ -187,6 +195,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Repository'
+        ostree:
+          $ref: '#/components/schemas/OSTree'
         upload_request:
           $ref: '#/components/schemas/UploadRequest'
     Repository:
@@ -219,11 +229,12 @@ components:
         options:
           oneOf:
             -  $ref: '#/components/schemas/AWSUploadRequestOptions'
+            -  $ref: '#/components/schemas/AWSS3UploadRequestOptions'
             -  $ref: '#/components/schemas/GCPUploadRequestOptions'
             -  $ref: '#/components/schemas/AzureUploadRequestOptions'
     UploadTypes:
       type: string
-      enum: ['aws', 'gcp', 'azure']
+      enum: ['aws', 'aws.s3', 'gcp', 'azure']
     AWSUploadRequestOptions:
       type: object
       required:
@@ -238,6 +249,17 @@ components:
           $ref: '#/components/schemas/AWSUploadRequestOptionsS3'
         ec2:
           $ref: '#/components/schemas/AWSUploadRequestOptionsEc2'
+    AWSS3UploadRequestOptions:
+      type: object
+      required:
+        - region
+        - s3
+      properties:
+        region:
+          type: string
+          example: 'eu-west-1'
+        s3:
+          $ref: '#/components/schemas/AWSUploadRequestOptionsS3'
     AWSUploadRequestOptionsS3:
       type: object
       required:
@@ -302,7 +324,7 @@ components:
           type: string
           example: 'my-image'
           description: |
-            The name to use for the imported and shared Compute Node image.
+            The name to use for the imported and shared Compute Engine image.
             The image name must be unique within the GCP project, which is used
             for the OS image upload and import. If not specified a random
             'composer-api-<uuid>' string is used as the image name.
@@ -315,7 +337,7 @@ components:
             'domain:example.com'
             ]
           description: |
-            List of valid Google accounts to share the imported Compute Node image with.
+            List of valid Google accounts to share the imported Compute Engine image with.
             Each string must contain a specifier of the account type. Valid formats are:
               - 'user:{emailid}': An email address that represents a specific
                 Google account. For example, 'alice@example.com'.
@@ -325,7 +347,7 @@ components:
                 For example, 'admins@example.com'.
               - 'domain:{domain}': The G Suite domain (primary) that represents all
                 the users of that domain. For example, 'google.com' or 'example.com'.
-            If not specified, the imported Compute Node image is not shared with any
+            If not specified, the imported Compute Engine image is not shared with any
             account.
           items:
             type: string
@@ -378,6 +400,14 @@ components:
           example: ['postgres']
           items:
             type: string
+    OSTree:
+      type: object
+      properties:
+        url:
+          type: string
+        ref:
+          type: string
+          example: ['rhel/8/x86_64/edge']
     Subscription:
       type: object
       required:
