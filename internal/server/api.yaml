@@ -285,6 +285,7 @@ components:
         options:
           oneOf:
             - $ref: '#/components/schemas/AWSUploadStatus'
+            - $ref: '#/components/schemas/AWSS3UploadStatus'
             - $ref: '#/components/schemas/GCPUploadStatus'
             - $ref: '#/components/schemas/AzureUploadStatus'
     AWSUploadStatus:
@@ -299,6 +300,13 @@ components:
         region:
           type: string
           example: 'eu-west-1'
+    AWSS3UploadStatus:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
     GCPUploadStatus:
       type: object
       required:
