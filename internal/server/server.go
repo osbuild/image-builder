@@ -405,6 +405,23 @@ func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, e
 				Region: s.aws.Region,
 			},
 		}, nil
+	case UploadTypes_aws_s3:
+		var awsOptions AWSUploadRequestOptions
+		err = json.Unmarshal(optionsJSON, &awsOptions)
+		if err != nil {
+			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
+		}
+		return cloudapi.UploadRequest{
+			Type: cloudapi.UploadTypes(ur.Type),
+			Options: cloudapi.AWSUploadRequestOptions{
+				S3: cloudapi.AWSUploadRequestOptionsS3{
+					AccessKeyId:     s.aws.AccessKeyId,
+					SecretAccessKey: s.aws.SecretAccessKey,
+					Bucket:          s.aws.S3Bucket,
+				},
+				Region: s.aws.Region,
+			},
+		}, nil
 	case UploadTypes_gcp:
 		var gcpOptions GCPUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &gcpOptions)
