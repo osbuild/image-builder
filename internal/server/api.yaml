@@ -404,11 +404,12 @@ components:
         options:
           anyOf:
             - $ref: '#/components/schemas/AWSUploadRequestOptions'
+            - $ref: '#/components/schemas/AWSS3UploadRequestOptions'
             - $ref: '#/components/schemas/GCPUploadRequestOptions'
             - $ref: '#/components/schemas/AzureUploadRequestOptions'
     UploadTypes:
       type: string
-      enum: ['aws', 'gcp', 'azure']
+      enum: ['aws', 'gcp', 'azure', 'aws.s3']
     AWSUploadRequestOptions:
       type: object
       required:
@@ -420,6 +421,8 @@ components:
           items:
             type: string
           uniqueItems: true
+    AWSS3UploadRequestOptions:
+      type: object
     GCPUploadRequestOptions:
       type: object
       required:
