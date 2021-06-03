@@ -1,0 +1,50 @@
+stages:
+  - start
+  - test
+  - finish
+
+.terraform:
+  after_script:
+    - schutzbot/update_github_status.sh update
+    - schutzbot/save_journal.sh
+  tags:
+    - terraform
+  artifacts:
+    paths:
+      - journal-log
+    when: always
+
+
+start:
+  stage: start
+  tags:
+    - shell
+  script:
+    - schutzbot/update_github_status.sh start
+
+Test EL8:
+  stage: test
+  extends: .terraform
+  variables:
+    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
+  script:
+    - schutzbot/ci_details.sh
+    # TODO: move build step as separate section
+    - schutzbot/build.sh
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/image-builder/api.sh ${PROVIDER}
+  parallel:
+    matrix:
+      - PROVIDER:
+          - aws
+          - azure
+          - gcp
+        RUNNER:
+          - aws/rhel-8-x86_64
+
+finish:
+  stage: finish
+  tags:
+    - shell
+  script:
+    - schutzbot/update_github_status.sh finish
