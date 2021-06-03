@@ -41,6 +41,7 @@ MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 # which is certainly good.
 POST_MERGE_SHA=$(git rev-parse --short HEAD)
 
+JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
