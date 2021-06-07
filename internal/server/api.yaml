@@ -355,6 +355,8 @@ components:
           type: string
         upload_request:
           $ref: '#/components/schemas/UploadRequest'
+        ostree:
+          $ref: '#/components/schemas/OSTree'
     ComposesResponse:
       required:
         - meta
@@ -519,6 +521,14 @@ components:
         insights:
           type: boolean
           example: true
+    OSTree:
+      type: object
+      properties:
+        url:
+          type: string
+        ref:
+          type: string
+          example: 'rhel/8/x86_64/edge'
     PackagesResponse:
       type: object
       required:

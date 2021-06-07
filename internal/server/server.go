@@ -295,6 +295,23 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	})
 }
 
+func buildOSTreeOptions(ostreeOptions *OSTree) *cloudapi.OSTree {
+	if ostreeOptions == nil {
+		return nil
+	}
+
+	cloudOptions := new(cloudapi.OSTree)
+	if ostreeOptions != nil {
+		if ref := ostreeOptions.Ref; ref != nil {
+			cloudOptions.Ref = ref
+		}
+		if url := ostreeOptions.Url; url != nil {
+			cloudOptions.Url = url
+		}
+	}
+	return cloudOptions
+}
+
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	var composeRequest ComposeRequest
 	err := ctx.Bind(&composeRequest)
@@ -327,6 +344,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 			{
 				Architecture:  composeRequest.ImageRequests[0].Architecture,
 				ImageType:     composeRequest.ImageRequests[0].ImageType,
+				Ostree:        buildOSTreeOptions(composeRequest.ImageRequests[0].Ostree),
 				Repositories:  repositories,
 				UploadRequest: uploadReq,
 			},
