@@ -13,6 +13,13 @@ func main() {
 		ListenAddress: "unused",
 		LogLevel:      "INFO",
 		MigrationsDir: "/usr/share/image-builder/migrations",
+		PGHost:        "localhost",
+		PGPort:        "5432",
+		PGDatabase:    "imagebuilder",
+		PGUser:        "postgres",
+		PGPassword:    "foobar",
+		// should be "prefer", see https://github.com/osbuild/image-builder/issues/197
+		PGSSLMode: "disable",
 	}
 
 	err := config.LoadConfigFromEnv(&conf)
@@ -25,7 +32,7 @@ func main() {
 		panic(err)
 	}
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase, conf.PGSSLMode)
 	err = db.Migrate(connStr, conf.MigrationsDir, log)
 	if err != nil {
 		panic(err)

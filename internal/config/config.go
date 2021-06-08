@@ -28,4 +28,5 @@ type ImageBuilderConfig struct {
 	PGDatabase             string  `env:"PGDATABASE"`
 	PGUser                 string  `env:"PGUSER"`
 	PGPassword             string  `env:"PGPASSWORD"`
+	PGSSLMode              string  `env:"PGSSLMODE"`
 }
