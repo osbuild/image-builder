@@ -104,6 +104,8 @@ objects:
                 secretKeyRef:
                   name: image-builder-db
                   key: db.password
+            - name: PGSSLMODE
+              value: "${PGSSLMODE}"
             # Configuration for the osbuild client within image-builder
             - name: OSBUILD_URL
               value: "${OSBUILD_URL}"
@@ -206,6 +208,8 @@ objects:
               secretKeyRef:
                 name: image-builder-db
                 key: db.password
+          - name: PGSSLMODE
+            value: "${PGSSLMODE}"
           # Credentials/configuration for AWS cloudwatch.
           - name: CW_AWS_ACCESS_KEY_ID
             valueFrom:
@@ -313,3 +317,6 @@ parameters:
   - name: MIGRATIONS_DIR
     description: Directory containing migration files for aws rds
     value: "/app/migrations"
+  - name: PGSSLMODE
+    description: Sslmode for the connection to psql
+    value: "require"

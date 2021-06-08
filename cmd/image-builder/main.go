@@ -20,6 +20,7 @@ func main() {
 		PGDatabase:    "imagebuilder",
 		PGUser:        "postgres",
 		PGPassword:    "foobar",
+		PGSSLMode:     "prefer",
 	}
 
 	err := config.LoadConfigFromEnv(&conf)
@@ -32,7 +33,7 @@ func main() {
 		panic(err)
 	}
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase, conf.PGSSLMode)
 	dbase, err := db.InitDBConnectionPool(connStr)
 	if err != nil {
 		panic(err)
