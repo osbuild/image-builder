@@ -555,6 +555,123 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	require.Equal(t, "3aa7375a-534a-4de3-8caf-011e04f402d3", result.Id)
 }
 
+// convenience function for string pointer fields
+func strptr(s string) *string {
+	return &s
+}
+
+func TestComposeCustomizations(t *testing.T) {
+	// simulate osbuild-composer API
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		result := cloudapi.ComposeResult{
+			Id: "fe93fb55-ae04-4e21-a8b4-25ba95c3fa64",
+		}
+		err := json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL, "*", "")
+	defer func() {
+		err := srv.echo.Server.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	payloads := []ComposeRequest{
+		{
+			Customizations: &Customizations{
+				Packages: &[]string{
+					"some",
+					"packages",
+				},
+			},
+			Distribution: "centos-8",
+			ImageRequests: []ImageRequest{
+				{
+					Architecture: "x86_64",
+					ImageType:    "qcow2",
+					UploadRequest: UploadRequest{
+						Type: "aws",
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
+						},
+					},
+				},
+			},
+		},
+		{
+			Customizations: &Customizations{
+				Packages: nil,
+			},
+			Distribution: "rhel-8",
+			ImageRequests: []ImageRequest{
+				{
+					Architecture: "x86_64",
+					ImageType:    "rhel-edge-commit",
+					Ostree: &OSTree{
+						Ref: strptr("edge/ref"),
+					},
+					UploadRequest: UploadRequest{
+						Type:    "aws.s3",
+						Options: AWSS3UploadRequestOptions{},
+					},
+				},
+			},
+		},
+		{
+			Customizations: &Customizations{
+				Packages: &[]string{"pkg"},
+				Subscription: &Subscription{
+					Organization: 000,
+				},
+			},
+			Distribution: "centos-8",
+			ImageRequests: []ImageRequest{
+				{
+					Architecture: "x86_64",
+					ImageType:    "rhel-edge-commit",
+					Ostree: &OSTree{
+						Ref: strptr("test/edge/ref"),
+						Url: strptr("https://ostree.srv/"),
+					},
+					UploadRequest: UploadRequest{
+						Type:    "aws.s3",
+						Options: AWSS3UploadRequestOptions{},
+					},
+				},
+			},
+		},
+	}
+
+	for idx, payload := range payloads {
+		fmt.Printf("TT payload %d\n", idx)
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, http.StatusCreated, response.StatusCode)
+
+		var result ComposeResponse
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, "fe93fb55-ae04-4e21-a8b4-25ba95c3fa64", result.Id)
+	}
+}
+
+// TestBuildOSTreeOptions checks if the buildOSTreeOptions utility function
+// properly transfers the ostree options to the CloudAPI structure.
+func TestBuildOSTreeOptions(t *testing.T) {
+	cases := map[ImageRequest]*cloudapi.OSTree{
+		{Ostree: nil}: nil,
+		{Ostree: &OSTree{Ref: strptr("someref")}}:                                     {Ref: strptr("someref")},
+		{Ostree: &OSTree{Ref: strptr("someref"), Url: strptr("https://example.org")}}: {Ref: strptr("someref"), Url: strptr("https://example.org")},
+		{Ostree: &OSTree{Url: strptr("https://example.org")}}:                         {Url: strptr("https://example.org")},
+	}
+
+	for in, expOut := range cases {
+		require.Equal(t, expOut, buildOSTreeOptions(in.Ostree), "input: %#v", in)
+	}
+}
+
 func TestIdentityAllowed(t *testing.T) {
 	var header IdentityHeader
 
