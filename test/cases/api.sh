@@ -52,12 +52,30 @@ function cleanupAzure() {
 
   # do not run clean-up if the image name is not yet defined
   if [[ -n "$AZURE_CMD" && -n "$AZURE_IMAGE_NAME" ]]; then
+    # When clean up, need to delete os_disk, NIC, public-ip, nsg, vnet, image and blob.
     set +e
-    $AZURE_CMD image delete --resource-group sharing-research --name "$AZURE_IMAGE_NAME"
+    $AZURE_CMD image delete --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_IMAGE_NAME"
+    # Get all the resources ids
+    VM_ID=$(jq -r '.id' "$WORKDIR"/vm_details.json)
+    OSDISK_ID=$(jq -r '.storageProfile.osDisk.managedDisk.id' "$WORKDIR"/vm_details.json)
+    NIC_ID=$(jq -r '.networkProfile.networkInterfaces[0].id' "$WORKDIR"/vm_details.json)
+    "$AZURE_CMD" network nic show --ids "$NIC_ID" > "$WORKDIR"/nic_details.json
+    NSG_ID=$(jq -r '.networkSecurityGroup.id' "$WORKDIR"/nic_details.json)
+    PUBLICIP_ID=$(jq -r '.ipConfigurations[0].publicIpAddress.id' "$WORKDIR"/nic_details.json)
+
+    # Delete resources. Some resources must be removed in order:
+    # - Delete VM prior to any other resources
+    # - Delete NIC prior to NSG, public-ip
+    # Left Virtual Network and Storage Account there because other tests in the same resource group will reuse them
+    for id in "$VM_ID" "$OSDISK_ID" "$NIC_ID" "$NSG_ID" "$PUBLICIP_ID"; do
+      echo "Deleting $id..."
+      "$AZURE_CMD" resource delete --ids "$id"
+    done
 
     # find a storage account by its tag
-    AZURE_STORAGE_ACCOUNT=$($AZURE_CMD resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)
-    $AZURE_CMD storage blob delete --container-name imagebuilder --name "$AZURE_IMAGE_NAME".vhd --account-name "$AZURE_STORAGE_ACCOUNT"
+    AZURE_STORAGE_ACCOUNT=$("$AZURE_CMD" resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)
+    AZURE_CONNECTION_STRING=$("$AZURE_CMD" storage account show-connection-string --name "$AZURE_STORAGE_ACCOUNT" | jq -r .connectionString)
+    "$AZURE_CMD" storage blob delete --container-name imagebuilder --name "$AZURE_IMAGE_NAME".vhd --account-name "$AZURE_STORAGE_ACCOUNT" --connection-string "$AZURE_CONNECTION_STRING"
     set -e
   fi
 }
@@ -540,10 +558,30 @@ function Test_verifyComposeResultAzure() {
   # verify that the image exists
   $AZURE_CMD image show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}"
 
-  # Boot testing is currently blocked due to
-  # https://github.com/Azure/azure-cli/issues/17123
-  # Without this issue fixed or worked around, I'm not able to delete the disk
-  # attached to the VM.
+  # Verify that the image boots and have customizations applied
+  # Create SSH keys to use
+  AZURE_SSH_KEY="$WORKDIR/id_azure"
+  ssh-keygen -t rsa -f "$AZURE_SSH_KEY" -C "$SSH_USER" -N ""
+
+  # create the instance
+  AZURE_INSTANCE_NAME="vm-$(uuidgen)"
+  $AZURE_CMD vm create --name "$AZURE_INSTANCE_NAME" \
+    --resource-group "$AZURE_RESOURCE_GROUP" \
+    --image "$AZURE_IMAGE_NAME" \
+    --size "Standard_B1s" \
+    --admin-username "$SSH_USER" \
+    --ssh-key-values "$AZURE_SSH_KEY.pub" \
+    --authentication-type "ssh" \
+    --location "$AZURE_LOCATION"
+  $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
+  HOST=$(jq -r '.publicIps' "$WORKDIR/vm_details.json")
+
+  echo "⏱ Waiting for Azure instance to respond to ssh"
+  instanceWaitSSH "$HOST"
+
+  # Verify image
+  _ssh="ssh -oStrictHostKeyChecking=no -i $AZURE_SSH_KEY $SSH_USER@$HOST"
+  instanceCheck "$_ssh"
 }
 
 ### Case: verify the result (image) of a finished compose
