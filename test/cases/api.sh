@@ -153,16 +153,18 @@ function instanceCheck() {
   $_ssh rpm -q postgresql
 
   # Verify subscribe status. Loop check since the system may not be registered such early
-   for LOOP_COUNTER in {1..10}; do
-    subscribe_org_id=$($_ssh sudo subscription-manager identity | grep 'org ID')
-    if [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]; then
-      echo "System is subscribed."
-      break
-    else
-      echo "System is not subscribed. Retrying in 10 seconds...($LOOP_COUNTER/10)"
-      sleep 10
-    fi
+  set +eu
+  for LOOP_COUNTER in {1..10}; do
+      subscribe_org_id=$($_ssh sudo subscription-manager identity | grep 'org ID')
+      if [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]; then
+          echo "System is subscribed."
+          break
+      else
+          echo "System is not subscribed. Retrying in 30 seconds...($LOOP_COUNTER/10)"
+          sleep 30
+      fi
   done
+  set -eu
   [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]
 
   # Verify yum install a small package. It will fail if no available repo.
