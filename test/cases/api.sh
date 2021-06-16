@@ -135,7 +135,7 @@ done
 
 case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
   "rhel-8.2" | "rhel-8.3" | "rhel-8.4")
-    DISTRO="rhel-8"
+    DISTRO="rhel-84"
     SSH_USER="cloud-user"
   ;;
 esac

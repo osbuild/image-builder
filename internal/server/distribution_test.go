@@ -40,7 +40,7 @@ func TestAvailableDistributions(t *testing.T) {
 	result, err := AvailableDistributions("../../distributions")
 	require.NoError(t, err)
 	for _, distro := range result {
-		require.Contains(t, []string{"rhel-8", "centos-8"}, distro.Name)
+		require.Contains(t, []string{"rhel-84", "rhel-8", "centos-8"}, distro.Name)
 	}
 }
 
@@ -55,7 +55,7 @@ func TestArchitecturesForImage(t *testing.T) {
 }
 
 func TestFindPackages(t *testing.T) {
-	pkgs, err := FindPackages("../../distributions", "rhel-8", "x86_64", "ssh")
+	pkgs, err := FindPackages("../../distributions", "rhel-84", "x86_64", "ssh")
 	require.NoError(t, err)
 	require.Greater(t, len(pkgs), 0)
 	for _, p := range pkgs {
