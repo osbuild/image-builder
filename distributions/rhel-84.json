@@ -1,0 +1,17 @@
+{
+  "module_platform_id": "platform:el8",
+  "distribution": {
+    "name": "rhel-84",
+    "description": "Red Hat Enterprise Linux (RHEL) 8"
+  },
+  "x86_64": {
+    "image_types": [ "ami", "vhd" ],
+    "repositories": [{
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os",
+      "rhsm": true
+    }, {
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os",
+      "rhsm": true
+    }]
+  }
+}
