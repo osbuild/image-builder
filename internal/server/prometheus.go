@@ -36,7 +36,7 @@ func (s *Server) PrometheusMW(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		timer := prometheus.NewTimer(httpDuration.WithLabelValues(ctx.Path()))
-		timer.ObserveDuration()
+		defer timer.ObserveDuration()
 		return nextHandler(ctx)
 	}
 }
