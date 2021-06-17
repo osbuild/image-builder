@@ -105,7 +105,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetPacakges", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh", &tutils.AuthString0)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result PackagesResponse
@@ -117,23 +117,23 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		p1 := result.Data[0]
 		p2 := result.Data[1]
 
-		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=1", &tutils.AuthString0)
+		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=1", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 		err = json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Greater(t, result.Meta.Count, 1)
 		require.Equal(t, result.Data[0], p1)
 
-		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=1&offset=1", &tutils.AuthString0)
+		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=1&offset=1", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 		err = json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Greater(t, result.Meta.Count, 1)
 		require.Equal(t, result.Data[0], p2)
 
-		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=-13", &tutils.AuthString0)
+		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=-13", &tutils.AuthString0)
 		require.Equal(t, 400, response.StatusCode)
-		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=13&offset=-2193", &tutils.AuthString0)
+		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=13&offset=-2193", &tutils.AuthString0)
 		require.Equal(t, 400, response.StatusCode)
 	})
 
