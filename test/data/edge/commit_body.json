@@ -1,0 +1,21 @@
+{
+    "distribution": "rhel-84",
+    "customizations": {
+      "packages": [
+        "wget"
+      ]
+    },
+    "ostree": {
+      "ref": "rhel/8/x86_64/edge"
+    },
+    "image_requests": [
+      {
+        "architecture": "x86_64",
+        "image_type": "rhel-edge-commit",
+        "upload_request": {
+          "type": "aws.s3",
+          "options": {}
+        }
+      }
+    ]
+}

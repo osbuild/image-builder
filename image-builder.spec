@@ -87,6 +87,15 @@ Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
 Requires:   openssl
 Requires:   jq
+Requires:   curl
+Requires:   httpd
+Requires:   expect
+Requires:   qemu-img
+Requires:   qemu-kvm
+Requires:   libvirt-client
+Requires:   libvirt-daemon-kvm
+Requires:   virt-install
+
 
 %description tests
 Integration tests to be run on a system with image-builder installed.

@@ -1,0 +1,19 @@
+{
+    "distribution": "rhel-84",
+      "customizations": {
+        "ostree": {
+          "ref": "rhel/8/x86_64/edge",
+          "url": "http://192.168.100.1/repo"
+        }
+      },
+      "image_requests": [
+        {
+          "architecture": "x86_64",
+          "image_type": "rhel-edge-installer",
+          "upload_request": {
+            "type": "aws.s3",
+            "options": {}
+          }
+        }
+      ]
+  }
