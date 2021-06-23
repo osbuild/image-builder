@@ -178,26 +178,6 @@
       set_fact:
         commit_log: "{{ deploy_commit[:11] }}"
 
-    # case: check wget installed
-    - name: check installed package
-      shell: rpm -qa | sort
-      register: result_packages
-
-    - name: check wget installed
-      block:
-        - assert:
-            that:
-              - "'wget' in result_packages.stdout"
-            fail_msg: "wget not installed, ostree upgrade might be failed"
-            success_msg: "wget installed in ostree upgrade"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-
     # case: check ostree-remount mount log
     - name: check ostree-remount mount log
       command: journalctl -u ostree-remount
@@ -251,43 +231,6 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when:
         - ansible_facts['distribution'] == "RedHat"
-        - "'rt' not in result_kernel.stdout"
-
-    - name: no any error or fail log
-      block:
-        - assert:
-            that:
-              - result_dmesg_error.stdout == ""
-            fail_msg: "no any error or fail log"
-            success_msg: "everything works as expected"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when:
-        - "'rt' in result_kernel.stdout"
-
-    - name: no more error or failed log
-      block:
-        - assert:
-            that:
-              - result_dmesg_error.stdout_lines | length == 2
-              - "'pcieport 0000:00:01.6: pciehp: Failed to check link status' in result_dmesg_error.stdout"
-              - "'RAS: Correctable Errors collector initialized' in result_dmesg_error.stdout"
-            fail_msg: "more or less error and failed log"
-            success_msg: "everything works as expected"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when:
-        - ansible_facts['distribution'] == "Fedora"
         - "'rt' not in result_kernel.stdout"
 
     # case: check running container with podman
@@ -425,63 +368,6 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-
-    # case: check rollback function if boot error found
-    - name: install sanely failing health check unit to test red boot status behavior
-      block:
-        - name: install sanely failing health check unit to test red boot status behavior
-          command: rpm-ostree install http://file-server-virt-qe-3rd.apps.ocp4.prod.psi.redhat.com/greenboot-failing-unit-1.0-1.el8.noarch.rpm
-          become: yes
-
-        - name: reboot to deploy new ostree commit
-          reboot:
-          become: yes
-
-        - name: waits until instance is reachable
-          wait_for:
-            host: "{{ ansible_all_ipv4_addresses[0] }}"
-            port: 22
-            search_regex: OpenSSH
-            delay: 10
-          register: result_rollback
-
-        - assert:
-            that:
-              - result_rollback is succeeded
-            fail_msg: "Rollback failed"
-            success_msg: "Rollback success"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-
-    # case: check ostree commit after rollback
-    - name: check ostree commit after rollback
-      block:
-        - name: check ostree commit after rollback
-          command: rpm-ostree status --json
-          register: result_commit
-
-        - name: make a json result
-          set_fact:
-            deploy_commit: "{{ result_commit.stdout | from_json | json_query('deployments[0].checksum') }}"
-
-        - assert:
-            that:
-              - deploy_commit == ostree_commit
-            fail_msg: "Not rollback to last commit"
-            success_msg: "Rollback success"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when: result_rollback is succeeded
 
     # case: check greenboot* services log again
     - name: fallback log should be found here

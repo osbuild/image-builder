@@ -2,7 +2,7 @@
     "distribution": "rhel-84",
     "customizations": {
       "packages": [
-        "wget"
+        "python36"
       ]
     },
     "ostree": {

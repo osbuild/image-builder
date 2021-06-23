@@ -130,7 +130,7 @@ check_result () {
         greenprint "💚 Success"
     else
         greenprint "❌ Failed"
-        clean_up
+        after_test
         exit 1
     fi
 }
@@ -162,9 +162,16 @@ function before_test() {
     exit 1
     }
 
-    if rpm -qa | grep -q firewalld; then
+    # ansible is not in RHEL repositories, enable EPEL and install ansible manually.
+    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo dnf install -y ansible
+
+    firewall_status=$(systemctl is-active firewalld.service)
+    if firewall_status==active; then
+        echo "Firewall is active, disable it now..."
         sudo systemctl disable firewalld --now
     fi
+
 
     # Start libvirtd and test it.
     greenprint "🚀 Starting libvirt daemon"
@@ -237,7 +244,7 @@ wait_for_compose
 download_image "${WORKDIR}/$COMMIT_FILENAME"
 
 # extract commit image to http path
-sudo tar -xf "${WORKDIR}${COMMIT_FILENAME}" -C ${HTTPD_PATH}
+sudo tar -xf "${WORKDIR}/${COMMIT_FILENAME}" -C ${HTTPD_PATH}
 
 # Write kickstart file for ostree image installation.
 greenprint "Generate kickstart file"
@@ -328,7 +335,7 @@ greenprint "🕹 Get ostree install commit value"
 INSTALL_HASH=$(curl "${REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Test Edge OS
-greenprint "📼 Run Edge tests on BIOS VM"
+greenprint "📼 Run Edge tests on VM"
 sudo tee "${WORKDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
 ${GUEST_ADDRESS}
