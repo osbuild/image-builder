@@ -33,6 +33,7 @@ Test EL8:
     - schutzbot/build.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/image-builder/api.sh ${PROVIDER}
+    - /usr/libexec/tests/image-builder/edge.sh
   parallel:
     matrix:
       - PROVIDER:

@@ -10,27 +10,6 @@
     # current target host's IP address
     - debug: var=ansible_all_ipv4_addresses
 
-    # case: check rt kernel installed after upgrade
-    - name: check installed kernel
-      command: uname -r
-      register: result_kernel
-
-    - name: check rt kernel installed
-      block:
-        - assert:
-            that:
-              - "'rt' in result_kernel.stdout"
-            fail_msg: "rt kernel not installed, ostree upgrade might be failed"
-            success_msg: "rt kernel installed in ostree upgrade"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when: "'rt' in result_kernel.stdout"
-
     # case: check ostree commit correctly updated
     - name: get deployed ostree commit
       command: rpm-ostree status --json
@@ -75,7 +54,7 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
-    # case: check /sysroot moutn point
+    # case: check /sysroot mount point
     - name: check /sysroot mount point
       command: findmnt -r -o SOURCE -n /sysroot
       register: result_sysroot_mount_point
@@ -199,7 +178,7 @@
       set_fact:
         commit_log: "{{ deploy_commit[:11] }}"
 
-        # case: check wget installed after upgrade
+    # case: check wget installed
     - name: check installed package
       shell: rpm -qa | sort
       register: result_packages
