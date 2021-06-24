@@ -166,13 +166,6 @@ function before_test() {
     sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
     sudo dnf install -y ansible
 
-    firewall_status=$(systemctl is-active firewalld.service)
-    if firewall_status==active; then
-        echo "Firewall is active, disable it now..."
-        sudo systemctl disable firewalld --now
-    fi
-
-
     # Start libvirtd and test it.
     greenprint "🚀 Starting libvirt daemon"
     sudo systemctl start libvirtd
@@ -206,6 +199,10 @@ EOF
     # Start httpd service
     greenprint "🚀 Starting httpd daemon"
     sudo systemctl start httpd
+
+    # Stop firewalld service because firewall will prevent edge vm installation
+    greenprint "🚀 Disable firewalld service"
+    sudo systemctl disable firewalld --now
 }
 
 # Run after test finished to clean up test environment
@@ -368,6 +365,13 @@ greenprint "Generate kickstart file"
 sudo rm -fr "$KS_FILE"
 tee "$KS_FILE" > /dev/null << STOPHERE
 text
+lang en_US.UTF-8
+keyboard us
+timezone --utc Etc/UTC
+selinux --enforcing
+rootpw --lock --iscrypted locked
+user --name=admin --groups=wheel --iscrypted --password=\$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0
+sshkey --username=admin "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
 network --bootproto=dhcp --device=link --activate --onboot=on
 zerombr
 clearpart --all --initlabel --disklabel=msdos

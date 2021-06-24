@@ -1,5 +1,10 @@
 {
-  "distribution": "rhel-84",
+    "distribution": "rhel-84",
+    "customizations": {
+      "packages": [
+        "python36"
+      ]
+    },
     "image_requests": [
       {
         "architecture": "x86_64",
