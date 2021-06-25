@@ -76,6 +76,15 @@ func (oc *OsbuildClient) ComposeStatus(id string) (*http.Response, error) {
 	return oc.client.Do(req)
 }
 
+func (oc *OsbuildClient) ComposeMetadata(id string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s%s/compose/%s/metadata", oc.osbuildURL, oc.pathPrefix, id), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return oc.client.Do(req)
+}
+
 func (oc *OsbuildClient) Compose(compose ComposeRequest) (*http.Response, error) {
 	buf, err := json.Marshal(compose)
 	if err != nil {
