@@ -8,7 +8,9 @@ import (
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/logger"
-	"github.com/osbuild/image-builder/internal/server"
+	"github.com/osbuild/image-builder/internal/v1"
+
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
@@ -56,21 +58,30 @@ func main() {
 		accountNumbers = strings.Split(conf.AccountNumbers, ";")
 	}
 
-	aws := server.AWSConfig{
+	aws := v1.AWSConfig{
 		Region:          conf.OsbuildRegion,
 		AccessKeyId:     conf.OsbuildAccessKeyID,
 		SecretAccessKey: conf.OsbuildSecretAccessKey,
 		S3Bucket:        conf.OsbuildS3Bucket,
 	}
-	gcp := server.GCPConfig{
+	gcp := v1.GCPConfig{
 		Region: conf.OsbuildGCPRegion,
 		Bucket: conf.OsbuildGCPBucket,
 	}
 
-	azure := server.AzureConfig{
+	azure := v1.AzureConfig{
 		Location: conf.OsbuildAzureLocation,
 	}
 
-	s := server.NewServer(log, client, dbase, aws, gcp, azure, orgIds, accountNumbers, conf.DistributionsDir)
-	s.Run(conf.ListenAddress)
+	echoServer := echo.New()
+	err = v1.Attach(echoServer, log, client, dbase, aws, gcp, azure, orgIds, accountNumbers, conf.DistributionsDir)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Infof("🚀 Starting image-builder server on %v ...\n", conf.ListenAddress)
+	err = echoServer.Start(conf.ListenAddress)
+	if err != nil {
+		panic(err)
+	}
 }

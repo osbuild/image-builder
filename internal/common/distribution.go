@@ -1,4 +1,4 @@
-package server
+package common
 
 import (
 	"encoding/json"
@@ -14,6 +14,20 @@ import (
 	"github.com/osbuild/image-builder/internal/cloudapi"
 )
 
+type DistributionItem struct {
+	Description string `json:"description"`
+	Name        string `json:"name"`
+}
+
+type Distributions []DistributionItem
+
+type ArchitectureItem struct {
+	Arch       string   `json:"arch"`
+	ImageTypes []string `json:"image_types"`
+}
+
+type Architectures []ArchitectureItem
+
 type DistributionFile struct {
 	ModulePlatformID string           `json:"module_platform_id"`
 	Distribution     DistributionItem `json:"distribution"`
@@ -23,6 +37,16 @@ type DistributionFile struct {
 type X86_64 struct {
 	ImageTypes   []string              `json:"image_types"`
 	Repositories []cloudapi.Repository `json:"repositories"`
+}
+
+type Package struct {
+	Name    string `json:"name"`
+	Summary string `json:"summary"`
+	Version string `json:"version"`
+}
+
+type PackagesFile struct {
+	Data []Package `json:"data"`
 }
 
 func ReadDistributions(distsDir, distro string) ([]DistributionFile, error) {
@@ -112,10 +136,6 @@ func ArchitecturesForImage(distsDir, distro string) (Architectures, error) {
 		})
 	}
 	return archs, nil
-}
-
-type PackagesFile struct {
-	Data []Package `json:"data"`
 }
 
 func FindPackages(distsDir, distro, arch, search string) ([]Package, error) {

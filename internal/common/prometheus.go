@@ -1,4 +1,4 @@
-package server
+package common
 
 import (
 	"strings"
@@ -23,13 +23,13 @@ var (
 )
 
 var (
-	composeErrors = promauto.NewCounter(prometheus.CounterOpts{
+	ComposeErrors = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "image_builder_compose_errors",
 		Help: "Number of internal server errors.",
 	})
 )
 
-func (s *Server) PrometheusMW(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+func PrometheusMW(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		if strings.HasSuffix(ctx.Path(), "/compose") {
 			composeRequests.Inc()
