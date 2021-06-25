@@ -1,4 +1,4 @@
-package server
+package v1
 
 import (
 	"context"
@@ -15,18 +15,21 @@ import (
 	"github.com/osbuild/image-builder/internal/cloudapi"
 	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/tutils"
+
+	"github.com/labstack/echo/v4"
 )
 
-func startServer(t *testing.T, url string, orgIds string, accountIds string) *Server {
+func startServer(t *testing.T, url string, orgIds string, accountIds string) *echo.Echo {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
-	srv := NewServer(logger, client, tutils.InitDB(), AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"), strings.Split(accountIds, ";"), "../../distributions")
+	echoServer := echo.New()
+	Attach(echoServer, logger, client, tutils.InitDB(), AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"), strings.Split(accountIds, ";"), "../../distributions")
 	// execute in parallel b/c .Run() will block execution
-	go srv.Run("localhost:8086")
+	go echoServer.Start("localhost:8086")
 
 	// wait until server is ready
 	tries := 0
@@ -41,7 +44,7 @@ func startServer(t *testing.T, url string, orgIds string, accountIds string) *Se
 		tries += 1
 	}
 
-	return srv
+	return echoServer
 }
 
 // note: all of the sub-tests below don't actually talk to
@@ -49,9 +52,9 @@ func startServer(t *testing.T, url string, orgIds string, accountIds string) *Se
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv := startServer(t, "http://example.com", "000000", "")
+	srv :=startServer(t, "http://example.com", "000000", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -174,7 +177,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 func TestEmptyAllowedIds(t *testing.T) {
 	srv := startServer(t, "http://example.com", "", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -188,7 +191,7 @@ func TestEmptyAllowedIds(t *testing.T) {
 func TestOrgIds(t *testing.T) {
 	srv := startServer(t, "http://example.com", "000000", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -207,7 +210,7 @@ func TestOrgIds(t *testing.T) {
 func TestAccountNumbers(t *testing.T) {
 	srv := startServer(t, "http://example.com", "", "500000")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -226,7 +229,7 @@ func TestAccountNumbers(t *testing.T) {
 func TestOrgIdWildcard(t *testing.T) {
 	srv := startServer(t, "http://example.com", "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -239,7 +242,7 @@ func TestOrgIdWildcard(t *testing.T) {
 func TestAccountNumberWildcard(t *testing.T) {
 	srv := startServer(t, "http://example.com", "", "*")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -266,7 +269,7 @@ func TestGetComposeStatus(t *testing.T) {
 
 	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -306,7 +309,7 @@ func TestGetComposeStatus404(t *testing.T) {
 
 	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -321,7 +324,7 @@ func TestComposeImage(t *testing.T) {
 	// instance when calling /compose or /compose/$uuid
 	srv := startServer(t, "http://example.com", "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -448,7 +451,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 
 	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -486,7 +489,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 
 	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -526,7 +529,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 
 	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -575,7 +578,7 @@ func TestComposeCustomizations(t *testing.T) {
 
 	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -705,7 +708,7 @@ func TestIdentityAllowed(t *testing.T) {
 func TestReadinessProbeNotReady(t *testing.T) {
 	srv := startServer(t, "http://example.com", "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -725,7 +728,7 @@ func TestReadinessProbeReady(t *testing.T) {
 
 	srv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
@@ -738,7 +741,7 @@ func TestMetrics(t *testing.T) {
 	// simulate osbuild-composer API
 	srv := startServer(t, "", "*", "")
 	defer func() {
-		err := srv.echo.Server.Shutdown(context.Background())
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
