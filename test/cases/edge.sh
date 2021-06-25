@@ -40,16 +40,14 @@ HOST_ADDRESS=192.168.100.1
 GUEST_ADDRESS=192.168.100.50
 REPO_URL=http://$HOST_ADDRESS/repo
 
-# SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
-# SSH_KEY=key/ostree_key
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
 SSH_KEY=${IMAGE_BUILDER_TEST_DATA}/keyring/id_rsa
 
 KS_FILE=${WORKDIR}/ks.cfg
 COMMIT_FILENAME="commit.tar"
-ISO_FILENAME="installer.iso"
+# ISO_FILENAME="installer.iso"
 REQUEST_JSON_FOR_COMMIT=${IMAGE_BUILDER_TEST_DATA}/edge/commit_body.json
-REQUEST_JSON_FOR_ISO=${IMAGE_BUILDER_TEST_DATA}/edge/installer_body.json
+# REQUEST_JSON_FOR_ISO=${IMAGE_BUILDER_TEST_DATA}/edge/installer_body.json
 
 ############### Common functions for image builder service ################
 
@@ -214,15 +212,15 @@ function after_test() {
     fi
     sudo virsh undefine "${IMAGE_KEY}-commit"
 
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-installer") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-installer"
-    fi
-    sudo virsh undefine "${IMAGE_KEY}-installer"
+    # if [[ $(sudo virsh domstate "${IMAGE_KEY}-installer") == "running" ]]; then
+    #     sudo virsh destroy "${IMAGE_KEY}-installer"
+    # fi
+    # sudo virsh undefine "${IMAGE_KEY}-installer"
 
     # Clean up temp files
     sudo rm -f "$COMMIT_IMAGE_PATH"
-    sudo rm -f "$ISO_IMAGE_PATH"
-    sudo rm -f /var/lib/libvirt/images/"${ISO_FILENAME}"
+    # sudo rm -f "$ISO_IMAGE_PATH"
+    # sudo rm -f /var/lib/libvirt/images/"${ISO_FILENAME}"
 
     # Clean up work directory
     sudo rm -f "$WORKDIR"
@@ -353,89 +351,90 @@ sudo virsh undefine --domain "${IMAGE_KEY}-commit"
 
 
 ############################## Test installer image #########################
+### Comment out of bug https://bugzilla.redhat.com/show_bug.cgi?id=1975554 and https://github.com/osbuild/image-builder/issues/206) ###
 
-# call image-builder API to build commit image
-post_to_composer "$REQUEST_JSON_FOR_ISO"
-wait_for_compose
-download_image "${WORKDIR}/$ISO_FILENAME"
+# # call image-builder API to build commit image
+# post_to_composer "$REQUEST_JSON_FOR_ISO"
+# wait_for_compose
+# download_image "${WORKDIR}/$ISO_FILENAME"
 
 
-# Write kickstart file for ostree image installation.
-greenprint "Generate kickstart file"
-sudo rm -fr "$KS_FILE"
-tee "$KS_FILE" > /dev/null << STOPHERE
-text
-lang en_US.UTF-8
-keyboard us
-timezone --utc Etc/UTC
-selinux --enforcing
-rootpw --lock --iscrypted locked
-user --name=admin --groups=wheel --iscrypted --password=\$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0
-sshkey --username=admin "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
-network --bootproto=dhcp --device=link --activate --onboot=on
-zerombr
-clearpart --all --initlabel --disklabel=msdos
-autopart --nohome --noswap --type=plain
-ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=file:///ostree/repo --ref=${OSTREE_REF}
-poweroff
-%post --log=/var/log/anaconda/post-install.log --erroronfail
-# no sudo password for user admin
-echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
-# delete local repo and add external repo
-ostree remote delete rhel-edge
-ostree remote add --no-gpg-verify --no-sign-verify rhel-edge ${REPO_URL}
-%end
-STOPHERE
+# # Write kickstart file for ostree image installation.
+# greenprint "Generate kickstart file"
+# sudo rm -fr "$KS_FILE"
+# tee "$KS_FILE" > /dev/null << STOPHERE
+# text
+# lang en_US.UTF-8
+# keyboard us
+# timezone --utc Etc/UTC
+# selinux --enforcing
+# rootpw --lock --iscrypted locked
+# user --name=admin --groups=wheel --iscrypted --password=\$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0
+# sshkey --username=admin "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+# network --bootproto=dhcp --device=link --activate --onboot=on
+# zerombr
+# clearpart --all --initlabel --disklabel=msdos
+# autopart --nohome --noswap --type=plain
+# ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=file:///ostree/repo --ref=${OSTREE_REF}
+# poweroff
+# %post --log=/var/log/anaconda/post-install.log --erroronfail
+# # no sudo password for user admin
+# echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
+# # delete local repo and add external repo
+# ostree remote delete rhel-edge
+# ostree remote add --no-gpg-verify --no-sign-verify rhel-edge ${REPO_URL}
+# %end
+# STOPHERE
 
-# Create qcow2 file for virt install.
-greenprint "🖥 Create qcow2 file for virt install"
-ISO_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-installer.qcow2
-sudo qemu-img create -f qcow2 "${ISO_IMAGE_PATH}" 20G
+# # Create qcow2 file for virt install.
+# greenprint "🖥 Create qcow2 file for virt install"
+# ISO_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-installer.qcow2
+# sudo qemu-img create -f qcow2 "${ISO_IMAGE_PATH}" 20G
 
-sudo mv "${WORKDIR}/${ISO_FILENAME}" /var/lib/libvirt/images/
+# sudo mv "${WORKDIR}/${ISO_FILENAME}" /var/lib/libvirt/images/
 
-# Install ostree image via anaconda.
-greenprint "💿 Install ostree image via installer(ISO) on BIOS VM"
-sudo virt-install  --initrd-inject="${KS_FILE}" \
-                --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                --name="${IMAGE_KEY}-installer" \
-                --disk path="${ISO_IMAGE_PATH}",format=qcow2 \
-                --ram 3072 \
-                --vcpus 2 \
-                --network network=integration,mac=34:49:22:B0:83:30 \
-                --os-type linux \
-                --os-variant ${OS_VARIANT} \
-                --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                --nographics \
-                --noautoconsole \
-                --wait=-1 \
-                --noreboot
+# # Install ostree image via anaconda.
+# greenprint "💿 Install ostree image via installer(ISO) on BIOS VM"
+# sudo virt-install  --initrd-inject="${KS_FILE}" \
+#                 --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
+#                 --name="${IMAGE_KEY}-installer" \
+#                 --disk path="${ISO_IMAGE_PATH}",format=qcow2 \
+#                 --ram 3072 \
+#                 --vcpus 2 \
+#                 --network network=integration,mac=34:49:22:B0:83:30 \
+#                 --os-type linux \
+#                 --os-variant ${OS_VARIANT} \
+#                 --location "/var/lib/libvirt/images/${ISO_FILENAME}" \
+#                 --nographics \
+#                 --noautoconsole \
+#                 --wait=-1 \
+#                 --noreboot
 
-# Start VM
-greenprint "📟 Start BIOS VM"
-sudo virsh start "${IMAGE_KEY}-installer"
+# # Start VM
+# greenprint "📟 Start BIOS VM"
+# sudo virsh start "${IMAGE_KEY}-installer"
 
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh $GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
+# # Check for ssh ready to go.
+# greenprint "🛃 Checking for SSH is ready to go"
+# for LOOP_COUNTER in $(seq 0 30); do
+#     RESULTS="$(wait_for_ssh $GUEST_ADDRESS)"
+#     if [[ $RESULTS == 1 ]]; then
+#         echo "SSH is ready now! 🥳"
+#         break
+#     fi
+#     sleep 10
+# done
 
-check_result
+# check_result
 
-# Get ostree commit value.
-greenprint "🕹 Get ostree install commit value"
-INSTALL_HASH=$(curl "${REPO_URL}/refs/heads/${OSTREE_REF}")
+# # Get ostree commit value.
+# greenprint "🕹 Get ostree install commit value"
+# INSTALL_HASH=$(curl "${REPO_URL}/refs/heads/${OSTREE_REF}")
 
-# Test IoT/Edge OS
-greenprint "📼 Run Edge tests on BIOS VM"
-sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${WORKDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${INSTALL_HASH}" -e workspace="$WORKDIR" ${IMAGE_BUILDER_TEST_DATA}/edge/check_ostree.yaml || RESULTS=0
-check_result
+# # Test IoT/Edge OS
+# greenprint "📼 Run Edge tests on BIOS VM"
+# sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${WORKDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${INSTALL_HASH}" -e workspace="$WORKDIR" ${IMAGE_BUILDER_TEST_DATA}/edge/check_ostree.yaml || RESULTS=0
+# check_result
 
 # cleanup test environment
 after_test
