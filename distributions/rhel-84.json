@@ -12,9 +12,9 @@
     }, {
       "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os",
       "rhsm": true
-    }, {                                                                                                                                                      
-      "baseurl": "https://cdn.redhat.com/content/dist/layered/rhel8/x86_64/ansible/2.9/os",                                                                   
-      "rhsm": true                                                                                                                                            
+    }, {
+      "baseurl": "https://cdn.redhat.com/content/dist/layered/rhel8/x86_64/ansible/2/os",
+      "rhsm": true
     }]
   }
 }
