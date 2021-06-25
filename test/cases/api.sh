@@ -609,6 +609,21 @@ function Test_verifyComposeResult() {
   esac
 }
 
+### Case: verify package list of a finished compose
+function Test_verifyComposeMetadata() {
+  local RESULT
+  RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID/metadata")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ $EXIT_CODE == 200 ]]
+
+  local PACKAGENAMES
+  PACKAGENAMES=$(getResponse "$RESULT" | jq -r '.packages[].name')
+  if ! grep -q postgresql <<< "${PACKAGENAMES}"; then
+      echo "'postgresql' not found in compose package list 😠"
+      exit 1
+  fi
+}
+
 function Test_getComposes() {
   RESULT=$($CURLCMD -H "$HEADER" -H 'Content-Type: application/json' "$BASEURL/composes")
   EXIT_CODE=$(getExitCode "$RESULT")
@@ -673,6 +688,7 @@ Test_getOpenapi "$BASEURLMAJORVERSION"
 Test_postToComposer
 Test_waitForCompose
 Test_verifyComposeResult
+Test_verifyComposeMetadata
 Test_getComposes
 Test_getOpenapiWithWrongOrgId
 Test_postToComposerWithWrongOrgId
