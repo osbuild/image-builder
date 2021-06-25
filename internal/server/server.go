@@ -230,6 +230,50 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	return ctx.JSON(http.StatusOK, status)
 }
 
+func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error {
+	resp, err := h.server.client.ComposeMetadata(composeId)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 404 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
+	}
+
+	var cloudStat cloudapi.ComposeMetadata
+	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
+	if err != nil {
+		return err
+	}
+
+	var packages []PackageMetadata
+	if cloudStat.Packages != nil {
+		packages = make([]PackageMetadata, len(*cloudStat.Packages))
+		for idx, cloudPkg := range *cloudStat.Packages {
+			packages[idx] = PackageMetadata{
+				Arch:      cloudPkg.Arch,
+				Epoch:     cloudPkg.Epoch,
+				Name:      cloudPkg.Name,
+				Release:   cloudPkg.Release,
+				Sigmd5:    cloudPkg.Sigmd5,
+				Signature: cloudPkg.Signature,
+				Type:      cloudPkg.Type,
+				Version:   cloudPkg.Version,
+			}
+		}
+	}
+	status := ComposeMetadata{
+		OstreeCommit: cloudStat.OstreeCommit,
+		Packages:     &packages,
+	}
+
+	return ctx.JSON(http.StatusOK, status)
+}
 func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error {
 	spec, err := GetSwagger()
 	if err != nil {
