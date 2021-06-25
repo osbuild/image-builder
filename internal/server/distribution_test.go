@@ -14,6 +14,7 @@ func TestRepositoriesForImage(t *testing.T) {
 
 	baseurl := "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
 	baseurl2 := "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"
+	baseurl3 := "http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"
 	require.Equal(t, []cloudapi.Repository{
 		{
 			Baseurl:    &baseurl,
@@ -23,6 +24,12 @@ func TestRepositoriesForImage(t *testing.T) {
 		},
 		{
 			Baseurl:    &baseurl2,
+			Metalink:   nil,
+			Mirrorlist: nil,
+			Rhsm:       false,
+		},
+		{
+			Baseurl:    &baseurl3,
 			Metalink:   nil,
 			Mirrorlist: nil,
 			Rhsm:       false,
