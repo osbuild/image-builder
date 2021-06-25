@@ -1,5 +1,5 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=server --generate types,server,spec -o api.go api.yaml
-package server
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=v1 --generate types,server,spec -o api.go api.yaml
+package v1
 
 import (
 	"encoding/base64"
@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/image-builder/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -66,26 +67,26 @@ type IdentityHeader struct {
 	} `json:"identity"`
 }
 
-func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, accountNumbers []string, distsDir string) *Server {
+func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, accountNumbers []string, distsDir string) error {
 	spec, err := GetSwagger()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	loader := openapi3.NewSwaggerLoader()
 	if err := spec.Validate(loader.Context); err != nil {
-		panic(err)
+		return err
 	}
 	router, err := legacyrouter.NewRouter(spec)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	majorVersion := strings.Split(spec.Info.Version, ".")[0]
 
 	s := Server{
 		logger,
-		echo.New(),
+		echoServer,
 		client,
 		router,
 		dbase,
@@ -100,8 +101,8 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.VerifyIdentityHeader, s.ValidateRequest, s.PrometheusMW), &h)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.VerifyIdentityHeader, s.ValidateRequest, s.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.VerifyIdentityHeader, s.ValidateRequest, common.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.VerifyIdentityHeader, s.ValidateRequest, common.PrometheusMW), &h)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
@@ -114,16 +115,7 @@ func NewServer(logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB
 	})
 
 	h.server.echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
-
-	return &s
-}
-
-func (s *Server) Run(address string) {
-	s.logger.Infof("🚀 Starting image-builder server on %v ...\n", address)
-	err := s.echo.Start(address)
-	if err != nil {
-		s.logger.Errorln(fmt.Sprintf("Error starting echo server: %v", err))
-	}
+	return nil
 }
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {
@@ -137,7 +129,7 @@ func (h *Handlers) GetVersion(ctx echo.Context) error {
 
 func (h *Handlers) GetReadiness(ctx echo.Context) error {
 	// make sure distributions are available
-	distributions, err := AvailableDistributions(h.server.distsDir)
+	distributions, err := common.AvailableDistributions(h.server.distsDir)
 	if err != nil {
 		return err
 	}
@@ -176,18 +168,36 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
-	distributions, err := AvailableDistributions(h.server.distsDir)
+	ds, err := common.AvailableDistributions(h.server.distsDir)
 	if err != nil {
 		return err
 	}
+
+	var distributions Distributions
+	for _, d := range ds {
+		distributions = append(distributions, DistributionItem{
+			Description: d.Description,
+			Name:        d.Name,
+		})
+	}
+
 	return ctx.JSON(http.StatusOK, distributions)
 }
 
 func (h *Handlers) GetArchitectures(ctx echo.Context, distribution string) error {
-	archs, err := ArchitecturesForImage(h.server.distsDir, distribution)
+	as, err := common.ArchitecturesForImage(h.server.distsDir, distribution)
 	if err != nil {
 		return err
 	}
+
+	var archs Architectures
+	for _, a := range as {
+		archs = append(archs, ArchitectureItem{
+			Arch:       a.Arch,
+			ImageTypes: a.ImageTypes,
+		})
+	}
+
 	return ctx.JSON(http.StatusOK, archs)
 }
 
@@ -371,7 +381,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
-	repositories, err := RepositoriesForImage(h.server.distsDir, composeRequest.Distribution, composeRequest.ImageRequests[0].Architecture)
+	repositories, err := common.RepositoriesForImage(h.server.distsDir, composeRequest.Distribution, composeRequest.ImageRequests[0].Architecture)
 	if err != nil {
 		return err
 	}
@@ -542,9 +552,18 @@ func buildCustomizations(cust *Customizations) *cloudapi.Customizations {
 }
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
-	packages, err := FindPackages(h.server.distsDir, params.Distribution, params.Architecture, params.Search)
+	pkgs, err := common.FindPackages(h.server.distsDir, params.Distribution, params.Architecture, params.Search)
 	if err != nil {
 		return err
+	}
+	var packages []Package
+	for _, p := range pkgs {
+		packages = append(packages,
+			Package{
+				Name:    p.Name,
+				Summary: p.Summary,
+				Version: p.Version,
+			})
 	}
 
 	limit := 100
@@ -722,7 +741,7 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 	if he.Code == http.StatusInternalServerError {
 		s.logger.Errorln(fmt.Sprintf("Internal error %v: %v, %v", he.Code, he.Message, err))
 		if strings.HasSuffix(c.Path(), "/compose") {
-			composeErrors.Inc()
+			common.ComposeErrors.Inc()
 		}
 	}
 
