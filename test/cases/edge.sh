@@ -320,6 +320,7 @@ for LOOP_COUNTER in $(seq 0 30); do
         echo "SSH is ready now! 🥳"
         break
     fi
+    echo "SSH is not ready, Waiting...($LOOP_COUNTER/30)"
     sleep 10
 done
 
