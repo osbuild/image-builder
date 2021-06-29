@@ -1,4 +1,4 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=v1 --generate types,server,spec -o api.go api.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=m0 --generate types,server,spec -o m0/api.go m0/api.yaml
 package v1
 
 import (
@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/image-builder/internal/cloudapi"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder/internal/v1/m0"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -68,7 +69,7 @@ type IdentityHeader struct {
 }
 
 func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, accountNumbers []string, distsDir string) error {
-	spec, err := GetSwagger()
+	spec, err := m0.GetSwagger()
 	if err != nil {
 		return err
 	}
@@ -653,6 +654,12 @@ func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 		return nextHandler(ctx)
 	}
 }
+
+// upgrade the request after the identity check but before validating.
+// func (s *Server) UpgradeRequest(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+//         return func(ctx echo.Context) error {
+//         }
+// }
 
 func (s *Server) ValidateRequest(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
