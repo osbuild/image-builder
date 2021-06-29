@@ -45,9 +45,7 @@ SSH_KEY=${IMAGE_BUILDER_TEST_DATA}/keyring/id_rsa
 
 KS_FILE=${WORKDIR}/ks.cfg
 COMMIT_FILENAME="commit.tar"
-# ISO_FILENAME="installer.iso"
 REQUEST_JSON_FOR_COMMIT=${IMAGE_BUILDER_TEST_DATA}/edge/commit_body.json
-# REQUEST_JSON_FOR_ISO=${IMAGE_BUILDER_TEST_DATA}/edge/installer_body.json
 
 ############### Common functions for image builder service ################
 
@@ -58,59 +56,59 @@ function greenprint {
 
 # Get response from curl result
 function get_response() {
-  read -r -d '' -a ARR <<<"$1"
-  echo "${ARR[@]::${#ARR[@]}-1}"
+    read -r -d '' -a ARR <<<"$1"
+    echo "${ARR[@]::${#ARR[@]}-1}"
 }
 
 # Get exit code from curl result
 function get_exit_code() {
-  read -r -d '' -a ARR <<<"$1"
-  echo "${ARR[-1]}"
+    read -r -d '' -a ARR <<<"$1"
+    echo "${ARR[-1]}"
 }
 
 ### Call image builder service Edge Rest API
 function post_to_composer() {
-  RESULT=$($CURLCMD -H "$HEADER" -H 'Content-Type: application/json' --request POST --data @"$1" "$BASEURL/compose")
-  EXIT_CODE=$(get_exit_code "$RESULT")
-  [[ "$EXIT_CODE" == 201 ]]
-  COMPOSE_ID=$(get_response "$RESULT" | jq -r '.id')
-  [[ "$COMPOSE_ID" =~ ^\{?[A-F0-9a-f]{8}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{12}\}?$ ]]
-  echo "Compose ID is: $COMPOSE_ID"
+    RESULT=$($CURLCMD -H "$HEADER" -H 'Content-Type: application/json' --request POST --data @"$1" "$BASEURL/compose")
+    EXIT_CODE=$(get_exit_code "$RESULT")
+    [[ "$EXIT_CODE" == 201 ]]
+    COMPOSE_ID=$(get_response "$RESULT" | jq -r '.id')
+    [[ "$COMPOSE_ID" =~ ^\{?[A-F0-9a-f]{8}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{12}\}?$ ]]
+    echo "Compose ID is: $COMPOSE_ID"
 }
 
 ### Wait for the compose to finish successfully
 function wait_for_compose() {
-  while true
-  do
-    RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID")
-    EXIT_CODE=$(get_exit_code "$RESULT")
-    [[ $EXIT_CODE == 200 ]]
+    while true
+    do
+        RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID")
+        EXIT_CODE=$(get_exit_code "$RESULT")
+        [[ $EXIT_CODE == 200 ]]
 
-    COMPOSE_STATUS=$(get_response "$RESULT" | jq -r '.image_status.status')
-    UPLOAD_STATUS=$(get_response "$RESULT" | jq -r '.image_status.upload_status.status')
+        COMPOSE_STATUS=$(get_response "$RESULT" | jq -r '.image_status.status')
+        UPLOAD_STATUS=$(get_response "$RESULT" | jq -r '.image_status.upload_status.status')
 
-    case "$COMPOSE_STATUS" in
-      # "running is kept here temporarily for backward compatibility"
-      "running")
-        ;;
-      # valid status values for compose which is not yet finished
-      "pending"|"building"|"uploading"|"registering")
-        ;;
-      "success")
-        [[ "$UPLOAD_STATUS" = "success" ]]
-        break
-        ;;
-      "failure")
-        echo "Image compose failed"
-        exit 1
-        ;;
-      *)
-        echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
-        exit 1
-        ;;
-    esac
-    sleep 30
-  done
+        case "$COMPOSE_STATUS" in
+        # "running is kept here temporarily for backward compatibility"
+        "running")
+            ;;
+        # valid status values for compose which is not yet finished
+        "pending"|"building"|"uploading"|"registering")
+            ;;
+        "success")
+            [[ "$UPLOAD_STATUS" = "success" ]]
+            break
+            ;;
+        "failure")
+            echo "Image compose failed"
+            exit 1
+            ;;
+        *)
+            echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
+            exit 1
+            ;;
+        esac
+        sleep 30
+    done
 }
 
 # Download image from aws s3
@@ -145,23 +143,26 @@ function wait_for_ssh() {
 
 # Run before test begin to prepare test environment
 function before_test() {
+    # Get os information
+    source /etc/os-release
+
     # Check service status
     READY=0
     for RETRY in {1..10};do
-    curl --fail -H "$HEADER" "http://$ADDRESS:$PORT/ready" && {
-        READY=1
-        break
-    }
-    echo "Port $PORT is not open. Waiting...($RETRY/10)"
-    sleep 1
+        curl --fail -H "$HEADER" "http://$ADDRESS:$PORT/ready" && {
+            READY=1
+            break
+        }
+        echo "Port $PORT is not open. Waiting...($RETRY/10)"
+        sleep 1
     done
 
     [ "$READY" -eq 1 ] || {
-    echo "Port $PORT is not open after retrying 10 times. Exit."
-    exit 1
+        echo "Port $PORT is not open after retrying 10 times. Exit."
+        exit 1
     }
 
-    # ansible is not in RHEL repositories, enable EPEL and install ansible manually.
+    # ansible is not in RHEL repositories, cannot install it by spec file, hence enable EPEL and install ansible manually.
     sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
     sudo dnf install -y ansible
 
@@ -198,10 +199,6 @@ EOF
     # Start httpd service
     greenprint "🚀 Starting httpd daemon"
     sudo systemctl start httpd
-
-    # Stop firewalld service because firewall will prevent edge vm installation
-    greenprint "🚀 Disable firewalld service"
-    sudo systemctl disable firewalld --now
 }
 
 # Run after test finished to clean up test environment
@@ -213,15 +210,8 @@ function after_test() {
     fi
     sudo virsh undefine "${IMAGE_KEY}-commit"
 
-    # if [[ $(sudo virsh domstate "${IMAGE_KEY}-installer") == "running" ]]; then
-    #     sudo virsh destroy "${IMAGE_KEY}-installer"
-    # fi
-    # sudo virsh undefine "${IMAGE_KEY}-installer"
-
     # Clean up temp files
     sudo rm -f "$COMMIT_IMAGE_PATH"
-    # sudo rm -f "$ISO_IMAGE_PATH"
-    # sudo rm -f /var/lib/libvirt/images/"${ISO_FILENAME}"
 
     # Clean up work directory
     sudo rm -f "$WORKDIR"
