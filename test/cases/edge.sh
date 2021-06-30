@@ -146,10 +146,10 @@ function after_test() {
     sudo virsh undefine "${IMAGE_KEY}-commit"
 
     # Clean up temp files
-    sudo rm -f "$COMMIT_IMAGE_PATH"
+    sudo rm -fr "$COMMIT_IMAGE_PATH"
 
     # Clean up work directory
-    sudo rm -f "$WORKDIR"
+    sudo rm -fr "$WORKDIR"
 }
 
 ############### Common functions for image builder service ################
