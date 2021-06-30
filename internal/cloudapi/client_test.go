@@ -40,17 +40,6 @@ func TestNewOsbuildClientWithCertsAndHttps(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestConfigureClientWithValidCertsAndHttps(t *testing.T) {
-	myCert := "/etc/osbuild-composer/client-crt.pem"
-	myKey := "/etc/osbuild-composer/client-key.pem"
-	myCA := "/etc/osbuild-composer-test/ca/ca.cert.pem"
-
-	client, err := NewOsbuildClient("https://localhost:8086/", &myCert, &myKey, &myCA)
-	require.NoError(t, err)
-	require.NotNil(t, client.client)
-	require.IsType(t, &http.Client{}, client.client)
-}
-
 func TestComposeStatusWithHTTPServer(t *testing.T) {
 	uuid := "1cf31af9-d2be-4b11-bb2d-f2f2d22b0736"
 
