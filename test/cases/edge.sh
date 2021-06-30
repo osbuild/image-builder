@@ -9,7 +9,7 @@
 # 2. Download commit image, extract it to /var/www/html, and serve it over httpd
 # 3. Install Edge vm based on commit repo url, and run ansible playbook to check it.
 #
-# ------------ Test installer image ------------------------------------------------------
+# ------------ Test installer image (not implemented because of bz 1975554) -------------
 # 4. Call image builder Rest API. (build an rhel-edge-install image and upload to aws s3)
 # 4. Download installer image.
 # 5. Install Edge vm with the installer image,and run ansible playbook to check it.
@@ -32,10 +32,6 @@ ARCH=$(uname -m)
 HTTPD_PATH="/var/www/html"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="edge-${TEST_UUID}"
-IMAGE_TYPE=rhel-edge
-OS_VARIANT="rhel8-unknown"
-OSTREE_REF="rhel/8/${ARCH}/edge"
-BOOT_LOCATION="http://download.devel.redhat.com/rel-eng/rhel-8/RHEL-8/latest-RHEL-8.4.0/compose/BaseOS/x86_64/os/"
 HOST_ADDRESS=192.168.100.1
 GUEST_ADDRESS=192.168.100.50
 REPO_URL=http://$HOST_ADDRESS/repo
@@ -45,7 +41,116 @@ SSH_KEY=${IMAGE_BUILDER_TEST_DATA}/keyring/id_rsa
 
 KS_FILE=${WORKDIR}/ks.cfg
 COMMIT_FILENAME="commit.tar"
-REQUEST_JSON_FOR_COMMIT=${IMAGE_BUILDER_TEST_DATA}/edge/commit_body.json
+
+# Run before test begin to prepare test environment
+function before_test() {
+    # Get os information
+    # shellcheck disable=SC1091
+    source /etc/os-release
+
+    # Set os-variant and boot location used by virt-install.
+    case "${ID}-${VERSION_ID}" in
+        "rhel-8.4")
+            IMAGE_TYPE="rhel-edge-commit"
+            OSTREE_REF="rhel/8/${ARCH}/edge"
+            OS_VARIANT="rhel8-unknown"
+            DISTRO="rhel-84"
+            BOOT_LOCATION="http://download.devel.redhat.com/rel-eng/rhel-8/RHEL-8/latest-RHEL-8.4.0/compose/BaseOS/x86_64/os/";;
+        *)
+            echo "unsupported distro: ${ID}-${VERSION_ID}"
+            exit 1;;
+    esac
+
+    # Check image-builder service status
+    READY=0
+    for RETRY in {1..10};do
+        curl --fail -H "$HEADER" "http://$ADDRESS:$PORT/ready" && {
+            READY=1
+            break
+        }
+        echo "Port $PORT is not open. Waiting...($RETRY/10)"
+        sleep 1
+    done
+
+    [ "$READY" -eq 1 ] || {
+        echo "Port $PORT is not open after retrying 10 times. Exit."
+        exit 1
+    }
+
+    # ansible is not in RHEL repositories, cannot install it by spec file, hence enable EPEL and install ansible manually.
+    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo dnf install -y ansible
+
+    # Start libvirtd and test it.
+    greenprint "🚀 Starting libvirt daemon"
+    sudo systemctl start libvirtd
+    sudo virsh list --all > /dev/null
+
+    sudo tee "${WORKDIR}"/integration.xml > /dev/null << EOF
+<network>
+  <name>integration</name>
+  <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='integration' stp='on' delay='0'/>
+  <mac address='52:54:00:36:46:ef'/>
+  <ip address='192.168.100.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.100.2' end='192.168.100.254'/>
+      <host mac='34:49:22:B0:83:30' name='vm-bios' ip='192.168.100.50'/>
+    </dhcp>
+  </ip>
+</network>
+EOF
+
+    if ! sudo virsh net-info integration > /dev/null 2>&1; then
+        sudo virsh net-define "${WORKDIR}"/integration.xml
+        sudo virsh net-start integration
+    fi
+
+    # Allow anyone in the wheel group to talk to libvirt.
+    greenprint "🚪 Allowing users in wheel group to talk to libvirt"
+    WHEEL_GROUP=wheel
+    if [[ $ID == rhel ]]; then
+        WHEEL_GROUP=adm
+    fi
+
+    sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.libvirt.unix.manage" &&
+        subject.isInGroup("${WHEEL_GROUP}")) {
+            return polkit.Result.YES;
+    }
+});
+EOF
+
+    # Ensure SELinux is happy with our new images.
+    greenprint "👿 Running restorecon on image directory"
+    sudo restorecon -Rv /var/lib/libvirt/images/
+
+    # Start httpd service
+    greenprint "🚀 Starting httpd daemon"
+    sudo systemctl start httpd
+}
+
+# Run after test finished to clean up test environment
+function after_test() {
+    # Clean up Edge VMs
+    greenprint "🧹 Clean up BIOS VM"
+    if [[ $(sudo virsh domstate "${IMAGE_KEY}-commit") == "running" ]]; then
+        sudo virsh destroy "${IMAGE_KEY}-commit"
+    fi
+    sudo virsh undefine "${IMAGE_KEY}-commit"
+
+    # Clean up temp files
+    sudo rm -f "$COMMIT_IMAGE_PATH"
+
+    # Clean up work directory
+    sudo rm -f "$WORKDIR"
+}
 
 ############### Common functions for image builder service ################
 
@@ -141,82 +246,6 @@ function wait_for_ssh() {
     fi
 }
 
-# Run before test begin to prepare test environment
-function before_test() {
-    # Get os information
-    source /etc/os-release
-
-    # Check service status
-    READY=0
-    for RETRY in {1..10};do
-        curl --fail -H "$HEADER" "http://$ADDRESS:$PORT/ready" && {
-            READY=1
-            break
-        }
-        echo "Port $PORT is not open. Waiting...($RETRY/10)"
-        sleep 1
-    done
-
-    [ "$READY" -eq 1 ] || {
-        echo "Port $PORT is not open after retrying 10 times. Exit."
-        exit 1
-    }
-
-    # ansible is not in RHEL repositories, cannot install it by spec file, hence enable EPEL and install ansible manually.
-    sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    sudo dnf install -y ansible
-
-    # Start libvirtd and test it.
-    greenprint "🚀 Starting libvirt daemon"
-    sudo systemctl start libvirtd
-    sudo virsh list --all > /dev/null
-
-    if ! sudo virsh net-info integration > /dev/null 2>&1; then
-        sudo virsh net-define ${IMAGE_BUILDER_TEST_DATA}/edge/integration.xml
-        sudo virsh net-start integration
-    fi
-
-    # Allow anyone in the wheel group to talk to libvirt.
-    greenprint "🚪 Allowing users in wheel group to talk to libvirt"
-    WHEEL_GROUP=wheel
-    if [[ $ID == rhel ]]; then
-        WHEEL_GROUP=adm
-    fi
-
-    sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
-polkit.addRule(function(action, subject) {
-    if (action.id == "org.libvirt.unix.manage" &&
-        subject.isInGroup("${WHEEL_GROUP}")) {
-            return polkit.Result.YES;
-    }
-});
-EOF
-
-    # Ensure SELinux is happy with our new images.
-    greenprint "👿 Running restorecon on image directory"
-    sudo restorecon -Rv /var/lib/libvirt/images/
-
-    # Start httpd service
-    greenprint "🚀 Starting httpd daemon"
-    sudo systemctl start httpd
-}
-
-# Run after test finished to clean up test environment
-function after_test() {
-    # Clean up Edge VMs
-    greenprint "🧹 Clean up BIOS VM"
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-commit") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-commit"
-    fi
-    sudo virsh undefine "${IMAGE_KEY}-commit"
-
-    # Clean up temp files
-    sudo rm -f "$COMMIT_IMAGE_PATH"
-
-    # Clean up work directory
-    sudo rm -f "$WORKDIR"
-}
-
 ############################## Test Begin ################################
 
 # prepare test environment
@@ -225,7 +254,32 @@ before_test
 ############################## Test commit image #########################
 
 # call image-builder API to build commit image
-post_to_composer "$REQUEST_JSON_FOR_COMMIT"
+greenprint "📼 Generate request body to build commit image"
+sudo tee "${WORKDIR}"/commit_body.json > /dev/null << EOF
+{
+    "distribution": "${DISTRO}",
+    "customizations": {
+      "packages": [
+        "python36"
+      ]
+    },
+    "ostree": {
+      "ref": "${OSTREE_REF}"
+    },
+    "image_requests": [
+      {
+        "architecture": "x86_64",
+        "image_type": "${IMAGE_TYPE}",
+        "upload_request": {
+          "type": "aws.s3",
+          "options": {}
+        }
+      }
+    ]
+}
+EOF
+
+post_to_composer "${WORKDIR}"/commit_body.json
 wait_for_compose
 download_image "${WORKDIR}/$COMMIT_FILENAME"
 
@@ -334,12 +388,8 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Run ansible playbook on Edge vm to do sanity check
-sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${WORKDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${INSTALL_HASH}" -e workspace="$WORKDIR" ${IMAGE_BUILDER_TEST_DATA}/edge/check_ostree.yaml || RESULTS=0
+sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${WORKDIR}"/inventory -e image_type=rhel-edge-commit -e ostree_commit="${INSTALL_HASH}" -e workspace="$WORKDIR" ${IMAGE_BUILDER_TEST_DATA}/edge/check_ostree.yaml || RESULTS=0
 check_result
-
-# Cleanup Edge vm (do it here but not in after_test, because need to create another Edge vm soon)
-sudo virsh destroy --domain "${IMAGE_KEY}-commit"
-sudo virsh undefine --domain "${IMAGE_KEY}-commit"
 
 # cleanup test environment
 after_test
