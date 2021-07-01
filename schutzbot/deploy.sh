@@ -9,7 +9,8 @@ echo "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
 # Set up osbuild-composer repo
-DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
+OSBUILD_DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
+COMPOSER_DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 # Default values
 OSBUILD_COMMIT=eb74ddf2ef8c203b5d354dfb97adee65babdc147
 OSBUILD_COMPOSER_COMMIT=6fac4dcb7011b6708802f52440955fd832b7eec1
@@ -51,13 +52,13 @@ fi
 sudo tee /etc/yum.repos.d/osbuild.repo << EOF
 [osbuild]
 name=osbuild ${OSBUILD_COMMIT}
-baseurl=${DNF_REPO_BASEURL}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMMIT}
+baseurl=${OSBUILD_DNF_REPO_BASEURL}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMMIT}
 enabled=1
 gpgcheck=0
 priority=5
 [osbuild-composer]
 name=osbuild-composer ${OSBUILD_COMPOSER_COMMIT}
-baseurl=${DNF_REPO_BASEURL}/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
+baseurl=${COMPOSER_DNF_REPO_BASEURL}/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
 enabled=1
 gpgcheck=0
 priority=6

@@ -2336,11 +2336,6 @@
       "version": "60.9.0"
     },
     {
-      "summary": "Development documentation for polkit",
-      "name": "polkit-docs",
-      "version": "0.115"
-    },
-    {
       "summary": "Documentation for International Components for Unicode",
       "name": "libicu-doc",
       "version": "60.3"
@@ -2511,11 +2506,6 @@
       "version": "3.5.0"
     },
     {
-      "summary": "Development files for polkit",
-      "name": "polkit-devel",
-      "version": "0.115"
-    },
-    {
       "summary": "Read and write compressed data",
       "name": "perl-IO-Compress",
       "version": "2.081"
@@ -2564,11 +2554,6 @@
       "summary": "DNS toolkit for Python 3",
       "name": "python3-dns",
       "version": "1.15.0"
-    },
-    {
-      "summary": "Libraries for polkit",
-      "name": "polkit-libs",
-      "version": "0.115"
     },
     {
       "summary": "Plugins for the audit event dispatcher",
@@ -2666,11 +2651,6 @@
       "version": "1.33.0"
     },
     {
-      "summary": "An authorization framework",
-      "name": "polkit",
-      "version": "0.115"
-    },
-    {
       "summary": "User space tools for kernel auditing",
       "name": "audit",
       "version": "3.0"
@@ -2709,11 +2689,6 @@
       "summary": "Library for low-level interaction with nftables Netlink's API over libmnl",
       "name": "libnftnl",
       "version": "1.1.5"
-    },
-    {
-      "summary": "Development files for polkit",
-      "name": "polkit-devel",
-      "version": "0.115"
     },
     {
       "summary": "A library for text mode user interfaces",
@@ -2759,11 +2734,6 @@
       "summary": "A CSS2 parsing library",
       "name": "libcroco",
       "version": "0.6.12"
-    },
-    {
-      "summary": "Libraries for polkit",
-      "name": "polkit-libs",
-      "version": "0.115"
     },
     {
       "summary": "Perform diffs on files and record sets",
@@ -3776,11 +3746,6 @@
       "version": "2.28"
     },
     {
-      "summary": "Development package for building kernel modules to match the debug kernel",
-      "name": "kernel-debug-devel",
-      "version": "4.18.0"
-    },
-    {
       "summary": "Minimal language packs for glibc.",
       "name": "glibc-minimal-langpack",
       "version": "2.28"
@@ -3946,6 +3911,11 @@
       "version": "1.8.29"
     },
     {
+      "summary": "Samba CUPS backend for printing with Kerberos",
+      "name": "samba-krb5-printing",
+      "version": "4.13.3"
+    },
+    {
       "summary": "Libraries for applications using libmagic",
       "name": "file-libs",
       "version": "5.33"
@@ -4039,11 +4009,6 @@
       "summary": "IPMI Perl language bindings",
       "name": "OpenIPMI-perl",
       "version": "2.0.29"
-    },
-    {
-      "summary": "Provides the ISC DHCP server",
-      "name": "dhcp-server",
-      "version": "4.3.6"
     },
     {
       "summary": "Wifi plugin for NetworkManager",
@@ -4461,11 +4426,6 @@
       "version": "2.28"
     },
     {
-      "summary": "Tests for the glib2 package",
-      "name": "glib2-tests",
-      "version": "2.56.4"
-    },
-    {
       "summary": "Locale data for mfe",
       "name": "glibc-langpack-mfe",
       "version": "2.28"
@@ -4536,6 +4496,11 @@
       "version": "2.9"
     },
     {
+      "summary": "iptables libraries",
+      "name": "iptables-libs",
+      "version": "1.8.4"
+    },
+    {
       "summary": "Development package for iptables",
       "name": "iptables-devel",
       "version": "1.8.4"
@@ -4584,11 +4549,6 @@
       "summary": "Locale data for kl",
       "name": "glibc-langpack-kl",
       "version": "2.28"
-    },
-    {
-      "summary": "Provides the ISC DHCP relay agent",
-      "name": "dhcp-relay",
-      "version": "4.3.6"
     },
     {
       "summary": "Developer tools for the LDB library",
@@ -4646,14 +4606,14 @@
       "version": "32.0"
     },
     {
+      "summary": "Library that implements an embeddable SQL database engine",
+      "name": "sqlite",
+      "version": "3.26.0"
+    },
+    {
       "summary": "Locale data for shn",
       "name": "glibc-langpack-shn",
       "version": "2.28"
-    },
-    {
-      "summary": "The Red Hat Enterprise Linux kernel ABI symbol stablelists",
-      "name": "kernel-abi-stablelists",
-      "version": "4.18.0"
     },
     {
       "summary": "Locale data for mi",
@@ -4786,9 +4746,19 @@
       "version": "2.28"
     },
     {
+      "summary": "Locale data for bem",
+      "name": "glibc-langpack-bem",
+      "version": "2.28"
+    },
+    {
       "summary": "Python 3 bindings for the libdnf library.",
       "name": "python3-libdnf",
       "version": "0.55.0"
+    },
+    {
+      "summary": "Root crontab files used to schedule the execution of programs",
+      "name": "crontabs",
+      "version": "1.11"
     },
     {
       "summary": "GCC OpenMP v4.5 shared support library",
@@ -5166,11 +5136,6 @@
       "version": "1.3.1"
     },
     {
-      "summary": "A library of handy utility functions",
-      "name": "glib2",
-      "version": "2.56.4"
-    },
-    {
       "summary": "Device mounting library",
       "name": "libmount",
       "version": "2.32.1"
@@ -5254,11 +5219,6 @@
       "summary": "A TLS-encrypting socket wrapper",
       "name": "stunnel",
       "version": "5.56"
-    },
-    {
-      "summary": "The Linux kernel",
-      "name": "kernel-core",
-      "version": "4.18.0"
     },
     {
       "summary": "Partition device manager for device-mapper devices",
@@ -5346,11 +5306,6 @@
       "version": "2.28"
     },
     {
-      "summary": "Header files for the Linux kernel for use by glibc",
-      "name": "kernel-headers",
-      "version": "4.18.0"
-    },
-    {
       "summary": "Locale data for tg",
       "name": "glibc-langpack-tg",
       "version": "2.28"
@@ -5379,6 +5334,11 @@
       "summary": "Modules used to build custom grub.efi images",
       "name": "grub2-efi-x64-modules",
       "version": "2.02"
+    },
+    {
+      "summary": "Extra kernel modules to match the debug kernel",
+      "name": "kernel-debug-modules-extra",
+      "version": "4.18.0"
     },
     {
       "summary": "Header files and libraries for Zlib development",
@@ -5456,11 +5416,6 @@
       "version": "2.3.3"
     },
     {
-      "summary": "Shared libraries used by ISC dhcp client and server",
-      "name": "dhcp-libs",
-      "version": "4.3.6"
-    },
-    {
       "summary": "Locale data for hak",
       "name": "glibc-langpack-hak",
       "version": "2.28"
@@ -5516,6 +5471,11 @@
       "version": "2.32.1"
     },
     {
+      "summary": "Documentation files for bash",
+      "name": "bash-doc",
+      "version": "4.4.20"
+    },
+    {
       "summary": "The run-time libraries for opencryptoki package",
       "name": "opencryptoki-libs",
       "version": "3.15.1"
@@ -5554,11 +5514,6 @@
       "summary": "Samba winbind modules",
       "name": "samba-winbind-modules",
       "version": "4.13.3"
-    },
-    {
-      "summary": "CPU microcode updates for Intel x86 processors",
-      "name": "microcode_ctl",
-      "version": "20210216"
     },
     {
       "summary": "Firmware for Intel(R) Wireless WiFi Link 6000 AGN Adapter",
@@ -5641,6 +5596,11 @@
       "version": "2.28"
     },
     {
+      "summary": "An open source implementation of SSH protocol version 2",
+      "name": "openssh",
+      "version": "8.0p1"
+    },
+    {
       "summary": "Libraries for manipulating RPM packages",
       "name": "rpm-libs",
       "version": "4.14.3"
@@ -5681,9 +5641,14 @@
       "version": "5.26.3"
     },
     {
-      "summary": "Common files used by ISC dhcp client, server and relay agent",
-      "name": "dhcp-common",
-      "version": "4.3.6"
+      "summary": "kernel modules to match the core kernel",
+      "name": "kernel-modules",
+      "version": "4.18.0"
+    },
+    {
+      "summary": "An open source SSH server daemon",
+      "name": "openssh-server",
+      "version": "8.0p1"
     },
     {
       "summary": "Locale data for os",
@@ -5706,6 +5671,11 @@
       "version": "2.28"
     },
     {
+      "summary": "A mls keycat backend for openssh",
+      "name": "openssh-keycat",
+      "version": "8.0p1"
+    },
+    {
       "summary": "Python 3 bindings for libcomps library",
       "name": "python3-libcomps",
       "version": "0.1.11"
@@ -5719,6 +5689,11 @@
       "summary": "Command line tools for managing Berkeley DB databases",
       "name": "libdb-utils",
       "version": "5.3.28"
+    },
+    {
+      "summary": "Provides the ISC DHCP server",
+      "name": "dhcp-server",
+      "version": "4.3.6"
     },
     {
       "summary": "Library and command line client for build-id HTTP ELF/DWARF server",
@@ -5786,11 +5761,6 @@
       "version": "20180629"
     },
     {
-      "summary": "Samba CUPS backend for printing with Kerberos",
-      "name": "samba-krb5-printing",
-      "version": "4.13.3"
-    },
-    {
       "summary": "Locale data for tk",
       "name": "glibc-langpack-tk",
       "version": "2.28"
@@ -5834,6 +5804,11 @@
       "summary": "Libraries for adding NetworkManager support to applications.",
       "name": "NetworkManager-libnm",
       "version": "1.30.0"
+    },
+    {
+      "summary": "Assortment of tools for the Linux kernel",
+      "name": "kernel-tools",
+      "version": "4.18.0"
     },
     {
       "summary": "A shared storage lock manager library",
@@ -5886,9 +5861,9 @@
       "version": "3.4.0"
     },
     {
-      "summary": "Assortment of tools for the Linux kernel",
-      "name": "kernel-tools",
-      "version": "4.18.0"
+      "summary": "FAM monitoring module for GIO",
+      "name": "glib2-fam",
+      "version": "2.56.4"
     },
     {
       "summary": "Audit use of some commands for support purposes",
@@ -5896,19 +5871,24 @@
       "version": "4.0"
     },
     {
+      "summary": "Libraries for the kernel-tools",
+      "name": "kernel-tools-libs",
+      "version": "4.18.0"
+    },
+    {
       "summary": "NFSv4 User and Group ID Mapping Library",
       "name": "libnfsidmap",
       "version": "2.3.3"
     },
     {
-      "summary": "Extra kernel modules to match the kernel",
-      "name": "kernel-modules-extra",
-      "version": "4.18.0"
-    },
-    {
       "summary": "Locale data for ti",
       "name": "glibc-langpack-ti",
       "version": "2.28"
+    },
+    {
+      "summary": "Header files for the Linux kernel for use by cross-glibc",
+      "name": "kernel-cross-headers",
+      "version": "4.18.0"
     },
     {
       "summary": "Locale data for sq",
@@ -5924,6 +5904,11 @@
       "summary": "Header files and libraries used to build SELinux",
       "name": "libselinux-devel",
       "version": "2.9"
+    },
+    {
+      "summary": "Libraries for polkit",
+      "name": "polkit-libs",
+      "version": "0.115"
     },
     {
       "summary": "Locale data for cs",
@@ -5954,6 +5939,11 @@
       "summary": "A utility for getting files from remote servers (FTP, HTTP, and others)",
       "name": "curl",
       "version": "7.61.1"
+    },
+    {
+      "summary": "Performance monitoring for the Linux kernel",
+      "name": "perf",
+      "version": "4.18.0"
     },
     {
       "summary": "The SMB client library",
@@ -6041,6 +6031,11 @@
       "version": "2.28"
     },
     {
+      "summary": "D-BUS message bus",
+      "name": "dbus-daemon",
+      "version": "1.12.8"
+    },
+    {
       "summary": "Locale data for lo",
       "name": "glibc-langpack-lo",
       "version": "2.28"
@@ -6051,6 +6046,11 @@
       "version": "1.9.1"
     },
     {
+      "summary": "D-BUS message bus configuration",
+      "name": "dbus-common",
+      "version": "1.12.8"
+    },
+    {
       "summary": "Management level tools and scripts",
       "name": "opa-fastfabric",
       "version": "10.10.3.0.11"
@@ -6059,6 +6059,11 @@
       "summary": "GlusterFS rdma support for ib-verbs",
       "name": "glusterfs-rdma",
       "version": "6.0"
+    },
+    {
+      "summary": "A library of handy utility functions",
+      "name": "glib2-devel",
+      "version": "2.56.4"
     },
     {
       "summary": "InfiniBand Communication Manager Assistant",
@@ -6161,9 +6166,19 @@
       "version": "2.28"
     },
     {
+      "summary": "Inspection and simple manipulation of eBPF programs and maps",
+      "name": "bpftool",
+      "version": "4.18.0"
+    },
+    {
       "summary": "Locale data for hu",
       "name": "glibc-langpack-hu",
       "version": "2.28"
+    },
+    {
+      "summary": "ISC libs for DHCP application",
+      "name": "bind-export-libs",
+      "version": "9.11.26"
     },
     {
       "summary": "NetworkManager dispatcher file for advanced routing rules",
@@ -6186,6 +6201,11 @@
       "version": "2.28"
     },
     {
+      "summary": "Extra kernel modules to match the kernel",
+      "name": "kernel-modules-extra",
+      "version": "4.18.0"
+    },
+    {
       "summary": "Locale data for hne",
       "name": "glibc-langpack-hne",
       "version": "2.28"
@@ -6206,6 +6226,11 @@
       "version": "2.28"
     },
     {
+      "summary": "A library of handy utility functions",
+      "name": "glib2",
+      "version": "2.56.4"
+    },
+    {
       "summary": "Locale data for ber",
       "name": "glibc-langpack-ber",
       "version": "2.28"
@@ -6214,6 +6239,11 @@
       "summary": "Locale data for yuw",
       "name": "glibc-langpack-yuw",
       "version": "2.28"
+    },
+    {
+      "summary": "An open source SSH client applications",
+      "name": "openssh-clients",
+      "version": "8.0p1"
     },
     {
       "summary": "SELinux mls base policy",
@@ -6396,11 +6426,6 @@
       "version": "1.3.2"
     },
     {
-      "summary": "Various documentation bits found in the kernel source",
-      "name": "kernel-doc",
-      "version": "4.18.0"
-    },
-    {
       "summary": "Development package for iptables",
       "name": "iptables-devel",
       "version": "1.8.4"
@@ -6411,9 +6436,9 @@
       "version": "2.28"
     },
     {
-      "summary": "kernel modules to match the debug-core kernel",
-      "name": "kernel-debug-modules",
-      "version": "4.18.0"
+      "summary": "Development files for polkit",
+      "name": "polkit-devel",
+      "version": "0.115"
     },
     {
       "summary": "Linux Traffic Control utility",
@@ -6421,19 +6446,9 @@
       "version": "5.9.0"
     },
     {
-      "summary": "Extra kernel modules to match the debug kernel",
-      "name": "kernel-debug-modules-extra",
-      "version": "4.18.0"
-    },
-    {
       "summary": "Package manager",
       "name": "dnf",
       "version": "4.4.2"
-    },
-    {
-      "summary": "Python bindings for apps which will manipulate perf events",
-      "name": "python3-perf",
-      "version": "4.18.0"
     },
     {
       "summary": "Locale data for wae",
@@ -6501,6 +6516,11 @@
       "version": "84.4"
     },
     {
+      "summary": "D-BUS message bus",
+      "name": "dbus",
+      "version": "1.12.8"
+    },
+    {
       "summary": "Locale data for km",
       "name": "glibc-langpack-km",
       "version": "2.28"
@@ -6536,6 +6556,16 @@
       "version": "1.2.2"
     },
     {
+      "summary": "Development files for polkit",
+      "name": "polkit-devel",
+      "version": "0.115"
+    },
+    {
+      "summary": "Libraries for accessing D-BUS",
+      "name": "dbus-libs",
+      "version": "1.12.8"
+    },
+    {
       "summary": "Kerberos 5 programs for use on workstations",
       "name": "krb5-workstation",
       "version": "1.18.2"
@@ -6556,6 +6586,11 @@
       "version": "6.0"
     },
     {
+      "summary": "The Red Hat Enterprise Linux kernel ABI symbol stablelists",
+      "name": "kernel-abi-stablelists",
+      "version": "4.18.0"
+    },
+    {
       "summary": "An extensible library which provides authentication for applications",
       "name": "pam",
       "version": "1.3.1"
@@ -6564,6 +6599,11 @@
       "summary": "Device-mapper shared library",
       "name": "device-mapper-libs",
       "version": "1.02.175"
+    },
+    {
+      "summary": "ISC libs for DHCP application",
+      "name": "bind-export-libs",
+      "version": "9.11.26"
     },
     {
       "summary": "Files needed for building applications with libcurl",
@@ -6636,6 +6676,11 @@
       "version": "2.28"
     },
     {
+      "summary": "A library of handy utility functions",
+      "name": "glib2",
+      "version": "2.56.4"
+    },
+    {
       "summary": "Bluetooth utilities",
       "name": "bluez",
       "version": "5.52"
@@ -6656,9 +6701,24 @@
       "version": "1.8.4"
     },
     {
+      "summary": "CPU microcode updates for Intel x86 processors",
+      "name": "microcode_ctl",
+      "version": "20210216"
+    },
+    {
+      "summary": "Live kernel patching module for kernel-4.18.0-305.el8.x86_64",
+      "name": "kpatch-patch-4_18_0-305",
+      "version": "1"
+    },
+    {
       "summary": "Locale data for kk",
       "name": "glibc-langpack-kk",
       "version": "2.28"
+    },
+    {
+      "summary": "Header files and libraries needed for BIND export libraries",
+      "name": "bind-export-devel",
+      "version": "9.11.26"
     },
     {
       "summary": "Tools to send journal events over the network",
@@ -6674,6 +6734,11 @@
       "summary": "Device-mapper event daemon shared library",
       "name": "device-mapper-event-libs",
       "version": "1.02.175"
+    },
+    {
+      "summary": "Initial empty kpatch-patch for kernel-4.18.0-305.3.1.el8_4.x86_64",
+      "name": "kpatch-patch-4_18_0-305_3_1",
+      "version": "0"
     },
     {
       "summary": "Device-mapper event daemon",
@@ -6699,11 +6764,6 @@
       "summary": "GlusterFS client-side translators",
       "name": "glusterfs-client-xlators",
       "version": "6.0"
-    },
-    {
-      "summary": "Libraries for the kernel-tools",
-      "name": "kernel-tools-libs",
-      "version": "4.18.0"
     },
     {
       "summary": "Locale data for fil",
@@ -6741,6 +6801,11 @@
       "version": "1.6.6"
     },
     {
+      "summary": "PAM module for authentication with ssh-agent",
+      "name": "pam_ssh_agent_auth",
+      "version": "0.10.3"
+    },
+    {
       "summary": "Locale data for hy",
       "name": "glibc-langpack-hy",
       "version": "2.28"
@@ -6749,11 +6814,6 @@
       "summary": "Linux PCI library",
       "name": "pciutils-libs",
       "version": "3.7.0"
-    },
-    {
-      "summary": "kernel modules to match the core kernel",
-      "name": "kernel-modules",
-      "version": "4.18.0"
     },
     {
       "summary": "SELinux library and simple utilities",
@@ -6789,6 +6849,11 @@
       "summary": "Locale data for ak",
       "name": "glibc-langpack-ak",
       "version": "2.28"
+    },
+    {
+      "summary": "Common files used by ISC dhcp client, server and relay agent",
+      "name": "dhcp-common",
+      "version": "4.3.6"
     },
     {
       "summary": "XFS filesystem-specific headers",
@@ -6871,6 +6936,11 @@
       "version": "3.26.0"
     },
     {
+      "summary": "Provides the ISC DHCP relay agent",
+      "name": "dhcp-relay",
+      "version": "4.3.6"
+    },
+    {
       "summary": "Firmware for Intel(R) Wireless WiFi Link 6050 Series Adapters",
       "name": "iwl6050-firmware",
       "version": "41.28.5.1"
@@ -6879,11 +6949,6 @@
       "summary": "Shared library for the sqlite3 embeddable SQL database engine.",
       "name": "sqlite-libs",
       "version": "3.26.0"
-    },
-    {
-      "summary": "iptables libraries",
-      "name": "iptables-libs",
-      "version": "1.8.4"
     },
     {
       "summary": "Locale data for tcy",
@@ -6976,6 +7041,11 @@
       "version": "1.18"
     },
     {
+      "summary": "D-BUS Tools and Utilities",
+      "name": "dbus-tools",
+      "version": "1.12.8"
+    },
+    {
       "summary": "GnuPG Made Easy - high level crypto API",
       "name": "gpgme",
       "version": "1.13.1"
@@ -6989,6 +7059,11 @@
       "summary": "LVM2 D-Bus daemon",
       "name": "lvm2-dbusd",
       "version": "2.03.11"
+    },
+    {
+      "summary": "Python bindings for apps which will manipulate perf events",
+      "name": "python3-perf",
+      "version": "4.18.0"
     },
     {
       "summary": "Locale data for ca",
@@ -7014,6 +7089,11 @@
       "summary": "SELinux binary policy manipulation library",
       "name": "libsepol",
       "version": "2.9"
+    },
+    {
+      "summary": "CAVS tests for FIPS validation",
+      "name": "openssh-cavs",
+      "version": "8.0p1"
     },
     {
       "summary": "Management tools for the TPM hardware",
@@ -7061,11 +7141,6 @@
       "version": "1.30.0"
     },
     {
-      "summary": "Library that implements an embeddable SQL database engine",
-      "name": "sqlite",
-      "version": "3.26.0"
-    },
-    {
       "summary": "Locale data for te",
       "name": "glibc-langpack-te",
       "version": "2.28"
@@ -7106,8 +7181,8 @@
       "version": "4.1.0"
     },
     {
-      "summary": "The Linux kernel, based on version 4.18.0, heavily modified with backports",
-      "name": "kernel",
+      "summary": "The Linux kernel compiled with extra debugging enabled",
+      "name": "kernel-debug-core",
       "version": "4.18.0"
     },
     {
@@ -7166,11 +7241,6 @@
       "version": "5.8"
     },
     {
-      "summary": "The Linux kernel compiled with extra debugging enabled",
-      "name": "kernel-debug-core",
-      "version": "4.18.0"
-    },
-    {
       "summary": "RDMA core userspace libraries and daemons",
       "name": "rdma-core",
       "version": "32.0"
@@ -7186,16 +7256,6 @@
       "version": "5.52"
     },
     {
-      "summary": "Performance monitoring for the Linux kernel",
-      "name": "perf",
-      "version": "4.18.0"
-    },
-    {
-      "summary": "Development package for building kernel modules to match the kernel",
-      "name": "kernel-devel",
-      "version": "4.18.0"
-    },
-    {
       "summary": "Development files for p11-kit",
       "name": "p11-kit-devel",
       "version": "0.23.22"
@@ -7209,11 +7269,6 @@
       "summary": "The OpenIPMI runtime libraries",
       "name": "OpenIPMI-libs",
       "version": "2.0.29"
-    },
-    {
-      "summary": "Provides the ISC DHCP client daemon and dhclient-script",
-      "name": "dhcp-client",
-      "version": "4.3.6"
     },
     {
       "summary": "Web Console for Linux servers",
@@ -7234,11 +7289,6 @@
       "summary": "A library for changing configuration files",
       "name": "augeas",
       "version": "1.12.0"
-    },
-    {
-      "summary": "A library of handy utility functions",
-      "name": "glib2",
-      "version": "2.56.4"
     },
     {
       "summary": "Locale data for dv",
@@ -7316,9 +7366,24 @@
       "version": "32.0"
     },
     {
+      "summary": "Libraries for accessing D-BUS",
+      "name": "dbus-libs",
+      "version": "1.12.8"
+    },
+    {
+      "summary": "Development documentation for polkit",
+      "name": "polkit-docs",
+      "version": "0.115"
+    },
+    {
       "summary": "Firmware and topology files for Sound Open Firmware project",
       "name": "alsa-sof-firmware",
       "version": "1.6.1"
+    },
+    {
+      "summary": "Shared libraries used by ISC dhcp client and server",
+      "name": "dhcp-libs",
+      "version": "4.3.6"
     },
     {
       "summary": "Locale data for ga",
@@ -7376,6 +7441,11 @@
       "version": "2.02"
     },
     {
+      "summary": "kernel modules to match the debug-core kernel",
+      "name": "kernel-debug-modules",
+      "version": "4.18.0"
+    },
+    {
       "summary": "Tools for containers and VMs",
       "name": "systemd-container",
       "version": "239"
@@ -7389,6 +7459,11 @@
       "summary": "Object files for development using standard C libraries.",
       "name": "glibc-devel",
       "version": "2.28"
+    },
+    {
+      "summary": "Header files and libraries needed for BIND export libraries",
+      "name": "bind-export-devel",
+      "version": "9.11.26"
     },
     {
       "summary": "Userspace configuration daemon required for some iSCSI hardware",
@@ -7418,11 +7493,6 @@
     {
       "summary": "Locale data for ln",
       "name": "glibc-langpack-ln",
-      "version": "2.28"
-    },
-    {
-      "summary": "Locale data for bem",
-      "name": "glibc-langpack-bem",
       "version": "2.28"
     },
     {
@@ -7461,11 +7531,6 @@
       "version": "9.0.3"
     },
     {
-      "summary": "Root crontab files used to schedule the execution of programs",
-      "name": "crontabs",
-      "version": "1.11"
-    },
-    {
       "summary": "Library for SID and certificate based lookups",
       "name": "libsss_nss_idmap",
       "version": "2.4.0"
@@ -7501,6 +7566,11 @@
       "version": "1.30.0"
     },
     {
+      "summary": "Development package for building kernel modules to match the debug kernel",
+      "name": "kernel-debug-devel",
+      "version": "4.18.0"
+    },
+    {
       "summary": "SELinux policy configuration",
       "name": "selinux-policy",
       "version": "3.14.3"
@@ -7519,6 +7589,11 @@
       "summary": "Locale data for dsb",
       "name": "glibc-langpack-dsb",
       "version": "2.28"
+    },
+    {
+      "summary": "A library of handy utility functions",
+      "name": "glib2-devel",
+      "version": "2.56.4"
     },
     {
       "summary": "Common files needed for supporting PAC processing",
@@ -7571,11 +7646,6 @@
       "version": "239"
     },
     {
-      "summary": "kernel meta-package for the debug kernel",
-      "name": "kernel-debug",
-      "version": "4.18.0"
-    },
-    {
       "summary": "Rule-based device node and kernel event manager",
       "name": "systemd-udev",
       "version": "239"
@@ -7599,6 +7669,11 @@
       "summary": "A set of libraries and tools for managing boot loader entries",
       "name": "boom-boot-conf",
       "version": "1.3"
+    },
+    {
+      "summary": "Tests for the glib2 package",
+      "name": "glib2-tests",
+      "version": "2.56.4"
     },
     {
       "summary": "Run time libraries for the hwloc",
@@ -7701,6 +7776,11 @@
       "version": "8.83.5.1_1"
     },
     {
+      "summary": "A LDAP support for open source SSH server daemon",
+      "name": "openssh-ldap",
+      "version": "8.0p1"
+    },
+    {
       "summary": "Utilities for managing the XFS filesystem",
       "name": "xfsprogs",
       "version": "5.0.0"
@@ -7739,11 +7819,6 @@
       "summary": "Locale data for ia",
       "name": "glibc-langpack-ia",
       "version": "2.28"
-    },
-    {
-      "summary": "Shared libraries used by ISC dhcp client and server",
-      "name": "dhcp-libs",
-      "version": "4.3.6"
     },
     {
       "summary": "Locale data for quz",
@@ -7786,6 +7861,11 @@
       "version": "32.0"
     },
     {
+      "summary": "The Linux kernel",
+      "name": "kernel-core",
+      "version": "4.18.0"
+    },
+    {
       "summary": "The proxy back end of the SSSD",
       "name": "sssd-proxy",
       "version": "2.4.0"
@@ -7804,6 +7884,11 @@
       "summary": "Python Lex-Yacc",
       "name": "python3-ply",
       "version": "3.9"
+    },
+    {
+      "summary": "An authorization framework",
+      "name": "polkit",
+      "version": "0.115"
     },
     {
       "summary": "LDAP client utilities",
@@ -7826,14 +7911,14 @@
       "version": "4.14.3"
     },
     {
+      "summary": "Header files for the Linux kernel for use by glibc",
+      "name": "kernel-headers",
+      "version": "4.18.0"
+    },
+    {
       "summary": "Implementation of the PKCS#11 (Cryptoki) specification v2.11",
       "name": "opencryptoki",
       "version": "3.15.1"
-    },
-    {
-      "summary": "A library of handy utility functions",
-      "name": "glib2-devel",
-      "version": "2.56.4"
     },
     {
       "summary": "Management library for \"libnvdimm\" subsystem devices (Non-volatile Memory)",
@@ -7859,11 +7944,6 @@
       "summary": "Python module providing an interface to libnftables",
       "name": "python3-nftables",
       "version": "0.9.3"
-    },
-    {
-      "summary": "FAM monitoring module for GIO",
-      "name": "glib2-fam",
-      "version": "2.56.4"
     },
     {
       "summary": "An extensible library which provides authentication for applications",
@@ -7956,6 +8036,11 @@
       "version": "2.28"
     },
     {
+      "summary": "Shared libraries used by ISC dhcp client and server",
+      "name": "dhcp-libs",
+      "version": "4.3.6"
+    },
+    {
       "summary": "Configuration library for accelerator subsystem devices",
       "name": "accel-config-libs",
       "version": "2.8"
@@ -7974,6 +8059,11 @@
       "summary": "Open Fabric Interfaces",
       "name": "libfabric",
       "version": "1.11.2"
+    },
+    {
+      "summary": "Development package for building kernel modules to match the kernel",
+      "name": "kernel-devel",
+      "version": "4.18.0"
     },
     {
       "summary": "Emulates an IPMI network listener",
@@ -8081,6 +8171,11 @@
       "version": "2.28"
     },
     {
+      "summary": "Provides the ISC DHCP client daemon and dhclient-script",
+      "name": "dhcp-client",
+      "version": "4.3.6"
+    },
+    {
       "summary": "Netfilter Tables userspace utillites",
       "name": "nftables",
       "version": "0.9.3"
@@ -8099,6 +8194,11 @@
       "summary": "Locale data for it",
       "name": "glibc-langpack-it",
       "version": "2.28"
+    },
+    {
+      "summary": "Libraries for polkit",
+      "name": "polkit-libs",
+      "version": "0.115"
     },
     {
       "summary": "Mobile broadband device plugin for NetworkManager",
@@ -8144,6 +8244,11 @@
       "summary": "A TPM2.0 testing tool build upon TPM2.0-TSS",
       "name": "tpm2-tools",
       "version": "4.1.1"
+    },
+    {
+      "summary": "Various documentation bits found in the kernel source",
+      "name": "kernel-doc",
+      "version": "4.18.0"
     },
     {
       "summary": "The SSSD D-Bus responder helper library",
@@ -8194,6 +8299,11 @@
       "summary": "Library to read and write ELF files",
       "name": "elfutils-libelf",
       "version": "0.182"
+    },
+    {
+      "summary": "The Linux kernel, based on version 4.18.0, heavily modified with backports",
+      "name": "kernel",
+      "version": "4.18.0"
     },
     {
       "summary": "The non-admin shared libraries used by Kerberos 5",
@@ -8336,8 +8446,8 @@
       "version": "2.9"
     },
     {
-      "summary": "Inspection and simple manipulation of eBPF programs and maps",
-      "name": "bpftool",
+      "summary": "kernel meta-package for the debug kernel",
+      "name": "kernel-debug",
       "version": "4.18.0"
     },
     {
@@ -8374,11 +8484,6 @@
       "summary": "The winbind client library",
       "name": "libwbclient",
       "version": "4.13.3"
-    },
-    {
-      "summary": "A library of handy utility functions",
-      "name": "glib2-devel",
-      "version": "2.56.4"
     },
     {
       "summary": "Network monitoring tools including ping",
@@ -8491,6 +8596,11 @@
       "version": "2.35"
     },
     {
+      "summary": "The GNU Bourne Again shell",
+      "name": "bash",
+      "version": "4.4.20"
+    },
+    {
       "summary": "A utility for offline reencryption of LUKS encrypted disks.",
       "name": "cryptsetup-reencrypt",
       "version": "2.3.3"
@@ -8509,11 +8619,6 @@
       "summary": "Locale data for sr",
       "name": "glibc-langpack-sr",
       "version": "2.28"
-    },
-    {
-      "summary": "Header files for the Linux kernel for use by cross-glibc",
-      "name": "kernel-cross-headers",
-      "version": "4.18.0"
     },
     {
       "summary": "System Security Services Daemon",
@@ -8599,106 +8704,6 @@
       "summary": "Locale data for sk",
       "name": "glibc-langpack-sk",
       "version": "2.28"
-    },
-    {
-      "summary": "Initial empty kpatch-patch for kernel-4.18.0-305.el8.x86_64",
-      "name": "kpatch-patch-4_18_0-305",
-      "version": "0"
-    },
-    {
-      "summary": "Documentation files for bash",
-      "name": "bash-doc",
-      "version": "4.4.20"
-    },
-    {
-      "summary": "An open source implementation of SSH protocol version 2",
-      "name": "openssh",
-      "version": "8.0p1"
-    },
-    {
-      "summary": "An open source SSH server daemon",
-      "name": "openssh-server",
-      "version": "8.0p1"
-    },
-    {
-      "summary": "A mls keycat backend for openssh",
-      "name": "openssh-keycat",
-      "version": "8.0p1"
-    },
-    {
-      "summary": "D-BUS message bus",
-      "name": "dbus-daemon",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "D-BUS message bus configuration",
-      "name": "dbus-common",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "ISC libs for DHCP application",
-      "name": "bind-export-libs",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "An open source SSH client applications",
-      "name": "openssh-clients",
-      "version": "8.0p1"
-    },
-    {
-      "summary": "D-BUS message bus",
-      "name": "dbus",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "Libraries for accessing D-BUS",
-      "name": "dbus-libs",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "ISC libs for DHCP application",
-      "name": "bind-export-libs",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "Header files and libraries needed for BIND export libraries",
-      "name": "bind-export-devel",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "PAM module for authentication with ssh-agent",
-      "name": "pam_ssh_agent_auth",
-      "version": "0.10.3"
-    },
-    {
-      "summary": "D-BUS Tools and Utilities",
-      "name": "dbus-tools",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "CAVS tests for FIPS validation",
-      "name": "openssh-cavs",
-      "version": "8.0p1"
-    },
-    {
-      "summary": "Libraries for accessing D-BUS",
-      "name": "dbus-libs",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "Header files and libraries needed for BIND export libraries",
-      "name": "bind-export-devel",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "A LDAP support for open source SSH server daemon",
-      "name": "openssh-ldap",
-      "version": "8.0p1"
-    },
-    {
-      "summary": "The GNU Bourne Again shell",
-      "name": "bash",
-      "version": "4.4.20"
     },
     {
       "summary": "Python library to display tabular data in tables",
@@ -9976,6 +9981,11 @@
       "version": "5.5.110"
     },
     {
+      "summary": "Sinhala langpacks meta-package",
+      "name": "langpacks-si",
+      "version": "1.0"
+    },
+    {
       "summary": "Finnish langpacks meta-package",
       "name": "langpacks-fi",
       "version": "1.0"
@@ -11041,11 +11051,6 @@
       "version": "1.0.0"
     },
     {
-      "summary": "Development files for libwebp, a library for the WebP format",
-      "name": "libwebp-devel",
-      "version": "1.0.0"
-    },
-    {
       "summary": "Maven shared utility classes",
       "name": "maven-shared-utils",
       "version": "3.2.1"
@@ -12061,11 +12066,6 @@
       "version": "1.0"
     },
     {
-      "summary": "Sinhala langpacks meta-package",
-      "name": "langpacks-si",
-      "version": "1.0"
-    },
-    {
       "summary": "Estonian hyphenation rules",
       "name": "hyphen-et",
       "version": "0.20030606"
@@ -12249,6 +12249,11 @@
       "summary": "Expand template text with embedded Perl",
       "name": "perl-Text-Template",
       "version": "1.51"
+    },
+    {
+      "summary": "A cross-platform library for parsing flash media stream",
+      "name": "libquvi",
+      "version": "0.9.4"
     },
     {
       "summary": "Spacewalk Configuration Client Actions",
@@ -12891,11 +12896,6 @@
       "version": "1.1.4"
     },
     {
-      "summary": "Development files for libwebp, a library for the WebP format",
-      "name": "libwebp-devel",
-      "version": "1.0.0"
-    },
-    {
       "summary": "Files for developing with graphite2",
       "name": "graphite2-devel",
       "version": "1.3.10"
@@ -13034,11 +13034,6 @@
       "summary": "X.Org X11 libXxf86misc runtime library",
       "name": "libXxf86misc",
       "version": "1.0.4"
-    },
-    {
-      "summary": "Library and tools for the WebP graphics format",
-      "name": "libwebp",
-      "version": "1.0.0"
     },
     {
       "summary": "Command-line JSON processor",
@@ -13956,11 +13951,6 @@
       "version": "0.14.0"
     },
     {
-      "summary": "A cross-platform library for parsing flash media stream",
-      "name": "libquvi",
-      "version": "0.9.4"
-    },
-    {
       "summary": "Header files for jansson",
       "name": "jansson-devel",
       "version": "2.11"
@@ -14471,6 +14461,11 @@
       "version": "1.1.6"
     },
     {
+      "summary": "Plugin for libproxy and networkmanager",
+      "name": "libproxy-networkmanager",
+      "version": "0.4.15"
+    },
+    {
       "summary": "The M17N engine for IBus platform",
       "name": "ibus-m17n",
       "version": "1.3.4"
@@ -14694,11 +14689,6 @@
       "summary": "The Threading Building Blocks C++ headers and shared development libraries",
       "name": "tbb-devel",
       "version": "2018.2"
-    },
-    {
-      "summary": "Library and tools for the WebP graphics format",
-      "name": "libwebp",
-      "version": "1.0.0"
     },
     {
       "summary": "Tools for manipulating graphics files in netpbm supported formats",
@@ -16019,11 +16009,6 @@
       "summary": "A library for import of Apple iWork documents",
       "name": "libetonyek",
       "version": "0.1.8"
-    },
-    {
-      "summary": "Plugin for libproxy and networkmanager",
-      "name": "libproxy-networkmanager",
-      "version": "0.4.15"
     },
     {
       "summary": "A process-transparent configuration system",
@@ -17559,11 +17544,6 @@
       "summary": "Support package for spacewalk koan interaction",
       "name": "python3-spacewalk-koan",
       "version": "2.8.6"
-    },
-    {
-      "summary": "Compatibility locales for SAP",
-      "name": "compat-locales-sap",
-      "version": "1.0.10"
     },
     {
       "summary": "Cargo subcommand to vendor crates.io dependencies",
@@ -21291,6 +21271,11 @@
       "version": "1.13.0"
     },
     {
+      "summary": "Linux-native io_uring I/O access library",
+      "name": "liburing",
+      "version": "1.0.7"
+    },
+    {
       "summary": "NBD client library in userspace",
       "name": "libnbd",
       "version": "1.2.2"
@@ -22734,11 +22719,6 @@
       "summary": "A D3.js plugin that produces flame graphs",
       "name": "js-d3-flame-graph",
       "version": "3.0.2"
-    },
-    {
-      "summary": "Linux-native io_uring I/O access library",
-      "name": "liburing",
-      "version": "1.0.7"
     },
     {
       "summary": "Policy analysis tools for SELinux",
@@ -24356,11 +24336,6 @@
       "version": "25.3.32"
     },
     {
-      "summary": "The Tcl procedural language for PostgreSQL",
-      "name": "postgresql-pltcl",
-      "version": "10.15"
-    },
-    {
       "summary": "Freebl library for the Network Security Services",
       "name": "nss-softokn-freebl",
       "version": "3.53.1"
@@ -24401,16 +24376,6 @@
       "version": "10.3.28"
     },
     {
-      "summary": "The programs needed to create and run a PostgreSQL server",
-      "name": "postgresql-server",
-      "version": "10.15"
-    },
-    {
-      "summary": "Extension modules distributed with PostgreSQL",
-      "name": "postgresql-contrib",
-      "version": "10.15"
-    },
-    {
       "summary": "Development files for MariaDB as an embeddable library",
       "name": "mariadb-embedded-devel",
       "version": "10.3.28"
@@ -24431,11 +24396,6 @@
       "version": "3.1.11"
     },
     {
-      "summary": "Extra documentation for PostgreSQL",
-      "name": "postgresql-docs",
-      "version": "10.15"
-    },
-    {
       "summary": "A Modern Concurrent Version Control System",
       "name": "subversion",
       "version": "1.10.2"
@@ -24444,11 +24404,6 @@
       "summary": "The mariabackup tool for physical online backups",
       "name": "mariadb-backup",
       "version": "10.3.28"
-    },
-    {
-      "summary": "Convenience RPM macros for build-time testing against PostgreSQL server",
-      "name": "postgresql-test-rpm-macros",
-      "version": "10.15"
     },
     {
       "summary": "Development headers for a low-level cryptographic library",
@@ -24481,14 +24436,14 @@
       "version": "10.3.28"
     },
     {
-      "summary": "CRIU image tool",
-      "name": "crit",
-      "version": "3.15"
-    },
-    {
       "summary": "MariaDB as an embeddable library",
       "name": "mariadb-embedded",
       "version": "10.3.28"
+    },
+    {
+      "summary": "Libvirt plugin for Name Service Switch",
+      "name": "libvirt-nss",
+      "version": "6.0.0"
     },
     {
       "summary": "Development libraries for Network Security Services",
@@ -24501,11 +24456,6 @@
       "version": "5.1.1"
     },
     {
-      "summary": "The Python3 procedural language for PostgreSQL",
-      "name": "postgresql-plpython3",
-      "version": "10.15"
-    },
-    {
       "summary": "Development files for the gnutls package",
       "name": "gnutls-devel",
       "version": "3.6.14"
@@ -24514,11 +24464,6 @@
       "summary": "Terminal emulator for the X Window System",
       "name": "xterm",
       "version": "331"
-    },
-    {
-      "summary": "The Perl procedural language for PostgreSQL",
-      "name": "postgresql-plperl",
-      "version": "10.15"
     },
     {
       "summary": "LLVM \"compiler-rt\" runtime libraries",
@@ -24569,11 +24514,6 @@
       "summary": "The C++ interface to GnuTLS",
       "name": "gnutls-c++",
       "version": "3.6.14"
-    },
-    {
-      "summary": "Statically linked PostgreSQL libraries",
-      "name": "postgresql-static",
-      "version": "10.15"
     },
     {
       "summary": "Tools for the Network Security Services",
@@ -24631,11 +24571,6 @@
       "version": "3.6.14"
     },
     {
-      "summary": "PostgreSQL development header files and libraries",
-      "name": "postgresql-server-devel",
-      "version": "10.15"
-    },
-    {
       "summary": "Supplementary tools for Subversion",
       "name": "subversion-tools",
       "version": "1.10.2"
@@ -24656,16 +24591,6 @@
       "version": "10.3.28"
     },
     {
-      "summary": "Support for upgrading from the previous major release of PostgreSQL",
-      "name": "postgresql-upgrade",
-      "version": "10.15"
-    },
-    {
-      "summary": "Support for build of extensions required for upgrade process",
-      "name": "postgresql-upgrade-devel",
-      "version": "10.15"
-    },
-    {
       "summary": "Documentation for LLVM",
       "name": "llvm-doc",
       "version": "11.0.0"
@@ -24681,11 +24606,6 @@
       "version": "1.10.2"
     },
     {
-      "summary": "The test suite distributed with PostgreSQL",
-      "name": "postgresql-test",
-      "version": "10.15"
-    },
-    {
       "summary": "QEMU SSH block driver",
       "name": "qemu-kvm-block-ssh",
       "version": "4.2.0"
@@ -24694,11 +24614,6 @@
       "summary": "Network Security Services Softoken Module",
       "name": "nss-softokn",
       "version": "3.53.1"
-    },
-    {
-      "summary": "PostgreSQL client programs",
-      "name": "postgresql",
-      "version": "10.15"
     },
     {
       "summary": "A DANE protocol implementation for GnuTLS",
@@ -24734,11 +24649,6 @@
       "summary": "Network Security Services",
       "name": "nss",
       "version": "3.53.1"
-    },
-    {
-      "summary": "Mozilla Firefox Web browser",
-      "name": "firefox",
-      "version": "78.10.0"
     },
     {
       "summary": "Library for extracting extra information from image files",
@@ -24779,11 +24689,6 @@
       "summary": "Network Security Services Utilities Library",
       "name": "nss-util",
       "version": "3.53.1"
-    },
-    {
-      "summary": "Mozilla Thunderbird mail/newsgroup client",
-      "name": "thunderbird",
-      "version": "78.10.0"
     },
     {
       "summary": "Node.js API documentation",
@@ -24951,11 +24856,6 @@
       "version": "3.36.5"
     },
     {
-      "summary": "Development files for building PostgreSQL client tools",
-      "name": "libpq-devel",
-      "version": "13.2"
-    },
-    {
       "summary": "OpenCV core libraries",
       "name": "opencv-core",
       "version": "3.4.6"
@@ -25099,16 +24999,6 @@
       "summary": "Terminal I/O logger",
       "name": "tlog",
       "version": "9"
-    },
-    {
-      "summary": "Plugins for podman",
-      "name": "podman-plugins",
-      "version": "3.0.1"
-    },
-    {
-      "summary": "A signal-forwarding process manager for containers",
-      "name": "podman-catatonit",
-      "version": "3.0.1"
     },
     {
       "summary": "Additional tools for virt-rescue",
@@ -25366,11 +25256,6 @@
       "version": "6.4.7.2"
     },
     {
-      "summary": "CLI for running Open Containers",
-      "name": "runc",
-      "version": "1.0.0"
-    },
-    {
       "summary": "An interface library to access tags for identifying languages",
       "name": "liblangtag",
       "version": "0.6.2"
@@ -25439,16 +25324,6 @@
       "summary": "Performance Co-Pilot (PCP) metrics for a GPS Daemon",
       "name": "pcp-pmda-gpsd",
       "version": "5.2.5"
-    },
-    {
-      "summary": "FUSE overlay+shiftfs implementation for rootless containers",
-      "name": "fuse-overlayfs",
-      "version": "1.4.0"
-    },
-    {
-      "summary": "Script to launch privileged container with podman",
-      "name": "toolbox",
-      "version": "0.0.8"
     },
     {
       "summary": "Spanish language pack for LibreOffice",
@@ -25659,11 +25534,6 @@
       "summary": "Libraries and header files needed for Python development",
       "name": "python38-devel",
       "version": "3.8.6"
-    },
-    {
-      "summary": "Configuration files for working with image signatures",
-      "name": "containers-common",
-      "version": "1.2.2"
     },
     {
       "summary": "Scientific Tools for Python",
@@ -25899,11 +25769,6 @@
       "summary": "An API for Run-time Code Generation",
       "name": "dyninst",
       "version": "10.2.1"
-    },
-    {
-      "summary": "A tool for generating SELinux security policies for containers",
-      "name": "udica",
-      "version": "0.2.4"
     },
     {
       "summary": "Protocol Buffers C headers and libraries",
@@ -26211,11 +26076,6 @@
       "version": "3.18.2"
     },
     {
-      "summary": "Libvirt plugin for Name Service Switch",
-      "name": "libvirt-nss",
-      "version": "6.0.0"
-    },
-    {
       "summary": "XeTeX packages",
       "name": "texlive-collection-xetex",
       "version": "20180414"
@@ -26239,11 +26099,6 @@
       "summary": "Use Concrete fonts",
       "name": "texlive-beton",
       "version": "20180414"
-    },
-    {
-      "summary": "SELinux policies for container runtimes",
-      "name": "container-selinux",
-      "version": "2.158.0"
     },
     {
       "summary": "The pip wheel",
@@ -26336,6 +26191,11 @@
       "version": "20180414"
     },
     {
+      "summary": "C++ interface for the ATK library",
+      "name": "atkmm",
+      "version": "2.24.2"
+    },
+    {
       "summary": "Session interface for the Apache HTTP Server",
       "name": "mod_session",
       "version": "2.4.37"
@@ -26349,11 +26209,6 @@
       "summary": "C parser and AST generator written in Python",
       "name": "python39-pycparser",
       "version": "2.20"
-    },
-    {
-      "summary": "OCI container runtime monitor",
-      "name": "conmon",
-      "version": "2.0.26"
     },
     {
       "summary": "Verbatim with URL-sensitive line breaks",
@@ -26379,11 +26234,6 @@
       "summary": "texconfig package",
       "name": "texlive-texconfig",
       "version": "20180414"
-    },
-    {
-      "summary": "Manage Pods, Containers and Container Images",
-      "name": "podman",
-      "version": "3.0.1"
     },
     {
       "summary": "Basic LaTeX packages",
@@ -26474,11 +26324,6 @@
       "summary": "Internationalized Domain Names in Applications (IDNA)",
       "name": "python39-idna",
       "version": "2.10"
-    },
-    {
-      "summary": "Python bindings for criu",
-      "name": "python3-criu",
-      "version": "3.15"
     },
     {
       "summary": "XML processing library combining libxml2/libxslt with the ElementTree API",
@@ -26574,11 +26419,6 @@
       "summary": "Package that installs llvm-toolset",
       "name": "llvm-toolset",
       "version": "11.0.0"
-    },
-    {
-      "summary": "Cockpit component for Podman containers",
-      "name": "cockpit-podman",
-      "version": "29"
     },
     {
       "summary": "Storage driver plugin for lvm volumes",
@@ -26691,11 +26531,6 @@
       "version": "1.0.27"
     },
     {
-      "summary": "Tool for Checkpoint/Restore in User-space",
-      "name": "criu",
-      "version": "3.15"
-    },
-    {
       "summary": "HTTP library, written in Python, for human beings",
       "name": "python38-requests",
       "version": "2.22.0"
@@ -26756,11 +26591,6 @@
       "version": "1.2.4"
     },
     {
-      "summary": "A command line tool used for creating OCI Images",
-      "name": "buildah",
-      "version": "1.19.7"
-    },
-    {
       "summary": "Portal frontend service to flatpak",
       "name": "xdg-desktop-portal",
       "version": "1.6.0"
@@ -26819,11 +26649,6 @@
       "summary": "Show legacy icons on top",
       "name": "gnome-shell-extension-top-icons",
       "version": "3.32.1"
-    },
-    {
-      "summary": "Emulate Docker CLI using podman",
-      "name": "podman-docker",
-      "version": "3.0.1"
     },
     {
       "summary": "A Python SOCKS client module",
@@ -26951,11 +26776,6 @@
       "version": "6.4.7.2"
     },
     {
-      "summary": "Inspect container images and repositories on registries",
-      "name": "skopeo",
-      "version": "1.2.2"
-    },
-    {
       "summary": "Provides the omudpspoof module",
       "name": "rsyslog-udpspoof",
       "version": "8.1911.0"
@@ -26964,11 +26784,6 @@
       "summary": "Character encoding auto-detection in Python",
       "name": "python39-chardet",
       "version": "3.0.4"
-    },
-    {
-      "summary": "A framework for creating UPnP devices & control points",
-      "name": "gupnp",
-      "version": "1.0.6"
     },
     {
       "summary": "A tool for installing and managing Python3 packages",
@@ -27001,6 +26816,11 @@
       "version": "20180414"
     },
     {
+      "summary": "Qt API bindings/wrapper for GPGME",
+      "name": "qgpgme",
+      "version": "1.13.1"
+    },
+    {
       "summary": "The Address Sanitizer static library",
       "name": "gcc-toolset-10-libasan-devel",
       "version": "10.2.1"
@@ -27009,11 +26829,6 @@
       "summary": "Development files to build Glib2 applications with spice-glib-2.0",
       "name": "spice-glib-devel",
       "version": "0.38"
-    },
-    {
-      "summary": "CNI network plugins",
-      "name": "containernetworking-plugins",
-      "version": "0.9.1"
     },
     {
       "summary": "A GUI toolkit for Python",
@@ -27164,11 +26979,6 @@
       "summary": "A testsuite for A PostgreSQL database adapter for Python 2",
       "name": "python38-psycopg2-tests",
       "version": "2.8.4"
-    },
-    {
-      "summary": "Development files for libslirp",
-      "name": "libslirp-devel",
-      "version": "4.3.1"
     },
     {
       "summary": "Core plugin system for healthcheck",
@@ -27329,11 +27139,6 @@
       "summary": "Additional dependencies for inspecting guest icons",
       "name": "libguestfs-inspect-icons",
       "version": "1.40.2"
-    },
-    {
-      "summary": "A general purpose TCP-IP emulator",
-      "name": "libslirp",
-      "version": "4.3.1"
     },
     {
       "summary": "OpenMP header files",
@@ -27781,11 +27586,6 @@
       "version": "11.0.0"
     },
     {
-      "summary": "slirp for network namespaces",
-      "name": "slirp4netns",
-      "version": "1.1.8"
-    },
-    {
       "summary": "A C language family front-end for LLVM",
       "name": "clang",
       "version": "11.0.0"
@@ -27949,11 +27749,6 @@
       "summary": "SELinux policy modules for MySQL and MariaDB packages",
       "name": "mysql-selinux",
       "version": "1.0.2"
-    },
-    {
-      "summary": "Tests for skopeo",
-      "name": "skopeo-tests",
-      "version": "1.2.2"
     },
     {
       "summary": "Single sign-on framework for GNOME",
@@ -28216,11 +28011,6 @@
       "version": "3.0.7"
     },
     {
-      "summary": "A remote CLI for Podman: A Simple management tool for pods, containers and images",
-      "name": "podman-remote",
-      "version": "3.0.1"
-    },
-    {
       "summary": "C library for multiple precision complex arithmetic",
       "name": "libmpc",
       "version": "1.1.0"
@@ -28239,11 +28029,6 @@
       "summary": "ODBC driver for Qt5's SQL classes",
       "name": "qt5-qtbase-odbc",
       "version": "5.12.5"
-    },
-    {
-      "summary": "Tests for buildah",
-      "name": "buildah-tests",
-      "version": "1.19.7"
     },
     {
       "summary": "Common files used by IPA client",
@@ -28326,11 +28111,6 @@
       "version": "0.182"
     },
     {
-      "summary": "OCI Hook to generate seccomp json files based on EBF syscalls used by container",
-      "name": "oci-seccomp-bpf-hook",
-      "version": "1.2.0"
-    },
-    {
       "summary": "Common debugger pretty printers for Rust",
       "name": "rust-debugger-common",
       "version": "1.49.0"
@@ -28394,11 +28174,6 @@
       "summary": "GTK+ Bluetooth device selection widgets",
       "name": "gnome-bluetooth-libs",
       "version": "3.34.3"
-    },
-    {
-      "summary": "A framework for creating UPnP devices & control points",
-      "name": "gupnp",
-      "version": "1.0.6"
     },
     {
       "summary": "IPA authentication for use on clients",
@@ -28476,11 +28251,6 @@
       "version": "20180414"
     },
     {
-      "summary": "OCI runtime written in C",
-      "name": "crun",
-      "version": "0.18"
-    },
-    {
       "summary": "The new \\makecommand command always (re)defines a command",
       "name": "texlive-makecmds",
       "version": "20180414"
@@ -28549,11 +28319,6 @@
       "summary": "PyCA's cryptography library",
       "name": "python39-cryptography",
       "version": "3.3.1"
-    },
-    {
-      "summary": "Tests for podman",
-      "name": "podman-tests",
-      "version": "3.0.1"
     },
     {
       "summary": "special arrows for PSTricks",
@@ -29721,6 +29486,11 @@
       "version": "3.28.5"
     },
     {
+      "summary": "The LuaTeX engine",
+      "name": "texlive-luatex",
+      "version": "20180414"
+    },
+    {
       "summary": "Documentation for texlive-common",
       "name": "texlive-texlive-common-doc",
       "version": "20180414"
@@ -30636,11 +30406,6 @@
       "version": "8.4.1"
     },
     {
-      "summary": "C++ interface for the ATK library",
-      "name": "atkmm",
-      "version": "2.24.2"
-    },
-    {
       "summary": "Enhancement of PostScript math operators to use with pstricks",
       "name": "texlive-pst-math",
       "version": "20180414"
@@ -31014,11 +30779,6 @@
       "summary": "Hungarian language pack for LibreOffice",
       "name": "libreoffice-langpack-hu",
       "version": "6.4.7.2"
-    },
-    {
-      "summary": "Development files for building PostgreSQL client tools",
-      "name": "libpq-devel",
-      "version": "13.2"
     },
     {
       "summary": "Fence agent for reservations over Device Mapper Multipath",
@@ -31464,11 +31224,6 @@
       "summary": "Unicode mathematics support for XeTeX and LuaTeX",
       "name": "texlive-unicode-math",
       "version": "20180414"
-    },
-    {
-      "summary": "Qt API bindings/wrapper for GPGME",
-      "name": "qgpgme",
-      "version": "1.13.1"
     },
     {
       "summary": "Command-line frontend for the org.freedesktop.Flatpak service",
@@ -31994,11 +31749,6 @@
       "summary": "Transparently speed up functions by caching return values",
       "name": "perl-Memoize",
       "version": "1.03"
-    },
-    {
-      "summary": "PostgreSQL client library",
-      "name": "libpq",
-      "version": "13.2"
     },
     {
       "summary": "An emoji selection tool",
@@ -32966,6 +32716,11 @@
       "version": "0.6.0"
     },
     {
+      "summary": "C++ interface for the GLib library",
+      "name": "glibmm24",
+      "version": "2.56.0"
+    },
+    {
       "summary": "AMS mathematical facilities for LaTeX",
       "name": "texlive-amsmath",
       "version": "20180414"
@@ -33506,6 +33261,11 @@
       "version": "3.4.6"
     },
     {
+      "summary": "Lite version of header files and libraries needed for BIND DNS development",
+      "name": "bind-lite-devel",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Macros and scripts for building kernel module packages.",
       "name": "kernel-rpm-macros",
       "version": "125"
@@ -33514,6 +33274,11 @@
       "summary": "Package that handles gcc-toolset-10 Software Collection.",
       "name": "gcc-toolset-10-runtime",
       "version": "10.1"
+    },
+    {
+      "summary": "OpenJDK 11 Runtime Environment",
+      "name": "java-11-openjdk",
+      "version": "11.0.11.0.9"
     },
     {
       "summary": "Documentations and examples for mpich",
@@ -33526,14 +33291,49 @@
       "version": "6.4.7.2"
     },
     {
+      "summary": "Inspect container images and repositories on registries",
+      "name": "skopeo",
+      "version": "1.2.2"
+    },
+    {
+      "summary": "OpenJDK 8 Runtime Environment",
+      "name": "java-1.8.0-openjdk",
+      "version": "1.8.0.292.b10"
+    },
+    {
+      "summary": "Development files for building PostgreSQL client tools",
+      "name": "libpq-devel",
+      "version": "13.3"
+    },
+    {
+      "summary": "Manage Pods, Containers and Container Images",
+      "name": "podman",
+      "version": "3.0.1"
+    },
+    {
+      "summary": "Development files for libslirp",
+      "name": "libslirp-devel",
+      "version": "4.3.1"
+    },
+    {
       "summary": "Maths fonts to match tex-gyre text fonts",
       "name": "texlive-tex-gyre-math",
       "version": "20180414"
     },
     {
+      "summary": "X11-requiring add-ons for D-BUS",
+      "name": "dbus-x11",
+      "version": "1.12.8"
+    },
+    {
       "summary": "Spice client MSI installers for Windows clients (32 bit)",
       "name": "spice-client-win-x86",
       "version": "8.4"
+    },
+    {
+      "summary": "License of the BIND DNS suite",
+      "name": "bind-license",
+      "version": "9.11.26"
     },
     {
       "summary": "Kdump configuration anaconda addon",
@@ -33546,14 +33346,39 @@
       "version": "1.90.9"
     },
     {
+      "summary": "Lite version of header files and libraries needed for BIND DNS development",
+      "name": "bind-lite-devel",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Switch fonts in XeTeX according to what is being processed",
       "name": "texlive-ucharclasses",
       "version": "20180414"
     },
     {
+      "summary": ".NET 5.0 templates",
+      "name": "dotnet-templates-5.0",
+      "version": "5.0.204"
+    },
+    {
       "summary": "Improved interface for floating objects",
       "name": "texlive-float",
       "version": "20180414"
+    },
+    {
+      "summary": "Targeting Pack for Microsoft.NETCore.App 5.0",
+      "name": "dotnet-apphost-pack-5.0",
+      "version": "5.0.7"
+    },
+    {
+      "summary": "JMods for OpenJDK 11",
+      "name": "java-11-openjdk-jmods",
+      "version": "11.0.11.0.9"
+    },
+    {
+      "summary": "Development files for Bind libraries compiled with native PKCS#11",
+      "name": "bind-pkcs11-devel",
+      "version": "9.11.26"
     },
     {
       "summary": "Write the C code for perlmain.c",
@@ -33569,6 +33394,21 @@
       "summary": "Validating, recursive, and caching DNS(SEC) resolver",
       "name": "unbound",
       "version": "1.7.3"
+    },
+    {
+      "summary": "The Perl procedural language for PostgreSQL",
+      "name": "postgresql-plperl",
+      "version": "10.17"
+    },
+    {
+      "summary": "A remote CLI for Podman: A Simple management tool for pods, containers and images",
+      "name": "podman-remote",
+      "version": "3.0.1"
+    },
+    {
+      "summary": "OCI Hook to generate seccomp json files based on EBF syscalls used by container",
+      "name": "oci-seccomp-bpf-hook",
+      "version": "1.2.0"
     },
     {
       "summary": "Voikko is a library for spellcheckers and hyphenators",
@@ -33591,9 +33431,34 @@
       "version": "3"
     },
     {
+      "summary": "Library and tools for the WebP graphics format",
+      "name": "libwebp",
+      "version": "1.0.0"
+    },
+    {
+      "summary": "Core Pacemaker libraries",
+      "name": "pacemaker-libs",
+      "version": "2.0.5"
+    },
+    {
+      "summary": "Configuration files for working with image signatures",
+      "name": "containers-common",
+      "version": "1.2.2"
+    },
+    {
       "summary": "Various LaTeX packages by Martin Schroder",
       "name": "texlive-ms",
       "version": "20180414"
+    },
+    {
+      "summary": "Emulate Docker CLI using podman",
+      "name": "podman-docker",
+      "version": "3.0.1"
+    },
+    {
+      "summary": "OpenJDK 11 Headless Runtime Environment",
+      "name": "java-11-openjdk-headless",
+      "version": "11.0.11.0.9"
     },
     {
       "summary": "Development files for mvapich2",
@@ -33601,14 +33466,44 @@
       "version": "2.3.5"
     },
     {
+      "summary": "The test suite distributed with PostgreSQL",
+      "name": "postgresql-test",
+      "version": "10.17"
+    },
+    {
+      "summary": "The Tcl procedural language for PostgreSQL",
+      "name": "postgresql-pltcl",
+      "version": "10.17"
+    },
+    {
+      "summary": "NET 5.0 runtime",
+      "name": "dotnet-runtime-5.0",
+      "version": "5.0.7"
+    },
+    {
       "summary": "A range of footnote options",
       "name": "texlive-footmisc",
       "version": "20180414"
     },
     {
+      "summary": "Tool for Checkpoint/Restore in User-space",
+      "name": "criu",
+      "version": "3.15"
+    },
+    {
       "summary": "Windows fileshare support for gvfs",
       "name": "gvfs-smb",
       "version": "1.36.2"
+    },
+    {
+      "summary": "Uploads Insights information to Red Hat on a periodic basis",
+      "name": "insights-client",
+      "version": "3.1.3"
+    },
+    {
+      "summary": "OpenJDK 8 Development Environment",
+      "name": "java-1.8.0-openjdk-devel",
+      "version": "1.8.0.292.b10"
     },
     {
       "summary": "XML processing library combining libxml2/libxslt with the ElementTree API",
@@ -33636,6 +33531,11 @@
       "version": "20180414"
     },
     {
+      "summary": "The Corosync Cluster Engine Libraries",
+      "name": "corosynclib",
+      "version": "3.1.0"
+    },
+    {
       "summary": "Mail and calendar client for GNOME",
       "name": "evolution",
       "version": "3.28.5"
@@ -33659,6 +33559,11 @@
       "summary": "Performance Co-Pilot Grafana Plugin",
       "name": "grafana-pcp",
       "version": "3.0.2"
+    },
+    {
+      "summary": ".NET Core 3.1 templates",
+      "name": "dotnet-templates-3.1",
+      "version": "3.1.116"
     },
     {
       "summary": "A collection of small packages by Walter Schmidt",
@@ -33686,14 +33591,14 @@
       "version": "0.6.0"
     },
     {
-      "summary": "The LuaTeX engine",
-      "name": "texlive-luatex",
-      "version": "20180414"
-    },
-    {
       "summary": "Interpreter for PostScript language & PDF",
       "name": "ghostscript",
       "version": "9.27"
+    },
+    {
+      "summary": "slirp for network namespaces",
+      "name": "slirp4netns",
+      "version": "1.1.8"
     },
     {
       "summary": "Spice client MSI installers for Windows clients (64 bit)",
@@ -33716,9 +33621,29 @@
       "version": "3.16.0"
     },
     {
+      "summary": "CNI network plugins",
+      "name": "containernetworking-plugins",
+      "version": "0.9.1"
+    },
+    {
+      "summary": "Libraries used by the BIND DNS packages",
+      "name": "bind-libs",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Fixes for mathematics-related LuaLaTeX issues",
       "name": "texlive-lualatex-math",
       "version": "20180414"
+    },
+    {
+      "summary": "The Corosync Cluster Engine Libraries",
+      "name": "corosynclib",
+      "version": "3.1.0"
+    },
+    {
+      "summary": "Schemas and upgrade stylesheets for Pacemaker",
+      "name": "pacemaker-schemas",
+      "version": "2.0.5"
     },
     {
       "summary": "LibreOffice Word Processor Application",
@@ -33746,6 +33671,16 @@
       "version": "0.8.3"
     },
     {
+      "summary": "Development files for D-BUS",
+      "name": "dbus-devel",
+      "version": "1.12.8"
+    },
+    {
+      "summary": "Libraries used by the BIND DNS packages",
+      "name": "bind-libs",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Report font features in XeTeX",
       "name": "texlive-xetexfontinfo",
       "version": "20180414"
@@ -33754,6 +33689,11 @@
       "summary": "Libraries for flatpak",
       "name": "flatpak-libs",
       "version": "1.8.5"
+    },
+    {
+      "summary": "Support for upgrading from the previous major release of PostgreSQL",
+      "name": "postgresql-upgrade",
+      "version": "10.17"
     },
     {
       "summary": "Croatian help for LibreOffice",
@@ -33776,6 +33716,21 @@
       "version": "1.0.5"
     },
     {
+      "summary": "The Squid proxy caching server",
+      "name": "squid",
+      "version": "4.11"
+    },
+    {
+      "summary": "Targeting Pack for Microsoft.AspNetCore.App 5.0",
+      "name": "aspnetcore-targeting-pack-5.0",
+      "version": "5.0.7"
+    },
+    {
+      "summary": "OpenJDK 11 API documentation",
+      "name": "java-11-openjdk-javadoc",
+      "version": "11.0.11.0.9"
+    },
+    {
       "summary": "Extend the standard classes' size options",
       "name": "texlive-extsizes",
       "version": "20180414"
@@ -33786,9 +33741,24 @@
       "version": "2.3.8"
     },
     {
+      "summary": "Cluster Libraries used by Pacemaker",
+      "name": "pacemaker-cluster-libs",
+      "version": "2.0.5"
+    },
+    {
       "summary": "Performance Co-Pilot (PCP) metrics from the Systemd journal",
       "name": "pcp-pmda-systemd",
       "version": "5.2.5"
+    },
+    {
+      "summary": "OpenJDK 11 Development Environment",
+      "name": "java-11-openjdk-devel",
+      "version": "11.0.11.0.9"
+    },
+    {
+      "summary": "A chroot runtime environment for the ISC BIND DNS server, named-sdb(8)",
+      "name": "bind-sdb-chroot",
+      "version": "9.11.26"
     },
     {
       "summary": "Python3 bindings for BPF Compiler Collection (BCC)",
@@ -33804,6 +33774,21 @@
       "summary": "Desktop icons support for the classic experience",
       "name": "gnome-shell-extension-horizontal-workspaces",
       "version": "3.32.1"
+    },
+    {
+      "summary": "OpenJDK 11 Demos",
+      "name": "java-11-openjdk-demo",
+      "version": "11.0.11.0.9"
+    },
+    {
+      "summary": "Tests for buildah",
+      "name": "buildah-tests",
+      "version": "1.19.7"
+    },
+    {
+      "summary": "Cloud instance init scripts",
+      "name": "cloud-init",
+      "version": "20.3"
     },
     {
       "summary": "Convert (La)TeX to HTML/XML",
@@ -33826,9 +33811,24 @@
       "version": "2.79"
     },
     {
+      "summary": "PostgreSQL client programs",
+      "name": "postgresql",
+      "version": "10.17"
+    },
+    {
       "summary": "Irish auto-correction rules",
       "name": "autocorr-ga",
       "version": "6.4.7.2"
+    },
+    {
+      "summary": "Red Hat connect worker for launching Ansible Runner",
+      "name": "rhc-worker-playbook",
+      "version": "0.1.5"
+    },
+    {
+      "summary": "A signal-forwarding process manager for containers",
+      "name": "podman-catatonit",
+      "version": "3.0.1"
     },
     {
       "summary": "Chinese auto-correction rules",
@@ -33836,14 +33836,14 @@
       "version": "6.4.7.2"
     },
     {
-      "summary": "PostgreSQL client library",
-      "name": "libpq",
-      "version": "13.2"
-    },
-    {
       "summary": "LibreOffice generic X11 support plug-in",
       "name": "libreoffice-x11",
       "version": "6.4.7.2"
+    },
+    {
+      "summary": "A framework for creating UPnP devices & control points",
+      "name": "gupnp",
+      "version": "1.0.6"
     },
     {
       "summary": "Script Check Engine plug-in for OpenSCAP",
@@ -33866,6 +33866,21 @@
       "version": "0.8.3"
     },
     {
+      "summary": "ASP.NET Core 3.1 runtime",
+      "name": "aspnetcore-runtime-3.1",
+      "version": "3.1.16"
+    },
+    {
+      "summary": "A command line tool used for creating OCI Images",
+      "name": "buildah",
+      "version": "1.19.7"
+    },
+    {
+      "summary": "Tests for podman",
+      "name": "podman-tests",
+      "version": "3.0.1"
+    },
+    {
       "summary": "Brazilian help for LibreOffice",
       "name": "libreoffice-help-pt-BR",
       "version": "6.4.7.2"
@@ -33874,6 +33889,11 @@
       "summary": "Development files for openscap",
       "name": "openscap-devel",
       "version": "1.3.4"
+    },
+    {
+      "summary": "Development files for D-BUS",
+      "name": "dbus-devel",
+      "version": "1.12.8"
     },
     {
       "summary": "Mesa gbm runtime library",
@@ -33906,9 +33926,34 @@
       "version": "20180414"
     },
     {
+      "summary": "NET Core 3.1 runtime",
+      "name": "dotnet-runtime-3.1",
+      "version": "3.1.16"
+    },
+    {
+      "summary": "ASP.NET Core 5.0 runtime",
+      "name": "aspnetcore-runtime-5.0",
+      "version": "5.0.7"
+    },
+    {
       "summary": "Performance Co-Pilot (PCP) metrics for filesystem mounts",
       "name": "pcp-pmda-mounts",
       "version": "5.2.5"
+    },
+    {
+      "summary": "Mozilla Firefox Web browser",
+      "name": "firefox",
+      "version": "78.11.0"
+    },
+    {
+      "summary": "Python bindings for criu",
+      "name": "python3-criu",
+      "version": "3.15"
+    },
+    {
+      "summary": "Targeting Pack for Microsoft.AspNetCore.App 3.1",
+      "name": "aspnetcore-targeting-pack-3.1",
+      "version": "3.1.16"
     },
     {
       "summary": "GlusterFS api library",
@@ -33926,6 +33971,11 @@
       "version": "0.182"
     },
     {
+      "summary": "Plugins for podman",
+      "name": "podman-plugins",
+      "version": "3.0.1"
+    },
+    {
       "summary": "RPM macros for building Golang packages for various architectures",
       "name": "go-srpm-macros",
       "version": "2"
@@ -33939,6 +33989,41 @@
       "summary": "OpenGL support for libglvnd",
       "name": "libglvnd-opengl",
       "version": "1.3.2"
+    },
+    {
+      "summary": "Development files for libwebp, a library for the WebP format",
+      "name": "libwebp-devel",
+      "version": "1.0.0"
+    },
+    {
+      "summary": "Cluster Libraries used by Pacemaker",
+      "name": "pacemaker-cluster-libs",
+      "version": "2.0.5"
+    },
+    {
+      "summary": ".NET CLI tools and runtime",
+      "name": "dotnet",
+      "version": "5.0.204"
+    },
+    {
+      "summary": ".NET 5.0 Software Development Kit",
+      "name": "dotnet-sdk-5.0",
+      "version": "5.0.204"
+    },
+    {
+      "summary": "The programs needed to create and run a PostgreSQL server",
+      "name": "postgresql-server",
+      "version": "10.17"
+    },
+    {
+      "summary": "OCI runtime written in C",
+      "name": "crun",
+      "version": "0.18"
+    },
+    {
+      "summary": ".NET Core 3.1 Software Development Kit",
+      "name": "dotnet-sdk-3.1",
+      "version": "3.1.116"
     },
     {
       "summary": "Hebrew language pack for LibreOffice",
@@ -33959,6 +34044,16 @@
       "summary": "UCX is a communication library implementing high-performance messaging",
       "name": "ucx",
       "version": "1.9.0"
+    },
+    {
+      "summary": "Libraries for working with the DNS protocol",
+      "name": "bind-libs-lite",
+      "version": "9.11.26"
+    },
+    {
+      "summary": ".NET Core command line host resolver",
+      "name": "dotnet-hostfxr-3.1",
+      "version": "3.1.16"
     },
     {
       "summary": "C bindings for Google's Protocol Buffers",
@@ -33986,6 +34081,11 @@
       "version": "2020.7"
     },
     {
+      "summary": "BIND server with database backends and DLZ support",
+      "name": "bind-sdb",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Assamese language pack for LibreOffice",
       "name": "libreoffice-langpack-as",
       "version": "6.4.7.2"
@@ -34001,14 +34101,34 @@
       "version": "20180414"
     },
     {
+      "summary": ".NET Core 2.1 Software Development Kit",
+      "name": "dotnet-sdk-2.1",
+      "version": "2.1.524"
+    },
+    {
       "summary": "Process bibliographies for LaTeX, etc",
       "name": "texlive-bibtex",
       "version": "20180414"
     },
     {
+      "summary": "OpenJDK 8 Headless Runtime Environment",
+      "name": "java-1.8.0-openjdk-headless",
+      "version": "1.8.0.292.b10"
+    },
+    {
+      "summary": "A passphrase dialog for OpenSSH and X",
+      "name": "openssh-askpass",
+      "version": "8.0p1"
+    },
+    {
       "summary": "Wadalab (Japanese) font packages",
       "name": "texlive-wadalab",
       "version": "20180414"
+    },
+    {
+      "summary": "OpenJDK 8 accessibility connector",
+      "name": "java-1.8.0-openjdk-accessibility",
+      "version": "1.8.0.292.b10"
     },
     {
       "summary": "Palatino-like fonts in support of mathematics",
@@ -34021,9 +34141,29 @@
       "version": "1.0.6"
     },
     {
+      "summary": "Header files and libraries needed for BIND DNS development",
+      "name": "bind-devel",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Desktop icons support for the classic experience",
       "name": "gnome-shell-extension-desktop-icons",
       "version": "3.32.1"
+    },
+    {
+      "summary": "Message dispatch agent for cloud-connected systems",
+      "name": "rhc",
+      "version": "0.1.4"
+    },
+    {
+      "summary": "Bind libraries compiled with native PKCS#11",
+      "name": "bind-pkcs11-libs",
+      "version": "9.11.26"
+    },
+    {
+      "summary": "Extension modules distributed with PostgreSQL",
+      "name": "postgresql-contrib",
+      "version": "10.17"
     },
     {
       "summary": "hyphen-base package",
@@ -34034,6 +34174,21 @@
       "summary": "Toolkit for fingerprint scanner",
       "name": "libfprint",
       "version": "1.90.7"
+    },
+    {
+      "summary": "A module allowing rndc commands to be sent from Python programs",
+      "name": "python3-bind",
+      "version": "9.11.26"
+    },
+    {
+      "summary": "OpenJDK 8 API documentation compressed in a single archive",
+      "name": "java-1.8.0-openjdk-javadoc-zip",
+      "version": "1.8.0.292.b10"
+    },
+    {
+      "summary": "The Berkeley Internet Name Domain (BIND) DNS (Domain Name System) server",
+      "name": "bind",
+      "version": "9.11.26"
     },
     {
       "summary": "C++ interface for the GTK+ library",
@@ -34051,6 +34206,11 @@
       "version": "6.4.7.2"
     },
     {
+      "summary": "OpenJDK 8 Demos",
+      "name": "java-1.8.0-openjdk-demo",
+      "version": "1.8.0.292.b10"
+    },
+    {
       "summary": "Development files for mpich",
       "name": "mpich-devel",
       "version": "3.3.2"
@@ -34059,6 +34219,11 @@
       "summary": "Provides the mmkubernetes module",
       "name": "rsyslog-mmkubernetes",
       "version": "8.1911.0"
+    },
+    {
+      "summary": "Development files for libwebp, a library for the WebP format",
+      "name": "libwebp-devel",
+      "version": "1.0.0"
     },
     {
       "summary": "Control table of contents, figures, etc",
@@ -34076,6 +34241,26 @@
       "version": "2.56.0"
     },
     {
+      "summary": "SELinux policies for container runtimes",
+      "name": "container-selinux",
+      "version": "2.162.0"
+    },
+    {
+      "summary": ".NET command line host resolver",
+      "name": "dotnet-hostfxr-5.0",
+      "version": "5.0.7"
+    },
+    {
+      "summary": "Mozilla Thunderbird mail/newsgroup client",
+      "name": "thunderbird",
+      "version": "78.11.0"
+    },
+    {
+      "summary": "Development files for building PostgreSQL client tools",
+      "name": "libpq-devel",
+      "version": "13.3"
+    },
+    {
       "summary": "Miscellaneous LaTeX packages, etc",
       "name": "texlive-ltxmisc",
       "version": "20180414"
@@ -34084,6 +34269,11 @@
       "summary": "Tool for finding memory management bugs in programs",
       "name": "gcc-toolset-10-valgrind",
       "version": "3.16.0"
+    },
+    {
+      "summary": "Targeting Pack for Microsoft.NETCore.App 5.0",
+      "name": "dotnet-targeting-pack-5.0",
+      "version": "5.0.7"
     },
     {
       "summary": "Development files for mpich",
@@ -34101,6 +34291,16 @@
       "version": "20180414"
     },
     {
+      "summary": "Convenience RPM macros for build-time testing against PostgreSQL server",
+      "name": "postgresql-test-rpm-macros",
+      "version": "10.17"
+    },
+    {
+      "summary": "Bind libraries compiled with native PKCS#11",
+      "name": "bind-pkcs11-libs",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Direct Rendering Manager runtime library",
       "name": "libdrm",
       "version": "2.4.103"
@@ -34114,6 +34314,11 @@
       "summary": "Performance Co-Pilot (PCP) metrics for the Lustre Filesytem",
       "name": "pcp-pmda-lustre",
       "version": "5.2.5"
+    },
+    {
+      "summary": "Library and tools for the WebP graphics format",
+      "name": "libwebp",
+      "version": "1.0.0"
     },
     {
       "summary": "Small Footprint CIM Broker",
@@ -34146,14 +34351,49 @@
       "version": "20180414"
     },
     {
+      "summary": "OpenJDK 8 Source Bundle",
+      "name": "java-1.8.0-openjdk-src",
+      "version": "1.8.0.292.b10"
+    },
+    {
+      "summary": "The Python3 procedural language for PostgreSQL",
+      "name": "postgresql-plpython3",
+      "version": "10.17"
+    },
+    {
+      "summary": "Development files for Bind libraries compiled with native PKCS#11",
+      "name": "bind-pkcs11-devel",
+      "version": "9.11.26"
+    },
+    {
+      "summary": "Core Pacemaker libraries",
+      "name": "pacemaker-libs",
+      "version": "2.0.5"
+    },
+    {
       "summary": "Disk Manager",
       "name": "udisks2",
       "version": "2.9.0"
     },
     {
+      "summary": "NET Core 2.1 runtime",
+      "name": "dotnet-runtime-2.1",
+      "version": "2.1.28"
+    },
+    {
       "summary": "Mesa XA state tracker",
       "name": "mesa-libxatracker",
       "version": "20.3.3"
+    },
+    {
+      "summary": "Header files and libraries needed for BIND DNS development",
+      "name": "bind-devel",
+      "version": "9.11.26"
+    },
+    {
+      "summary": "OCI container runtime monitor",
+      "name": "conmon",
+      "version": "2.0.26"
     },
     {
       "summary": "Performance Co-Pilot (PCP) metrics for Simple Network Management Protocol",
@@ -34176,9 +34416,29 @@
       "version": "6.4.7.2"
     },
     {
+      "summary": "A tool for generating SELinux security policies for containers",
+      "name": "udica",
+      "version": "0.2.4"
+    },
+    {
+      "summary": "FUSE overlay+shiftfs implementation for rootless containers",
+      "name": "fuse-overlayfs",
+      "version": "1.4.0"
+    },
+    {
+      "summary": "Statically linked PostgreSQL libraries",
+      "name": "postgresql-static",
+      "version": "10.17"
+    },
+    {
       "summary": "Tablet Information Client Library",
       "name": "libwacom",
       "version": "1.6"
+    },
+    {
+      "summary": "OpenJDK 11 libraries for static linking",
+      "name": "java-11-openjdk-static-libs",
+      "version": "11.0.11.0.9"
     },
     {
       "summary": "Number to number name and money text conversion library",
@@ -34189,6 +34449,11 @@
       "summary": "Common files for qt5-qttools",
       "name": "qt5-qttools-common",
       "version": "5.12.5"
+    },
+    {
+      "summary": "A general purpose TCP-IP emulator",
+      "name": "libslirp",
+      "version": "4.3.1"
     },
     {
       "summary": "Development files for libglvnd",
@@ -34211,6 +34476,21 @@
       "version": "3.32.1"
     },
     {
+      "summary": "Targeting Pack for Microsoft.NETCore.App 3.1",
+      "name": "dotnet-apphost-pack-3.1",
+      "version": "3.1.16"
+    },
+    {
+      "summary": ".NET Core command line host resolver",
+      "name": "dotnet-host-fxr-2.1",
+      "version": "2.1.28"
+    },
+    {
+      "summary": "Tests for skopeo",
+      "name": "skopeo-tests",
+      "version": "1.2.2"
+    },
+    {
       "summary": "C++ interface for GTK2 (a GUI library for X)",
       "name": "gtkmm24",
       "version": "2.24.5"
@@ -34231,6 +34511,16 @@
       "version": "20.11.0"
     },
     {
+      "summary": "A chroot runtime environment for the ISC BIND DNS server, named(8)",
+      "name": "bind-chroot",
+      "version": "9.11.26"
+    },
+    {
+      "summary": "Libraries for working with the DNS protocol",
+      "name": "bind-libs-lite",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Utilities to configure the GNOME desktop",
       "name": "gnome-control-center",
       "version": "3.28.2"
@@ -34246,14 +34536,19 @@
       "version": "0.21"
     },
     {
+      "summary": "Bind with native PKCS#11 functionality for crypto",
+      "name": "bind-pkcs11",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Extended filecontents and filecontents* environments",
       "name": "texlive-filecontents",
       "version": "20180414"
     },
     {
-      "summary": "C++ interface for the GLib library",
-      "name": "glibmm24",
-      "version": "2.56.0"
+      "summary": "OpenJDK 8 API documentation",
+      "name": "java-1.8.0-openjdk-javadoc",
+      "version": "1.8.0.292.b10"
     },
     {
       "summary": "Python 3 wrapper module around the OpenSSL library",
@@ -34276,6 +34571,11 @@
       "version": "3.4.4"
     },
     {
+      "summary": "Script to launch privileged container with podman",
+      "name": "toolbox",
+      "version": "0.0.8"
+    },
+    {
       "summary": "Performance Co-Pilot (PCP) metrics for PowerDNS",
       "name": "pcp-pmda-pdns",
       "version": "5.2.5"
@@ -34286,6 +34586,16 @@
       "version": "3.28.1"
     },
     {
+      "summary": "OpenJDK 11 API documentation compressed in a single archive",
+      "name": "java-11-openjdk-javadoc-zip",
+      "version": "11.0.11.0.9"
+    },
+    {
+      "summary": "Utilities for querying DNS name servers",
+      "name": "bind-utils",
+      "version": "9.11.26"
+    },
+    {
       "summary": "Mesa Vulkan development files",
       "name": "mesa-vulkan-devel",
       "version": "20.3.3"
@@ -34294,6 +34604,11 @@
       "summary": "Generate changebars in LaTeX documents",
       "name": "texlive-changebar",
       "version": "20180414"
+    },
+    {
+      "summary": ".NET Core 2.1.5xx Software Development Kit",
+      "name": "dotnet-sdk-2.1.5xx",
+      "version": "2.1.524"
     },
     {
       "summary": "Python DB API 2.0 Module for ODBC",
@@ -34311,6 +34626,16 @@
       "version": "28.14.58"
     },
     {
+      "summary": "Extra documentation for PostgreSQL",
+      "name": "postgresql-docs",
+      "version": "10.17"
+    },
+    {
+      "summary": "Targeting Pack for Microsoft.NETCore.App 3.1",
+      "name": "dotnet-targeting-pack-3.1",
+      "version": "3.1.16"
+    },
+    {
       "summary": "Mesa-based VDPAU drivers",
       "name": "mesa-vdpau-drivers",
       "version": "20.3.3"
@@ -34321,9 +34646,19 @@
       "version": "1.11.0"
     },
     {
+      "summary": ".NET command line launcher",
+      "name": "dotnet-host",
+      "version": "5.0.7"
+    },
+    {
       "summary": "OpenCV core libraries",
       "name": "opencv-core",
       "version": "3.4.6"
+    },
+    {
+      "summary": "PostgreSQL client library",
+      "name": "libpq",
+      "version": "13.3"
     },
     {
       "summary": "Latvian language pack for LibreOffice",
@@ -34336,9 +34671,29 @@
       "version": "2.2.0"
     },
     {
+      "summary": "OpenJDK 11 Source Bundle",
+      "name": "java-11-openjdk-src",
+      "version": "11.0.11.0.9"
+    },
+    {
+      "summary": "Targeting Pack for NETStandard.Library 2.1",
+      "name": "netstandard-targeting-pack-2.1",
+      "version": "5.0.204"
+    },
+    {
       "summary": "GStreamer plugins with good code and licensing",
       "name": "gstreamer1-plugins-good",
       "version": "1.16.1"
+    },
+    {
+      "summary": "Cockpit component for Podman containers",
+      "name": "cockpit-podman",
+      "version": "29"
+    },
+    {
+      "summary": "PostgreSQL development header files and libraries",
+      "name": "postgresql-server-devel",
+      "version": "10.17"
     },
     {
       "summary": "Hyper-V VSS daemon",
@@ -34346,274 +34701,29 @@
       "version": "0"
     },
     {
+      "summary": "Support for build of extensions required for upgrade process",
+      "name": "postgresql-upgrade-devel",
+      "version": "10.17"
+    },
+    {
       "summary": "Performance Co-Pilot (PCP) metrics for virtual machines",
       "name": "pcp-pmda-libvirt",
       "version": "5.2.5"
     },
     {
-      "summary": "Lite version of header files and libraries needed for BIND DNS development",
-      "name": "bind-lite-devel",
-      "version": "9.11.26"
+      "summary": "A framework for creating UPnP devices & control points",
+      "name": "gupnp",
+      "version": "1.0.6"
     },
     {
-      "summary": "OpenJDK 11 Runtime Environment",
-      "name": "java-11-openjdk",
-      "version": "11.0.11.0.9"
+      "summary": "CLI for running Open Containers",
+      "name": "runc",
+      "version": "1.0.0"
     },
     {
-      "summary": "OpenJDK 8 Runtime Environment",
-      "name": "java-1.8.0-openjdk",
-      "version": "1.8.0.292.b10"
-    },
-    {
-      "summary": "X11-requiring add-ons for D-BUS",
-      "name": "dbus-x11",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "License of the BIND DNS suite",
-      "name": "bind-license",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "Lite version of header files and libraries needed for BIND DNS development",
-      "name": "bind-lite-devel",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "JMods for OpenJDK 11",
-      "name": "java-11-openjdk-jmods",
-      "version": "11.0.11.0.9"
-    },
-    {
-      "summary": "Development files for Bind libraries compiled with native PKCS#11",
-      "name": "bind-pkcs11-devel",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "Core Pacemaker libraries",
-      "name": "pacemaker-libs",
-      "version": "2.0.5"
-    },
-    {
-      "summary": "OpenJDK 11 Headless Runtime Environment",
-      "name": "java-11-openjdk-headless",
-      "version": "11.0.11.0.9"
-    },
-    {
-      "summary": "Uploads Insights information to Red Hat on a periodic basis",
-      "name": "insights-client",
-      "version": "3.1.3"
-    },
-    {
-      "summary": "OpenJDK 8 Development Environment",
-      "name": "java-1.8.0-openjdk-devel",
-      "version": "1.8.0.292.b10"
-    },
-    {
-      "summary": "The Corosync Cluster Engine Libraries",
-      "name": "corosynclib",
-      "version": "3.1.0"
-    },
-    {
-      "summary": "Libraries used by the BIND DNS packages",
-      "name": "bind-libs",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "The Corosync Cluster Engine Libraries",
-      "name": "corosynclib",
-      "version": "3.1.0"
-    },
-    {
-      "summary": "Schemas and upgrade stylesheets for Pacemaker",
-      "name": "pacemaker-schemas",
-      "version": "2.0.5"
-    },
-    {
-      "summary": "Development files for D-BUS",
-      "name": "dbus-devel",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "Libraries used by the BIND DNS packages",
-      "name": "bind-libs",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "The Squid proxy caching server",
-      "name": "squid",
-      "version": "4.11"
-    },
-    {
-      "summary": "OpenJDK 11 API documentation",
-      "name": "java-11-openjdk-javadoc",
-      "version": "11.0.11.0.9"
-    },
-    {
-      "summary": "Cluster Libraries used by Pacemaker",
-      "name": "pacemaker-cluster-libs",
-      "version": "2.0.5"
-    },
-    {
-      "summary": "OpenJDK 11 Development Environment",
-      "name": "java-11-openjdk-devel",
-      "version": "11.0.11.0.9"
-    },
-    {
-      "summary": "A chroot runtime environment for the ISC BIND DNS server, named-sdb(8)",
-      "name": "bind-sdb-chroot",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "OpenJDK 11 Demos",
-      "name": "java-11-openjdk-demo",
-      "version": "11.0.11.0.9"
-    },
-    {
-      "summary": "Cloud instance init scripts",
-      "name": "cloud-init",
-      "version": "20.3"
-    },
-    {
-      "summary": "Red Hat connect worker for launching Ansible Runner",
-      "name": "rhc-worker-playbook",
-      "version": "0.1.5"
-    },
-    {
-      "summary": "Development files for D-BUS",
-      "name": "dbus-devel",
-      "version": "1.12.8"
-    },
-    {
-      "summary": "Cluster Libraries used by Pacemaker",
-      "name": "pacemaker-cluster-libs",
-      "version": "2.0.5"
-    },
-    {
-      "summary": "Libraries for working with the DNS protocol",
-      "name": "bind-libs-lite",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "BIND server with database backends and DLZ support",
-      "name": "bind-sdb",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "OpenJDK 8 Headless Runtime Environment",
-      "name": "java-1.8.0-openjdk-headless",
-      "version": "1.8.0.292.b10"
-    },
-    {
-      "summary": "A passphrase dialog for OpenSSH and X",
-      "name": "openssh-askpass",
-      "version": "8.0p1"
-    },
-    {
-      "summary": "OpenJDK 8 accessibility connector",
-      "name": "java-1.8.0-openjdk-accessibility",
-      "version": "1.8.0.292.b10"
-    },
-    {
-      "summary": "Header files and libraries needed for BIND DNS development",
-      "name": "bind-devel",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "Message dispatch agent for cloud-connected systems",
-      "name": "rhc",
-      "version": "0.1.4"
-    },
-    {
-      "summary": "Bind libraries compiled with native PKCS#11",
-      "name": "bind-pkcs11-libs",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "A module allowing rndc commands to be sent from Python programs",
-      "name": "python3-bind",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "OpenJDK 8 API documentation compressed in a single archive",
-      "name": "java-1.8.0-openjdk-javadoc-zip",
-      "version": "1.8.0.292.b10"
-    },
-    {
-      "summary": "The Berkeley Internet Name Domain (BIND) DNS (Domain Name System) server",
-      "name": "bind",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "OpenJDK 8 Demos",
-      "name": "java-1.8.0-openjdk-demo",
-      "version": "1.8.0.292.b10"
-    },
-    {
-      "summary": "Bind libraries compiled with native PKCS#11",
-      "name": "bind-pkcs11-libs",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "OpenJDK 8 Source Bundle",
-      "name": "java-1.8.0-openjdk-src",
-      "version": "1.8.0.292.b10"
-    },
-    {
-      "summary": "Development files for Bind libraries compiled with native PKCS#11",
-      "name": "bind-pkcs11-devel",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "Core Pacemaker libraries",
-      "name": "pacemaker-libs",
-      "version": "2.0.5"
-    },
-    {
-      "summary": "Header files and libraries needed for BIND DNS development",
-      "name": "bind-devel",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "OpenJDK 11 libraries for static linking",
-      "name": "java-11-openjdk-static-libs",
-      "version": "11.0.11.0.9"
-    },
-    {
-      "summary": "A chroot runtime environment for the ISC BIND DNS server, named(8)",
-      "name": "bind-chroot",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "Libraries for working with the DNS protocol",
-      "name": "bind-libs-lite",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "Bind with native PKCS#11 functionality for crypto",
-      "name": "bind-pkcs11",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "OpenJDK 8 API documentation",
-      "name": "java-1.8.0-openjdk-javadoc",
-      "version": "1.8.0.292.b10"
-    },
-    {
-      "summary": "OpenJDK 11 API documentation compressed in a single archive",
-      "name": "java-11-openjdk-javadoc-zip",
-      "version": "11.0.11.0.9"
-    },
-    {
-      "summary": "Utilities for querying DNS name servers",
-      "name": "bind-utils",
-      "version": "9.11.26"
-    },
-    {
-      "summary": "OpenJDK 11 Source Bundle",
-      "name": "java-11-openjdk-src",
-      "version": "11.0.11.0.9"
+      "summary": "PostgreSQL client library",
+      "name": "libpq",
+      "version": "13.3"
     },
     {
       "summary": "Bind tools with native PKCS#11 for using DNSSEC",
@@ -34621,119 +34731,24 @@
       "version": "9.11.26"
     },
     {
-      "summary": "Targeting Pack for Microsoft.NETCore.App 5.0",
-      "name": "dotnet-apphost-pack-5.0",
-      "version": "5.0.6"
+      "summary": "CRIU image tool",
+      "name": "crit",
+      "version": "3.15"
     },
     {
-      "summary": "Targeting Pack for Microsoft.AspNetCore.App 5.0",
-      "name": "aspnetcore-targeting-pack-5.0",
-      "version": "5.0.6"
+      "summary": "Non-interactive SSH authentication utility",
+      "name": "sshpass",
+      "version": "1.06"
     },
     {
-      "summary": "Targeting Pack for Microsoft.NETCore.App 5.0",
-      "name": "dotnet-targeting-pack-5.0",
-      "version": "5.0.6"
+      "summary": "SSH-based configuration management, deployment, and task execution system",
+      "name": "ansible",
+      "version": "2.9.22"
     },
     {
-      "summary": ".NET command line host resolver",
-      "name": "dotnet-hostfxr-5.0",
-      "version": "5.0.6"
-    },
-    {
-      "summary": "ASP.NET Core 5.0 runtime",
-      "name": "aspnetcore-runtime-5.0",
-      "version": "5.0.6"
-    },
-    {
-      "summary": ".NET 5.0 templates",
-      "name": "dotnet-templates-5.0",
-      "version": "5.0.203"
-    },
-    {
-      "summary": ".NET Core 3.1 Software Development Kit",
-      "name": "dotnet-sdk-3.1",
-      "version": "3.1.115"
-    },
-    {
-      "summary": ".NET Core 3.1 templates",
-      "name": "dotnet-templates-3.1",
-      "version": "3.1.115"
-    },
-    {
-      "summary": "Targeting Pack for NETStandard.Library 2.1",
-      "name": "netstandard-targeting-pack-2.1",
-      "version": "5.0.203"
-    },
-    {
-      "summary": "Targeting Pack for Microsoft.AspNetCore.App 3.1",
-      "name": "aspnetcore-targeting-pack-3.1",
-      "version": "3.1.15"
-    },
-    {
-      "summary": ".NET Core 2.1 Software Development Kit",
-      "name": "dotnet-sdk-2.1",
-      "version": "2.1.524"
-    },
-    {
-      "summary": "Targeting Pack for Microsoft.NETCore.App 3.1",
-      "name": "dotnet-targeting-pack-3.1",
-      "version": "3.1.15"
-    },
-    {
-      "summary": ".NET CLI tools and runtime",
-      "name": "dotnet",
-      "version": "5.0.203"
-    },
-    {
-      "summary": "NET Core 3.1 runtime",
-      "name": "dotnet-runtime-3.1",
-      "version": "3.1.15"
-    },
-    {
-      "summary": "NET 5.0 runtime",
-      "name": "dotnet-runtime-5.0",
-      "version": "5.0.6"
-    },
-    {
-      "summary": ".NET 5.0 Software Development Kit",
-      "name": "dotnet-sdk-5.0",
-      "version": "5.0.203"
-    },
-    {
-      "summary": "NET Core 2.1 runtime",
-      "name": "dotnet-runtime-2.1",
-      "version": "2.1.28"
-    },
-    {
-      "summary": ".NET Core command line host resolver",
-      "name": "dotnet-host-fxr-2.1",
-      "version": "2.1.28"
-    },
-    {
-      "summary": "ASP.NET Core 3.1 runtime",
-      "name": "aspnetcore-runtime-3.1",
-      "version": "3.1.15"
-    },
-    {
-      "summary": ".NET Core command line host resolver",
-      "name": "dotnet-hostfxr-3.1",
-      "version": "3.1.15"
-    },
-    {
-      "summary": ".NET Core 2.1.5xx Software Development Kit",
-      "name": "dotnet-sdk-2.1.5xx",
-      "version": "2.1.524"
-    },
-    {
-      "summary": "Targeting Pack for Microsoft.NETCore.App 3.1",
-      "name": "dotnet-apphost-pack-3.1",
-      "version": "3.1.15"
-    },
-    {
-      "summary": ".NET command line launcher",
-      "name": "dotnet-host",
-      "version": "5.0.6"
+      "summary": "Tool for testing ansible plugin and module code",
+      "name": "ansible-test",
+      "version": "2.9.22"
     }
   ]
 }

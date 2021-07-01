@@ -119,6 +119,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ComposeStatus'
+  /composes/{composeId}/metadata:
+    get:
+      summary: get metadata of an image compose
+      parameters:
+        - in: path
+          name: composeId
+          schema:
+            type: string
+          required: true
+          description: Id of compose metadata to get
+      description: "metadata for an image compose"
+      operationId: getComposeMetadata
+      responses:
+        '200':
+          description: compose metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeMetadata'
   /compose:
     post:
       summary: compose image
@@ -570,4 +589,40 @@ components:
         summary:
           type: string
         version:
+          type: string
+    ComposeMetadata:
+      type: object
+      properties:
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageMetadata'
+          description: 'Package list including NEVRA'
+        ostree_commit:
+          type: string
+          description: 'ID (hash) of the built commit'
+    PackageMetadata:
+      required:
+        - type
+        - name
+        - version
+        - release
+        - arch
+        - sigmd5
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        release:
+          type: string
+        epoch:
+          type: string
+        arch:
+          type: string
+        sigmd5:
+          type: string
+        signature:
           type: string

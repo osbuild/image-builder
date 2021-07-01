@@ -12,6 +12,9 @@
     }, {
       "baseurl": "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/",
       "rhsm": false
+    }, {
+      "baseurl": "http://mirror.centos.org/centos/8-stream/extras/x86_64/os/",
+      "rhsm": false
     }]
   }
 }

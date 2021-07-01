@@ -168,7 +168,7 @@ function instanceCheck() {
   local _ssh="$1"
 
   # Check if postgres is installed
-  $_ssh rpm -q postgresql
+  $_ssh rpm -q postgresql ansible
 
   # Verify subscribe status. Loop check since the system may not be registered such early
   set +eu
@@ -231,7 +231,8 @@ function createReqFileAWS() {
   ],
   "customizations": {
     "packages": [
-      "postgresql"
+      "postgresql",
+      "ansible"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -288,7 +289,8 @@ function createReqFileGCP() {
   ],
   "customizations": {
     "packages": [
-      "postgresql"
+      "postgresql",
+      "ansible"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -346,7 +348,8 @@ function createReqFileAzure() {
   ],
   "customizations": {
     "packages": [
-      "postgresql"
+      "postgresql",
+      "ansible"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -609,6 +612,21 @@ function Test_verifyComposeResult() {
   esac
 }
 
+### Case: verify package list of a finished compose
+function Test_verifyComposeMetadata() {
+  local RESULT
+  RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID/metadata")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ $EXIT_CODE == 200 ]]
+
+  local PACKAGENAMES
+  PACKAGENAMES=$(getResponse "$RESULT" | jq -r '.packages[].name')
+  if ! grep -q postgresql <<< "${PACKAGENAMES}"; then
+      echo "'postgresql' not found in compose package list 😠"
+      exit 1
+  fi
+}
+
 function Test_getComposes() {
   RESULT=$($CURLCMD -H "$HEADER" -H 'Content-Type: application/json' "$BASEURL/composes")
   EXIT_CODE=$(getExitCode "$RESULT")
@@ -673,6 +691,7 @@ Test_getOpenapi "$BASEURLMAJORVERSION"
 Test_postToComposer
 Test_waitForCompose
 Test_verifyComposeResult
+Test_verifyComposeMetadata
 Test_getComposes
 Test_getOpenapiWithWrongOrgId
 Test_postToComposerWithWrongOrgId

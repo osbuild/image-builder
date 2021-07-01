@@ -72,6 +72,16 @@ type AzureUploadStatus struct {
 	ImageName string `json:"image_name"`
 }
 
+// ComposeMetadata defines model for ComposeMetadata.
+type ComposeMetadata struct {
+
+	// ID (hash) of the built commit
+	OstreeCommit *string `json:"ostree_commit,omitempty"`
+
+	// Package list including NEVRA
+	Packages *[]PackageMetadata `json:"packages,omitempty"`
+}
+
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
 	Customizations *Customizations `json:"customizations,omitempty"`
@@ -166,6 +176,18 @@ const (
 type OSTree struct {
 	Ref *string `json:"ref,omitempty"`
 	Url *string `json:"url,omitempty"`
+}
+
+// PackageMetadata defines model for PackageMetadata.
+type PackageMetadata struct {
+	Arch      string  `json:"arch"`
+	Epoch     *string `json:"epoch,omitempty"`
+	Name      string  `json:"name"`
+	Release   string  `json:"release"`
+	Sigmd5    string  `json:"sigmd5"`
+	Signature *string `json:"signature,omitempty"`
+	Type      string  `json:"type"`
+	Version   string  `json:"version"`
 }
 
 // Repository defines model for Repository.
