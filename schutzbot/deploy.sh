@@ -12,8 +12,8 @@ echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 OSBUILD_DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
 COMPOSER_DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 # Default values
-OSBUILD_COMMIT=bc7096ab8694a1a0abcf7bf536abee8ea8a6e5ac
-OSBUILD_COMPOSER_COMMIT=419ac4c7699b72cd4ca5fc89c8f46bd579baf06c
+OSBUILD_COMMIT=eb74ddf2ef8c203b5d354dfb97adee65babdc147
+OSBUILD_COMPOSER_COMMIT=c025c605444de9efba86da6e47a649eba40c9396
 
 # If the GH token is defined, fetch used commits used in production / staging
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
@@ -122,6 +122,11 @@ sudo composer-cli sources list
 for SOURCE in $(sudo composer-cli sources list); do
     sudo composer-cli sources info "$SOURCE"
 done
+
+# Currently openstack/rhel-8.4-x86_64 cannot subcribe, subscription is disabled.
+# In a non-subscribed system, cannot pull the Postgres container. So manually download it from quay.io
+# Remove this after openstack/rhel-8.4-x86_64 can subscribe
+sudo podman pull docker://quay.io/osbuild/postgres:latest
 
 # Start Postgres container
 sudo podman run -p 5432:5432 --name image-builder-db \
