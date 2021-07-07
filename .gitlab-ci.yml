@@ -25,8 +25,6 @@ start:
 Test EL8:
   stage: test
   extends: .terraform
-  variables:
-    EXTRA_REPO_PATH_SEGMENT: "gitlab/"
   script:
     - schutzbot/ci_details.sh
     # TODO: move build step as separate section
