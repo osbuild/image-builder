@@ -40,6 +40,19 @@ Test EL8:
         RUNNER:
           - aws/rhel-8-x86_64
 
+Test Edge 84:
+  stage: test
+  extends: .terraform
+  script:
+    - schutzbot/ci_details.sh
+    - schutzbot/build.sh
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/image-builder/edge.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - openstack/rhel-8.4-x86_64
+
 finish:
   stage: finish
   tags:

@@ -62,6 +62,17 @@ install -m 0644 -vp internal/db/migrations/*          %{buildroot}%{_datadir}/im
 %if %{with tests} || 0%{?rhel}
 install -m 0755 -vd					%{buildroot}%{_libexecdir}/tests/image-builder
 install -m 0755 -vp test/cases/*                        %{buildroot}%{_libexecdir}/tests/image-builder/
+
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/image-builder/edge
+install -m 0644 -vp test/data/edge/*                            %{buildroot}%{_datadir}/tests/image-builder/edge/
+
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/image-builder/keyring
+install -m 0644 -vp test/data/keyring/id_rsa.pub                %{buildroot}%{_datadir}/tests/image-builder/keyring/
+install -m 0600 -vp test/data/keyring/id_rsa                    %{buildroot}%{_datadir}/tests/image-builder/keyring/
+
+install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/image-builder/repositories
+install -m 0644 -vp test/data/repositories/*                    %{buildroot}%{_datadir}/tests/image-builder/repositories/
+
 %endif
 
 %post
@@ -87,12 +98,21 @@ Summary:    Integration tests
 Requires:   %{name} = %{version}-%{release}
 Requires:   openssl
 Requires:   jq
+Requires:   curl
+Requires:   httpd
+Requires:   expect
+Requires:   qemu-img
+Requires:   qemu-kvm
+Requires:   libvirt-client
+Requires:   libvirt-daemon-kvm
+Requires:   virt-install
 
 %description tests
 Integration tests to be run on a system with image-builder installed.
 
 %files tests
 %{_libexecdir}/tests/image-builder
+%{_datadir}/tests/image-builder
 %endif
 
 %changelog
