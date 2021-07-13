@@ -48,21 +48,6 @@ JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
 # Directory to hold the RPMs temporarily before we upload them.
 REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
 
-# Currently openstack/rhel-8.4-x86_64 cannot subcribe, subscription is disabled.
-# Mock will fail if not subscribed, this is a workaround to fix mock failure.
-# TODO: remove this after openstack/rhel-8.4-x86_64 can subscribe
-if [[ "$ID" == rhel ]] && ! sudo subscription-manager status; then
-    greenprint "📋 Updating RHEL 8 mock template with the latest nightly repositories"
-    # strip everything after line with # repos
-    sudo sed -i '/# repos/q' /etc/mock/templates/rhel-8.tpl
-    # remove the subscription check
-    sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
-    # reuse redhat.repo
-    cat /etc/yum.repos.d/rhel8internal.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
-    # We need triple quotes at the end of the template to mark the end of the repo list.
-    echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
-fi
-
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
 make srpm
@@ -77,17 +62,6 @@ sudo mock -v -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
     rpmbuild/SRPMS/*.src.rpm
 
 sudo dnf localinstall -y "$REPO_DIR"/*x86_64.rpm
-
-# Currently openstack/rhel-8.4-x86_64 cannot subcribe, subscription is disabled.
-# Can not use the cdn repo link, replace with internal repo
-# TODO: remove this after openstack/rhel-8.4-x86_64 can subscribe
-echo "Replace original cdn link."
-if ! sudo subscription-manager status; then
-    sudo rm distributions/rhel-84.json
-    sudo rm distributions/rhel-8.json
-    sudo cp /usr/share/tests/image-builder/repositories/rhel-84.json distributions/rhel-84.json
-    sudo cp /usr/share/tests/image-builder/repositories/rhel-84.json distributions/rhel-8.json
-fi
 
 # Build the container
 sudo dnf install -y podman
