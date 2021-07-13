@@ -70,9 +70,6 @@ install -m 0755 -vd                                             %{buildroot}%{_d
 install -m 0644 -vp test/data/keyring/id_rsa.pub                %{buildroot}%{_datadir}/tests/image-builder/keyring/
 install -m 0600 -vp test/data/keyring/id_rsa                    %{buildroot}%{_datadir}/tests/image-builder/keyring/
 
-install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/image-builder/repositories
-install -m 0644 -vp test/data/repositories/*                    %{buildroot}%{_datadir}/tests/image-builder/repositories/
-
 %endif
 
 %post
