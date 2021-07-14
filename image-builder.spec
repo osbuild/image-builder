@@ -103,6 +103,7 @@ Requires:   qemu-kvm
 Requires:   libvirt-client
 Requires:   libvirt-daemon-kvm
 Requires:   virt-install
+Requires:   wget
 
 %description tests
 Integration tests to be run on a system with image-builder installed.
