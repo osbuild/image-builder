@@ -9,7 +9,11 @@
 # 2. Download commit image, extract it to /var/www/html, and serve it over httpd
 # 3. Install Edge vm based on commit repo url, and run ansible playbook to check it.
 #
-# Test case for installer ISO image will be added soon.
+# ------------ Test iso image --------------------------------------------------------
+# 1. Call image builder Rest API. (build an rhel-edge-installer image and upload to aws s3)
+# 2. Download iso image
+# 3. Use mkksiso to put kickstart file into iso image
+# 4. Install Edge vm with iso, and run ansible playbook to check it.
 
 set -euxo pipefail
 
@@ -38,6 +42,7 @@ SSH_KEY=${IMAGE_BUILDER_TEST_DATA}/keyring/id_rsa
 
 KS_FILE=${WORKDIR}/ks.cfg
 COMMIT_FILENAME="commit.tar"
+ISO_FILENAME="installer.iso"
 
 # Run before test begin to prepare test environment
 function before_test() {
@@ -130,14 +135,18 @@ EOF
 # Run after test finished to clean up test environment
 function after_test() {
     # Clean up Edge VMs
-    greenprint "🧹 Clean up BIOS VM"
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-commit") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-commit"
+    if [[ $(sudo virsh domstate "${IMAGE_KEY}-installer") == "running" ]]; then
+        sudo virsh destroy "${IMAGE_KEY}-installer"
     fi
-    sudo virsh undefine "${IMAGE_KEY}-commit"
+    sudo virsh undefine "${IMAGE_KEY}-installer"
 
     # Clean up temp files
     sudo rm -fr "$COMMIT_IMAGE_PATH"
+    sudo rm -fr "${WORKDIR}/$COMMIT_FILENAME"
+
+    sudo rm -fr "$ISO_IMAGE_PATH"
+    sudo rm -fr "/var/lib/libvirt/images/${ISO_FILENAME}"
+    sudo rm -fr /var/lib/libvirt/images/output.iso
 
     # Clean up work directory
     sudo rm -fr "$WORKDIR"
@@ -215,6 +224,21 @@ function download_image() {
     $CURLCMD "$RESULT_URL" --output "$1"
 }
 
+# Get metadata of the image
+function verify_metadata() {
+    local RESULT
+    RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID/metadata")
+    EXIT_CODE=$(get_exit_code "$RESULT")
+    [[ $EXIT_CODE == 200 ]]
+
+    local PACKAGENAMES
+    PACKAGENAMES=$(get_response "$RESULT" | jq -r '.packages[].name')
+    if ! grep -q python36 <<< "${PACKAGENAMES}"; then
+        echo "'python36' not found in compose package list 😠"
+        exit 1
+    fi
+}
+
 # Test result checking
 check_result () {
     greenprint "🎏 Checking for test result"
@@ -272,6 +296,8 @@ EOF
 
 post_to_composer "${WORKDIR}"/commit_body.json
 wait_for_compose
+#TODO:  (due to log size issue, disable this step, recover it after CI job log size increased.)
+# verify_metadata
 download_image "${WORKDIR}/$COMMIT_FILENAME"
 
 # extract commit image to http path
@@ -379,6 +405,128 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Run ansible playbook on Edge vm to do sanity check
+sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${WORKDIR}"/inventory -e image_type=rhel-edge-commit -e ostree_commit="${INSTALL_HASH}" -e workspace="$WORKDIR" ${IMAGE_BUILDER_TEST_DATA}/edge/check_ostree.yaml || RESULTS=0
+check_result
+
+# Cleanup edge vm
+greenprint "🧹 Clean up BIOS VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-commit") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-commit"
+fi
+sudo virsh undefine "${IMAGE_KEY}-commit"
+
+
+############################## Test installer image #########################
+# call image-builder API to build installer iso image
+greenprint "📼 Generate request body to build commit image"
+sudo tee "${WORKDIR}"/installer_body.json > /dev/null << EOF
+{
+    "distribution": "${DISTRO}",
+      "customizations": {
+        "packages": []
+      },
+      "image_requests": [
+        {
+          "architecture": "${ARCH}",
+          "image_type": "rhel-edge-installer",
+          "ostree": {
+            "ref": "${OSTREE_REF}",
+            "url": "${REPO_URL}"
+          },
+          "upload_request": {
+            "type": "aws.s3",
+            "options": {}
+          }
+        }
+      ]
+}
+EOF
+
+post_to_composer "${WORKDIR}"/installer_body.json
+wait_for_compose
+#TODO:  (due to log size issue, disable this step, recover it after CI job log size increased.)
+# verify_metadata
+download_image "${WORKDIR}/$ISO_FILENAME"
+
+
+# Write kickstart file for ostree image installation.
+greenprint "Generate kickstart file"
+sudo rm -fr "$KS_FILE"
+tee "$KS_FILE" > /dev/null << STOPHERE
+text
+network --bootproto=dhcp --device=link --activate --onboot=on
+
+zerombr
+clearpart --all --initlabel --disklabel=msdos
+autopart --nohome --noswap --type=plain
+ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=file:///ostree/repo --ref=${OSTREE_REF}
+poweroff
+
+%post --log=/var/log/anaconda/post-install.log --erroronfail
+# add user admin and ssh key
+useradd -m -d /home/admin -p \$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0 -G wheel admin
+mkdir -p /home/admin/.ssh
+chmod 755 /home/admin/.ssh
+tee /home/admin/.ssh/authorized_keys > /dev/null << EOF
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost
+EOF
+chmod 600 /home/admin/.ssh/authorized_keys
+chown admin:admin /home/admin/.ssh/authorized_keys
+# no sudo password for user admin
+echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
+
+# delete local ostree repo and add external prod edge repo
+ostree remote delete rhel-edge
+ostree remote add --no-gpg-verify --no-sign-verify rhel-edge ${REPO_URL}
+%end
+STOPHERE
+
+# Create qcow2 file for virt install.
+greenprint "🖥 Create qcow2 file for virt install"
+ISO_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-installer.qcow2
+sudo qemu-img create -f qcow2 "${ISO_IMAGE_PATH}" 20G
+
+# Put ks.cfg into iso file
+sudo mv "${WORKDIR}/${ISO_FILENAME}" /var/lib/libvirt/images/
+sudo dnf install -y lorax
+sudo wget -cN https://raw.githubusercontent.com/weldr/lorax/master/src/sbin/mkksiso -O "${WORKDIR}/mkksiso"
+sudo chmod +x "${WORKDIR}/mkksiso"
+sudo "${WORKDIR}/mkksiso" -c "console=ttyS0,115200" "$KS_FILE" "/var/lib/libvirt/images/${ISO_FILENAME}" /var/lib/libvirt/images/output.iso
+
+# Install ostree image via anaconda.
+greenprint "💿 Install ostree image via installer(ISO) on BIOS VM"
+sudo virt-install  --name="${IMAGE_KEY}-installer" \
+                --disk path="${ISO_IMAGE_PATH}",format=qcow2 \
+                --ram 3072 \
+                --vcpus 2 \
+                --network network=integration,mac=34:49:22:B0:83:30 \
+                --os-type linux \
+                --os-variant ${OS_VARIANT} \
+                --cdrom /var/lib/libvirt/images/output.iso \
+                --nographics \
+                --noautoconsole \
+                --wait=-1 \
+                --noreboot
+
+# Start VM
+greenprint "📟 Start BIOS VM"
+sudo virsh start "${IMAGE_KEY}-installer"
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh $GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+check_result
+
+# Test IoT/Edge OS
+greenprint "📼 Run Edge tests on BIOS VM"
 sudo ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -v -i "${WORKDIR}"/inventory -e image_type=rhel-edge-commit -e ostree_commit="${INSTALL_HASH}" -e workspace="$WORKDIR" ${IMAGE_BUILDER_TEST_DATA}/edge/check_ostree.yaml || RESULTS=0
 check_result
 
