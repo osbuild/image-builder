@@ -200,6 +200,7 @@ function checkEnvAWS() {
 
 function installClientAWS() {
   if ! hash aws; then
+    command unzip > /dev/null || sudo dnf install -y unzip
     mkdir "$WORKDIR/aws"
     pushd "$WORKDIR/aws"
       curl -Ls --retry 5 --output awscliv2.zip \
