@@ -1,5 +1,6 @@
 stages:
   - start
+  - build
   - test
   - finish
 
@@ -22,13 +23,25 @@ start:
   script:
     - schutzbot/update_github_status.sh start
 
+build:
+  stage: build
+  extends: .terraform
+  script:
+    - schutzbot/build.sh
+  artifacts:
+    paths:
+      - repo/image-builder/${CI_PIPELINE_ID}
+    expire_in: 3 days
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8-x86_64
+
 Test EL8:
   stage: test
   extends: .terraform
   script:
     - schutzbot/ci_details.sh
-    # TODO: move build step as separate section
-    - schutzbot/build.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/image-builder/api.sh ${PROVIDER}
   parallel:
@@ -45,7 +58,6 @@ Test Edge 84:
   extends: .terraform
   script:
     - schutzbot/ci_details.sh
-    - schutzbot/build.sh
     - schutzbot/deploy.sh
     - /usr/libexec/tests/image-builder/edge.sh
   parallel:

@@ -8,6 +8,20 @@ ARCH=$(uname -m)
 echo "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
+# Currently openstack/rhel-8.4-x86_64 is beta image, the subscription will fail.
+# Added condition to check if it is a beta image.
+# TODO: remove condition to check beta after openstack/rhel-8.4-x86_64 can subscribe
+# Register RHEL if we are provided with a registration script.
+if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status && ! sudo grep beta /etc/os-release; then
+    echo "Registering RHEL instance"
+    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
+    sudo "$RHN_REGISTRATION_SCRIPT"
+fi
+
+# Install image-builder packages
+REPO_DIR=repo/image-builder/"${CI_PIPELINE_ID}"
+sudo dnf localinstall -y "$REPO_DIR"/*"${ARCH}".rpm
+
 # Set up osbuild-composer repo
 OSBUILD_DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
 COMPOSER_DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
@@ -126,6 +140,7 @@ done
 # Currently openstack/rhel-8.4-x86_64 cannot subcribe, subscription is disabled.
 # In a non-subscribed system, cannot pull the Postgres container. So manually download it from quay.io
 # Remove this after openstack/rhel-8.4-x86_64 can subscribe
+sudo dnf install -y podman
 sudo podman pull docker://quay.io/osbuild/postgres:latest
 
 # Start Postgres container
@@ -145,14 +160,18 @@ for RETRY in {1..10}; do
     sleep 2
 done
 
+# Pull image-builder image
+QUAY_REPO_URL="quay.io/osbuild/image-builder-test"
+QUAY_REPO_TAG="${CI_PIPELINE_ID}"
+sudo podman pull --creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" "${QUAY_REPO_URL}":"${QUAY_REPO_TAG}"
+
 # Migrate
 sudo podman run --pull=never --security-opt "label=disable" --net=host \
      -e PGHOST=localhost -e PGPORT=5432 -e PGDATABASE=imagebuilder \
      -e PGUSER=postgres -e PGPASSWORD=foobar \
      -e MIGRATIONS_DIR="/app/migrations" \
      --name image-builder-migrate \
-     image-builder /app/image-builder-migrate-db
-
+     image-builder-test:"${QUAY_REPO_TAG}" /app/image-builder-migrate-db
 
 # Start Image Builder container
 sudo podman run -d -p 8086:8086 --pull=never --security-opt "label=disable" --net=host \
@@ -173,4 +192,4 @@ sudo podman run -d -p 8086:8086 --pull=never --security-opt "label=disable" --ne
      -e DISTRIBUTIONS_DIR="/app/distributions" \
      -v /etc/osbuild-composer:/etc/osbuild-composer \
      --name image-builder \
-     image-builder
+     image-builder-test:"${QUAY_REPO_TAG}"

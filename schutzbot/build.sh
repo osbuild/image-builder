@@ -36,17 +36,10 @@ sudo dnf -y install createrepo_c make mock python3-pip rpm-build
 WORKSPACE=${WORKSPACE:-$(pwd)}
 
 # Mock configuration file to use for building RPMs.
-MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
+MOCK_CONFIG="${ID}-${VERSION_ID%.*}-${ARCH}"
 
-# Jenkins takes the proposed PR and merges it onto main. Although this creates a
-# new SHA (which is slightly confusing), it ensures that the code merges
-# properly against main and it tests the code against the latest commit in main,
-# which is certainly good.
-POST_MERGE_SHA=$(git rev-parse --short HEAD)
-
-JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
 # Directory to hold the RPMs temporarily before we upload them.
-REPO_DIR=repo/${JOB_NAME}/${POST_MERGE_SHA}/${ID}${VERSION_ID//./}_${ARCH}
+REPO_DIR=repo/image-builder/${CI_PIPELINE_ID}
 
 # Build source RPMs.
 greenprint "🔧 Building source RPMs."
@@ -61,10 +54,13 @@ greenprint "🎁 Building RPMs with mock"
 sudo mock -v -r "$MOCK_CONFIG" --resultdir "$REPO_DIR" --with=tests \
     rpmbuild/SRPMS/*.src.rpm
 
-sudo dnf localinstall -y "$REPO_DIR"/*x86_64.rpm
+# Build the container and push to quay
+QUAY_REPO_URL="quay.io/osbuild/image-builder-test"
+QUAY_REPO_TAG="${CI_PIPELINE_ID}"
 
-# Build the container
 sudo dnf install -y podman
 sudo setenforce 0 # todo
-sudo podman build --security-opt "label=disable" -t image-builder -f distribution/Dockerfile-ubi .
+sudo podman build --security-opt "label=disable" -t image-builder-"${QUAY_REPO_TAG}" -f distribution/Dockerfile-ubi .
 sudo setenforce 1
+
+sudo podman push --creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" image-builder-"${CI_PIPELINE_ID}" "${QUAY_REPO_URL}":"${QUAY_REPO_TAG}"
