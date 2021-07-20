@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 import time
+import requests
 
 PROJECT_ROOT=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DISTRIBUTION_DIR=os.path.join(PROJECT_ROOT, 'distributions')
@@ -27,6 +28,11 @@ def main():
     dnfjson_args_template = {
         'command': 'dump'
     }
+
+    r = requests.get("https://raw.githubusercontent.com/osbuild/osbuild-composer/main/dnf-json")
+    with open(DNF_JSON, 'w') as f:
+        f.write(r.text)
+    os.chmod(DNF_JSON, 0o755)
 
     for distro in args.distro:
         distro_data = {}
