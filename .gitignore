@@ -2,3 +2,4 @@
 rpmbuild
 /image-builder-tests
 /image-builder-migrate-db
+dnf-json
