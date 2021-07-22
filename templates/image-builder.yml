@@ -9,18 +9,6 @@ metadata:
   name: image-builder
 objects:
 
-# NOTE(mhayden): This came from the example in the documentation and I felt
-# like it would be useful to maintain it here so it's easier to add our own
-# variables later.
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    labels:
-      app: image-builder
-    name: image-builder-config
-  data:
-    example: "${EXAMPLE}"
-
 # Deploy the image-builder container.
 - apiVersion: apps/v1
   kind: Deployment
@@ -253,9 +241,6 @@ objects:
 
 # Parameters for the various configurations shown above.
 parameters:
-  - description: Example configmap variable
-    name: EXAMPLE
-    value: "EXAMPLE_DATA"
   - description: image-builder image name
     name: IMAGE_NAME
     value: quay.io/cloudservices/image-builder
