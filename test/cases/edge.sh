@@ -15,7 +15,7 @@
 # 3. Use mkksiso to put kickstart file into iso image
 # 4. Install Edge vm with iso, and run ansible playbook to check it.
 
-set -euxo pipefail
+set -euo pipefail
 
 ############### Common variables for CI ###########################
 WORKDIR=$(mktemp -d)
@@ -227,12 +227,12 @@ function download_image() {
 # Get metadata of the image
 function verify_metadata() {
     local RESULT
-    RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID/metadata")
+    RESULT=$($CURLCMD -H "$HEADER" --request GET "$BASEURL/composes/$COMPOSE_ID/metadata") > /dev/null
     EXIT_CODE=$(get_exit_code "$RESULT")
     [[ $EXIT_CODE == 200 ]]
 
     local PACKAGENAMES
-    PACKAGENAMES=$(get_response "$RESULT" | jq -r '.packages[].name')
+    PACKAGENAMES=$(get_response "$RESULT" | jq -r '.packages[].name') > /dev/null
     if ! grep -q python36 <<< "${PACKAGENAMES}"; then
         echo "'python36' not found in compose package list 😠"
         exit 1
@@ -296,8 +296,7 @@ EOF
 
 post_to_composer "${WORKDIR}"/commit_body.json
 wait_for_compose
-#TODO:  (due to log size issue, disable this step, recover it after CI job log size increased.)
-# verify_metadata
+verify_metadata
 download_image "${WORKDIR}/$COMMIT_FILENAME"
 
 # extract commit image to http path
@@ -444,8 +443,6 @@ EOF
 
 post_to_composer "${WORKDIR}"/installer_body.json
 wait_for_compose
-#TODO:  (due to log size issue, disable this step, recover it after CI job log size increased.)
-# verify_metadata
 download_image "${WORKDIR}/$ISO_FILENAME"
 
 
