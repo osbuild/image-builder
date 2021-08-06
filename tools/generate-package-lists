@@ -67,12 +67,13 @@ def main():
             p = subprocess.Popen(DNF_JSON, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             out, err = p.communicate(json.dumps(dnfjson_args).encode('utf-8'))
 
-            pkgdata = {
-                'data': [{"summary": p["summary"], "name": p["name"], "version": p["version"]} for p in json.loads(out)['packages']]
-            }
+            pkgs = [ {"name": p["name"], "summary": p["summary"]} for p in json.loads(out)['packages'] ]
+            filtered = []
+            [ filtered.append(p) for p in pkgs if p["name"] not in list(map(lambda p: p["name"], filtered)) ]
+
             outfile = os.path.join(DISTRIBUTION_DIR, '%s-%s-packages.json' % (distro_data['distribution']['name'], arch))
             with open(outfile, 'w+') as f:
-                json.dump(pkgdata, f, indent=2)
+                json.dump({ 'data': filtered }, f, indent=2)
 
     return 0
 
