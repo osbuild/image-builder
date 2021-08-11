@@ -49,6 +49,7 @@ export GOFLAGS=-mod=vendor
 install -m 0755 -vd					%{buildroot}%{_libexecdir}/image-builder
 install -m 0755 -vp _bin/image-builder			%{buildroot}%{_libexecdir}/image-builder/
 install -m 0755 -vp _bin/image-builder-migrate-db       %{buildroot}%{_libexecdir}/image-builder/
+install -m 0755 -vp tools/gen-ssh.sh			%{buildroot}%{_libexecdir}/image-builder/
 
 install -m 0755 -vd					%{buildroot}%{_unitdir}
 install -m 0644 -vp distribution/*.{service,socket}	%{buildroot}%{_unitdir}/
@@ -84,6 +85,7 @@ install -m 0600 -vp test/data/keyring/id_rsa                    %{buildroot}%{_d
 %files
 %{_libexecdir}/image-builder/image-builder
 %{_libexecdir}/image-builder/image-builder-migrate-db
+%{_libexecdir}/image-builder/gen-ssh.sh
 %{_unitdir}/image-builder.service
 %{_unitdir}/image-builder.socket
 %{_datadir}/image-builder/distributions/
