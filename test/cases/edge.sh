@@ -38,7 +38,9 @@ GUEST_ADDRESS=192.168.100.50
 REPO_URL=http://$HOST_ADDRESS/repo
 
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
-SSH_KEY=${IMAGE_BUILDER_TEST_DATA}/keyring/id_rsa
+SSH_DATA_DIR=$(/usr/libexec/image-builder/gen-ssh.sh)
+SSH_KEY=${SSH_DATA_DIR}/id_rsa
+SSH_KEY_PUB="$(cat "${SSH_KEY}".pub)"
 
 KS_FILE=${WORKDIR}/ks.cfg
 COMMIT_FILENAME="commit.tar"
@@ -313,7 +315,7 @@ timezone --utc Etc/UTC
 selinux --enforcing
 rootpw --lock --iscrypted locked
 user --name=admin --groups=wheel --iscrypted --password=\$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp24HTuqXPJl6GYCm8uuobAmwxLv7rGCvTRZhxtcYdmC0.XnYRSR9Sh6de3p0
-sshkey --username=admin "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+sshkey --username=admin "${SSH_KEY_PUB}"
 bootloader --timeout=1 --append="net.ifnames=0 modprobe.blacklist=vc4"
 network --bootproto=dhcp --device=link --activate --onboot=on
 zerombr
@@ -465,7 +467,7 @@ useradd -m -d /home/admin -p \$6\$1LgwKw9aOoAi/Zy9\$Pn3ErY1E8/yEanJ98evqKEW.DZp2
 mkdir -p /home/admin/.ssh
 chmod 755 /home/admin/.ssh
 tee /home/admin/.ssh/authorized_keys > /dev/null << EOF
-ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost
+$SSH_KEY_PUB
 EOF
 chmod 600 /home/admin/.ssh/authorized_keys
 chown admin:admin /home/admin/.ssh/authorized_keys
