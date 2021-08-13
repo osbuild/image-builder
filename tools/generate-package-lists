@@ -67,12 +67,23 @@ def main():
             p = subprocess.Popen(DNF_JSON, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             out, err = p.communicate(json.dumps(dnfjson_args).encode('utf-8'))
 
-            pkgdata = {
-                'data': [{"summary": p["summary"], "name": p["name"], "version": p["version"]} for p in json.loads(out)['packages']]
+            pkgdata = [
+                {"summary": p["summary"], "name": p["name"], "version": p["version"]} for p in json.loads(out)['packages']
+            ]
+
+            removeDup = [
+                json.dumps(d, sort_keys=True) for d in pkgdata
+            ]
+            
+            removeDup = set(removeDup)
+
+            nonDup = {
+                'data': [json.loads(s) for s in removeDup]
             }
+
             outfile = os.path.join(DISTRIBUTION_DIR, '%s-%s-packages.json' % (distro_data['distribution']['name'], arch))
             with open(outfile, 'w+') as f:
-                json.dump(pkgdata, f, indent=2)
+                json.dump(nonDup, f, indent=2)
 
     return 0
 
