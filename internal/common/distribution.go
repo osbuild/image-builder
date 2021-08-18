@@ -42,7 +42,6 @@ type X86_64 struct {
 type Package struct {
 	Name    string `json:"name"`
 	Summary string `json:"summary"`
-	Version string `json:"version"`
 }
 
 type PackagesFile struct {

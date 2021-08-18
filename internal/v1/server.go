@@ -562,7 +562,6 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 			Package{
 				Name:    p.Name,
 				Summary: p.Summary,
-				Version: p.Version,
 			})
 	}
 
