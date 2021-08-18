@@ -1,0 +1,23 @@
+name: Coverity
+
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - main
+
+jobs:
+  scan:
+    name: "coverity scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+
+      - name: Run coverify scan script
+        env:
+          COVERITY_SCAN_PROJECT_NAME: ${{ secrets.COVERITY_SCAN_PROJECT_NAME }}
+          COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+        run: ./tools/coverity-scan.sh "$COVERITY_SCAN_PROJECT_NAME" "$COVERITY_SCAN_TOKEN"
