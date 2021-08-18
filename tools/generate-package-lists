@@ -70,6 +70,7 @@ def main():
             pkgs = [ {"name": p["name"], "summary": p["summary"]} for p in json.loads(out)['packages'] ]
             filtered = []
             [ filtered.append(p) for p in pkgs if p["name"] not in list(map(lambda p: p["name"], filtered)) ]
+            filtered.sort(key=lambda p: p["name"].lower())
 
             outfile = os.path.join(DISTRIBUTION_DIR, '%s-%s-packages.json' % (distro_data['distribution']['name'], arch))
             with open(outfile, 'w+') as f:

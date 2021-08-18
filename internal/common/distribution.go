@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -154,10 +153,6 @@ func FindPackages(distsDir, distro, arch, search string) ([]Package, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	sort.Slice(p.Data, func(i, j int) bool {
-		return strings.ToLower(p.Data[i].Name) < strings.ToLower(p.Data[j].Name)
-	})
 
 	var filtPkgs []Package
 	for _, p := range p.Data {
