@@ -582,13 +582,10 @@ components:
       required:
         - name
         - summary
-        - version
       properties:
         name:
           type: string
         summary:
-          type: string
-        version:
           type: string
     ComposeMetadata:
       type: object
