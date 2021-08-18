@@ -92,7 +92,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, distro := range result {
-			require.Contains(t, []string{"rhel-84", "rhel-8", "centos-8"}, distro.Name)
+			require.Contains(t, []string{"rhel-84", "centos-8"}, distro.Name)
 		}
 	})
 
@@ -611,7 +611,7 @@ func TestComposeCustomizations(t *testing.T) {
 			Customizations: &Customizations{
 				Packages: nil,
 			},
-			Distribution: "rhel-8",
+			Distribution: "rhel-84",
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
