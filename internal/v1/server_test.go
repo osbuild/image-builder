@@ -321,6 +321,78 @@ func TestGetComposeStatus404(t *testing.T) {
 	require.Contains(t, body, "404 during tests")
 }
 
+func TestGetComposeMetadata(t *testing.T) {
+	// simulate osbuild-composer API
+	testPackages := []cloudapi.PackageMetadata{
+		{
+			Arch:      "ArchTest2",
+			Epoch:     strptr("EpochTest2"),
+			Name:      "NameTest2",
+			Release:   "ReleaseTest2",
+			Sigmd5:    "Sigmd5Test2",
+			Signature: strptr("SignatureTest2"),
+			Type:      "TypeTest2",
+			Version:   "VersionTest2",
+		},
+		{
+			Arch:      "ArchTest1",
+			Epoch:     strptr("EpochTest1"),
+			Name:      "NameTest1",
+			Release:   "ReleaseTest1",
+			Sigmd5:    "Sigmd5Test1",
+			Signature: strptr("SignatureTest1"),
+			Type:      "TypeTest1",
+			Version:   "VersionTest1",
+		},
+	}
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		m := cloudapi.ComposeMetadata{
+			OstreeCommit: strptr("test string"),
+			Packages:     &testPackages,
+		}
+
+		err := json.NewEncoder(w).Encode(m)
+		require.NoError(t, err)
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL, "*", "")
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	var result cloudapi.ComposeMetadata
+
+	// Get API response and compare
+	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test/metadata", &tutils.AuthString0)
+	require.Equal(t, 200, response.StatusCode)
+	err := json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, *result.Packages, testPackages)
+}
+
+func TestGetComposeMetadata404(t *testing.T) {
+	// simulate osbuild-composer API
+	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprint(w, "404 during tests")
+	}))
+	defer api_srv.Close()
+
+	srv := startServer(t, api_srv.URL, "*", "")
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test/metadata", &tutils.AuthString0)
+	require.Equal(t, 404, response.StatusCode)
+	require.Contains(t, body, "404 during tests")
+}
+
 // note: these scenarios don't needs to talk to a simulated osbuild-composer API
 func TestComposeImage(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
