@@ -67,10 +67,6 @@ install -m 0755 -vp test/cases/*                        %{buildroot}%{_libexecdi
 install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/image-builder/edge
 install -m 0644 -vp test/data/edge/*                            %{buildroot}%{_datadir}/tests/image-builder/edge/
 
-install -m 0755 -vd                                             %{buildroot}%{_datadir}/tests/image-builder/keyring
-install -m 0644 -vp test/data/keyring/id_rsa.pub                %{buildroot}%{_datadir}/tests/image-builder/keyring/
-install -m 0600 -vp test/data/keyring/id_rsa                    %{buildroot}%{_datadir}/tests/image-builder/keyring/
-
 %endif
 
 %post
