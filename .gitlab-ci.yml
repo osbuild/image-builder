@@ -26,6 +26,8 @@ start:
 build:
   stage: build
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
     - schutzbot/build.sh
   artifacts:
@@ -40,6 +42,8 @@ build:
 Test EL8:
   stage: test
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
     - schutzbot/ci_details.sh
     - schutzbot/deploy.sh
@@ -56,6 +60,8 @@ Test EL8:
 Test Edge 84:
   stage: test
   extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
     - schutzbot/ci_details.sh
     - schutzbot/deploy.sh
@@ -64,6 +70,20 @@ Test Edge 84:
     matrix:
       - RUNNER:
           - openstack/rhel-8-x86_64
+
+Test Load Test:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - schutzbot/ci_details.sh
+    - test/cases/load_test.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 finish:
   stage: finish
