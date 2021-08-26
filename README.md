@@ -7,7 +7,7 @@ backend for [Image Builder
 Frontend](https://github.com/osbuild/image-builder-frontend/).
 
 Image Builder is intended to be run within the
-[cloud.redhat.com](https://cloud.redhat.com) platform.
+[console.redhat.com](https://console.redhat.com) platform.
 
 ### OpenAPI spec
 

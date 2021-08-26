@@ -5,7 +5,7 @@ labels:
   template: image-builder
 metadata:
   annotations:
-    description: Backend service for image-builder in cloud.redhat.com
+    description: Backend service for image-builder in console.redhat.com
   name: image-builder
 objects:
 
