@@ -12,7 +12,7 @@ Image Builder is intended to be run within the
 ### OpenAPI spec
 
 The [latest api
-specification](https://github.com/osbuild/image-builder/blob/main/internal/server/api.yaml).
+specification](https://github.com/osbuild/image-builder/blob/main/internal/v1/api.yaml).
 
 ### Updating package lists
 
