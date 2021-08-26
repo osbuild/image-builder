@@ -23,6 +23,9 @@ jobs:
           COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
           COVERITY_EMAIL: ${{ secrets.COVERITY_EMAIL }}
         run: |
+        
+            echo "*** DEBUG: email=$COVERITY_EMAIL"
+        
           echo "Downloading coverity scan package."
           curl -o /tmp/cov-analysis-linux64.tgz https://scan.coverity.com/download/linux64 \
             --form project="$COVERITY_SCAN_PROJECT_NAME" \
