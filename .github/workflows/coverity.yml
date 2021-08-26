@@ -12,6 +12,7 @@ jobs:
   scan:
     name: "coverity scan"
     runs-on: ubuntu-latest
+    environment: coverity
     steps:
       - name: Clone repository
         uses: actions/checkout@v2
