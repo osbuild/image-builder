@@ -98,3 +98,7 @@ func (d *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMessa
 func (d *dB) GetComposes(accountId string, limit, offset int) ([]db.ComposeEntry, int, error) {
 	return d.entries, len(d.entries), nil
 }
+
+func (db *dB) GetCompose(jobId string, accountId string) (*db.ComposeEntry, error) {
+	return nil, nil
+}

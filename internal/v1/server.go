@@ -4,6 +4,7 @@ package v1
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -201,7 +202,44 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distribution string) error
 	return ctx.JSON(http.StatusOK, archs)
 }
 
+// return the Identity Header if there is a valid one in the request
+func (h *Handlers) getIdentityHeader(ctx echo.Context) (*IdentityHeader, error) {
+	ih := ctx.Get("IdentityHeader")
+	if ih == nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
+	}
+	idHeader, ok := ih.(IdentityHeader)
+	if !ok {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Identity Header invalid in request handler")
+	}
+
+	return &idHeader, nil
+}
+
+// return an error if the user does not have the composeId associated to its AccountId in the DB, nil otherwise
+func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId string) error {
+	idHeader, err := h.getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = h.server.db.GetCompose(composeId, idHeader.Identity.AccountNumber)
+	if err != nil {
+		if errors.As(err, &db.ComposeNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		} else {
+			return err
+		}
+	}
+	return nil
+}
+
 func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
+	err := h.canUserAccessComposeId(ctx, composeId)
+	if err != nil {
+		return err
+	}
+
 	resp, err := h.server.client.ComposeStatus(composeId)
 	if err != nil {
 		return err
@@ -213,7 +251,9 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		if err != nil {
 			return err
 		}
-		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
+		//At this point, if composer is returning a 404, it means that there is a difference between the state of the DB
+		//and the state and the worker. Throw a 500 error
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("%s", body))
 	}
 
 	var cloudStat cloudapi.ComposeStatus
@@ -241,6 +281,11 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 }
 
 func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error {
+	err := h.canUserAccessComposeId(ctx, composeId)
+	if err != nil {
+		return err
+	}
+
 	resp, err := h.server.client.ComposeMetadata(composeId)
 	if err != nil {
 		return err
@@ -290,13 +335,9 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 		return err
 	}
 
-	ih := ctx.Get("IdentityHeader")
-	if ih == nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
-	}
-	idHeader, ok := ih.(IdentityHeader)
-	if !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Identity Header invalid in request handler")
+	idHeader, err := h.getIdentityHeader(ctx)
+	if err != nil {
+		return err
 	}
 
 	limit := 100
@@ -429,13 +470,9 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	ih := ctx.Get("IdentityHeader")
-	if ih == nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
-	}
-	idHeader, ok := ih.(IdentityHeader)
-	if !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Identity Header invalid in request handler")
+	idHeader, err := h.getIdentityHeader(ctx)
+	if err != nil {
+		return err
 	}
 
 	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgId, rawCR)
