@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: '4:00'
+    open-pull-requests-limit: 1
+    rebase-strategy: "disabled"
+
+  # Maintain dependencies for Go
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: '4:00'
+    open-pull-requests-limit: 1
+    rebase-strategy: "disabled"
