@@ -13,13 +13,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/tutils"
 
 	"github.com/labstack/echo/v4"
 )
 
-func startServer(t *testing.T, url string, orgIds string, accountIds string) *echo.Echo {
+var UUIDTest string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc93d"
+
+func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountIds string, dbase db.DB) *echo.Echo {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
 
@@ -27,7 +30,8 @@ func startServer(t *testing.T, url string, orgIds string, accountIds string) *ec
 	require.NoError(t, err)
 
 	echoServer := echo.New()
-	err = Attach(echoServer, logger, client, tutils.InitDB(), AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"), strings.Split(accountIds, ";"), "../../distributions")
+	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"),
+		strings.Split(accountIds, ";"), "../../distributions")
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {
@@ -48,6 +52,10 @@ func startServer(t *testing.T, url string, orgIds string, accountIds string) *ec
 	}
 
 	return echoServer
+}
+
+func startServer(t *testing.T, url string, orgIds string, accountIds string) *echo.Echo {
+	return startServerWithCustomDB(t, url, orgIds, accountIds, tutils.InitDB())
 }
 
 // note: all of the sub-tests below don't actually talk to
@@ -270,17 +278,23 @@ func TestGetComposeStatus(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	// insert a compose in the mock database
+	dbase := tutils.InitDB()
+	err := dbase.InsertCompose(UUIDTest, "600000", "000001", json.RawMessage("{}"))
+	require.NoError(t, err)
+
+	srv := startServerWithCustomDB(t, api_srv.URL, "*", "", dbase)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 
-	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", &tutils.AuthString0)
+	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+		UUIDTest), &tutils.AuthString1)
 	require.Equal(t, 200, response.StatusCode)
 
 	var result cloudapi.ComposeStatus
-	err := json.Unmarshal([]byte(body), &result)
+	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, cloudapi.ComposeStatus{
 		ImageStatus: cloudapi.ImageStatus{
@@ -289,7 +303,8 @@ func TestGetComposeStatus(t *testing.T) {
 	}, result)
 
 	// With a wildcard orgIds either auth should work
-	response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", &tutils.AuthString1)
+	response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+		UUIDTest), &tutils.AuthString1)
 	require.Equal(t, 200, response.StatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -316,9 +331,10 @@ func TestGetComposeStatus404(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test", &tutils.AuthString0)
+	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+		UUIDTest), &tutils.AuthString0)
 	require.Equal(t, 404, response.StatusCode)
-	require.Contains(t, body, "404 during tests")
+	require.Contains(t, body, "Compose not found")
 }
 
 func TestGetComposeMetadata(t *testing.T) {
@@ -357,7 +373,12 @@ func TestGetComposeMetadata(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	// insert a compose in the mock database
+	dbase := tutils.InitDB()
+	err := dbase.InsertCompose(UUIDTest, "500000", "000000", json.RawMessage("{}"))
+	require.NoError(t, err)
+
+	srv := startServerWithCustomDB(t, api_srv.URL, "*", "", dbase)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -366,9 +387,10 @@ func TestGetComposeMetadata(t *testing.T) {
 	var result cloudapi.ComposeMetadata
 
 	// Get API response and compare
-	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test/metadata", &tutils.AuthString0)
+	response, body := tutils.GetResponseBody(t,
+		fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata", UUIDTest), &tutils.AuthString0)
 	require.Equal(t, 200, response.StatusCode)
-	err := json.Unmarshal([]byte(body), &result)
+	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, *result.Packages, testPackages)
 }
@@ -388,9 +410,10 @@ func TestGetComposeMetadata404(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes/xyz-123-test/metadata", &tutils.AuthString0)
+	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata",
+		UUIDTest), &tutils.AuthString0)
 	require.Equal(t, 404, response.StatusCode)
-	require.Contains(t, body, "404 during tests")
+	require.Contains(t, body, "Compose not found")
 }
 
 // note: these scenarios don't needs to talk to a simulated osbuild-composer API

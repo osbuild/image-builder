@@ -75,11 +75,13 @@ func PostResponseBody(t *testing.T, url string, compose interface{}) (*http.Resp
 }
 
 type dB struct {
-	entries []db.ComposeEntry
+	accountOwernship map[string][]db.ComposeEntry
 }
 
 func InitDB() db.DB {
-	return &dB{[]db.ComposeEntry{}}
+	return &dB{
+		make(map[string][]db.ComposeEntry),
+	}
 }
 
 func (d *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMessage) error {
@@ -87,18 +89,33 @@ func (d *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMessa
 	if err != nil {
 		return err
 	}
-	d.entries = append(d.entries, db.ComposeEntry{
+	dbEntry := db.ComposeEntry{
 		Id:        id,
 		Request:   request,
 		CreatedAt: time.Now(),
-	})
+	}
+	if d.accountOwernship[accountId] == nil {
+		d.accountOwernship[accountId] = make([]db.ComposeEntry, 0)
+	}
+	d.accountOwernship[accountId] = append(d.accountOwernship[accountId], dbEntry)
 	return nil
 }
 
 func (d *dB) GetComposes(accountId string, limit, offset int) ([]db.ComposeEntry, int, error) {
-	return d.entries, len(d.entries), nil
+	if d.accountOwernship[accountId] != nil {
+		return d.accountOwernship[accountId], len(d.accountOwernship[accountId]), nil
+	} else {
+		return make([]db.ComposeEntry, 0), 0, nil
+	}
 }
 
-func (db *dB) GetCompose(jobId string, accountId string) (*db.ComposeEntry, error) {
-	return nil, nil
+func (d *dB) GetCompose(jobId string, accountId string) (*db.ComposeEntry, error) {
+	if d.accountOwernship[accountId] != nil {
+		for _, composeEntry := range d.accountOwernship[accountId] {
+			if composeEntry.Id.String() == jobId {
+				return &composeEntry, nil
+			}
+		}
+	}
+	return nil, db.ComposeNotFoundError
 }
