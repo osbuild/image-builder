@@ -22,7 +22,7 @@ import (
 
 var UUIDTest string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc93d"
 
-func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountIds string, dbase db.DB) *echo.Echo {
+func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNumbers string, dbase db.DB) *echo.Echo {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
 
@@ -31,7 +31,7 @@ func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountIds
 
 	echoServer := echo.New()
 	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"),
-		strings.Split(accountIds, ";"), "../../distributions")
+		strings.Split(accountNumbers, ";"), "../../distributions")
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {
@@ -54,8 +54,8 @@ func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountIds
 	return echoServer
 }
 
-func startServer(t *testing.T, url string, orgIds string, accountIds string) *echo.Echo {
-	return startServerWithCustomDB(t, url, orgIds, accountIds, tutils.InitDB())
+func startServer(t *testing.T, url string, orgIds string, accountNumbers string) *echo.Echo {
+	return startServerWithCustomDB(t, url, orgIds, accountNumbers, tutils.InitDB())
 }
 
 // note: all of the sub-tests below don't actually talk to

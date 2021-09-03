@@ -84,7 +84,7 @@ func InitDB() db.DB {
 	}
 }
 
-func (d *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMessage) error {
+func (d *dB) InsertCompose(jobId, accountNumber, orgId string, request json.RawMessage) error {
 	id, err := uuid.Parse(jobId)
 	if err != nil {
 		return err
@@ -94,24 +94,24 @@ func (d *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMessa
 		Request:   request,
 		CreatedAt: time.Now(),
 	}
-	if d.accountOwernship[accountId] == nil {
-		d.accountOwernship[accountId] = make([]db.ComposeEntry, 0)
+	if d.accountOwernship[accountNumber] == nil {
+		d.accountOwernship[accountNumber] = make([]db.ComposeEntry, 0)
 	}
-	d.accountOwernship[accountId] = append(d.accountOwernship[accountId], dbEntry)
+	d.accountOwernship[accountNumber] = append(d.accountOwernship[accountNumber], dbEntry)
 	return nil
 }
 
-func (d *dB) GetComposes(accountId string, limit, offset int) ([]db.ComposeEntry, int, error) {
-	if d.accountOwernship[accountId] != nil {
-		return d.accountOwernship[accountId], len(d.accountOwernship[accountId]), nil
+func (d *dB) GetComposes(accountNumber string, limit, offset int) ([]db.ComposeEntry, int, error) {
+	if d.accountOwernship[accountNumber] != nil {
+		return d.accountOwernship[accountNumber], len(d.accountOwernship[accountNumber]), nil
 	} else {
 		return make([]db.ComposeEntry, 0), 0, nil
 	}
 }
 
-func (d *dB) GetCompose(jobId string, accountId string) (*db.ComposeEntry, error) {
-	if d.accountOwernship[accountId] != nil {
-		for _, composeEntry := range d.accountOwernship[accountId] {
+func (d *dB) GetCompose(jobId string, accountNumber string) (*db.ComposeEntry, error) {
+	if d.accountOwernship[accountNumber] != nil {
+		for _, composeEntry := range d.accountOwernship[accountNumber] {
 			if composeEntry.Id.String() == jobId {
 				return &composeEntry, nil
 			}
