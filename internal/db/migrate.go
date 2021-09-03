@@ -25,7 +25,7 @@ func Migrate(connStr string, migrationsDir string, logger *logrus.Logger) error 
 	logger.Infoln("Current migration version", version)
 
 	if dirty {
-		logger.Warnln("Current migration state is dirty, force resetting to version")
+		logger.Warnln("Current migration state is dirty, force resetting to version", version)
 		err = m.Force(int(version))
 		if err != nil {
 			return err

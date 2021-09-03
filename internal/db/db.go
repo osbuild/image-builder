@@ -25,9 +25,9 @@ type ComposeEntry struct {
 }
 
 type DB interface {
-	InsertCompose(jobId, accountId, orgId string, request json.RawMessage) error
-	GetComposes(accountId string, limit, offset int) ([]ComposeEntry, int, error)
-	GetCompose(jobId string, accountId string) (*ComposeEntry, error)
+	InsertCompose(jobId, accountNumber, orgId string, request json.RawMessage) error
+	GetComposes(accountNumber string, limit, offset int) ([]ComposeEntry, int, error)
+	GetCompose(jobId string, accountNumber string) (*ComposeEntry, error)
 }
 
 func InitDBConnectionPool(connStr string) (DB, error) {
@@ -44,7 +44,7 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 	return &dB{pool}, nil
 }
 
-func (db *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMessage) error {
+func (db *dB) InsertCompose(jobId, accountNumber, orgId string, request json.RawMessage) error {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -52,11 +52,11 @@ func (db *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMess
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)", jobId, request, accountId, orgId)
+	_, err = conn.Exec(ctx, "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)", jobId, request, accountNumber, orgId)
 	return err
 }
 
-func (db *dB) GetCompose(jobId string, accountId string) (*ComposeEntry, error) {
+func (db *dB) GetCompose(jobId string, accountNumber string) (*ComposeEntry, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -64,8 +64,8 @@ func (db *dB) GetCompose(jobId string, accountId string) (*ComposeEntry, error) 
 	}
 	defer conn.Release()
 
-	result := conn.QueryRow(ctx, "SELECT job_id, request, created_at FROM composes WHERE account_id=$1 and job_id=$2",
-		accountId, jobId)
+	result := conn.QueryRow(ctx, "SELECT job_id, request, created_at FROM composes WHERE account_number=$1 and job_id=$2",
+		accountNumber, jobId)
 
 	var compose ComposeEntry
 	err = result.Scan(&compose.Id, &compose.Request, &compose.CreatedAt)
@@ -80,7 +80,7 @@ func (db *dB) GetCompose(jobId string, accountId string) (*ComposeEntry, error) 
 	return &compose, nil
 }
 
-func (db *dB) GetComposes(accountId string, limit, offset int) ([]ComposeEntry, int, error) {
+func (db *dB) GetComposes(accountNumber string, limit, offset int) ([]ComposeEntry, int, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -88,7 +88,7 @@ func (db *dB) GetComposes(accountId string, limit, offset int) ([]ComposeEntry, 
 	}
 	defer conn.Release()
 
-	result, err := conn.Query(ctx, "SELECT job_id, request, created_at FROM composes WHERE account_id=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3", accountId, limit, offset)
+	result, err := conn.Query(ctx, "SELECT job_id, request, created_at FROM composes WHERE account_number=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3", accountNumber, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -110,7 +110,7 @@ func (db *dB) GetComposes(accountId string, limit, offset int) ([]ComposeEntry, 
 	}
 
 	var count int
-	err = conn.QueryRow(ctx, "SELECT COUNT(*) FROM composes WHERE account_id=$1", accountId).Scan(&count)
+	err = conn.QueryRow(ctx, "SELECT COUNT(*) FROM composes WHERE account_number=$1", accountNumber).Scan(&count)
 	if err != nil {
 		return nil, 0, err
 	}
