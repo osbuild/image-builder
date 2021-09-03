@@ -22,57 +22,25 @@ fi
 REPO_DIR=repo/image-builder/"${CI_PIPELINE_ID}"
 sudo dnf localinstall -y "$REPO_DIR"/*"${ARCH}".rpm
 
-# Set up osbuild-composer repo
-OSBUILD_DNF_REPO_BASEURL=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com
-COMPOSER_DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
-# Default values
-OSBUILD_COMMIT=eb74ddf2ef8c203b5d354dfb97adee65babdc147
-OSBUILD_COMPOSER_COMMIT=c025c605444de9efba86da6e47a649eba40c9396
+# Retrieve composer&osbuild version from current stage deployment
+pushd "$(mktemp -d)"
+chmod 600 "$TERRAFORM_REPO_DEPLOY_KEY"
+GIT_SSH_COMMAND="ssh -i $TERRAFORM_REPO_DEPLOY_KEY -oStrictHostKeyChecking=no" git clone --depth 1 --sparse git@github.com:osbuild/image-builder-terraform.git
+OSBUILD_COMMIT="$(cat image-builder-terraform/terraform.tfvars.json | jq -r .osbuild_commit)"
+OSBUILD_COMPOSER_COMMIT="$(cat image-builder-terraform/terraform.tfvars.json | jq -r .composer_commit)"
+popd
 
-# If the GH token is defined, fetch used commits used in production / staging
-GITHUB_TOKEN="${GITHUB_TOKEN:-}"
-if [[ -n $GITHUB_TOKEN ]]; then
-     # if the token is defined, fetch used commits from the respective image-builder-terraform branch
-     BRANCH_NAME=${BRANCH_NAME:-}
-     CHANGE_TARGET="${CHANGE_TARGET:-}"
-
-     # determine which image-builder-terraform branch to use
-     # first check if this is a PR to main/stable
-     # if not a PR check if running on main/stable
-     # if not, fall back to using default commit values
-     IB_TERRAFORM_BRANCH=
-     case "$CHANGE_TARGET" in
-          # PR to production / staging
-          "main"|"stable")
-               IB_TERRAFORM_BRANCH="$CHANGE_TARGET"
-               ;;
-          # Not a PR, but a regular run on a branch
-          "")
-               case "$BRANCH_NAME" in
-                    "main"|"stable")
-                         IB_TERRAFORM_BRANCH="$BRANCH_NAME"
-                         ;;
-               esac
-     esac
-
-     if [[ -n "$IB_TERRAFORM_BRANCH" ]]; then
-          CURL_URL="https://api.github.com/repos/osbuild/image-builder-terraform/contents/terraform.tfvars.json?ref=$IB_TERRAFORM_BRANCH"
-          TERRAFORM_VARS=$(curl -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3.raw" -L "$CURL_URL")
-          OSBUILD_COMMIT=$(echo "$TERRAFORM_VARS" | jq -r .osbuild_commit)
-          OSBUILD_COMPOSER_COMMIT=$(echo "$TERRAFORM_VARS" | jq -r .composer_commit)
-     fi
-fi
-
+DNF_REPO_BASEURL=http://osbuild-composer-repos.s3.amazonaws.com
 sudo tee /etc/yum.repos.d/osbuild.repo << EOF
 [osbuild]
 name=osbuild ${OSBUILD_COMMIT}
-baseurl=${OSBUILD_DNF_REPO_BASEURL}/osbuild/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild/rhel-${VERSION_ID%.*}-cdn/${ARCH}/${OSBUILD_COMMIT}
 enabled=1
 gpgcheck=0
 priority=5
 [osbuild-composer]
 name=osbuild-composer ${OSBUILD_COMPOSER_COMMIT}
-baseurl=${COMPOSER_DNF_REPO_BASEURL}/osbuild-composer/${ID}-${VERSION_ID}/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
+baseurl=${DNF_REPO_BASEURL}/osbuild-composer/rhel-${VERSION_ID%.*}-cdn/${ARCH}/${OSBUILD_COMPOSER_COMMIT}
 enabled=1
 gpgcheck=0
 priority=6
