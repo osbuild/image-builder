@@ -52,7 +52,7 @@ func (db *dB) InsertCompose(jobId, accountId, orgId string, request json.RawMess
 	}
 	defer conn.Release()
 
-	_, err = conn.Query(ctx, "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4);", jobId, request, accountId, orgId)
+	_, err = conn.Exec(ctx, "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)", jobId, request, accountId, orgId)
 	return err
 }
 

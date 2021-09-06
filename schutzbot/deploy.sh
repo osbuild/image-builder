@@ -140,6 +140,7 @@ sudo podman run --pull=never --security-opt "label=disable" --net=host \
      -e MIGRATIONS_DIR="/app/migrations" \
      --name image-builder-migrate \
      image-builder-test:"${QUAY_REPO_TAG}" /app/image-builder-migrate-db
+sudo podman logs image-builder-migrate
 
 # Start Image Builder container
 sudo podman run -d -p 8086:8086 --pull=never --security-opt "label=disable" --net=host \
