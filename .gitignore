@@ -1,5 +1,5 @@
 /image-builder
 rpmbuild
-/image-builder-tests
+/image-builder-db-test
 /image-builder-migrate-db
 dnf-json
