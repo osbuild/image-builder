@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -35,7 +36,7 @@ func prepare(connStr string, migrationsDir string, logger *logrus.Logger) (*migr
 	}
 
 	version, dirty, err := m.Version()
-	if err == migrate.ErrNilVersion {
+	if errors.Is(err, migrate.ErrNilVersion) {
 		logger.Infoln("No migration has been aplied, this is the first one")
 	} else if err != nil {
 		return nil, err
@@ -53,13 +54,13 @@ func prepare(connStr string, migrationsDir string, logger *logrus.Logger) (*migr
 }
 
 func finish(m *migrate.Migrate, err error, logger *logrus.Logger) error {
-	if err == migrate.ErrNoChange {
+	if errors.Is(err, migrate.ErrNoChange) {
 		logger.Infoln("No migrations were applied, already at latest version")
 	} else if err != nil {
 		return err
 	}
 	version, _, err := m.Version()
-	if err != nil && err != migrate.ErrNilVersion {
+	if errors.Is(err, migrate.ErrNilVersion) {
 		return err
 	}
 	logger.Infoln("Migrated to version ", version)
