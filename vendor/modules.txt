@@ -1,4 +1,4 @@
-# github.com/aws/aws-sdk-go v1.34.34
+# github.com/aws/aws-sdk-go v1.40.39
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/awserr
 github.com/aws/aws-sdk-go/aws/awsutil
@@ -9,6 +9,7 @@ github.com/aws/aws-sdk-go/aws/credentials
 github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
 github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
 github.com/aws/aws-sdk-go/aws/credentials/processcreds
+github.com/aws/aws-sdk-go/aws/credentials/ssocreds
 github.com/aws/aws-sdk-go/aws/credentials/stscreds
 github.com/aws/aws-sdk-go/aws/csm
 github.com/aws/aws-sdk-go/aws/defaults
@@ -32,8 +33,11 @@ github.com/aws/aws-sdk-go/private/protocol/jsonrpc
 github.com/aws/aws-sdk-go/private/protocol/query
 github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 github.com/aws/aws-sdk-go/private/protocol/rest
+github.com/aws/aws-sdk-go/private/protocol/restjson
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/service/cloudwatchlogs
+github.com/aws/aws-sdk-go/service/sso
+github.com/aws/aws-sdk-go/service/sso/ssoiface
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/beorn7/perks v1.0.1
@@ -155,9 +159,15 @@ github.com/valyala/fasttemplate
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/pbkdf2
+<<<<<<< HEAD
 # golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 golang.org/x/net/idna
 # golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
+=======
+# golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+golang.org/x/net/idna
+# golang.org/x/sys v0.0.0-20210423082822-04245dca01da
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows

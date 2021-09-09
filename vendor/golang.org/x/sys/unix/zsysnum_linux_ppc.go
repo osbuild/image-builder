@@ -430,5 +430,8 @@ const (
 	SYS_FACCESSAT2                   = 439
 	SYS_PROCESS_MADVISE              = 440
 	SYS_EPOLL_PWAIT2                 = 441
+<<<<<<< HEAD
 	SYS_MOUNT_SETATTR                = 442
+=======
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
 )

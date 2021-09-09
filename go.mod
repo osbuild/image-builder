@@ -3,7 +3,7 @@ module github.com/osbuild/image-builder
 go 1.13
 
 require (
-	github.com/aws/aws-sdk-go v1.34.34
+	github.com/aws/aws-sdk-go v1.40.39
 	github.com/deepmap/oapi-codegen v1.3.12
 	github.com/getkin/kin-openapi v0.53.0
 	github.com/golang-migrate/migrate/v4 v4.13.0

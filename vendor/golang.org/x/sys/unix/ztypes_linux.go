@@ -3750,6 +3750,7 @@ const (
 	NLMSGERR_ATTR_OFFS   = 0x2
 	NLMSGERR_ATTR_COOKIE = 0x3
 )
+<<<<<<< HEAD
 
 type (
 	EraseInfo struct {
@@ -3905,3 +3906,5 @@ const (
 	NFC_SDP_ATTR_URI                  = 0x1
 	NFC_SDP_ATTR_SAP                  = 0x2
 )
+=======
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
