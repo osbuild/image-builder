@@ -504,11 +504,14 @@ ccflags="$@"
 		$2 ~ /^LOOP_(CLR|CTL|GET|SET)_/ ||
 		$2 ~ /^(AF|SOCK|SO|SOL|IPPROTO|IP|IPV6|TCP|MCAST|EVFILT|NOTE|SHUT|PROT|MAP|MFD|T?PACKET|MSG|SCM|MCL|DT|MADV|PR|LOCAL)_/ ||
 <<<<<<< HEAD
+<<<<<<< HEAD
 		$2 ~ /^NFC_(GENL|PROTO|COMM|RF|SE|DIRECTION|LLCP|SOCKPROTO)_/ ||
 		$2 ~ /^NFC_.*_(MAX)?SIZE$/ ||
 		$2 ~ /^RAW_PAYLOAD_/ ||
 =======
 >>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
+=======
+>>>>>>> 2b07f9f (build(deps): bump github.com/prometheus/client_golang)
 		$2 ~ /^TP_STATUS_/ ||
 		$2 ~ /^FALLOC_/ ||
 		$2 ~ /^ICMPV?6?_(FILTER|SEC)/ ||

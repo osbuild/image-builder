@@ -11,7 +11,7 @@ require (
 	github.com/jackc/pgx/v4 v4.9.2
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/labstack/echo/v4 v4.1.11
-	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/client_golang v1.11.0
 	github.com/redhatinsights/platform-go-middlewares v0.7.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.5.1
