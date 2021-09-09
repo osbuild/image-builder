@@ -135,6 +135,7 @@ const (
 )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 type RawSockaddrNFCLLCP struct {
 	Sa_family        uint16
 	Dev_idx          uint32
@@ -148,6 +149,8 @@ type RawSockaddrNFCLLCP struct {
 
 =======
 >>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
+=======
+>>>>>>> 2b07f9f (build(deps): bump github.com/prometheus/client_golang)
 type RawSockaddr struct {
 	Family uint16
 	Data   [14]uint8
@@ -181,6 +184,7 @@ type Cmsghdr struct {
 
 const (
 <<<<<<< HEAD
+<<<<<<< HEAD
 	SizeofSockaddrNFCLLCP = 0x58
 	SizeofIovec           = 0x8
 	SizeofMsghdr          = 0x1c
@@ -190,6 +194,11 @@ const (
 	SizeofMsghdr  = 0x1c
 	SizeofCmsghdr = 0xc
 >>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
+=======
+	SizeofIovec   = 0x8
+	SizeofMsghdr  = 0x1c
+	SizeofCmsghdr = 0xc
+>>>>>>> 2b07f9f (build(deps): bump github.com/prometheus/client_golang)
 )
 
 const (

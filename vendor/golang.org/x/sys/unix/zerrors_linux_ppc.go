@@ -61,10 +61,15 @@ const (
 	CSIZE                            = 0x300
 	CSTOPB                           = 0x400
 <<<<<<< HEAD
+<<<<<<< HEAD
 	ECCGETLAYOUT                     = 0x41484d11
 	ECCGETSTATS                      = 0x40104d12
 =======
 >>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
+=======
+	ECCGETLAYOUT                     = 0x41484d11
+	ECCGETSTATS                      = 0x40104d12
+>>>>>>> 2b07f9f (build(deps): bump github.com/prometheus/client_golang)
 	ECHOCTL                          = 0x40
 	ECHOE                            = 0x2
 	ECHOK                            = 0x4
@@ -127,6 +132,9 @@ const (
 	MCL_FUTURE                       = 0x4000
 	MCL_ONFAULT                      = 0x8000
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2b07f9f (build(deps): bump github.com/prometheus/client_golang)
 	MEMERASE                         = 0x80084d02
 	MEMERASE64                       = 0x80104d14
 	MEMGETBADBLOCK                   = 0x80084d0b
@@ -140,8 +148,11 @@ const (
 	MEMUNLOCK                        = 0x80084d06
 	MEMWRITEOOB                      = 0xc00c4d03
 	MTDFILEMODE                      = 0x20004d13
+<<<<<<< HEAD
 =======
 >>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
+=======
+>>>>>>> 2b07f9f (build(deps): bump github.com/prometheus/client_golang)
 	NFDBITS                          = 0x20
 	NL2                              = 0x200
 	NL3                              = 0x300
@@ -154,12 +165,18 @@ const (
 	OLCUC                            = 0x4
 	ONLCR                            = 0x2
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2b07f9f (build(deps): bump github.com/prometheus/client_golang)
 	OTPGETREGIONCOUNT                = 0x80044d0e
 	OTPGETREGIONINFO                 = 0x800c4d0f
 	OTPLOCK                          = 0x400c4d10
 	OTPSELECT                        = 0x40044d0d
+<<<<<<< HEAD
 =======
 >>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
+=======
+>>>>>>> 2b07f9f (build(deps): bump github.com/prometheus/client_golang)
 	O_APPEND                         = 0x400
 	O_ASYNC                          = 0x2000
 	O_CLOEXEC                        = 0x80000
