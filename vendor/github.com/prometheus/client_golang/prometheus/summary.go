@@ -55,12 +55,7 @@ type Summary interface {
 	Metric
 	Collector
 
-	// Observe adds a single observation to the summary. Observations are
-	// usually positive or zero. Negative observations are accepted but
-	// prevent current versions of Prometheus from properly detecting
-	// counter resets in the sum of observations. See
-	// https://prometheus.io/docs/practices/histograms/#count-and-sum-of-observations
-	// for details.
+	// Observe adds a single observation to the summary.
 	Observe(float64)
 }
 
@@ -126,9 +121,7 @@ type SummaryOpts struct {
 	Objectives map[float64]float64
 
 	// MaxAge defines the duration for which an observation stays relevant
-	// for the summary. Only applies to pre-calculated quantiles, does not
-	// apply to _sum and _count. Must be positive. The default value is
-	// DefMaxAge.
+	// for the summary. Must be positive. The default value is DefMaxAge.
 	MaxAge time.Duration
 
 	// AgeBuckets is the number of buckets used to exclude observations that

@@ -104,10 +104,10 @@ func (content Content) Get(mime string) *MediaType {
 	return content["*/*"]
 }
 
-func (value Content) Validate(ctx context.Context) error {
-	for _, v := range value {
+func (content Content) Validate(c context.Context) error {
+	for _, v := range content {
 		// Validate MediaType
-		if err := v.Validate(ctx); err != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}

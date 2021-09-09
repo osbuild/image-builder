@@ -18,14 +18,14 @@ var _ AuthenticationFunc = NoopAuthenticationFunc
 type ValidationHandler struct {
 	Handler            http.Handler
 	AuthenticationFunc AuthenticationFunc
-	File               string
+	SwaggerFile        string
 	ErrorEncoder       ErrorEncoder
 	router             routers.Router
 }
 
 func (h *ValidationHandler) Load() error {
-	loader := openapi3.NewLoader()
-	doc, err := loader.LoadFromFile(h.File)
+	loader := openapi3.NewSwaggerLoader()
+	doc, err := loader.LoadSwaggerFromFile(h.SwaggerFile)
 	if err != nil {
 		return err
 	}

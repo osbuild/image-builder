@@ -1,5 +1,4 @@
 [![](https://godoc.org/github.com/jackc/pgtype?status.svg)](https://godoc.org/github.com/jackc/pgtype)
-![CI](https://github.com/jackc/pgtype/workflows/CI/badge.svg)
 
 # pgtype
 

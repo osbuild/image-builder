@@ -67,12 +67,12 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, mediaType)
 }
 
-func (value *MediaType) Validate(ctx context.Context) error {
-	if value == nil {
+func (mediaType *MediaType) Validate(c context.Context) error {
+	if mediaType == nil {
 		return nil
 	}
-	if schema := value.Schema; schema != nil {
-		if err := schema.Validate(ctx); err != nil {
+	if schema := mediaType.Schema; schema != nil {
+		if err := schema.Validate(c); err != nil {
 			return err
 		}
 	}

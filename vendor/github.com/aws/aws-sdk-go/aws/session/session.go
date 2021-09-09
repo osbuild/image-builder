@@ -283,8 +283,8 @@ type Options struct {
 	Handlers request.Handlers
 
 	// Allows specifying a custom endpoint to be used by the EC2 IMDS client
-	// when making requests to the EC2 IMDS API. The endpoint value should
-	// include the URI scheme. If the scheme is not present it will be defaulted to http.
+	// when making requests to the EC2 IMDS API. The must endpoint value must
+	// include protocol prefix.
 	//
 	// If unset, will the EC2 IMDS client will use its default endpoint.
 	//
@@ -298,11 +298,6 @@ type Options struct {
 	//
 	//   AWS_EC2_METADATA_SERVICE_ENDPOINT=http://[::1]
 	EC2IMDSEndpoint string
-
-	// Specifies the EC2 Instance Metadata Service default endpoint selection mode (IPv4 or IPv6)
-	//
-	// AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE=IPv6
-	EC2IMDSEndpointMode endpoints.EC2IMDSEndpointModeState
 }
 
 // NewSessionWithOptions returns a new Session created from SDK defaults, config files,
@@ -380,23 +375,19 @@ func Must(sess *Session, err error) *Session {
 
 // Wraps the endpoint resolver with a resolver that will return a custom
 // endpoint for EC2 IMDS.
-func wrapEC2IMDSEndpoint(resolver endpoints.Resolver, endpoint string, mode endpoints.EC2IMDSEndpointModeState) endpoints.Resolver {
+func wrapEC2IMDSEndpoint(resolver endpoints.Resolver, endpoint string) endpoints.Resolver {
 	return endpoints.ResolverFunc(
 		func(service, region string, opts ...func(*endpoints.Options)) (
 			endpoints.ResolvedEndpoint, error,
 		) {
-			if service == ec2MetadataServiceID && len(endpoint) > 0 {
+			if service == ec2MetadataServiceID {
 				return endpoints.ResolvedEndpoint{
 					URL:           endpoint,
 					SigningName:   ec2MetadataServiceID,
 					SigningRegion: region,
 				}, nil
-			} else if service == ec2MetadataServiceID {
-				opts = append(opts, func(o *endpoints.Options) {
-					o.EC2MetadataEndpointMode = mode
-				})
 			}
-			return resolver.EndpointFor(service, region, opts...)
+			return resolver.EndpointFor(service, region)
 		})
 }
 
@@ -413,8 +404,8 @@ func deprecatedNewSession(envCfg envConfig, cfgs ...*aws.Config) *Session {
 		cfg.EndpointResolver = endpoints.DefaultResolver()
 	}
 
-	if !(len(envCfg.EC2IMDSEndpoint) == 0 && envCfg.EC2IMDSEndpointMode == endpoints.EC2IMDSEndpointModeStateUnset) {
-		cfg.EndpointResolver = wrapEC2IMDSEndpoint(cfg.EndpointResolver, envCfg.EC2IMDSEndpoint, envCfg.EC2IMDSEndpointMode)
+	if len(envCfg.EC2IMDSEndpoint) != 0 {
+		cfg.EndpointResolver = wrapEC2IMDSEndpoint(cfg.EndpointResolver, envCfg.EC2IMDSEndpoint)
 	}
 
 	cfg.Credentials = defaults.CredChain(cfg, handlers)
@@ -746,32 +737,12 @@ func mergeConfigSrcs(cfg, userCfg *aws.Config,
 		endpoints.LegacyS3UsEast1Endpoint,
 	})
 
-	var ec2IMDSEndpoint string
-	for _, v := range []string{
-		sessOpts.EC2IMDSEndpoint,
-		envCfg.EC2IMDSEndpoint,
-		sharedCfg.EC2IMDSEndpoint,
-	} {
-		if len(v) != 0 {
-			ec2IMDSEndpoint = v
-			break
-		}
+	ec2IMDSEndpoint := sessOpts.EC2IMDSEndpoint
+	if len(ec2IMDSEndpoint) == 0 {
+		ec2IMDSEndpoint = envCfg.EC2IMDSEndpoint
 	}
-
-	var endpointMode endpoints.EC2IMDSEndpointModeState
-	for _, v := range []endpoints.EC2IMDSEndpointModeState{
-		sessOpts.EC2IMDSEndpointMode,
-		envCfg.EC2IMDSEndpointMode,
-		sharedCfg.EC2IMDSEndpointMode,
-	} {
-		if v != endpoints.EC2IMDSEndpointModeStateUnset {
-			endpointMode = v
-			break
-		}
-	}
-
-	if len(ec2IMDSEndpoint) != 0 || endpointMode != endpoints.EC2IMDSEndpointModeStateUnset {
-		cfg.EndpointResolver = wrapEC2IMDSEndpoint(cfg.EndpointResolver, ec2IMDSEndpoint, endpointMode)
+	if len(ec2IMDSEndpoint) != 0 {
+		cfg.EndpointResolver = wrapEC2IMDSEndpoint(cfg.EndpointResolver, ec2IMDSEndpoint)
 	}
 
 	// Configure credentials if not already set by the user when creating the

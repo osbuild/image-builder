@@ -3,7 +3,6 @@ package pgproto3
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 
 	"github.com/jackc/pgio"
@@ -16,9 +15,6 @@ type AuthenticationSASL struct {
 
 // Backend identifies this message as sendable by the PostgreSQL backend.
 func (*AuthenticationSASL) Backend() {}
-
-// Backend identifies this message as an authentication response.
-func (*AuthenticationSASL) AuthenticationResponse() {}
 
 // Decode decodes src into dst. src must contain the complete message with the exception of the initial 1 byte message
 // type identifier and 4 byte message length.
@@ -61,15 +57,4 @@ func (src *AuthenticationSASL) Encode(dst []byte) []byte {
 	pgio.SetInt32(dst[sp:], int32(len(dst[sp:])))
 
 	return dst
-}
-
-// MarshalJSON implements encoding/json.Marshaler.
-func (src AuthenticationSASL) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		Type           string
-		AuthMechanisms []string
-	}{
-		Type:           "AuthenticationSASL",
-		AuthMechanisms: src.AuthMechanisms,
-	})
 }

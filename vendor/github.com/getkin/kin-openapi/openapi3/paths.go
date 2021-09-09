@@ -9,76 +9,47 @@ import (
 // Paths is specified by OpenAPI/Swagger standard version 3.0.
 type Paths map[string]*PathItem
 
-func (value Paths) Validate(ctx context.Context) error {
+func (paths Paths) Validate(c context.Context) error {
 	normalizedPaths := make(map[string]string)
-	for path, pathItem := range value {
+	for path, pathItem := range paths {
 		if path == "" || path[0] != '/' {
 			return fmt.Errorf("path %q does not start with a forward slash (/)", path)
 		}
 
 		if pathItem == nil {
-			value[path] = &PathItem{}
-			pathItem = value[path]
+			paths[path] = &PathItem{}
+			pathItem = paths[path]
 		}
 
-		normalizedPath, _, varsInPath := normalizeTemplatedPath(path)
+		normalizedPath, pathParamsCount := normalizeTemplatedPath(path)
 		if oldPath, ok := normalizedPaths[normalizedPath]; ok {
 			return fmt.Errorf("conflicting paths %q and %q", path, oldPath)
 		}
 		normalizedPaths[path] = path
 
-		var commonParams []string
+		var globalCount uint
 		for _, parameterRef := range pathItem.Parameters {
 			if parameterRef != nil {
 				if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
-					commonParams = append(commonParams, parameter.Name)
+					globalCount++
 				}
 			}
 		}
 		for method, operation := range pathItem.Operations() {
-			var setParams []string
+			var count uint
 			for _, parameterRef := range operation.Parameters {
 				if parameterRef != nil {
 					if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
-						setParams = append(setParams, parameter.Name)
+						count++
 					}
 				}
 			}
-			if expected := len(setParams) + len(commonParams); expected != len(varsInPath) {
-				expected -= len(varsInPath)
-				if expected < 0 {
-					expected *= -1
-				}
-				missing := make(map[string]struct{}, expected)
-				definedParams := append(setParams, commonParams...)
-				for _, name := range definedParams {
-					if _, ok := varsInPath[name]; !ok {
-						missing[name] = struct{}{}
-					}
-				}
-				for name := range varsInPath {
-					got := false
-					for _, othername := range definedParams {
-						if othername == name {
-							got = true
-							break
-						}
-					}
-					if !got {
-						missing[name] = struct{}{}
-					}
-				}
-				if len(missing) != 0 {
-					missings := make([]string, 0, len(missing))
-					for name := range missing {
-						missings = append(missings, name)
-					}
-					return fmt.Errorf("operation %s %s must define exactly all path parameters (missing: %v)", method, path, missings)
-				}
+			if count+globalCount != pathParamsCount {
+				return fmt.Errorf("operation %s %s must define exactly all path parameters", method, path)
 			}
 		}
 
-		if err := pathItem.Validate(ctx); err != nil {
+		if err := pathItem.Validate(c); err != nil {
 			return err
 		}
 	}
@@ -104,9 +75,9 @@ func (paths Paths) Find(key string) *PathItem {
 		return pathItem
 	}
 
-	normalizedPath, expected, _ := normalizeTemplatedPath(key)
+	normalizedPath, expected := normalizeTemplatedPath(key)
 	for path, pathItem := range paths {
-		pathNormalized, got, _ := normalizeTemplatedPath(path)
+		pathNormalized, got := normalizeTemplatedPath(path)
 		if got == expected && pathNormalized == normalizedPath {
 			return pathItem
 		}
@@ -114,51 +85,43 @@ func (paths Paths) Find(key string) *PathItem {
 	return nil
 }
 
-func normalizeTemplatedPath(path string) (string, uint, map[string]struct{}) {
+func normalizeTemplatedPath(path string) (string, uint) {
 	if strings.IndexByte(path, '{') < 0 {
-		return path, 0, nil
+		return path, 0
 	}
 
-	var buffTpl strings.Builder
-	buffTpl.Grow(len(path))
+	var buf strings.Builder
+	buf.Grow(len(path))
 
 	var (
 		cc         rune
 		count      uint
 		isVariable bool
-		vars       = make(map[string]struct{})
-		buffVar    strings.Builder
 	)
 	for i, c := range path {
 		if isVariable {
 			if c == '}' {
-				// End path variable
-				isVariable = false
-
-				vars[buffVar.String()] = struct{}{}
-				buffVar = strings.Builder{}
-
+				// End path variables
 				// First append possible '*' before this character
 				// The character '}' will be appended
 				if i > 0 && cc == '*' {
-					buffTpl.WriteRune(cc)
+					buf.WriteRune(cc)
 				}
+				isVariable = false
 			} else {
-				buffVar.WriteRune(c)
+				// Skip this character
 				continue
 			}
-
 		} else if c == '{' {
 			// Begin path variable
-			isVariable = true
-
 			// The character '{' will be appended
+			isVariable = true
 			count++
 		}
 
 		// Append the character
-		buffTpl.WriteRune(c)
+		buf.WriteRune(c)
 		cc = c
 	}
-	return buffTpl.String(), count, vars
+	return buf.String(), count
 }

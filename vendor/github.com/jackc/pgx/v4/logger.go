@@ -3,8 +3,9 @@ package pgx
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
+
+	errors "golang.org/x/xerrors"
 )
 
 // The values for log levels are chosen such that the zero value means that no

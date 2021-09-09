@@ -45,7 +45,6 @@ type Frontend struct {
 	bodyLen    int
 	msgType    byte
 	partialMsg bool
-	authType   uint32
 }
 
 // NewFrontend creates a new Frontend.
@@ -147,16 +146,10 @@ func (f *Frontend) Receive() (BackendMessage, error) {
 }
 
 // Authentication message type constants.
-// See src/include/libpq/pqcomm.h for all
-// constants.
 const (
 	AuthTypeOk                = 0
 	AuthTypeCleartextPassword = 3
 	AuthTypeMD5Password       = 5
-	AuthTypeSCMCreds          = 6
-	AuthTypeGSS               = 7
-	AuthTypeGSSCont           = 8
-	AuthTypeSSPI              = 9
 	AuthTypeSASL              = 10
 	AuthTypeSASLContinue      = 11
 	AuthTypeSASLFinal         = 12
@@ -166,23 +159,15 @@ func (f *Frontend) findAuthenticationMessageType(src []byte) (BackendMessage, er
 	if len(src) < 4 {
 		return nil, errors.New("authentication message too short")
 	}
-	f.authType = binary.BigEndian.Uint32(src[:4])
+	authType := binary.BigEndian.Uint32(src[:4])
 
-	switch f.authType {
+	switch authType {
 	case AuthTypeOk:
 		return &f.authenticationOk, nil
 	case AuthTypeCleartextPassword:
 		return &f.authenticationCleartextPassword, nil
 	case AuthTypeMD5Password:
 		return &f.authenticationMD5Password, nil
-	case AuthTypeSCMCreds:
-		return nil, errors.New("AuthTypeSCMCreds is unimplemented")
-	case AuthTypeGSS:
-		return nil, errors.New("AuthTypeGSS is unimplemented")
-	case AuthTypeGSSCont:
-		return nil, errors.New("AuthTypeGSSCont is unimplemented")
-	case AuthTypeSSPI:
-		return nil, errors.New("AuthTypeSSPI is unimplemented")
 	case AuthTypeSASL:
 		return &f.authenticationSASL, nil
 	case AuthTypeSASLContinue:
@@ -190,12 +175,6 @@ func (f *Frontend) findAuthenticationMessageType(src []byte) (BackendMessage, er
 	case AuthTypeSASLFinal:
 		return &f.authenticationSASLFinal, nil
 	default:
-		return nil, fmt.Errorf("unknown authentication type: %d", f.authType)
+		return nil, fmt.Errorf("unknown authentication type: %d", authType)
 	}
-}
-
-// GetAuthType returns the authType used in the current state of the frontend.
-// See SetAuthType for more information.
-func (f *Frontend) GetAuthType() uint32 {
-	return f.authType
 }

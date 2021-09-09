@@ -14,7 +14,7 @@ var _ jsonpointer.JSONPointable = (*Headers)(nil)
 
 func (h Headers) JSONLookup(token string) (interface{}, error) {
 	ref, ok := h[token]
-	if ref == nil || !ok {
+	if ref == nil || ok == false {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
 
@@ -43,9 +43,9 @@ func (value *Header) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
-func (value *Header) Validate(ctx context.Context) error {
+func (value *Header) Validate(c context.Context) error {
 	if v := value.Schema; v != nil {
-		if err := v.Validate(ctx); err != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}

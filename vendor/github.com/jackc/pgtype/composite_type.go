@@ -2,12 +2,11 @@ package pgtype
 
 import (
 	"encoding/binary"
-	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/jackc/pgio"
+	errors "golang.org/x/xerrors"
 )
 
 type CompositeTypeField struct {
@@ -32,13 +31,13 @@ func NewCompositeType(typeName string, fields []CompositeTypeField, ci *ConnInfo
 	for i := range fields {
 		dt, ok := ci.DataTypeForOID(fields[i].OID)
 		if !ok {
-			return nil, fmt.Errorf("no data type registered for oid: %d", fields[i].OID)
+			return nil, errors.Errorf("no data type registered for oid: %d", fields[i].OID)
 		}
 
 		value := NewValue(dt.Value)
 		valueTranscoder, ok := value.(ValueTranscoder)
 		if !ok {
-			return nil, fmt.Errorf("data type for oid does not implement ValueTranscoder: %d", fields[i].OID)
+			return nil, errors.Errorf("data type for oid does not implement ValueTranscoder: %d", fields[i].OID)
 		}
 
 		valueTranscoders[i] = valueTranscoder
@@ -103,7 +102,7 @@ func (dst *CompositeType) Set(src interface{}) error {
 	switch value := src.(type) {
 	case []interface{}:
 		if len(value) != len(dst.valueTranscoders) {
-			return fmt.Errorf("Number of fields don't match. CompositeType has %d fields", len(dst.valueTranscoders))
+			return errors.Errorf("Number of fields don't match. CompositeType has %d fields", len(dst.valueTranscoders))
 		}
 		for i, v := range value {
 			if err := dst.valueTranscoders[i].Set(v); err != nil {
@@ -118,7 +117,7 @@ func (dst *CompositeType) Set(src interface{}) error {
 		}
 		return dst.Set(*value)
 	default:
-		return fmt.Errorf("Can not convert %v to Composite", src)
+		return errors.Errorf("Can not convert %v to Composite", src)
 	}
 
 	return nil
@@ -131,7 +130,7 @@ func (src CompositeType) AssignTo(dst interface{}) error {
 		switch v := dst.(type) {
 		case []interface{}:
 			if len(v) != len(src.valueTranscoders) {
-				return fmt.Errorf("Number of fields don't match. CompositeType has %d fields", len(src.valueTranscoders))
+				return errors.Errorf("Number of fields don't match. CompositeType has %d fields", len(src.valueTranscoders))
 			}
 			for i := range src.valueTranscoders {
 				if v[i] == nil {
@@ -140,7 +139,7 @@ func (src CompositeType) AssignTo(dst interface{}) error {
 
 				err := assignToOrSet(src.valueTranscoders[i], v[i])
 				if err != nil {
-					return fmt.Errorf("unable to assign to dst[%d]: %v", i, err)
+					return errors.Errorf("unable to assign to dst[%d]: %v", i, err)
 				}
 			}
 			return nil
@@ -154,12 +153,12 @@ func (src CompositeType) AssignTo(dst interface{}) error {
 			if nextDst, retry := GetAssignToDstType(dst); retry {
 				return src.AssignTo(nextDst)
 			}
-			return fmt.Errorf("unable to assign to %T", dst)
+			return errors.Errorf("unable to assign to %T", dst)
 		}
 	case Null:
 		return NullAssignTo(dst)
 	}
-	return fmt.Errorf("cannot decode %#v into %T", src, dst)
+	return errors.Errorf("cannot decode %#v into %T", src, dst)
 }
 
 func assignToOrSet(src Value, dst interface{}) error {
@@ -211,7 +210,7 @@ func (src CompositeType) assignToPtrStruct(dst interface{}) (bool, error) {
 	for i := range exportedFields {
 		err := assignToOrSet(src.valueTranscoders[i], dstElemValue.Field(exportedFields[i]).Addr().Interface())
 		if err != nil {
-			return true, fmt.Errorf("unable to assign to field %s: %v", dstElemType.Field(exportedFields[i]).Name, err)
+			return true, errors.Errorf("unable to assign to field %s: %v", dstElemType.Field(exportedFields[i]).Name, err)
 		}
 	}
 
@@ -311,7 +310,7 @@ type CompositeBinaryScanner struct {
 func NewCompositeBinaryScanner(ci *ConnInfo, src []byte) *CompositeBinaryScanner {
 	rp := 0
 	if len(src[rp:]) < 4 {
-		return &CompositeBinaryScanner{err: fmt.Errorf("Record incomplete %v", src)}
+		return &CompositeBinaryScanner{err: errors.Errorf("Record incomplete %v", src)}
 	}
 
 	fieldCount := int32(binary.BigEndian.Uint32(src[rp:]))
@@ -363,7 +362,7 @@ func (cfs *CompositeBinaryScanner) Next() bool {
 	}
 
 	if len(cfs.src[cfs.rp:]) < 8 {
-		cfs.err = fmt.Errorf("Record incomplete %v", cfs.src)
+		cfs.err = errors.Errorf("Record incomplete %v", cfs.src)
 		return false
 	}
 	cfs.fieldOID = binary.BigEndian.Uint32(cfs.src[cfs.rp:])
@@ -374,7 +373,7 @@ func (cfs *CompositeBinaryScanner) Next() bool {
 
 	if fieldLen >= 0 {
 		if len(cfs.src[cfs.rp:]) < fieldLen {
-			cfs.err = fmt.Errorf("Record incomplete rp=%d src=%v", cfs.rp, cfs.src)
+			cfs.err = errors.Errorf("Record incomplete rp=%d src=%v", cfs.rp, cfs.src)
 			return false
 		}
 		cfs.fieldBytes = cfs.src[cfs.rp : cfs.rp+fieldLen]
@@ -417,15 +416,15 @@ type CompositeTextScanner struct {
 // NewCompositeTextScanner a scanner over a text encoded composite value.
 func NewCompositeTextScanner(ci *ConnInfo, src []byte) *CompositeTextScanner {
 	if len(src) < 2 {
-		return &CompositeTextScanner{err: fmt.Errorf("Record incomplete %v", src)}
+		return &CompositeTextScanner{err: errors.Errorf("Record incomplete %v", src)}
 	}
 
 	if src[0] != '(' {
-		return &CompositeTextScanner{err: fmt.Errorf("composite text format must start with '('")}
+		return &CompositeTextScanner{err: errors.Errorf("composite text format must start with '('")}
 	}
 
 	if src[len(src)-1] != ')' {
-		return &CompositeTextScanner{err: fmt.Errorf("composite text format must end with ')'")}
+		return &CompositeTextScanner{err: errors.Errorf("composite text format must end with ')'")}
 	}
 
 	return &CompositeTextScanner{
@@ -491,10 +490,6 @@ func (cfs *CompositeTextScanner) Next() bool {
 				} else {
 					break
 				}
-			} else if ch == '\\' {
-				cfs.rp++
-				cfs.fieldBytes = append(cfs.fieldBytes, cfs.src[cfs.rp])
-				cfs.rp++
 			} else {
 				cfs.fieldBytes = append(cfs.fieldBytes, ch)
 				cfs.rp++
@@ -548,7 +543,7 @@ func (b *CompositeBinaryBuilder) AppendValue(oid uint32, field interface{}) {
 
 	dt, ok := b.ci.DataTypeForOID(oid)
 	if !ok {
-		b.err = fmt.Errorf("unknown data type for OID: %d", oid)
+		b.err = errors.Errorf("unknown data type for OID: %d", oid)
 		return
 	}
 
@@ -560,7 +555,7 @@ func (b *CompositeBinaryBuilder) AppendValue(oid uint32, field interface{}) {
 
 	binaryEncoder, ok := dt.Value.(BinaryEncoder)
 	if !ok {
-		b.err = fmt.Errorf("unable to encode binary for OID: %d", oid)
+		b.err = errors.Errorf("unable to encode binary for OID: %d", oid)
 		return
 	}
 
@@ -623,7 +618,7 @@ func (b *CompositeTextBuilder) AppendValue(field interface{}) {
 
 	dt, ok := b.ci.DataTypeForValue(field)
 	if !ok {
-		b.err = fmt.Errorf("unknown data type for field: %v", field)
+		b.err = errors.Errorf("unknown data type for field: %v", field)
 		return
 	}
 
@@ -635,7 +630,7 @@ func (b *CompositeTextBuilder) AppendValue(field interface{}) {
 
 	textEncoder, ok := dt.Value.(TextEncoder)
 	if !ok {
-		b.err = fmt.Errorf("unable to encode text for value: %v", field)
+		b.err = errors.Errorf("unable to encode text for value: %v", field)
 		return
 	}
 

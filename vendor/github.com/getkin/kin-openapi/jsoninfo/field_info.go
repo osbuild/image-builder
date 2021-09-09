@@ -21,9 +21,6 @@ type FieldInfo struct {
 }
 
 func AppendFields(fields []FieldInfo, parentIndex []int, t reflect.Type) []FieldInfo {
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
 	// For each field
 	numField := t.NumField()
 iteration:

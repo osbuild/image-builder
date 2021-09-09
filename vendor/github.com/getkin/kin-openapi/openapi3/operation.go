@@ -120,19 +120,19 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 	}
 }
 
-func (value *Operation) Validate(ctx context.Context) error {
-	if v := value.Parameters; v != nil {
-		if err := v.Validate(ctx); err != nil {
+func (operation *Operation) Validate(c context.Context) error {
+	if v := operation.Parameters; v != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}
-	if v := value.RequestBody; v != nil {
-		if err := v.Validate(ctx); err != nil {
+	if v := operation.RequestBody; v != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	}
-	if v := value.Responses; v != nil {
-		if err := v.Validate(ctx); err != nil {
+	if v := operation.Responses; v != nil {
+		if err := v.Validate(c); err != nil {
 			return err
 		}
 	} else {

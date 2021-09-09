@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgio"
+	errors "golang.org/x/xerrors"
 )
 
 type Vec2 struct {
@@ -27,7 +28,7 @@ func (dst *Point) Set(src interface{}) error {
 		dst.Status = Null
 		return nil
 	}
-	err := fmt.Errorf("cannot convert %v to Point", src)
+	err := errors.Errorf("cannot convert %v to Point", src)
 	var p *Point
 	switch value := src.(type) {
 	case string:
@@ -50,14 +51,14 @@ func parsePoint(src []byte) (*Point, error) {
 	}
 
 	if len(src) < 5 {
-		return nil, fmt.Errorf("invalid length for point: %v", len(src))
+		return nil, errors.Errorf("invalid length for point: %v", len(src))
 	}
 	if src[0] == '"' && src[len(src)-1] == '"' {
 		src = src[1 : len(src)-1]
 	}
 	parts := strings.SplitN(string(src[1:len(src)-1]), ",", 2)
 	if len(parts) < 2 {
-		return nil, fmt.Errorf("invalid format for point")
+		return nil, errors.Errorf("invalid format for point")
 	}
 
 	x, err := strconv.ParseFloat(parts[0], 64)
@@ -85,7 +86,7 @@ func (dst Point) Get() interface{} {
 }
 
 func (src *Point) AssignTo(dst interface{}) error {
-	return fmt.Errorf("cannot assign %v to %T", src, dst)
+	return errors.Errorf("cannot assign %v to %T", src, dst)
 }
 
 func (dst *Point) DecodeText(ci *ConnInfo, src []byte) error {
@@ -95,12 +96,12 @@ func (dst *Point) DecodeText(ci *ConnInfo, src []byte) error {
 	}
 
 	if len(src) < 5 {
-		return fmt.Errorf("invalid length for point: %v", len(src))
+		return errors.Errorf("invalid length for point: %v", len(src))
 	}
 
 	parts := strings.SplitN(string(src[1:len(src)-1]), ",", 2)
 	if len(parts) < 2 {
-		return fmt.Errorf("invalid format for point")
+		return errors.Errorf("invalid format for point")
 	}
 
 	x, err := strconv.ParseFloat(parts[0], 64)
@@ -124,7 +125,7 @@ func (dst *Point) DecodeBinary(ci *ConnInfo, src []byte) error {
 	}
 
 	if len(src) != 16 {
-		return fmt.Errorf("invalid length for point: %v", len(src))
+		return errors.Errorf("invalid length for point: %v", len(src))
 	}
 
 	x := binary.BigEndian.Uint64(src)
@@ -180,7 +181,7 @@ func (dst *Point) Scan(src interface{}) error {
 		return dst.DecodeText(nil, srcCopy)
 	}
 
-	return fmt.Errorf("cannot scan %T", src)
+	return errors.Errorf("cannot scan %T", src)
 }
 
 // Value implements the database/sql/driver Valuer interface.
