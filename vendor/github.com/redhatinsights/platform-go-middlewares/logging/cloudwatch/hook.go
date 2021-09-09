@@ -1,4 +1,4 @@
-package cloudwatch 
+package cloudwatch
 
 import (
 	"fmt"
@@ -21,6 +21,7 @@ type Hook struct {
 	nextSequenceToken *string
 	m                 sync.Mutex
 	ch                chan *cloudwatchlogs.InputLogEvent
+	flush             chan bool
 	err               *error
 }
 
@@ -65,6 +66,8 @@ func NewBatchingHook(groupName, streamName string, cfg *aws.Config, batchFrequen
 		svc:        cloudwatchlogs.New(session.New(cfg)),
 		groupName:  groupName,
 		streamName: streamName,
+		// unbuferred channel for flushing, calling flush method will block
+		flush: make(chan bool, 0),
 	}
 
 	resp, err := h.getOrCreateCloudWatchLogGroup()
@@ -74,7 +77,7 @@ func NewBatchingHook(groupName, streamName string, cfg *aws.Config, batchFrequen
 
 	if batchFrequency > 0 {
 		h.ch = make(chan *cloudwatchlogs.InputLogEvent, 10000)
-		go h.putBatches(time.Tick(batchFrequency))
+		go h.putBatches(h.flush, time.Tick(batchFrequency))
 	}
 
 	// grab the next sequence token
@@ -93,6 +96,15 @@ func NewBatchingHook(groupName, streamName string, cfg *aws.Config, batchFrequen
 	}
 
 	return h, nil
+}
+
+// Force flushing of currently stored messages
+func (h *Hook) Flush() error {
+	h.flush <- true
+	if h.err != nil {
+		return *h.err
+	}
+	return nil
 }
 
 func (h *Hook) Fire(entry *logrus.Entry) error {
@@ -121,20 +133,24 @@ func (h *Hook) Fire(entry *logrus.Entry) error {
 	}
 }
 
-func (h *Hook) putBatches(ticker <-chan time.Time) {
+func (h *Hook) putBatches(flush <-chan bool, ticker <-chan time.Time) {
 	var batch []*cloudwatchlogs.InputLogEvent
 	size := 0
 	for {
 		select {
 		case p := <-h.ch:
 			messageSize := len(*p.Message) + 26
-			if size + messageSize >= 1048576 || len(batch) == 10000 {
+			if size+messageSize >= 1048576 || len(batch) == 10000 {
 				go h.sendBatch(batch)
 				batch = nil
 				size = 0
 			}
 			batch = append(batch, p)
 			size += messageSize
+		case <-flush:
+			go h.sendBatch(batch)
+			batch = nil
+			size = 0
 		case <-ticker:
 			go h.sendBatch(batch)
 			batch = nil
@@ -143,11 +159,11 @@ func (h *Hook) putBatches(ticker <-chan time.Time) {
 	}
 }
 
-func(h *Hook) sendBatch(batch []*cloudwatchlogs.InputLogEvent){
+func (h *Hook) sendBatch(batch []*cloudwatchlogs.InputLogEvent) {
 	h.m.Lock()
-	defer h.m.Unlock()
 
 	if len(batch) == 0 {
+		h.m.Unlock()
 		return
 	}
 	params := &cloudwatchlogs.PutLogEventsInput{
@@ -157,11 +173,21 @@ func(h *Hook) sendBatch(batch []*cloudwatchlogs.InputLogEvent){
 		SequenceToken: h.nextSequenceToken,
 	}
 	resp, err := h.svc.PutLogEvents(params)
-	if err != nil {
-		h.err = &err
-	} else {
+	if err == nil {
 		h.nextSequenceToken = resp.NextSequenceToken
+		h.m.Unlock()
+		return
 	}
+
+	h.err = &err
+	if aerr, ok := err.(*cloudwatchlogs.InvalidSequenceTokenException); ok {
+		h.nextSequenceToken = aerr.ExpectedSequenceToken
+		h.m.Unlock()
+		h.sendBatch(batch)
+		return
+	}
+	
+	h.m.Unlock()
 }
 
 func (h *Hook) Write(p []byte) (n int, err error) {
