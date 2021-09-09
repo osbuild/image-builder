@@ -2,8 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+<<<<<<< HEAD
 //go:build (freebsd || netbsd || openbsd) && gc
 // +build freebsd netbsd openbsd
+=======
+//go:build (darwin || freebsd || netbsd || openbsd) && gc
+// +build darwin freebsd netbsd openbsd
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
 // +build gc
 
 #include "textflag.h"

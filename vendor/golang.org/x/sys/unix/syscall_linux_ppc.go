@@ -215,10 +215,13 @@ func (cmsg *Cmsghdr) SetLen(length int) {
 	cmsg.Len = uint32(length)
 }
 
+<<<<<<< HEAD
 func (rsa *RawSockaddrNFCLLCP) SetServiceNameLen(length int) {
 	rsa.Service_name_len = uint32(length)
 }
 
+=======
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
 //sysnb	pipe(p *[2]_C_int) (err error)
 
 func Pipe(p []int) (err error) {

@@ -10,8 +10,11 @@
 package unix
 
 import (
+<<<<<<< HEAD
 	"fmt"
 	"runtime"
+=======
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
 	"unsafe"
 )
 
@@ -129,6 +132,7 @@ func Getmsg(fd int, cl []byte, data []byte) (retCl []byte, retData []byte, flags
 	}
 	return retCl, retData, flags, nil
 }
+<<<<<<< HEAD
 
 func IoctlSetIntRetInt(fd int, req uint, arg int) (int, error) {
 	return ioctlRet(fd, req, uintptr(arg))
@@ -176,3 +180,5 @@ func (s *Strioctl) SetInt(i int) {
 func IoctlSetStrioctlRetInt(fd int, req uint, s *Strioctl) (int, error) {
 	return ioctlRet(fd, req, uintptr(unsafe.Pointer(s)))
 }
+=======
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)

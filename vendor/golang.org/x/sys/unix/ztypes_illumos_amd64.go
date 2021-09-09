@@ -25,14 +25,22 @@ type strbuf struct {
 	Buf    *int8
 }
 
+<<<<<<< HEAD
 type Strioctl struct {
+=======
+type strioctl struct {
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
 	Cmd    int32
 	Timout int32
 	Len    int32
 	Dp     *int8
 }
 
+<<<<<<< HEAD
 type Lifreq struct {
+=======
+type lifreq struct {
+>>>>>>> f9a33a2 (build(deps): bump github.com/aws/aws-sdk-go from 1.34.34 to 1.40.39)
 	Name   [32]int8
 	Lifru1 [4]byte
 	Type   uint32
