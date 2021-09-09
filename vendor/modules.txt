@@ -58,7 +58,7 @@ github.com/ghodss/yaml
 github.com/go-openapi/jsonpointer
 # github.com/go-openapi/swag v0.19.5
 github.com/go-openapi/swag
-# github.com/golang-migrate/migrate/v4 v4.13.0
+# github.com/golang-migrate/migrate/v4 v4.14.1
 github.com/golang-migrate/migrate/v4
 github.com/golang-migrate/migrate/v4/database
 github.com/golang-migrate/migrate/v4/database/postgres
@@ -72,7 +72,7 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/uuid v1.1.1
+# github.com/google/uuid v1.1.2
 github.com/google/uuid
 # github.com/hashicorp/errwrap v1.0.0
 github.com/hashicorp/errwrap
@@ -107,7 +107,7 @@ github.com/labstack/echo/v4
 # github.com/labstack/gommon v0.3.0
 github.com/labstack/gommon/color
 github.com/labstack/gommon/log
-# github.com/lib/pq v1.3.0
+# github.com/lib/pq v1.8.0
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
