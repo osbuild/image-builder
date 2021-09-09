@@ -200,10 +200,30 @@ func appendEscapedText(buf []byte, text string) []byte {
 func mustParse(f string, typ oid.Oid, s []byte) time.Time {
 	str := string(s)
 
-	// check for a 30-minute-offset timezone
-	if (typ == oid.T_timestamptz || typ == oid.T_timetz) &&
-		str[len(str)-3] == ':' {
-		f += ":00"
+	// Check for a minute and second offset in the timezone.
+	if typ == oid.T_timestamptz || typ == oid.T_timetz {
+		for i := 3; i <= 6; i += 3 {
+			if str[len(str)-i] == ':' {
+				f += ":00"
+				continue
+			}
+			break
+		}
+	}
+
+	// Special case for 24:00 time.
+	// Unfortunately, golang does not parse 24:00 as a proper time.
+	// In this case, we want to try "round to the next day", to differentiate.
+	// As such, we find if the 24:00 time matches at the beginning; if so,
+	// we default it back to 00:00 but add a day later.
+	var is2400Time bool
+	switch typ {
+	case oid.T_timetz, oid.T_time:
+		if matches := time2400Regex.FindStringSubmatch(str); matches != nil {
+			// Concatenate timezone information at the back.
+			str = "00:00:00" + str[len(matches[1]):]
+			is2400Time = true
+		}
 	}
 	// Special case for 24:00 time.
 	// Unfortunately, golang does not parse 24:00 as a proper time.

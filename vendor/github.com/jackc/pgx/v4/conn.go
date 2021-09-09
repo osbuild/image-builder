@@ -2,14 +2,15 @@ package pgx
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	errors "golang.org/x/xerrors"
-
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgconn/stmtcache"
+	"github.com/jackc/pgproto3/v2"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4/internal/sanitize"
 )
@@ -123,6 +124,9 @@ func ConnectConfig(ctx context.Context, connConfig *ConnConfig) (*Conn, error) {
 // 		"describe" will use the anonymous prepared statement to describe a statement without creating a statement on the
 // 		server. "describe" is primarily useful when the environment does not allow prepared statements such as when
 // 		running a connection pooler like PgBouncer. Default: "prepare"
+//
+//	prefer_simple_protocol
+//		Possible values: "true" and "false". Use the simple protocol instead of extended protocol. Default: false
 func ParseConfig(connString string) (*ConnConfig, error) {
 	config, err := pgconn.ParseConfig(connString)
 	if err != nil {
@@ -136,7 +140,7 @@ func ParseConfig(connString string) (*ConnConfig, error) {
 		delete(config.RuntimeParams, "statement_cache_capacity")
 		n, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
-			return nil, errors.Errorf("cannot parse statement_cache_capacity: %w", err)
+			return nil, fmt.Errorf("cannot parse statement_cache_capacity: %w", err)
 		}
 		statementCacheCapacity = int(n)
 	}
@@ -149,7 +153,7 @@ func ParseConfig(connString string) (*ConnConfig, error) {
 		case "describe":
 			statementCacheMode = stmtcache.ModeDescribe
 		default:
-			return nil, errors.Errorf("invalid statement_cache_mod: %s", s)
+			return nil, fmt.Errorf("invalid statement_cache_mod: %s", s)
 		}
 	}
 
@@ -159,11 +163,22 @@ func ParseConfig(connString string) (*ConnConfig, error) {
 		}
 	}
 
+	preferSimpleProtocol := false
+	if s, ok := config.RuntimeParams["prefer_simple_protocol"]; ok {
+		delete(config.RuntimeParams, "prefer_simple_protocol")
+		if b, err := strconv.ParseBool(s); err == nil {
+			preferSimpleProtocol = b
+		} else {
+			return nil, fmt.Errorf("invalid prefer_simple_protocol: %v", err)
+		}
+	}
+
 	connConfig := &ConnConfig{
 		Config:               *config,
 		createdByParseConfig: true,
 		LogLevel:             LogLevelInfo,
 		BuildStatementCache:  buildStatementCache,
+		PreferSimpleProtocol: preferSimpleProtocol,
 		connString:           connString,
 	}
 
@@ -471,7 +486,7 @@ func (c *Conn) execSimpleProtocol(ctx context.Context, sql string, arguments []i
 
 func (c *Conn) execParamsAndPreparedPrefix(sd *pgconn.StatementDescription, arguments []interface{}) error {
 	if len(sd.ParamOIDs) != len(arguments) {
-		return errors.Errorf("expected %d arguments, got %d", len(sd.ParamOIDs), len(arguments))
+		return fmt.Errorf("expected %d arguments, got %d", len(sd.ParamOIDs), len(arguments))
 	}
 
 	c.eqb.Reset()
@@ -529,6 +544,7 @@ func (c *Conn) getRows(ctx context.Context, sql string, args []interface{}) *con
 	r.startTime = time.Now()
 	r.sql = sql
 	r.args = args
+	r.conn = c
 
 	return r
 }
@@ -613,7 +629,7 @@ optionLoop:
 		}
 	}
 	if len(sd.ParamOIDs) != len(args) {
-		rows.fatal(errors.Errorf("expected %d arguments, got %d", len(sd.ParamOIDs), len(args)))
+		rows.fatal(fmt.Errorf("expected %d arguments, got %d", len(sd.ParamOIDs), len(args)))
 		return rows, rows.err
 	}
 
@@ -663,6 +679,48 @@ optionLoop:
 func (c *Conn) QueryRow(ctx context.Context, sql string, args ...interface{}) Row {
 	rows, _ := c.Query(ctx, sql, args...)
 	return (*connRow)(rows.(*connRows))
+}
+
+// QueryFuncRow is the argument to the QueryFunc callback function.
+//
+// QueryFuncRow is an interface instead of a struct to allow tests to mock QueryFunc. However, adding a method to an
+// interface is technically a breaking change. Because of this the QueryFuncRow interface is partially excluded from
+// semantic version requirements. Methods will not be removed or changed, but new methods may be added.
+type QueryFuncRow interface {
+	FieldDescriptions() []pgproto3.FieldDescription
+
+	// RawValues returns the unparsed bytes of the row values. The returned [][]byte is only valid during the current
+	// function call. However, the underlying byte data is safe to retain a reference to and mutate.
+	RawValues() [][]byte
+}
+
+// QueryFunc executes sql with args. For each row returned by the query the values will scanned into the elements of
+// scans and f will be called. If any row fails to scan or f returns an error the query will be aborted and the error
+// will be returned.
+func (c *Conn) QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(QueryFuncRow) error) (pgconn.CommandTag, error) {
+	rows, err := c.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err = rows.Scan(scans...)
+		if err != nil {
+			return nil, err
+		}
+
+		err = f(rows)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return rows.CommandTag(), nil
 }
 
 // SendBatch sends all queued queries to the server at once. All queries are run in an implicit transaction unless
@@ -733,7 +791,7 @@ func (c *Conn) SendBatch(ctx context.Context, b *Batch) BatchResults {
 		}
 
 		if len(sd.ParamOIDs) != len(bi.arguments) {
-			return &batchResults{ctx: ctx, conn: c, err: errors.Errorf("mismatched param and argument count")}
+			return &batchResults{ctx: ctx, conn: c, err: fmt.Errorf("mismatched param and argument count")}
 		}
 
 		args, err := convertDriverValuers(bi.arguments)
