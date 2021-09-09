@@ -13,6 +13,6 @@ require (
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/prometheus/client_golang v1.10.0
 	github.com/redhatinsights/platform-go-middlewares v0.7.0
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.5.1
 )
