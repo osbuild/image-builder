@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgio"
+	errors "golang.org/x/xerrors"
 )
 
 // Time represents the PostgreSQL time type. The PostgreSQL time is a time of day without time zone.
@@ -41,17 +42,11 @@ func (dst *Time) Set(src interface{}) error {
 			int64(value.Second())*microsecondsPerSecond +
 			int64(value.Nanosecond())/1000
 		*dst = Time{Microseconds: usec, Status: Present}
-	case *time.Time:
-		if value == nil {
-			*dst = Time{Status: Null}
-		} else {
-			return dst.Set(*value)
-		}
 	default:
 		if originalSrc, ok := underlyingTimeType(src); ok {
 			return dst.Set(originalSrc)
 		}
-		return fmt.Errorf("cannot convert %v to Time", value)
+		return errors.Errorf("cannot convert %v to Time", value)
 	}
 
 	return nil
@@ -76,7 +71,7 @@ func (src *Time) AssignTo(dst interface{}) error {
 			// 24:00:00 is max allowed time in PostgreSQL, but time.Time will normalize that to 00:00:00 the next day.
 			var maxRepresentableByTime int64 = 24*60*60*1000000 - 1
 			if src.Microseconds > maxRepresentableByTime {
-				return fmt.Errorf("%d microseconds cannot be represented as time.Time", src.Microseconds)
+				return errors.Errorf("%d microseconds cannot be represented as time.Time", src.Microseconds)
 			}
 
 			usec := src.Microseconds
@@ -93,13 +88,13 @@ func (src *Time) AssignTo(dst interface{}) error {
 			if nextDst, retry := GetAssignToDstType(dst); retry {
 				return src.AssignTo(nextDst)
 			}
-			return fmt.Errorf("unable to assign to %T", dst)
+			return errors.Errorf("unable to assign to %T", dst)
 		}
 	case Null:
 		return NullAssignTo(dst)
 	}
 
-	return fmt.Errorf("cannot decode %#v into %T", src, dst)
+	return errors.Errorf("cannot decode %#v into %T", src, dst)
 }
 
 // DecodeText decodes from src into dst.
@@ -112,24 +107,24 @@ func (dst *Time) DecodeText(ci *ConnInfo, src []byte) error {
 	s := string(src)
 
 	if len(s) < 8 {
-		return fmt.Errorf("cannot decode %v into Time", s)
+		return errors.Errorf("cannot decode %v into Time", s)
 	}
 
 	hours, err := strconv.ParseInt(s[0:2], 10, 64)
 	if err != nil {
-		return fmt.Errorf("cannot decode %v into Time", s)
+		return errors.Errorf("cannot decode %v into Time", s)
 	}
 	usec := hours * microsecondsPerHour
 
 	minutes, err := strconv.ParseInt(s[3:5], 10, 64)
 	if err != nil {
-		return fmt.Errorf("cannot decode %v into Time", s)
+		return errors.Errorf("cannot decode %v into Time", s)
 	}
 	usec += minutes * microsecondsPerMinute
 
 	seconds, err := strconv.ParseInt(s[6:8], 10, 64)
 	if err != nil {
-		return fmt.Errorf("cannot decode %v into Time", s)
+		return errors.Errorf("cannot decode %v into Time", s)
 	}
 	usec += seconds * microsecondsPerSecond
 
@@ -137,7 +132,7 @@ func (dst *Time) DecodeText(ci *ConnInfo, src []byte) error {
 		fraction := s[9:]
 		n, err := strconv.ParseInt(fraction, 10, 64)
 		if err != nil {
-			return fmt.Errorf("cannot decode %v into Time", s)
+			return errors.Errorf("cannot decode %v into Time", s)
 		}
 
 		for i := len(fraction); i < 6; i++ {
@@ -160,7 +155,7 @@ func (dst *Time) DecodeBinary(ci *ConnInfo, src []byte) error {
 	}
 
 	if len(src) != 8 {
-		return fmt.Errorf("invalid length for time: %v", len(src))
+		return errors.Errorf("invalid length for time: %v", len(src))
 	}
 
 	usec := int64(binary.BigEndian.Uint64(src))
@@ -222,7 +217,7 @@ func (dst *Time) Scan(src interface{}) error {
 		return dst.Set(src)
 	}
 
-	return fmt.Errorf("cannot scan %T", src)
+	return errors.Errorf("cannot scan %T", src)
 }
 
 // Value implements the database/sql/driver Valuer interface.

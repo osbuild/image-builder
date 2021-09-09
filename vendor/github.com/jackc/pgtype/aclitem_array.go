@@ -4,8 +4,9 @@ package pgtype
 
 import (
 	"database/sql/driver"
-	"fmt"
 	"reflect"
+
+	errors "golang.org/x/xerrors"
 )
 
 type ACLItemArray struct {
@@ -93,7 +94,7 @@ func (dst *ACLItemArray) Set(src interface{}) error {
 
 		dimensions, elementsLength, ok := findDimensionsFromValue(reflectedValue, nil, 0)
 		if !ok {
-			return fmt.Errorf("cannot find dimensions of %v for ACLItemArray", src)
+			return errors.Errorf("cannot find dimensions of %v for ACLItemArray", src)
 		}
 		if elementsLength == 0 {
 			*dst = ACLItemArray{Status: Present}
@@ -103,7 +104,7 @@ func (dst *ACLItemArray) Set(src interface{}) error {
 			if originalSrc, ok := underlyingSliceType(src); ok {
 				return dst.Set(originalSrc)
 			}
-			return fmt.Errorf("cannot convert %v to ACLItemArray", src)
+			return errors.Errorf("cannot convert %v to ACLItemArray", src)
 		}
 
 		*dst = ACLItemArray{
@@ -134,7 +135,7 @@ func (dst *ACLItemArray) Set(src interface{}) error {
 			}
 		}
 		if elementCount != len(dst.Elements) {
-			return fmt.Errorf("cannot convert %v to ACLItemArray, expected %d dst.Elements, but got %d instead", src, len(dst.Elements), elementCount)
+			return errors.Errorf("cannot convert %v to ACLItemArray, expected %d dst.Elements, but got %d instead", src, len(dst.Elements), elementCount)
 		}
 	}
 
@@ -152,7 +153,7 @@ func (dst *ACLItemArray) setRecursive(value reflect.Value, index, dimension int)
 
 		valueLen := value.Len()
 		if int32(valueLen) != dst.Dimensions[dimension].Length {
-			return 0, fmt.Errorf("multidimensional arrays must have array expressions with matching dimensions")
+			return 0, errors.Errorf("multidimensional arrays must have array expressions with matching dimensions")
 		}
 		for i := 0; i < valueLen; i++ {
 			var err error
@@ -165,10 +166,10 @@ func (dst *ACLItemArray) setRecursive(value reflect.Value, index, dimension int)
 		return index, nil
 	}
 	if !value.CanInterface() {
-		return 0, fmt.Errorf("cannot convert all values to ACLItemArray")
+		return 0, errors.Errorf("cannot convert all values to ACLItemArray")
 	}
 	if err := dst.Elements[index].Set(value.Interface()); err != nil {
-		return 0, fmt.Errorf("%v in ACLItemArray", err)
+		return 0, errors.Errorf("%v in ACLItemArray", err)
 	}
 	index++
 
@@ -227,12 +228,6 @@ func (src *ACLItemArray) AssignTo(dst interface{}) error {
 			value = value.Elem()
 		}
 
-		switch value.Kind() {
-		case reflect.Array, reflect.Slice:
-		default:
-			return fmt.Errorf("cannot assign %T to %T", src, dst)
-		}
-
 		if len(src.Elements) == 0 {
 			if value.Kind() == reflect.Slice {
 				value.Set(reflect.MakeSlice(value.Type(), 0, 0))
@@ -245,7 +240,7 @@ func (src *ACLItemArray) AssignTo(dst interface{}) error {
 			return err
 		}
 		if elementCount != len(src.Elements) {
-			return fmt.Errorf("cannot assign %v, needed to assign %d elements, but only assigned %d", dst, len(src.Elements), elementCount)
+			return errors.Errorf("cannot assign %v, needed to assign %d elements, but only assigned %d", dst, len(src.Elements), elementCount)
 		}
 
 		return nil
@@ -253,7 +248,7 @@ func (src *ACLItemArray) AssignTo(dst interface{}) error {
 		return NullAssignTo(dst)
 	}
 
-	return fmt.Errorf("cannot decode %#v into %T", src, dst)
+	return errors.Errorf("cannot decode %#v into %T", src, dst)
 }
 
 func (src *ACLItemArray) assignToRecursive(value reflect.Value, index, dimension int) (int, error) {
@@ -269,7 +264,7 @@ func (src *ACLItemArray) assignToRecursive(value reflect.Value, index, dimension
 		if reflect.Array == kind {
 			typ := value.Type()
 			if typ.Len() != length {
-				return 0, fmt.Errorf("expected size %d array, but %s has size %d array", length, typ, typ.Len())
+				return 0, errors.Errorf("expected size %d array, but %s has size %d array", length, typ, typ.Len())
 			}
 			value.Set(reflect.New(typ).Elem())
 		} else {
@@ -287,14 +282,14 @@ func (src *ACLItemArray) assignToRecursive(value reflect.Value, index, dimension
 		return index, nil
 	}
 	if len(src.Dimensions) != dimension {
-		return 0, fmt.Errorf("incorrect dimensions, expected %d, found %d", len(src.Dimensions), dimension)
+		return 0, errors.Errorf("incorrect dimensions, expected %d, found %d", len(src.Dimensions), dimension)
 	}
 	if !value.CanAddr() {
-		return 0, fmt.Errorf("cannot assign all values from ACLItemArray")
+		return 0, errors.Errorf("cannot assign all values from ACLItemArray")
 	}
 	addr := value.Addr()
 	if !addr.CanInterface() {
-		return 0, fmt.Errorf("cannot assign all values from ACLItemArray")
+		return 0, errors.Errorf("cannot assign all values from ACLItemArray")
 	}
 	if err := src.Elements[index].AssignTo(addr.Interface()); err != nil {
 		return 0, err
@@ -322,7 +317,7 @@ func (dst *ACLItemArray) DecodeText(ci *ConnInfo, src []byte) error {
 		for i, s := range uta.Elements {
 			var elem ACLItem
 			var elemSrc []byte
-			if s != "NULL" || uta.Quoted[i] {
+			if s != "NULL" {
 				elemSrc = []byte(s)
 			}
 			err = elem.DecodeText(ci, elemSrc)
@@ -411,7 +406,7 @@ func (dst *ACLItemArray) Scan(src interface{}) error {
 		return dst.DecodeText(nil, srcCopy)
 	}
 
-	return fmt.Errorf("cannot scan %T", src)
+	return errors.Errorf("cannot scan %T", src)
 }
 
 // Value implements the database/sql/driver Valuer interface.

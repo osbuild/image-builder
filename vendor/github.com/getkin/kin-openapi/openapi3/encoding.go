@@ -61,21 +61,21 @@ func (encoding *Encoding) SerializationMethod() *SerializationMethod {
 	return sm
 }
 
-func (value *Encoding) Validate(ctx context.Context) error {
-	if value == nil {
+func (encoding *Encoding) Validate(c context.Context) error {
+	if encoding == nil {
 		return nil
 	}
-	for k, v := range value.Headers {
+	for k, v := range encoding.Headers {
 		if err := ValidateIdentifier(k); err != nil {
 			return nil
 		}
-		if err := v.Validate(ctx); err != nil {
+		if err := v.Validate(c); err != nil {
 			return nil
 		}
 	}
 
 	// Validate a media types's serialization method.
-	sm := value.SerializationMethod()
+	sm := encoding.SerializationMethod()
 	switch {
 	case sm.Style == SerializationForm && sm.Explode,
 		sm.Style == SerializationForm && !sm.Explode,

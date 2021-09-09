@@ -56,11 +56,11 @@ func (r *Response) WriteHeader(code int) {
 		r.echo.Logger.Warn("response already committed")
 		return
 	}
-	r.Status = code
 	for _, fn := range r.beforeFuncs {
 		fn()
 	}
-	r.Writer.WriteHeader(r.Status)
+	r.Status = code
+	r.Writer.WriteHeader(code)
 	r.Committed = true
 }
 
