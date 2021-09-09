@@ -83,7 +83,6 @@ func (value Parameters) Validate(ctx context.Context) error {
 }
 
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md#parameterObject
 type Parameter struct {
 	ExtensionProps
 	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`
@@ -168,42 +167,42 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, parameter)
 }
 
-func (value Parameter) JSONLookup(token string) (interface{}, error) {
+func (parameter Parameter) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":
-		if value.Schema != nil {
-			if value.Schema.Ref != "" {
-				return &Ref{Ref: value.Schema.Ref}, nil
+		if parameter.Schema != nil {
+			if parameter.Schema.Ref != "" {
+				return &Ref{Ref: parameter.Schema.Ref}, nil
 			}
-			return value.Schema.Value, nil
+			return parameter.Schema.Value, nil
 		}
 	case "name":
-		return value.Name, nil
+		return parameter.Name, nil
 	case "in":
-		return value.In, nil
+		return parameter.In, nil
 	case "description":
-		return value.Description, nil
+		return parameter.Description, nil
 	case "style":
-		return value.Style, nil
+		return parameter.Style, nil
 	case "explode":
-		return value.Explode, nil
+		return parameter.Explode, nil
 	case "allowEmptyValue":
-		return value.AllowEmptyValue, nil
+		return parameter.AllowEmptyValue, nil
 	case "allowReserved":
-		return value.AllowReserved, nil
+		return parameter.AllowReserved, nil
 	case "deprecated":
-		return value.Deprecated, nil
+		return parameter.Deprecated, nil
 	case "required":
-		return value.Required, nil
+		return parameter.Required, nil
 	case "example":
-		return value.Example, nil
+		return parameter.Example, nil
 	case "examples":
-		return value.Examples, nil
+		return parameter.Examples, nil
 	case "content":
-		return value.Content, nil
+		return parameter.Content, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(value.ExtensionProps, token)
+	v, _, err := jsonpointer.GetForToken(parameter.ExtensionProps, token)
 	return v, err
 }
 
@@ -295,7 +294,6 @@ func (value *Parameter) Validate(ctx context.Context) error {
 			return fmt.Errorf("parameter %q schema is invalid: %v", value.Name, err)
 		}
 	}
-
 	if content := value.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
 			return fmt.Errorf("parameter %q content is invalid: %v", value.Name, err)

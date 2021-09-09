@@ -35,8 +35,6 @@ type Loader struct {
 
 	Context context.Context
 
-	rootDir string
-
 	visitedPathItemRefs map[string]struct{}
 
 	visitedDocuments map[string]*T
@@ -68,7 +66,6 @@ func (loader *Loader) LoadFromURI(location *url.URL) (*T, error) {
 
 // LoadFromFile loads a spec from a local file path
 func (loader *Loader) LoadFromFile(location string) (*T, error) {
-	loader.rootDir = path.Dir(location)
 	return loader.LoadFromURI(&url.URL{Path: filepath.ToSlash(location)})
 }
 
@@ -308,9 +305,6 @@ func (loader *Loader) resolveComponent(
 	}
 	var cursor interface{}
 	if cursor, err = drill(doc); err != nil {
-		if path == nil {
-			return nil, err
-		}
 		var err2 error
 		data, err2 := loader.readURL(path)
 		if err2 != nil {
@@ -352,14 +346,6 @@ func (loader *Loader) resolveComponent(
 }
 
 func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
-	// Special case due to multijson
-	if s, ok := cursor.(*SchemaRef); ok && fieldName == "additionalProperties" {
-		if ap := s.Value.AdditionalPropertiesAllowed; ap != nil {
-			return *ap, nil
-		}
-		return s.Value.AdditionalProperties, nil
-	}
-
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
 	case reflect.Map:
 		elementValue := val.MapIndex(reflect.ValueOf(fieldName))
@@ -386,10 +372,6 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 			field := val.Type().Field(i)
 			tagValue := field.Tag.Get("yaml")
 			yamlKey := strings.Split(tagValue, ",")[0]
-			if yamlKey == "-" {
-				tagValue := field.Tag.Get("multijson")
-				yamlKey = strings.Split(tagValue, ",")[0]
-			}
 			if yamlKey == fieldName {
 				return val.Field(i).Interface(), nil
 			}
@@ -416,14 +398,6 @@ func drillIntoField(cursor interface{}, fieldName string) (interface{}, error) {
 	default:
 		return nil, errors.New("not a map, slice nor struct")
 	}
-}
-
-func (loader *Loader) documentPathForRecursiveRef(current *url.URL, resolvedRef string) *url.URL {
-	if loader.rootDir == "" {
-		return current
-	}
-	return &url.URL{Path: path.Join(loader.rootDir, resolvedRef)}
-
 }
 
 func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
@@ -485,7 +459,6 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	value := component.Value
@@ -533,7 +506,6 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	value := component.Value
@@ -590,7 +562,6 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	value := component.Value
@@ -646,7 +617,6 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	value := component.Value
@@ -716,7 +686,6 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	value := component.Value
@@ -794,7 +763,6 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	return nil
@@ -831,7 +799,6 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	return nil
@@ -859,7 +826,6 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	value := component.Value
@@ -957,7 +923,6 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
 		}
 	}
 	return nil

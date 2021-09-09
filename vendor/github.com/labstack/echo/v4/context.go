@@ -2,6 +2,7 @@ package echo
 
 import (
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -275,9 +276,9 @@ func (c *context) RealIP() string {
 	}
 	// Fall back to legacy behavior
 	if ip := c.request.Header.Get(HeaderXForwardedFor); ip != "" {
-		i := strings.IndexAny(ip, ",")
+		i := strings.IndexAny(ip, ", ")
 		if i > 0 {
-			return strings.TrimSpace(ip[:i])
+			return ip[:i]
 		}
 		return ip
 	}
@@ -456,16 +457,17 @@ func (c *context) String(code int, s string) (err error) {
 }
 
 func (c *context) jsonPBlob(code int, callback string, i interface{}) (err error) {
-	indent := ""
-	if _, pretty := c.QueryParams()["pretty"]; c.echo.Debug || pretty {
-		indent = defaultIndent
+	enc := json.NewEncoder(c.response)
+	_, pretty := c.QueryParams()["pretty"]
+	if c.echo.Debug || pretty {
+		enc.SetIndent("", "  ")
 	}
 	c.writeContentType(MIMEApplicationJavaScriptCharsetUTF8)
 	c.response.WriteHeader(code)
 	if _, err = c.response.Write([]byte(callback + "(")); err != nil {
 		return
 	}
-	if err = c.echo.JSONSerializer.Serialize(c, i, indent); err != nil {
+	if err = enc.Encode(i); err != nil {
 		return
 	}
 	if _, err = c.response.Write([]byte(");")); err != nil {
@@ -475,9 +477,13 @@ func (c *context) jsonPBlob(code int, callback string, i interface{}) (err error
 }
 
 func (c *context) json(code int, i interface{}, indent string) error {
+	enc := json.NewEncoder(c.response)
+	if indent != "" {
+		enc.SetIndent("", indent)
+	}
 	c.writeContentType(MIMEApplicationJSONCharsetUTF8)
 	c.response.Status = code
-	return c.echo.JSONSerializer.Serialize(c, i, indent)
+	return enc.Encode(i)
 }
 
 func (c *context) JSON(code int, i interface{}) (err error) {
