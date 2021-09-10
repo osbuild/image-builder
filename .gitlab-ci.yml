@@ -37,7 +37,7 @@ build:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8-x86_64
+          - aws/rhel-8.4-ga-x86_64
 
 Test EL8:
   stage: test
@@ -55,7 +55,7 @@ Test EL8:
           - azure
           - gcp
         RUNNER:
-          - aws/rhel-8-x86_64
+          - aws/rhel-8.4-ga-x86_64
 
 Test Edge 84:
   stage: test
@@ -69,7 +69,7 @@ Test Edge 84:
   parallel:
     matrix:
       - RUNNER:
-          - openstack/rhel-8-x86_64
+          - openstack/rhel-8.4-ga-x86_64
 
 Test Load Test:
   stage: test
@@ -82,7 +82,7 @@ Test Load Test:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8-x86_64
+          - aws/rhel-8.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 finish:
