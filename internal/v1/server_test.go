@@ -165,6 +165,14 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.Contains(t, body, "Auth header has incorrect format")
 	})
 
+	t.Run("EmptyAccountNumber", func(t *testing.T) {
+		// AccoundNumber equals ""
+		auth := tutils.GetCompleteBas64Header("", "000000")
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 404, response.StatusCode)
+		require.Contains(t, body, "The Account Number is missing in the Identity Header")
+	})
+
 	t.Run("NoOrgId", func(t *testing.T) {
 		// no org_id key is present
 		auth := tutils.GetBas64HeaderWithoutOrgId("000000")
