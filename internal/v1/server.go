@@ -102,8 +102,8 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.Osbuil
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.VerifyIdentityHeader, s.ValidateRequest, common.PrometheusMW), &h)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.VerifyIdentityHeader, s.ValidateRequest, common.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.verifyIdentityHeader, s.ValidateRequest, common.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.verifyIdentityHeader, s.ValidateRequest, common.PrometheusMW), &h)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
@@ -702,7 +702,7 @@ func identityAllowed(header IdentityHeader, orgIds []string, accountNumbers []st
 }
 
 // clouddot guidelines requires 404 instead of 403 when unauthorized
-func (s *Server) VerifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+func (s *Server) verifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		request := ctx.Request()
 
