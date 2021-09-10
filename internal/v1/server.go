@@ -728,6 +728,9 @@ func (s *Server) verifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 			return echo.NewHTTPError(http.StatusNotFound, "Organization or account not allowed")
 		}
 
+		if idHeader.Identity.AccountNumber == "" {
+			return echo.NewHTTPError(http.StatusNotFound, "The Account Number is missing in the Identity Header")
+		}
 		ctx.Set("IdentityHeader", idHeader)
 
 		return nextHandler(ctx)
