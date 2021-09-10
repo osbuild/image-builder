@@ -5,7 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
-        "testing"
+	"testing"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
@@ -21,7 +21,7 @@ const (
 	ANR2 = "000002"
 	ANR3 = "000003"
 
-	ORGID1= "100000"
+	ORGID1 = "100000"
 )
 
 func conf(t *testing.T) *config.ImageBuilderConfig {
@@ -116,6 +116,8 @@ func TestMain(t *testing.T) {
 	migrateOneStep(t)
 	insertData2(t)
 
+	migrateOneStep(t)
+
 	// make sure migrating a fully migrated db doesn't error out
 	migrateUp(t)
 
@@ -155,4 +157,8 @@ func TestMain(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
 	require.Equal(t, 3, len(composes))
+
+	// Verify that adding a compose request to the db requires a non empty account number.
+	err = d.InsertCompose(uuid.New().String(), "", ORGID1, []byte("{}"))
+	require.Error(t, err)
 }
