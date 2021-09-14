@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
@@ -77,7 +78,7 @@ func connect(t *testing.T) *pgx.Conn {
 }
 
 // after each migration insert some data which follows the schema of that migration
-func insertData1(t *testing.T) {
+func insertDataForMigrationStep1(t *testing.T) {
 	conn := connect(t)
 	defer conn.Close(context.Background())
 
@@ -91,9 +92,24 @@ func insertData1(t *testing.T) {
 
 	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR2, ORGID1)
 	require.NoError(t, err)
+
+	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4)"
+
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
+	require.NoError(t, err)
+
+	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '3 days', $3, $4)"
+
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
+	require.NoError(t, err)
+
+	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '4 days', $3, $4)"
+
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
+	require.NoError(t, err)
 }
 
-func insertData2(t *testing.T) {
+func insertDataForMigrationStep2(t *testing.T) {
 	conn := connect(t)
 	defer conn.Close(context.Background())
 
@@ -111,10 +127,10 @@ func insertData2(t *testing.T) {
 
 func TestMain(t *testing.T) {
 	migrateOneStep(t)
-	insertData1(t)
+	insertDataForMigrationStep1(t)
 
 	migrateOneStep(t)
-	insertData2(t)
+	insertDataForMigrationStep2(t)
 
 	migrateOneStep(t)
 
@@ -151,6 +167,7 @@ func TestMain(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 2, count)
 	require.Equal(t, 2, len(composes))
+
 	err = d.InsertCompose(uuid.New().String(), ANR2, ORGID1, []byte("{}"))
 	require.NoError(t, err)
 	composes, count, err = d.GetComposes(ANR2, 100, 0)
@@ -161,4 +178,21 @@ func TestMain(t *testing.T) {
 	// Verify that adding a compose request to the db requires a non empty account number.
 	err = d.InsertCompose(uuid.New().String(), "", ORGID1, []byte("{}"))
 	require.Error(t, err)
+
+	// Verify quering since an interval
+	count, err = d.CountComposesSince(ANR3, 24*time.Hour)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
+
+	count, err = d.CountComposesSince(ANR3, 48*time.Hour+time.Second)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+
+	count, err = d.CountComposesSince(ANR3, 72*time.Hour+time.Second)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+
+	count, err = d.CountComposesSince(ANR3, 96*time.Hour+time.Second)
+	require.NoError(t, err)
+	require.Equal(t, 3, count)
 }
