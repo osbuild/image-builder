@@ -28,6 +28,8 @@ type DB interface {
 	InsertCompose(jobId, accountNumber, orgId string, request json.RawMessage) error
 	GetComposes(accountNumber string, limit, offset int) ([]ComposeEntry, int, error)
 	GetCompose(jobId string, accountNumber string) (*ComposeEntry, error)
+	// Returns the count of compose requests performed by an *accountNumber* for a *duration*.
+	CountComposesSince(accountNumber string, duration time.Duration) (int, error)
 }
 
 func InitDBConnectionPool(connStr string) (DB, error) {
@@ -116,4 +118,23 @@ func (db *dB) GetComposes(accountNumber string, limit, offset int) ([]ComposeEnt
 	}
 
 	return composes, count, nil
+}
+
+func (db *dB) CountComposesSince(accountNumber string, duration time.Duration) (int, error) {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Release()
+
+	var count int
+	err = conn.QueryRow(ctx,
+		"SELECT COUNT(*) FROM composes WHERE account_number=$1 AND CURRENT_TIMESTAMP - created_at <= $2",
+		accountNumber, duration).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

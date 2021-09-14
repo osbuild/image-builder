@@ -119,3 +119,8 @@ func (d *dB) GetCompose(jobId string, accountNumber string) (*db.ComposeEntry, e
 	}
 	return nil, db.ComposeNotFoundError
 }
+
+func (d *dB) CountComposesSince(accountNumber string, duration time.Duration) (int, error) {
+	_, count, err := d.GetComposes(accountNumber, 100, 0)
+	return count, err
+}
