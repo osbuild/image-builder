@@ -8,16 +8,6 @@ ARCH=$(uname -m)
 echo "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
-# Currently openstack/rhel-8.4-x86_64 is beta image, the subscription will fail.
-# Added condition to check if it is a beta image.
-# TODO: remove condition to check beta after openstack/rhel-8.4-x86_64 can subscribe
-# Register RHEL if we are provided with a registration script.
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status && ! sudo grep beta /etc/os-release; then
-    echo "Registering RHEL instance"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
-fi
-
 # Install image-builder packages
 REPO_DIR=repo/image-builder/"${CI_PIPELINE_ID}"
 sudo dnf localinstall -y "$REPO_DIR"/*"${ARCH}".rpm
