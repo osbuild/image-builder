@@ -77,69 +77,92 @@ func connect(t *testing.T) *pgx.Conn {
 	return conn
 }
 
-// after each migration insert some data which follows the schema of that migration
-func insertDataForMigrationStep1(t *testing.T) {
+func tearDown(t *testing.T) {
 	conn := connect(t)
 	defer conn.Close(context.Background())
+	conn.Exec(context.Background(), "drop table composes")
+	conn.Exec(context.Background(), "drop table schema_migrations")
+}
 
+func testMigration(t *testing.T) {
+	defer tearDown(t) // tear-down cleanup the database
+
+	migrateOneStep(t) //migrate to step 1
+
+	conn := connect(t)
+	defer conn.Close(context.Background())
 	insert := "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-
 	_, err := conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, ORGID1)
 	require.NoError(t, err)
 
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, ORGID1)
-	require.NoError(t, err)
+	migrateOneStep(t) // migrate to step 2
 
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
 	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR2, ORGID1)
 	require.NoError(t, err)
 
-	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4)"
-
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
-	require.NoError(t, err)
-
-	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '3 days', $3, $4)"
-
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
-	require.NoError(t, err)
-
-	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '4 days', $3, $4)"
-
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
-	require.NoError(t, err)
-}
-
-func insertDataForMigrationStep2(t *testing.T) {
-	conn := connect(t)
-	defer conn.Close(context.Background())
-
-	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-
-	_, err := conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, ORGID1)
-	require.NoError(t, err)
-
+	// inserting data referring to account_id should fail after migration step 2
+	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
 	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, ORGID1)
-	require.NoError(t, err)
+	require.Error(t, err)
 
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR2, ORGID1)
-	require.NoError(t, err)
-}
+	migrateOneStep(t) // migrate to step 3
 
-func TestMain(t *testing.T) {
-	migrateOneStep(t)
-	insertDataForMigrationStep1(t)
-
-	migrateOneStep(t)
-	insertDataForMigrationStep2(t)
-
-	migrateOneStep(t)
+	// Verify that after migration step 3 adding a compose request to the db requires a non empty account number.
+	d, err := db.InitDBConnectionPool(connStr(t))
+	err = d.InsertCompose(uuid.New().String(), "", ORGID1, []byte("{}"))
+	require.Error(t, err)
 
 	// make sure migrating a fully migrated db doesn't error out
 	migrateUp(t)
 
+	// Check data inserted at migration step 1 and 2 are still accessible
+	_, count, err := d.GetComposes(ANR1, 100, 0)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+	_, count, err = d.GetComposes(ANR2, 100, 0)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+}
+
+func testInsertCompose(t *testing.T) {
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
+	// teardwon
+	defer tearDown(t)
+
+	// setup
+	migrateUp(t)
+
+	// test
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	require.NoError(t, err)
+	err = d.InsertCompose("toto", ANR1, ORGID1, []byte("{}"))
+	require.Error(t, err)
+	err = d.InsertCompose(uuid.New().String(), "", ORGID1, []byte("{}"))
+	require.Error(t, err)
+}
+
+func testGetCompose(t *testing.T) {
+	d, err := db.InitDBConnectionPool(connStr(t))
+	require.NoError(t, err)
+
+	// teardwon
+	defer tearDown(t)
+
+	// setup
+	migrateUp(t)
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	require.NoError(t, err)
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	require.NoError(t, err)
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	require.NoError(t, err)
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	require.NoError(t, err)
+
+	// test
 	// GetComposes works as expected
 	composes, count, err := d.GetComposes(ANR1, 100, 0)
 	require.NoError(t, err)
@@ -162,25 +185,28 @@ func TestMain(t *testing.T) {
 	require.Equal(t, db.ComposeNotFoundError, err)
 	require.Nil(t, compose)
 
-	// InsertCompose works as expected
-	composes, count, err = d.GetComposes(ANR2, 100, 0)
-	require.NoError(t, err)
-	require.Equal(t, 2, count)
-	require.Equal(t, 2, len(composes))
+}
 
-	err = d.InsertCompose(uuid.New().String(), ANR2, ORGID1, []byte("{}"))
+func testCountComposesSince(t *testing.T) {
+	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
-	composes, count, err = d.GetComposes(ANR2, 100, 0)
-	require.NoError(t, err)
-	require.Equal(t, 3, count)
-	require.Equal(t, 3, len(composes))
 
-	// Verify that adding a compose request to the db requires a non empty account number.
-	err = d.InsertCompose(uuid.New().String(), "", ORGID1, []byte("{}"))
-	require.Error(t, err)
+	// teardwon
+	defer tearDown(t)
+
+	// setup
+	migrateUp(t)
+	conn := connect(t)
+	defer conn.Close(context.Background())
+	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '3 days', $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '4 days', $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
 
 	// Verify quering since an interval
-	count, err = d.CountComposesSince(ANR3, 24*time.Hour)
+	count, err := d.CountComposesSince(ANR3, 24*time.Hour)
 	require.NoError(t, err)
 	require.Equal(t, 0, count)
 
@@ -195,4 +221,12 @@ func TestMain(t *testing.T) {
 	count, err = d.CountComposesSince(ANR3, 96*time.Hour+time.Second)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
+}
+
+func TestMain(t *testing.T) {
+	tearDown(t)
+	testMigration(t)
+	testInsertCompose(t)
+	testGetCompose(t)
+	testCountComposesSince(t)
 }
