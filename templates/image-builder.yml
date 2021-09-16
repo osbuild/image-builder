@@ -63,6 +63,8 @@ objects:
             - name: composer-secrets
               mountPath: "/app/composer-secrets"
               readOnly: true
+            - name: config-volume
+              mountPath: /app/quotas
           env:
             - name: LISTEN_ADDRESS
               value: "${LISTEN_ADDRESS}"
@@ -159,10 +161,18 @@ objects:
               value: "${ALLOWED_ACCOUNT_NUMBERS}"
             - name: DISTRIBUTIONS_DIR
               value: "${DISTRIBUTIONS_DIR}"
+            - name: QUOTA_FILE
+              value: "/app/quotas/accounts_quotas.json"
         volumes:
           - name: composer-secrets
             secret:
               secretName: composer-secrets
+          - name: config-volume
+            configMap:
+              name: image-builder-crc-quotas
+              items:
+              - key: quotas.json
+                path: accounts_quotas.json
         initContainers:
         - name: image-builder-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"

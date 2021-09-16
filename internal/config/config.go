@@ -29,4 +29,5 @@ type ImageBuilderConfig struct {
 	PGUser                 string  `env:"PGUSER"`
 	PGPassword             string  `env:"PGPASSWORD"`
 	PGSSLMode              string  `env:"PGSSLMODE"`
+	QuotaFile              string  `env:"QUOTA_FILE"`
 }
