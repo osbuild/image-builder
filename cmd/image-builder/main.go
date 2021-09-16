@@ -8,7 +8,7 @@ import (
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/logger"
-	"github.com/osbuild/image-builder/internal/v1"
+	v1 "github.com/osbuild/image-builder/internal/v1"
 
 	"github.com/labstack/echo/v4"
 )
@@ -74,7 +74,7 @@ func main() {
 	}
 
 	echoServer := echo.New()
-	err = v1.Attach(echoServer, log, client, dbase, aws, gcp, azure, orgIds, accountNumbers, conf.DistributionsDir)
+	err = v1.Attach(echoServer, log, client, dbase, aws, gcp, azure, orgIds, accountNumbers, conf.DistributionsDir, conf.QuotaFile)
 	if err != nil {
 		panic(err)
 	}

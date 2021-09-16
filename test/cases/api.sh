@@ -110,6 +110,7 @@ ACCOUNT0_ORG1="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9L
 PORT="8086"
 CURLCMD='curl -w %{http_code}'
 HEADER="x-rh-identity: $ACCOUNT0_ORG0"
+HEADER2="x-rh-identity: $ACCOUNT1_ORG0"
 ADDRESS="localhost"
 BASEURL="http://$ADDRESS:$PORT/api/image-builder/v1.0"
 BASEURLMAJORVERSION="http://$ADDRESS:$PORT/api/image-builder/v1"
@@ -392,6 +393,13 @@ function Test_postToComposer() {
   [[ "$COMPOSE_ID" =~ ^\{?[A-F0-9a-f]{8}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{4}-[A-F0-9a-f]{12}\}?$ ]]
 }
 
+### Case: post to composer without enough quotas
+function Test_postToComposerWithoutEnoughQuotas() {
+  RESULT=$($CURLCMD -H "$HEADER2" -H 'Content-Type: application/json' --request POST --data @"$REQUEST_FILE" "$BASEURL/compose")
+  EXIT_CODE=$(getExitCode "$RESULT")
+  [[ "$EXIT_CODE" == 403 ]]
+}
+
 ### Case: wait for the compose to finish successfully
 function Test_waitForCompose() {
   while true
@@ -429,7 +437,7 @@ function Test_waitForCompose() {
 }
 
 function Test_wrong_user_get_compose_status() {
-  RESULT=$($CURLCMD -H "x-rh-identity: $ACCOUNT1_ORG0" --request GET "$BASEURL/composes/$COMPOSE_ID")
+  RESULT=$($CURLCMD -H "$HEADER2" --request GET "$BASEURL/composes/$COMPOSE_ID")
   EXIT_CODE=$(getExitCode "$RESULT")
   [[ $EXIT_CODE == 404 ]]
 }
@@ -702,6 +710,7 @@ Test_verifyComposeMetadata
 Test_getComposes
 Test_getOpenapiWithWrongOrgId
 Test_postToComposerWithWrongOrgId
+Test_postToComposerWithoutEnoughQuotas
 
 echo "########## Test success! ##########"
 exit 0

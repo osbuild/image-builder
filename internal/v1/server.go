@@ -37,6 +37,7 @@ type Server struct {
 	orgIds         []string
 	accountNumbers []string
 	distsDir       string
+	quotaFile      string
 }
 
 type AWSConfig struct {
@@ -68,7 +69,9 @@ type IdentityHeader struct {
 	} `json:"identity"`
 }
 
-func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB, awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, accountNumbers []string, distsDir string) error {
+func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB,
+	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, accountNumbers []string,
+	distsDir string, quotaFile string) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -97,6 +100,7 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.Osbuil
 		orgIds,
 		accountNumbers,
 		distsDir,
+		quotaFile,
 	}
 	var h Handlers
 	h.server = &s
@@ -408,8 +412,21 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *cloudapi.OSTree {
 }
 
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
+	idHeader, err := h.getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	quotaOk, err := common.CheckQuota(idHeader.Identity.AccountNumber, h.server.db, h.server.quotaFile)
+	if err != nil {
+		return err
+	}
+	if !quotaOk {
+		return echo.NewHTTPError(http.StatusForbidden, "Quota exceeded for user")
+	}
+
 	var composeRequest ComposeRequest
-	err := ctx.Bind(&composeRequest)
+	err = ctx.Bind(&composeRequest)
 	if err != nil {
 		return err
 	}
@@ -466,11 +483,6 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 
 	rawCR, err := json.Marshal(composeRequest)
-	if err != nil {
-		return err
-	}
-
-	idHeader, err := h.getIdentityHeader(ctx)
 	if err != nil {
 		return err
 	}

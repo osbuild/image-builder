@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/tutils"
@@ -22,6 +25,40 @@ import (
 
 var UUIDTest string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc93d"
 
+// Create a temporary file containing quotas, returns the file name as a string
+func initQuotaFile() (string, error) {
+	// create quotas with only the default values
+	quotas := map[string]common.Quota{
+		"default": {Quota: common.DefaultQuota, SlidingWindow: common.DefaultSlidingWindow},
+	}
+	jsonQuotas, err := json.Marshal(quotas)
+	if err != nil {
+		return "", err
+	}
+
+	// get a temp file to store the quotas
+	file, err := ioutil.TempFile("", "account_quotas.*.json")
+	if err != nil {
+		return "", err
+	}
+
+	// write to disk
+	jsonFile, err := os.Create(file.Name())
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	_, err = jsonFile.Write(jsonQuotas)
+	if err != nil {
+		return "", err
+	}
+	err = jsonFile.Close()
+	if err != nil {
+		return "", err
+	}
+	return file.Name(), nil
+}
+
 func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNumbers string, dbase db.DB) *echo.Echo {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
@@ -29,9 +66,13 @@ func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNum
 	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
 	require.NoError(t, err)
 
+	//store the quotas in a temporary file
+	quotaFile, err := initQuotaFile()
+	require.NoError(t, err)
+
 	echoServer := echo.New()
 	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"),
-		strings.Split(accountNumbers, ";"), "../../distributions")
+		strings.Split(accountNumbers, ";"), "../../distributions", quotaFile)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {

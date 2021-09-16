@@ -132,6 +132,7 @@ sudo podman run --pull=never --security-opt "label=disable" --net=host \
      image-builder-test:"${QUAY_REPO_TAG}" /app/image-builder-migrate-db
 sudo podman logs image-builder-migrate
 
+echo "{\"000000\":{\"quota\":5,\"slidingWindow\":1209600000000000},\"000001\":{\"quota\":0,\"slidingWindow\":1209600000000000}}" > /tmp/quotas
 # Start Image Builder container
 sudo podman run -d -p 8086:8086 --pull=never --security-opt "label=disable" --net=host \
      -e OSBUILD_URL=https://localhost:443 \
@@ -149,6 +150,8 @@ sudo podman run -d -p 8086:8086 --pull=never --security-opt "label=disable" --ne
      -e PGUSER=postgres -e PGPASSWORD=foobar \
      -e ALLOWED_ORG_IDS="000000" \
      -e DISTRIBUTIONS_DIR="/app/distributions" \
+     -e QUOTA_FILE="/app/accounts_quotas.json" \
      -v /etc/osbuild-composer:/etc/osbuild-composer \
+     -v /tmp/quotas:/app/accounts_quotas.json \
      --name image-builder \
      image-builder-test:"${QUAY_REPO_TAG}"
