@@ -44,11 +44,8 @@ func prepare(connStr string, migrationsDir string, logger *logrus.Logger) (*migr
 	logger.Infoln("Current migration version", version)
 
 	if dirty {
-		logger.Warnln("Current migration state is dirty, force resetting to version", version)
-		err = m.Force(int(version))
-		if err != nil {
-			return nil, err
-		}
+		logger.Errorln("Current migration state is dirty")
+		return m, fmt.Errorf("DB is at schema version %v is dirty", version)
 	}
 	return m, nil
 }
