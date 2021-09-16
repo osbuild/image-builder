@@ -424,6 +424,40 @@ func TestGetComposeMetadata404(t *testing.T) {
 	require.Contains(t, body, "Compose not found")
 }
 
+func TestGetComposes(t *testing.T) {
+	var UUIDTest2 string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc222"
+	var UUIDTest3 string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc333"
+
+	dbase := tutils.InitDB()
+	err := dbase.InsertCompose(UUIDTest, "500000", "000000", json.RawMessage("{}"))
+	require.NoError(t, err)
+	err = dbase.InsertCompose(UUIDTest2, "500000", "000000", json.RawMessage("{}"))
+	require.NoError(t, err)
+	err = dbase.InsertCompose(UUIDTest3, "500000", "000000", json.RawMessage("{}"))
+	require.NoError(t, err)
+
+	composeEntry, err := dbase.GetCompose(UUIDTest, "500000")
+	require.NoError(t, err)
+
+	db_srv := startServerWithCustomDB(t, "", "*", "", dbase)
+	defer func() {
+		err := db_srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+
+	var result ComposesResponse
+
+	resp, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
+
+	require.Equal(t, 200, resp.StatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+
+	require.Equal(t, 3, result.Meta.Count)
+	require.Equal(t, composeEntry.CreatedAt.String(), result.Data[0].CreatedAt)
+	require.Equal(t, UUIDTest, result.Data[0].Id)
+}
+
 // note: these scenarios don't needs to talk to a simulated osbuild-composer API
 func TestComposeImage(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
