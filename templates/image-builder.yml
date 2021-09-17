@@ -17,7 +17,7 @@ objects:
       service: image-builder
     name: image-builder
   spec:
-    replicas: 2
+    replicas: 3
     selector:
       matchLabels:
         name: image-builder
