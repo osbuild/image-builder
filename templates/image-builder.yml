@@ -34,6 +34,7 @@ objects:
         labels:
           name: image-builder
       spec:
+        serviceAccountName: image-builder
         containers:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: image-builder
@@ -229,6 +230,13 @@ objects:
               secretKeyRef:
                 key: aws_region
                 name: image-builder-cloudwatch
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: image-builder
+  imagePullSecrets:
+  - name: quay-cloudservices-pull
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
