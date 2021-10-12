@@ -293,14 +293,6 @@ parameters:
   - description: image-builder image tag
     name: IMAGE_TAG
     required: true
-  - description: osbuild-composer image name
-    name: OSBUILD_IMAGE_NAME
-    value: quay.io/cloudservices/osbuild-composer
-    required: true
-  - description: osbuild-composer image tag
-    name: OSBUILD_IMAGE_TAG
-    value: INSERTHASH # Pin the osbuild-composer version, we should always a working and tested version here
-    required: true
   # NOTE(mhayden): This is set to match the ports set up in RHIOPS-953.
   - description: Backend listener port
     name: BACKEND_LISTENER_PORT
