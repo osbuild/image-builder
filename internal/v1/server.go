@@ -124,12 +124,7 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.Osbuil
 }
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {
-	spec, err := GetSwagger()
-	if err != nil {
-		return err
-	}
-	version := Version{spec.Info.Version}
-	return ctx.JSON(http.StatusOK, version)
+	return ctx.JSON(http.StatusOK, Version{Version: "1.0"})
 }
 
 func (h *Handlers) GetReadiness(ctx echo.Context) error {
