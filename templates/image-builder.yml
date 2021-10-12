@@ -69,6 +69,13 @@ objects:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 10 # The readiness probe is pinging osbuild-composer
+          resources:
+            requests:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: "${MEMORY_LIMIT}"
           ports:
           - name: api
             containerPort: 8086
@@ -191,6 +198,13 @@ objects:
         - name: image-builder-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"
           command: [ "/app/image-builder-migrate-db" ]
+          resources:
+            requests:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: "${MEMORY_LIMIT}"
           env:
           - name: MIGRATIONS_DIR
             value: "${MIGRATIONS_DIR}"
@@ -336,3 +350,15 @@ parameters:
   - name: PGSSLMODE
     description: Sslmode for the connection to psql
     value: "require"
+  - name: CPU_REQUEST
+    description: CPU request per container
+    value: "200m"
+  - name: CPU_LIMIT
+    description: CPU limit per container
+    value: "1"
+  - name: MEMORY_REQUEST
+    description: Memory request per container
+    value: "256Mi"
+  - name: MEMORY_LIMIT
+    description: Memory limit per container
+    value: "512Mi"
