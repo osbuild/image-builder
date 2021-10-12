@@ -29,6 +29,7 @@ type Server struct {
 	logger         *logrus.Logger
 	echo           *echo.Echo
 	client         cloudapi.OsbuildClient
+	spec           *openapi3.Swagger
 	router         routers.Router
 	db             db.DB
 	aws            AWSConfig
@@ -81,6 +82,9 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.Osbuil
 	if err := spec.Validate(loader.Context); err != nil {
 		return err
 	}
+
+	spec.AddServer(&openapi3.Server{URL: fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)})
+
 	router, err := legacyrouter.NewRouter(spec)
 	if err != nil {
 		return err
@@ -92,6 +96,7 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.Osbuil
 		logger,
 		echoServer,
 		client,
+		spec,
 		router,
 		dbase,
 		awsConfig,
@@ -124,11 +129,7 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.Osbuil
 }
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {
-	spec, err := GetSwagger()
-	if err != nil {
-		return err
-	}
-	version := Version{spec.Info.Version}
+	version := Version{h.server.spec.Info.Version}
 	return ctx.JSON(http.StatusOK, version)
 }
 
@@ -164,12 +165,7 @@ func (h *Handlers) GetReadiness(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
-	spec, err := GetSwagger()
-	if err != nil {
-		return err
-	}
-	spec.AddServer(&openapi3.Server{URL: fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)})
-	return ctx.JSON(http.StatusOK, spec)
+	return ctx.JSON(http.StatusOK, h.server.spec)
 }
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
@@ -635,11 +631,6 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 		upto = len(packages)
 	}
 
-	spec, err := GetSwagger()
-	if err != nil {
-		return err
-	}
-
 	return ctx.JSON(http.StatusOK, PackagesResponse{
 		Meta: struct {
 			Count int `json:"count"`
@@ -651,9 +642,9 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 			Last  string `json:"last"`
 		}{
 			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
-				RoutePrefix(), spec.Info.Version, params.Search, params.Distribution, params.Architecture, offset, limit),
+				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, offset, limit),
 			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
-				RoutePrefix(), spec.Info.Version, params.Search, params.Distribution, params.Architecture, len(packages)-1, limit),
+				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, len(packages)-1, limit),
 		},
 		Data: packages[offset:upto],
 	})
