@@ -40,13 +40,15 @@ objects:
             preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 100
               podAffinityTerm:
-                matchLabels:
-                  name: image-builder
+                labelSelector:
+                  matchLabels:
+                    name: image-builder
                 topologyKey: topology.kubernetes.io/zone
             - weight: 50
               podAffinityTerm:
-                matchLabels:
-                  name: image-builder
+                labelSelector:
+                  matchLabels:
+                    name: image-builder
                 topologyKey: kubernetes.io/hostname
         containers:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
