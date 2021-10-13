@@ -43,13 +43,13 @@ objects:
                 labelSelector:
                   matchLabels:
                     name: image-builder
-                topologyKey: topology.kubernetes.io/zone
+                topologyKey: node
             - weight: 50
               podAffinityTerm:
                 labelSelector:
                   matchLabels:
                     name: image-builder
-                topologyKey: kubernetes.io/hostname
+                topologyKey: zone
         containers:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: image-builder
