@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/cloudapi"
 	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -28,7 +28,7 @@ import (
 type Server struct {
 	logger         *logrus.Logger
 	echo           *echo.Echo
-	client         cloudapi.OsbuildClient
+	client         *composer.ComposerClient
 	spec           *openapi3.Swagger
 	router         routers.Router
 	db             db.DB
@@ -42,10 +42,7 @@ type Server struct {
 }
 
 type AWSConfig struct {
-	Region          string
-	AccessKeyId     string
-	SecretAccessKey string
-	S3Bucket        string
+	Region string
 }
 
 type GCPConfig struct {
@@ -70,7 +67,7 @@ type IdentityHeader struct {
 	} `json:"identity"`
 }
 
-func Attach(echoServer *echo.Echo, logger *logrus.Logger, client cloudapi.OsbuildClient, dbase db.DB,
+func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.ComposerClient, dbase db.DB,
 	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, accountNumbers []string,
 	distsDir string, quotaFile string) error {
 	spec, err := GetSwagger()
@@ -143,7 +140,7 @@ func (h *Handlers) GetReadiness(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "no distributions defined")
 	}
 
-	resp, err := h.server.client.Version()
+	resp, err := h.server.client.OpenAPI()
 	if err != nil {
 		return err
 	}
@@ -256,7 +253,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("%s", body))
 	}
 
-	var cloudStat cloudapi.ComposeStatus
+	var cloudStat composer.ComposeStatus
 	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
 	if err != nil {
 		return err
@@ -300,7 +297,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error 
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
 	}
 
-	var cloudStat cloudapi.ComposeMetadata
+	var cloudStat composer.ComposeMetadata
 	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
 	if err != nil {
 		return err
@@ -390,12 +387,12 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	})
 }
 
-func buildOSTreeOptions(ostreeOptions *OSTree) *cloudapi.OSTree {
+func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 	if ostreeOptions == nil {
 		return nil
 	}
 
-	cloudOptions := new(cloudapi.OSTree)
+	cloudOptions := new(composer.OSTree)
 	if ostreeOptions != nil {
 		if ref := ostreeOptions.Ref; ref != nil {
 			cloudOptions.Ref = ref
@@ -440,22 +437,20 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	uploadReq, err := h.server.buildUploadRequest(composeRequest.ImageRequests[0].UploadRequest)
+	uploadOptions, err := h.server.buildUploadOptions(composeRequest.ImageRequests[0].UploadRequest)
 	if err != nil {
 		return err
 	}
 
-	cloudCR := cloudapi.ComposeRequest{
+	cloudCR := composer.ComposeRequest{
 		Distribution:   composeRequest.Distribution,
 		Customizations: buildCustomizations(composeRequest.Customizations),
-		ImageRequests: []cloudapi.ImageRequest{
-			{
-				Architecture:  composeRequest.ImageRequests[0].Architecture,
-				ImageType:     composeRequest.ImageRequests[0].ImageType,
-				Ostree:        buildOSTreeOptions(composeRequest.ImageRequests[0].Ostree),
-				Repositories:  repositories,
-				UploadRequest: uploadReq,
-			},
+		ImageRequest: composer.ImageRequest{
+			Architecture:  composeRequest.ImageRequests[0].Architecture,
+			ImageType:     composer.ImageTypes(composeRequest.ImageRequests[0].ImageType),
+			Ostree:        buildOSTreeOptions(composeRequest.ImageRequests[0].Ostree),
+			Repositories:  repositories,
+			UploadOptions: uploadOptions,
 		},
 	}
 
@@ -472,7 +467,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(resp.StatusCode, fmt.Sprintf("Failed posting compose request to osbuild-composer: %s", body))
 	}
 
-	var composeResult cloudapi.ComposeResult
+	var composeResult composer.ComposeId
 	err = json.NewDecoder(resp.Body).Decode(&composeResult)
 	if err != nil {
 		return err
@@ -493,98 +488,72 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	})
 }
 
-func (s *Server) buildUploadRequest(ur UploadRequest) (cloudapi.UploadRequest, error) {
+func (s *Server) buildUploadOptions(ur UploadRequest) (composer.UploadOptions, error) {
 	// HACK deepmap doesn't really support `oneOf`, so marshal and unmarshal into target object
 	optionsJSON, err := json.Marshal(ur.Options)
 	if err != nil {
-		return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to marshal UploadRequestOptions")
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "Unable to marshal UploadRequestOptions")
 	}
 	switch ur.Type {
 	case UploadTypes_aws:
 		var awsOptions AWSUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &awsOptions)
 		if err != nil {
-			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
 		}
-		return cloudapi.UploadRequest{
-			Type: cloudapi.UploadTypes(ur.Type),
-			Options: cloudapi.AWSUploadRequestOptions{
-				Ec2: cloudapi.AWSUploadRequestOptionsEc2{
-					AccessKeyId:       s.aws.AccessKeyId,
-					SecretAccessKey:   s.aws.SecretAccessKey,
-					ShareWithAccounts: &awsOptions.ShareWithAccounts,
-				},
-				S3: cloudapi.AWSUploadRequestOptionsS3{
-					AccessKeyId:     s.aws.AccessKeyId,
-					SecretAccessKey: s.aws.SecretAccessKey,
-					Bucket:          s.aws.S3Bucket,
-				},
-				Region: s.aws.Region,
-			},
+		return composer.AWSEC2UploadOptions{
+			Region:            s.aws.Region,
+			ShareWithAccounts: awsOptions.ShareWithAccounts,
 		}, nil
 	case UploadTypes_aws_s3:
 		var awsOptions AWSUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &awsOptions)
 		if err != nil {
-			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
 		}
-		return cloudapi.UploadRequest{
-			Type: cloudapi.UploadTypes(ur.Type),
-			Options: cloudapi.AWSUploadRequestOptions{
-				S3: cloudapi.AWSUploadRequestOptionsS3{
-					AccessKeyId:     s.aws.AccessKeyId,
-					SecretAccessKey: s.aws.SecretAccessKey,
-					Bucket:          s.aws.S3Bucket,
-				},
-				Region: s.aws.Region,
-			},
+		return composer.AWSS3UploadOptions{
+			Region: s.aws.Region,
 		}, nil
 	case UploadTypes_gcp:
 		var gcpOptions GCPUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &gcpOptions)
 		if err != nil {
-			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into GCPUploadRequestOptions")
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into GCPUploadRequestOptions")
 		}
-		return cloudapi.UploadRequest{
-			Type: cloudapi.UploadTypes(ur.Type),
-			Options: cloudapi.GCPUploadRequestOptions{
-				Bucket:            s.gcp.Bucket,
-				Region:            &s.gcp.Region,
-				ShareWithAccounts: &gcpOptions.ShareWithAccounts,
-			},
+		return composer.GCPUploadOptions{
+			Bucket:            s.gcp.Bucket,
+			Region:            s.gcp.Region,
+			ShareWithAccounts: &gcpOptions.ShareWithAccounts,
 		}, nil
 	case UploadTypes_azure:
 		var azureOptions AzureUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &azureOptions)
 		if err != nil {
-			return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into AzureUploadRequestOptions")
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into AzureUploadRequestOptions")
 		}
-		return cloudapi.UploadRequest{
-			Type: cloudapi.UploadTypes(ur.Type),
-			Options: cloudapi.AzureUploadRequestOptions{
-				TenantId:       azureOptions.TenantId,
-				SubscriptionId: azureOptions.SubscriptionId,
-				ResourceGroup:  azureOptions.ResourceGroup,
-				Location:       s.azure.Location,
-			},
+		return composer.AzureUploadOptions{
+			TenantId:       azureOptions.TenantId,
+			SubscriptionId: azureOptions.SubscriptionId,
+			ResourceGroup:  azureOptions.ResourceGroup,
+			Location:       s.azure.Location,
 		}, nil
 	default:
-		return cloudapi.UploadRequest{}, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
+		return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
 	}
 }
 
-func buildCustomizations(cust *Customizations) *cloudapi.Customizations {
+func buildCustomizations(cust *Customizations) *composer.Customizations {
 	if cust == nil {
 		return nil
 	}
 
-	res := &cloudapi.Customizations{}
+	res := &composer.Customizations{}
 	if cust.Subscription != nil {
-		res.Subscription = &cloudapi.Subscription{
+		res.Subscription = &composer.Subscription{
 			ActivationKey: cust.Subscription.ActivationKey,
 			BaseUrl:       cust.Subscription.BaseUrl,
 			Insights:      cust.Subscription.Insights,
-			Organization:  cust.Subscription.Organization,
+			Organization:  fmt.Sprintf("%d", cust.Subscription.Organization),
 			ServerUrl:     cust.Subscription.ServerUrl,
 		}
 	}

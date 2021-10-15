@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/logger"
@@ -41,7 +41,7 @@ func main() {
 		panic(err)
 	}
 
-	client, err := cloudapi.NewOsbuildClient(conf.OsbuildURL, conf.OsbuildCert, conf.OsbuildKey, conf.OsbuildCA)
+	client, err := composer.NewClient(conf.ComposerURL, conf.ComposerTokenURL, conf.ComposerOfflineToken)
 	if err != nil {
 		panic(err)
 	}
@@ -59,10 +59,7 @@ func main() {
 	}
 
 	aws := v1.AWSConfig{
-		Region:          conf.OsbuildRegion,
-		AccessKeyId:     conf.OsbuildAccessKeyID,
-		SecretAccessKey: conf.OsbuildSecretAccessKey,
-		S3Bucket:        conf.OsbuildS3Bucket,
+		Region: conf.OsbuildRegion,
 	}
 	gcp := v1.GCPConfig{
 		Region: conf.OsbuildGCPRegion,

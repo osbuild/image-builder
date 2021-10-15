@@ -2,6 +2,12 @@
 
 set -eux
 
+# fetch latest thingy
+
+curl https://raw.githubusercontent.com/osbuild/osbuild-composer/main/internal/cloudapi/v2/openapi.v2.yml -o internal/composer/openapi.v2.yml
+
+# go stuff
+
 GO_VERSION=1.14.14
 GO_BINARY=$(go env GOPATH)/bin/go$GO_VERSION
 
