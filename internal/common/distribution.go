@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/osbuild/image-builder/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/composer"
 )
 
 type DistributionItem struct {
@@ -35,7 +35,7 @@ type DistributionFile struct {
 
 type X86_64 struct {
 	ImageTypes   []string              `json:"image_types"`
-	Repositories []cloudapi.Repository `json:"repositories"`
+	Repositories []composer.Repository `json:"repositories"`
 }
 
 type Package struct {
@@ -94,7 +94,7 @@ func ReadDistributions(distsDir, distro string) ([]DistributionFile, error) {
 	return distributions, nil
 }
 
-func RepositoriesForImage(distsDir, distro, arch string) ([]cloudapi.Repository, error) {
+func RepositoriesForImage(distsDir, distro, arch string) ([]composer.Repository, error) {
 	distributions, err := ReadDistributions(distsDir, distro)
 	if err != nil {
 		return nil, err

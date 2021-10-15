@@ -31,7 +31,11 @@ jobs:
 
       - name: Run the container
         run: |
-          docker run -d --env PGHOST=localhost --net=host --name image-builder image-builder
+          docker run -d \
+            --env PGHOST=localhost \
+            --env COMPOSER_TOKEN_URL=localhost \
+            --env COMPOSER_OFFLINE_TOKEN=token \
+            --net=host --name image-builder image-builder
           docker ps
 
       - name: Verify that the startup log line is in the logs

@@ -114,14 +114,15 @@ objects:
             - name: PGSSLMODE
               value: "${PGSSLMODE}"
             # Configuration for the osbuild client within image-builder
-            - name: OSBUILD_URL
-              value: "${OSBUILD_URL}"
-            - name: OSBUILD_CERT_PATH
-              value: "${OSBUILD_CERT_PATH}"
-            - name: OSBUILD_KEY_PATH
-              value: "${OSBUILD_KEY_PATH}"
-            - name: OSBUILD_CA_PATH
-              value: "${OSBUILD_CA_PATH}"
+            - name: COMPOSER_URL
+              value: "${COMPOSER_URL}"
+            - name: COMPOSER_TOKEN_URL
+              value: "${COMPOSER_TOKEN_URL}"
+            - name: COMPOSER_OFFLINE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: offline_token
+                  name: composer-secrets
             # Credentials/configuration for AWS cloudwatch.
             - name: CW_AWS_ACCESS_KEY_ID
               valueFrom:
@@ -148,21 +149,6 @@ objects:
               valueFrom:
                 secretKeyRef:
                   key: aws_region
-                  name: composer-secrets
-            - name: OSBUILD_AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  key: aws_access_key_id
-                  name: composer-secrets
-            - name: OSBUILD_AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  key: aws_secret_access_key
-                  name: composer-secrets
-            - name: OSBUILD_AWS_S3_BUCKET
-              valueFrom:
-                secretKeyRef:
-                  key: aws_s3_bucket
                   name: composer-secrets
             # GCP target specific variables passed to composer
             - name: OSBUILD_GCP_REGION
@@ -302,18 +288,12 @@ parameters:
   - name: LISTEN_ADDRESS
     description: Listening address and port
     value: "0.0.0.0:8086"
-  - name: OSBUILD_CERT_PATH
-    description: Path to certificate for ssl client auth to osbuild-composer instance
-    value: "/app/composer-secrets/client-crt.pem"
-  - name: OSBUILD_KEY_PATH
-    description: Path to key for ssl client auth to osbuild-composer instance
-    value: "/app/composer-secrets/client-key.pem"
-  - name: OSBUILD_CA_PATH
-    description: Path to ca for ssl client auth to osbuild-composer instance
-    value: "/app/composer-secrets/ca-crt.pem"
-  - name: OSBUILD_URL
+  - name: COMPOSER_URL
     description: Url to osbuild-composer instance in AWS
     value: ""
+  - name: COMPOSER_TOKEN_URL
+    description: OpenId token endpoint
+    value: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
   - name: ALLOWED_ORG_IDS
     description: Organization ids allowed to access the api, wildcard means everyone
     value: ""

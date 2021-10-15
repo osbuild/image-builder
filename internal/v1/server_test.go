@@ -14,8 +14,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/cloudapi"
 	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/tutils"
@@ -59,11 +59,21 @@ func initQuotaFile() (string, error) {
 	return file.Name(), nil
 }
 
-func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNumbers string, dbase db.DB) *echo.Echo {
+func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNumbers string, dbase db.DB) (*echo.Echo, *httptest.Server) {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
 
-	client, err := cloudapi.NewOsbuildClient(url, nil, nil, nil)
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(struct {
+			AccessToken string `json:"access_token"`
+		}{
+			AccessToken: "accesstoken",
+		})
+		require.NoError(t, err)
+	}))
+
+	client, err := composer.NewClient(url, tokenServer.URL, "offlinetoken")
 	require.NoError(t, err)
 
 	//store the quotas in a temporary file
@@ -92,10 +102,10 @@ func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNum
 		tries += 1
 	}
 
-	return echoServer
+	return echoServer, tokenServer
 }
 
-func startServer(t *testing.T, url string, orgIds string, accountNumbers string) *echo.Echo {
+func startServer(t *testing.T, url string, orgIds string, accountNumbers string) (*echo.Echo, *httptest.Server) {
 	return startServerWithCustomDB(t, url, orgIds, accountNumbers, tutils.InitDB())
 }
 
@@ -104,11 +114,12 @@ func startServer(t *testing.T, url string, orgIds string, accountNumbers string)
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv := startServer(t, "http://example.com", "000000", "")
+	srv, tokenSrv := startServer(t, "http://example.com", "000000", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", nil)
@@ -235,11 +246,12 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 }
 
 func TestEmptyAllowedIds(t *testing.T) {
-	srv := startServer(t, "http://example.com", "", "")
+	srv, tokenSrv := startServer(t, "http://example.com", "", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	t.Run("NotAuthorized", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
@@ -249,11 +261,12 @@ func TestEmptyAllowedIds(t *testing.T) {
 }
 
 func TestOrgIds(t *testing.T) {
-	srv := startServer(t, "http://example.com", "000000", "")
+	srv, tokenSrv := startServer(t, "http://example.com", "000000", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	t.Run("Authorized", func(t *testing.T) {
 		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
@@ -268,11 +281,12 @@ func TestOrgIds(t *testing.T) {
 }
 
 func TestAccountNumbers(t *testing.T) {
-	srv := startServer(t, "http://example.com", "", "500000")
+	srv, tokenSrv := startServer(t, "http://example.com", "", "500000")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	t.Run("Authorized", func(t *testing.T) {
 		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
@@ -287,11 +301,12 @@ func TestAccountNumbers(t *testing.T) {
 }
 
 func TestOrgIdWildcard(t *testing.T) {
-	srv := startServer(t, "http://example.com", "*", "")
+	srv, tokenSrv := startServer(t, "http://example.com", "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	t.Run("Authorized", func(t *testing.T) {
 		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
@@ -300,11 +315,12 @@ func TestOrgIdWildcard(t *testing.T) {
 }
 
 func TestAccountNumberWildcard(t *testing.T) {
-	srv := startServer(t, "http://example.com", "", "*")
+	srv, tokenSrv := startServer(t, "http://example.com", "", "*")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	t.Run("Authorized", func(t *testing.T) {
 		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
@@ -332,21 +348,22 @@ func TestGetComposeStatus(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "600000", "000001", json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv := startServerWithCustomDB(t, api_srv.URL, "*", "", dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, "*", "", dbase)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		UUIDTest), &tutils.AuthString1)
 	require.Equal(t, 200, response.StatusCode)
 
-	var result cloudapi.ComposeStatus
+	var result composer.ComposeStatus
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, cloudapi.ComposeStatus{
-		ImageStatus: cloudapi.ImageStatus{
+	require.Equal(t, composer.ComposeStatus{
+		ImageStatus: composer.ImageStatus{
 			Status: "building",
 		},
 	}, result)
@@ -357,8 +374,8 @@ func TestGetComposeStatus(t *testing.T) {
 	require.Equal(t, 200, response.StatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, cloudapi.ComposeStatus{
-		ImageStatus: cloudapi.ImageStatus{
+	require.Equal(t, composer.ComposeStatus{
+		ImageStatus: composer.ImageStatus{
 			Status: "building",
 		},
 	}, result)
@@ -374,11 +391,12 @@ func TestGetComposeStatus404(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		UUIDTest), &tutils.AuthString0)
@@ -388,7 +406,7 @@ func TestGetComposeStatus404(t *testing.T) {
 
 func TestGetComposeMetadata(t *testing.T) {
 	// simulate osbuild-composer API
-	testPackages := []cloudapi.PackageMetadata{
+	testPackages := []composer.PackageMetadata{
 		{
 			Arch:      "ArchTest2",
 			Epoch:     strptr("EpochTest2"),
@@ -412,7 +430,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	}
 	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		m := cloudapi.ComposeMetadata{
+		m := composer.ComposeMetadata{
 			OstreeCommit: strptr("test string"),
 			Packages:     &testPackages,
 		}
@@ -427,13 +445,14 @@ func TestGetComposeMetadata(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "500000", "000000", json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv := startServerWithCustomDB(t, api_srv.URL, "*", "", dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, "*", "", dbase)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
-	var result cloudapi.ComposeMetadata
+	var result composer.ComposeMetadata
 
 	// Get API response and compare
 	response, body := tutils.GetResponseBody(t,
@@ -453,11 +472,12 @@ func TestGetComposeMetadata404(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata",
 		UUIDTest), &tutils.AuthString0)
@@ -480,11 +500,12 @@ func TestGetComposes(t *testing.T) {
 	composeEntry, err := dbase.GetCompose(UUIDTest, "500000")
 	require.NoError(t, err)
 
-	db_srv := startServerWithCustomDB(t, "", "*", "", dbase)
+	db_srv, tokenSrv := startServerWithCustomDB(t, "", "*", "", dbase)
 	defer func() {
 		err := db_srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	var result ComposesResponse
 
@@ -503,11 +524,12 @@ func TestGetComposes(t *testing.T) {
 func TestComposeImage(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv := startServer(t, "http://example.com", "*", "")
+	srv, tokenSrv := startServer(t, "http://example.com", "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	t.Run("ErrorsForZeroImageRequests", func(t *testing.T) {
 		payload := ComposeRequest{
@@ -630,11 +652,12 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	payload := ComposeRequest{
 		Customizations: nil,
@@ -662,17 +685,18 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		s := "not a cloudapi.ComposeResult data structure"
+		s := "not a composer.ComposeId data structure"
 		err := json.NewEncoder(w).Encode(s)
 		require.NoError(t, err)
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	payload := ComposeRequest{
 		Customizations: nil,
@@ -700,7 +724,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		result := cloudapi.ComposeResult{
+		result := composer.ComposeId{
 			Id: "3aa7375a-534a-4de3-8caf-011e04f402d3",
 		}
 		err := json.NewEncoder(w).Encode(result)
@@ -708,11 +732,12 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	payload := ComposeRequest{
 		Customizations: nil,
@@ -749,7 +774,7 @@ func TestComposeCustomizations(t *testing.T) {
 	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		result := cloudapi.ComposeResult{
+		result := composer.ComposeId{
 			Id: "fe93fb55-ae04-4e21-a8b4-25ba95c3fa64",
 		}
 		err := json.NewEncoder(w).Encode(result)
@@ -757,11 +782,12 @@ func TestComposeCustomizations(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	payloads := []ComposeRequest{
 		{
@@ -842,9 +868,9 @@ func TestComposeCustomizations(t *testing.T) {
 }
 
 // TestBuildOSTreeOptions checks if the buildOSTreeOptions utility function
-// properly transfers the ostree options to the CloudAPI structure.
+// properly transfers the ostree options to the Composer structure.
 func TestBuildOSTreeOptions(t *testing.T) {
-	cases := map[ImageRequest]*cloudapi.OSTree{
+	cases := map[ImageRequest]*composer.OSTree{
 		{Ostree: nil}: nil,
 		{Ostree: &OSTree{Ref: strptr("someref")}}:                                     {Ref: strptr("someref")},
 		{Ostree: &OSTree{Ref: strptr("someref"), Url: strptr("https://example.org")}}: {Ref: strptr("someref"), Url: strptr("https://example.org")},
@@ -887,11 +913,12 @@ func TestIdentityAllowed(t *testing.T) {
 }
 
 func TestReadinessProbeNotReady(t *testing.T) {
-	srv := startServer(t, "http://example.com", "*", "")
+	srv, tokenSrv := startServer(t, "http://example.com", "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	response, _ := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
 	require.NotEqual(t, 200, response.StatusCode)
@@ -907,11 +934,12 @@ func TestReadinessProbeReady(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	response, body := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
 	require.Equal(t, 200, response.StatusCode)
@@ -920,11 +948,12 @@ func TestReadinessProbeReady(t *testing.T) {
 
 func TestMetrics(t *testing.T) {
 	// simulate osbuild-composer API
-	srv := startServer(t, "", "*", "")
+	srv, tokenSrv := startServer(t, "", "*", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
+	defer tokenSrv.Close()
 
 	response, body := tutils.GetResponseBody(t, "http://localhost:8086/metrics", nil)
 	require.Equal(t, 200, response.StatusCode)

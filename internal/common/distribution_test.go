@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/cloudapi"
+	"github.com/osbuild/image-builder/internal/composer"
 )
 
 func TestRepositoriesForImage(t *testing.T) {
@@ -15,7 +15,7 @@ func TestRepositoriesForImage(t *testing.T) {
 	baseurl := "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
 	baseurl2 := "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"
 	baseurl3 := "http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"
-	require.Equal(t, []cloudapi.Repository{
+	require.Equal(t, []composer.Repository{
 		{
 			Baseurl:    &baseurl,
 			Metalink:   nil,
