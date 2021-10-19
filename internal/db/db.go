@@ -118,6 +118,9 @@ func (db *dB) GetComposes(accountNumber string, since time.Duration, limit, offs
 			createdAt,
 		})
 	}
+	if err = result.Err(); err != nil {
+		return nil, 0, err
+	}
 
 	var count int
 	err = conn.QueryRow(ctx, sqlCountComposesSince, accountNumber, since).Scan(&count)
