@@ -67,6 +67,8 @@ func ReadDistributions(distsDir, distro string) ([]DistributionFile, error) {
 		if err != nil {
 			return err
 		}
+		// nosec because of https://github.com/securego/gosec/issues/714
+		/* #nosec G307 */
 		defer func() {
 			err := f.Close()
 			if err != nil {
@@ -142,6 +144,8 @@ func FindPackages(distsDir, distro, arch, search string) ([]Package, error) {
 	if err != nil {
 		return nil, err
 	}
+	// nosec because of https://github.com/securego/gosec/issues/714
+	/* #nosec G307 */
 	defer func() {
 		err := f.Close()
 		if err != nil {
