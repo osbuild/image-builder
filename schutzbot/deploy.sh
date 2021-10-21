@@ -55,12 +55,12 @@ if [[ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
 fi
 
 # if Azure credentials are defined in the env, create the credentials file
-AZURE_CLIENT_ID="${AZURE_CLIENT_ID:-}"
-AZURE_CLIENT_SECRET="${AZURE_CLIENT_SECRET:-}"
-if [[ -n "$AZURE_CLIENT_ID" && -n "$AZURE_CLIENT_SECRET" ]]; then
+V2_AZURE_CLIENT_ID="${V2_AZURE_CLIENT_ID:-}"
+V2_AZURE_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET:-}"
+if [[ -n "$V2_AZURE_CLIENT_ID" && -n "$V2_AZURE_CLIENT_SECRET" ]]; then
      sudo tee /etc/osbuild-worker/azure-credentials.toml > /dev/null << EOF
-client_id =     "$AZURE_CLIENT_ID"
-client_secret = "$AZURE_CLIENT_SECRET"
+client_id =     "$V2_AZURE_CLIENT_ID"
+client_secret = "$V2_AZURE_CLIENT_SECRET"
 EOF
      sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 
@@ -121,7 +121,7 @@ done
 # Pull image-builder image
 QUAY_REPO_URL="quay.io/osbuild/image-builder-test"
 QUAY_REPO_TAG="${CI_PIPELINE_ID}"
-sudo podman pull --creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" "${QUAY_REPO_URL}":"${QUAY_REPO_TAG}"
+sudo podman pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" "${QUAY_REPO_URL}":"${QUAY_REPO_TAG}"
 
 # Migrate
 sudo podman run --pull=never --security-opt "label=disable" --net=host \
@@ -140,8 +140,8 @@ sudo podman run -d -p 8086:8086 --pull=never --security-opt "label=disable" --ne
      -e OSBUILD_CERT_PATH=/etc/osbuild-composer/client-crt.pem \
      -e OSBUILD_KEY_PATH=/etc/osbuild-composer/client-key.pem \
      -e OSBUILD_AWS_REGION="${AWS_REGION:-}"\
-     -e OSBUILD_AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-}" \
-     -e OSBUILD_AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-}" \
+     -e OSBUILD_AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID:-}" \
+     -e OSBUILD_AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY:-}" \
      -e OSBUILD_AWS_S3_BUCKET="${AWS_BUCKET:-}" \
      -e OSBUILD_GCP_REGION="${GCP_REGION:-}" \
      -e OSBUILD_GCP_BUCKET="${GCP_BUCKET:-}" \

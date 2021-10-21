@@ -67,7 +67,7 @@ The following environment variables are required
 
 - `AWS_REGION`
 - `AWS_BUCKET`
-- `AWS_ACCESS_KEY_ID`
+- `V2_AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_API_TEST_SHARE_ACCOUNT`
 
@@ -82,8 +82,8 @@ The following environment variables are required
 - `AZURE_SUBSCRIPTION_ID`
 - `AZURE_RESOURCE_GROUP`
 - `AZURE_LOCATION`
-- `AZURE_CLIENT_ID`
-- `AZURE_CLIENT_SECRET`
+- `V2_AZURE_CLIENT_ID`
+- `V2_AZURE_CLIENT_SECRET`
 
 To execute the AWS integration test, complete steps 1-2 from the *Integration test*
 section and run `test/cases/api.sh azure`.
