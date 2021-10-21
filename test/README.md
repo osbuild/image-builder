@@ -106,3 +106,47 @@ section and run `test/cases/api.sh gcp`.
 
 Coverage report is available from
 [CodeCov](https://codecov.io/github/osbuild/image-builder/).
+
+## Load Testing
+
+The load testing runs on the CI machine at a fixed schedule.
+
+### Installation
+
+To execute it manually, you need to install locust:
+
+```
+# install locust
+sudo dnf install -y python3 python3-pip gcc python3-devel make
+sudo pip3 install locust
+```
+
+### Run the tests
+
+And then you can run the test you'll need:
+
+* to have a user and a password to access console.stage.redhat.com
+* to be on the redhat VPN.
+* to have the corp proxy setup
+
+If you don't have a user on ethel, you can create one here:
+http://account-manager-stage.app.eng.rdu2.redhat.com/#create
+Note that your account name should not be the same as you kerberos password.
+
+The proxy to use is this one: http://hdn.corp.redhat.com/proxy.pac
+
+#### Headless run:
+
+```
+locust -f test/cases/load_test.py -H https://$USER:$PASSWORD@console.stage.redhat.com/api/image-builder/v1  --users 20 --spawn-rate 1 --run-time 30s --headless
+```
+
+#### Headed run:
+
+```
+locust -f test/cases/load_test.py -H https://$USER:$PASSWORD@console.stage.redhat.com/api/image-builder/v1
+```
+
+This mode will give you a local webpage to visit where you can configure the
+number of users you want and also will compute you nice graphs.
+
