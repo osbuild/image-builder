@@ -195,7 +195,7 @@ function instanceCheck() {
 ############### AWS-specific functions ################
 
 function checkEnvAWS() {
-  printenv AWS_REGION AWS_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
+  printenv AWS_REGION AWS_BUCKET V2_AWS_ACCESS_KEY_ID V2_AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
 }
 
 function installClientAWS() {
@@ -211,7 +211,7 @@ function installClientAWS() {
     popd
   fi
 
-  AWS_CMD="aws --region $AWS_REGION --output json --color on"
+  AWS_CMD="env AWS_ACCESS_KEY_ID=$V2_AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$V2_AWS_SECRET_ACCESS_KEY aws --region $AWS_REGION --output json --color on"
 }
 
 function createReqFileAWS() {
@@ -308,7 +308,7 @@ EOF
 ############### Azure-specific functions ################
 
 function checkEnvAzure() {
-  printenv AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP AZURE_LOCATION AZURE_CLIENT_ID AZURE_CLIENT_SECRET > /dev/null
+  printenv AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_RESOURCE_GROUP AZURE_LOCATION V2_AZURE_CLIENT_ID V2_AZURE_CLIENT_SECRET > /dev/null
 }
 
 function installClientAzure() {
@@ -569,7 +569,7 @@ function Test_verifyComposeResultAzure() {
   [[ -n "$AZURE_IMAGE_NAME" ]]
 
   set +x
-  $AZURE_CMD login --service-principal --username "${AZURE_CLIENT_ID}" --password "${AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
+  $AZURE_CMD login --service-principal --username "${V2_AZURE_CLIENT_ID}" --password "${V2_AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
   set -x
 
   # verify that the image exists
