@@ -18,16 +18,6 @@ if [[ $ID == rhel ]] && ! rpm -q epel-release; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
-# Currently openstack/rhel-8.4-x86_64 is beta image, the subscription will fail.
-# Added condition to check if it is a beta image.
-# TODO: remove condition to check beta after openstack/rhel-8.4-x86_64 can subscribe
-# Register RHEL if we are provided with a registration script.
-if [[ -n "${RHN_REGISTRATION_SCRIPT:-}" ]] && ! sudo subscription-manager status && ! sudo grep beta /etc/os-release; then
-    greenprint "🪙 Registering RHEL instance"
-    sudo chmod +x "$RHN_REGISTRATION_SCRIPT"
-    sudo "$RHN_REGISTRATION_SCRIPT"
-fi
-
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
 sudo dnf -y install createrepo_c make mock python3-pip rpm-build
