@@ -166,7 +166,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.Equal(t, Architectures{
 			ArchitectureItem{
 				Arch:       "x86_64",
-				ImageTypes: []string{"ami", "vhd"},
+				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd"},
 			}}, result)
 	})
 
@@ -547,21 +547,21 @@ func TestComposeImage(t *testing.T) {
 			Customizations: nil,
 			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
-				ImageRequest{
+				{
 					Architecture: "x86_64",
-					ImageType:    "qcow2",
+					ImageType:    ImageTypes_aws,
 					UploadRequest: UploadRequest{
-						Type: "aws",
+						Type: UploadTypes_aws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
 					},
 				},
-				ImageRequest{
+				{
 					Architecture: "x86_64",
-					ImageType:    "ami",
+					ImageType:    ImageTypes_ami,
 					UploadRequest: UploadRequest{
-						Type: "aws",
+						Type: UploadTypes_aws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
@@ -579,9 +579,9 @@ func TestComposeImage(t *testing.T) {
 			Customizations: nil,
 			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
-				ImageRequest{
+				{
 					Architecture:  "x86_64",
-					ImageType:     "qcow2",
+					ImageType:     ImageTypes_azure,
 					UploadRequest: UploadRequest{},
 				},
 			},
@@ -599,11 +599,11 @@ func TestComposeImage(t *testing.T) {
 			Customizations: nil,
 			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
-				ImageRequest{
+				{
 					Architecture: "unsupported-arch",
-					ImageType:    "qcow2",
+					ImageType:    ImageTypes_aws,
 					UploadRequest: UploadRequest{
-						Type: "aws",
+						Type: UploadTypes_aws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
@@ -622,9 +622,9 @@ func TestComposeImage(t *testing.T) {
 			Customizations: nil,
 			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
-				ImageRequest{
+				{
 					Architecture: "x86_64",
-					ImageType:    "qcow2",
+					ImageType:    ImageTypes_azure,
 					UploadRequest: UploadRequest{
 						Type: "unknown",
 						Options: AWSUploadRequestOptions{
@@ -663,11 +663,11 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 		Customizations: nil,
 		Distribution:   "centos-8",
 		ImageRequests: []ImageRequest{
-			ImageRequest{
+			{
 				Architecture: "x86_64",
-				ImageType:    "qcow2",
+				ImageType:    ImageTypes_aws,
 				UploadRequest: UploadRequest{
-					Type: "aws",
+					Type: UploadTypes_aws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
 					},
@@ -702,11 +702,11 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 		Customizations: nil,
 		Distribution:   "centos-8",
 		ImageRequests: []ImageRequest{
-			ImageRequest{
+			{
 				Architecture: "x86_64",
-				ImageType:    "qcow2",
+				ImageType:    ImageTypes_aws,
 				UploadRequest: UploadRequest{
-					Type: "aws",
+					Type: UploadTypes_aws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
 					},
@@ -743,11 +743,11 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 		Customizations: nil,
 		Distribution:   "centos-8",
 		ImageRequests: []ImageRequest{
-			ImageRequest{
+			{
 				Architecture: "x86_64",
-				ImageType:    "qcow2",
+				ImageType:    ImageTypes_aws,
 				UploadRequest: UploadRequest{
-					Type: "aws",
+					Type: UploadTypes_aws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
 					},
@@ -801,9 +801,9 @@ func TestComposeCustomizations(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
-					ImageType:    "qcow2",
+					ImageType:    ImageTypes_aws,
 					UploadRequest: UploadRequest{
-						Type: "aws",
+						Type: UploadTypes_aws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
@@ -819,12 +819,12 @@ func TestComposeCustomizations(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
-					ImageType:    "rhel-edge-commit",
+					ImageType:    ImageTypes_edge_commit,
 					Ostree: &OSTree{
 						Ref: strptr("edge/ref"),
 					},
 					UploadRequest: UploadRequest{
-						Type:    "aws.s3",
+						Type:    UploadTypes_aws_s3,
 						Options: AWSS3UploadRequestOptions{},
 					},
 				},
@@ -841,13 +841,13 @@ func TestComposeCustomizations(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
-					ImageType:    "rhel-edge-commit",
+					ImageType:    ImageTypes_rhel_edge_commit,
 					Ostree: &OSTree{
 						Ref: strptr("test/edge/ref"),
 						Url: strptr("https://ostree.srv/"),
 					},
 					UploadRequest: UploadRequest{
-						Type:    "aws.s3",
+						Type:    UploadTypes_aws_s3,
 						Options: AWSS3UploadRequestOptions{},
 					},
 				},
