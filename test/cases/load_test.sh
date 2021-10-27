@@ -11,9 +11,9 @@ sudo pip3 install locust
 
 # Configuration of the load test
 
-USERS=20            # number of concurrent users
+USERS=40            # number of concurrent users
 SPAWN_RATE=1        # warm-up rate at which users arrive (per second)
-DURATION=60         # duration of the test in "UNIT" below
+DURATION=120         # duration of the test in "UNIT" below
 DURATION_UNIT="s"
 
 # By default, debug tags are disabled
@@ -32,6 +32,10 @@ export LT_FAIL_RATIO="0.01"
 export LT_MEAN_RESPONSE_TIME="200"
 export LT_MEDIAN_RESPONSE_TIME="280"
 export LT_PERCENTILE_95_RESPONSE_TIME="500"
+
+# Compose requests are supposed to fail 100% percent of the time.
+export COMPOSE_LT_FAIL_RATIO="1"
+export COMPOSE_LT_PERCENTILE_95_RESPONSE_TIME="12000"
 
 # Finally, run the load test
 
