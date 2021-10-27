@@ -371,11 +371,14 @@ components:
         architecture:
           type: string
         image_type:
-          type: string
+          $ref: '#/components/schemas/ImageTypes'
         upload_request:
           $ref: '#/components/schemas/UploadRequest'
         ostree:
           $ref: '#/components/schemas/OSTree'
+    ImageTypes:
+      type: string
+      enum: ['aws', 'gcp', 'azure', 'edge-commit', 'edge-installer', 'ami', 'vhd', 'rhel-edge-commit', 'rhel-edge-installer']
     ComposesResponse:
       required:
         - meta
