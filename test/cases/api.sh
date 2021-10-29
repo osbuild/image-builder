@@ -511,28 +511,10 @@ function Test_verifyComposeResultGCP() {
   GCP_IMAGE_NAME=$(echo "$UPLOAD_OPTIONS" | jq -r '.image_name')
   [[ -n "$GCP_IMAGE_NAME" ]]
 
-  local PROJECT_ID
-  PROJECT_ID=$(echo "$UPLOAD_OPTIONS" | jq -r '.project_id')
-  [[ "$PROJECT_ID" = "$GCP_PROJECT" ]]
-
   # Authenticate
   $GCP_CMD auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS"
   # Set the default project to be used for commands
   $GCP_CMD config set project "$GCP_PROJECT"
-
-  # Verify that the image was shared
-  SHARE_OK=1
-  $GCP_CMD compute images get-iam-policy "$GCP_IMAGE_NAME" > "$WORKDIR/image-iam-policy.json"
-  SHARED_ACCOUNT=$(jq -r '.bindings[0].members[0]' "$WORKDIR/image-iam-policy.json")
-  SHARED_ROLE=$(jq -r '.bindings[0].role' "$WORKDIR/image-iam-policy.json")
-  if [ "$SHARED_ACCOUNT" != "$GCP_API_TEST_SHARE_ACCOUNT" ] || [ "$SHARED_ROLE" != "roles/compute.imageUser" ]; then
-    SHARE_OK=0
-  fi
-
-  if [ "$SHARE_OK" != 1 ]; then
-    echo "GCP image wasn't shared with the GCP_API_TEST_SHARE_ACCOUNT. 😢"
-    exit 1
-  fi
 
   # Verify that the image boots and have customizations applied
   # Create SSH keys to use
