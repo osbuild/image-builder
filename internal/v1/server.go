@@ -499,6 +499,7 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		var composerImageType composer.ImageTypes
 		switch it {
 		case ImageTypes_aws:
+			fallthrough
 		case ImageTypes_ami:
 			composerImageType = composer.ImageTypes_aws
 		default:
@@ -517,9 +518,11 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		var composerImageType composer.ImageTypes
 		switch it {
 		case ImageTypes_edge_commit:
+			fallthrough
 		case ImageTypes_rhel_edge_commit:
 			composerImageType = composer.ImageTypes_edge_commit
 		case ImageTypes_edge_installer:
+			fallthrough
 		case ImageTypes_rhel_edge_installer:
 			composerImageType = composer.ImageTypes_edge_installer
 		default:
@@ -537,6 +540,7 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		var composerImageType composer.ImageTypes
 		switch it {
 		case ImageTypes_gcp:
+			fallthrough
 		case ImageTypes_vhd:
 			composerImageType = composer.ImageTypes_gcp
 		default:
@@ -556,6 +560,7 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		var composerImageType composer.ImageTypes
 		switch it {
 		case ImageTypes_azure:
+			fallthrough
 		case ImageTypes_vhd:
 			composerImageType = composer.ImageTypes_azure
 		default:
