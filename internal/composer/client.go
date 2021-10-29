@@ -100,7 +100,7 @@ func (cc *ComposerClient) refreshBearerToken() error {
 }
 
 func (cc *ComposerClient) ComposeStatus(id string) (*http.Response, error) {
-	req, err := cc.newRequest("GET", fmt.Sprintf("%s/compose/%s", cc.composerURL, id), nil)
+	req, err := cc.newRequest("GET", fmt.Sprintf("%s/composes/%s", cc.composerURL, id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (cc *ComposerClient) ComposeStatus(id string) (*http.Response, error) {
 }
 
 func (cc *ComposerClient) ComposeMetadata(id string) (*http.Response, error) {
-	req, err := cc.newRequest("GET", fmt.Sprintf("%s/compose/%s/metadata", cc.composerURL, id), nil)
+	req, err := cc.newRequest("GET", fmt.Sprintf("%s/composes/%s/metadata", cc.composerURL, id), nil)
 	if err != nil {
 		return nil, err
 	}
