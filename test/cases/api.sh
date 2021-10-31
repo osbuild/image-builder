@@ -24,8 +24,6 @@ function cleanupAWS() {
   if [ -n "$AWS_CMD" ]; then
     set +e
     $AWS_CMD ec2 terminate-instances --instance-ids "$AWS_INSTANCE_ID"
-    $AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
-    $AWS_CMD ec2 delete-snapshot --snapshot-id "$AWS_SNAPSHOT_ID"
     $AWS_CMD ec2 delete-key-pair --key-name "key-for-$AMI_IMAGE_ID"
     set -e
   fi
@@ -40,7 +38,6 @@ function cleanupGCP() {
   if [ -n "$GCP_CMD" ]; then
     set +e
     $GCP_CMD compute instances delete --zone="$GCP_REGION-a" "$GCP_INSTANCE_NAME"
-    $GCP_CMD compute images delete "$GCP_IMAGE_NAME"
     set -e
   fi
 }
