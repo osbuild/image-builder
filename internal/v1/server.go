@@ -528,7 +528,7 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		default:
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
-		var awsOptions AWSUploadRequestOptions
+		var awsOptions AWSS3UploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &awsOptions)
 		if err != nil {
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
