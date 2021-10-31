@@ -176,6 +176,7 @@ function get_exit_code() {
 ### Call image builder service Edge Rest API
 function post_to_composer() {
     RESULT=$($CURLCMD -H "$HEADER" -H 'Content-Type: application/json' --request POST --data @"$1" "$BASEURL/compose")
+    echo "$RESULT"
     EXIT_CODE=$(get_exit_code "$RESULT")
     [[ "$EXIT_CODE" == 201 ]]
     COMPOSE_ID=$(get_response "$RESULT" | jq -r '.id')
