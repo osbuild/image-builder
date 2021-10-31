@@ -274,25 +274,25 @@ before_test
 greenprint "📼 Generate request body to build commit image"
 sudo tee "${WORKDIR}"/commit_body.json > /dev/null << EOF
 {
-    "distribution": "${DISTRO}",
-    "customizations": {
-      "packages": [
-        "python36"
-      ]
-    },
-    "image_requests": [
-      {
-        "architecture": "${ARCH}",
-        "image_type": "${IMAGE_TYPE}",
-        "ostree": {
-            "ref": "${OSTREE_REF}"
-        },
-        "upload_request": {
-          "type": "aws.s3",
-          "options": {}
-        }
-      }
+  "distribution": "${DISTRO}",
+  "customizations": {
+    "packages": [
+      "python36"
     ]
+  },
+  "image_requests": [
+    {
+      "architecture": "${ARCH}",
+      "image_type": "${IMAGE_TYPE}",
+      "ostree": {
+          "ref": "${OSTREE_REF}"
+      },
+      "upload_request": {
+        "type": "aws.s3",
+        "options": {}
+      }
+    }
+  ]
 }
 EOF
 
@@ -422,24 +422,24 @@ sudo virsh undefine "${IMAGE_KEY}-commit"
 greenprint "📼 Generate request body to build commit image"
 sudo tee "${WORKDIR}"/installer_body.json > /dev/null << EOF
 {
-    "distribution": "${DISTRO}",
-      "customizations": {
-        "packages": []
+  "distribution": "${DISTRO}",
+  "customizations": {
+    "packages": []
+  },
+  "image_requests": [
+    {
+      "architecture": "${ARCH}",
+      "image_type": "rhel-edge-installer",
+      "ostree": {
+        "ref": "${OSTREE_REF}",
+        "url": "${REPO_URL}"
       },
-      "image_requests": [
-        {
-          "architecture": "${ARCH}",
-          "image_type": "rhel-edge-installer",
-          "ostree": {
-            "ref": "${OSTREE_REF}",
-            "url": "${REPO_URL}"
-          },
-          "upload_request": {
-            "type": "aws.s3",
-            "options": {}
-          }
-        }
-      ]
+      "upload_request": {
+        "type": "aws.s3",
+        "options": {}
+      }
+    }
+  ]
 }
 EOF
 
