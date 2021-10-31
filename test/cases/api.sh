@@ -454,33 +454,6 @@ function Test_verifyComposeResultAWS() {
   REGION=$(echo "$UPLOAD_OPTIONS" | jq -r '.region')
   [[ "$REGION" = "$AWS_REGION" ]]
 
-  # Try to boot the result image with the cloud provider
-  $AWS_CMD ec2 describe-images --image-ids "$AMI_IMAGE_ID" > "$WORKDIR/ami.json"
-
-  AWS_SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami.json")
-  SHARE_OK=1
-
-  # Verify that the ec2 snapshot was shared
-  $AWS_CMD ec2 describe-snapshot-attribute --snapshot-id "$AWS_SNAPSHOT_ID" --attribute createVolumePermission > "$WORKDIR/snapshot-attributes.json"
-
-  SHARED_ID=$(jq -r '.CreateVolumePermissions[0].UserId' "$WORKDIR/snapshot-attributes.json")
-  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
-    SHARE_OK=0
-  fi
-
-  # Verify that the ec2 ami was shared
-  $AWS_CMD ec2 describe-image-attribute --image-id "$AMI_IMAGE_ID" --attribute launchPermission > "$WORKDIR/ami-attributes.json"
-
-  SHARED_ID=$(jq -r '.LaunchPermissions[0].UserId' "$WORKDIR/ami-attributes.json")
-  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
-    SHARE_OK=0
-  fi
-
-  if [ "$SHARE_OK" != 1 ]; then
-    echo "EC2 snapshot wasn't shared with the AWS_API_TEST_SHARE_ACCOUNT. 😢"
-    exit 1
-  fi
-
   # Create key-pair
   $AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
   chmod 400 ./keypair.pem
