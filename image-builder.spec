@@ -94,7 +94,6 @@ Requires:   %{name} = %{version}-%{release}
 Requires:   openssl
 Requires:   jq
 Requires:   curl
-Requires:   httpd
 Requires:   expect
 Requires:   qemu-img
 Requires:   qemu-kvm
