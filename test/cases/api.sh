@@ -500,7 +500,7 @@ function Test_verifyComposeResultGCP() {
 
   $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
     --zone="$GCP_REGION-a" \
-    --image-project="$GCP_PROJECT" \
+    --image-project="$GCP_IMAGE_BUILDER_PROJECT" \
     --image="$GCP_IMAGE_NAME" \
     --metadata-from-file=ssh-keys="$GCP_SSH_METADATA_FILE"
   HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_REGION-a" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
