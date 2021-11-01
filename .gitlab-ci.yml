@@ -54,6 +54,8 @@ Test EL8:
 Test Edge 84:
   stage: test
   extends: .terraform
+  tags:
+    - terraform/openstack
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
