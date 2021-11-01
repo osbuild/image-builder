@@ -30,12 +30,11 @@ BASEURL="http://$ADDRESS:$PORT/api/image-builder/v1.0"
 ARCH=$(uname -m)
 
 ############### Common variables for Edge ################
-HTTPD_PATH="/var/www/html"
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="edge-${TEST_UUID}"
-HOST_ADDRESS=192.168.100.1
 GUEST_ADDRESS=192.168.100.50
-REPO_URL=http://$HOST_ADDRESS/repo
+REPO_BUCKET="image-builder-ci-edge-repositories"
+REPO_URL="https://${REPO_BUCKET}.s3.amazonaws.com/${CI_JOB_ID}/repo"
 
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
 SSH_DATA_DIR=$(/usr/libexec/image-builder/gen-ssh.sh)
@@ -75,9 +74,9 @@ function before_test() {
         exit 1
     }
 
-    # ansible is not in RHEL repositories, cannot install it by spec file, hence enable EPEL and install ansible manually.
+    # ansible and s3cmd are not in RHEL repositories, cannot install it by spec file, hence enable EPEL and install them manually.
     sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    sudo dnf install -y ansible
+    sudo dnf install -y ansible s3cmd
 
     # Start libvirtd and test it.
     greenprint "🚀 Starting libvirt daemon"
@@ -128,14 +127,15 @@ EOF
     # Ensure SELinux is happy with our new images.
     greenprint "👿 Running restorecon on image directory"
     sudo restorecon -Rv /var/lib/libvirt/images/
-
-    # Start httpd service
-    greenprint "🚀 Starting httpd daemon"
-    sudo systemctl start httpd
 }
 
 # Run after test finished to clean up test environment
 function after_test() {
+    # Remove the ostree repository
+    AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
+    AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
+    s3cmd rm --recursive --quiet "s3://${REPO_BUCKET}/${CI_JOB_ID}"
+
     # Clean up Edge VMs
     if [[ $(sudo virsh domstate "${IMAGE_KEY}-installer") == "running" ]]; then
         sudo virsh destroy "${IMAGE_KEY}-installer"
@@ -302,8 +302,16 @@ wait_for_compose
 verify_metadata
 download_image "${WORKDIR}/$COMMIT_FILENAME"
 
-# extract commit image to http path
-sudo tar -xf "${WORKDIR}/${COMMIT_FILENAME}" -C ${HTTPD_PATH}
+COMMIT_DIR="${WORKDIR}/${CI_JOB_ID}"
+mkdir "${COMMIT_DIR}"
+
+# extract commit image
+tar -xf "${WORKDIR}/${COMMIT_FILENAME}" -C "${COMMIT_DIR}"
+
+# upload it to S3
+AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
+AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
+s3cmd --acl-public put --recursive --quiet "${COMMIT_DIR}" "s3://${REPO_BUCKET}/"
 
 # Write kickstart file for ostree image installation.
 greenprint "Generate kickstart file"
@@ -322,7 +330,7 @@ network --bootproto=dhcp --device=link --activate --onboot=on
 zerombr
 clearpart --all --initlabel --disklabel=msdos
 autopart --nohome --noswap --type=plain
-ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=http://192.168.100.1/repo/ --ref=${OSTREE_REF}
+ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=${REPO_URL} --ref=${OSTREE_REF}
 poweroff
 %post --log=/var/log/anaconda/post-install.log --erroronfail
 # no sudo password for user admin
