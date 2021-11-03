@@ -5,7 +5,7 @@ metadata:
   labels:
     grafana_dashboard: "true"
   annotations:
-    grafana-folder: /grafana-dashboard-definitions/Insights
+    grafana-folder: /grafana-dashboard-definitions/Image-Builder
 data:
   grafana.json: |-
     {
@@ -1539,5 +1539,5 @@ data:
       "timezone": "",
       "title": "Image Builder",
       "uid": "91_RmVCMk",
-      "version": 5
+      "version": 6
     }
