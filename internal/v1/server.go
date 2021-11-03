@@ -480,9 +480,11 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 
 	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgId, rawCR)
 	if err != nil {
+		h.server.logger.Error("Error inserting id into db", err)
 		return err
 	}
 
+	h.server.logger.Info("Compose result", composeResult)
 	return ctx.JSON(http.StatusCreated, ComposeResponse{
 		Id: composeResult.Id,
 	})
@@ -788,8 +790,8 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 		}
 	}
 
-	// Only log internal errors
-	if he.Code == http.StatusInternalServerError {
+	internalError := he.Code >= http.StatusInternalServerError && he.Code <= http.StatusNetworkAuthenticationRequired
+	if internalError {
 		s.logger.Errorln(fmt.Sprintf("Internal error %v: %v, %v", he.Code, he.Message, err))
 		if strings.HasSuffix(c.Path(), "/compose") {
 			common.ComposeErrors.Inc()
