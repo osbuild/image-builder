@@ -31,7 +31,8 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "iteration": 1635780181016,
+      "id": 2,
+      "iteration": 1636039881169,
       "links": [],
       "panels": [
         {
@@ -1501,7 +1502,7 @@ data:
             "hide": 2,
             "label": null,
             "name": "noncompose_latency_slo",
-            "query": "0.95",
+            "query": "0.9",
             "skipUrlSync": false,
             "type": "constant"
           }
@@ -1537,7 +1538,7 @@ data:
         ]
       },
       "timezone": "",
-      "title": "Image Builder",
-      "uid": "91_RmVCMk",
-      "version": 6
+      "title": "Image Builder CRC",
+      "uid": "yMgD18Knk",
+      "version": 7
     }
