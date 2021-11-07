@@ -6,8 +6,8 @@ if [[ -z "${KUBERNETES_PORT:-}" ]]; then
 else
     echo "Starting image-builder inside OpenShift..."
     echo "Cloudwatch: ${CW_LOG_GROUP} in ${CW_AWS_REGION}"
-    echo "Upload target: ${OSBUILD_AWS_S3_BUCKET} in ${OSBUILD_AWS_REGION}"
-    echo "Composer URL: ${OSBUILD_URL}"
+    echo "Composer URL: ${COMPOSER_URL}"
+    echo "Composer token URL: ${COMPOSER_TOKEN_URL}"
     echo "Distributions dir: ${DISTRIBUTIONS_DIR}"
 fi
 
