@@ -7,10 +7,10 @@
   "x86_64": {
     "image_types": [ "aws", "gcp", "azure", "edge-commit", "edge-installer", "ami", "vhd", "rhel-edge-commit", "rhel-edge-installer", "rhel-edge-container" ],
     "repositories": [{
-      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os",
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.4/x86_64/baseos/os",
       "rhsm": true
     }, {
-      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os",
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.4/x86_64/appstream/os",
       "rhsm": true
     }, {
       "baseurl": "https://cdn.redhat.com/content/dist/layered/rhel8/x86_64/ansible/2/os",
