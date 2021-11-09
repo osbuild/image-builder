@@ -57,7 +57,7 @@ Test EL8:
         RUNNER:
           - aws/rhel-8.4-ga-x86_64
 
-Test Edge 84:
+Test Edge EL8:
   stage: test
   extends: .terraform
   tags:

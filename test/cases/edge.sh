@@ -55,8 +55,8 @@ function before_test() {
     IMAGE_TYPE="rhel-edge-commit"
     OSTREE_REF="rhel/8/${ARCH}/edge"
     OS_VARIANT="rhel8-unknown"
-    DISTRO="rhel-84"
-    BOOT_LOCATION="http://download.devel.redhat.com/rel-eng/rhel-8/RHEL-8/latest-RHEL-8.4.0/compose/BaseOS/${ARCH}/os/"
+    DISTRO="rhel-85"
+    BOOT_LOCATION="http://download.devel.redhat.com/rel-eng/rhel-8/RHEL-8/latest-RHEL-8.5.0/compose/BaseOS/${ARCH}/os/"
 
     # Check image-builder service status
     READY=0
@@ -467,7 +467,7 @@ network --bootproto=dhcp --device=link --activate --onboot=on
 zerombr
 clearpart --all --initlabel --disklabel=msdos
 autopart --nohome --noswap --type=plain
-ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=file:///ostree/repo --ref=${OSTREE_REF}
+ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=file:///run/install/repo/ostree/repo --ref=${OSTREE_REF}
 poweroff
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
