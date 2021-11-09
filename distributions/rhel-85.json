@@ -1,0 +1,20 @@
+{
+  "module_platform_id": "platform:el8",
+  "distribution": {
+    "name": "rhel-85",
+    "description": "Red Hat Enterprise Linux (RHEL) 8"
+  },
+  "x86_64": {
+    "image_types": [ "ami", "vhd", "rhel-edge-commit", "rhel-edge-installer", "rhel-edge-container" ],
+    "repositories": [{
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.5/x86_64/baseos/os",
+      "rhsm": true
+    }, {
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.5/x86_64/appstream/os",
+      "rhsm": true
+    }, {
+      "baseurl": "https://cdn.redhat.com/content/dist/layered/rhel8/x86_64/ansible/2/os",
+      "rhsm": true
+    }]
+  }
+}
