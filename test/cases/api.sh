@@ -104,6 +104,11 @@ ACCOUNT0_ORG0="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9L
 ACCOUNT1_ORG0="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDEiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQo="
 ACCOUNT0_ORG1="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAxIn19fQ=="
 
+CLOUD_PROVIDER_AWS="aws"
+CLOUD_PROVIDER_GCP="gcp"
+CLOUD_PROVIDER_AZURE="azure"
+CLOUD_PROVIDER=${1:-$CLOUD_PROVIDER_AWS}
+
 PORT="8086"
 CURLCMD='curl -w %{http_code}'
 HEADER="x-rh-identity: $ACCOUNT0_ORG0"
@@ -113,6 +118,12 @@ BASEURL="http://$ADDRESS:$PORT/api/image-builder/v1.0"
 BASEURLMAJORVERSION="http://$ADDRESS:$PORT/api/image-builder/v1"
 REQUEST_FILE="${WORKDIR}/request.json"
 ARCH=$(uname -m)
+
+DISTRO="rhel-85"
+SSH_USER="cloud-user"
+if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
+    SSH_USER="ec2-user"
+fi
 
 # Wait until service is ready
 READY=0
@@ -129,13 +140,6 @@ done
   echo "Port $PORT is not open after retrying 10 times. Exit."
   exit 1
 }
-
-case $(set +x; . /etc/os-release; echo "$ID-$VERSION_ID") in
-  "rhel-8.2" | "rhel-8.3" | "rhel-8.4")
-    DISTRO="rhel-84"
-    SSH_USER="cloud-user"
-  ;;
-esac
 
 function getResponse() {
   read -r -d '' -a ARR <<<"$1"
@@ -622,11 +626,6 @@ function Test_postToComposerWithWrongOrgId() {
 # Which cloud provider are we testing?
 #
 
-CLOUD_PROVIDER_AWS="aws"
-CLOUD_PROVIDER_GCP="gcp"
-CLOUD_PROVIDER_AZURE="azure"
-
-CLOUD_PROVIDER=${1:-$CLOUD_PROVIDER_AWS}
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     checkEnvAWS
