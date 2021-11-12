@@ -73,7 +73,7 @@ func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNum
 		require.NoError(t, err)
 	}))
 
-	client, err := composer.NewClient(url, tokenServer.URL, "offlinetoken")
+	client, err := composer.NewClient(url, tokenServer.URL, "offlinetoken", nil)
 	require.NoError(t, err)
 
 	//store the quotas in a temporary file

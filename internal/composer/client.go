@@ -4,11 +4,15 @@ package composer
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 )
@@ -30,7 +34,7 @@ type ComposerClient struct {
 	client *http.Client
 }
 
-func NewClient(composerURL, tokenURL, offlineToken string) (*ComposerClient, error) {
+func NewClient(composerURL, tokenURL, offlineToken string, ca *string) (*ComposerClient, error) {
 	if tokenURL == "" {
 		return nil, fmt.Errorf("Client needs token endpoint")
 	}
@@ -38,14 +42,43 @@ func NewClient(composerURL, tokenURL, offlineToken string) (*ComposerClient, err
 		return nil, fmt.Errorf("Client needs offline token")
 	}
 
+	client, err := createClient(composerURL, ca)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating compose http client")
+	}
+
 	cc := ComposerClient{
 		composerURL:  fmt.Sprintf("%s/api/image-builder-composer/v2", composerURL),
 		tokenURL:     tokenURL,
 		offlineToken: offlineToken,
-		client:       &http.Client{},
+		client:       client,
 	}
 
 	return &cc, nil
+}
+
+func createClient(composerURL string, ca *string) (*http.Client, error) {
+	if !strings.HasPrefix(composerURL, "https") || ca == nil {
+		return &http.Client{}, nil
+	}
+
+	var tlsConfig *tls.Config
+	caCert, err := ioutil.ReadFile(*ca)
+	if err != nil {
+		return nil, err
+	}
+
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	tlsConfig = &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		RootCAs:    caCertPool,
+	}
+
+	tlsConfig.BuildNameToCertificate()
+	transport := &http.Transport{TLSClientConfig: tlsConfig}
+	return &http.Client{Transport: transport}, nil
 }
 
 func (cc *ComposerClient) newRequest(method, url string, body io.Reader) (*http.Request, error) {
