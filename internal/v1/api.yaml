@@ -171,7 +171,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: ['rhel-84', 'centos-8']
+            enum: ['rhel-84', 'rhel-85', 'centos-8']
           description: distribution to look up packages for
         - in: query
           name: architecture
