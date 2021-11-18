@@ -8,25 +8,36 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+const (
+	namespace = "image_builder"
+	subsystem = "crc"
+)
+
 var (
 	httpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "image_builder_http_duration_seconds",
-		Help:    "Duration of HTTP requests.",
-		Buckets: []float64{.025, .05, .075, .1, .2, .5, .75, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20},
+		Name:      "http_duration_seconds",
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Help:      "Duration of HTTP requests.",
+		Buckets:   []float64{.025, .05, .075, .1, .2, .5, .75, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20},
 	}, []string{"path"})
 )
 
 var (
 	composeRequests = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "image_builder_compose_requests_total",
-		Help: "Total number of compose requests.",
+		Name:      "compose_requests_total",
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Help:      "Total number of compose requests.",
 	})
 )
 
 var (
 	ComposeErrors = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "image_builder_compose_errors",
-		Help: "Number of internal server errors.",
+		Name:      "compose_errors",
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Help:      "Number of internal server errors.",
 	})
 )
 
