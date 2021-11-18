@@ -121,7 +121,7 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "1 - sum(rate(image_builder_compose_errors[$__range])) / sum(rate(image_builder_compose_requests_total[$__range]))",
+              "expr": "1 - sum(rate(image_builder_crc_compose_errors[$__range])) / sum(rate(image_builder_crc_compose_requests_total[$__range]))",
               "instant": true,
               "refId": "A"
             }
@@ -260,7 +260,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "(sum(increase(image_builder_compose_requests_total[$__range])) - sum(increase(image_builder_compose_errors[$__range])))",
+              "expr": "sum(increase(image_builder_crc_compose_requests_total[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -403,7 +403,7 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_http_duration_seconds_bucket{path=~\".*compose\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_crc_http_duration_seconds_bucket{path=~\".*compose\"}[$__range])) by (le))",
               "instant": true,
               "refId": "A"
             }
@@ -486,7 +486,7 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_http_duration_seconds_bucket{path!~\".*compose\"}[$__range])) by (le)) * 1000",
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_crc_http_duration_seconds_bucket{path!~\".*compose\"}[$__range])) by (le)) * 1000",
               "instant": true,
               "refId": "A"
             }
@@ -580,7 +580,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(increase(image_builder_compose_errors[$__range]))/sum(increase(image_builder_compose_requests_total[$__range]))",
+              "expr": "sum(increase(image_builder_crc_compose_errors[$__range]))/sum(increase(image_builder_crc_compose_requests_total[$__range]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -673,7 +673,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_compose_errors[$__range]))/ sum(rate(image_builder_compose_requests_total[$__range]))) + 0.001)",
+              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_crc_compose_errors[$__range]))/ sum(rate(image_builder_crc_compose_requests_total[$__range]))) + 0.001)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -769,7 +769,7 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "1 - ((1 - sum(increase(image_builder_compose_errors[$__range]))/sum(increase(image_builder_compose_requests_total[$__range]))) - $stability_slo)/ (1 - $stability_slo)",
+              "expr": "1 - ((1 - sum(increase(image_builder_crc_compose_errors[$__range]))/sum(increase(image_builder_crc_compose_requests_total[$__range]))) - $stability_slo)/ (1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -875,7 +875,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "(sum by (job) (rate(image_builder_http_duration_seconds_sum{path=~\".*compose\"}[$__range])) / sum by (job) (rate(image_builder_http_duration_seconds_count{path=~\".*compose\"}[$__range])))",
+              "expr": "histogram_quantile(0.9, sum by (le) (rate(image_builder_crc_http_duration_seconds_bucket{path=~\".*compose\"}[$__range])))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -970,7 +970,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $compose_latency_slo) / (1 - sum(rate(image_builder_http_duration_seconds_bucket{le=\"12\",path=~\".*compose\"}[$__range]))/sum(rate(image_builder_http_duration_seconds_count{path=~\".*compose\"}[$__range])))",
+              "expr": "28 * 24 * (1 - $compose_latency_slo) / (1 - sum(rate(image_builder_crc_http_duration_seconds_bucket{le=\"12\",path=~\".*compose\"}[$__range]))/sum(rate(image_builder_crc_http_duration_seconds_count{path=~\".*compose\"}[$__range])))",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1067,7 +1067,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((sum(increase(image_builder_http_duration_seconds_bucket{le=\"12\",path=~\".*compose\"}[$__range]))/sum(increase(image_builder_http_duration_seconds_count{path=~\".*compose\"}[$__range]))) - $compose_latency_slo)/ (1 - $compose_latency_slo)",
+              "expr": "1 - ((sum(increase(image_builder_crc_http_duration_seconds_bucket{le=\"12\",path=~\".*compose\"}[$__range]))/sum(increase(image_builder_crc_http_duration_seconds_count{path=~\".*compose\"}[$__range]))) - $compose_latency_slo)/ (1 - $compose_latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1172,7 +1172,7 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "(sum by (job) (rate(image_builder_http_duration_seconds_sum{path!~\".*compose\"}[$__range])) / sum by (job) (rate(image_builder_http_duration_seconds_count{path!~\".*compose\"}[$__range]))) * 1000",
+              "expr": "histogram_quantile(0.9, sum by (le) (rate(image_builder_crc_http_duration_seconds_bucket{path!~\".*compose\"}[$__range]))) * 1000",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1267,7 +1267,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $noncompose_latency_slo) / (1 - sum(rate(image_builder_http_duration_seconds_bucket{le=\"0.2\",path!~\".*compose\"}[$__range]))/sum(rate(image_builder_http_duration_seconds_count{path!~\".*compose\"}[$__range])))",
+              "expr": "28 * 24 * (1 - $noncompose_latency_slo) / (1 - sum(rate(image_builder_crc_http_duration_seconds_bucket{le=\"0.2\",path!~\".*compose\"}[$__range]))/sum(rate(image_builder_crc_http_duration_seconds_count{path!~\".*compose\"}[$__range])))",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1363,7 +1363,7 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "1 - ((sum(increase(image_builder_http_duration_seconds_bucket{le=\"0.2\",path!~\".*compose\"}[$__range]))/sum(increase(image_builder_http_duration_seconds_count{path!~\".*compose\"}[$__range]))) - $noncompose_latency_slo)/ (1 - $noncompose_latency_slo)",
+              "expr": "1 - ((sum(increase(image_builder_crc_http_duration_seconds_bucket{le=\"0.2\",path!~\".*compose\"}[$__range]))/sum(increase(image_builder_crc_http_duration_seconds_count{path!~\".*compose\"}[$__range]))) - $noncompose_latency_slo)/ (1 - $noncompose_latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1540,5 +1540,5 @@ data:
       "timezone": "",
       "title": "Image Builder CRC",
       "uid": "yMgD18Knk",
-      "version": 7
+      "version": 8
     }
