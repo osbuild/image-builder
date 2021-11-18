@@ -11,6 +11,7 @@ type ImageBuilderConfig struct {
 	ComposerURL          string  `env:"COMPOSER_URL"`
 	ComposerTokenURL     string  `env:"COMPOSER_TOKEN_URL"`
 	ComposerOfflineToken string  `env:"COMPOSER_OFFLINE_TOKEN"`
+	ComposerCA           *string `env:"COMPOSER_CA_PATH"`
 	OsbuildRegion        string  `env:"OSBUILD_AWS_REGION"`
 	OsbuildGCPRegion     string  `env:"OSBUILD_GCP_REGION"`
 	OsbuildGCPBucket     string  `env:"OSBUILD_GCP_BUCKET"`

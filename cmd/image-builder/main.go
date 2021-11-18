@@ -41,7 +41,7 @@ func main() {
 		panic(err)
 	}
 
-	client, err := composer.NewClient(conf.ComposerURL, conf.ComposerTokenURL, conf.ComposerOfflineToken)
+	client, err := composer.NewClient(conf.ComposerURL, conf.ComposerTokenURL, conf.ComposerOfflineToken, conf.ComposerCA)
 	if err != nil {
 		panic(err)
 	}
