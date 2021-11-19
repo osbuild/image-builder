@@ -27,19 +27,17 @@ import (
 )
 
 type Server struct {
-	logger         *logrus.Logger
-	echo           *echo.Echo
-	client         *composer.ComposerClient
-	spec           *openapi3.Swagger
-	router         routers.Router
-	db             db.DB
-	aws            AWSConfig
-	gcp            GCPConfig
-	azure          AzureConfig
-	orgIds         []string
-	accountNumbers []string
-	distsDir       string
-	quotaFile      string
+	logger    *logrus.Logger
+	echo      *echo.Echo
+	client    *composer.ComposerClient
+	spec      *openapi3.Swagger
+	router    routers.Router
+	db        db.DB
+	aws       AWSConfig
+	gcp       GCPConfig
+	azure     AzureConfig
+	distsDir  string
+	quotaFile string
 }
 
 type AWSConfig struct {
@@ -69,8 +67,7 @@ type IdentityHeader struct {
 }
 
 func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.ComposerClient, dbase db.DB,
-	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, orgIds []string, accountNumbers []string,
-	distsDir string, quotaFile string) error {
+	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -100,8 +97,6 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.Compo
 		awsConfig,
 		gcpConfig,
 		azureConfig,
-		orgIds,
-		accountNumbers,
 		distsDir,
 		quotaFile,
 	}
@@ -695,27 +690,6 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	return nil
 }
 
-func identityAllowed(header IdentityHeader, orgIds []string, accountNumbers []string) bool {
-	for _, org := range orgIds {
-		if org == "*" {
-			return true
-		}
-		if header.Identity.Internal.OrgId == org {
-			return true
-		}
-	}
-
-	for _, account := range accountNumbers {
-		if account == "*" {
-			return true
-		}
-		if header.Identity.AccountNumber == account {
-			return true
-		}
-	}
-	return false
-}
-
 // clouddot guidelines requires 404 instead of 403 when unauthorized
 func (s *Server) verifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
@@ -735,12 +709,6 @@ func (s *Server) verifyIdentityHeader(nextHandler echo.HandlerFunc) echo.Handler
 		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
-		}
-
-		s.logger.Infof("Verify identity for user with internal org_id '%v' in header '%v' \n", idHeader.Identity.Internal.OrgId, idHeaderB64[0])
-
-		if !identityAllowed(idHeader, s.orgIds, s.accountNumbers) {
-			return echo.NewHTTPError(http.StatusNotFound, "Organization or account not allowed")
 		}
 
 		if idHeader.Identity.AccountNumber == "" {

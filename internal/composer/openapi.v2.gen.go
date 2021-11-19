@@ -94,9 +94,10 @@ type ComposeStatus struct {
 
 // Customizations defines model for Customizations.
 type Customizations struct {
-	Packages     *[]string     `json:"packages,omitempty"`
-	Subscription *Subscription `json:"subscription,omitempty"`
-	Users        *[]User       `json:"users,omitempty"`
+	Packages            *[]string     `json:"packages,omitempty"`
+	PayloadRepositories *[]Repository `json:"payload_repositories,omitempty"`
+	Subscription        *Subscription `json:"subscription,omitempty"`
+	Users               *[]User       `json:"users,omitempty"`
 }
 
 // Error defines model for Error.
@@ -236,6 +237,9 @@ type PackageMetadata struct {
 // Repository defines model for Repository.
 type Repository struct {
 	Baseurl    *string `json:"baseurl,omitempty"`
+	CheckGpg   *bool   `json:"check_gpg,omitempty"`
+	GpgKey     *string `json:"gpg_key,omitempty"`
+	IgnoreSsl  *bool   `json:"ignore_ssl,omitempty"`
 	Metalink   *string `json:"metalink,omitempty"`
 	Mirrorlist *string `json:"mirrorlist,omitempty"`
 	Rhsm       bool    `json:"rhsm"`

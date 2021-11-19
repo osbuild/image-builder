@@ -102,7 +102,6 @@ trap cleanup EXIT
 
 ACCOUNT0_ORG0="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQ=="
 ACCOUNT1_ORG0="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDEiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAwIn19fQo="
-ACCOUNT0_ORG1="eyJlbnRpdGxlbWVudHMiOnsiaW5zaWdodHMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJzbWFydF9tYW5hZ2VtZW50Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwib3BlbnNoaWZ0Ijp7ImlzX2VudGl0bGVkIjp0cnVlfSwiaHlicmlkIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwibWlncmF0aW9ucyI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImFuc2libGUiOnsiaXNfZW50aXRsZWQiOnRydWV9fSwiaWRlbnRpdHkiOnsiYWNjb3VudF9udW1iZXIiOiIwMDAwMDAiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnsidXNlcm5hbWUiOiJ1c2VyIiwiZW1haWwiOiJ1c2VyQHVzZXIudXNlciIsImZpcnN0X25hbWUiOiJ1c2VyIiwibGFzdF9uYW1lIjoidXNlciIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfb3JnX2FkbWluIjp0cnVlLCJpc19pbnRlcm5hbCI6dHJ1ZSwibG9jYWxlIjoiZW4tVVMifSwiaW50ZXJuYWwiOnsib3JnX2lkIjoiMDAwMDAxIn19fQ=="
 
 CLOUD_PROVIDER_AWS="aws"
 CLOUD_PROVIDER_GCP="gcp"
@@ -610,22 +609,6 @@ function Test_getComposes() {
   diff <(echo "$RESPONSE" | jq -Sr '.request') <(jq -Sr '.' "$REQUEST_FILE")
 }
 
-function Test_getOpenapiWithWrongOrgId() {
-  RESULT=$($CURLCMD -H "x-rh-identity: $ACCOUNT0_ORG1" "$BASEURL/openapi.json")
-  EXIT_CODE=$(getExitCode "$RESULT")
-  [[ "$EXIT_CODE" == 404 ]]
-  MSG=$(getResponse "$RESULT" | jq -r '.errors[0].detail')
-  [[ "$MSG" == "Organization or account not allowed" ]]
-}
-
-function Test_postToComposerWithWrongOrgId() {
-  RESULT=$($CURLCMD -H "x-rh-identity: $ACCOUNT0_ORG1" -H 'Content-Type: application/json' --request POST --data @"$REQUEST_FILE" "$BASEURL/compose")
-  EXIT_CODE=$(getExitCode "$RESULT")
-  [[ "$EXIT_CODE" == 404 ]]
-  MSG=$(getResponse "$RESULT" | jq -r '.errors[0].detail')
-  [[ $MSG == "Organization or account not allowed" ]]
-}
-
 #
 # Which cloud provider are we testing?
 #
@@ -663,8 +646,6 @@ Test_wrong_user_get_compose_status
 Test_verifyComposeResult
 Test_verifyComposeMetadata
 Test_getComposes
-Test_getOpenapiWithWrongOrgId
-Test_postToComposerWithWrongOrgId
 Test_postToComposerWithoutEnoughQuotas
 
 echo "########## Test success! ##########"
