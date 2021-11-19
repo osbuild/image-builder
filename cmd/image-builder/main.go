@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/config"
@@ -46,18 +45,6 @@ func main() {
 		panic(err)
 	}
 
-	// Make a slice of allowed organization ids, '*' in the slice means blanket permission
-	orgIds := []string{}
-	if conf.OrgIds != "" {
-		orgIds = strings.Split(conf.OrgIds, ";")
-	}
-
-	// Make a slice of allowed organization ids, '*' in the slice means blanket permission
-	accountNumbers := []string{}
-	if conf.AccountNumbers != "" {
-		accountNumbers = strings.Split(conf.AccountNumbers, ";")
-	}
-
 	aws := v1.AWSConfig{
 		Region: conf.OsbuildRegion,
 	}
@@ -71,7 +58,7 @@ func main() {
 	}
 
 	echoServer := echo.New()
-	err = v1.Attach(echoServer, log, client, dbase, aws, gcp, azure, orgIds, accountNumbers, conf.DistributionsDir, conf.QuotaFile)
+	err = v1.Attach(echoServer, log, client, dbase, aws, gcp, azure, conf.DistributionsDir, conf.QuotaFile)
 	if err != nil {
 		panic(err)
 	}

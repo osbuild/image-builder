@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -59,7 +58,7 @@ func initQuotaFile() (string, error) {
 	return file.Name(), nil
 }
 
-func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNumbers string, dbase db.DB) (*echo.Echo, *httptest.Server) {
+func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo, *httptest.Server) {
 	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
 	require.NoError(t, err)
 
@@ -81,8 +80,7 @@ func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNum
 	require.NoError(t, err)
 
 	echoServer := echo.New()
-	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, strings.Split(orgIds, ";"),
-		strings.Split(accountNumbers, ";"), "../../distributions", quotaFile)
+	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, "../../distributions", quotaFile)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {
@@ -105,8 +103,8 @@ func startServerWithCustomDB(t *testing.T, url string, orgIds string, accountNum
 	return echoServer, tokenServer
 }
 
-func startServer(t *testing.T, url string, orgIds string, accountNumbers string) (*echo.Echo, *httptest.Server) {
-	return startServerWithCustomDB(t, url, orgIds, accountNumbers, tutils.InitDB())
+func startServer(t *testing.T, url string) (*echo.Echo, *httptest.Server) {
+	return startServerWithCustomDB(t, url, tutils.InitDB())
 }
 
 // note: all of the sub-tests below don't actually talk to
@@ -114,7 +112,7 @@ func startServer(t *testing.T, url string, orgIds string, accountNumbers string)
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "http://example.com", "000000", "")
+	srv, tokenSrv := startServer(t, "http://example.com")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -225,83 +223,14 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.Contains(t, body, "The Account Number is missing in the Identity Header")
 	})
 
-	t.Run("NoOrgId", func(t *testing.T) {
-		// no org_id key is present
-		auth := tutils.GetBas64HeaderWithoutOrgId("000000")
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Organization or account not allowed")
-	})
-
-	t.Run("OrgIdNotAuthorized", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Organization or account not allowed")
-	})
-
 	t.Run("StatusCheck", func(t *testing.T) {
 		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/status", nil)
 		require.Equal(t, 200, response.StatusCode)
 	})
 }
 
-func TestEmptyAllowedIds(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com", "", "")
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
-
-	t.Run("NotAuthorized", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Organization or account not allowed")
-	})
-}
-
-func TestOrgIds(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com", "000000", "")
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
-
-	t.Run("Authorized", func(t *testing.T) {
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
-	})
-
-	t.Run("NotAuthorized", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Organization or account not allowed")
-	})
-}
-
-func TestAccountNumbers(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com", "", "500000")
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
-
-	t.Run("Authorized", func(t *testing.T) {
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
-	})
-
-	t.Run("NotAuthorized", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString1)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Organization or account not allowed")
-	})
-}
-
 func TestOrgIdWildcard(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com", "*", "")
+	srv, tokenSrv := startServer(t, "http://example.com")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -315,7 +244,7 @@ func TestOrgIdWildcard(t *testing.T) {
 }
 
 func TestAccountNumberWildcard(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com", "", "*")
+	srv, tokenSrv := startServer(t, "http://example.com")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -348,7 +277,7 @@ func TestGetComposeStatus(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "600000", "000001", json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, "*", "", dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, dbase)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -368,7 +297,6 @@ func TestGetComposeStatus(t *testing.T) {
 		},
 	}, result)
 
-	// With a wildcard orgIds either auth should work
 	response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		UUIDTest), &tutils.AuthString1)
 	require.Equal(t, 200, response.StatusCode)
@@ -391,7 +319,7 @@ func TestGetComposeStatus404(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -445,7 +373,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "500000", "000000", json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, "*", "", dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, dbase)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -472,7 +400,7 @@ func TestGetComposeMetadata404(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -500,7 +428,7 @@ func TestGetComposes(t *testing.T) {
 	composeEntry, err := dbase.GetCompose(UUIDTest, "500000")
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServerWithCustomDB(t, "", "*", "", dbase)
+	db_srv, tokenSrv := startServerWithCustomDB(t, "", dbase)
 	defer func() {
 		err := db_srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -524,7 +452,7 @@ func TestGetComposes(t *testing.T) {
 func TestComposeImage(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "http://example.com", "*", "")
+	srv, tokenSrv := startServer(t, "http://example.com")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -652,7 +580,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -691,7 +619,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -732,7 +660,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -782,7 +710,7 @@ func TestComposeCustomizations(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -882,38 +810,8 @@ func TestBuildOSTreeOptions(t *testing.T) {
 	}
 }
 
-func TestIdentityAllowed(t *testing.T) {
-	var header IdentityHeader
-
-	header.Identity.Internal.OrgId = ""
-	require.False(t, identityAllowed(header, []string{}, []string{}))
-	require.True(t, identityAllowed(header, []string{"*"}, []string{}))
-	header.Identity.Internal.OrgId = "12345"
-	require.False(t, identityAllowed(header, []string{}, []string{}))
-	require.True(t, identityAllowed(header, []string{"*"}, []string{}))
-	require.True(t, identityAllowed(header, []string{"12345"}, []string{}))
-	require.True(t, identityAllowed(header, []string{"12345"}, []string{"54321"}))
-	require.True(t, identityAllowed(header, []string{"12345", "12322"}, []string{}))
-	require.False(t, identityAllowed(header, []string{"123456"}, []string{}))
-	require.False(t, identityAllowed(header, []string{"123456"}, []string{"54321"}))
-	require.True(t, identityAllowed(header, []string{"123456", "*"}, []string{}))
-
-	header.Identity.AccountNumber = "54321"
-	require.False(t, identityAllowed(header, []string{}, []string{}))
-	require.True(t, identityAllowed(header, []string{"*"}, []string{}))
-	require.True(t, identityAllowed(header, []string{""}, []string{"*"}))
-	require.True(t, identityAllowed(header, []string{"*"}, []string{"*"}))
-	require.True(t, identityAllowed(header, []string{""}, []string{"54321"}))
-	require.False(t, identityAllowed(header, []string{""}, []string{"54322"}))
-	require.True(t, identityAllowed(header, []string{""}, []string{"54321", "54322"}))
-
-	header.Identity.Internal.OrgId = ""
-	require.False(t, identityAllowed(header, []string{"12345"}, []string{}))
-	require.True(t, identityAllowed(header, []string{"12345"}, []string{"54321"}))
-}
-
 func TestReadinessProbeNotReady(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com", "*", "")
+	srv, tokenSrv := startServer(t, "http://example.com")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -934,7 +832,7 @@ func TestReadinessProbeReady(t *testing.T) {
 	}))
 	defer api_srv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL, "*", "")
+	srv, tokenSrv := startServer(t, api_srv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -948,7 +846,7 @@ func TestReadinessProbeReady(t *testing.T) {
 
 func TestMetrics(t *testing.T) {
 	// simulate osbuild-composer API
-	srv, tokenSrv := startServer(t, "", "*", "")
+	srv, tokenSrv := startServer(t, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)

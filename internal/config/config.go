@@ -16,8 +16,6 @@ type ImageBuilderConfig struct {
 	OsbuildGCPRegion     string  `env:"OSBUILD_GCP_REGION"`
 	OsbuildGCPBucket     string  `env:"OSBUILD_GCP_BUCKET"`
 	OsbuildAzureLocation string  `env:"OSBUILD_AZURE_LOCATION"`
-	OrgIds               string  `env:"ALLOWED_ORG_IDS"`
-	AccountNumbers       string  `env:"ALLOWED_ACCOUNT_NUMBERS"`
 	DistributionsDir     string  `env:"DISTRIBUTIONS_DIR"`
 	MigrationsDir        string  `env:"MIGRATIONS_DIR"`
 	PGHost               string  `env:"PGHOST"`
