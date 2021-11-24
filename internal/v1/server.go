@@ -249,9 +249,8 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		if err != nil {
 			return err
 		}
-		//At this point, if composer is returning a 404, it means that there is a difference between the state of the DB
-		//and the state and the worker. Throw a 500 error
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("%s", body))
+		// Composes can get deleted in composer, usually when the image is expired
+		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
 	}
 
 	var cloudStat composer.ComposeStatus
