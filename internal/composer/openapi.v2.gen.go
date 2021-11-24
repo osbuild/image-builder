@@ -195,6 +195,7 @@ const (
 	ImageTypes_aws            ImageTypes = "aws"
 	ImageTypes_azure          ImageTypes = "azure"
 	ImageTypes_edge_commit    ImageTypes = "edge-commit"
+	ImageTypes_edge_container ImageTypes = "edge-container"
 	ImageTypes_edge_installer ImageTypes = "edge-installer"
 	ImageTypes_gcp            ImageTypes = "gcp"
 )

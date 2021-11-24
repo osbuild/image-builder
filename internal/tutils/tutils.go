@@ -101,7 +101,7 @@ func (d *dB) InsertCompose(jobId, accountNumber, orgId string, request json.RawM
 	return nil
 }
 
-func (d *dB) GetComposes(accountNumber string, limit, offset int) ([]db.ComposeEntry, int, error) {
+func (d *dB) GetComposes(accountNumber string, since time.Duration, limit, offset int) ([]db.ComposeEntry, int, error) {
 	if d.accountOwernship[accountNumber] != nil {
 		return d.accountOwernship[accountNumber], len(d.accountOwernship[accountNumber]), nil
 	} else {
@@ -121,6 +121,6 @@ func (d *dB) GetCompose(jobId string, accountNumber string) (*db.ComposeEntry, e
 }
 
 func (d *dB) CountComposesSince(accountNumber string, duration time.Duration) (int, error) {
-	_, count, err := d.GetComposes(accountNumber, 100, 0)
+	_, count, err := d.GetComposes(accountNumber, duration, 100, 0)
 	return count, err
 }

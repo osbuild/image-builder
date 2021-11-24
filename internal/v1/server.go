@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
@@ -349,7 +350,8 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 		offset = *params.Offset
 	}
 
-	composes, count, err := h.server.db.GetComposes(idHeader.Identity.AccountNumber, limit, offset)
+	// composes in the last 14 days
+	composes, count, err := h.server.db.GetComposes(idHeader.Identity.AccountNumber, (time.Hour * 24 * 14), limit, offset)
 	if err != nil {
 		return err
 	}
