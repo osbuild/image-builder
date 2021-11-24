@@ -26,11 +26,19 @@ type ComposeEntry struct {
 
 type DB interface {
 	InsertCompose(jobId, accountNumber, orgId string, request json.RawMessage) error
-	GetComposes(accountNumber string, limit, offset int) ([]ComposeEntry, int, error)
+	GetComposes(accountNumber string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error)
 	GetCompose(jobId string, accountNumber string) (*ComposeEntry, error)
 	// Returns the count of compose requests performed by an *accountNumber* for a *duration*.
 	CountComposesSince(accountNumber string, duration time.Duration) (int, error)
 }
+
+const (
+	sqlGetComposes = `
+		SELECT job_id, request, created_at FROM composes WHERE account_number=$1 AND CURRENT_TIMESTAMP - created_at <= $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4`
+
+	sqlCountComposesSince = `
+		SELECT COUNT(*) FROM composes WHERE account_number=$1 AND CURRENT_TIMESTAMP - created_at <= $2`
+)
 
 func InitDBConnectionPool(connStr string) (DB, error) {
 	dbConfig, err := pgxpool.ParseConfig(connStr)
@@ -82,7 +90,7 @@ func (db *dB) GetCompose(jobId string, accountNumber string) (*ComposeEntry, err
 	return &compose, nil
 }
 
-func (db *dB) GetComposes(accountNumber string, limit, offset int) ([]ComposeEntry, int, error) {
+func (db *dB) GetComposes(accountNumber string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -90,7 +98,7 @@ func (db *dB) GetComposes(accountNumber string, limit, offset int) ([]ComposeEnt
 	}
 	defer conn.Release()
 
-	result, err := conn.Query(ctx, "SELECT job_id, request, created_at FROM composes WHERE account_number=$1 ORDER BY created_at DESC LIMIT $2 OFFSET $3", accountNumber, limit, offset)
+	result, err := conn.Query(ctx, sqlGetComposes, accountNumber, since, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -112,7 +120,7 @@ func (db *dB) GetComposes(accountNumber string, limit, offset int) ([]ComposeEnt
 	}
 
 	var count int
-	err = conn.QueryRow(ctx, "SELECT COUNT(*) FROM composes WHERE account_number=$1", accountNumber).Scan(&count)
+	err = conn.QueryRow(ctx, sqlCountComposesSince, accountNumber, since).Scan(&count)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -130,7 +138,7 @@ func (db *dB) CountComposesSince(accountNumber string, duration time.Duration) (
 
 	var count int
 	err = conn.QueryRow(ctx,
-		"SELECT COUNT(*) FROM composes WHERE account_number=$1 AND CURRENT_TIMESTAMP - created_at <= $2",
+		sqlCountComposesSince,
 		accountNumber, duration).Scan(&count)
 	if err != nil {
 		return 0, err

@@ -23,6 +23,8 @@ const (
 	ANR3 = "000003"
 
 	ORGID1 = "100000"
+
+	fortnight = time.Hour * 24 * 14
 )
 
 func conf(t *testing.T) *config.ImageBuilderConfig {
@@ -117,10 +119,10 @@ func testMigration(t *testing.T) {
 	migrateUp(t)
 
 	// Check data inserted at migration step 1 and 2 are still accessible
-	_, count, err := d.GetComposes(ANR1, 100, 0)
+	_, count, err := d.GetComposes(ANR1, fortnight, 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
-	_, count, err = d.GetComposes(ANR2, 100, 0)
+	_, count, err = d.GetComposes(ANR2, fortnight, 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 }
@@ -164,13 +166,13 @@ func testGetCompose(t *testing.T) {
 
 	// test
 	// GetComposes works as expected
-	composes, count, err := d.GetComposes(ANR1, 100, 0)
+	composes, count, err := d.GetComposes(ANR1, fortnight, 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 4, count)
 	require.Equal(t, 4, len(composes))
 
 	// count returns total in db, ignoring limits
-	composes, count, err = d.GetComposes(ANR1, 1, 2)
+	composes, count, err = d.GetComposes(ANR1, fortnight, 1, 2)
 	require.NoError(t, err)
 	require.Equal(t, 4, count)
 	require.Equal(t, 1, len(composes))
@@ -221,6 +223,44 @@ func testCountComposesSince(t *testing.T) {
 	count, err = d.CountComposesSince(ANR3, 96*time.Hour+time.Second)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
+}
+
+func testCountGetComposesSince(t *testing.T) {
+	d, err := db.InitDBConnectionPool(connStr(t))
+	require.NoError(t, err)
+
+	// teardwon
+	defer tearDown(t)
+
+	// setup
+	migrateUp(t)
+	conn := connect(t)
+	defer conn.Close(context.Background())
+
+	job1 := uuid.New()
+	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, job1, "{}", ANR3, ORGID1)
+
+	composes, count, err := d.GetComposes(ANR3, fortnight, 100, 0)
+	require.Equal(t, 1, count)
+	require.NoError(t, err)
+	require.Equal(t, job1, composes[0].Id)
+
+	job2 := uuid.New()
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '20 days', $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, job2, "{}", ANR3, ORGID1)
+
+	// job2 is outside of time range
+	composes, count, err = d.GetComposes(ANR3, fortnight, 100, 0)
+	require.Equal(t, 1, count)
+	require.NoError(t, err)
+	require.Equal(t, job1, composes[0].Id)
+
+	// correct ordering (recent first)
+	composes, count, err = d.GetComposes(ANR3, fortnight * 2, 100, 0)
+	require.Equal(t, 2, count)
+	require.NoError(t, err)
+	require.Equal(t, job1, composes[0].Id)
 }
 
 func TestMain(t *testing.T) {
