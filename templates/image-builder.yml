@@ -77,9 +77,6 @@ objects:
             containerPort: 8086
             protocol: TCP
           volumeMounts:
-            - name: composer-secrets
-              mountPath: "/app/composer-secrets"
-              readOnly: true
             - name: config-volume
               mountPath: /app/quotas
           env:
@@ -167,9 +164,6 @@ objects:
             - name: QUOTA_FILE
               value: "/app/quotas/accounts_quotas.json"
         volumes:
-          - name: composer-secrets
-            secret:
-              secretName: composer-secrets
           - name: config-volume
             configMap:
               name: image-builder-crc-quotas
