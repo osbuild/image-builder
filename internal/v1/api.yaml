@@ -378,7 +378,21 @@ components:
           $ref: '#/components/schemas/OSTree'
     ImageTypes:
       type: string
-      enum: ['aws', 'gcp', 'azure', 'edge-commit', 'edge-installer', 'ami', 'vhd', 'rhel-edge-commit', 'rhel-edge-installer']
+      enum:
+        - aws
+        - azure
+        - edge-commit
+        - edge-container
+        - edge-installer
+        - gcp
+        - guest-image
+        - image-installer
+        - vsphere
+        # backwards compatible aliases
+        - ami  # == aws
+        - rhel-edge-commit  # == edge-commit
+        - rhel-edge-installer  # == edge-installer
+        - vhd  # == azure
     ComposesResponse:
       required:
         - meta
