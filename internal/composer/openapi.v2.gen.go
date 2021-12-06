@@ -79,9 +79,6 @@ type ComposeMetadata struct {
 
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
-	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
-	ObjectReference
-	// Embedded fields due to inline allOf schema
 	Customizations *Customizations `json:"customizations,omitempty"`
 	Distribution   string          `json:"distribution"`
 	ImageRequest   ImageRequest    `json:"image_request"`
@@ -192,12 +189,15 @@ type ImageTypes string
 
 // List of ImageTypes
 const (
-	ImageTypes_aws            ImageTypes = "aws"
-	ImageTypes_azure          ImageTypes = "azure"
-	ImageTypes_edge_commit    ImageTypes = "edge-commit"
-	ImageTypes_edge_container ImageTypes = "edge-container"
-	ImageTypes_edge_installer ImageTypes = "edge-installer"
-	ImageTypes_gcp            ImageTypes = "gcp"
+	ImageTypes_aws             ImageTypes = "aws"
+	ImageTypes_azure           ImageTypes = "azure"
+	ImageTypes_edge_commit     ImageTypes = "edge-commit"
+	ImageTypes_edge_container  ImageTypes = "edge-container"
+	ImageTypes_edge_installer  ImageTypes = "edge-installer"
+	ImageTypes_gcp             ImageTypes = "gcp"
+	ImageTypes_guest_image     ImageTypes = "guest-image"
+	ImageTypes_image_installer ImageTypes = "image-installer"
+	ImageTypes_vsphere         ImageTypes = "vsphere"
 )
 
 // List defines model for List.
