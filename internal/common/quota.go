@@ -58,10 +58,13 @@ func CheckQuota(accountNumber string, dB db.DB, quotaFile string) (bool, error) 
 	if _, ok := err.(*os.PathError); ok {
 		return false, fmt.Errorf("No config file for quotas found at %s\n", quotaFile)
 	} else {
-		rawJsonFile, _ := ioutil.ReadAll(jsonFile)
+		rawJsonFile, err := ioutil.ReadAll(jsonFile)
+		if err != nil {
+			return false, fmt.Errorf("Failed to read quota file %q: %s", quotaFile, err.Error())
+		}
 		err = json.Unmarshal(rawJsonFile, &quotas)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("Failed to unmarshal quota file %q: %s", quotaFile, err.Error())
 		}
 		if quota, ok := quotas[accountNumber]; ok {
 			authorizedRequests = quota.Quota
