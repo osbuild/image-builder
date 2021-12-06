@@ -524,10 +524,18 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 			fallthrough
 		case ImageTypes_rhel_edge_commit:
 			composerImageType = composer.ImageTypes_edge_commit
+		case ImageTypes_edge_container:
+			composerImageType = composer.ImageTypes_edge_container
 		case ImageTypes_edge_installer:
 			fallthrough
 		case ImageTypes_rhel_edge_installer:
 			composerImageType = composer.ImageTypes_edge_installer
+		case ImageTypes_guest_image:
+			composerImageType = composer.ImageTypes_guest_image
+		case ImageTypes_image_installer:
+			composerImageType = composer.ImageTypes_image_installer
+		case ImageTypes_vsphere:
+			composerImageType = composer.ImageTypes_vsphere
 		default:
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
