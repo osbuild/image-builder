@@ -50,7 +50,7 @@ QUAY_REPO_TAG="${CI_PIPELINE_ID}"
 
 sudo dnf install -y podman
 sudo setenforce 0 # todo
-sudo podman build --security-opt "label=disable" -t image-builder-"${QUAY_REPO_TAG}" -f distribution/Dockerfile-ubi .
+sudo podman build --label="quay.expires-after=1w" --security-opt "label=disable" -t image-builder-"${QUAY_REPO_TAG}" -f distribution/Dockerfile-ubi .
 sudo setenforce 1
 
 sudo podman push --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" image-builder-"${CI_PIPELINE_ID}" "${QUAY_REPO_URL}":"${QUAY_REPO_TAG}"
