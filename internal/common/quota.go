@@ -44,7 +44,11 @@ type Quota struct {
 // Returns true if the number of requests made by accountNumber during a sliding window is below a threshold.
 // The duration of the sliding window and the value of the threshold must be set in a file pointed by the QUOTA_FILE
 // environment variable.
+// If the variable is unset (or an empty string), the check is disabled and always returns true.
 func CheckQuota(accountNumber string, dB db.DB, quotaFile string) (bool, error) {
+	if quotaFile == "" {
+		return true, nil
+	}
 	var authorizedRequests int
 	var slidingWindow time.Duration
 
