@@ -532,6 +532,10 @@ components:
           example: ['postgresql']
           items:
             type: string
+        payload_repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
     Subscription:
       type: object
       required:
@@ -640,3 +644,28 @@ components:
           type: string
         signature:
           type: string
+    Repository:
+      type: object
+      required:
+        - rhsm
+      properties:
+        rhsm:
+          type: boolean
+        baseurl:
+          type: string
+          format: url
+          example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
+        mirrorlist:
+          type: string
+          format: url
+          example: 'http://mirrorlist.centos.org/?release=8-stream&arch=aarch64&repo=BaseOS'
+        metalink:
+          type: string
+          format: url
+          example: 'https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=x86_64'
+        gpg_key:
+          type: string
+        check_gpg:
+          type: boolean
+        ignore_ssl:
+          type: boolean
