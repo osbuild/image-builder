@@ -779,6 +779,15 @@ func TestComposeCustomizations(t *testing.T) {
 					"some",
 					"packages",
 				},
+				PayloadRepositories: &[]Repository{
+					{
+						Baseurl:   common.StringToPtr("https://some-repo-base-url.org"),
+						CheckGpg:  common.BoolToPtr(false),
+						Gpgkey:    common.StringToPtr("some-gpg-key"),
+						IgnoreSsl: common.BoolToPtr(false),
+						Rhsm:      false,
+					},
+				},
 				Filesystem: &[]Filesystem{
 					{
 						Mountpoint: "/",
