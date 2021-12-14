@@ -717,12 +717,26 @@ func TestComposeCustomizations(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
+	payloadRepoBaseUrl := "some-repo-base-url.org"
+	payloadRepoGpgKey := "some-gpg-key"
+	payloadRepoCheckGpg := false
+	payloadRepoIgnoreSsl := false
+
 	payloads := []ComposeRequest{
 		{
 			Customizations: &Customizations{
 				Packages: &[]string{
 					"some",
 					"packages",
+				},
+				PayloadRepositories: &[]Repository{
+					{
+						Baseurl:   &payloadRepoBaseUrl,
+						CheckGpg:  &payloadRepoCheckGpg,
+						GpgKey:    &payloadRepoGpgKey,
+						IgnoreSsl: &payloadRepoIgnoreSsl,
+						Rhsm:      false,
+					},
 				},
 			},
 			Distribution: "centos-8",

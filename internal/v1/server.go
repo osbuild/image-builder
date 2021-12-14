@@ -608,6 +608,35 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		res.Packages = cust.Packages
 	}
 
+	if cust.PayloadRepositories != nil {
+		payloadRepositories := make([]composer.Repository, len(*cust.PayloadRepositories))
+
+		for i, payloadRepository := range *cust.PayloadRepositories {
+
+			if payloadRepository.Baseurl != nil {
+				payloadRepositories[i].Baseurl = payloadRepository.Baseurl
+			}
+			if payloadRepository.CheckGpg != nil {
+				payloadRepositories[i].CheckGpg = payloadRepository.CheckGpg
+			}
+			if payloadRepository.GpgKey != nil {
+				payloadRepositories[i].GpgKey = payloadRepository.GpgKey
+			}
+			if payloadRepository.IgnoreSsl != nil {
+				payloadRepositories[i].IgnoreSsl = payloadRepository.IgnoreSsl
+			}
+			if payloadRepository.Metalink != nil {
+				payloadRepositories[i].Metalink = payloadRepository.Metalink
+			}
+			if payloadRepository.Mirrorlist != nil {
+				payloadRepositories[i].Mirrorlist = payloadRepository.Mirrorlist
+			}
+			payloadRepositories[i].Rhsm = payloadRepository.Rhsm
+		}
+
+		res.PayloadRepositories = &payloadRepositories
+	}
+
 	return res
 }
 
