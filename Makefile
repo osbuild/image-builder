@@ -14,8 +14,3 @@ check-api-spec:
 .PHONY: ubi-container
 ubi-container:
 	podman build -t osbuild/image-builder -f distribution/Dockerfile-ubi .
-
-.PHONY: update-cloudapi
-update-cloudapi:
-	curl https://raw.githubusercontent.com/osbuild/osbuild-composer/main/internal/cloudapi/openapi.yml -o internal/cloudapi/cloudapi_types.yml
-	tools/prepare-source.sh
