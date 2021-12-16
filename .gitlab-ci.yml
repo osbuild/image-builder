@@ -47,7 +47,7 @@ Test EL8:
   script:
     - schutzbot/ci_details.sh
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/image-builder/api.sh ${PROVIDER}
+    - test/cases/api.sh ${PROVIDER}
   parallel:
     matrix:
       - PROVIDER:
@@ -67,7 +67,7 @@ Test Edge EL8:
   script:
     - schutzbot/ci_details.sh
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/image-builder/edge.sh
+    - test/cases/edge.sh
   parallel:
     matrix:
       - RUNNER:

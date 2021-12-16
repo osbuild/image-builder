@@ -1,16 +1,8 @@
 #!/bin/bash
 set -euxo pipefail
 
-# Get OS and architecture details.
-source /etc/os-release
-ARCH=$(uname -m)
-
 echo "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
-
-# Install image-builder packages
-REPO_DIR=repo/image-builder/"${CI_PIPELINE_ID}"
-sudo dnf localinstall -y "$REPO_DIR"/*"${ARCH}".rpm
 
 # Currently openstack/rhel-8.4-x86_64 cannot subcribe, subscription is disabled.
 # In a non-subscribed system, cannot pull the Postgres container. So manually download it from quay.io
