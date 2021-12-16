@@ -19,7 +19,7 @@ set -euo pipefail
 
 ############### Common variables for CI ###########################
 WORKDIR=$(mktemp -d)
-IMAGE_BUILDER_TEST_DATA=/usr/share/tests/image-builder
+IMAGE_BUILDER_TEST_DATA=test/data
 
 ############### Common variables for image builder ################
 PORT="8086"
@@ -37,7 +37,7 @@ REPO_BUCKET="image-builder-ci-edge-repositories"
 REPO_URL="https://${REPO_BUCKET}.s3.amazonaws.com/${CI_JOB_ID}/repo"
 
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
-SSH_DATA_DIR=$(/usr/libexec/image-builder/gen-ssh.sh)
+SSH_DATA_DIR=$(tools/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB="$(cat "${SSH_KEY}".pub)"
 
