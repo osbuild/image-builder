@@ -653,15 +653,15 @@ components:
           type: boolean
         baseurl:
           type: string
-          format: url
+          format: uri
           example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
         mirrorlist:
           type: string
-          format: url
+          format: uri
           example: 'http://mirrorlist.centos.org/?release=8-stream&arch=aarch64&repo=BaseOS'
         metalink:
           type: string
-          format: url
+          format: uri
           example: 'https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=x86_64'
         gpg_key:
           type: string

@@ -717,7 +717,7 @@ func TestComposeCustomizations(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	payloadRepoBaseUrl := "some-repo-base-url.org"
+	payloadRepoBaseUrl := "https://some-repo-base-url.org"
 	payloadRepoGpgKey := "some-gpg-key"
 	payloadRepoCheckGpg := false
 	payloadRepoIgnoreSsl := false
