@@ -81,7 +81,6 @@ function cleanupAzure() {
 # terminates in any way.
 WORKDIR=$(mktemp -d)
 function cleanup() {
-  sudo podman logs image-builder
   case $CLOUD_PROVIDER in
     "$CLOUD_PROVIDER_AWS")
       cleanupAWS

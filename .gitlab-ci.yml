@@ -13,6 +13,7 @@ stages:
   artifacts:
     paths:
       - journal-log.gpg
+      - container-log.gpg
     when: always
 
 
