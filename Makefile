@@ -9,7 +9,7 @@ build:
 # pip3 install openapi-spec-validator
 .PHONY: check-api-spec
 check-api-spec:
-	 openapi-spec-validator internal/server/api.yaml
+	 openapi-spec-validator internal/v1/api.yaml
 
 .PHONY: ubi-container
 ubi-container:
