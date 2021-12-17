@@ -4,10 +4,16 @@ set -euxo pipefail
 echo "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
-# Currently openstack/rhel-8.4-x86_64 cannot subcribe, subscription is disabled.
-# In a non-subscribed system, cannot pull the Postgres container. So manually download it from quay.io
-# Remove this after openstack/rhel-8.4-x86_64 can subscribe
-sudo dnf install -y podman
+# Install any packages required during the test
+sudo dnf install -y podman \
+     libvirt-client \
+     libvirt-daemon-kvm \
+     virt-install \
+     wget \
+     qemu-img \
+     qemu-kvm \
+     jq
+
 sudo podman pull docker://quay.io/osbuild/postgres:latest
 
 # Start Postgres container
