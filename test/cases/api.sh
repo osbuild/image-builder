@@ -253,10 +253,6 @@ function checkEnvGCP() {
 }
 
 function installClientGCP() {
-  # Bug in 366.0.0 see https://issuetracker.google.com/issues/209655844
-  export CLOUDSDK_PYTHON=python3
-  sudo dnf install -y python3
-
   if ! hash gcloud; then
     sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
 [google-cloud-sdk]
@@ -270,7 +266,9 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
 EOM
   fi
 
-  sudo dnf -y install google-cloud-sdk
+  # Use python3 for gcloud
+  export CLOUDSDK_PYTHON=python3
+  sudo dnf -y install python3 google-cloud-sdk
   GCP_CMD="gcloud --format=json --quiet"
   $GCP_CMD --version
 }
