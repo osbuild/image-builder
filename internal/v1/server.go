@@ -263,7 +263,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 
 	if cloudStat.ImageStatus.UploadStatus != nil {
 		status.ImageStatus.UploadStatus = &UploadStatus{
-			Status:  cloudStat.ImageStatus.UploadStatus.Status,
+			Status:  string(cloudStat.ImageStatus.UploadStatus.Status),
 			Type:    UploadTypes(cloudStat.ImageStatus.UploadStatus.Type),
 			Options: cloudStat.ImageStatus.UploadStatus.Options,
 		}
