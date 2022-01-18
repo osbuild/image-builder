@@ -259,10 +259,21 @@ type UploadOptions interface{}
 
 // UploadStatus defines model for UploadStatus.
 type UploadStatus struct {
-	Options interface{} `json:"options"`
-	Status  string      `json:"status"`
-	Type    UploadTypes `json:"type"`
+	Options interface{}       `json:"options"`
+	Status  UploadStatusValue `json:"status"`
+	Type    UploadTypes       `json:"type"`
 }
+
+// UploadStatusValue defines model for UploadStatusValue.
+type UploadStatusValue string
+
+// List of UploadStatusValue
+const (
+	UploadStatusValue_failure UploadStatusValue = "failure"
+	UploadStatusValue_pending UploadStatusValue = "pending"
+	UploadStatusValue_running UploadStatusValue = "running"
+	UploadStatusValue_success UploadStatusValue = "success"
+)
 
 // UploadTypes defines model for UploadTypes.
 type UploadTypes string
