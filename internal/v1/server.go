@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder/internal/dnf_json"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -27,17 +29,18 @@ import (
 )
 
 type Server struct {
-	logger    *logrus.Logger
-	echo      *echo.Echo
-	client    *composer.ComposerClient
-	spec      *openapi3.Swagger
-	router    routers.Router
-	db        db.DB
-	aws       AWSConfig
-	gcp       GCPConfig
-	azure     AzureConfig
-	distsDir  string
-	quotaFile string
+	logger     *logrus.Logger
+	echo       *echo.Echo
+	client     *composer.ComposerClient
+	spec       *openapi3.Swagger
+	router     routers.Router
+	db         db.DB
+	aws        AWSConfig
+	gcp        GCPConfig
+	azure      AzureConfig
+	distsDir   string
+	quotaFile  string
+	dnfJsonURL string
 }
 
 type AWSConfig struct {
@@ -67,7 +70,7 @@ type IdentityHeader struct {
 }
 
 func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.ComposerClient, dbase db.DB,
-	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string) error {
+	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string, dnfJsonURL string) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -99,6 +102,7 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.Compo
 		azureConfig,
 		distsDir,
 		quotaFile,
+		dnfJsonURL,
 	}
 	var h Handlers
 	h.server = &s
@@ -677,9 +681,109 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 
 	return ctx.JSON(http.StatusOK, PackagesResponse{
 		Meta: struct {
-			Count int `json:"count"`
+			Count               int           `json:"count"`
+			PayloadRepositories *[]Repository `json:"payload_repositories,omitempty"`
 		}{
 			len(packages),
+			nil,
+		},
+		Links: struct {
+			First string `json:"first"`
+			Last  string `json:"last"`
+		}{
+			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
+				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, offset, limit),
+			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
+				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, len(packages)-1, limit),
+		},
+		Data: packages[offset:upto],
+	})
+}
+
+func (h *Handlers) FindAllPackages(ctx echo.Context, params FindAllPackagesParams) error {
+	var packagesRequest FindAllPackagesBodyRequest
+	err := ctx.Bind(&packagesRequest)
+	if err != nil {
+		return err
+	}
+
+	rhelPackages, err := common.FindPackages(h.server.distsDir, params.Distribution, params.Architecture, params.Search)
+	if err != nil {
+		return err
+	}
+
+	var packagesMap map[string]Package
+	var packagesNames []string
+
+	for _, p := range rhelPackages {
+		// emulate rhel repo id as %dist-%arch-rpms
+		repoID := fmt.Sprintf("%s-%s-rpms", params.Distribution, params.Architecture)
+		packagesMap[p.Name] = Package{
+			Name:    p.Name,
+			Summary: p.Summary,
+			RepoId:  &repoID,
+		}
+		packagesNames = append(packagesNames, p.Name)
+	}
+
+	var dnfJSONRepos []dnf_json.Repository
+	if packagesRequest.PayloadRepositories != nil {
+		for _, repo := range *packagesRequest.PayloadRepositories {
+			if repo.Baseurl != nil {
+				dnfJSONRepos = append(dnfJSONRepos, dnf_json.Repository{Baseurl: *repo.Baseurl})
+			}
+		}
+	}
+
+	dumpPackages, dumpErr := dnf_json.Search(h.server.dnfJsonURL, params.Search, params.Architecture, params.Distribution, dnfJSONRepos)
+	if dumpErr != nil {
+		return dumpErr
+	}
+
+	for _, p := range dumpPackages {
+		packagesMap[p.Name] = Package{
+			Name:    p.Name,
+			Summary: p.Summary,
+			RepoId:  &p.RepoID,
+		}
+		packagesNames = append(packagesNames, p.Name)
+	}
+
+	sort.Strings(packagesNames)
+
+	var packages []Package
+	for _, pName := range packagesNames {
+		packages = append(packages, packagesMap[pName])
+	}
+
+	limit := 100
+	if params.Limit != nil {
+		if *params.Limit > 0 {
+			limit = *params.Limit
+		}
+	}
+
+	offset := 0
+	if params.Offset != nil {
+		if *params.Offset >= len(packages) {
+			offset = len(packages) - 1
+		} else if *params.Offset > 0 {
+			offset = *params.Offset
+		}
+	}
+
+	upto := offset + limit
+	if upto > len(packages) {
+		upto = len(packages)
+	}
+
+	return ctx.JSON(http.StatusOK, PackagesResponse{
+		Meta: struct {
+			Count               int           `json:"count"`
+			PayloadRepositories *[]Repository `json:"payload_repositories,omitempty"`
+		}{
+			len(packages),
+			packagesRequest.PayloadRepositories,
 		},
 		Links: struct {
 			First string `json:"first"`

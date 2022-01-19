@@ -79,8 +79,10 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo,
 	quotaFile, err := initQuotaFile()
 	require.NoError(t, err)
 
+	dnfJsonURL := "http://localhost:8089"
+
 	echoServer := echo.New()
-	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, "../../distributions", quotaFile)
+	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, "../../distributions", quotaFile, dnfJsonURL)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {

@@ -207,7 +207,59 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PackagesResponse'
-
+    post:
+      summary: "find all packages"
+      description: "search for packages in rh and custom repositories"
+      operationId: findAllPackages
+      requestBody:
+        required: true
+        description: "search package details"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindAllPackagesBodyRequest"
+      parameters:
+        - in: query
+          name: distribution
+          required: true
+          schema:
+            type: string
+            enum: [ 'rhel-84', 'rhel-85', 'centos-8' ]
+          description: distribution to look up packages for
+        - in: query
+          name: architecture
+          required: true
+          schema:
+            type: string
+            enum: [ 'x86_64' ]
+          description: architecture to look up packages for
+        - in: query
+          name: search
+          required: true
+          schema:
+            type: string
+          description: packages to look for
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+          description: max amount of packages, default 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: packages page offset, default 0
+      responses:
+        '200':
+          description: 'a list of packages'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackagesResponse'
 components:
   schemas:
     HTTPError:
@@ -583,6 +635,10 @@ components:
           properties:
             count:
               type: integer
+            payload_repositories:
+              type: array
+              items:
+                $ref: '#/components/schemas/Repository'
         links:
           type: object
           required:
@@ -607,6 +663,8 @@ components:
         name:
           type: string
         summary:
+          type: string
+        repo_id:
           type: string
     ComposeMetadata:
       type: object
@@ -669,3 +727,10 @@ components:
           type: boolean
         ignore_ssl:
           type: boolean
+    FindAllPackagesBodyRequest:
+      type: object
+      properties:
+        payload_repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'

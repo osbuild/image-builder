@@ -25,4 +25,5 @@ type ImageBuilderConfig struct {
 	PGPassword           string  `env:"PGPASSWORD"`
 	PGSSLMode            string  `env:"PGSSLMODE"`
 	QuotaFile            string  `env:"QUOTA_FILE"`
+	DnfJsonURL           string  `env:"DNF_JSON_URL"`
 }

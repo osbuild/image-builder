@@ -58,7 +58,7 @@ func main() {
 	}
 
 	echoServer := echo.New()
-	err = v1.Attach(echoServer, log, client, dbase, aws, gcp, azure, conf.DistributionsDir, conf.QuotaFile)
+	err = v1.Attach(echoServer, log, client, dbase, aws, gcp, azure, conf.DistributionsDir, conf.QuotaFile, conf.DnfJsonURL)
 	if err != nil {
 		panic(err)
 	}
