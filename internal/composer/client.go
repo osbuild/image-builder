@@ -14,22 +14,20 @@ import (
 	"net/url"
 	"strings"
 	"sync"
-	"time"
 )
 
-type bearerToken struct {
-	AccessToken     string `json:"access_token"`
-	ValidForSeconds int    `json:"expires_in"`
+type AccessToken struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
 }
 
 type ComposerClient struct {
 	composerURL string
 
-	tokenURL         string
-	offlineToken     string
-	lastTokenRefresh *time.Time
-	bearerToken      *bearerToken
-	tokenMu          sync.Mutex
+	tokenURL     string
+	offlineToken string
+	accessToken  AccessToken
+	tokenMu      sync.RWMutex
 
 	client *http.Client
 }
@@ -81,31 +79,45 @@ func createClient(composerURL string, ca *string) (*http.Client, error) {
 	return &http.Client{Transport: transport}, nil
 }
 
-func (cc *ComposerClient) newRequest(method, url string, body io.Reader) (*http.Request, error) {
+func (cc *ComposerClient) request(method, url string, headers map[string]string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
 
-	var d time.Duration
-	cc.tokenMu.Lock()
-	defer cc.tokenMu.Unlock()
-	if cc.lastTokenRefresh != nil {
-		d = time.Since(*cc.lastTokenRefresh)
+	for k, v := range headers {
+		req.Header.Add(k, v)
 	}
-	if cc.bearerToken == nil || d.Seconds() >= (float64(cc.bearerToken.ValidForSeconds)*0.8) {
-		err = cc.refreshBearerToken()
+
+	token := func() string {
+		cc.tokenMu.RLock()
+		defer cc.tokenMu.RUnlock()
+		return cc.accessToken.AccessToken
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token()))
+
+	resp, err := cc.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		err = cc.refreshToken()
 		if err != nil {
 			return nil, err
 		}
+
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token()))
+		resp, err = cc.client.Do(req)
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cc.bearerToken.AccessToken))
-	return req, nil
+	return resp, err
 }
 
-// Note: Only call this function with Client.tokenMu locked!
-func (cc *ComposerClient) refreshBearerToken() error {
+func (cc *ComposerClient) refreshToken() error {
+	cc.tokenMu.Lock()
+	defer cc.tokenMu.Unlock()
+
 	if cc.offlineToken == "" || cc.tokenURL == "" {
 		return fmt.Errorf("No offline token or oauth url available")
 	}
@@ -115,39 +127,27 @@ func (cc *ComposerClient) refreshBearerToken() error {
 	data.Set("client_id", "rhsm-api")
 	data.Set("refresh_token", cc.offlineToken)
 
-	t := time.Now()
 	resp, err := http.PostForm(cc.tokenURL, data)
 	if err != nil {
 		return err
 	}
 
-	var bt bearerToken
-	err = json.NewDecoder(resp.Body).Decode(&bt)
+	var at AccessToken
+	err = json.NewDecoder(resp.Body).Decode(&at)
 	if err != nil {
 		return err
 	}
 
-	cc.bearerToken = &bt
-	cc.lastTokenRefresh = &t
+	cc.accessToken = at
 	return nil
 }
 
 func (cc *ComposerClient) ComposeStatus(id string) (*http.Response, error) {
-	req, err := cc.newRequest("GET", fmt.Sprintf("%s/composes/%s", cc.composerURL, id), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return cc.client.Do(req)
+	return cc.request("GET", fmt.Sprintf("%s/composes/%s", cc.composerURL, id), nil, nil)
 }
 
 func (cc *ComposerClient) ComposeMetadata(id string) (*http.Response, error) {
-	req, err := cc.newRequest("GET", fmt.Sprintf("%s/composes/%s/metadata", cc.composerURL, id), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return cc.client.Do(req)
+	return cc.request("GET", fmt.Sprintf("%s/composes/%s/metadata", cc.composerURL, id), nil, nil)
 }
 
 func (cc *ComposerClient) Compose(compose ComposeRequest) (*http.Response, error) {
@@ -156,20 +156,9 @@ func (cc *ComposerClient) Compose(compose ComposeRequest) (*http.Response, error
 		return nil, err
 	}
 
-	req, err := cc.newRequest("POST", fmt.Sprintf("%s/compose", cc.composerURL), bytes.NewReader(buf))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Content-Type", "application/json")
-
-	return cc.client.Do(req)
+	return cc.request("POST", fmt.Sprintf("%s/compose", cc.composerURL), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf))
 }
 
 func (cc *ComposerClient) OpenAPI() (*http.Response, error) {
-	req, err := cc.newRequest("GET", fmt.Sprintf("%s/openapi", cc.composerURL), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return cc.client.Do(req)
+	return cc.request("GET", fmt.Sprintf("%s/openapi", cc.composerURL), nil, nil)
 }
