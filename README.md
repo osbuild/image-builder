@@ -21,3 +21,7 @@ file to generate a package list.
 
 If the repository requires a client tls key/cert you can supply them with
 `--key` and `--cert`.
+
+### Contributing
+
+Please refer to the [developer guide](https://www.osbuild.org/guides/developer-guide/developer-guide.html) to learn about our workflow, code style and more.
