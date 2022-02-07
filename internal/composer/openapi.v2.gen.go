@@ -64,6 +64,23 @@ type ComposeId struct {
 	Id string `json:"id"`
 }
 
+// ComposeLogs defines model for ComposeLogs.
+type ComposeLogs struct {
+	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
+	ObjectReference
+	// Embedded fields due to inline allOf schema
+	ImageBuilds []interface{} `json:"image_builds"`
+	Koji        *KojiLogs     `json:"koji,omitempty"`
+}
+
+// ComposeManifests defines model for ComposeManifests.
+type ComposeManifests struct {
+	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
+	ObjectReference
+	// Embedded fields due to inline allOf schema
+	Manifests []interface{} `json:"manifests"`
+}
+
 // ComposeMetadata defines model for ComposeMetadata.
 type ComposeMetadata struct {
 	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
@@ -81,7 +98,9 @@ type ComposeMetadata struct {
 type ComposeRequest struct {
 	Customizations *Customizations `json:"customizations,omitempty"`
 	Distribution   string          `json:"distribution"`
-	ImageRequest   ImageRequest    `json:"image_request"`
+	ImageRequest   *ImageRequest   `json:"image_request,omitempty"`
+	ImageRequests  *[]ImageRequest `json:"image_requests,omitempty"`
+	Koji           *Koji           `json:"koji,omitempty"`
 }
 
 // ComposeStatus defines model for ComposeStatus.
@@ -89,8 +108,21 @@ type ComposeStatus struct {
 	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
 	ObjectReference
 	// Embedded fields due to inline allOf schema
-	ImageStatus ImageStatus `json:"image_status"`
+	ImageStatus   ImageStatus        `json:"image_status"`
+	ImageStatuses *[]ImageStatus     `json:"image_statuses,omitempty"`
+	KojiStatus    *KojiStatus        `json:"koji_status,omitempty"`
+	Status        ComposeStatusValue `json:"status"`
 }
+
+// ComposeStatusValue defines model for ComposeStatusValue.
+type ComposeStatusValue string
+
+// List of ComposeStatusValue
+const (
+	ComposeStatusValue_failure ComposeStatusValue = "failure"
+	ComposeStatusValue_pending ComposeStatusValue = "pending"
+	ComposeStatusValue_success ComposeStatusValue = "success"
+)
 
 // Customizations defines model for Customizations.
 type Customizations struct {
@@ -159,11 +191,11 @@ type GCPUploadStatus struct {
 
 // ImageRequest defines model for ImageRequest.
 type ImageRequest struct {
-	Architecture  string        `json:"architecture"`
-	ImageType     ImageTypes    `json:"image_type"`
-	Ostree        *OSTree       `json:"ostree,omitempty"`
-	Repositories  []Repository  `json:"repositories"`
-	UploadOptions UploadOptions `json:"upload_options"`
+	Architecture  string         `json:"architecture"`
+	ImageType     ImageTypes     `json:"image_type"`
+	Ostree        *OSTree        `json:"ostree,omitempty"`
+	Repositories  []Repository   `json:"repositories"`
+	UploadOptions *UploadOptions `json:"upload_options,omitempty"`
 }
 
 // ImageStatus defines model for ImageStatus.
@@ -200,6 +232,26 @@ const (
 	ImageTypes_image_installer ImageTypes = "image-installer"
 	ImageTypes_vsphere         ImageTypes = "vsphere"
 )
+
+// Koji defines model for Koji.
+type Koji struct {
+	Name    string `json:"name"`
+	Release string `json:"release"`
+	Server  string `json:"server"`
+	TaskId  int    `json:"task_id"`
+	Version string `json:"version"`
+}
+
+// KojiLogs defines model for KojiLogs.
+type KojiLogs struct {
+	Import interface{} `json:"import"`
+	Init   interface{} `json:"init"`
+}
+
+// KojiStatus defines model for KojiStatus.
+type KojiStatus struct {
+	BuildId *int `json:"build_id,omitempty"`
+}
 
 // List defines model for List.
 type List struct {
