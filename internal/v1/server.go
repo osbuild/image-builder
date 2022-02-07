@@ -441,12 +441,12 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	cloudCR := composer.ComposeRequest{
 		Distribution:   composeRequest.Distribution,
 		Customizations: buildCustomizations(composeRequest.Customizations),
-		ImageRequest: composer.ImageRequest{
+		ImageRequest: &composer.ImageRequest{
 			Architecture:  composeRequest.ImageRequests[0].Architecture,
 			ImageType:     imageType,
 			Ostree:        buildOSTreeOptions(composeRequest.ImageRequests[0].Ostree),
 			Repositories:  repositories,
-			UploadOptions: uploadOptions,
+			UploadOptions: &uploadOptions,
 		},
 	}
 
