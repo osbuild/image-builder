@@ -2,9 +2,9 @@ import os
 import json
 from locust import HttpUser, task, tag, events
 
-COMPOSE_FAIL_RATIO = float(os.getenv("COMPOSE_LT_FAIL_RATIO", "1"))
+COMPOSE_FAIL_RATIO = float(os.getenv("COMPOSE_LT_FAIL_RATIO", "0.01"))
 COMPOSE_PERCENTILE_95_RESPONSE_TIME = int(os.getenv("COMPOSE_LT_PERCENTILE_95_RESPONSE_TIME",
-    "12000"))
+    "6000"))
 
 FAIL_RATIO = float(os.getenv("LT_FAIL_RATIO", "0.01"))
 MEAN_RESPONSE_TIME = int(os.getenv("LT_MEAN_RESPONSE_TIME", "200"))
@@ -98,9 +98,9 @@ def _(environment, **kw):
         # Test separately the compose request and the other ones as they are not
         # expected to have the same latencies.
         if key[0] == '/api/image-builder/v1/compose':
-            if value.fail_ratio < COMPOSE_FAIL_RATIO:
+            if value.fail_ratio > COMPOSE_FAIL_RATIO:
                 print(f"{key} Test failed due to failure ratio "
-                        f"< {COMPOSE_FAIL_RATIO}%")
+                        f"> {COMPOSE_FAIL_RATIO}%")
                 environment.process_exit_code = 1
             elif (value.get_response_time_percentile(0.95) >
                     COMPOSE_PERCENTILE_95_RESPONSE_TIME):
