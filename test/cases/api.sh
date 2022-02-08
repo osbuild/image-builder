@@ -12,6 +12,18 @@
 
 set -euxo pipefail
 
+# Container image used for cloud provider CLI tools
+CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+
+if which podman 2>/dev/null >&2; then
+  CONTAINER_RUNTIME=podman
+elif which docker 2>/dev/null >&2; then
+  CONTAINER_RUNTIME=docker
+else
+  echo No container runtime found, install podman or docker.
+  exit 2
+fi
+
 ############### Cleanup functions ################
 
 function cleanupAWS() {
@@ -46,17 +58,18 @@ function cleanupAzure() {
   # since this function can be called at any time, ensure that we don't expand unbound variables
   AZURE_CMD="${AZURE_CMD:-}"
   AZURE_IMAGE_NAME="${AZURE_IMAGE_NAME:-}"
+  AZURE_INSTANCE_NAME="${AZURE_INSTANCE_NAME:-}"
 
+  set +e
   # do not run clean-up if the image name is not yet defined
   if [[ -n "$AZURE_CMD" && -n "$AZURE_IMAGE_NAME" ]]; then
-    # When clean up, need to delete os_disk, NIC, public-ip, nsg, vnet, image and blob.
-    set +e
-    $AZURE_CMD image delete --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_IMAGE_NAME"
+    # Re-get the vm_details in case the VM creation is failed.
+    [ -f "$WORKDIR/vm_details.json" ] || $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
     # Get all the resources ids
     VM_ID=$(jq -r '.id' "$WORKDIR"/vm_details.json)
     OSDISK_ID=$(jq -r '.storageProfile.osDisk.managedDisk.id' "$WORKDIR"/vm_details.json)
     NIC_ID=$(jq -r '.networkProfile.networkInterfaces[0].id' "$WORKDIR"/vm_details.json)
-    "$AZURE_CMD" network nic show --ids "$NIC_ID" > "$WORKDIR"/nic_details.json
+    $AZURE_CMD network nic show --ids "$NIC_ID" > "$WORKDIR"/nic_details.json
     NSG_ID=$(jq -r '.networkSecurityGroup.id' "$WORKDIR"/nic_details.json)
     PUBLICIP_ID=$(jq -r '.ipConfigurations[0].publicIpAddress.id' "$WORKDIR"/nic_details.json)
 
@@ -66,13 +79,15 @@ function cleanupAzure() {
     # Left Virtual Network and Storage Account there because other tests in the same resource group will reuse them
     for id in "$VM_ID" "$OSDISK_ID" "$NIC_ID" "$NSG_ID" "$PUBLICIP_ID"; do
       echo "Deleting $id..."
-      "$AZURE_CMD" resource delete --ids "$id"
+      $AZURE_CMD resource delete --ids "$id"
     done
 
+    # Delete image after VM deleting.
+    $AZURE_CMD image delete --resource-group "$AZURE_RESOURCE_GROUP" --name "$AZURE_IMAGE_NAME"
     # find a storage account by its tag
-    AZURE_STORAGE_ACCOUNT=$("$AZURE_CMD" resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)
-    AZURE_CONNECTION_STRING=$("$AZURE_CMD" storage account show-connection-string --name "$AZURE_STORAGE_ACCOUNT" | jq -r .connectionString)
-    "$AZURE_CMD" storage blob delete --container-name imagebuilder --name "$AZURE_IMAGE_NAME".vhd --account-name "$AZURE_STORAGE_ACCOUNT" --connection-string "$AZURE_CONNECTION_STRING"
+    AZURE_STORAGE_ACCOUNT=$($AZURE_CMD resource list --tag imageBuilderStorageAccount=location="$AZURE_LOCATION" | jq -r .[0].name)
+    AZURE_CONNECTION_STRING=$($AZURE_CMD storage account show-connection-string --name "$AZURE_STORAGE_ACCOUNT" | jq -r .connectionString)
+    $AZURE_CMD storage blob delete --container-name imagebuilder --name "$AZURE_IMAGE_NAME".vhd --account-name "$AZURE_STORAGE_ACCOUNT" --connection-string "$AZURE_CONNECTION_STRING"
     set -e
   fi
 }
@@ -93,7 +108,7 @@ function cleanup() {
       ;;
   esac
 
-  rm -rf "$WORKDIR"
+  sudo rm -rf "$WORKDIR"
 }
 trap cleanup EXIT
 
@@ -199,18 +214,19 @@ function checkEnvAWS() {
 
 function installClientAWS() {
   if ! hash aws; then
-    command unzip > /dev/null || sudo dnf install -y unzip
-    mkdir "$WORKDIR/aws"
-    pushd "$WORKDIR/aws"
-      curl -Ls --retry 5 --output awscliv2.zip \
-        https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-      unzip awscliv2.zip > /dev/null
-      sudo ./aws/install > /dev/null
-      aws --version
-    popd
-  fi
+    echo "Using 'awscli' from a container"
+    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
-  AWS_CMD="env AWS_ACCESS_KEY_ID=$V2_AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$V2_AWS_SECRET_ACCESS_KEY aws --region $AWS_REGION --output json --color on"
+    AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+      -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
+      -e AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
+      -v ${WORKDIR}:${WORKDIR}:Z \
+      ${CONTAINER_IMAGE_CLOUD_TOOLS} aws --region $AWS_REGION --output json --color on"
+  else
+    echo "Using pre-installed 'aws' from the system"
+    AWS_CMD="env AWS_ACCESS_KEY_ID=$V2_AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$V2_AWS_SECRET_ACCESS_KEY aws --region $AWS_REGION --output json --color on"
+  fi
+  $AWS_CMD --version
 }
 
 function createReqFileAWS() {
@@ -254,22 +270,22 @@ function checkEnvGCP() {
 
 function installClientGCP() {
   if ! hash gcloud; then
-    sudo tee -a /etc/yum.repos.d/google-cloud-sdk.repo << EOM
-[google-cloud-sdk]
-name=Google Cloud SDK
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOM
-  fi
+    echo "Using 'gcloud' from a container"
+    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
-  # Use python3 for gcloud
-  export CLOUDSDK_PYTHON=python3
-  sudo dnf -y install python3 google-cloud-sdk
-  GCP_CMD="gcloud --format=json --quiet"
+    # directory mounted to the container, in which gcloud stores the credentials after logging in
+    GCP_CMD_CREDS_DIR="${WORKDIR}/gcloud_credentials"
+    mkdir "${GCP_CMD_CREDS_DIR}"
+
+    GCP_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+      -v ${GCP_CMD_CREDS_DIR}:/root/.config/gcloud:Z \
+      -v ${GOOGLE_APPLICATION_CREDENTIALS}:${GOOGLE_APPLICATION_CREDENTIALS}:Z \
+      -v ${WORKDIR}:${WORKDIR}:Z \
+      ${CONTAINER_IMAGE_CLOUD_TOOLS} gcloud --format=json"
+  else
+    echo "Using pre-installed 'gcloud' from the system"
+    GCP_CMD="gcloud --format=json --quiet"
+  fi
   $GCP_CMD --version
 }
 
@@ -314,19 +330,21 @@ function checkEnvAzure() {
 
 function installClientAzure() {
   if ! hash az; then
-    # this installation method is taken from the official docs:
-    # https://docs.microsoft.com/cs-cz/cli/azure/install-azure-cli-linux?pivots=dnf
-    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    echo -e "[azure-cli]
-name=Azure CLI
-baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
-  fi
+    echo "Using 'azure-cli' from a container"
+    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
-  sudo dnf install -y azure-cli
-  AZURE_CMD="az"
+    # directory mounted to the container, in which azure-cli stores the credentials after logging in
+    AZURE_CMD_CREDS_DIR="${WORKDIR}/azure-cli_credentials"
+    mkdir "${AZURE_CMD_CREDS_DIR}"
+
+    AZURE_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+      -v ${AZURE_CMD_CREDS_DIR}:/root/.azure:Z \
+      -v ${WORKDIR}:${WORKDIR}:Z \
+      ${CONTAINER_IMAGE_CLOUD_TOOLS} az"
+  else
+    echo "Using pre-installed 'azure-cli' from the system"
+    AZURE_CMD="az"
+  fi
   $AZURE_CMD version
 }
 
