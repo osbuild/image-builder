@@ -98,6 +98,21 @@ SonarQube:
     INTERNAL_NETWORK: "true"
     GIT_DEPTH: 0
 
+Load test Success:
+  stage: finish
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $LOAD_TEST == "true"'
+  script: 
+    - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
+
+Load test Fail:
+  stage: finish
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $LOAD_TEST == "true"'
+      when: on_failure
+  script: 
+    - schutzbot/slack_notification.sh FAILED ":big-sad:"
+
 finish:
   stage: finish
   tags:
