@@ -532,6 +532,22 @@ components:
           example: ['postgresql']
           items:
             type: string
+        filesystem:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filesystem'
+    Filesystem:
+      type: object
+      required:
+        - mountpoint
+        - min_size
+      properties:
+        mountpoint:
+          type: string
+          example: '/var'
+        min_size:
+          type: integer
+          example: 1024
     Subscription:
       type: object
       required:

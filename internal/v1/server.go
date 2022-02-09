@@ -608,6 +608,10 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		res.Packages = cust.Packages
 	}
 
+	if cust.Filesystem != nil {
+		res.Filesystem = cust.Filesystem
+	}
+
 	return res
 }
 
