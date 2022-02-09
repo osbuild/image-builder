@@ -126,7 +126,13 @@ const (
 
 // Customizations defines model for Customizations.
 type Customizations struct {
-	Packages            *[]string     `json:"packages,omitempty"`
+	Packages *[]string `json:"packages,omitempty"`
+
+	// Extra repositories for packages specified in customizations. These
+	// repositories will only be used to depsolve and retrieve packages
+	// for the OS itself (they will not be available for the build root or
+	// any other part of the build process). The package_sets field for these
+	// repositories is ignored.
 	PayloadRepositories *[]Repository `json:"payload_repositories,omitempty"`
 	Subscription        *Subscription `json:"subscription,omitempty"`
 	Users               *[]User       `json:"users,omitempty"`
@@ -297,7 +303,11 @@ type Repository struct {
 	IgnoreSsl  *bool   `json:"ignore_ssl,omitempty"`
 	Metalink   *string `json:"metalink,omitempty"`
 	Mirrorlist *string `json:"mirrorlist,omitempty"`
-	Rhsm       bool    `json:"rhsm"`
+
+	// Naming package sets for a repository assigns it to a specific part
+	// (pipeline) of the build process.
+	PackageSets *[]string `json:"package_sets,omitempty"`
+	Rhsm        bool      `json:"rhsm"`
 }
 
 // Subscription defines model for Subscription.
