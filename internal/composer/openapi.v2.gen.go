@@ -223,6 +223,9 @@ type ImageTypes string
 // List of ImageTypes
 const (
 	ImageTypes_aws             ImageTypes = "aws"
+	ImageTypes_aws_ha_rhui     ImageTypes = "aws-ha-rhui"
+	ImageTypes_aws_rhui        ImageTypes = "aws-rhui"
+	ImageTypes_aws_sap_rhui    ImageTypes = "aws-sap-rhui"
 	ImageTypes_azure           ImageTypes = "azure"
 	ImageTypes_edge_commit     ImageTypes = "edge-commit"
 	ImageTypes_edge_container  ImageTypes = "edge-container"
