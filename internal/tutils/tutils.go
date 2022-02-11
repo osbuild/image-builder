@@ -84,7 +84,7 @@ func InitDB() db.DB {
 	}
 }
 
-func (d *dB) InsertCompose(jobId, accountNumber, orgId string, request json.RawMessage) error {
+func (d *dB) InsertCompose(jobId, accountNumber, orgId string, imageName *string, request json.RawMessage) error {
 	id, err := uuid.Parse(jobId)
 	if err != nil {
 		return err
@@ -93,6 +93,7 @@ func (d *dB) InsertCompose(jobId, accountNumber, orgId string, request json.RawM
 		Id:        id,
 		Request:   request,
 		CreatedAt: time.Now(),
+		ImageName: imageName,
 	}
 	if d.accountOwernship[accountNumber] == nil {
 		d.accountOwernship[accountNumber] = make([]db.ComposeEntry, 0)

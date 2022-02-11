@@ -274,7 +274,8 @@ func TestGetComposeStatus(t *testing.T) {
 
 	// insert a compose in the mock database
 	dbase := tutils.InitDB()
-	err := dbase.InsertCompose(UUIDTest, "600000", "000001", json.RawMessage("{}"))
+	imageName := "MyImageName"
+	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, dbase)
@@ -370,7 +371,8 @@ func TestGetComposeMetadata(t *testing.T) {
 
 	// insert a compose in the mock database
 	dbase := tutils.InitDB()
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", json.RawMessage("{}"))
+	imageName := "MyImageName"
+	err := dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, dbase)
@@ -418,11 +420,12 @@ func TestGetComposes(t *testing.T) {
 	var UUIDTest3 string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc333"
 
 	dbase := tutils.InitDB()
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", json.RawMessage("{}"))
+	imageName := "MyImageName"
+	err := dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
-	err = dbase.InsertCompose(UUIDTest2, "500000", "000000", json.RawMessage("{}"))
+	err = dbase.InsertCompose(UUIDTest2, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
-	err = dbase.InsertCompose(UUIDTest3, "500000", "000000", json.RawMessage("{}"))
+	err = dbase.InsertCompose(UUIDTest3, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	composeEntry, err := dbase.GetCompose(UUIDTest, "500000")

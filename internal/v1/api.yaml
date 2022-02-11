@@ -355,6 +355,9 @@ components:
         distribution:
           type: string
           example: 'rhel-84'
+        image_name:
+          type: string
+          example: "MyImageName"
         image_requests:
           type: array
           items:
@@ -432,6 +435,8 @@ components:
           type: string
         request: {}
         created_at:
+          type: string
+        image_name:
           type: string
     ComposeResponse:
       required:

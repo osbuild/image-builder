@@ -57,6 +57,12 @@ type Handlers struct {
 	server *Server
 }
 
+type DBComposeRequest struct {
+	Customizations *Customizations `json:"customizations,omitempty"`
+	Distribution   string          `json:"distribution"`
+	ImageRequests  []ImageRequest  `json:"image_requests"`
+}
+
 type IdentityHeader struct {
 	Identity struct {
 		AccountNumber string `json:"account_number"`
@@ -355,6 +361,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 		data = append(data, ComposesResponseItem{
 			CreatedAt: c.CreatedAt.String(),
 			Id:        c.Id.String(),
+			ImageName: c.ImageName,
 			Request:   c.Request,
 		})
 	}
@@ -474,7 +481,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgId, rawCR)
+	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgId, composeRequest.ImageName, rawCR)
 	if err != nil {
 		h.server.logger.Error("Error inserting id into db", err)
 		return err
