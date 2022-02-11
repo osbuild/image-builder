@@ -22,10 +22,11 @@ type ComposeEntry struct {
 	Id        uuid.UUID
 	Request   json.RawMessage
 	CreatedAt time.Time
+	ImageName *string
 }
 
 type DB interface {
-	InsertCompose(jobId, accountNumber, orgId string, request json.RawMessage) error
+	InsertCompose(jobId, accountNumber, orgId string, imageName *string, request json.RawMessage) error
 	GetComposes(accountNumber string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error)
 	GetCompose(jobId string, accountNumber string) (*ComposeEntry, error)
 	// Returns the count of compose requests performed by an *accountNumber* for a *duration*.
@@ -34,7 +35,7 @@ type DB interface {
 
 const (
 	sqlGetComposes = `
-		SELECT job_id, request, created_at FROM composes WHERE account_number=$1 AND CURRENT_TIMESTAMP - created_at <= $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4`
+		SELECT job_id, request, created_at, image_name FROM composes WHERE account_number=$1 AND CURRENT_TIMESTAMP - created_at <= $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4`
 
 	sqlCountComposesSince = `
 		SELECT COUNT(*) FROM composes WHERE account_number=$1 AND CURRENT_TIMESTAMP - created_at <= $2`
@@ -54,7 +55,7 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 	return &dB{pool}, nil
 }
 
-func (db *dB) InsertCompose(jobId, accountNumber, orgId string, request json.RawMessage) error {
+func (db *dB) InsertCompose(jobId, accountNumber, orgId string, imageName *string, request json.RawMessage) error {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -62,7 +63,7 @@ func (db *dB) InsertCompose(jobId, accountNumber, orgId string, request json.Raw
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)", jobId, request, accountNumber, orgId)
+	_, err = conn.Exec(ctx, "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)", jobId, request, accountNumber, orgId, imageName)
 	return err
 }
 
@@ -74,11 +75,11 @@ func (db *dB) GetCompose(jobId string, accountNumber string) (*ComposeEntry, err
 	}
 	defer conn.Release()
 
-	result := conn.QueryRow(ctx, "SELECT job_id, request, created_at FROM composes WHERE account_number=$1 and job_id=$2",
+	result := conn.QueryRow(ctx, "SELECT job_id, request, created_at, image_name FROM composes WHERE account_number=$1 and job_id=$2",
 		accountNumber, jobId)
 
 	var compose ComposeEntry
-	err = result.Scan(&compose.Id, &compose.Request, &compose.CreatedAt)
+	err = result.Scan(&compose.Id, &compose.Request, &compose.CreatedAt, &compose.ImageName)
 	if err != nil {
 		if errors.As(err, &pgx.ErrNoRows) {
 			return nil, ComposeNotFoundError
@@ -108,7 +109,8 @@ func (db *dB) GetComposes(accountNumber string, since time.Duration, limit, offs
 		var jobId uuid.UUID
 		var request json.RawMessage
 		var createdAt time.Time
-		err = result.Scan(&jobId, &request, &createdAt)
+		var imageName *string
+		err = result.Scan(&jobId, &request, &createdAt, &imageName)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -116,6 +118,7 @@ func (db *dB) GetComposes(accountNumber string, since time.Duration, limit, offs
 			jobId,
 			request,
 			createdAt,
+			imageName,
 		})
 	}
 	if err = result.Err(); err != nil {

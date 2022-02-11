@@ -111,20 +111,40 @@ func testMigration(t *testing.T) {
 	migrateOneStep(t) // migrate to step 3
 
 	// Verify that after migration step 3 adding a compose request to the db requires a non empty account number.
-	d, err := db.InitDBConnectionPool(connStr(t))
-	err = d.InsertCompose(uuid.New().String(), "", ORGID1, []byte("{}"))
+	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", "", ORGID1)
 	require.Error(t, err)
+
+	migrateOneStep(t) // migrate to step 4
+
+	imageName := "MyImageName"
+
+	// inserting image_name should succeed
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1, &imageName)
+	require.NoError(t, err)
+
+	// inserting empty image_name should succeed
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1, nil)
+	require.NoError(t, err)
 
 	// make sure migrating a fully migrated db doesn't error out
 	migrateUp(t)
 
 	// Check data inserted at migration step 1 and 2 are still accessible
+	d, err := db.InitDBConnectionPool(connStr(t))
 	_, count, err := d.GetComposes(ANR1, fortnight, 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 	_, count, err = d.GetComposes(ANR2, fortnight, 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
+
+	// check that the image names are as expected
+	composeEntries, count, err := d.GetComposes(ANR3, fortnight, 100, 0)
+	require.Nil(t, composeEntries[0].ImageName)
+	require.Equal(t, imageName, *composeEntries[1].ImageName)
 }
 
 func testInsertCompose(t *testing.T) {
@@ -134,15 +154,17 @@ func testInsertCompose(t *testing.T) {
 	// teardwon
 	defer tearDown(t)
 
+	imageName := "MyImageName"
+
 	// setup
 	migrateUp(t)
 
 	// test
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
-	err = d.InsertCompose("toto", ANR1, ORGID1, []byte("{}"))
+	err = d.InsertCompose("toto", ANR1, ORGID1, &imageName, []byte("{}"))
 	require.Error(t, err)
-	err = d.InsertCompose(uuid.New().String(), "", ORGID1, []byte("{}"))
+	err = d.InsertCompose(uuid.New().String(), "", ORGID1, &imageName, []byte("{}"))
 	require.Error(t, err)
 }
 
@@ -150,18 +172,20 @@ func testGetCompose(t *testing.T) {
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
+	imageName := "MyImageName"
+
 	// teardwon
 	defer tearDown(t)
 
 	// setup
 	migrateUp(t)
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, []byte("{}"))
+	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
 
 	// test
@@ -193,6 +217,8 @@ func testCountComposesSince(t *testing.T) {
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
+	imageName := "MyImageName"
+
 	// teardwon
 	defer tearDown(t)
 
@@ -200,12 +226,12 @@ func testCountComposesSince(t *testing.T) {
 	migrateUp(t)
 	conn := connect(t)
 	defer conn.Close(context.Background())
-	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
-	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '3 days', $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
-	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '4 days', $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1)
+	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4, $5)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1, &imageName)
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '3 days', $3, $4, $5)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1, &imageName)
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '4 days', $3, $4, $5)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1, &imageName)
 
 	// Verify quering since an interval
 	count, err := d.CountComposesSince(ANR3, 24*time.Hour)
@@ -257,7 +283,7 @@ func testCountGetComposesSince(t *testing.T) {
 	require.Equal(t, job1, composes[0].Id)
 
 	// correct ordering (recent first)
-	composes, count, err = d.GetComposes(ANR3, fortnight * 2, 100, 0)
+	composes, count, err = d.GetComposes(ANR3, fortnight*2, 100, 0)
 	require.Equal(t, 2, count)
 	require.NoError(t, err)
 	require.Equal(t, job1, composes[0].Id)
