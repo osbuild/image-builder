@@ -348,7 +348,20 @@ function installClientAzure() {
   $AZURE_CMD version
 }
 
+source /etc/os-release
+
+CI="${CI:-false}"
+if [[ "$CI" == true ]]; then
+  DISTRO_CODE="${DISTRO_CODE:-${ID}-${VERSION_ID//./}}"
+  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
+else
+  # if not running in Jenkins, generate ID not relying on specific env variables
+  TEST_ID=$(uuidgen);
+fi
+
 function createReqFileAzure() {
+  AZURE_IMAGE_NAME="image-$TEST_ID"
+
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
@@ -361,7 +374,8 @@ function createReqFileAzure() {
         "options": {
           "tenant_id": "${AZURE_TENANT_ID}",
           "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
-          "resource_group": "${AZURE_RESOURCE_GROUP}"
+          "resource_group": "${AZURE_RESOURCE_GROUP}",
+	  "image-name": "${AZURE_IMAGE_NAME}"
         }
       }
     }
@@ -473,12 +487,19 @@ function Test_verifyComposeResultAWS() {
   REGION=$(echo "$UPLOAD_OPTIONS" | jq -r '.region')
   [[ "$REGION" = "$AWS_REGION" ]]
 
+  # Tag image and snapshot with "gitlab-ci-test" tag
+  $AWS_CMD ec2 create-tags \
+    --resources "${AMI_IMAGE_ID}" \
+    --tags Key=gitlab-ci-test,Value=true
+
   # Create key-pair
   $AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
   chmod 400 ./keypair.pem
 
   # Create an instance based on the ami
-  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" > "$WORKDIR/instances.json"
+  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro \
+	  --key-name "key-for-$AMI_IMAGE_ID" \
+	  --tag-specifications 'ResourceType=instance,Tags=[{Key=gitlab-ci-test,Value=true}]' > "$WORKDIR/instances.json"
   AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
 
   $AWS_CMD ec2 wait instance-running --instance-ids "$AWS_INSTANCE_ID"
@@ -554,8 +575,30 @@ function Test_verifyComposeResultAzure() {
   AZURE_SSH_KEY="$WORKDIR/id_azure"
   ssh-keygen -t rsa -f "$AZURE_SSH_KEY" -C "$SSH_USER" -N ""
 
+  # Create network resources with predictable names
+  $AZURE_CMD network nsg create --resource-group "$AZURE_RESOURCE_GROUP" --name "nsg-$TEST_ID" --location "$AZURE_LOCATION"
+  $AZURE_CMD network nsg rule create --resource-group "$AZURE_RESOURCE_GROUP" \
+      --nsg-name "nsg-$TEST_ID" \
+      --name SSH \
+      --priority 1001 \
+      --access Allow \
+      --protocol Tcp \
+      --destination-address-prefixes '*' \
+      --destination-port-ranges 22 \
+      --source-port-ranges '*' \
+      --source-address-prefixes '*'
+  $AZURE_CMD network vnet create --resource-group "$AZURE_RESOURCE_GROUP" --name "vnet-$TEST_ID" --subnet-name "snet-$TEST_ID" --location "$AZURE_LOCATION"
+  $AZURE_CMD network public-ip create --resource-group "$AZURE_RESOURCE_GROUP" --name "ip-$TEST_ID" --location "$AZURE_LOCATION"
+  $AZURE_CMD network nic create --resource-group "$AZURE_RESOURCE_GROUP" \
+      --name "iface-$TEST_ID" \
+      --subnet "snet-$TEST_ID" \
+      --vnet-name "vnet-$TEST_ID" \
+      --network-security-group "nsg-$TEST_ID" \
+      --public-ip-address "ip-$TEST_ID" \
+      --location "$AZURE_LOCATION"  
+
   # create the instance
-  AZURE_INSTANCE_NAME="vm-$(uuidgen)"
+  AZURE_INSTANCE_NAME="vm-$TEST_ID"
   $AZURE_CMD vm create --name "$AZURE_INSTANCE_NAME" \
     --resource-group "$AZURE_RESOURCE_GROUP" \
     --image "$AZURE_IMAGE_NAME" \
@@ -563,7 +606,9 @@ function Test_verifyComposeResultAzure() {
     --admin-username "$SSH_USER" \
     --ssh-key-values "$AZURE_SSH_KEY.pub" \
     --authentication-type "ssh" \
-    --location "$AZURE_LOCATION"
+    --location "$AZURE_LOCATION" \
+    --nics "iface-$TEST_ID" \
+    --os-disk-name "disk-$TEST_ID"
   $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
   HOST=$(jq -r '.publicIps' "$WORKDIR/vm_details.json")
 
