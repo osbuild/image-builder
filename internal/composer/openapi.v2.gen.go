@@ -126,7 +126,8 @@ const (
 
 // Customizations defines model for Customizations.
 type Customizations struct {
-	Packages *[]string `json:"packages,omitempty"`
+	Filesystem *[]Filesystem `json:"filesystem,omitempty"`
+	Packages   *[]string     `json:"packages,omitempty"`
 
 	// Extra repositories for packages specified in customizations. These
 	// repositories will only be used to depsolve and retrieve packages
@@ -154,6 +155,12 @@ type ErrorList struct {
 	List
 	// Embedded fields due to inline allOf schema
 	Items []Error `json:"items"`
+}
+
+// Filesystem defines model for Filesystem.
+type Filesystem struct {
+	MinSize    int    `json:"min_size"`
+	Mountpoint string `json:"mountpoint"`
 }
 
 // GCPUploadOptions defines model for GCPUploadOptions.
@@ -272,8 +279,9 @@ type List struct {
 
 // OSTree defines model for OSTree.
 type OSTree struct {
-	Ref *string `json:"ref,omitempty"`
-	Url *string `json:"url,omitempty"`
+	Parent *string `json:"parent,omitempty"`
+	Ref    *string `json:"ref,omitempty"`
+	Url    *string `json:"url,omitempty"`
 }
 
 // ObjectReference defines model for ObjectReference.

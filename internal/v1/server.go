@@ -608,8 +608,15 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		res.Packages = cust.Packages
 	}
 
-	if cust.Filesystem != nil {
-		res.Filesystem = cust.Filesystem
+	if cust.Filesystem != nil && len(*cust.Filesystem) > 1 {
+		var fsc []composer.Filesystem
+		for _, v := range *cust.Filesystem {
+			fsc = append(fsc, composer.Filesystem{
+				Mountpoint: v.Mountpoint,
+				MinSize:    v.MinSize,
+			})
+		}
+		res.Filesystem = &fsc
 	}
 
 	return res
