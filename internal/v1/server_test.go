@@ -724,6 +724,16 @@ func TestComposeCustomizations(t *testing.T) {
 					"some",
 					"packages",
 				},
+				Filesystem: &[]Filesystem{
+					{
+						Mountpoint: "/",
+						MinSize:    2147483648,
+					},
+					{
+						Mountpoint: "/var",
+						MinSize:    1073741824,
+					},
+				},
 			},
 			Distribution: "centos-8",
 			ImageRequests: []ImageRequest{
