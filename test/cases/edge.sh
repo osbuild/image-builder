@@ -56,7 +56,7 @@ function before_test() {
     OSTREE_REF="rhel/8/${ARCH}/edge"
     OS_VARIANT="rhel8-unknown"
     DISTRO="rhel-85"
-    BOOT_LOCATION="http://download.devel.redhat.com/rel-eng/rhel-8/RHEL-8/latest-RHEL-8.5.0/compose/BaseOS/${ARCH}/os/"
+    BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.5.0/BaseOS/${ARCH}/os/"
 
     # Check image-builder service status
     READY=0
