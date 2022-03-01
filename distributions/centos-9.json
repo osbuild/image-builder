@@ -1,0 +1,17 @@
+{
+  "module_platform_id": "platform:el9",
+  "distribution": {
+    "name": "centos-9",
+    "description": "CentOS Stream 9"
+  },
+  "x86_64": {
+    "image_types": [ "ami", "vhd", "aws", "gcp", "azure", "edge-commit", "edge-installer", "edge-container", "rhel-edge-commit", "rhel-edge-installer", "guest-image", "image-installer", "vsphere" ],
+    "repositories": [{
+      "baseurl": "http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/",
+      "rhsm": false
+    }, {
+      "baseurl": "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/",
+      "rhsm": false
+    }]
+  }
+}
