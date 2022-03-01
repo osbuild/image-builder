@@ -4,6 +4,7 @@ import argparse
 import copy
 import json
 import tempfile
+import docker
 import os
 import subprocess
 import sys
@@ -29,10 +30,15 @@ def main():
         'command': 'dump'
     }
 
-    r = requests.get("https://raw.githubusercontent.com/osbuild/osbuild-composer/main/dnf-json")
-    with open(DNF_JSON, 'w') as f:
-        f.write(r.text)
-    os.chmod(DNF_JSON, 0o755)
+    dc = docker.from_env()
+    # v46 composer
+    dnfc = dc.containers.run('quay.io/app-sre/composer:f0522e7',
+        name='dnf-json',
+        ports={'8088/tcp': '8088'},
+        entrypoint=['python3', '/opt/entrypoint.py', '--dnf-json', '--dnf-json-port', '8088'],
+        detach=True)
+    # arbitrary sleep until container is up
+    time.sleep(1)
 
     for distro in args.distro:
         distro_data = {}
@@ -64,10 +70,8 @@ def main():
             for i in range(len(dnfjson_args['arguments']['repos'])):
                 dnfjson_args['arguments']['repos'][i]['id'] = f"repo{i}"
 
-            p = subprocess.Popen(DNF_JSON, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-            out, err = p.communicate(json.dumps(dnfjson_args).encode('utf-8'))
-
-            pkgs = [ {"name": p["name"], "summary": p["summary"]} for p in json.loads(out)['packages'] ]
+            resp = requests.post("http://127.0.0.1:8088", data=json.dumps(dnfjson_args))
+            pkgs = [ {"name": p["name"], "summary": p["summary"]} for p in resp.json()['packages'] ]
             filtered = []
             [ filtered.append(p) for p in pkgs if p["name"] not in list(map(lambda p: p["name"], filtered)) ]
             filtered.sort(key=lambda p: p["name"].lower())
@@ -76,6 +80,8 @@ def main():
             with open(outfile, 'w+') as f:
                 json.dump({ 'data': filtered }, f, indent=2)
 
+    dnfc.kill()
+    dnfc.remove()
     return 0
 
 if __name__ == '__main__':

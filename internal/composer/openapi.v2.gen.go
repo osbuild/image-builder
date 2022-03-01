@@ -240,6 +240,7 @@ const (
 	ImageTypes_aws_rhui        ImageTypes = "aws-rhui"
 	ImageTypes_aws_sap_rhui    ImageTypes = "aws-sap-rhui"
 	ImageTypes_azure           ImageTypes = "azure"
+	ImageTypes_azure_rhui      ImageTypes = "azure-rhui"
 	ImageTypes_edge_commit     ImageTypes = "edge-commit"
 	ImageTypes_edge_container  ImageTypes = "edge-container"
 	ImageTypes_edge_installer  ImageTypes = "edge-installer"
