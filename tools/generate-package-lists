@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-import copy
 import json
 import tempfile
 import docker
 import os
-import subprocess
 import sys
 import time
 import requests
@@ -31,12 +29,16 @@ def main():
     }
 
     dc = docker.from_env()
-    # v46 composer
-    dnfc = dc.containers.run('quay.io/app-sre/composer:f0522e7',
-        name='dnf-json',
-        ports={'8088/tcp': '8088'},
-        entrypoint=['python3', '/opt/entrypoint.py', '--dnf-json', '--dnf-json-port', '8088'],
-        detach=True)
+    mounts=[]
+    if args.key:
+        mounts.append(docker.types.Mount('/etc/pki/entitlement', '/etc/pki/entitlement', read_only=True, type='bind'))
+    dnfc = dc.containers.run('quay.io/app-sre/composer:f0522e7', # v46 composer
+                             name='dnf-json',
+                             privileged=True,
+                             ports={'8088/tcp': '8088'},
+                             mounts=mounts,
+                             entrypoint=['python3', '/opt/entrypoint.py', '--dnf-json', '--dnf-json-port', '8088'],
+                             detach=True)
     # arbitrary sleep until container is up
     time.sleep(1)
 
@@ -47,38 +49,43 @@ def main():
         # make sure it's not empty
         print('Calling dnf-json for ', distro_data['distribution'])
 
+        visited_repo_ids = []
+
         for arch in SUPPORTED_ARCHS:
             dnfjson_args = dnfjson_args_template.copy()
 
             repos = distro_data[arch]['repositories']
-            if args.key:
-                repos = []
-                for repo in distro_data[arch]['repositories']:
-                    repo['ignoressl'] = True
-                    repo['sslclientkey'] = args.key
-                    repo['sslclientcert'] = args.cert
-                    repos.append(repo)
             dnfjson_args['arguments'] = {
                 'module_platform_id': distro_data['module_platform_id'],
-                'repos': repos,
                 'cachedir': tempdir.name,
                 'arch': arch,
                 'latest': True,
             }
 
-            # assign an ID to each repo
-            for i in range(len(dnfjson_args['arguments']['repos'])):
-                dnfjson_args['arguments']['repos'][i]['id'] = f"repo{i}"
+            for repo in distro_data[arch]['repositories']:
+                if repo['id'] in visited_repo_ids:
+                    continue
+                visited_repo_ids.append(repo['id'])
 
-            resp = requests.post("http://127.0.0.1:8088", data=json.dumps(dnfjson_args))
-            pkgs = [ {"name": p["name"], "summary": p["summary"]} for p in resp.json()['packages'] ]
-            filtered = []
-            [ filtered.append(p) for p in pkgs if p["name"] not in list(map(lambda p: p["name"], filtered)) ]
-            filtered.sort(key=lambda p: p["name"].lower())
+                if repo['rhsm']:
+                    repo['ignoressl'] = True
+                    repo['sslclientkey'] = args.key
+                    repo['sslclientcert'] = args.cert
+                if 'image_type_tags' in repo:
+                    repo.pop('image_type_tags')
+                dnfjson_args['arguments']['repos'] = [repo]
 
-            outfile = os.path.join(DISTRIBUTION_DIR, '%s-%s-packages.json' % (distro_data['distribution']['name'], arch))
-            with open(outfile, 'w+') as f:
-                json.dump({ 'data': filtered }, f, indent=2)
+                resp = requests.post("http://127.0.0.1:8088", data=json.dumps(dnfjson_args))
+                pkgs = [ {"name": p["name"], "summary": p["summary"]} for p in resp.json()['packages'] ]
+                filtered = []
+                [ filtered.append(p) for p in pkgs if p["name"] not in list(map(lambda p: p["name"], filtered)) ]
+                filtered.sort(key=lambda p: p["name"].lower())
+
+                outfile = os.path.join(DISTRIBUTION_DIR, distro_data['distribution']['name'],
+                                       '%s-%s-%s-packages.json' % (distro_data['distribution']['name'], arch, repo['id']))
+                with open(outfile, 'w+') as f:
+                    json.dump(filtered, f, indent=2)
+                    f.write('\n')
 
     dnfc.kill()
     dnfc.remove()
