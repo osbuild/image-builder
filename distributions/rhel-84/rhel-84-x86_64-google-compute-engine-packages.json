@@ -1,0 +1,38 @@
+[
+  {
+    "name": "dnf-plugin-artifact-registry",
+    "summary": "dnf plugin for Artifact Registry"
+  },
+  {
+    "name": "gce-disk-expand",
+    "summary": "Google Compute Engine root disk expansion module"
+  },
+  {
+    "name": "google-compute-engine",
+    "summary": "Google Compute Engine guest environment."
+  },
+  {
+    "name": "google-compute-engine-oslogin",
+    "summary": "OS Login Functionality for Google Compute Engine"
+  },
+  {
+    "name": "google-guest-agent",
+    "summary": "Google Compute Engine guest agent."
+  },
+  {
+    "name": "google-osconfig-agent",
+    "summary": "Google Compute Engine guest environment."
+  },
+  {
+    "name": "google-rhui-client-rhel8",
+    "summary": "Custom configuration for a cloud client instance"
+  },
+  {
+    "name": "google-rhui-client-rhel8-sap",
+    "summary": "Custom configuration for a cloud client instance"
+  },
+  {
+    "name": "python3-google-compute-engine",
+    "summary": "Google Compute Engine python3 library"
+  }
+]
