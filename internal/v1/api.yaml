@@ -55,7 +55,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Distributions'
+                $ref: '#/components/schemas/DistributionsResponse'
   /architectures/{distribution}:
     get:
       summary: get the architectures and their image types available for a given distribution
@@ -170,8 +170,7 @@ paths:
           name: distribution
           required: true
           schema:
-            type: string
-            enum: ['rhel-84', 'rhel-85', 'centos-8']
+            $ref: '#/components/schemas/Distributions'
           description: distribution to look up packages for
         - in: query
           name: architecture
@@ -240,7 +239,7 @@ components:
       properties:
         readiness:
           type: string
-    Distributions:
+    DistributionsResponse:
       type: array
       items:
         $ref: '#/components/schemas/DistributionItem'
@@ -353,8 +352,7 @@ components:
         - image_requests
       properties:
         distribution:
-          type: string
-          example: 'rhel-84'
+          $ref: '#/components/schemas/Distributions'
         image_name:
           type: string
           example: "MyImageName"
@@ -365,6 +363,13 @@ components:
           uniqueItems: true
         customizations:
             $ref: '#/components/schemas/Customizations'
+    Distributions:
+      type: string
+      enum:
+        - rhel-84
+        - rhel-85
+        - centos-8
+        - centos-9
     ImageRequest:
       required:
         - architecture
