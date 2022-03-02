@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder/internal/distribution"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -134,7 +135,7 @@ func (h *Handlers) GetVersion(ctx echo.Context) error {
 
 func (h *Handlers) GetReadiness(ctx echo.Context) error {
 	// make sure distributions are available
-	distributions, err := common.AvailableDistributions(h.server.distsDir)
+	distributions, err := distribution.AvailableDistributions(h.server.distsDir)
 	if err != nil {
 		return err
 	}
@@ -168,7 +169,7 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
-	ds, err := common.AvailableDistributions(h.server.distsDir)
+	ds, err := distribution.AvailableDistributions(h.server.distsDir)
 	if err != nil {
 		return err
 	}
@@ -184,17 +185,20 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, distributions)
 }
 
-func (h *Handlers) GetArchitectures(ctx echo.Context, distribution string) error {
-	as, err := common.ArchitecturesForImage(h.server.distsDir, distribution)
+func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
+	d, err := distribution.ReadDistribution(h.server.distsDir, distro)
+	if err == distribution.DistributionNotFound {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
 	if err != nil {
 		return err
 	}
 
 	var archs Architectures
-	for _, a := range as {
+	if d.ArchX86 != nil {
 		archs = append(archs, ArchitectureItem{
-			Arch:       a.Arch,
-			ImageTypes: a.ImageTypes,
+			Arch:       "x86_64",
+			ImageTypes: d.ArchX86.ImageTypes,
 		})
 	}
 
@@ -443,9 +447,26 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
-	repositories, err := common.RepositoriesForImage(h.server.distsDir, string(composeRequest.Distribution), composeRequest.ImageRequests[0].Architecture)
+	var repositories []composer.Repository
+	rs, err := distribution.RepositoriesForArch(h.server.distsDir, string(composeRequest.Distribution), composeRequest.ImageRequests[0].Architecture)
 	if err != nil {
 		return err
+	}
+	for _, r := range rs {
+		// If no image type tags are defined for the repo, add the repo
+		contains := len(r.ImageTypeTags) == 0
+		for _, it := range r.ImageTypeTags {
+			if it == string(composeRequest.ImageRequests[0].ImageType) {
+				contains = true
+				break
+			}
+		}
+		if contains {
+			repositories = append(repositories, composer.Repository{
+				Baseurl: common.StringToPtr(r.Baseurl),
+				Rhsm:    r.Rhsm,
+			})
+		}
 	}
 
 	uploadOptions, imageType, err := h.server.buildUploadOptions(composeRequest.ImageRequests[0].UploadRequest, composeRequest.ImageRequests[0].ImageType)
@@ -638,7 +659,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 }
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
-	pkgs, err := common.FindPackages(h.server.distsDir, string(params.Distribution), params.Architecture, params.Search)
+	pkgs, err := distribution.FindPackages(h.server.distsDir, string(params.Distribution), params.Architecture, params.Search)
 	if err != nil {
 		return err
 	}
