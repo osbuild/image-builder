@@ -145,7 +145,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 
-		var result Distributions
+		var result DistributionsResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 
@@ -168,7 +168,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 			}}, result)
 	})
 
-	t.Run("GetPacakges", func(t *testing.T) {
+	t.Run("GetPackages", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 
@@ -198,6 +198,9 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=-13", &tutils.AuthString0)
 		require.Equal(t, 400, response.StatusCode)
 		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=13&offset=-2193", &tutils.AuthString0)
+		require.Equal(t, 400, response.StatusCode)
+
+		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=x86_64&search=ssh", &tutils.AuthString0)
 		require.Equal(t, 400, response.StatusCode)
 	})
 

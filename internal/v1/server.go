@@ -173,7 +173,7 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 		return err
 	}
 
-	var distributions Distributions
+	var distributions DistributionsResponse
 	for _, d := range ds {
 		distributions = append(distributions, DistributionItem{
 			Description: d.Description,
@@ -435,7 +435,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
-	repositories, err := common.RepositoriesForImage(h.server.distsDir, composeRequest.Distribution, composeRequest.ImageRequests[0].Architecture)
+	repositories, err := common.RepositoriesForImage(h.server.distsDir, string(composeRequest.Distribution), composeRequest.ImageRequests[0].Architecture)
 	if err != nil {
 		return err
 	}
@@ -446,7 +446,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 
 	cloudCR := composer.ComposeRequest{
-		Distribution:   composeRequest.Distribution,
+		Distribution:   string(composeRequest.Distribution),
 		Customizations: buildCustomizations(composeRequest.Customizations),
 		ImageRequest: &composer.ImageRequest{
 			Architecture:  composeRequest.ImageRequests[0].Architecture,
@@ -630,7 +630,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 }
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
-	pkgs, err := common.FindPackages(h.server.distsDir, params.Distribution, params.Architecture, params.Search)
+	pkgs, err := common.FindPackages(h.server.distsDir, string(params.Distribution), params.Architecture, params.Search)
 	if err != nil {
 		return err
 	}
