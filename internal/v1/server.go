@@ -58,12 +58,6 @@ type Handlers struct {
 	server *Server
 }
 
-type DBComposeRequest struct {
-	Customizations *Customizations `json:"customizations,omitempty"`
-	Distribution   string          `json:"distribution"`
-	ImageRequests  []ImageRequest  `json:"image_requests"`
-}
-
 type IdentityHeader struct {
 	Identity struct {
 		AccountNumber string `json:"account_number"`
