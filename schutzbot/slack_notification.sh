@@ -2,7 +2,7 @@
 
 set -eux
 
-MESSAGE="\"Load testing on image builder finished with status *$1* $2 \n QE: @jabia \n Link to results: $CI_PIPELINE_URL \""
+MESSAGE="\"<$CI_PIPELINE_URL|Load testing on image builder> finished with status *$1* $2 \n QE: @atodorov, @jrusz, @jabia \""
 
 curl \
     -X POST \
