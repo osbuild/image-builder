@@ -275,6 +275,14 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		}
 	}
 
+	if cloudStat.ImageStatus.Error != nil {
+		status.ImageStatus.Error = &ComposeStatusError{
+			Id:      cloudStat.ImageStatus.Error.Id,
+			Reason:  cloudStat.ImageStatus.Error.Reason,
+			Details: cloudStat.ImageStatus.Error.Details,
+		}
+	}
+
 	return ctx.JSON(http.StatusOK, status)
 }
 

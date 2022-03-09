@@ -289,6 +289,18 @@ components:
           example: 'success'
         upload_status:
           $ref: '#/components/schemas/UploadStatus'
+        error: 
+          $ref: '#/components/schemas/ComposeStatusError'
+    ComposeStatusError:
+      required:
+       - id
+       - reason
+      properties:
+        id:
+          type: integer
+        reason:
+          type: string
+        details: {}
     UploadStatus:
       required:
         - status
