@@ -114,6 +114,13 @@ type ComposeStatus struct {
 	Status        ComposeStatusValue `json:"status"`
 }
 
+// ComposeStatusError defines model for ComposeStatusError.
+type ComposeStatusError struct {
+	Details *interface{} `json:"details,omitempty"`
+	Id      int          `json:"id"`
+	Reason  string       `json:"reason"`
+}
+
 // ComposeStatusValue defines model for ComposeStatusValue.
 type ComposeStatusValue string
 
@@ -213,8 +220,9 @@ type ImageRequest struct {
 
 // ImageStatus defines model for ImageStatus.
 type ImageStatus struct {
-	Status       ImageStatusValue `json:"status"`
-	UploadStatus *UploadStatus    `json:"upload_status,omitempty"`
+	Error        *ComposeStatusError `json:"error,omitempty"`
+	Status       ImageStatusValue    `json:"status"`
+	UploadStatus *UploadStatus       `json:"upload_status,omitempty"`
 }
 
 // ImageStatusValue defines model for ImageStatusValue.
