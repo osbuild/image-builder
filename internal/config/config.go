@@ -10,7 +10,9 @@ type ImageBuilderConfig struct {
 	CwSecretAccessKey    string `env:"CW_AWS_SECRET_ACCESS_KEY"`
 	ComposerURL          string `env:"COMPOSER_URL"`
 	ComposerTokenURL     string `env:"COMPOSER_TOKEN_URL"`
+	ComposerClientId     string `env:"COMPOSER_CLIENT_ID"`
 	ComposerOfflineToken string `env:"COMPOSER_OFFLINE_TOKEN"`
+	ComposerClientSecret string `env:"COMPOSER_CLIENT_SECRET"`
 	ComposerCA           string `env:"COMPOSER_CA_PATH"`
 	OsbuildRegion        string `env:"OSBUILD_AWS_REGION"`
 	OsbuildGCPRegion     string `env:"OSBUILD_GCP_REGION"`

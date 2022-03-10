@@ -115,6 +115,11 @@ objects:
               value: "${COMPOSER_URL}"
             - name: COMPOSER_TOKEN_URL
               value: "${COMPOSER_TOKEN_URL}"
+            - name: COMPOSER_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: client_id
+                  name: composer-secrets
             - name: COMPOSER_OFFLINE_TOKEN
               valueFrom:
                 secretKeyRef:
