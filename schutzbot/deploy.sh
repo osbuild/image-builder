@@ -53,6 +53,7 @@ sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
      -e COMPOSER_URL=https://api.stage.openshift.com: \
      -e COMPOSER_TOKEN_URL="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token" \
      -e COMPOSER_OFFLINE_TOKEN="${COMPOSER_OFFLINE_TOKEN:-}" \
+     -e COMPOSER_CLIENT_ID="${COMPOSER_CLIENT_ID:-}" \
      -e OSBUILD_AWS_REGION="${AWS_REGION:-}" \
      -e OSBUILD_GCP_REGION="${GCP_REGION:-}" \
      -e OSBUILD_GCP_BUCKET="${GCP_BUCKET:-}" \

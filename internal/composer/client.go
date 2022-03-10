@@ -23,6 +23,8 @@ type ComposerClient struct {
 	tokenURL     string
 	offlineToken string
 	accessToken  string
+	clientId     string
+	clientSecret string
 	tokenMu      sync.RWMutex
 
 	client *http.Client
@@ -32,7 +34,9 @@ type ComposerClientConfig struct {
 	ComposerURL  string
 	CA           string
 	TokenURL     string
+	ClientId     string
 	OfflineToken string
+	ClientSecret string
 }
 
 type tokenResponse struct {
@@ -43,8 +47,11 @@ func NewClient(conf ComposerClientConfig) (*ComposerClient, error) {
 	if conf.TokenURL == "" {
 		return nil, fmt.Errorf("Client needs token endpoint")
 	}
-	if conf.OfflineToken == "" {
-		return nil, fmt.Errorf("Client needs offline token")
+	if conf.ClientId == "" {
+		return nil, fmt.Errorf("Client needs clientId")
+	}
+	if conf.OfflineToken == "" && conf.ClientSecret == "" {
+		return nil, fmt.Errorf("Client needs offline token, or client secret")
 	}
 
 	client, err := createClient(conf.ComposerURL, conf.CA)
@@ -55,7 +62,9 @@ func NewClient(conf ComposerClientConfig) (*ComposerClient, error) {
 	cc := ComposerClient{
 		composerURL:  fmt.Sprintf("%s/api/image-builder-composer/v2", conf.ComposerURL),
 		tokenURL:     conf.TokenURL,
+		clientId:     conf.ClientId,
 		offlineToken: conf.OfflineToken,
+		clientSecret: conf.ClientSecret,
 		client:       client,
 	}
 
@@ -125,14 +134,17 @@ func (cc *ComposerClient) refreshToken() error {
 	cc.tokenMu.Lock()
 	defer cc.tokenMu.Unlock()
 
-	if cc.offlineToken == "" || cc.tokenURL == "" {
-		return fmt.Errorf("No offline token or oauth url available")
-	}
-
 	data := url.Values{}
-	data.Set("grant_type", "refresh_token")
-	data.Set("client_id", "rhsm-api")
-	data.Set("refresh_token", cc.offlineToken)
+	if cc.offlineToken != "" {
+		data.Set("grant_type", "refresh_token")
+		data.Set("client_id", cc.clientId)
+		data.Set("refresh_token", cc.offlineToken)
+	}
+	if cc.clientSecret != "" {
+		data.Set("grant_type", "client_credentials")
+		data.Set("client_id", cc.clientId)
+		data.Set("client_secret", cc.clientSecret)
+	}
 
 	resp, err := http.PostForm(cc.tokenURL, data)
 	if err != nil {

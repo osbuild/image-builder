@@ -44,7 +44,9 @@ func main() {
 		ComposerURL:  conf.ComposerURL,
 		CA:           conf.ComposerCA,
 		TokenURL:     conf.ComposerTokenURL,
+		ClientId:     conf.ComposerClientId,
 		OfflineToken: conf.ComposerOfflineToken,
+		ClientSecret: conf.ComposerClientSecret,
 	}
 	client, err := composer.NewClient(composerConf)
 	if err != nil {

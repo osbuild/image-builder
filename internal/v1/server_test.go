@@ -63,6 +63,10 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo,
 	require.NoError(t, err)
 
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "rhsm-api", r.FormValue("client_id"))
+		require.Equal(t, "offlinetoken", r.FormValue("refresh_token"))
+		require.Equal(t, "refresh_token", r.FormValue("grant_type"))
+
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode(struct {
 			AccessToken string `json:"access_token"`
@@ -73,8 +77,9 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo,
 	}))
 
 	client, err := composer.NewClient(composer.ComposerClientConfig{
-		ComposerURL: url,
-		TokenURL: tokenServer.URL,
+		ComposerURL:  url,
+		TokenURL:     tokenServer.URL,
+		ClientId:     "rhsm-api",
 		OfflineToken: "offlinetoken",
 	})
 	require.NoError(t, err)
