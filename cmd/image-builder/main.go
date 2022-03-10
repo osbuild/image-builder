@@ -40,7 +40,13 @@ func main() {
 		panic(err)
 	}
 
-	client, err := composer.NewClient(conf.ComposerURL, conf.ComposerTokenURL, conf.ComposerOfflineToken, conf.ComposerCA)
+	composerConf := composer.ComposerClientConfig{
+		ComposerURL:  conf.ComposerURL,
+		CA:           conf.ComposerCA,
+		TokenURL:     conf.ComposerTokenURL,
+		OfflineToken: conf.ComposerOfflineToken,
+	}
+	client, err := composer.NewClient(composerConf)
 	if err != nil {
 		panic(err)
 	}

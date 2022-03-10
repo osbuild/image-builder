@@ -28,27 +28,34 @@ type ComposerClient struct {
 	client *http.Client
 }
 
+type ComposerClientConfig struct {
+	ComposerURL  string
+	CA           string
+	TokenURL     string
+	OfflineToken string
+}
+
 type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 }
 
-func NewClient(composerURL, tokenURL, offlineToken string, ca string) (*ComposerClient, error) {
-	if tokenURL == "" {
+func NewClient(conf ComposerClientConfig) (*ComposerClient, error) {
+	if conf.TokenURL == "" {
 		return nil, fmt.Errorf("Client needs token endpoint")
 	}
-	if offlineToken == "" {
+	if conf.OfflineToken == "" {
 		return nil, fmt.Errorf("Client needs offline token")
 	}
 
-	client, err := createClient(composerURL, ca)
+	client, err := createClient(conf.ComposerURL, conf.CA)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating compose http client")
 	}
 
 	cc := ComposerClient{
-		composerURL:  fmt.Sprintf("%s/api/image-builder-composer/v2", composerURL),
-		tokenURL:     tokenURL,
-		offlineToken: offlineToken,
+		composerURL:  fmt.Sprintf("%s/api/image-builder-composer/v2", conf.ComposerURL),
+		tokenURL:     conf.TokenURL,
+		offlineToken: conf.OfflineToken,
 		client:       client,
 	}
 
