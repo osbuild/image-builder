@@ -83,7 +83,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func NewLogger(level string, key *string, secret *string, region *string, group *string) (*logrus.Logger, error) {
+func NewLogger(level, key, secret, region, group string) (*logrus.Logger, error) {
 
 	switch level {
 	case "DEBUG":
@@ -103,13 +103,13 @@ func NewLogger(level string, key *string, secret *string, region *string, group 
 		ReportCaller: true,
 	}
 
-	if key != nil {
+	if key != "" {
 		f := NewCloudwatchFormatter()
 		log.SetFormatter(f)
-		cred := credentials.NewStaticCredentials(*key, *secret, "")
-		awsconf := aws.NewConfig().WithRegion(*region).WithCredentials(cred)
+		cred := credentials.NewStaticCredentials(key, secret, "")
+		awsconf := aws.NewConfig().WithRegion(region).WithCredentials(cred)
 		// avoid the cloudwatch sequence token to get out of sync using the unique hostname per pod
-		hook, err := cloudwatch.NewBatchingHook(*group, f.Hostname, awsconf, 10*time.Second)
+		hook, err := cloudwatch.NewBatchingHook(group, f.Hostname, awsconf, 10*time.Second)
 		if err != nil {
 			return nil, err
 		}

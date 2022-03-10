@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -32,7 +33,7 @@ type ComposerClient struct {
 	client *http.Client
 }
 
-func NewClient(composerURL, tokenURL, offlineToken string, ca *string) (*ComposerClient, error) {
+func NewClient(composerURL, tokenURL, offlineToken string, ca string) (*ComposerClient, error) {
 	if tokenURL == "" {
 		return nil, fmt.Errorf("Client needs token endpoint")
 	}
@@ -55,13 +56,13 @@ func NewClient(composerURL, tokenURL, offlineToken string, ca *string) (*Compose
 	return &cc, nil
 }
 
-func createClient(composerURL string, ca *string) (*http.Client, error) {
-	if !strings.HasPrefix(composerURL, "https") || ca == nil {
+func createClient(composerURL string, ca string) (*http.Client, error) {
+	if !strings.HasPrefix(composerURL, "https") || ca == "" {
 		return &http.Client{}, nil
 	}
 
 	var tlsConfig *tls.Config
-	caCert, err := ioutil.ReadFile(*ca)
+	caCert, err := ioutil.ReadFile(filepath.Clean(ca))
 	if err != nil {
 		return nil, err
 	}
