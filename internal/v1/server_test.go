@@ -59,7 +59,7 @@ func initQuotaFile() (string, error) {
 }
 
 func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo, *httptest.Server) {
-	logger, err := logger.NewLogger("DEBUG", nil, nil, nil, nil)
+	logger, err := logger.NewLogger("DEBUG", "", "", "", "")
 	require.NoError(t, err)
 
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,7 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo,
 		require.NoError(t, err)
 	}))
 
-	client, err := composer.NewClient(url, tokenServer.URL, "offlinetoken", nil)
+	client, err := composer.NewClient(url, tokenServer.URL, "offlinetoken", "")
 	require.NoError(t, err)
 
 	//store the quotas in a temporary file
