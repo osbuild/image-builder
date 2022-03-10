@@ -17,20 +17,19 @@ import (
 	"sync"
 )
 
-type AccessToken struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int    `json:"expires_in"`
-}
-
 type ComposerClient struct {
 	composerURL string
 
 	tokenURL     string
 	offlineToken string
-	accessToken  AccessToken
+	accessToken  string
 	tokenMu      sync.RWMutex
 
 	client *http.Client
+}
+
+type tokenResponse struct {
+	AccessToken string `json:"access_token"`
 }
 
 func NewClient(composerURL, tokenURL, offlineToken string, ca string) (*ComposerClient, error) {
@@ -93,7 +92,7 @@ func (cc *ComposerClient) request(method, url string, headers map[string]string,
 	token := func() string {
 		cc.tokenMu.RLock()
 		defer cc.tokenMu.RUnlock()
-		return cc.accessToken.AccessToken
+		return cc.accessToken
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token()))
 
@@ -133,13 +132,13 @@ func (cc *ComposerClient) refreshToken() error {
 		return err
 	}
 
-	var at AccessToken
-	err = json.NewDecoder(resp.Body).Decode(&at)
+	var tr tokenResponse
+	err = json.NewDecoder(resp.Body).Decode(&tr)
 	if err != nil {
 		return err
 	}
 
-	cc.accessToken = at
+	cc.accessToken = tr.AccessToken
 	return nil
 }
 
