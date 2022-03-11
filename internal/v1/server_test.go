@@ -263,7 +263,7 @@ func TestAccountNumberWildcard(t *testing.T) {
 // note: this scenario needs to talk to a simulated osbuild-composer API
 func TestGetComposeStatus(t *testing.T) {
 	// simulate osbuild-composer API
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		s := ComposeStatus{
 			ImageStatus: ImageStatus{
@@ -273,7 +273,7 @@ func TestGetComposeStatus(t *testing.T) {
 		err := json.NewEncoder(w).Encode(s)
 		require.NoError(t, err)
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
 	// insert a compose in the mock database
 	dbase := tutils.InitDB()
@@ -281,7 +281,7 @@ func TestGetComposeStatus(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -316,14 +316,14 @@ func TestGetComposeStatus(t *testing.T) {
 // note: this scenario needs to talk to a simulated osbuild-composer API
 func TestGetComposeStatus404(t *testing.T) {
 	// simulate osbuild-composer API
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "404 during tests")
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -360,7 +360,7 @@ func TestGetComposeMetadata(t *testing.T) {
 			Version:   "VersionTest1",
 		},
 	}
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		m := composer.ComposeMetadata{
 			OstreeCommit: strptr("test string"),
@@ -370,7 +370,7 @@ func TestGetComposeMetadata(t *testing.T) {
 		err := json.NewEncoder(w).Encode(m)
 		require.NoError(t, err)
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
 	// insert a compose in the mock database
 	dbase := tutils.InitDB()
@@ -378,7 +378,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, api_srv.URL, dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -398,14 +398,14 @@ func TestGetComposeMetadata(t *testing.T) {
 
 func TestGetComposeMetadata404(t *testing.T) {
 	// simulate osbuild-composer API
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "404 during tests")
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -577,16 +577,16 @@ func TestComposeImage(t *testing.T) {
 
 func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	// simulate osbuild-composer API
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusTeapot)
 		s := "deliberately returning !201 during tests"
 		err := json.NewEncoder(w).Encode(s)
 		require.NoError(t, err)
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -616,16 +616,16 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 
 func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	// simulate osbuild-composer API
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		s := "not a composer.ComposeId data structure"
 		err := json.NewEncoder(w).Encode(s)
 		require.NoError(t, err)
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -655,7 +655,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 
 func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	// simulate osbuild-composer API
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
@@ -664,9 +664,9 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 		err := json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -705,7 +705,7 @@ func strptr(s string) *string {
 
 func TestComposeCustomizations(t *testing.T) {
 	// simulate osbuild-composer API
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
@@ -714,9 +714,9 @@ func TestComposeCustomizations(t *testing.T) {
 		err := json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -841,14 +841,14 @@ func TestReadinessProbeNotReady(t *testing.T) {
 
 func TestReadinessProbeReady(t *testing.T) {
 	// simulate osbuild-composer API
-	api_srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "{\"version\":\"fake\"}")
 	}))
-	defer api_srv.Close()
+	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, api_srv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
