@@ -112,7 +112,7 @@ func startServer(t *testing.T, url string) (*echo.Echo, *httptest.Server) {
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "http://example.com")
+	srv, tokenSrv := startServer(t, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -233,7 +233,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 }
 
 func TestOrgIdWildcard(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com")
+	srv, tokenSrv := startServer(t, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -247,7 +247,7 @@ func TestOrgIdWildcard(t *testing.T) {
 }
 
 func TestAccountNumberWildcard(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com")
+	srv, tokenSrv := startServer(t, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -458,7 +458,7 @@ func TestGetComposes(t *testing.T) {
 func TestComposeImage(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "http://example.com")
+	srv, tokenSrv := startServer(t, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -827,7 +827,7 @@ func TestBuildOSTreeOptions(t *testing.T) {
 }
 
 func TestReadinessProbeNotReady(t *testing.T) {
-	srv, tokenSrv := startServer(t, "http://example.com")
+	srv, tokenSrv := startServer(t, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -861,7 +861,6 @@ func TestReadinessProbeReady(t *testing.T) {
 }
 
 func TestMetrics(t *testing.T) {
-	// simulate osbuild-composer API
 	srv, tokenSrv := startServer(t, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
