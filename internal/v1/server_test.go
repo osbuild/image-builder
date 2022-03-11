@@ -25,7 +25,7 @@ import (
 var UUIDTest string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc93d"
 
 // Create a temporary file containing quotas, returns the file name as a string
-func initQuotaFile() (string, error) {
+func initQuotaFile(t *testing.T) (string, error) {
 	// create quotas with only the default values
 	quotas := map[string]common.Quota{
 		"default": {Quota: common.DefaultQuota, SlidingWindow: common.DefaultSlidingWindow},
@@ -36,7 +36,7 @@ func initQuotaFile() (string, error) {
 	}
 
 	// get a temp file to store the quotas
-	file, err := ioutil.TempFile("", "account_quotas.*.json")
+	file, err := ioutil.TempFile(t.TempDir(), "account_quotas.*.json")
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +76,7 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo,
 	require.NoError(t, err)
 
 	//store the quotas in a temporary file
-	quotaFile, err := initQuotaFile()
+	quotaFile, err := initQuotaFile(t)
 	require.NoError(t, err)
 
 	echoServer := echo.New()
