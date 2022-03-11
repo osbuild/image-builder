@@ -264,6 +264,11 @@ func TestAccountNumberWildcard(t *testing.T) {
 func TestGetComposeStatus(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		s := ComposeStatus{
 			ImageStatus: ImageStatus{
@@ -317,6 +322,11 @@ func TestGetComposeStatus(t *testing.T) {
 func TestGetComposeStatus404(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "404 during tests")
@@ -361,6 +371,11 @@ func TestGetComposeMetadata(t *testing.T) {
 		},
 	}
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		m := composer.ComposeMetadata{
 			OstreeCommit: strptr("test string"),
@@ -399,6 +414,11 @@ func TestGetComposeMetadata(t *testing.T) {
 func TestGetComposeMetadata404(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "404 during tests")
@@ -578,6 +598,11 @@ func TestComposeImage(t *testing.T) {
 func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusTeapot)
 		s := "deliberately returning !201 during tests"
@@ -617,6 +642,11 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		s := "not a composer.ComposeId data structure"
@@ -656,6 +686,11 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
@@ -706,6 +741,11 @@ func strptr(s string) *string {
 func TestComposeCustomizations(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
@@ -842,6 +882,11 @@ func TestReadinessProbeNotReady(t *testing.T) {
 func TestReadinessProbeReady(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "{\"version\":\"fake\"}")
