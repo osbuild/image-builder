@@ -15,7 +15,7 @@ COPY . ./
 
 RUN make build-docker
 
-FROM alpine:3.12
+FROM alpine:3.13.7
 
 RUN apk add --no-cache ca-certificates
 
