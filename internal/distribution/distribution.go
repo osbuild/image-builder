@@ -26,10 +26,10 @@ type Distributions []DistributionItem
 type DistributionFile struct {
 	ModulePlatformID string           `json:"module_platform_id"`
 	Distribution     DistributionItem `json:"distribution"`
-	ArchX86          *X86_64          `json:"x86_64,omitempty"`
+	ArchX86          *Architecture    `json:"x86_64,omitempty"`
 }
 
-type X86_64 struct {
+type Architecture struct {
 	ImageTypes   []string     `json:"image_types"`
 	Repositories []Repository `json:"repositories"`
 }
