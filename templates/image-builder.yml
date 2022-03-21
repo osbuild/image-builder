@@ -120,10 +120,10 @@ objects:
                 secretKeyRef:
                   key: client_id
                   name: composer-secrets
-            - name: COMPOSER_OFFLINE_TOKEN
+            - name: COMPOSER_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  key: offline_token
+                  key: client_secret
                   name: composer-secrets
             # Credentials/configuration for AWS cloudwatch.
             - name: CW_AWS_ACCESS_KEY_ID
@@ -292,7 +292,7 @@ parameters:
     value: ""
   - name: COMPOSER_TOKEN_URL
     description: OpenId token endpoint
-    value: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+    value: "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
   - name: ALLOWED_ORG_IDS
     description: Organization ids allowed to access the api, wildcard means everyone
     value: ""
