@@ -10,7 +10,7 @@ func TestRepositoriesForArch(t *testing.T) {
 	result, err := RepositoriesForArch("../../distributions", "centos-8", "x86_64")
 	require.NoError(t, err)
 
-	require.Equal(t, []Repository{
+	require.ElementsMatch(t, []Repository{
 		{
 			Id:      "baseos",
 			Baseurl: "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/",
@@ -56,12 +56,30 @@ func TestAvailableDistributions(t *testing.T) {
 }
 
 func TestFindPackages(t *testing.T) {
-	pkgs, err := FindPackages("../../distributions", "centos-8", "x86_64", "ssh")
+	pkgs, err := FindPackages("../../distributions", "centos-8", "x86_64", "vim")
 	require.NoError(t, err)
-	require.Greater(t, len(pkgs), 0)
-	for _, p := range pkgs {
-		require.Contains(t, p.Name, "ssh")
-	}
+	require.ElementsMatch(t, []Package{
+		{
+			Name:    "vim-minimal",
+			Summary: "A minimal version of the VIM editor",
+		},
+		{
+			Name:    "vim-common",
+			Summary: "The common files needed by any version of the VIM editor",
+		},
+		{
+			Name:    "vim-enhanced",
+			Summary: "A version of the VIM editor which includes recent enhancements",
+		},
+		{
+			Name:    "vim-X11",
+			Summary: "The VIM version of the vi editor for the X Window System - GVim",
+		},
+		{
+			Name:    "vim-filesystem",
+			Summary: "VIM filesystem layout",
+		},
+	}, pkgs)
 }
 
 func TestInvalidDistribution(t *testing.T) {
