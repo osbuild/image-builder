@@ -11,7 +11,7 @@
       "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.5/x86_64/baseos/os",
       "rhsm": true
     }, {
-      "id": "baseos",
+      "id": "appstream",
       "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.5/x86_64/appstream/os",
       "rhsm": true
     }, {

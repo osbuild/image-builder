@@ -1,9 +1,5 @@
 [
   {
-    "name": "aardvark-dns",
-    "summary": "Authoritative DNS server for A/AAAA container records"
-  },
-  {
     "name": "abattis-cantarell-fonts",
     "summary": "Cantarell, a Humanist sans-serif font family"
   },
@@ -185,7 +181,7 @@
   },
   {
     "name": "alsa-ucm",
-    "summary": "ALSA Use Case Manager configuration"
+    "summary": "ALSA Universal Configuration Manager"
   },
   {
     "name": "alsa-utils",
@@ -245,7 +241,7 @@
   },
   {
     "name": "annobin",
-    "summary": "Annotate and examine compiled binary files"
+    "summary": "Binary annotation plugin for GCC"
   },
   {
     "name": "annobin-annocheck",
@@ -260,10 +256,6 @@
     "summary": "Ansible Collection of general system management and utility modules and other plugins"
   },
   {
-    "name": "ansible-core",
-    "summary": "SSH-based configuration management, deployment, and task execution system"
-  },
-  {
     "name": "ansible-freeipa",
     "summary": "Roles and playbooks to deploy FreeIPA servers, replicas and clients"
   },
@@ -274,10 +266,6 @@
   {
     "name": "ansible-pcp",
     "summary": "Ansible Metric collection for Performance Co-Pilot"
-  },
-  {
-    "name": "ansible-test",
-    "summary": "Tool for testing ansible plugin and module code"
   },
   {
     "name": "ant",
@@ -648,6 +636,10 @@
     "summary": "Command line tools for BPF Compiler Collection (BCC)"
   },
   {
+    "name": "beignet",
+    "summary": "Open source implementation of the OpenCL for Intel GPUs"
+  },
+  {
     "name": "bind",
     "summary": "The Berkeley Internet Name Domain (BIND) DNS (Domain Name System) server"
   },
@@ -701,30 +693,6 @@
   },
   {
     "name": "bind-utils",
-    "summary": "Utilities for querying DNS name servers"
-  },
-  {
-    "name": "bind9.16",
-    "summary": "The Berkeley Internet Name Domain (BIND) DNS (Domain Name System) server"
-  },
-  {
-    "name": "bind9.16-chroot",
-    "summary": "A chroot runtime environment for the ISC BIND DNS server, named(8)"
-  },
-  {
-    "name": "bind9.16-dnssec-utils",
-    "summary": "DNSSEC keys and zones management utilities"
-  },
-  {
-    "name": "bind9.16-libs",
-    "summary": "Libraries used by the BIND DNS packages"
-  },
-  {
-    "name": "bind9.16-license",
-    "summary": "License of the BIND DNS suite"
-  },
-  {
-    "name": "bind9.16-utils",
     "summary": "Utilities for querying DNS name servers"
   },
   {
@@ -1116,6 +1084,10 @@
     "summary": "Documentation for Cargo"
   },
   {
+    "name": "cargo-vendor",
+    "summary": "Cargo subcommand to vendor crates.io dependencies"
+  },
+  {
     "name": "cdi-api",
     "summary": "CDI API"
   },
@@ -1134,26 +1106,6 @@
   {
     "name": "celt051",
     "summary": "An audio codec for use in low-delay speech and audio communication"
-  },
-  {
-    "name": "centos-backgrounds",
-    "summary": "CentOS-related desktop backgrounds"
-  },
-  {
-    "name": "centos-indexhtml",
-    "summary": "Browser default start page for CentOS"
-  },
-  {
-    "name": "centos-logos",
-    "summary": "CentOS-related icons and pictures"
-  },
-  {
-    "name": "centos-logos-httpd",
-    "summary": "CentOS-related icons and pictures used by httpd"
-  },
-  {
-    "name": "centos-logos-ipa",
-    "summary": "CentOS-related icons and pictures used by ipa"
   },
   {
     "name": "certmonger",
@@ -1201,7 +1153,7 @@
   },
   {
     "name": "clang-devel",
-    "summary": "Development header files for clang"
+    "summary": "Development header files for clang."
   },
   {
     "name": "clang-libs",
@@ -1229,7 +1181,7 @@
   },
   {
     "name": "clevis-luks",
-    "summary": "LUKS integration for clevis"
+    "summary": "LUKSv1 integration for clevis"
   },
   {
     "name": "clevis-systemd",
@@ -1302,6 +1254,10 @@
   {
     "name": "cockpit-composer",
     "summary": "Composer GUI for use with Cockpit"
+  },
+  {
+    "name": "cockpit-dashboard",
+    "summary": "Cockpit remote servers and dashboard"
   },
   {
     "name": "cockpit-machines",
@@ -1389,11 +1345,11 @@
   },
   {
     "name": "containernetworking-plugins",
-    "summary": "CNI network plugins"
+    "summary": "Some CNI network plugins, maintained by the containernetworking team."
   },
   {
     "name": "containers-common",
-    "summary": "Common configuration and documentation for containers"
+    "summary": "Configuration files for working with image signatures"
   },
   {
     "name": "convmv",
@@ -1410,10 +1366,6 @@
   {
     "name": "coreos-installer-bootinfra",
     "summary": "coreos-installer boot-time infrastructure for use on Fedora/RHEL CoreOS"
-  },
-  {
-    "name": "coreos-installer-dracut",
-    "summary": "coreos-installer provides coreos-installer as a dracut module."
   },
   {
     "name": "corosynclib",
@@ -1729,7 +1681,7 @@
   },
   {
     "name": "dotnet",
-    "summary": ".NET CLI tools and runtime"
+    "summary": ".NET Core CLI tools and runtime"
   },
   {
     "name": "dotnet-apphost-pack-3.0",
@@ -1920,6 +1872,14 @@
     "summary": "Wayland EGL External Platform library"
   },
   {
+    "name": "elfutils-debuginfod-client",
+    "summary": "Library and command line client for build-id HTTP ELF/DWARF server"
+  },
+  {
+    "name": "elfutils-debuginfod-client-devel",
+    "summary": "Libraries and headers to build debuginfod client applications"
+  },
+  {
     "name": "emacs",
     "summary": "GNU Emacs text editor"
   },
@@ -2084,34 +2044,6 @@
     "summary": "Libraries for videoconferencing"
   },
   {
-    "name": "fdo-admin-cli",
-    "summary": "FDO admin tools implementation"
-  },
-  {
-    "name": "fdo-client",
-    "summary": "FDO Client implementation"
-  },
-  {
-    "name": "fdo-init",
-    "summary": "dracut module for device initialization"
-  },
-  {
-    "name": "fdo-manufacturing-server",
-    "summary": "FDO Manufacturing Server implementation"
-  },
-  {
-    "name": "fdo-owner-cli",
-    "summary": "FDO Owner tools implementation"
-  },
-  {
-    "name": "fdo-owner-onboarding-server",
-    "summary": "FDO Owner Onboarding Server implementation"
-  },
-  {
-    "name": "fdo-rendezvous-server",
-    "summary": "FDO Rendezvous Server implementation"
-  },
-  {
     "name": "fence-agents-all",
     "summary": "Set of unified programs capable of host isolation (\"fencing\")"
   },
@@ -2176,14 +2108,6 @@
     "summary": "Fence agent for HP BladeSystem devices"
   },
   {
-    "name": "fence-agents-ibm-powervs",
-    "summary": "Fence agent for IBM PowerVS"
-  },
-  {
-    "name": "fence-agents-ibm-vpc",
-    "summary": "Fence agent for IBM Cloud VPC"
-  },
-  {
     "name": "fence-agents-ibmblade",
     "summary": "Fence agent for IBM BladeCenter"
   },
@@ -2222,10 +2146,6 @@
   {
     "name": "fence-agents-kdump",
     "summary": "Fence agent for use with kdump crash recovery service"
-  },
-  {
-    "name": "fence-agents-kubevirt",
-    "summary": "Fence agent for KubeVirt platform"
   },
   {
     "name": "fence-agents-lpar",
@@ -2284,10 +2204,6 @@
     "summary": "Daemon which handles requests from fence-virt"
   },
   {
-    "name": "fence-virtd-cpg",
-    "summary": "CPG/libvirt backend for fence-virtd"
-  },
-  {
     "name": "fence-virtd-libvirt",
     "summary": "Libvirt backend for fence-virtd"
   },
@@ -2342,6 +2258,10 @@
   {
     "name": "file-roller",
     "summary": "Tool for viewing and creating archives"
+  },
+  {
+    "name": "file-roller-nautilus",
+    "summary": "File Roller extension for nautilus"
   },
   {
     "name": "fio",
@@ -2522,6 +2442,10 @@
   {
     "name": "frr",
     "summary": "Routing daemon"
+  },
+  {
+    "name": "frr-contrib",
+    "summary": "Contrib tools for frr"
   },
   {
     "name": "fstrm",
@@ -3361,7 +3285,7 @@
   },
   {
     "name": "git-clang-format",
-    "summary": "Integration of clang-format for git"
+    "summary": "clang-format integration for git"
   },
   {
     "name": "git-core",
@@ -3428,10 +3352,6 @@
     "summary": "Expression Language 3.0 API"
   },
   {
-    "name": "glibc-gconv-extra",
-    "summary": "All iconv converter modules for glibc."
-  },
-  {
     "name": "glibc-utils",
     "summary": "Development utilities from GNU C library"
   },
@@ -3440,12 +3360,20 @@
     "summary": "C++ interface for the GLib library"
   },
   {
+    "name": "glusterfs",
+    "summary": "Distributed File System"
+  },
+  {
     "name": "glusterfs-api",
     "summary": "GlusterFS api library"
   },
   {
     "name": "glusterfs-cli",
     "summary": "GlusterFS CLI"
+  },
+  {
+    "name": "glusterfs-client-xlators",
+    "summary": "GlusterFS client-side translators"
   },
   {
     "name": "glx-utils",
@@ -3636,6 +3564,10 @@
     "summary": "Window management and application launching for GNOME"
   },
   {
+    "name": "gnome-shell-extension-alternate-tab",
+    "summary": "Classic Alt+Tab behavior for GNOME Shell"
+  },
+  {
     "name": "gnome-shell-extension-apps-menu",
     "summary": "Application menu for GNOME Shell"
   },
@@ -3644,20 +3576,12 @@
     "summary": "Assign specific workspaces to applications in GNOME Shell"
   },
   {
-    "name": "gnome-shell-extension-classification-banner",
-    "summary": "Display classification level banner in GNOME Shell"
-  },
-  {
     "name": "gnome-shell-extension-common",
     "summary": "Files common to GNOME Shell Extensions"
   },
   {
     "name": "gnome-shell-extension-dash-to-dock",
     "summary": "Show the dash outside the activities overview"
-  },
-  {
-    "name": "gnome-shell-extension-dash-to-panel",
-    "summary": "Show the dash in the top bar"
   },
   {
     "name": "gnome-shell-extension-desktop-icons",
@@ -3742,6 +3666,10 @@
   {
     "name": "gnome-software",
     "summary": "A software center for GNOME"
+  },
+  {
+    "name": "gnome-software-editor",
+    "summary": "Banner designer for GNOME Software"
   },
   {
     "name": "gnome-system-monitor",
@@ -4393,15 +4321,63 @@
   },
   {
     "name": "gpm-libs",
-    "summary": "Dynamic library for gpm"
+    "summary": "Dynamic library for for the gpm"
   },
   {
     "name": "grafana",
     "summary": "Metrics dashboard and graph editor"
   },
   {
+    "name": "grafana-azure-monitor",
+    "summary": "Grafana azure-monitor datasource"
+  },
+  {
+    "name": "grafana-cloudwatch",
+    "summary": "Grafana cloudwatch datasource"
+  },
+  {
+    "name": "grafana-elasticsearch",
+    "summary": "Grafana elasticsearch datasource"
+  },
+  {
+    "name": "grafana-graphite",
+    "summary": "Grafana graphite datasource"
+  },
+  {
+    "name": "grafana-influxdb",
+    "summary": "Grafana influxdb datasource"
+  },
+  {
+    "name": "grafana-loki",
+    "summary": "Grafana loki datasource"
+  },
+  {
+    "name": "grafana-mssql",
+    "summary": "Grafana mssql datasource"
+  },
+  {
+    "name": "grafana-mysql",
+    "summary": "Grafana mysql datasource"
+  },
+  {
+    "name": "grafana-opentsdb",
+    "summary": "Grafana opentsdb datasource"
+  },
+  {
     "name": "grafana-pcp",
     "summary": "Performance Co-Pilot Grafana Plugin"
+  },
+  {
+    "name": "grafana-postgres",
+    "summary": "Grafana postgres datasource"
+  },
+  {
+    "name": "grafana-prometheus",
+    "summary": "Grafana prometheus datasource"
+  },
+  {
+    "name": "grafana-stackdriver",
+    "summary": "Grafana stackdriver datasource"
   },
   {
     "name": "graphite2",
@@ -4418,10 +4394,6 @@
   {
     "name": "greenboot",
     "summary": "Generic Health Check Framework for systemd"
-  },
-  {
-    "name": "greenboot-default-health-checks",
-    "summary": "Series of optional and curated health checks"
   },
   {
     "name": "greenboot-grub2",
@@ -4742,10 +4714,6 @@
   {
     "name": "hivex-devel",
     "summary": "Development tools and libraries for hivex"
-  },
-  {
-    "name": "hostapd",
-    "summary": "IEEE 802.11 AP, IEEE 802.1X/WPA/WPA2/EAP/RADIUS Authenticator"
   },
   {
     "name": "hplip",
@@ -5828,6 +5796,10 @@
     "summary": "Viewing program for SVG files"
   },
   {
+    "name": "insights-client",
+    "summary": "Uploads Insights information to Red Hat on a periodic basis"
+  },
+  {
     "name": "intel-gpu-tools",
     "summary": "Debugging tools for Intel graphics chips"
   },
@@ -5957,7 +5929,7 @@
   },
   {
     "name": "java-1.8.0-openjdk",
-    "summary": "OpenJDK 8 Runtime Environment"
+    "summary": "OpenJDK Runtime Environment 8"
   },
   {
     "name": "java-1.8.0-openjdk-accessibility",
@@ -5965,19 +5937,15 @@
   },
   {
     "name": "java-1.8.0-openjdk-demo",
-    "summary": "OpenJDK 8 Demos"
+    "summary": "OpenJDK Demos 8"
   },
   {
     "name": "java-1.8.0-openjdk-devel",
-    "summary": "OpenJDK 8 Development Environment"
+    "summary": "OpenJDK Development Environment 8"
   },
   {
     "name": "java-1.8.0-openjdk-headless",
-    "summary": "OpenJDK 8 Headless Runtime Environment"
-  },
-  {
-    "name": "java-1.8.0-openjdk-headless-slowdebug",
-    "summary": "OpenJDK 8 Runtime Environment unoptimised with full debugging on"
+    "summary": "OpenJDK Headless Runtime Environment 8"
   },
   {
     "name": "java-1.8.0-openjdk-javadoc",
@@ -5985,31 +5953,27 @@
   },
   {
     "name": "java-1.8.0-openjdk-javadoc-zip",
-    "summary": "OpenJDK 8 API documentation compressed in a single archive"
-  },
-  {
-    "name": "java-1.8.0-openjdk-slowdebug",
-    "summary": "OpenJDK 8 Runtime Environment unoptimised with full debugging on"
+    "summary": "OpenJDK 8 API documentation compressed in single archive"
   },
   {
     "name": "java-1.8.0-openjdk-src",
-    "summary": "OpenJDK 8 Source Bundle"
+    "summary": "OpenJDK Source Bundle 8"
   },
   {
     "name": "java-11-openjdk",
-    "summary": "OpenJDK 11 Runtime Environment"
+    "summary": "OpenJDK Runtime Environment 11"
   },
   {
     "name": "java-11-openjdk-demo",
-    "summary": "OpenJDK 11 Demos"
+    "summary": "OpenJDK Demos 11"
   },
   {
     "name": "java-11-openjdk-devel",
-    "summary": "OpenJDK 11 Development Environment"
+    "summary": "OpenJDK Development Environment 11"
   },
   {
     "name": "java-11-openjdk-headless",
-    "summary": "OpenJDK 11 Headless Runtime Environment"
+    "summary": "OpenJDK Headless Runtime Environment 11"
   },
   {
     "name": "java-11-openjdk-javadoc",
@@ -6017,7 +5981,7 @@
   },
   {
     "name": "java-11-openjdk-javadoc-zip",
-    "summary": "OpenJDK 11 API documentation compressed in a single archive"
+    "summary": "OpenJDK 11 API documentation compressed in single archive"
   },
   {
     "name": "java-11-openjdk-jmods",
@@ -6025,11 +5989,11 @@
   },
   {
     "name": "java-11-openjdk-src",
-    "summary": "OpenJDK 11 Source Bundle"
+    "summary": "OpenJDK Source Bundle 11"
   },
   {
     "name": "java-11-openjdk-static-libs",
-    "summary": "OpenJDK 11 libraries for static linking"
+    "summary": "OpenJDK libraries for static linking 11"
   },
   {
     "name": "java-17-openjdk",
@@ -6181,7 +6145,7 @@
   },
   {
     "name": "julietaula-montserrat-fonts",
-    "summary": "Sans-serif typeface inspired from Montserrat area"
+    "summary": "Sans-serif typeface created by Julieta Ulanovsky"
   },
   {
     "name": "kacst-art-fonts",
@@ -6648,6 +6612,10 @@
     "summary": "Guessing reasonable defaults for locale, keyboard layout, territory, and language."
   },
   {
+    "name": "langtable-data",
+    "summary": "Data files for langtable"
+  },
+  {
     "name": "lapack",
     "summary": "Numerical linear algebra package libraries"
   },
@@ -6726,6 +6694,10 @@
   {
     "name": "libavc1394",
     "summary": "Audio/Video Control library for IEEE-1394 devices"
+  },
+  {
+    "name": "libbabeltrace",
+    "summary": "Common Trace Format Babel Tower"
   },
   {
     "name": "libbase",
@@ -6988,10 +6960,6 @@
     "summary": "A JSON implementation in C"
   },
   {
-    "name": "libfdt",
-    "summary": "Device tree library"
-  },
-  {
     "name": "libfontenc",
     "summary": "X.Org X11 libfontenc runtime library"
   },
@@ -7098,10 +7066,6 @@
   {
     "name": "libguestfs",
     "summary": "Access and modify virtual machine disk images"
-  },
-  {
-    "name": "libguestfs-appliance",
-    "summary": "Appliance for libguestfs"
   },
   {
     "name": "libguestfs-bash-completion",
@@ -7436,10 +7400,6 @@
     "summary": "NBD client library in userspace"
   },
   {
-    "name": "libnbd-bash-completion",
-    "summary": "Bash tab-completion for libnbd"
-  },
-  {
     "name": "libnbd-devel",
     "summary": "Development headers for libnbd"
   },
@@ -7457,7 +7417,7 @@
   },
   {
     "name": "libnma",
-    "summary": "NetworkManager GUI library"
+    "summary": "Private libraries for NetworkManager GUI support"
   },
   {
     "name": "libnotify",
@@ -7726,6 +7686,10 @@
   {
     "name": "libreoffice-graphicfilter",
     "summary": "LibreOffice Extra Graphic filters"
+  },
+  {
+    "name": "libreoffice-gtk2",
+    "summary": "LibreOffice GTK+ 2 integration plug-in"
   },
   {
     "name": "libreoffice-gtk3",
@@ -8416,6 +8380,10 @@
     "summary": "Development files for libssh"
   },
   {
+    "name": "libssh2",
+    "summary": "A library implementing the SSH2 protocol"
+  },
+  {
     "name": "libstaroffice",
     "summary": "A library for import of binary StarOffice documents"
   },
@@ -8466,14 +8434,6 @@
   {
     "name": "libtool-ltdl-devel",
     "summary": "Tools needed for development using the GNU Libtool Dynamic Module Loader"
-  },
-  {
-    "name": "libtpms",
-    "summary": "Library providing Trusted Platform Module (TPM) functionality"
-  },
-  {
-    "name": "libtpms-devel",
-    "summary": "Include files for libtpms"
   },
   {
     "name": "libucil",
@@ -8652,10 +8612,6 @@
     "summary": "Libvirt plugin for Name Service Switch"
   },
   {
-    "name": "libvirt-wireshark",
-    "summary": "Wireshark dissector plugin for libvirt RPC transactions"
-  },
-  {
     "name": "libvisio",
     "summary": "A library for import of Microsoft Visio diagrams"
   },
@@ -8798,6 +8754,10 @@
   {
     "name": "libXaw-devel",
     "summary": "Development files for libXaw"
+  },
+  {
+    "name": "libxcam",
+    "summary": "libXCam is a project for extended camera features and focus on image quality improvement and video analysis."
   },
   {
     "name": "libxcb",
@@ -9036,6 +8996,10 @@
     "summary": "YANG data modeling language library"
   },
   {
+    "name": "libyang-devel",
+    "summary": "Development files for libyang"
+  },
+  {
     "name": "libzhuyin",
     "summary": "Library to deal with zhuyin"
   },
@@ -9104,14 +9068,6 @@
     "summary": "The Low Level Virtual Machine"
   },
   {
-    "name": "llvm-compat",
-    "summary": "The Low Level Virtual Machine"
-  },
-  {
-    "name": "llvm-compat-libs",
-    "summary": "LLVM shared libraries"
-  },
-  {
     "name": "llvm-devel",
     "summary": "Libraries and header files for LLVM"
   },
@@ -9121,7 +9077,7 @@
   },
   {
     "name": "llvm-googletest",
-    "summary": "LLVM's modified googletest sources"
+    "summary": "LLVM's modified googletest sources."
   },
   {
     "name": "llvm-libs",
@@ -9133,7 +9089,7 @@
   },
   {
     "name": "llvm-test",
-    "summary": "LLVM regression tests"
+    "summary": "LLVM regression tests."
   },
   {
     "name": "llvm-toolset",
@@ -9142,6 +9098,10 @@
   {
     "name": "lm_sensors-sensord",
     "summary": "Daemon that periodically logs sensor readings"
+  },
+  {
+    "name": "lmdb-libs",
+    "summary": "Shared libraries for lmdb"
   },
   {
     "name": "lohit-assamese-fonts",
@@ -9250,10 +9210,6 @@
   {
     "name": "lua-lpeg",
     "summary": "Parsing Expression Grammars for Lua"
-  },
-  {
-    "name": "lua-posix",
-    "summary": "A POSIX library for Lua"
   },
   {
     "name": "lua-socket",
@@ -9492,6 +9448,10 @@
     "summary": "Mesa driver filesystem"
   },
   {
+    "name": "mesa-khr-devel",
+    "summary": "Mesa Khronos development headers"
+  },
+  {
     "name": "mesa-libEGL",
     "summary": "Mesa libEGL runtime libraries"
   },
@@ -9514,6 +9474,10 @@
   {
     "name": "mesa-libglapi",
     "summary": "Mesa shared glapi"
+  },
+  {
+    "name": "mesa-libGLES",
+    "summary": "Mesa libGLES runtime libraries"
   },
   {
     "name": "mesa-libGLU",
@@ -9960,10 +9924,6 @@
     "summary": "Example plugins for nbdkit"
   },
   {
-    "name": "nbdkit-gzip-filter",
-    "summary": "GZip filter for nbdkit"
-  },
-  {
     "name": "nbdkit-gzip-plugin",
     "summary": "GZip file serving plugin for nbdkit"
   },
@@ -9972,8 +9932,24 @@
     "summary": "Virtual Linux disk plugin for nbdkit"
   },
   {
-    "name": "nbdkit-nbd-plugin",
-    "summary": "NBD proxy / forward plugin for nbdkit"
+    "name": "nbdkit-plugin-gzip",
+    "summary": "GZip file serving plugin for nbdkit"
+  },
+  {
+    "name": "nbdkit-plugin-python-common",
+    "summary": "Python 2 and 3 plugin common files for nbdkit"
+  },
+  {
+    "name": "nbdkit-plugin-python3",
+    "summary": "Python 3 plugin for nbdkit"
+  },
+  {
+    "name": "nbdkit-plugin-vddk",
+    "summary": "VMware VDDK plugin for nbdkit"
+  },
+  {
+    "name": "nbdkit-plugin-xz",
+    "summary": "XZ file serving plugin for nbdkit"
   },
   {
     "name": "nbdkit-python-plugin",
@@ -9986,18 +9962,6 @@
   {
     "name": "nbdkit-ssh-plugin",
     "summary": "SSH plugin for nbdkit"
-  },
-  {
-    "name": "nbdkit-tar-filter",
-    "summary": "Tar archive filter for nbdkit"
-  },
-  {
-    "name": "nbdkit-tar-plugin",
-    "summary": "Tar archive plugin for nbdkit"
-  },
-  {
-    "name": "nbdkit-tmpdisk-plugin",
-    "summary": "Remote temporary filesystem disk plugin for nbdkit"
   },
   {
     "name": "nbdkit-vddk-plugin",
@@ -10038,10 +10002,6 @@
   {
     "name": "net-snmp-utils",
     "summary": "Network management utilities using SNMP, from the NET-SNMP project"
-  },
-  {
-    "name": "netavark",
-    "summary": "OCI network stack"
   },
   {
     "name": "netcf",
@@ -10148,10 +10108,6 @@
     "summary": "Declarative network manager API"
   },
   {
-    "name": "nmstate-libs",
-    "summary": "C binding of nmstate"
-  },
-  {
     "name": "nmstate-plugin-ovsdb",
     "summary": "nmstate plugin for OVS database manipulation"
   },
@@ -10256,6 +10212,14 @@
     "summary": "OCI Hook to generate seccomp json files based on EBF syscalls used by container"
   },
   {
+    "name": "oci-systemd-hook",
+    "summary": "OCI systemd hook for docker"
+  },
+  {
+    "name": "oci-umount",
+    "summary": "OCI umount hook for docker"
+  },
+  {
     "name": "ocl-icd",
     "summary": "OpenCL ICD Bindings"
   },
@@ -10322,6 +10286,10 @@
   {
     "name": "opencl-filesystem",
     "summary": "OpenCL filesystem layout"
+  },
+  {
+    "name": "opencv",
+    "summary": "Collection of algorithms for computer vision"
   },
   {
     "name": "opencv-contrib",
@@ -10440,20 +10408,8 @@
     "summary": "The core osbuild-composer binary"
   },
   {
-    "name": "osbuild-composer-dnf-json",
-    "summary": "The dnf-json binary used by osbuild-composer and the workers"
-  },
-  {
     "name": "osbuild-composer-worker",
     "summary": "The worker for osbuild-composer"
-  },
-  {
-    "name": "osbuild-luks2",
-    "summary": "LUKS2 support"
-  },
-  {
-    "name": "osbuild-lvm2",
-    "summary": "LVM2 support"
   },
   {
     "name": "osbuild-ostree",
@@ -10696,6 +10652,10 @@
     "summary": "Performance Co-Pilot (PCP) development headers"
   },
   {
+    "name": "pcp-manager",
+    "summary": "Performance Co-Pilot (PCP) manager daemon"
+  },
+  {
     "name": "pcp-pmda-activemq",
     "summary": "Performance Co-Pilot (PCP) metrics for ActiveMQ"
   },
@@ -10734,10 +10694,6 @@
   {
     "name": "pcp-pmda-dbping",
     "summary": "Performance Co-Pilot (PCP) metrics for Database response times and Availablility"
-  },
-  {
-    "name": "pcp-pmda-denki",
-    "summary": "Performance Co-Pilot (PCP) metrics dealing with electrical power"
   },
   {
     "name": "pcp-pmda-dm",
@@ -10828,10 +10784,6 @@
     "summary": "Performance Co-Pilot (PCP) metrics for Intel MIC cards"
   },
   {
-    "name": "pcp-pmda-mongodb",
-    "summary": "Performance Co-Pilot (PCP) metrics for MongoDB"
-  },
-  {
     "name": "pcp-pmda-mounts",
     "summary": "Performance Co-Pilot (PCP) metrics for filesystem mounts"
   },
@@ -10884,6 +10836,10 @@
     "summary": "Performance Co-Pilot (PCP) metrics for the Oracle database"
   },
   {
+    "name": "pcp-pmda-papi",
+    "summary": "Performance Co-Pilot (PCP) metrics for Performance API and hardware counters"
+  },
+  {
     "name": "pcp-pmda-pdns",
     "summary": "Performance Co-Pilot (PCP) metrics for PowerDNS"
   },
@@ -10902,6 +10858,10 @@
   {
     "name": "pcp-pmda-postgresql",
     "summary": "Performance Co-Pilot (PCP) metrics for PostgreSQL"
+  },
+  {
+    "name": "pcp-pmda-prometheus",
+    "summary": "Performance Co-Pilot (PCP) metrics from Prometheus endpoints"
   },
   {
     "name": "pcp-pmda-rabbitmq",
@@ -11000,6 +10960,30 @@
     "summary": "Performance Co-Pilot (PCP) test suite"
   },
   {
+    "name": "pcp-webapi",
+    "summary": "Performance Co-Pilot (PCP) web API service"
+  },
+  {
+    "name": "pcp-webapp-blinkenlights",
+    "summary": "Blinking lights web application for Performance Co-Pilot (PCP)"
+  },
+  {
+    "name": "pcp-webapp-grafana",
+    "summary": "Grafana web application for Performance Co-Pilot (PCP)"
+  },
+  {
+    "name": "pcp-webapp-graphite",
+    "summary": "Graphite web application for Performance Co-Pilot (PCP)"
+  },
+  {
+    "name": "pcp-webapp-vector",
+    "summary": "Vector web application for Performance Co-Pilot (PCP)"
+  },
+  {
+    "name": "pcp-webjs",
+    "summary": "Performance Co-Pilot (PCP) web applications"
+  },
+  {
     "name": "pcp-zeroconf",
     "summary": "Performance Co-Pilot (PCP) Zeroconf Package"
   },
@@ -11020,8 +11004,16 @@
     "summary": "Practical Extraction and Report Language"
   },
   {
+    "name": "perl-Algorithm-Diff",
+    "summary": "Compute `intelligent' differences between two files/lists"
+  },
+  {
     "name": "perl-App-cpanminus",
     "summary": "Get, unpack, build and install CPAN modules"
+  },
+  {
+    "name": "perl-Archive-Tar",
+    "summary": "A module for Perl manipulation of .tar files"
   },
   {
     "name": "perl-Archive-Zip",
@@ -11074,6 +11066,14 @@
   {
     "name": "perl-Compress-Bzip2",
     "summary": "Interface to Bzip2 compression library"
+  },
+  {
+    "name": "perl-Compress-Raw-Bzip2",
+    "summary": "Low-level interface to bzip2 compression library"
+  },
+  {
+    "name": "perl-Compress-Raw-Zlib",
+    "summary": "Low-level interface to the zlib compression library"
   },
   {
     "name": "perl-Config-Perl-V",
@@ -11356,6 +11356,10 @@
     "summary": "Use modules bundled in inc/ if they are newer than installed ones"
   },
   {
+    "name": "perl-IO-Compress",
+    "summary": "Read and write compressed data"
+  },
+  {
     "name": "perl-IO-HTML",
     "summary": "Open an HTML file with automatic character set detection"
   },
@@ -11378,6 +11382,10 @@
   {
     "name": "perl-IO-String",
     "summary": "Emulate file interface for in-core strings"
+  },
+  {
+    "name": "perl-IO-Zlib",
+    "summary": "Perl IO:: style interface to Compress::Zlib"
   },
   {
     "name": "perl-IPC-Cmd",
@@ -11700,6 +11708,10 @@
     "summary": "Extract delimited text sequences from strings"
   },
   {
+    "name": "perl-Text-Diff",
+    "summary": "Perform diffs on files and record sets"
+  },
+  {
     "name": "perl-Text-Glob",
     "summary": "Perl module to match globbing patterns against text"
   },
@@ -11806,10 +11818,6 @@
   {
     "name": "pesign",
     "summary": "Signing utility for UEFI binaries"
-  },
-  {
-    "name": "pg_repack",
-    "summary": "Reorganize tables in PostgreSQL databases without any locks"
   },
   {
     "name": "php",
@@ -12144,12 +12152,16 @@
     "summary": "Go replacement for libslirp and VPNKit"
   },
   {
+    "name": "podman-manpages",
+    "summary": "Man pages for the podman commands"
+  },
+  {
     "name": "podman-plugins",
     "summary": "Plugins for podman"
   },
   {
     "name": "podman-remote",
-    "summary": "A remote CLI for Podman: A Simple management tool for pods, containers and images"
+    "summary": "(Experimental) Remote client for managing podman containers"
   },
   {
     "name": "podman-tests",
@@ -12296,10 +12308,6 @@
     "summary": "Prometheus JMX Exporter"
   },
   {
-    "name": "prometheus-jmx-exporter-openjdk11",
-    "summary": "OpenJDK 11 binding for prometheus-jmx-exporter"
-  },
-  {
     "name": "protobuf",
     "summary": "Protocol Buffers - Google's data interchange format"
   },
@@ -12396,6 +12404,10 @@
     "summary": "Nose Documentation"
   },
   {
+    "name": "python-podman-api",
+    "summary": "Podman API"
+  },
+  {
     "name": "python-psycopg2-doc",
     "summary": "Documentation for psycopg python PostgreSQL database adapter"
   },
@@ -12490,10 +12502,6 @@
   {
     "name": "python2-docutils",
     "summary": "System for processing plaintext documentation for python2"
-  },
-  {
-    "name": "python2-for-tests",
-    "summary": "The python2-for-tests-command"
   },
   {
     "name": "python2-funcsigs",
@@ -12716,10 +12724,6 @@
     "summary": "A module allowing rndc commands to be sent from Python programs"
   },
   {
-    "name": "python3-bind9.16",
-    "summary": "A module allowing rndc commands to be sent from Python programs"
-  },
-  {
     "name": "python3-blivet",
     "summary": "A python3 package for examining and modifying storage configuration."
   },
@@ -12794,10 +12798,6 @@
   {
     "name": "python3-distro",
     "summary": "Linux Distribution - a Linux OS platform information API"
-  },
-  {
-    "name": "python3-dnf-plugin-modulesync",
-    "summary": "Download module metadata and packages and create repository"
   },
   {
     "name": "python3-dnf-plugin-spacewalk",
@@ -13304,6 +13304,10 @@
     "summary": "A Python3 library for creating text UI"
   },
   {
+    "name": "python3-sip",
+    "summary": "SIP - Python 3/C++ Bindings Generator"
+  },
+  {
     "name": "python3-spacewalk-abrt",
     "summary": "ABRT plug-in for rhn-check"
   },
@@ -13536,10 +13540,6 @@
     "summary": "HTTP library, written in Python, for human beings"
   },
   {
-    "name": "python38-resolvelib",
-    "summary": "Resolve abstract dependencies into concrete ones"
-  },
-  {
     "name": "python38-rpm-macros",
     "summary": "RPM macros for building RPMs with Python 3.8"
   },
@@ -13650,10 +13650,6 @@
   {
     "name": "python39-psycopg2",
     "summary": "A PostgreSQL database adapter for Python 3"
-  },
-  {
-    "name": "python39-psycopg2-debug",
-    "summary": "A PostgreSQL database adapter for Python 3 (debug build)"
   },
   {
     "name": "python39-psycopg2-doc",
@@ -13774,22 +13770,6 @@
   {
     "name": "qemu-kvm-core",
     "summary": "qemu-kvm core components"
-  },
-  {
-    "name": "qemu-kvm-docs",
-    "summary": "qemu-kvm documentation"
-  },
-  {
-    "name": "qemu-kvm-hw-usbredir",
-    "summary": "QEMU usbredir support"
-  },
-  {
-    "name": "qemu-kvm-ui-opengl",
-    "summary": "QEMU opengl support"
-  },
-  {
-    "name": "qemu-kvm-ui-spice",
-    "summary": "QEMU spice support"
   },
   {
     "name": "qgnomeplatform",
@@ -14156,6 +14136,14 @@
     "summary": "Utility for parsing SMBIOS information and configuring canonical BMC access"
   },
   {
+    "name": "redhat-backgrounds",
+    "summary": "Red Hat-related desktop backgrounds"
+  },
+  {
+    "name": "redhat-logos-ipa",
+    "summary": "Red Hat-related icons and pictures used by ipa"
+  },
+  {
     "name": "redhat-lsb",
     "summary": "Implementation of Linux Standard Base specification"
   },
@@ -14224,6 +14212,14 @@
     "summary": "A library for access to RESTful web services"
   },
   {
+    "name": "rhc",
+    "summary": "Message dispatch agent for cloud-connected systems"
+  },
+  {
+    "name": "rhc-worker-playbook",
+    "summary": "Red Hat connect worker for launching Ansible Runner"
+  },
+  {
     "name": "rhel-system-roles",
     "summary": "Set of interfaces for unified system management"
   },
@@ -14286,10 +14282,6 @@
   {
     "name": "rhythmbox",
     "summary": "Music Management Application"
-  },
-  {
-    "name": "rig",
-    "summary": "Monitor a system for events and trigger specific actions"
   },
   {
     "name": "rls",
@@ -14370,10 +14362,6 @@
   {
     "name": "rsyslog-mmaudit",
     "summary": "Message modification module supporting Linux audit format"
-  },
-  {
-    "name": "rsyslog-mmfields",
-    "summary": "Fields extraction module"
   },
   {
     "name": "rsyslog-mmjsonparse",
@@ -14608,10 +14596,6 @@
     "summary": "Standard library for Rust"
   },
   {
-    "name": "rust-std-static-wasm32-wasi",
-    "summary": "Standard library for Rust"
-  },
-  {
     "name": "rust-toolset",
     "summary": "Package that installs rust-toolset"
   },
@@ -14626,6 +14610,10 @@
   {
     "name": "sac",
     "summary": "Java standard interface for CSS parser"
+  },
+  {
+    "name": "samba-test",
+    "summary": "Testing tools for Samba servers and clients"
   },
   {
     "name": "samba-vfs-iouring",
@@ -14718,6 +14706,10 @@
   {
     "name": "sblim-gather",
     "summary": "SBLIM Gatherer"
+  },
+  {
+    "name": "sblim-gather-provider",
+    "summary": "SBLIM Gatherer Provider"
   },
   {
     "name": "sblim-indication_helper",
@@ -14889,7 +14881,7 @@
   },
   {
     "name": "skopeo",
-    "summary": "Inspect container images and repositories on registries"
+    "summary": "Inspect Docker images and repositories on registries"
   },
   {
     "name": "skopeo-tests",
@@ -15048,6 +15040,10 @@
     "summary": "A QXL display-only driver for Windows 10 virtual machines."
   },
   {
+    "name": "spice-qxl-xddm",
+    "summary": "A QXL driver for Windows 7 virtual machines"
+  },
+  {
     "name": "spice-server",
     "summary": "Implements the server side of the SPICE protocol"
   },
@@ -15088,10 +15084,6 @@
     "summary": "Simple SSL certificate generator"
   },
   {
-    "name": "sshpass",
-    "summary": "Non-interactive SSH authentication utility"
-  },
-  {
     "name": "stalld",
     "summary": "Daemon that finds starving tasks and gives them a temporary boost"
   },
@@ -15122,10 +15114,6 @@
   {
     "name": "stratisd-dracut",
     "summary": "Dracut modules for use with stratisd"
-  },
-  {
-    "name": "stress-ng",
-    "summary": "Stress test a computer system in various ways"
   },
   {
     "name": "subscription-manager-initial-setup-addon",
@@ -15198,26 +15186,6 @@
   {
     "name": "switcheroo-control",
     "summary": "D-Bus service to check the availability of dual-GPU"
-  },
-  {
-    "name": "swtpm",
-    "summary": "TPM Emulator"
-  },
-  {
-    "name": "swtpm-devel",
-    "summary": "Include files for the TPM emulator's CUSE interface for usage by clients"
-  },
-  {
-    "name": "swtpm-libs",
-    "summary": "Private libraries for swtpm TPM emulators"
-  },
-  {
-    "name": "swtpm-tools",
-    "summary": "Tools for the TPM emulator"
-  },
-  {
-    "name": "swtpm-tools-pkcs11",
-    "summary": "Tools for creating a local CA based on a TPM pkcs11 device"
   },
   {
     "name": "sysfsutils",
@@ -16716,6 +16684,10 @@
     "summary": "A TigerVNC server"
   },
   {
+    "name": "tigervnc-server-applet",
+    "summary": "Java TigerVNC viewer applet for TigerVNC server"
+  },
+  {
     "name": "tigervnc-server-minimal",
     "summary": "A minimal installation of TigerVNC server"
   },
@@ -16757,7 +16729,7 @@
   },
   {
     "name": "toolbox",
-    "summary": "Unprivileged development environment"
+    "summary": "Script to launch privileged container with podman"
   },
   {
     "name": "toolbox-tests",
@@ -17072,18 +17044,6 @@
     "summary": "Convert a virtual machine to run on KVM"
   },
   {
-    "name": "virt-v2v-bash-completion",
-    "summary": "Bash tab-completion for virt-v2v"
-  },
-  {
-    "name": "virt-v2v-man-pages-ja",
-    "summary": "Japanese (ja) man pages for virt-v2v"
-  },
-  {
-    "name": "virt-v2v-man-pages-uk",
-    "summary": "Ukrainian (uk) man pages for virt-v2v"
-  },
-  {
     "name": "virt-viewer",
     "summary": "Virtual Machine Viewer"
   },
@@ -17169,7 +17129,7 @@
   },
   {
     "name": "webkit2gtk3",
-    "summary": "GTK Web content engine library"
+    "summary": "GTK+ Web content engine library"
   },
   {
     "name": "webkit2gtk3-devel",
@@ -17184,12 +17144,12 @@
     "summary": "Development files for JavaScript engine from webkit2gtk3"
   },
   {
-    "name": "webrtc-audio-processing",
-    "summary": "Library for echo cancellation"
+    "name": "webkit2gtk3-plugin-process-gtk2",
+    "summary": "GTK+ 2 based NPAPI plugins support for webkit2gtk3"
   },
   {
-    "name": "weldr-client",
-    "summary": "Command line utility to control osbuild-composer"
+    "name": "webrtc-audio-processing",
+    "summary": "Library for echo cancellation"
   },
   {
     "name": "wget",
