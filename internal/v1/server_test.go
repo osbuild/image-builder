@@ -644,7 +644,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 		},
 	}
 	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-	require.Equal(t, http.StatusTeapot, response.StatusCode)
+	require.Equal(t, http.StatusInternalServerError, response.StatusCode)
 	require.Contains(t, body, "Failed posting compose request to osbuild-composer")
 }
 
