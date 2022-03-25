@@ -243,13 +243,20 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 404 {
+	if resp.StatusCode == http.StatusNotFound {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}
 		// Composes can get deleted in composer, usually when the image is expired
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
+	} else if resp.StatusCode != http.StatusOK {
+		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			_ = httpError.SetInternal(fmt.Errorf("%s", body))
+		}
+		return httpError
 	}
 
 	var cloudStat composer.ComposeStatus
@@ -296,12 +303,19 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error 
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 404 {
+	if resp.StatusCode == http.StatusNotFound {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}
 		return echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("%s", body))
+	} else if resp.StatusCode != http.StatusOK {
+		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			_ = httpError.SetInternal(fmt.Errorf("%s", body))
+		}
+		return httpError
 	}
 
 	var cloudStat composer.ComposeMetadata
@@ -486,11 +500,12 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
+		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed posting compose request to osbuild-composer")
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return echo.NewHTTPError(resp.StatusCode, "Failed posting compose request to osbuild-composer")
+			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 		}
-		return echo.NewHTTPError(resp.StatusCode, fmt.Sprintf("Failed posting compose request to osbuild-composer: %s", body))
+		return httpError
 	}
 
 	var composeResult composer.ComposeId
