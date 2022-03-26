@@ -200,14 +200,14 @@ func getIdentityHeader(ctx echo.Context) (*identity.XRHID, error) {
 	return &idHeader, nil
 }
 
-// return an error if the user does not have the composeId associated to its AccountId in the DB, nil otherwise
+// return an error if the user does not have the composeId associated to its OrgID in the DB, nil otherwise
 func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId string) error {
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = h.server.db.GetCompose(composeId, idHeader.Identity.AccountNumber)
+	_, err = h.server.db.GetCompose(composeId, idHeader.Identity.OrgID)
 	if err != nil {
 		if errors.As(err, &db.ComposeNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -358,7 +358,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	}
 
 	// composes in the last 14 days
-	composes, count, err := h.server.db.GetComposes(idHeader.Identity.AccountNumber, (time.Hour * 24 * 14), limit, offset)
+	composes, count, err := h.server.db.GetComposes(idHeader.Identity.OrgID, (time.Hour * 24 * 14), limit, offset)
 	if err != nil {
 		return err
 	}
@@ -420,7 +420,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	quotaOk, err := common.CheckQuota(idHeader.Identity.AccountNumber, h.server.db, h.server.quotaFile)
+	quotaOk, err := common.CheckQuota(idHeader.Identity.OrgID, h.server.db, h.server.quotaFile)
 	if err != nil {
 		return err
 	}

@@ -95,24 +95,24 @@ func (d *dB) InsertCompose(jobId, accountNumber, orgId string, imageName *string
 		CreatedAt: time.Now(),
 		ImageName: imageName,
 	}
-	if d.accountOwernship[accountNumber] == nil {
-		d.accountOwernship[accountNumber] = make([]db.ComposeEntry, 0)
+	if d.accountOwernship[orgId] == nil {
+		d.accountOwernship[orgId] = make([]db.ComposeEntry, 0)
 	}
-	d.accountOwernship[accountNumber] = append(d.accountOwernship[accountNumber], dbEntry)
+	d.accountOwernship[orgId] = append(d.accountOwernship[orgId], dbEntry)
 	return nil
 }
 
-func (d *dB) GetComposes(accountNumber string, since time.Duration, limit, offset int) ([]db.ComposeEntry, int, error) {
-	if d.accountOwernship[accountNumber] != nil {
-		return d.accountOwernship[accountNumber], len(d.accountOwernship[accountNumber]), nil
+func (d *dB) GetComposes(orgId string, since time.Duration, limit, offset int) ([]db.ComposeEntry, int, error) {
+	if d.accountOwernship[orgId] != nil {
+		return d.accountOwernship[orgId], len(d.accountOwernship[orgId]), nil
 	} else {
 		return make([]db.ComposeEntry, 0), 0, nil
 	}
 }
 
-func (d *dB) GetCompose(jobId string, accountNumber string) (*db.ComposeEntry, error) {
-	if d.accountOwernship[accountNumber] != nil {
-		for _, composeEntry := range d.accountOwernship[accountNumber] {
+func (d *dB) GetCompose(jobId string, orgId string) (*db.ComposeEntry, error) {
+	if d.accountOwernship[orgId] != nil {
+		for _, composeEntry := range d.accountOwernship[orgId] {
 			if composeEntry.Id.String() == jobId {
 				return &composeEntry, nil
 			}
@@ -121,7 +121,7 @@ func (d *dB) GetCompose(jobId string, accountNumber string) (*db.ComposeEntry, e
 	return nil, db.ComposeNotFoundError
 }
 
-func (d *dB) CountComposesSince(accountNumber string, duration time.Duration) (int, error) {
-	_, count, err := d.GetComposes(accountNumber, duration, 100, 0)
+func (d *dB) CountComposesSince(orgId string, duration time.Duration) (int, error) {
+	_, count, err := d.GetComposes(orgId, duration, 100, 0)
 	return count, err
 }
