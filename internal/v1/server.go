@@ -2,7 +2,6 @@
 package v1
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +23,7 @@ import (
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redhatinsights/identity"
 	"github.com/sirupsen/logrus"
 )
 
@@ -56,15 +56,6 @@ type AzureConfig struct {
 
 type Handlers struct {
 	server *Server
-}
-
-type IdentityHeader struct {
-	Identity struct {
-		AccountNumber string `json:"account_number"`
-		Internal      struct {
-			OrgId string `json:"org_id"`
-		} `json:"internal"`
-	} `json:"identity"`
 }
 
 func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.ComposerClient, dbase db.DB,
@@ -105,8 +96,8 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.Compo
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), s.verifyIdentityHeader, s.ValidateRequest, common.PrometheusMW), &h)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), s.verifyIdentityHeader, s.ValidateRequest, common.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), s.ValidateRequest, common.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), s.ValidateRequest, common.PrometheusMW), &h)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
@@ -200,14 +191,10 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
 }
 
 // return the Identity Header if there is a valid one in the request
-func (h *Handlers) getIdentityHeader(ctx echo.Context) (*IdentityHeader, error) {
-	ih := ctx.Get("IdentityHeader")
-	if ih == nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
-	}
-	idHeader, ok := ih.(IdentityHeader)
+func (h *Handlers) getIdentityHeader(ctx echo.Context) (*identity.XRHID, error) {
+	idHeader, ok := identity.Get(ctx.Request().Context())
 	if !ok {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Identity Header invalid in request handler")
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
 	}
 
 	return &idHeader, nil
@@ -515,7 +502,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgId, composeRequest.ImageName, rawCR)
+	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
 	if err != nil {
 		h.server.logger.Error("Error inserting id into db", err)
 		return err
@@ -772,36 +759,6 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	}
 
 	return nil
-}
-
-// clouddot guidelines requires 404 instead of 403 when unauthorized
-func (s *Server) verifyIdentityHeader(nextHandler echo.HandlerFunc) echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		request := ctx.Request()
-
-		idHeaderB64 := request.Header["X-Rh-Identity"]
-		if len(idHeaderB64) != 1 {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header is not present")
-		}
-
-		b64Result, err := base64.StdEncoding.DecodeString(idHeaderB64[0])
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
-		}
-
-		var idHeader IdentityHeader
-		err = json.Unmarshal([]byte(strings.TrimSuffix(fmt.Sprintf("%s", b64Result), "\n")), &idHeader)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "Auth header has incorrect format")
-		}
-
-		if idHeader.Identity.AccountNumber == "" {
-			return echo.NewHTTPError(http.StatusNotFound, "The Account Number is missing in the Identity Header")
-		}
-		ctx.Set("IdentityHeader", idHeader)
-
-		return nextHandler(ctx)
-	}
 }
 
 func (s *Server) ValidateRequest(nextHandler echo.HandlerFunc) echo.HandlerFunc {
