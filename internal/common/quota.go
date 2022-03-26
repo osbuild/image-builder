@@ -41,11 +41,11 @@ type Quota struct {
 	SlidingWindow time.Duration `json:"slidingWindow"`
 }
 
-// Returns true if the number of requests made by accountNumber during a sliding window is below a threshold.
+// Returns true if the number of requests made by OrgID during a sliding window is below a threshold.
 // The duration of the sliding window and the value of the threshold must be set in a file pointed by the QUOTA_FILE
 // environment variable.
 // If the variable is unset (or an empty string), the check is disabled and always returns true.
-func CheckQuota(accountNumber string, dB db.DB, quotaFile string) (bool, error) {
+func CheckQuota(orgID string, dB db.DB, quotaFile string) (bool, error) {
 	if quotaFile == "" {
 		return true, nil
 	}
@@ -66,7 +66,7 @@ func CheckQuota(accountNumber string, dB db.DB, quotaFile string) (bool, error) 
 		if err != nil {
 			return false, fmt.Errorf("Failed to unmarshal quota file %q: %s", quotaFile, err.Error())
 		}
-		if quota, ok := quotas[accountNumber]; ok {
+		if quota, ok := quotas[orgID]; ok {
 			authorizedRequests = quota.Quota
 			slidingWindow = quota.SlidingWindow
 		} else if quota, ok := quotas["default"]; ok {
@@ -78,7 +78,7 @@ func CheckQuota(accountNumber string, dB db.DB, quotaFile string) (bool, error) 
 	}
 
 	// read user created requests
-	count, err := dB.CountComposesSince(accountNumber, slidingWindow)
+	count, err := dB.CountComposesSince(orgID, slidingWindow)
 	if err != nil {
 		return false, err
 	}

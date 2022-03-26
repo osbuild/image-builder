@@ -167,14 +167,14 @@ objects:
             - name: DISTRIBUTIONS_DIR
               value: "${DISTRIBUTIONS_DIR}"
             - name: QUOTA_FILE
-              value: "/app/quotas/accounts_quotas.json"
+              value: "/app/quotas/org_quotas.json"
         volumes:
           - name: config-volume
             configMap:
               name: image-builder-crc-quotas
               items:
               - key: quotas.json
-                path: accounts_quotas.json
+                path: org_quotas.json
         initContainers:
         - name: image-builder-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"

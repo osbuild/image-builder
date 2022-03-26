@@ -468,7 +468,7 @@ func TestGetComposes(t *testing.T) {
 	err = dbase.InsertCompose(UUIDTest3, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	composeEntry, err := dbase.GetCompose(UUIDTest, "500000")
+	composeEntry, err := dbase.GetCompose(UUIDTest, "000000")
 	require.NoError(t, err)
 
 	db_srv, tokenSrv := startServerWithCustomDB(t, "", dbase)
