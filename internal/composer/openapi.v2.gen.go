@@ -314,9 +314,11 @@ type PackageMetadata struct {
 
 // Repository defines model for Repository.
 type Repository struct {
-	Baseurl    *string `json:"baseurl,omitempty"`
-	CheckGpg   *bool   `json:"check_gpg,omitempty"`
-	GpgKey     *string `json:"gpg_key,omitempty"`
+	Baseurl  *string `json:"baseurl,omitempty"`
+	CheckGpg *bool   `json:"check_gpg,omitempty"`
+
+	// GPG key used to sign packages in this repository.
+	Gpgkey     *string `json:"gpgkey,omitempty"`
 	IgnoreSsl  *bool   `json:"ignore_ssl,omitempty"`
 	Metalink   *string `json:"metalink,omitempty"`
 	Mirrorlist *string `json:"mirrorlist,omitempty"`
