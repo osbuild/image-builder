@@ -130,8 +130,8 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 
 	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", nil)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Auth header is not present")
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "missing x-rh-identity header")
 	})
 
 	t.Run("GetVersion", func(t *testing.T) {
@@ -216,23 +216,31 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	t.Run("BogusAuthString", func(t *testing.T) {
 		auth := "notbase64"
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Auth header has incorrect format")
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "unable to b64 decode x-rh-identity header")
 	})
 
 	t.Run("BogusBase64AuthString", func(t *testing.T) {
 		auth := "dGhpcyBpcyBkZWZpbml0ZWx5IG5vdCBqc29uCg=="
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "Auth header has incorrect format")
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "does not contain valid JSON")
 	})
 
 	t.Run("EmptyAccountNumber", func(t *testing.T) {
 		// AccoundNumber equals ""
 		auth := tutils.GetCompleteBas64Header("", "000000")
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 404, response.StatusCode)
-		require.Contains(t, body, "The Account Number is missing in the Identity Header")
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "invalid or missing account number")
+	})
+
+	t.Run("EmptyOrgID", func(t *testing.T) {
+		// OrgID equals ""
+		auth := tutils.GetCompleteBas64Header("000000", "")
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "invalid or missing org_id")
 	})
 
 	t.Run("StatusCheck", func(t *testing.T) {
