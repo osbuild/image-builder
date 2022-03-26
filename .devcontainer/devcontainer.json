@@ -1,0 +1,11 @@
+{
+  "name": "image-builder",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "extensions": [
+    "golang.Go",
+    "GitHub.vscode-pull-request-github"
+  ]
+}
