@@ -96,8 +96,8 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.Compo
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), s.ValidateRequest, common.PrometheusMW), &h)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), s.ValidateRequest, common.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), noAssociateAccounts, s.ValidateRequest, common.PrometheusMW), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), noAssociateAccounts, s.ValidateRequest, common.PrometheusMW), &h)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
@@ -191,7 +191,7 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
 }
 
 // return the Identity Header if there is a valid one in the request
-func (h *Handlers) getIdentityHeader(ctx echo.Context) (*identity.XRHID, error) {
+func getIdentityHeader(ctx echo.Context) (*identity.XRHID, error) {
 	idHeader, ok := identity.Get(ctx.Request().Context())
 	if !ok {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
@@ -202,7 +202,7 @@ func (h *Handlers) getIdentityHeader(ctx echo.Context) (*identity.XRHID, error) 
 
 // return an error if the user does not have the composeId associated to its AccountId in the DB, nil otherwise
 func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId string) error {
-	idHeader, err := h.getIdentityHeader(ctx)
+	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
 		return err
 	}
@@ -340,7 +340,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 		return err
 	}
 
-	idHeader, err := h.getIdentityHeader(ctx)
+	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
 		return err
 	}
@@ -415,7 +415,7 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 }
 
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
-	idHeader, err := h.getIdentityHeader(ctx)
+	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
 		return err
 	}
@@ -825,5 +825,24 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 		if err != nil {
 			s.logger.Errorln(err)
 		}
+	}
+}
+
+func noAssociateAccounts(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		idh, err := getIdentityHeader(ctx)
+		if err != nil {
+			return err
+		}
+
+		if idh.Identity.Type == "Associate" {
+			// Associate account types are not guaranteed to have an associated org_id, these accounts
+			// should not be able to access image-builder as long as we don't explicitly enable turnpike
+			// access, or another such service forwards them to us. Explicitly reject such accounts for
+			// now.
+			return echo.NewHTTPError(http.StatusBadRequest, "unsupported account type: 'Associate'")
+		}
+
+		return nextHandler(ctx)
 	}
 }
