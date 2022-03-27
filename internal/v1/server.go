@@ -120,7 +120,7 @@ func (h *Handlers) GetVersion(ctx echo.Context) error {
 
 func (h *Handlers) GetReadiness(ctx echo.Context) error {
 	// make sure distributions are available
-	distributions, err := distribution.AvailableDistributions(h.server.distsDir)
+	distributions, err := distribution.AvailableDistributions(h.server.distsDir, h.server.isEntitled(ctx))
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
-	ds, err := distribution.AvailableDistributions(h.server.distsDir)
+	ds, err := distribution.AvailableDistributions(h.server.distsDir, h.server.isEntitled(ctx))
 	if err != nil {
 		return err
 	}
@@ -198,6 +198,27 @@ func getIdentityHeader(ctx echo.Context) (*identity.XRHID, error) {
 	}
 
 	return &idHeader, nil
+}
+
+// return whether or not the calling context is entitled to consume RHEL content
+func (s *Server) isEntitled(ctx echo.Context) bool {
+	idh, err := getIdentityHeader(ctx)
+	if err != nil {
+		return false
+	}
+
+	entitled, ok := idh.Entitlements["rhel"]
+	// The entitlement should really be present in the identity header, just in case use account
+	// number as a fallback
+	if !ok {
+		// the user's org does not have an associated EBS account number, these
+		// are associated when a billing relationship exists, which is a decent
+		// proxy for RHEL entitlements
+		s.logger.Error("RHEL entitlement not present in identity header")
+		return idh.Identity.AccountNumber == ""
+
+	}
+	return entitled.IsEntitled
 }
 
 // return an error if the user does not have the composeId associated to its OrgID in the DB, nil otherwise
@@ -439,7 +460,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 
 	var repositories []composer.Repository
-	rs, err := distribution.RepositoriesForArch(h.server.distsDir, string(composeRequest.Distribution), composeRequest.ImageRequests[0].Architecture)
+	rs, err := distribution.RepositoriesForArch(h.server.distsDir, string(composeRequest.Distribution), composeRequest.ImageRequests[0].Architecture, h.server.isEntitled(ctx))
 	if err != nil {
 		return err
 	}
@@ -675,7 +696,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 }
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
-	pkgs, err := distribution.FindPackages(h.server.distsDir, string(params.Distribution), params.Architecture, params.Search)
+	pkgs, err := distribution.FindPackages(h.server.distsDir, string(params.Distribution), params.Architecture, params.Search, h.server.isEntitled(ctx))
 	if err != nil {
 		return err
 	}

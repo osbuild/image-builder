@@ -50,6 +50,23 @@ type PackagesFile struct {
 	Data []Package `json:"data"`
 }
 
+// entitlement is required if access to the repository is gated by
+// Red Hat Subscription Manager
+func (repo Repository) NeedsEntitlement() bool {
+	return repo.Rhsm
+}
+
+// entitlement is required for a distro if it is for any of its
+// repositories
+func (dist DistributionFile) NeedsEntitlement() bool {
+	for _, repo := range dist.ArchX86.Repositories {
+		if repo.NeedsEntitlement() {
+			return true
+		}
+	}
+	return false
+}
+
 func allDistributions(distsDir string) ([]string, error) {
 	files, err := ioutil.ReadDir(distsDir)
 	if err != nil {
@@ -98,7 +115,7 @@ func ReadDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 	return
 }
 
-func AvailableDistributions(distsDir string) (Distributions, error) {
+func AvailableDistributions(distsDir string, is_entitled bool) (Distributions, error) {
 	allDistros, err := allDistributions(distsDir)
 	if err != nil {
 		return nil, err
@@ -110,15 +127,22 @@ func AvailableDistributions(distsDir string) (Distributions, error) {
 		if err != nil {
 			return nil, err
 		}
+		if !is_entitled && df.NeedsEntitlement() {
+			continue
+		}
 		distros = append(distros, df.Distribution)
 	}
 	return distros, nil
 }
 
-func RepositoriesForArch(distsDir, distro, arch string) ([]Repository, error) {
+func RepositoriesForArch(distsDir, distro, arch string, is_entitled bool) ([]Repository, error) {
 	distribution, err := ReadDistribution(distsDir, distro)
 	if err != nil {
 		return nil, err
+	}
+
+	if !is_entitled && distribution.NeedsEntitlement() {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, "users organization is not entitled for distribution")
 	}
 
 	switch arch {
@@ -129,8 +153,8 @@ func RepositoriesForArch(distsDir, distro, arch string) ([]Repository, error) {
 	}
 }
 
-func FindPackages(distsDir, distro, arch, search string) ([]Package, error) {
-	repos, err := RepositoriesForArch(distsDir, distro, arch)
+func FindPackages(distsDir, distro, arch, search string, is_entitled bool) ([]Package, error) {
+	repos, err := RepositoriesForArch(distsDir, distro, arch, is_entitled)
 	if err != nil {
 		return nil, err
 	}
