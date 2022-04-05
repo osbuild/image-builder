@@ -380,6 +380,7 @@ components:
       enum:
         - rhel-84
         - rhel-85
+        - rhel-86
         - rhel-90
         - centos-8
         - centos-9
