@@ -1,0 +1,33 @@
+{
+  "module_platform_id": "platform:el8",
+  "distribution": {
+    "name": "rhel-86",
+    "description": "Red Hat Enterprise Linux (RHEL) 8 Beta"
+  },
+  "x86_64": {
+    "image_types": [ "aws", "gcp", "azure", "edge-commit", "edge-installer", "edge-container", "guest-image", "image-installer", "vsphere" ],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "https://cdn.redhat.com/content/beta/rhel8/8/x86_64/baseos/os",
+      "rhsm": true
+    }, {
+      "id": "appstream",
+      "baseurl": "https://cdn.redhat.com/content/beta/rhel8/8/x86_64/appstream/os",
+      "rhsm": true
+    }, {
+      "id": "ansible",
+      "baseurl": "https://cdn.redhat.com/content/dist/layered/rhel8/x86_64/ansible/2/os",
+      "rhsm": true
+    }, {
+      "id": "google-compute-engine",
+      "baseurl": "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
+      "rhsm": false,
+      "image_type_tags": ["gcp"]
+    }, {
+      "id": "google-cloud-sdk",
+      "baseurl": "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
+      "rhsm": false,
+      "image_type_tags": ["gcp"]
+    }]
+  }
+}
