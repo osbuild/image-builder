@@ -51,7 +51,7 @@ func TestAvailableDistributions(t *testing.T) {
 	result, err := AvailableDistributions("../../distributions")
 	require.NoError(t, err)
 	for _, distro := range result {
-		require.Contains(t, []string{"rhel-84", "rhel-85", "centos-8", "centos-9"}, distro.Name)
+		require.Contains(t, []string{"rhel-84", "rhel-85", "rhel-90", "centos-8", "centos-9"}, distro.Name)
 	}
 }
 
