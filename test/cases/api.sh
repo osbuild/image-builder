@@ -252,7 +252,7 @@ function createReqFileAWS() {
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
-      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2:-}",
       "base-url": "https://cdn.redhat.com/",
       "server-url": "subscription.rhsm.redhat.com",
       "insights": true
@@ -312,7 +312,7 @@ function createReqFileGCP() {
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
-      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2:-}",
       "base-url": "https://cdn.redhat.com/",
       "server-url": "subscription.rhsm.redhat.com",
       "insights": true
@@ -387,7 +387,7 @@ function createReqFileAzure() {
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
-      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "activation-key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2:-}",
       "base-url": "https://cdn.redhat.com/",
       "server-url": "subscription.rhsm.redhat.com",
       "insights": true
