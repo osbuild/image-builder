@@ -12,7 +12,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
-      SCHUTZBOT_SSH_KEY: ${{ secrets.SCHUTZBOT_SSH_KEY }}
+      IMAGEBUILDER_BOT_GITLAB_SSH_KEY: ${{ secrets.IMAGEBUILDER_BOT_GITLAB_SSH_KEY }}
       SKIP_CI: ${{ (github.event.pull_request.draft == true || contains(github.event.pull_request.labels.*.name, 'WIP')) && !contains(github.event.pull_request.labels.*.name, 'WIP+test') }}
     steps:
       - name: Report status
@@ -54,10 +54,10 @@ jobs:
       - name: Push to gitlab
         run: |
           mkdir -p ~/.ssh
-          echo "${SCHUTZBOT_SSH_KEY}" > ~/.ssh/id_rsa
+          echo "${IMAGEBUILDER_BOT_GITLAB_SSH_KEY}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
           touch ~/.ssh/known_hosts
           ssh-keyscan -t rsa gitlab.com >> ~/.ssh/known_hosts
-          git remote add ci git@gitlab.com:osbuild/ci/image-builder.git
+          git remote add ci git@gitlab.com:redhat/services/products/image-builder/ci/image-builder.git
           [[ "${SKIP_CI}" == true ]] && PUSH_OPTION='-o ci.variable="SKIP_CI=true"' || PUSH_OPTION=""
           git push -f ${PUSH_OPTION} ci
