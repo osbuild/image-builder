@@ -447,10 +447,6 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	if len(composeRequest.ImageRequests) != 1 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one image request should be included")
-	}
-
 	if (composeRequest.ImageRequests[0].UploadRequest == UploadRequest{}) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
