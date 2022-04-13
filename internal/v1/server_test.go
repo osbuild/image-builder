@@ -502,7 +502,7 @@ func TestComposeImage(t *testing.T) {
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, "Exactly one image request should be included")
+		require.Contains(t, body, `Error at \"/image_requests\": minimum number of items is 1`)
 	})
 
 	t.Run("ErrorsForTwoImageRequests", func(t *testing.T) {
@@ -534,7 +534,7 @@ func TestComposeImage(t *testing.T) {
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, "Exactly one image request should be included")
+		require.Contains(t, body, `Error at \"/image_requests\": maximum number of items is 1`)
 	})
 
 	t.Run("ErrorsForZeroUploadRequests", func(t *testing.T) {
