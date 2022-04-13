@@ -6,12 +6,12 @@ set -eux
 curl https://raw.githubusercontent.com/osbuild/osbuild-composer/main/internal/cloudapi/v2/openapi.v2.yml \
      -o internal/composer/openapi.v2.yml
 
-GO_VERSION=1.16.7
+GO_VERSION=1.16.15
 GO_BINARY=$(go env GOPATH)/bin/go$GO_VERSION
 
 # this is the official way to get a different version of golang
-# see https://golang.org/doc/install#extra_versions
-go get golang.org/dl/go$GO_VERSION
+# see https://go.dev/doc/manage-install
+go install golang.org/dl/go$GO_VERSION@latest
 $GO_BINARY download
 
 
