@@ -166,7 +166,7 @@ type ErrorList struct {
 
 // Filesystem defines model for Filesystem.
 type Filesystem struct {
-	MinSize    int    `json:"min_size"`
+	MinSize    uint64 `json:"min_size"`
 	Mountpoint string `json:"mountpoint"`
 }
 
