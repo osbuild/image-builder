@@ -587,8 +587,6 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		var composerImageType composer.ImageTypes
 		switch it {
 		case ImageTypes_gcp:
-			fallthrough
-		case ImageTypes_vhd:
 			composerImageType = composer.ImageTypes_gcp
 		default:
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")

@@ -296,7 +296,7 @@ function createReqFileGCP() {
   "image_requests": [
     {
       "architecture": "$ARCH",
-      "image_type": "vhd",
+      "image_type": "gcp",
       "upload_request": {
         "type": "gcp",
         "options": {
