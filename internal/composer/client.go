@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ComposerClient struct {
@@ -174,6 +176,8 @@ func (cc *ComposerClient) Compose(compose ComposeRequest) (*http.Response, error
 	if err != nil {
 		return nil, err
 	}
+
+	logrus.Warning("COMPOSER REQ '%s'", string(buf))
 
 	return cc.request("POST", fmt.Sprintf("%s/compose", cc.composerURL), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf))
 }

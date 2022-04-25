@@ -53,8 +53,8 @@ Test EL8:
   parallel:
     matrix:
       - PROVIDER:
-          - aws
-          - azure
+          # - aws
+          # - azure
           - gcp
         RUNNER:
           - aws/rhel-8.5-ga-x86_64
