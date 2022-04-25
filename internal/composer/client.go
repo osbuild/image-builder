@@ -177,7 +177,7 @@ func (cc *ComposerClient) Compose(compose ComposeRequest) (*http.Response, error
 		return nil, err
 	}
 
-	logrus.Warning("COMPOSER REQ '%s'", string(buf))
+	logrus.Warning("COMPOSER REQ", string(buf))
 
 	return cc.request("POST", fmt.Sprintf("%s/compose", cc.composerURL), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf))
 }
