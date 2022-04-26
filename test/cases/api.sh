@@ -49,7 +49,7 @@ function cleanupGCP() {
 
   if [ -n "$GCP_CMD" ]; then
     set +e
-    $GCP_CMD compute instances delete --zone="$GCP_REGION-a" "$GCP_INSTANCE_NAME"
+    $GCP_CMD compute instances delete --zone="$GCP_ZONE" "$GCP_INSTANCE_NAME"
     set -e
   fi
 }
@@ -533,26 +533,26 @@ function Test_verifyComposeResultGCP() {
   # Create SSH keys to use
   GCP_SSH_KEY="$WORKDIR/id_google_compute_engine"
   ssh-keygen -t rsa -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
-  GCP_SSH_METADATA_FILE="$WORKDIR/gcp-ssh-keys-metadata"
-
-  echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
 
   # create the instance
   # resource ID can have max 62 characters, the $GCP_TEST_ID_HASH contains 56 characters
   GCP_INSTANCE_NAME="vm-$(uuidgen)"
 
+  GCP_ZONE=$($GCP_CMD compute zones list --filter="region=$GCP_REGION" | jq -r ' .[] | select(.status == "UP") | .name' | shuf -n1)
+
   $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
-    --zone="$GCP_REGION-a" \
+    --zone="$GCP_ZONE" \
     --image-project="$GCP_IMAGE_BUILDER_PROJECT" \
     --image="$GCP_IMAGE_NAME" \
-    --metadata-from-file=ssh-keys="$GCP_SSH_METADATA_FILE"
-  HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_REGION-a" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+    --labels=gitlab-ci-test=true
+
+  HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 
   echo "⏱ Waiting for GCP instance to respond to ssh"
   instanceWaitSSH "$HOST"
 
   # Verify image
-  _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
+  _ssh="$GCP_CMD compute ssh --strict-host-key-checking=no --ssh-key-file=$GCP_SSH_KEY --zone=$GCP_ZONE --quiet $SSH_USER@$GCP_INSTANCE_NAME --"
   instanceCheck "$_ssh"
 }
 
