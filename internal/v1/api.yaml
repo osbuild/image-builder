@@ -27,7 +27,7 @@ paths:
                 $ref: '#/components/schemas/Version'
   /ready:
     get:
-      summary: return the readiness 
+      summary: return the readiness
       operationId: getReadiness
       responses:
         '200':
@@ -289,7 +289,7 @@ components:
           example: 'success'
         upload_status:
           $ref: '#/components/schemas/UploadStatus'
-        error: 
+        error:
           $ref: '#/components/schemas/ComposeStatusError'
     ComposeStatusError:
       required:
