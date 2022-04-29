@@ -13,7 +13,10 @@ data:
         "list": [
           {
             "builtIn": 1,
-            "datasource": "-- Grafana --",
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
             "enable": true,
             "hide": true,
             "iconColor": "rgba(0, 211, 255, 1)",
@@ -29,15 +32,19 @@ data:
         ]
       },
       "editable": true,
-      "gnetId": null,
+      "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 2,
-      "iteration": 1636039881169,
+      "id": 250,
+      "iteration": 1651238407501,
       "links": [],
+      "liveNow": false,
       "panels": [
         {
           "collapsed": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PC1EAC84DCBBF0697"
+          },
           "gridPos": {
             "h": 1,
             "w": 24,
@@ -50,8 +57,11 @@ data:
           "type": "row"
         },
         {
-          "cacheTimeout": 1,
-          "datasource": "${datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "This panel reports the percentage of successful compose requests. The SLI target for this is currently 95%",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -93,12 +103,11 @@ data:
           },
           "gridPos": {
             "h": 7,
-            "w": 4,
+            "w": 6,
             "x": 0,
             "y": 1
           },
           "id": 113,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "options": {
@@ -118,22 +127,30 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.1.5",
+          "pluginVersion": "8.4.1",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "pKSsqZB7k"
+              },
+              "exemplar": false,
               "expr": "1 - sum(rate(image_builder_crc_compose_errors[$__range])) / sum(rate(image_builder_crc_compose_requests_total[$__range]))",
               "instant": true,
+              "interval": "",
+              "legendFormat": "",
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Compose Success Rate",
+          "title": "Compose Request Success Rate",
           "type": "stat"
         },
         {
           "cacheTimeout": 1,
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "description": "The overall availability for the service in console.redhat.com",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -175,12 +192,11 @@ data:
           },
           "gridPos": {
             "h": 7,
-            "w": 4,
-            "x": 4,
+            "w": 6,
+            "x": 6,
             "y": 1
           },
           "id": 190,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "options": {
@@ -200,7 +216,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.1.5",
+          "pluginVersion": "8.4.1",
           "targets": [
             {
               "expr": "1 - sum(rate(api_3scale_gateway_api_status{exported_service=\"image-builder\",status=\"5xx\"}[$__range])) / sum(rate(api_3scale_gateway_api_status{exported_service=\"image-builder\"}[$__range]))",
@@ -208,70 +224,14 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Service Availability",
           "type": "stat"
         },
         {
-          "datasource": "${datasource}",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 0,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
-              }
-            },
-            "overrides": []
+          "datasource": {
+            "uid": "${datasource}"
           },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 8,
-            "y": 1
-          },
-          "id": 196,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {},
-            "textMode": "auto"
-          },
-          "pluginVersion": "8.1.5",
-          "targets": [
-            {
-              "exemplar": true,
-              "expr": "sum(increase(image_builder_crc_compose_requests_total[$__range]))",
-              "interval": "",
-              "legendFormat": "",
-              "refId": "A"
-            }
-          ],
-          "title": "Compose Requests",
-          "type": "stat"
-        },
-        {
-          "datasource": "${datasource}",
-          "description": "",
+          "description": "The current number of active pods",
           "fieldConfig": {
             "defaults": {
               "mappings": [],
@@ -297,7 +257,7 @@ data:
           },
           "gridPos": {
             "h": 7,
-            "w": 4,
+            "w": 6,
             "x": 12,
             "y": 1
           },
@@ -317,7 +277,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.1.5",
+          "pluginVersion": "8.4.1",
           "targets": [
             {
               "expr": "sum(up{job=\"image-builder\"})",
@@ -326,14 +286,15 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Current Pods",
           "type": "stat"
         },
         {
           "cacheTimeout": 1,
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "description": "The latency time of the 90th percentile of requests for the selected time range. The target latency is for 90% of requests to be below 90%",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -375,12 +336,11 @@ data:
           },
           "gridPos": {
             "h": 7,
-            "w": 4,
-            "x": 16,
+            "w": 6,
+            "x": 18,
             "y": 1
           },
           "id": 191,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "options": {
@@ -400,105 +360,26 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.1.5",
+          "pluginVersion": "8.4.1",
           "targets": [
             {
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_crc_http_duration_seconds_bucket{path=~\".*compose\"}[$__range])) by (le))",
+              "exemplar": true,
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_crc_http_duration_seconds_bucket[$__range])) by (le))",
               "instant": true,
+              "interval": "",
+              "legendFormat": "",
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Compose Latency",
-          "type": "stat"
-        },
-        {
-          "cacheTimeout": 1,
-          "datasource": "${datasource}",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 0,
-              "mappings": [
-                {
-                  "options": {
-                    "match": "null",
-                    "result": {
-                      "text": "N/A"
-                    }
-                  },
-                  "type": "special"
-                }
-              ],
-              "max": 1,
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": "175"
-                  },
-                  {
-                    "color": "red",
-                    "value": "200"
-                  }
-                ]
-              },
-              "unit": "ms"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 20,
-            "y": 1
-          },
-          "id": 192,
-          "interval": null,
-          "links": [],
-          "maxDataPoints": 100,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "horizontal",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {
-              "valueSize": 100
-            },
-            "textMode": "auto"
-          },
-          "pluginVersion": "8.1.5",
-          "targets": [
-            {
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_crc_http_duration_seconds_bucket{path!~\".*compose\"}[$__range])) by (le)) * 1000",
-              "instant": true,
-              "refId": "A"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Non-compose Latency",
+          "title": "Latency",
           "type": "stat"
         },
         {
           "collapsed": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PC1EAC84DCBBF0697"
+          },
           "gridPos": {
             "h": 1,
             "w": 24,
@@ -511,7 +392,10 @@ data:
           "type": "row"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "description": "The number of compose request errors (as a percentage) over time for the selected time range",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -574,24 +458,28 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(increase(image_builder_crc_compose_errors[$__range]))/sum(increase(image_builder_crc_compose_requests_total[$__range]))",
+              "expr": "(\n  sum(increase(image_builder_crc_compose_errors[$__range]))\n  /\n  sum(increase(image_builder_crc_compose_requests_total[$__range]))\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
             }
           ],
-          "title": "Compose Errors",
+          "title": "Compose Request Errors",
           "type": "timeseries"
         },
         {
           "cacheTimeout": 1,
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for a 28 day period",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -649,7 +537,6 @@ data:
             "y": 19
           },
           "id": 115,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "options": {
@@ -669,11 +556,11 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.1.5",
+          "pluginVersion": "8.4.1",
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_crc_compose_errors[$__range]))/ sum(rate(image_builder_crc_compose_requests_total[$__range]))) + 0.001)",
+              "expr": "28 * 24 * (1 - $stability_slo)\n/\n(\n  (\n    sum(rate(image_builder_crc_compose_errors[$__range]))\n    /\n    sum(rate(image_builder_crc_compose_requests_total[$__range]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -681,14 +568,15 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Compose Error Budget Remaining",
+          "title": "Compose Request Error Budget Remaining",
           "type": "stat"
         },
         {
-          "cacheTimeout": null,
-          "datasource": "${datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "The percentage of error budget consumed for the selected time range. ",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -763,13 +651,19 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "1 - ((1 - sum(increase(image_builder_crc_compose_errors[$__range]))/sum(increase(image_builder_crc_compose_requests_total[$__range]))) - $stability_slo)/ (1 - $stability_slo)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "pKSsqZB7k"
+              },
+              "exemplar": true,
+              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      (\n        sum(increase(image_builder_crc_compose_errors[$__range]))\n        /\n        sum(increase(image_builder_crc_compose_requests_total[$__range]))\n      ) OR on() vector(0) # set fallback for empty query result\n    )\n  )\n)\n/\n(1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -777,325 +671,32 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Compose Error Budget Consumed",
+          "title": "Compose Request Error Budget Consumed",
           "type": "timeseries"
         },
         {
           "collapsed": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PC1EAC84DCBBF0697"
+          },
           "gridPos": {
             "h": 1,
             "w": 24,
             "x": 0,
             "y": 27
           },
-          "id": 138,
-          "panels": [],
-          "title": "Compose Request Latency",
-          "type": "row"
-        },
-        {
-          "datasource": "${datasource}",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "axisLabel": "seconds",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 35,
-                "gradientMode": "scheme",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 3,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": true,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": "11"
-                  },
-                  {
-                    "color": "red",
-                    "value": "12"
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 24,
-            "x": 0,
-            "y": 28
-          },
-          "id": 10,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "hidden",
-              "placement": "bottom"
-            },
-            "tooltip": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "8.1.5",
-          "targets": [
-            {
-              "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum by (le) (rate(image_builder_crc_http_duration_seconds_bucket{path=~\".*compose\"}[$__range])))",
-              "interval": "",
-              "legendFormat": "",
-              "refId": "A"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Compose request response time",
-          "type": "timeseries"
-        },
-        {
-          "cacheTimeout": 1,
-          "datasource": "${datasource}",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "decimals": 2,
-              "mappings": [
-                {
-                  "options": {
-                    "match": "null",
-                    "result": {
-                      "index": 0,
-                      "text": "1.40 days"
-                    }
-                  },
-                  "type": "special"
-                },
-                {
-                  "options": {
-                    "from": 672,
-                    "result": {
-                      "index": 1,
-                      "text": "∞"
-                    },
-                    "to": 3360100
-                  },
-                  "type": "range"
-                }
-              ],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "red",
-                    "value": null
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": 40
-                  },
-                  {
-                    "color": "green",
-                    "value": 50
-                  }
-                ]
-              },
-              "unit": "h"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 4,
-            "x": 0,
-            "y": 38
-          },
-          "id": 201,
-          "interval": null,
-          "links": [],
-          "maxDataPoints": 100,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "horizontal",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "text": {
-              "valueSize": 100
-            },
-            "textMode": "auto"
-          },
-          "pluginVersion": "8.1.5",
-          "targets": [
-            {
-              "exemplar": true,
-              "expr": "28 * 24 * (1 - $compose_latency_slo) / (1 - sum(rate(image_builder_crc_http_duration_seconds_bucket{le=\"12\",path=~\".*compose\"}[$__range]))/sum(rate(image_builder_crc_http_duration_seconds_count{path=~\".*compose\"}[$__range])))",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 1,
-              "legendFormat": "",
-              "refId": "A"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Compose Latency Error Budget Remaining",
-          "type": "stat"
-        },
-        {
-          "cacheTimeout": null,
-          "datasource": "${datasource}",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 100,
-                "gradientMode": "scheme",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 0,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": true,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "links": [],
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": 0.95
-                  },
-                  {
-                    "color": "red",
-                    "value": 1
-                  }
-                ]
-              },
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 20,
-            "x": 4,
-            "y": 38
-          },
-          "id": 202,
-          "links": [],
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "hidden",
-              "placement": "bottom"
-            },
-            "tooltip": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "8.1.5",
-          "targets": [
-            {
-              "exemplar": true,
-              "expr": "1 - ((sum(increase(image_builder_crc_http_duration_seconds_bucket{le=\"12\",path=~\".*compose\"}[$__range]))/sum(increase(image_builder_crc_http_duration_seconds_count{path=~\".*compose\"}[$__range]))) - $compose_latency_slo)/ (1 - $compose_latency_slo)",
-              "instant": false,
-              "interval": "",
-              "intervalFactor": 10,
-              "legendFormat": "errorbudget",
-              "refId": "A"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Compose Latency Error Budget Consumed",
-          "type": "timeseries"
-        },
-        {
-          "collapsed": false,
-          "datasource": null,
-          "gridPos": {
-            "h": 1,
-            "w": 24,
-            "x": 0,
-            "y": 46
-          },
           "id": 139,
           "panels": [],
-          "title": "Non-Compose Request Latency",
+          "title": "Request Latency",
           "type": "row"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "The request latency for composer requests over the selected date range",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1131,6 +732,7 @@ data:
               },
               "mappings": [],
               "min": 0,
+              "noValue": "0",
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -1140,23 +742,23 @@ data:
                   },
                   {
                     "color": "#EAB839",
-                    "value": "175"
+                    "value": 0.4
                   },
                   {
                     "color": "red",
-                    "value": "200"
+                    "value": 0.5
                   }
                 ]
               },
-              "unit": "ms"
+              "unit": "s"
             },
             "overrides": []
           },
           "gridPos": {
-            "h": 10,
+            "h": 9,
             "w": 24,
             "x": 0,
-            "y": 47
+            "y": 28
           },
           "id": 198,
           "options": {
@@ -1166,26 +768,35 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "histogram_quantile(0.9, sum by (le) (rate(image_builder_crc_http_duration_seconds_bucket{path!~\".*compose\"}[$__range]))) * 1000",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "histogram_quantile(0.9, sum(rate(image_builder_crc_http_duration_seconds_bucket{path=~\".*compose\"}[$__interval])) by (le))",
               "interval": "",
-              "legendFormat": "",
+              "legendFormat": "latency",
+              "range": true,
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Non-compose request response time",
+          "title": "Request response time",
           "type": "timeseries"
         },
         {
-          "cacheTimeout": 1,
-          "datasource": "${datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for a 28 day period",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1240,10 +851,9 @@ data:
             "h": 8,
             "w": 4,
             "x": 0,
-            "y": 57
+            "y": 37
           },
           "id": 203,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "options": {
@@ -1263,11 +873,15 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.1.5",
+          "pluginVersion": "8.4.1",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "skSy3ZB7k"
+              },
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $noncompose_latency_slo) / (1 - sum(rate(image_builder_crc_http_duration_seconds_bucket{le=\"0.2\",path!~\".*compose\"}[$__range]))/sum(rate(image_builder_crc_http_duration_seconds_count{path!~\".*compose\"}[$__range])))",
+              "expr": "28 * 24 * (1 - $latency_slo)\n/\n(\n  1.001 - (\n    (\n      sum(rate(image_builder_crc_http_duration_seconds_bucket{le=\"0.5\"}[$__range]))\n      /\n      sum(rate(image_builder_crc_http_duration_seconds_count[$__range]))\n    ) OR on() vector(1) # set fallback for empty query result\n  )\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1275,14 +889,14 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Non-Compose Latency Error Budget Remaining",
+          "title": "Latency Error Budget Remaining",
           "type": "stat"
         },
         {
-          "cacheTimeout": null,
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "description": "The percentage of error budget consumed for the selected time range. ",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1338,7 +952,7 @@ data:
                   }
                 ]
               },
-              "unit": "percentunit"
+              "unit": "percent"
             },
             "overrides": []
           },
@@ -1346,7 +960,7 @@ data:
             "h": 8,
             "w": 20,
             "x": 4,
-            "y": 57
+            "y": 37
           },
           "id": 204,
           "links": [],
@@ -1357,13 +971,15 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "pluginVersion": "8.1.5",
           "targets": [
             {
-              "expr": "1 - ((sum(increase(image_builder_crc_http_duration_seconds_bucket{le=\"0.2\",path!~\".*compose\"}[$__range]))/sum(increase(image_builder_crc_http_duration_seconds_count{path!~\".*compose\"}[$__range]))) - $noncompose_latency_slo)/ (1 - $noncompose_latency_slo)",
+              "exemplar": true,
+              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_crc_http_duration_seconds_bucket{le=\"0.5\"}[$__range]))\n      /\n      sum(increase(image_builder_crc_http_duration_seconds_count[$__range]))\n    ) OR on() vector(1) # set fallback for empty query result\n  ) - $latency_slo)\n/\n(1 - $latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1371,29 +987,24 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Non-Compose Latency Error Budget",
+          "title": "Latency Error Budget",
           "type": "timeseries"
         }
       ],
       "refresh": false,
-      "schemaVersion": 30,
+      "schemaVersion": 35,
       "style": "dark",
       "tags": [],
       "templating": {
         "list": [
           {
             "current": {
-              "selected": false,
-              "text": "crcp01ue1-prometheus",
-              "value": "crcp01ue1-prometheus"
+              "selected": true,
+              "text": "crcs02ue1-prometheus",
+              "value": "crcs02ue1-prometheus"
             },
-            "description": null,
-            "error": null,
             "hide": 0,
             "includeAll": false,
-            "label": null,
             "multi": false,
             "name": "datasource",
             "options": [],
@@ -1413,10 +1024,7 @@ data:
               "text": "28d",
               "value": "28d"
             },
-            "description": null,
-            "error": null,
             "hide": 0,
-            "label": null,
             "name": "interval",
             "options": [
               {
@@ -1478,31 +1086,17 @@ data:
           },
           {
             "description": "Compose stability SLO target",
-            "error": null,
             "hide": 2,
-            "label": null,
             "name": "stability_slo",
             "query": "0.95",
             "skipUrlSync": false,
             "type": "constant"
           },
           {
-            "description": "Compose Latency SLO target",
-            "error": null,
+            "description": "Latency SLO target",
             "hide": 2,
-            "label": null,
-            "name": "compose_latency_slo",
-            "query": "0.9",
-            "skipUrlSync": false,
-            "type": "constant"
-          },
-          {
-            "description": "Non-compose Latency stability SLO target",
-            "error": null,
-            "hide": 2,
-            "label": null,
-            "name": "noncompose_latency_slo",
-            "query": "0.9",
+            "name": "latency_slo",
+            "query": "0.95",
             "skipUrlSync": false,
             "type": "constant"
           }
@@ -1540,5 +1134,5 @@ data:
       "timezone": "",
       "title": "Image Builder CRC",
       "uid": "image-builder-crc",
-      "version": 8
+      "version": 9
     }
