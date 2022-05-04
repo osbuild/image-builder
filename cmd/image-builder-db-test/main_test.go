@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -128,6 +129,15 @@ func testMigration(t *testing.T) {
 	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)"
 	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1, nil)
 	require.NoError(t, err)
+
+	migrateOneStep(t) // migrate to step 5
+
+	// inserting image_name with length > 101 should fail
+	imageNameInvalid := strings.Repeat("a", 101)
+
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)"
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1, &imageNameInvalid)
+	require.Error(t, err)
 
 	// make sure migrating a fully migrated db doesn't error out
 	migrateUp(t)
