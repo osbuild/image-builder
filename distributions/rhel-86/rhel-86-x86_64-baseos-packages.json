@@ -73,7 +73,7 @@
   },
   {
     "name": "audit",
-    "summary": "User space tools for kernel auditing"
+    "summary": "User space tools for 2.6 kernel auditing"
   },
   {
     "name": "audit-libs",
@@ -333,7 +333,7 @@
   },
   {
     "name": "crypto-policies",
-    "summary": "System-wide crypto policies"
+    "summary": "Systemwide crypto policies"
   },
   {
     "name": "crypto-policies-scripts",
@@ -354,6 +354,10 @@
   {
     "name": "ctdb",
     "summary": "A Clustered Database based on Samba's Trivial Database (TDB)"
+  },
+  {
+    "name": "ctdb-tests",
+    "summary": "CTDB clustered database test suite"
   },
   {
     "name": "cups-libs",
@@ -534,6 +538,10 @@
   {
     "name": "dnf-plugins-core",
     "summary": "Core Plugins for DNF"
+  },
+  {
+    "name": "dnf-utils",
+    "summary": "Yum-utils CLI compatibility layer"
   },
   {
     "name": "dos2unix",
@@ -1869,7 +1877,7 @@
   },
   {
     "name": "infiniband-diags",
-    "summary": "InfiniBand Diagnostic Tools"
+    "summary": "OpenFabrics Alliance InfiniBand Diagnostic Tools"
   },
   {
     "name": "info",
@@ -2093,11 +2101,15 @@
   },
   {
     "name": "kernel",
-    "summary": "The Linux kernel, based on version 4.18.0, heavily modified with backports"
+    "summary": "The Linux kernel"
   },
   {
     "name": "kernel-abi-stablelists",
     "summary": "The Red Hat Enterprise Linux kernel ABI symbol stablelists"
+  },
+  {
+    "name": "kernel-abi-whitelists",
+    "summary": "The Red Hat Enterprise Linux kernel ABI symbol whitelists"
   },
   {
     "name": "kernel-core",
@@ -2117,15 +2129,15 @@
   },
   {
     "name": "kernel-debug-devel",
-    "summary": "Development package for building kernel modules to match the debug kernel"
+    "summary": "Development package for building kernel modules to match the kernel"
   },
   {
     "name": "kernel-debug-modules",
-    "summary": "kernel modules to match the debug-core kernel"
+    "summary": "kernel modules to match the core kernel"
   },
   {
     "name": "kernel-debug-modules-extra",
-    "summary": "Extra kernel modules to match the debug kernel"
+    "summary": "Extra kernel modules to match the kernel"
   },
   {
     "name": "kernel-devel",
@@ -2153,7 +2165,7 @@
   },
   {
     "name": "kernel-tools-libs",
-    "summary": "Libraries for the kernel-tools"
+    "summary": "Libraries for the kernels-tools"
   },
   {
     "name": "kexec-tools",
@@ -2184,8 +2196,108 @@
     "summary": "Libraries to handle kernel module loading and unloading"
   },
   {
+    "name": "kmod-redhat-atlantic",
+    "summary": "atlantic kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-bnxt_en",
+    "summary": "bnxt_en kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-btusb",
+    "summary": "btusb kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-btusb-firmware",
+    "summary": "btusb firmware for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-cfg80211",
+    "summary": "cfg80211 kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-cfg80211-devel",
+    "summary": "cfg80211 development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-ice",
+    "summary": "ice kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-ice-firmware",
+    "summary": "ice firmware for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-ionic",
+    "summary": "ionic kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-iwlwifi",
+    "summary": "iwlwifi kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-iwlwifi-devel",
+    "summary": "iwlwifi development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-iwlwifi-firmware",
+    "summary": "iwlwifi firmware for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mac80211",
+    "summary": "mac80211 kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mac80211-devel",
+    "summary": "mac80211 development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mlx5_core",
+    "summary": "mlx5_core kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mlx5_core-devel",
+    "summary": "mlx5_core development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mpt3sas",
+    "summary": "mpt3sas kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mt7921",
+    "summary": "mt7921 kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mt7921-devel",
+    "summary": "mt7921 development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mt7921-firmware",
+    "summary": "mt7921 firmware for Driver Update Program"
+  },
+  {
     "name": "kmod-redhat-oracleasm",
     "summary": "oracleasm kernel module"
+  },
+  {
+    "name": "kmod-redhat-oracleasm-kernel_4_18_0_240",
+    "summary": "oracleasm kernel module for kernel version 4.18.0-240.el8..4.18.0-240.14.1.el8_3"
+  },
+  {
+    "name": "kmod-redhat-oracleasm-kernel_4_18_0_240_14_1",
+    "summary": "oracleasm kernel module for kernel version 4.18.0-240.14.1.el8_3 and higher"
+  },
+  {
+    "name": "kmod-redhat-rtw89",
+    "summary": "rtw89 kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-rtw89-devel",
+    "summary": "rtw89 development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-rtw89-firmware",
+    "summary": "rtw89 firmware for Driver Update Program"
   },
   {
     "name": "kpartx",
@@ -2198,6 +2310,114 @@
   {
     "name": "kpatch-dnf",
     "summary": "kpatch-patch manager plugin for DNF"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-147",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-147.el8"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-147_0_2",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-147.0.2.el8_1"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-147_0_3",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-147.0.3.el8_1"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-147_3_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-147.3.1.el8_1"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-147_5_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-147.5.1.el8_1.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-193",
+    "summary": "Live kernel patching module for kernel-4.18.0-193.el8.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-193_13_2",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-193.13.2.el8_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-193_14_3",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-193.14.3.el8_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-193_19_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-193.19.1.el8_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-193_1_2",
+    "summary": "Live kernel patching module for kernel-4.18.0-193.1.2.el8_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-193_28_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-193.28.1.el8_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-193_6_3",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-193.6.3.el8_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-305",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-305.el8.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-305_10_2",
+    "summary": "Live kernel patching module for kernel-4.18.0-305.10.2.el8_4.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-305_12_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-305.12.1.el8_4.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-305_17_1",
+    "summary": "Live kernel patching module for kernel-4.18.0-305.17.1.el8_4.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-305_19_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-305.19.1.el8_4.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-305_25_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-305.25.1.el8_4.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-305_3_1",
+    "summary": "Live kernel patching module for kernel-4.18.0-305.3.1.el8_4.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-305_7_1",
+    "summary": "Live kernel patching module for kernel-4.18.0-305.7.1.el8_4.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-348",
+    "summary": "Live kernel patching module for kernel-4.18.0-348.el8.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-348_12_2",
+    "summary": "Live kernel patching module for kernel-4.18.0-348.12.2.el8_5.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-348_20_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-348.20.1.el8_5.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-348_23_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-348.23.1.el8_5.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-348_2_1",
+    "summary": "Live kernel patching module for kernel-4.18.0-348.2.1.el8_5.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-348_7_1",
+    "summary": "Live kernel patching module for kernel-4.18.0-348.7.1.el8_5.x86_64"
+  },
+  {
+    "name": "kpatch-patch-4_18_0-372_9_1",
+    "summary": "Initial empty kpatch-patch for kernel-4.18.0-372.9.1.el8.x86_64"
   },
   {
     "name": "krb5-devel",
@@ -2358,6 +2578,10 @@
   {
     "name": "libcomps",
     "summary": "Comps XML file manipulation library"
+  },
+  {
+    "name": "libcomps-devel",
+    "summary": "Development files for libcomps library"
   },
   {
     "name": "libconfig",
@@ -2784,10 +3008,6 @@
     "summary": "Utilities to use the QMI protocol from the command line"
   },
   {
-    "name": "libqrtr-glib",
-    "summary": "Support library to use and manage the QRTR (Qualcomm IPC Router) bus."
-  },
-  {
     "name": "libquadmath",
     "summary": "GCC __float128 shared support library"
   },
@@ -2841,7 +3061,7 @@
   },
   {
     "name": "libselinux-utils",
-    "summary": "SELinux libselinux utilities"
+    "summary": "SELinux libselinux utilies"
   },
   {
     "name": "libsemanage",
@@ -2901,7 +3121,7 @@
   },
   {
     "name": "libsss_certmap",
-    "summary": "SSSD Certificate Mapping Library"
+    "summary": "SSSD Certficate Mapping Library"
   },
   {
     "name": "libsss_idmap",
@@ -2946,6 +3166,22 @@
   {
     "name": "libstoragemgmt-megaraid-plugin",
     "summary": "Files for LSI MegaRAID support for libstoragemgmt"
+  },
+  {
+    "name": "libstoragemgmt-netapp-plugin",
+    "summary": "Files for NetApp array support for libstoragemgmt"
+  },
+  {
+    "name": "libstoragemgmt-nfs-plugin",
+    "summary": "Files for NFS local filesystem support for libstoragemgmt"
+  },
+  {
+    "name": "libstoragemgmt-nfs-plugin-clibs",
+    "summary": "Python C extension module for libstoragemgmt NFS plugin"
+  },
+  {
+    "name": "libstoragemgmt-nstor-plugin",
+    "summary": "Files for NexentaStor array support for libstoragemgmt"
   },
   {
     "name": "libstoragemgmt-smis-plugin",
@@ -3281,7 +3517,7 @@
   },
   {
     "name": "microdnf",
-    "summary": "Lightweight implementation of DNF in C"
+    "summary": "Micro DNF"
   },
   {
     "name": "minicom",
@@ -3429,7 +3665,7 @@
   },
   {
     "name": "NetworkManager-libnm",
-    "summary": "Libraries for adding NetworkManager support to applications."
+    "summary": "Libraries for adding NetworkManager support to applications (new API)."
   },
   {
     "name": "NetworkManager-ovs",
@@ -3541,7 +3777,7 @@
   },
   {
     "name": "opencryptoki",
-    "summary": "Implementation of the PKCS#11 (Cryptoki) specification v3.0"
+    "summary": "Implementation of the PKCS#11 (Cryptoki) specification v2.11"
   },
   {
     "name": "opencryptoki-icsftok",
@@ -4072,10 +4308,6 @@
     "summary": "Internationalization pack for procps-ng"
   },
   {
-    "name": "protobuf-c",
-    "summary": "C bindings for Google's Protocol Buffers"
-  },
-  {
     "name": "ps_mem",
     "summary": "Memory profiling tool"
   },
@@ -4262,6 +4494,10 @@
   {
     "name": "python3-libstoragemgmt",
     "summary": "Python 3 client libraries and plug-in support for libstoragemgmt"
+  },
+  {
+    "name": "python3-libstoragemgmt-clibs",
+    "summary": "Python 3 C extension module for libstoragemgmt"
   },
   {
     "name": "python3-libuser",
@@ -4620,6 +4856,10 @@
     "summary": "Tools for Samba servers and clients"
   },
   {
+    "name": "samba-dc-libs",
+    "summary": "Samba AD Domain Controller Libraries"
+  },
+  {
     "name": "samba-krb5-printing",
     "summary": "Samba CUPS backend for printing with Kerberos"
   },
@@ -4840,6 +5080,10 @@
     "summary": "The LDAP back end of the SSSD"
   },
   {
+    "name": "sssd-libwbclient",
+    "summary": "The SSSD libwbclient implementation"
+  },
+  {
     "name": "sssd-nfs-idmap",
     "summary": "SSSD plug-in for NFSv4 rpc.idmapd"
   },
@@ -4878,6 +5122,10 @@
   {
     "name": "subscription-manager-cockpit",
     "summary": "Subscription Manager Cockpit UI"
+  },
+  {
+    "name": "subscription-manager-plugin-container",
+    "summary": "A plugin for handling container content"
   },
   {
     "name": "subscription-manager-plugin-ostree",
