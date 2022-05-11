@@ -55,8 +55,8 @@ function before_test() {
     IMAGE_TYPE="rhel-edge-commit"
     OSTREE_REF="rhel/8/${ARCH}/edge"
     OS_VARIANT="rhel8-unknown"
-    DISTRO="rhel-85"
-    BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.5.0/BaseOS/${ARCH}/os/"
+    DISTRO="rhel-86"
+    BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0-Beta-0/BaseOS/${ARCH}/os/"
 
     # Check image-builder service status
     READY=0

@@ -2,17 +2,17 @@
   "module_platform_id": "platform:el8",
   "distribution": {
     "name": "rhel-86",
-    "description": "Red Hat Enterprise Linux (RHEL) 8 Beta"
+    "description": "Red Hat Enterprise Linux (RHEL) 8"
   },
   "x86_64": {
     "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "edge-container", "guest-image", "image-installer", "vsphere" ],
     "repositories": [{
       "id": "baseos",
-      "baseurl": "https://cdn.redhat.com/content/beta/rhel8/8/x86_64/baseos/os",
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/baseos/os",
       "rhsm": true
     }, {
       "id": "appstream",
-      "baseurl": "https://cdn.redhat.com/content/beta/rhel8/8/x86_64/appstream/os",
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/appstream/os",
       "rhsm": true
     }, {
       "id": "ansible",

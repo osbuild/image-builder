@@ -272,10 +272,7 @@
         - assert:
             that:
               - "'greenboot-0' in result_greenboot_packages.stdout"
-              - "'greenboot-grub2' in result_greenboot_packages.stdout"
-              - "'greenboot-rpm-ostree-grub2' in result_greenboot_packages.stdout"
-              - "'greenboot-reboot' in result_greenboot_packages.stdout"
-              - "'greenboot-status' in result_greenboot_packages.stdout"
+              - "'greenboot-default-health-checks' in result_greenboot_packages.stdout"
             fail_msg: "Some of greenboot and its related packages are not installed"
             success_msg: "All greenboot and its related packages are installed"
       always:

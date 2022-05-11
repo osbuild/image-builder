@@ -326,7 +326,9 @@ type Repository struct {
 	// Naming package sets for a repository assigns it to a specific part
 	// (pipeline) of the build process.
 	PackageSets *[]string `json:"package_sets,omitempty"`
-	Rhsm        bool      `json:"rhsm"`
+
+	// Determines whether a valid subscription is required to access this repository.
+	Rhsm *bool `json:"rhsm,omitempty"`
 }
 
 // Subscription defines model for Subscription.
