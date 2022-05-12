@@ -182,7 +182,7 @@ function instanceCheck() {
   local _ssh="$1"
 
   # Check if postgres is installed
-  $_ssh rpm -q postgresql ansible
+  $_ssh rpm -q postgresql ansible-core
 
   # Verify subscribe status. Loop check since the system may not be registered such early
   set +eu
@@ -248,7 +248,7 @@ function createReqFileAWS() {
   "customizations": {
     "packages": [
       "postgresql",
-      "ansible"
+      "ansible-core"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -308,7 +308,7 @@ function createReqFileGCP() {
   "customizations": {
     "packages": [
       "postgresql",
-      "ansible"
+      "ansible-core"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -383,7 +383,7 @@ function createReqFileAzure() {
   "customizations": {
     "packages": [
       "postgresql",
-      "ansible"
+      "ansible-core"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
