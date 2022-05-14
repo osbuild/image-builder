@@ -145,14 +145,30 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	}
 
 	if cloudStat.ImageStatus.Error != nil {
-		status.ImageStatus.Error = &ComposeStatusError{
-			Id:      cloudStat.ImageStatus.Error.Id,
-			Reason:  cloudStat.ImageStatus.Error.Reason,
-			Details: cloudStat.ImageStatus.Error.Details,
-		}
+		status.ImageStatus.Error = composeStatusError(cloudStat.ImageStatus.Error)
 	}
 
 	return ctx.JSON(http.StatusOK, status)
+}
+
+// Only pass along errors which are useful to an end user, or translate the error message where
+// appropriate.
+func composeStatusError(err *composer.ComposeStatusError) *ComposeStatusError {
+	switch err.Id {
+	case 20: // ErrorDNFDepsolveError
+		fallthrough
+	case 21: // ErrorDNFMarkingErrors
+		return &ComposeStatusError{
+			Id:      err.Id,
+			Reason:  err.Reason,
+			Details: err.Details,
+		}
+	default:
+		return &ComposeStatusError{
+			Id:     err.Id,
+			Reason: "Unknown error occured, please retry or open a support case",
+		}
+	}
 }
 
 func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error {
