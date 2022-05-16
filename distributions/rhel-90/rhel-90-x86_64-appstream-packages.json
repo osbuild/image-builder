@@ -16,6 +16,10 @@
     "summary": "Modern style true type font"
   },
   {
+    "name": "aardvark-dns",
+    "summary": "Authoritative DNS server for A/AAAA container records"
+  },
+  {
     "name": "abattis-cantarell-fonts",
     "summary": "Humanist sans serif font"
   },
@@ -58,6 +62,14 @@
   {
     "name": "adwaita-qt5",
     "summary": "Adwaita Qt5 theme"
+  },
+  {
+    "name": "afterburn",
+    "summary": "Simple cloud provider agent"
+  },
+  {
+    "name": "afterburn-dracut",
+    "summary": "Dracut modules for afterburn"
   },
   {
     "name": "aide",
@@ -368,16 +380,8 @@
     "summary": "Text based document generation"
   },
   {
-    "name": "aspnetcore-runtime-3.1",
-    "summary": "ASP.NET Core 3.1 runtime"
-  },
-  {
     "name": "aspnetcore-runtime-6.0",
     "summary": "ASP.NET Core 6.0 runtime"
-  },
-  {
-    "name": "aspnetcore-targeting-pack-3.1",
-    "summary": "Targeting Pack for Microsoft.AspNetCore.App 3.1"
   },
   {
     "name": "aspnetcore-targeting-pack-6.0",
@@ -612,14 +616,6 @@
     "summary": "A dynamic, any to any, pixel format conversion library"
   },
   {
-    "name": "babl-devel",
-    "summary": "Headers for developing programs that will use babl"
-  },
-  {
-    "name": "babl-devel-docs",
-    "summary": "Documentation for developing programs that will use babl"
-  },
-  {
     "name": "bacula-client",
     "summary": "Bacula backup client"
   },
@@ -630,10 +626,6 @@
   {
     "name": "bacula-console",
     "summary": "Bacula management console"
-  },
-  {
-    "name": "bacula-console-bat",
-    "summary": "Bacula bat console"
   },
   {
     "name": "bacula-director",
@@ -654,10 +646,6 @@
   {
     "name": "bacula-storage",
     "summary": "Bacula storage daemon files"
-  },
-  {
-    "name": "bacula-traymonitor",
-    "summary": "Bacula system tray monitor"
   },
   {
     "name": "baobab",
@@ -734,6 +722,10 @@
   {
     "name": "blktrace",
     "summary": "Utilities for performing block layer IO tracing in the Linux kernel"
+  },
+  {
+    "name": "bluez-cups",
+    "summary": "CUPS printer backend for Bluetooth printers"
   },
   {
     "name": "bluez-obexd",
@@ -884,6 +876,10 @@
     "summary": "Run-time component of boost C99/C++ preprocessing library"
   },
   {
+    "name": "bootupd",
+    "summary": "Bootloader updater"
+  },
+  {
     "name": "Box2D",
     "summary": "A 2D Physics Engine for Games"
   },
@@ -954,6 +950,10 @@
   {
     "name": "buildah-tests",
     "summary": "Tests for buildah"
+  },
+  {
+    "name": "butane",
+    "summary": "Butane config transpiler"
   },
   {
     "name": "byacc",
@@ -1232,10 +1232,6 @@
     "summary": "Compatibility Fortran runtime library version 4.8.5"
   },
   {
-    "name": "compat-libtiff3",
-    "summary": "Compatibility package for libtiff 3"
-  },
-  {
     "name": "compat-openssl11",
     "summary": "Utilities from the general purpose cryptography library with TLS implementation"
   },
@@ -1254,6 +1250,22 @@
   {
     "name": "conntrack-tools",
     "summary": "Manipulate netfilter connection tracking table and run High Availability"
+  },
+  {
+    "name": "console-login-helper-messages",
+    "summary": "Combines motd, issue, profile features to show system information to the user before/on login"
+  },
+  {
+    "name": "console-login-helper-messages-issuegen",
+    "summary": "Issue generator scripts showing SSH keys and IP address"
+  },
+  {
+    "name": "console-login-helper-messages-motdgen",
+    "summary": "Message of the day generator script showing system information"
+  },
+  {
+    "name": "console-login-helper-messages-profile",
+    "summary": "Profile script showing systemd failed units"
   },
   {
     "name": "console-setup",
@@ -1293,7 +1305,11 @@
   },
   {
     "name": "coreos-installer-dracut",
-    "summary": "coreos-installer provides coreos-installer as a dracut module."
+    "summary": "Dracut module for running coreos-installer in the initrd"
+  },
+  {
+    "name": "corosynclib",
+    "summary": "The Corosync Cluster Engine Libraries"
   },
   {
     "name": "cpp",
@@ -1444,10 +1460,6 @@
     "summary": "CUPS printing system - tools for printer application"
   },
   {
-    "name": "curl-minimal",
-    "summary": "Conservatively configured build of curl for minimal installations"
-  },
-  {
     "name": "cyrus-imapd",
     "summary": "A high-performance email, contacts and calendar server"
   },
@@ -1576,6 +1588,10 @@
     "summary": "A utility which provides statistics based on the output of diff"
   },
   {
+    "name": "disruptor",
+    "summary": "Concurrent Programming Framework"
+  },
+  {
     "name": "dlm-lib",
     "summary": "Library for dlm"
   },
@@ -1592,24 +1608,8 @@
     "summary": "SGML and XML document type definitions for DocBook"
   },
   {
-    "name": "docbook-style-dsssl",
-    "summary": "Norman Walsh's modular stylesheets for DocBook"
-  },
-  {
     "name": "docbook-style-xsl",
     "summary": "Norman Walsh's XSL stylesheets for DocBook XML"
-  },
-  {
-    "name": "docbook-utils",
-    "summary": "Shell scripts for managing DocBook documents"
-  },
-  {
-    "name": "docbook-utils-pdf",
-    "summary": "A script for converting DocBook documents to PDF format"
-  },
-  {
-    "name": "docbook5-schemas",
-    "summary": "Norman Walsh's schemas (DTD, Relax NG, W3C schema) for Docbook 5.X"
   },
   {
     "name": "docbook5-style-xsl",
@@ -1624,10 +1624,6 @@
     "summary": "Libraries to parse configuration files"
   },
   {
-    "name": "dotnet-apphost-pack-3.1",
-    "summary": "Targeting Pack for Microsoft.NETCore.App 3.1"
-  },
-  {
     "name": "dotnet-apphost-pack-6.0",
     "summary": "Targeting Pack for Microsoft.NETCore.App 6.0"
   },
@@ -1636,40 +1632,20 @@
     "summary": ".NET command line launcher"
   },
   {
-    "name": "dotnet-hostfxr-3.1",
-    "summary": ".NET Core command line host resolver"
-  },
-  {
     "name": "dotnet-hostfxr-6.0",
     "summary": ".NET command line host resolver"
-  },
-  {
-    "name": "dotnet-runtime-3.1",
-    "summary": "NET Core 3.1 runtime"
   },
   {
     "name": "dotnet-runtime-6.0",
     "summary": "NET 6.0 runtime"
   },
   {
-    "name": "dotnet-sdk-3.1",
-    "summary": ".NET Core 3.1 Software Development Kit"
-  },
-  {
     "name": "dotnet-sdk-6.0",
     "summary": ".NET 6.0 Software Development Kit"
   },
   {
-    "name": "dotnet-targeting-pack-3.1",
-    "summary": "Targeting Pack for Microsoft.NETCore.App 3.1"
-  },
-  {
     "name": "dotnet-targeting-pack-6.0",
     "summary": "Targeting Pack for Microsoft.NETCore.App 6.0"
-  },
-  {
-    "name": "dotnet-templates-3.1",
-    "summary": ".NET Core 3.1 templates"
   },
   {
     "name": "dotnet-templates-6.0",
@@ -1696,20 +1672,12 @@
     "summary": "Sieve and managesieve plug-in for dovecot"
   },
   {
-    "name": "doxygen",
-    "summary": "A documentation system for C/C++"
-  },
-  {
-    "name": "doxygen-doxywizard",
-    "summary": "A GUI for creating and editing configuration files"
-  },
-  {
-    "name": "doxygen-latex",
-    "summary": "Support for producing latex/pdf output from doxygen"
-  },
-  {
     "name": "dpdk",
     "summary": "Set of libraries and drivers for fast packet processing"
+  },
+  {
+    "name": "dpdk-devel",
+    "summary": "Data Plane Development Kit development files"
   },
   {
     "name": "dpdk-doc",
@@ -1968,6 +1936,10 @@
     "summary": "Third-Party Modified Version of the Fraunhofer FDK AAC Codec Library for Android"
   },
   {
+    "name": "fdo-admin-cli",
+    "summary": "FDO admin tools implementation"
+  },
+  {
     "name": "fdo-client",
     "summary": "FDO Client implementation"
   },
@@ -2000,6 +1972,18 @@
     "summary": "Fence agent for Nova compute nodes"
   },
   {
+    "name": "fence-agents-ibm-powervs",
+    "summary": "Fence agent for IBM PowerVS"
+  },
+  {
+    "name": "fence-agents-ibm-vpc",
+    "summary": "Fence agent for IBM Cloud VPC"
+  },
+  {
+    "name": "fence-agents-kubevirt",
+    "summary": "Fence agent for KubeVirt platform"
+  },
+  {
     "name": "fence-agents-virsh",
     "summary": "Fence agent for virtual machines based on libvirt"
   },
@@ -2010,6 +1994,10 @@
   {
     "name": "fence-virtd",
     "summary": "Daemon which handles requests from fence-virt"
+  },
+  {
+    "name": "fence-virtd-cpg",
+    "summary": "CPG/libvirt backend for fence-virtd"
   },
   {
     "name": "fence-virtd-libvirt",
@@ -2584,6 +2572,14 @@
     "summary": "A library and utilities for processing GIFs"
   },
   {
+    "name": "gimp",
+    "summary": "GNU Image Manipulation Program"
+  },
+  {
+    "name": "gimp-libs",
+    "summary": "GIMP libraries"
+  },
+  {
     "name": "git",
     "summary": "Fast Version Control System"
   },
@@ -2702,6 +2698,10 @@
   {
     "name": "glslang",
     "summary": "OpenGL and OpenGL ES shader front end and validator"
+  },
+  {
+    "name": "glslc",
+    "summary": "A command line compiler for GLSL/HLSL to SPIR-V"
   },
   {
     "name": "glusterfs",
@@ -3268,6 +3268,10 @@
     "summary": "Noto Sans Malayalam UI font"
   },
   {
+    "name": "google-noto-sans-mono-fonts",
+    "summary": "Noto Sans Mono font"
+  },
+  {
     "name": "google-noto-sans-nko-fonts",
     "summary": "Noto Sans NKo font"
   },
@@ -3444,22 +3448,6 @@
     "summary": "Series of optional and curated health checks"
   },
   {
-    "name": "greenboot-grub2",
-    "summary": "Grub2 specific scripts for greenboot"
-  },
-  {
-    "name": "greenboot-reboot",
-    "summary": "Reboot on red status for greenboot"
-  },
-  {
-    "name": "greenboot-rpm-ostree-grub2",
-    "summary": "Scripts for greenboot on rpm-ostree-based systems using the Grub2 bootloader"
-  },
-  {
-    "name": "greenboot-status",
-    "summary": "Message of the Day updater for greenboot"
-  },
-  {
     "name": "grilo",
     "summary": "Content discovery framework"
   },
@@ -3482,10 +3470,6 @@
   {
     "name": "gsl",
     "summary": "The GNU Scientific Library for numerical analysis"
-  },
-  {
-    "name": "gsl-devel",
-    "summary": "Libraries and the header files for GSL development"
   },
   {
     "name": "gsm",
@@ -3674,10 +3658,6 @@
   {
     "name": "HdrHistogram_c",
     "summary": "C port of the HdrHistogram"
-  },
-  {
-    "name": "help2man",
-    "summary": "Create simple man pages from --help output"
   },
   {
     "name": "hexchat",
@@ -4856,8 +4836,12 @@
     "summary": "Utility to administer the Linux Virtual Server"
   },
   {
-    "name": "ipxe-bootimgs",
-    "summary": "Network boot loader images in bootable USB, CD, floppy and GRUB formats"
+    "name": "ipxe-bootimgs-aarch64",
+    "summary": "AArch64 Network boot loader images in bootable USB and GRUB formats"
+  },
+  {
+    "name": "ipxe-bootimgs-x86",
+    "summary": "X86 Network boot loader images in bootable USB, CD, floppy and GRUB formats"
   },
   {
     "name": "ipxe-roms",
@@ -5058,6 +5042,10 @@
   {
     "name": "jcl-over-slf4j",
     "summary": "JCL 1.1.1 implemented over SLF4J"
+  },
+  {
+    "name": "jctools",
+    "summary": "Java Concurrency Tools for the JVM"
   },
   {
     "name": "jdeparser",
@@ -6420,10 +6408,6 @@
     "summary": "Liberty Alliance Single Sign On"
   },
   {
-    "name": "latex2html",
-    "summary": "Converts LaTeX documents to HTML"
-  },
-  {
     "name": "lato-fonts",
     "summary": "A sanserif typeface family"
   },
@@ -6478,6 +6462,10 @@
   {
     "name": "libappstream-glib",
     "summary": "Library for AppStream metadata"
+  },
+  {
+    "name": "libasan",
+    "summary": "The Address Sanitizer runtime library"
   },
   {
     "name": "libasyncns",
@@ -7388,10 +7376,6 @@
     "summary": "Development files for building PostgreSQL client tools"
   },
   {
-    "name": "libproxy",
-    "summary": "A library handling all the details of proxy configuration"
-  },
-  {
     "name": "libproxy-bin",
     "summary": "Binary to test libproxy"
   },
@@ -8076,10 +8060,6 @@
     "summary": "Extra tools for librsvg"
   },
   {
-    "name": "librx",
-    "summary": "POSIX regexp functions"
-  },
-  {
     "name": "libsamplerate",
     "summary": "Sample rate conversion library for audio data"
   },
@@ -8126,6 +8106,10 @@
   {
     "name": "libserializer",
     "summary": "JFreeReport General Serialization Framework"
+  },
+  {
+    "name": "libshaderc",
+    "summary": "A library for compiling shader strings into SPIR-V"
   },
   {
     "name": "libshout",
@@ -8286,6 +8270,10 @@
   {
     "name": "libtsan",
     "summary": "The Thread Sanitizer runtime library"
+  },
+  {
+    "name": "libubsan",
+    "summary": "The Undefined Behavior Sanitizer runtime library"
   },
   {
     "name": "libudisks2",
@@ -8802,10 +8790,6 @@
   {
     "name": "linuxconsoletools",
     "summary": "Tools for connecting joysticks & legacy devices to the kernel's input subsystem"
-  },
-  {
-    "name": "linuxdoc-tools",
-    "summary": "A text formatting package based on SGML"
   },
   {
     "name": "linuxptp",
@@ -9404,6 +9388,10 @@
     "summary": "Real time MPEG 1.0/2.0/2.5 audio player/decoder for layers 1, 2 and 3"
   },
   {
+    "name": "mpg123-plugins-pulseaudio",
+    "summary": "Pulseaudio output plug-in for mpg123"
+  },
+  {
     "name": "mpich",
     "summary": "A high-performance implementation of MPI"
   },
@@ -9744,12 +9732,12 @@
     "summary": "Network management utilities using SNMP, from the NET-SNMP project"
   },
   {
-    "name": "netpbm",
-    "summary": "A library for handling different graphics file formats"
+    "name": "netavark",
+    "summary": "OCI network stack"
   },
   {
-    "name": "netpbm-doc",
-    "summary": "Documentation for tools manipulating graphics files in netpbm supported formats"
+    "name": "netpbm",
+    "summary": "A library for handling different graphics file formats"
   },
   {
     "name": "netpbm-progs",
@@ -9858,10 +9846,6 @@
   {
     "name": "nmstate-libs",
     "summary": "C binding of nmstate"
-  },
-  {
-    "name": "nmstate-plugin-ovsdb",
-    "summary": "nmstate plugin for OVS database manipulation"
   },
   {
     "name": "nodejs",
@@ -10092,10 +10076,6 @@
     "summary": "The OpenIPMI runtime libraries"
   },
   {
-    "name": "openjade",
-    "summary": "A DSSSL implementation"
-  },
-  {
     "name": "openjpeg2",
     "summary": "C-Library for JPEG 2000"
   },
@@ -10146,10 +10126,6 @@
   {
     "name": "openslp-server",
     "summary": "OpenSLP server daemon"
-  },
-  {
-    "name": "opensp",
-    "summary": "SGML and XML parser"
   },
   {
     "name": "openssh-askpass",
@@ -10730,10 +10706,6 @@
   {
     "name": "pcp-pmda-unbound",
     "summary": "Performance Co-Pilot (PCP) metrics for the Unbound DNS Resolver"
-  },
-  {
-    "name": "pcp-pmda-vmware",
-    "summary": "Performance Co-Pilot (PCP) metrics for VMware"
   },
   {
     "name": "pcp-pmda-weblog",
@@ -11792,10 +11764,6 @@
     "summary": "Load functions only on demand"
   },
   {
-    "name": "perl-SGMLSpm",
-    "summary": "Perl library for parsing the output of nsgmls"
-  },
-  {
     "name": "perl-sigtrap",
     "summary": "Perl pragma to enable simple signal handling"
   },
@@ -12014,10 +11982,6 @@
   {
     "name": "perl-Unicode-Collate",
     "summary": "Unicode Collation Algorithm"
-  },
-  {
-    "name": "perl-Unicode-EastAsianWidth",
-    "summary": "East Asian Width properties"
   },
   {
     "name": "perl-Unicode-LineBreak",
@@ -12240,10 +12204,6 @@
     "summary": "A module for PHP applications which use XML"
   },
   {
-    "name": "pigz",
-    "summary": "Parallel implementation of gzip"
-  },
-  {
     "name": "pinentry",
     "summary": "Collection of simple PIN or passphrase entry dialogs"
   },
@@ -12286,10 +12246,6 @@
   {
     "name": "pipewire-libs",
     "summary": "Libraries for PipeWire clients"
-  },
-  {
-    "name": "pipewire-media-session",
-    "summary": "PipeWire Media Session Manager"
   },
   {
     "name": "pipewire-pulseaudio",
@@ -12410,10 +12366,6 @@
   {
     "name": "plexus-utils",
     "summary": "Plexus Common Utilities"
-  },
-  {
-    "name": "plotnetcfg",
-    "summary": "A tool to plot network configuration"
   },
   {
     "name": "plotutils",
@@ -12692,10 +12644,6 @@
     "summary": "Protocol Buffers - Google's data interchange format"
   },
   {
-    "name": "protobuf-c",
-    "summary": "C bindings for Google's Protocol Buffers"
-  },
-  {
     "name": "protobuf-lite",
     "summary": "Protocol Buffers LITE_RUNTIME libraries"
   },
@@ -12712,6 +12660,10 @@
     "summary": "Cross-vendor public domain suffix database"
   },
   {
+    "name": "pulseaudio",
+    "summary": "Improved Linux Sound Server"
+  },
+  {
     "name": "pulseaudio-libs",
     "summary": "Libraries for PulseAudio clients"
   },
@@ -12722,6 +12674,14 @@
   {
     "name": "pulseaudio-libs-glib2",
     "summary": "GLIB 2.x bindings for PulseAudio clients"
+  },
+  {
+    "name": "pulseaudio-module-bluetooth",
+    "summary": "Bluetooth support for the PulseAudio sound server"
+  },
+  {
+    "name": "pulseaudio-module-x11",
+    "summary": "X11 support for the PulseAudio sound server"
   },
   {
     "name": "pulseaudio-utils",
@@ -12864,10 +12824,6 @@
     "summary": "Linux Distribution - a Linux OS platform information API"
   },
   {
-    "name": "python3-dns",
-    "summary": "DNS toolkit for Python"
-  },
-  {
     "name": "python3-enchant",
     "summary": "Python 3 bindings for Enchant spellchecking library"
   },
@@ -12966,10 +12922,6 @@
   {
     "name": "python3-ldap",
     "summary": "An object-oriented API to access LDAP directory servers"
-  },
-  {
-    "name": "python3-ldb",
-    "summary": "Python bindings for the LDB library"
   },
   {
     "name": "python3-lib389",
@@ -13288,10 +13240,6 @@
     "summary": "API for Linux kernel LIO SCSI target"
   },
   {
-    "name": "python3-samba",
-    "summary": "Samba Python3 libraries"
-  },
-  {
     "name": "python3-sanlock",
     "summary": "Python bindings for the sanlock library"
   },
@@ -13324,24 +13272,8 @@
     "summary": "Python bindings for Subversion Version Control system"
   },
   {
-    "name": "python3-systemd",
-    "summary": "Python module wrapping systemd functionality"
-  },
-  {
-    "name": "python3-talloc",
-    "summary": "Python bindings for the Talloc library"
-  },
-  {
     "name": "python3-tbb",
     "summary": "Python 3 TBB module"
-  },
-  {
-    "name": "python3-tdb",
-    "summary": "Python3 bindings for the Tdb library"
-  },
-  {
-    "name": "python3-tevent",
-    "summary": "Python 3 bindings for the Tevent library"
   },
   {
     "name": "python3-tkinter",
@@ -13390,6 +13322,10 @@
   {
     "name": "qatzip-libs",
     "summary": "Libraries for the qatzip package"
+  },
+  {
+    "name": "qemu-ga-win",
+    "summary": "Qemus Guest agent for Windows"
   },
   {
     "name": "qemu-guest-agent",
@@ -13460,10 +13396,6 @@
     "summary": "qemu-kvm documentation"
   },
   {
-    "name": "qemu-kvm-hw-usbredir",
-    "summary": "QEMU usbredir support"
-  },
-  {
     "name": "qemu-kvm-tools",
     "summary": "qemu-kvm support tools"
   },
@@ -13478,10 +13410,6 @@
   {
     "name": "qemu-pr-helper",
     "summary": "qemu-pr-helper utility for qemu-kvm"
-  },
-  {
-    "name": "qemu-virtiofsd",
-    "summary": "QEMU virtio-fs shared file system daemon"
   },
   {
     "name": "qgnomeplatform",
@@ -14037,7 +13965,7 @@
   },
   {
     "name": "rhc",
-    "summary": "Message dispatch agent for cloud-connected systems"
+    "summary": "rhc connects the system to Red Hat hosted services"
   },
   {
     "name": "rhc-worker-playbook",
@@ -14296,10 +14224,6 @@
     "summary": "An xUnit family unit testing framework for Ruby"
   },
   {
-    "name": "rubygem-thread_order",
-    "summary": "Test helper for ordering threaded code"
-  },
-  {
     "name": "rubygem-typeprof",
     "summary": "TypeProf is a type analysis tool for Ruby code based on abstract interpretation"
   },
@@ -14353,11 +14277,11 @@
   },
   {
     "name": "rust-std-static-wasm32-unknown-unknown",
-    "summary": "Standard library for Rust"
+    "summary": "Standard library for Rust wasm32-unknown-unknown"
   },
   {
     "name": "rust-std-static-wasm32-wasi",
-    "summary": "Standard library for Rust"
+    "summary": "Standard library for Rust wasm32-wasi"
   },
   {
     "name": "rust-toolset",
@@ -14498,14 +14422,6 @@
   {
     "name": "scrub",
     "summary": "Disk scrubbing program"
-  },
-  {
-    "name": "SDL",
-    "summary": "A cross-platform multimedia library"
-  },
-  {
-    "name": "SDL-devel",
-    "summary": "Files needed to develop Simple DirectMedia Layer applications"
   },
   {
     "name": "sdl12-compat",
@@ -14780,6 +14696,10 @@
     "summary": "Simple SSL certificate generator"
   },
   {
+    "name": "ssh-key-dir",
+    "summary": "sshd AuthorizedKeysCommand to read ~/.ssh/authorized_keys.d"
+  },
+  {
     "name": "sshpass",
     "summary": "Non-interactive SSH authentication utility"
   },
@@ -14996,10 +14916,6 @@
     "summary": "An enhanced version of csh, the C shell"
   },
   {
-    "name": "tdb-tools",
-    "summary": "Developer tools for the Tdb library"
-  },
-  {
     "name": "teckit",
     "summary": "Conversion library and mapping compiler"
   },
@@ -15030,18 +14946,6 @@
   {
     "name": "tex-preview",
     "summary": "Preview style files for LaTeX"
-  },
-  {
-    "name": "texi2html",
-    "summary": "A highly customizable texinfo to HTML and other formats translator"
-  },
-  {
-    "name": "texinfo",
-    "summary": "Tools needed to create Texinfo format documentation files"
-  },
-  {
-    "name": "texinfo-tex",
-    "summary": "Tools for formatting Texinfo documentation files using TeX"
   },
   {
     "name": "texlive",
@@ -16657,7 +16561,7 @@
   },
   {
     "name": "toolbox",
-    "summary": "Unprivileged development environment"
+    "summary": "Tool for containerized command line environments on Linux"
   },
   {
     "name": "toolbox-tests",
@@ -16930,10 +16834,6 @@
   {
     "name": "varnish",
     "summary": "High-performance HTTP accelerator"
-  },
-  {
-    "name": "varnish-devel",
-    "summary": "Development files for varnish"
   },
   {
     "name": "varnish-docs",
@@ -17296,10 +17196,6 @@
     "summary": "A set of xmlto backends for xhtml1 source format"
   },
   {
-    "name": "xmltoman",
-    "summary": "Scripts for converting XML to roff or HTML"
-  },
-  {
     "name": "xorg-x11-drivers",
     "summary": "X.Org X11 driver installation package"
   },
@@ -17522,10 +17418,6 @@
   {
     "name": "zram-generator",
     "summary": "Systemd unit generator for zram swap devices"
-  },
-  {
-    "name": "zstd",
-    "summary": "Zstd compression library"
   },
   {
     "name": "zziplib",
