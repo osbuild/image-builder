@@ -464,18 +464,6 @@
     "summary": "Fibre Channel over Ethernet utilities"
   },
   {
-    "name": "fdo-client",
-    "summary": "FDO Client implementation"
-  },
-  {
-    "name": "fdo-init",
-    "summary": "dracut module for device initialization"
-  },
-  {
-    "name": "fdo-owner-cli",
-    "summary": "FDO Owner tools implementation"
-  },
-  {
     "name": "file",
     "summary": "Utility for determining file types"
   },
@@ -1400,14 +1388,6 @@
     "summary": "Modules used to build custom grub.efi images"
   },
   {
-    "name": "grub2-efi-ia32",
-    "summary": "GRUB for EFI systems."
-  },
-  {
-    "name": "grub2-efi-ia32-cdboot",
-    "summary": "Files used to boot removeable media with EFI"
-  },
-  {
     "name": "grub2-efi-x64",
     "summary": "GRUB for EFI systems."
   },
@@ -1502,6 +1482,10 @@
   {
     "name": "initscripts",
     "summary": "Basic support for legacy System V init scripts"
+  },
+  {
+    "name": "initscripts-rename-device",
+    "summary": "Udev helper utility that provides network interface naming"
   },
   {
     "name": "initscripts-service",
@@ -2080,6 +2064,10 @@
     "summary": "A library of functions for manipulating PNG image format files"
   },
   {
+    "name": "libproxy",
+    "summary": "A library handling all the details of proxy configuration"
+  },
+  {
     "name": "libpsl",
     "summary": "C library for the Publix Suffix List"
   },
@@ -2504,6 +2492,10 @@
     "summary": "NetworkManager config file for \"server-like\" defaults"
   },
   {
+    "name": "NetworkManager-initscripts-updown",
+    "summary": "Legacy ifup/ifdown scripts for NetworkManager that replace initscripts (network-scripts)"
+  },
+  {
     "name": "NetworkManager-libnm",
     "summary": "Libraries for adding NetworkManager support to applications."
   },
@@ -2760,6 +2752,10 @@
     "summary": "Internationalization pack for procps-ng"
   },
   {
+    "name": "protobuf-c",
+    "summary": "C bindings for Google's Protocol Buffers"
+  },
+  {
     "name": "psacct",
     "summary": "Utilities for monitoring process activities"
   },
@@ -2770,14 +2766,6 @@
   {
     "name": "publicsuffix-list-dafsa",
     "summary": "Cross-vendor public domain suffix database in DAFSA form"
-  },
-  {
-    "name": "python-pip-wheel",
-    "summary": "The pip wheel"
-  },
-  {
-    "name": "python-setuptools-wheel",
-    "summary": "The setuptools wheel"
   },
   {
     "name": "python3",
@@ -3184,10 +3172,6 @@
     "summary": "Shared MIME information database"
   },
   {
-    "name": "shim-ia32",
-    "summary": "First-stage UEFI bootloader"
-  },
-  {
     "name": "shim-x64",
     "summary": "First-stage UEFI bootloader"
   },
@@ -3546,10 +3530,6 @@
   {
     "name": "yum-utils",
     "summary": "Yum-utils CLI compatibility layer"
-  },
-  {
-    "name": "zchunk-libs",
-    "summary": "Zchunk library"
   },
   {
     "name": "zip",

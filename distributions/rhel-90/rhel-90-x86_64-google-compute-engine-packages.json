@@ -18,5 +18,9 @@
   {
     "name": "google-osconfig-agent",
     "summary": "Google Compute Engine guest environment."
+  },
+  {
+    "name": "google-rhui-client-rhel9",
+    "summary": "RHUI config for GCE"
   }
 ]
