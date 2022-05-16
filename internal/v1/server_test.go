@@ -213,6 +213,11 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.Equal(t, 400, response.StatusCode)
 	})
 
+	t.Run("AccountNumberFallback", func(t *testing.T) {
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0WithoutEntitlements)
+		require.Equal(t, 200, response.StatusCode)
+	})
+
 	t.Run("BogusAuthString", func(t *testing.T) {
 		auth := "notbase64"
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)

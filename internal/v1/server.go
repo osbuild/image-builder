@@ -215,7 +215,7 @@ func (s *Server) isEntitled(ctx echo.Context) bool {
 		// are associated when a billing relationship exists, which is a decent
 		// proxy for RHEL entitlements
 		s.logger.Error("RHEL entitlement not present in identity header")
-		return idh.Identity.AccountNumber == ""
+		return idh.Identity.AccountNumber != ""
 
 	}
 	return entitled.IsEntitled
