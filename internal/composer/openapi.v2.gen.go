@@ -211,10 +211,16 @@ type GCPUploadStatus struct {
 
 // ImageRequest defines model for ImageRequest.
 type ImageRequest struct {
-	Architecture  string         `json:"architecture"`
-	ImageType     ImageTypes     `json:"image_type"`
-	Ostree        *OSTree        `json:"ostree,omitempty"`
-	Repositories  []Repository   `json:"repositories"`
+	Architecture string       `json:"architecture"`
+	ImageType    ImageTypes   `json:"image_type"`
+	Ostree       *OSTree      `json:"ostree,omitempty"`
+	Repositories []Repository `json:"repositories"`
+
+	// This should really be oneOf but AWSS3UploadOptions is a subset of
+	// AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
+	// are also valid AWSS3UploadOptionas objects which violates the oneOf
+	// rules. Therefore, we have to use anyOf here but be aware that it isn't
+	// possible to mix and match more schemas together.
 	UploadOptions *UploadOptions `json:"upload_options,omitempty"`
 }
 
@@ -288,6 +294,8 @@ type List struct {
 
 // OSTree defines model for OSTree.
 type OSTree struct {
+
+	// Can be either a commit (example: 02604b2da6e954bd34b8b82a835e5a77d2b60ffa), or a branch-like reference (example: rhel/8/x86_64/edge)
 	Parent *string `json:"parent,omitempty"`
 	Ref    *string `json:"ref,omitempty"`
 	Url    *string `json:"url,omitempty"`
@@ -374,9 +382,6 @@ const (
 
 // User defines model for User.
 type User struct {
-	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
-	ObjectReference
-	// Embedded fields due to inline allOf schema
 	Groups *[]string `json:"groups,omitempty"`
 	Key    *string   `json:"key,omitempty"`
 	Name   string    `json:"name"`
