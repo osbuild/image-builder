@@ -59,22 +59,6 @@ Test EL8:
         RUNNER:
           - aws/rhel-8.6-ga-x86_64
 
-Test Edge EL8:
-  stage: test
-  extends: .terraform
-  tags:
-    - terraform/openstack
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  script:
-    - schutzbot/ci_details.sh
-    - schutzbot/deploy.sh
-    - test/cases/edge.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.6-ga-x86_64
-
 Test Load Test:
   stage: test
   extends: .terraform
