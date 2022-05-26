@@ -16,7 +16,7 @@ objects:
           - image: "quay.io/app-sre/ubi8-ubi-minimal:8.6"
             name: image-builder-iqe-trigger
             command: ["curl"]
-            args: ["-X", "POST", "-H", 'Content-type: application/json', "--data", '{"text":"Trigger IQE pipeline."}', "$(WEBHOOK_URL)"]
+            args: ["-X", "POST", "-H", 'Content-type: application/json', "--data", '{"text":"Trigger IQE pipeline."}', "${WEBHOOK_URL}"]
 
 parameters:
   - name: WEBHOOK_URL
