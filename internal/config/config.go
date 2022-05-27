@@ -28,4 +28,5 @@ type ImageBuilderConfig struct {
 	PGSSLMode            string `env:"PGSSLMODE"`
 	QuotaFile            string `env:"QUOTA_FILE"`
 	SyslogServer         string `toml:"syslog_server" env:"SYSLOG_SERVER"`
+	AllowFile            string `env:"ALLOW_FILE"`
 }

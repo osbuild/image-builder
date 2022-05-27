@@ -39,6 +39,7 @@ type Server struct {
 	azure     AzureConfig
 	distsDir  string
 	quotaFile string
+	allowList common.AllowList
 }
 
 type AWSConfig struct {
@@ -59,7 +60,7 @@ type Handlers struct {
 }
 
 func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.ComposerClient, dbase db.DB,
-	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string) error {
+	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string, allowFile string) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -79,6 +80,11 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.Compo
 
 	majorVersion := strings.Split(spec.Info.Version, ".")[0]
 
+	allowList, err := common.LoadAllowList(allowFile, logger)
+	if err != nil {
+		return err
+	}
+
 	s := Server{
 		logger,
 		echoServer,
@@ -91,6 +97,7 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.Compo
 		azureConfig,
 		distsDir,
 		quotaFile,
+		allowList,
 	}
 	var h Handlers
 	h.server = &s
@@ -492,6 +499,15 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	err = ctx.Bind(&composeRequest)
 	if err != nil {
 		return err
+	}
+
+	allowOk, err := common.CheckAllow(idHeader.Identity.Internal.OrgID, string(composeRequest.Distribution), h.server.distsDir, h.server.allowList)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if !allowOk {
+		message := fmt.Sprintf("This account's organization is not authorized to build %s images", string(composeRequest.Distribution))
+		return echo.NewHTTPError(http.StatusForbidden, message)
 	}
 
 	if (composeRequest.ImageRequests[0].UploadRequest == UploadRequest{}) {

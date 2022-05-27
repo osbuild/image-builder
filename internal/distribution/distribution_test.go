@@ -155,3 +155,25 @@ func TestInvalidDistribution(t *testing.T) {
 	_, err := ReadDistribution("../../distributions", "none")
 	require.Error(t, err, DistributionNotFound)
 }
+
+func TestIsRestricted(t *testing.T) {
+	distsDir := "testdata/distributions"
+
+	t.Run("distro is not restricted, has no restrictedAccess field", func(t *testing.T) {
+		actual, _ := IsRestricted(distsDir, "rhel-90")
+		expected := false
+		require.Equal(t, expected, actual)
+	})
+
+	t.Run("distro is not restricted, restrictedAccess field is false", func(t *testing.T) {
+		actual, _ := IsRestricted(distsDir, "centos-9")
+		expected := false
+		require.Equal(t, expected, actual)
+	})
+
+	t.Run("distro is restricted, restrictedAccess field is true", func(t *testing.T) {
+		actual, _ := IsRestricted(distsDir, "centos-8")
+		expected := true
+		require.Equal(t, expected, actual)
+	})
+}
