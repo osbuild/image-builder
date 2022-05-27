@@ -497,7 +497,7 @@ sudo qemu-img create -f qcow2 "${ISO_IMAGE_PATH}" 20G
 # Put ks.cfg into iso file
 sudo mv "${WORKDIR}/${ISO_FILENAME}" /var/lib/libvirt/images/
 sudo dnf install -y lorax
-sudo wget -cN https://raw.githubusercontent.com/weldr/lorax/master/src/sbin/mkksiso -O "${WORKDIR}/mkksiso"
+sudo wget -cN https://raw.githubusercontent.com/weldr/lorax/f6e8518ec9105a292d734786ad3813197922ca14/src/sbin/mkksiso -O "${WORKDIR}/mkksiso"
 sudo chmod +x "${WORKDIR}/mkksiso"
 sudo "${WORKDIR}/mkksiso" -c "console=ttyS0,115200" "$KS_FILE" "/var/lib/libvirt/images/${ISO_FILENAME}" /var/lib/libvirt/images/output.iso
 
