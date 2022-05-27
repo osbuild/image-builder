@@ -17,6 +17,13 @@ objects:
             name: image-builder-iqe-trigger
             command: ["curl"]
             args: ["-X", "POST", "-H", 'Content-type: application/json', "--data", '{"text":"Trigger IQE pipeline."}', "${WEBHOOK_URL}"]
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
 
 parameters:
   - name: WEBHOOK_URL
