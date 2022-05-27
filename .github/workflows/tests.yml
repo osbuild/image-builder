@@ -86,3 +86,27 @@ jobs:
       run: |
         make build
         ./image-builder-db-test
+
+  kube-linter:
+    name: "🎀 kube-linter"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: redhat-actions/oc-installer@v1
+    - name: Process template
+      run: |
+        mkdir processed-templates
+        oc process -f templates/image-builder.yml \
+          -p IMAGE_TAG=image_tag \
+          --local \
+          -o yaml > processed-templates/image-builder.yml
+
+        oc process -f templates/iqe-trigger.yml \
+          -p WEBHOOK_URL=webhook_url \
+          --local \
+          -o yaml > processed-templates/iqe-trigger.yml
+
+    - uses: stackrox/kube-linter-action@v1.0.4
+      with:
+        directory: processed-templates
+        config: templates/.kube-linter-config.yml
