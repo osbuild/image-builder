@@ -17,8 +17,9 @@ import (
 var DistributionNotFound = errors.New("Distribution not available")
 
 type DistributionItem struct {
-	Description string `json:"description"`
-	Name        string `json:"name"`
+	Description      string `json:"description"`
+	Name             string `json:"name"`
+	RestrictedAccess bool   `json:"restrictedAccess"`
 }
 
 type Distributions []DistributionItem
@@ -182,4 +183,13 @@ func FindPackages(distsDir, distro, arch, search string, is_entitled bool) ([]Pa
 		}
 	}
 	return pkgs, nil
+}
+
+func IsRestricted(distsDir, distro string) (bool, error) {
+	distributionFile, err := ReadDistribution(distsDir, distro)
+	if err != nil {
+		return true, err
+	}
+
+	return distributionFile.Distribution.RestrictedAccess, nil
 }

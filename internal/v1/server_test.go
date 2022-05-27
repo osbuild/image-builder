@@ -58,7 +58,7 @@ func initQuotaFile(t *testing.T) (string, error) {
 	return file.Name(), nil
 }
 
-func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo, *httptest.Server) {
+func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
 	logger, err := logger.NewLogger("DEBUG", "", "", "", "", "")
 	require.NoError(t, err)
 
@@ -89,7 +89,7 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo,
 	require.NoError(t, err)
 
 	echoServer := echo.New()
-	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, "../../distributions", quotaFile)
+	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, distsDir, quotaFile, allowFile)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {
@@ -113,7 +113,11 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo,
 }
 
 func startServer(t *testing.T, url string) (*echo.Echo, *httptest.Server) {
-	return startServerWithCustomDB(t, url, tutils.InitDB())
+	return startServerWithCustomDB(t, url, tutils.InitDB(), "../../distributions", "")
+}
+
+func startServerWithAllowFile(t *testing.T, url string, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
+	return startServerWithCustomDB(t, url, tutils.InitDB(), distsDir, allowFile)
 }
 
 // note: all of the sub-tests below don't actually talk to
@@ -308,7 +312,7 @@ func TestGetComposeStatus(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -415,7 +419,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -476,7 +480,7 @@ func TestGetComposes(t *testing.T) {
 	composeEntry, err := dbase.GetCompose(UUIDTest, "000000")
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServerWithCustomDB(t, "", dbase)
+	db_srv, tokenSrv := startServerWithCustomDB(t, "", dbase, "../../distributions", "")
 	defer func() {
 		err := db_srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -755,6 +759,116 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	require.Equal(t, "3aa7375a-534a-4de3-8caf-011e04f402d3", result.Id)
 }
 
+func TestComposeImageAllowList(t *testing.T) {
+	distsDir := "../distribution/testdata/distributions"
+	allowFile := "../common/testdata/allow.json"
+
+	createApiSrv := func() *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if "Bearer" == r.Header.Get("Authorization") {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			result := composer.ComposeId{
+				Id: "3aa7375a-534a-4de3-8caf-011e04f402d3",
+			}
+			err := json.NewEncoder(w).Encode(result)
+			require.NoError(t, err)
+		}))
+	}
+
+	createPayload := func(distro Distributions) ComposeRequest {
+		return ComposeRequest{
+			Customizations: nil,
+			Distribution:   distro,
+			ImageRequests: []ImageRequest{
+				{
+					Architecture: "x86_64",
+					ImageType:    ImageTypes_aws,
+					UploadRequest: UploadRequest{
+						Type: UploadTypes_aws,
+						Options: AWSUploadRequestOptions{
+							ShareWithAccounts: []string{"test-account"},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	t.Run("restricted distribution, allowed", func(t *testing.T) {
+		// simulate osbuild-composer API
+		apiSrv := createApiSrv()
+		defer apiSrv.Close()
+
+		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, distsDir, allowFile)
+		defer func() {
+			err := srv.Shutdown(context.Background())
+			require.NoError(t, err)
+		}()
+		defer tokenSrv.Close()
+
+		payload := createPayload("centos-8")
+
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, http.StatusCreated, response.StatusCode)
+
+		var result ComposeResponse
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, "3aa7375a-534a-4de3-8caf-011e04f402d3", result.Id)
+	})
+
+	t.Run("restricted distribution, forbidden", func(t *testing.T) {
+		// simulate osbuild-composer API
+		apiSrv := createApiSrv()
+		defer apiSrv.Close()
+
+		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, distsDir, allowFile)
+		defer func() {
+			err := srv.Shutdown(context.Background())
+			require.NoError(t, err)
+		}()
+		defer tokenSrv.Close()
+
+		payload := createPayload("rhel-86")
+
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, http.StatusForbidden, response.StatusCode)
+
+		var result ComposeResponse
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, "", result.Id)
+	})
+
+	t.Run("restricted distribution, forbidden (no allowFile)", func(t *testing.T) {
+		// simulate osbuild-composer API
+		apiSrv := createApiSrv()
+		defer apiSrv.Close()
+
+		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, distsDir, "")
+		defer func() {
+			err := srv.Shutdown(context.Background())
+			require.NoError(t, err)
+		}()
+		defer tokenSrv.Close()
+
+		payload := createPayload("centos-8")
+
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, http.StatusForbidden, response.StatusCode)
+
+		var result ComposeResponse
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, "", result.Id)
+	})
+}
+
 // convenience function for string pointer fields
 func strptr(s string) *string {
 	return &s
@@ -1001,7 +1115,7 @@ func TestComposeStatusError(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase)
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
