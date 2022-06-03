@@ -75,6 +75,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Architectures'
+
   /composes:
     get:
       summary: get a collection of previous compose requests for the logged in user
@@ -100,6 +101,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ComposesResponse'
+
   /composes/{composeId}:
     get:
       summary: get status of an image compose
@@ -119,6 +121,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ComposeStatus'
+
+  /composes/{composeId}/promotions:
+    get:
+      summary: get all promotions of an image compose
+      description: |
+        List all promotions for a specific image. Each image compose has a single promotion by
+        default.
+
   /composes/{composeId}/metadata:
     get:
       summary: get metadata of an image compose
@@ -163,6 +173,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+
+  /compose/{id}/promote:
+    post:
+      summary: promote an image
+      description: |
+        Promote or repromote an image to a specific location. Each image compose has 1 promotion by
+        default.
+
   /packages:
     get:
       parameters:
