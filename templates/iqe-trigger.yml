@@ -41,4 +41,4 @@ parameters:
   - name: JOB_SUFFIX
     description: "Random string used as job suffix"
     generate: expression
-    from : "[a-zA-Z0-9]{12}"
+    from : "[a-z0-9]{12}"
