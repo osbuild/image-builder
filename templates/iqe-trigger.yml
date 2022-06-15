@@ -6,7 +6,7 @@ objects:
 - apiVersion: batch/v1
   kind: Job
   metadata:
-    name: image-builder-iqe-trigger
+    name: image-builder-iqe-trigger-${JOB_SUFFIX}
     annotations:
       ignore-check.kube-linter.io/no-liveness-probe
       ignore-check.kube-linter.io/no-readiness-probe
@@ -38,3 +38,7 @@ parameters:
   - name: WEBHOOK_URL
     value: ''
     required: true
+  - name: JOB_SUFFIX
+    description: "Random string used as job suffix"
+    generate: expression
+    from : "[a-zA-Z0-9]{12}"
