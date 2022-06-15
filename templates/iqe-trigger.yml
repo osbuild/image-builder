@@ -7,11 +7,15 @@ objects:
   kind: Job
   metadata:
     name: image-builder-iqe-trigger
+    annotations:
+      ignore-check.kube-linter.io/no-liveness-probe
+      ignore-check.kube-linter.io/no-readiness-probe
   spec:
     backoffLimit: 5
     template:
       spec:
         restartPolicy: Never
+        serviceAccountName: image-builder
         containers:
           - image: "quay.io/app-sre/ubi8-ubi-minimal:8.6"
             name: image-builder-iqe-trigger
@@ -24,6 +28,11 @@ objects:
               limits:
                 cpu: 200m
                 memory: 256Mi
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: image-builder
 
 parameters:
   - name: WEBHOOK_URL
