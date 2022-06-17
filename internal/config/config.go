@@ -27,4 +27,5 @@ type ImageBuilderConfig struct {
 	PGPassword           string `env:"PGPASSWORD"`
 	PGSSLMode            string `env:"PGSSLMODE"`
 	QuotaFile            string `env:"QUOTA_FILE"`
+	SyslogServer         string `toml:"syslog_server" env:"SYSLOG_SERVER"`
 }

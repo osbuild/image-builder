@@ -59,7 +59,7 @@ func initQuotaFile(t *testing.T) (string, error) {
 }
 
 func startServerWithCustomDB(t *testing.T, url string, dbase db.DB) (*echo.Echo, *httptest.Server) {
-	logger, err := logger.NewLogger("DEBUG", "", "", "", "")
+	logger, err := logger.NewLogger("DEBUG", "", "", "", "", "")
 	require.NoError(t, err)
 
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
