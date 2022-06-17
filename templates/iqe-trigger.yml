@@ -8,8 +8,8 @@ objects:
   metadata:
     name: image-builder-iqe-trigger-${JOB_SUFFIX}
     annotations:
-      ignore-check.kube-linter.io/no-liveness-probe
-      ignore-check.kube-linter.io/no-readiness-probe
+      ignore-check.kube-linter.io/no-liveness-probe: "no need for liveness probe in a job"
+      ignore-check.kube-linter.io/no-readiness-probe: "no need for readiness probe in a job"
   spec:
     backoffLimit: 5
     template:
