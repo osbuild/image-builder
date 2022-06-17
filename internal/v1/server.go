@@ -289,14 +289,53 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	}
 
 	if cloudStat.ImageStatus.Error != nil {
-		status.ImageStatus.Error = &ComposeStatusError{
-			Id:      cloudStat.ImageStatus.Error.Id,
-			Reason:  cloudStat.ImageStatus.Error.Reason,
-			Details: cloudStat.ImageStatus.Error.Details,
-		}
+		status.ImageStatus.Error = parseComposeStatusError(cloudStat.ImageStatus.Error)
 	}
 
 	return ctx.JSON(http.StatusOK, status)
+}
+
+func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeStatusError {
+	if composeErr == nil {
+		return nil
+	}
+
+	// Default top-level error
+	fbErr := &ComposeStatusError{
+		Id:      composeErr.Id,
+		Reason:  composeErr.Reason,
+		Details: composeErr.Details,
+	}
+
+	switch composeErr.Id {
+	case 5: // manifest error: depsolve dependency failure
+		fallthrough
+	case 9: // osbuild error: manifest dependency failure
+		if composeErr.Details != nil {
+			intfs := (*composeErr.Details).([]interface{})
+			if len(intfs) == 0 {
+				return fbErr
+			}
+
+			// Try to remarshal the details as another composer.ComposeStatusError
+			jsonDetails, err := json.Marshal(intfs[0])
+			if err != nil {
+				logrus.Errorf("Error processing compose status error details: %v", err)
+				return fbErr
+			}
+			var newErr composer.ComposeStatusError
+			err = json.Unmarshal(jsonDetails, &newErr)
+			if err != nil {
+				logrus.Errorf("Error processing compose status error details: %v", err)
+				return fbErr
+			}
+
+			return parseComposeStatusError(&newErr)
+		}
+		return fbErr
+	default:
+		return fbErr
+	}
 }
 
 func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error {
