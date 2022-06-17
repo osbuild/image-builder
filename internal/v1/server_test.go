@@ -292,9 +292,9 @@ func TestGetComposeStatus(t *testing.T) {
 		}
 		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
-		s := ComposeStatus{
-			ImageStatus: ImageStatus{
-				Status: "building",
+		s := composer.ComposeStatus{
+			ImageStatus: composer.ImageStatus{
+				Status: composer.ImageStatusValue_building,
 			},
 		}
 		err := json.NewEncoder(w).Encode(s)
@@ -319,11 +319,11 @@ func TestGetComposeStatus(t *testing.T) {
 		UUIDTest), &tutils.AuthString1)
 	require.Equal(t, 200, response.StatusCode)
 
-	var result composer.ComposeStatus
+	var result ComposeStatus
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, composer.ComposeStatus{
-		ImageStatus: composer.ImageStatus{
+	require.Equal(t, ComposeStatus{
+		ImageStatus: ImageStatus{
 			Status: "building",
 		},
 	}, result)
@@ -333,8 +333,8 @@ func TestGetComposeStatus(t *testing.T) {
 	require.Equal(t, 200, response.StatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, composer.ComposeStatus{
-		ImageStatus: composer.ImageStatus{
+	require.Equal(t, ComposeStatus{
+		ImageStatus: ImageStatus{
 			Status: "building",
 		},
 	}, result)
@@ -948,4 +948,81 @@ func TestMetrics(t *testing.T) {
 	require.Equal(t, 200, response.StatusCode)
 	require.Contains(t, body, "image_builder_crc_compose_requests_total")
 	require.Contains(t, body, "image_builder_crc_compose_errors")
+}
+
+func TestComposeStatusError(t *testing.T) {
+	// simulate osbuild-composer API
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+
+		//nolint
+		var manifestErrorDetails interface{}
+		manifestErrorDetails = []composer.ComposeStatusError{
+			composer.ComposeStatusError{
+				Id:     23,
+				Reason: "Marking errors: package",
+			},
+		}
+
+		//nolint
+		var osbuildErrorDetails interface{}
+		osbuildErrorDetails = []composer.ComposeStatusError{
+			composer.ComposeStatusError{
+				Id:      5,
+				Reason:  "dependency failed",
+				Details: &manifestErrorDetails,
+			},
+		}
+
+		s := composer.ComposeStatus{
+			ImageStatus: composer.ImageStatus{
+				Status: composer.ImageStatusValue_failure,
+				Error: &composer.ComposeStatusError{
+					Id:      9,
+					Reason:  "depenceny failed",
+					Details: &osbuildErrorDetails,
+				},
+			},
+		}
+
+		err := json.NewEncoder(w).Encode(s)
+		require.NoError(t, err)
+	}))
+	defer apiSrv.Close()
+
+	// insert a compose in the mock database
+	dbase := tutils.InitDB()
+	imageName := "MyImageName"
+	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
+	require.NoError(t, err)
+
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase)
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+		UUIDTest), &tutils.AuthString1)
+	require.Equal(t, 200, response.StatusCode)
+
+	var result ComposeStatus
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, ComposeStatus{
+		ImageStatus: ImageStatus{
+			Status: "failure",
+			Error: &ComposeStatusError{
+				Id:     23,
+				Reason: "Marking errors: package",
+			},
+		},
+	}, result)
+
 }
