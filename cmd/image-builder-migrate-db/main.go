@@ -27,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	log, err := logger.NewLogger(conf.LogLevel, conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup)
+	log, err := logger.NewLogger(conf.LogLevel, conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup, "")
 	if err != nil {
 		panic(err)
 	}

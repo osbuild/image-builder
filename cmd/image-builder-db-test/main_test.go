@@ -57,7 +57,7 @@ func connStr(t *testing.T) string {
 func migrateOneStep(t *testing.T) {
 	c := conf(t)
 
-	log, err := logger.NewLogger(c.LogLevel, "", "", "", "")
+	log, err := logger.NewLogger(c.LogLevel, "", "", "", "", "")
 	require.NoError(t, err)
 	require.NotNil(t, log)
 
@@ -68,7 +68,7 @@ func migrateOneStep(t *testing.T) {
 func migrateUp(t *testing.T) {
 	c := conf(t)
 
-	log, err := logger.NewLogger(c.LogLevel, "", "", "", "")
+	log, err := logger.NewLogger(c.LogLevel, "", "", "", "", "")
 	require.NoError(t, err)
 	require.NotNil(t, log)
 

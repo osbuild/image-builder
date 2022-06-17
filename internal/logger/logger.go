@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch"
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/syslog"
 )
 
 // If CW_AWS_ACCESS_KEY_ID is set in the environment it will assume that the
@@ -83,7 +84,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func NewLogger(level, key, secret, region, group string) (*logrus.Logger, error) {
+func NewLogger(level, key, secret, region, group, syslog_server string) (*logrus.Logger, error) {
 
 	switch level {
 	case "DEBUG":
@@ -118,6 +119,15 @@ func NewLogger(level, key, secret, region, group string) (*logrus.Logger, error)
 		log.SetFormatter(&logrus.TextFormatter{
 			DisableColors: true,
 		})
+	}
+
+	if len(syslog_server) > 0 {
+		hook, err := syslog.NewSyslogHook("tcp", syslog_server, 0, "image-builder")
+		if err != nil {
+			return nil, err
+		}
+
+		logrus.AddHook(hook)
 	}
 
 	return &log, nil

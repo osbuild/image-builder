@@ -150,6 +150,7 @@ github.com/redhatinsights/identity
 github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch
 # github.com/sirupsen/logrus v1.8.1
 github.com/sirupsen/logrus
+github.com/sirupsen/logrus/hooks/syslog
 # github.com/stretchr/testify v1.5.1
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require

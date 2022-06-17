@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewLoggerDEBUG(t *testing.T) {
-	result, err := NewLogger("DEBUG", "", "", "", "")
+	result, err := NewLogger("DEBUG", "", "", "", "", "")
 
 	require.NoError(t, err)
 	require.Equal(t, logrus.DebugLevel, result.Level)
@@ -16,7 +16,7 @@ func TestNewLoggerDEBUG(t *testing.T) {
 }
 
 func TestNewLoggerERROR(t *testing.T) {
-	result, err := NewLogger("ERROR", "", "", "", "")
+	result, err := NewLogger("ERROR", "", "", "", "", "")
 
 	require.NoError(t, err)
 	require.Equal(t, logrus.ErrorLevel, result.Level)
@@ -24,7 +24,7 @@ func TestNewLoggerERROR(t *testing.T) {
 }
 
 func TestNewLoggerINFO(t *testing.T) {
-	result, err := NewLogger("INFO", "", "", "", "")
+	result, err := NewLogger("INFO", "", "", "", "", "")
 
 	require.NoError(t, err)
 	require.Equal(t, logrus.InfoLevel, result.Level)
@@ -32,7 +32,7 @@ func TestNewLoggerINFO(t *testing.T) {
 }
 
 func TestNewLoggerUnknownLevel(t *testing.T) {
-	result, err := NewLogger("DummyLevel", "", "", "", "")
+	result, err := NewLogger("DummyLevel", "", "", "", "", "")
 
 	require.NoError(t, err)
 	require.Equal(t, logrus.InfoLevel, result.Level)
@@ -40,7 +40,7 @@ func TestNewLoggerUnknownLevel(t *testing.T) {
 }
 
 func TestNewLoggerWithInvalidKeyAndSecret(t *testing.T) {
-	result, err := NewLogger("DEBUG", "testKey", "testSecret", "us-east-1", "image-builder")
+	result, err := NewLogger("DEBUG", "testKey", "testSecret", "us-east-1", "image-builder", "")
 
 	require.Nil(t, result)
 	require.Error(t, err, "The security token included in the request is invalid")
