@@ -151,9 +151,10 @@ type Error struct {
 	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
 	ObjectReference
 	// Embedded fields due to inline allOf schema
-	Code        string `json:"code"`
-	OperationId string `json:"operation_id"`
-	Reason      string `json:"reason"`
+	Code        string       `json:"code"`
+	Details     *interface{} `json:"details,omitempty"`
+	OperationId string       `json:"operation_id"`
+	Reason      string       `json:"reason"`
 }
 
 // ErrorList defines model for ErrorList.
