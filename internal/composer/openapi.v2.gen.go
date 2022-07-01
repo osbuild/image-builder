@@ -142,8 +142,16 @@ type Customizations struct {
 	// any other part of the build process). The package_sets field for these
 	// repositories is ignored.
 	PayloadRepositories *[]Repository `json:"payload_repositories,omitempty"`
-	Subscription        *Subscription `json:"subscription,omitempty"`
-	Users               *[]User       `json:"users,omitempty"`
+	Services            *struct {
+
+		// List of services to disable by default
+		Disabled *[]string `json:"disabled,omitempty"`
+
+		// List of services to enable by default
+		Enabled *[]string `json:"enabled,omitempty"`
+	} `json:"services,omitempty"`
+	Subscription *Subscription `json:"subscription,omitempty"`
+	Users        *[]User       `json:"users,omitempty"`
 }
 
 // Error defines model for Error.
