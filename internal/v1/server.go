@@ -262,6 +262,8 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			logrus.Errorf("Unable to parse composer's compose response: %v", err)
+		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 		}
 		return httpError
@@ -360,6 +362,8 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error 
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			logrus.Errorf("Unable to parse composer's compose response: %v", err)
+		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 		}
 		return httpError
@@ -546,6 +550,8 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed posting compose request to osbuild-composer")
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			logrus.Errorf("Unable to parse composer's compose response: %v", err)
+		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 		}
 		return httpError
