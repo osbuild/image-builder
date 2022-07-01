@@ -972,8 +972,9 @@ func TestComposeCustomizations(t *testing.T) {
 					Architecture: "x86_64",
 					ImageType:    ImageTypes_rhel_edge_commit,
 					Ostree: &OSTree{
-						Ref: strptr("test/edge/ref"),
-						Url: strptr("https://ostree.srv/"),
+						Ref:    strptr("test/edge/ref"),
+						Url:    strptr("https://ostree.srv/"),
+						Parent: strptr("test/edge/ref2"),
 					},
 					UploadRequest: UploadRequest{
 						Type:    UploadTypes_aws_s3,

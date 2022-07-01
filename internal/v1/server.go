@@ -481,6 +481,9 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 		if url := ostreeOptions.Url; url != nil {
 			cloudOptions.Url = url
 		}
+		if parent := ostreeOptions.Parent; parent != nil {
+			cloudOptions.Parent = parent
+		}
 	}
 	return cloudOptions
 }
