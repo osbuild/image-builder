@@ -168,6 +168,35 @@ objects:
               value: "${DISTRIBUTIONS_DIR}"
             - name: QUOTA_FILE
               value: "/app/quotas/org_quotas.json"
+            - name: SYSLOG_SERVER
+              value: "localhost:5140"
+
+        - image: "quay.io/app-sre/fluentd-hec:1.2.13"
+          name: fluentd-sidecar
+          resources:
+            requests:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
+            limits:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_LIMIT}"
+          env:
+            - name: SPLUNK_HEC_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: splunk
+                  key: token
+                  optional: false
+            - name: SPLUNK_HEC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: splunk
+                  key: url
+                  optional: false
+          volumeMounts:
+            - name: fluentd-config
+              mountPath: /fluentd/etc
+              readOnly: true
         volumes:
           - name: config-volume
             configMap:
@@ -175,6 +204,9 @@ objects:
               items:
               - key: quotas.json
                 path: org_quotas.json
+          - name: fluentd-config
+            configMap:
+              name: fluentd-config
         initContainers:
         - name: image-builder-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"
@@ -245,6 +277,7 @@ objects:
     name: image-builder
   imagePullSecrets:
   - name: quay-cloudservices-pull
+  - name: quay.io
 
 # Set up a service within the namespace for the backend.
 - apiVersion: v1
@@ -264,6 +297,31 @@ objects:
         targetPort: 8086
     selector:
       name: image-builder
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: fluentd-config
+  data:
+    fluent.conf: |
+      <source>
+        @type syslog
+        port 5140
+        bind 127.0.0.1
+        <transport tcp>
+        </transport>
+        tag osbuild-composer
+        <parse>
+          time_format %Y-%m-%dT%H:%M:%SZ
+        </parse>
+      </source>
+
+      <match **>
+        @type splunk_hec
+        hec_host "#{ENV['SPLUNK_HEC_URL']}"
+        hec_port 8088
+        hec_token "#{ENV['SPLUNK_HEC_TOKEN']}"
+      </match>
 
 # Parameters for the various configurations shown above.
 parameters:
