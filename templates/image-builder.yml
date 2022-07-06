@@ -310,7 +310,7 @@ objects:
         bind 127.0.0.1
         <transport tcp>
         </transport>
-        tag osbuild-composer
+        tag image-builder
         <parse>
           time_format %Y-%m-%dT%H:%M:%SZ
         </parse>
