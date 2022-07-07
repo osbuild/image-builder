@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -27,13 +28,13 @@ func main() {
 		panic(err)
 	}
 
-	log, err := logger.NewLogger(conf.LogLevel, conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup, "")
+	err = logger.ConfigLogger(logrus.StandardLogger(), conf.LogLevel, conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup, "")
 	if err != nil {
 		panic(err)
 	}
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase, conf.PGSSLMode)
-	err = db.Migrate(connStr, conf.MigrationsDir, log)
+	err = db.Migrate(connStr, conf.MigrationsDir)
 	if err != nil {
 		panic(err)
 	}

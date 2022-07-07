@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/common"
@@ -59,7 +60,14 @@ func initQuotaFile(t *testing.T) (string, error) {
 }
 
 func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
-	logger, err := logger.NewLogger("DEBUG", "", "", "", "", "")
+	var log = &logrus.Logger{
+		Out:       os.Stderr,
+		Formatter: new(logrus.TextFormatter),
+		Hooks:     make(logrus.LevelHooks),
+		Level:     logrus.DebugLevel,
+	}
+
+	err := logger.ConfigLogger(log, "DEBUG", "", "", "", "", "")
 	require.NoError(t, err)
 
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +97,7 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir str
 	require.NoError(t, err)
 
 	echoServer := echo.New()
-	err = Attach(echoServer, logger, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, distsDir, quotaFile, allowFile)
+	err = Attach(echoServer, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, distsDir, quotaFile, allowFile)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {

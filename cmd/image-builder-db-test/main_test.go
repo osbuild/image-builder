@@ -15,7 +15,6 @@ import (
 
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
-	"github.com/osbuild/image-builder/internal/logger"
 )
 
 const (
@@ -57,22 +56,14 @@ func connStr(t *testing.T) string {
 func migrateOneStep(t *testing.T) {
 	c := conf(t)
 
-	log, err := logger.NewLogger(c.LogLevel, "", "", "", "", "")
-	require.NoError(t, err)
-	require.NotNil(t, log)
-
-	err = db.MigrateSteps(connStr(t), c.MigrationsDir, 1, log)
+	err := db.MigrateSteps(connStr(t), c.MigrationsDir, 1)
 	require.NoError(t, err)
 }
 
 func migrateUp(t *testing.T) {
 	c := conf(t)
 
-	log, err := logger.NewLogger(c.LogLevel, "", "", "", "", "")
-	require.NoError(t, err)
-	require.NotNil(t, log)
-
-	err = db.Migrate(connStr(t), c.MigrationsDir, log)
+	err := db.Migrate(connStr(t), c.MigrationsDir)
 	require.NoError(t, err)
 }
 

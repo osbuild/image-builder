@@ -23,7 +23,7 @@ type AllowList map[string][]string
 //  "000001": ["fedora-34", "fedora-35", "fedora-36"]
 //  "000002": []
 // }
-func LoadAllowList(allowFile string, logger *logrus.Logger) (AllowList, error) {
+func LoadAllowList(allowFile string) (AllowList, error) {
 	if allowFile == "" {
 		return AllowList{}, nil
 	}
@@ -34,7 +34,7 @@ func LoadAllowList(allowFile string, logger *logrus.Logger) (AllowList, error) {
 	}
 	defer func() {
 		if err := jsonFile.Close(); err != nil {
-			logger.Errorln(fmt.Sprintf("Error closing file: %s", err))
+			logrus.Errorln(fmt.Sprintf("Error closing file: %s", err))
 		}
 	}()
 

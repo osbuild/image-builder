@@ -26,6 +26,8 @@ import (
 
 var logLevel logrus.Level
 
+var stdLoggerConfigd = false
+
 type Formatter struct {
 	Hostname string
 }
@@ -84,7 +86,12 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func NewLogger(level, key, secret, region, group, syslog_server string) (*logrus.Logger, error) {
+func ConfigLogger(log *logrus.Logger, level, key, secret, region, group, syslog_server string) error {
+
+	// avoid configuring standard logger multiple times to avoid duplicate hooks
+	if stdLoggerConfigd && log == logrus.StandardLogger() {
+		return nil
+	}
 
 	switch level {
 	case "DEBUG":
@@ -97,12 +104,9 @@ func NewLogger(level, key, secret, region, group, syslog_server string) (*logrus
 		logLevel = logrus.InfoLevel
 	}
 
-	log := logrus.Logger{
-		Out:          os.Stdout,
-		Level:        logLevel,
-		Hooks:        make(logrus.LevelHooks),
-		ReportCaller: true,
-	}
+	log.SetLevel(logLevel)
+	log.SetOutput(os.Stdout)
+	log.SetReportCaller(true)
 
 	if key != "" {
 		f := NewCloudwatchFormatter()
@@ -112,9 +116,9 @@ func NewLogger(level, key, secret, region, group, syslog_server string) (*logrus
 		// avoid the cloudwatch sequence token to get out of sync using the unique hostname per pod
 		hook, err := cloudwatch.NewBatchingHook(group, f.Hostname, awsconf, 10*time.Second)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		log.Hooks.Add(hook)
+		log.AddHook(hook)
 	} else {
 		log.SetFormatter(&logrus.TextFormatter{
 			DisableColors: true,
@@ -124,11 +128,15 @@ func NewLogger(level, key, secret, region, group, syslog_server string) (*logrus
 	if len(syslog_server) > 0 {
 		hook, err := syslog.NewSyslogHook("tcp", syslog_server, 0, "image-builder")
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		log.AddHook(hook)
 	}
 
-	return &log, nil
+	if log == logrus.StandardLogger() {
+		stdLoggerConfigd = true
+	}
+
+	return nil
 }

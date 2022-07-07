@@ -10,26 +10,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Migrate(connStr string, migrationsDir string, logger *logrus.Logger) error {
-	m, err := prepare(connStr, migrationsDir, logger)
-	defer cleanup(m, logger)
+func Migrate(connStr string, migrationsDir string) error {
+	m, err := prepare(connStr, migrationsDir)
+	defer cleanup(m)
 	if err != nil {
 		return err
 	}
-	return finish(m, m.Up(), logger)
+	return finish(m, m.Up())
 }
 
-func MigrateSteps(connStr string, migrationsDir string, steps int, logger *logrus.Logger) error {
-	m, err := prepare(connStr, migrationsDir, logger)
-	defer cleanup(m, logger)
+func MigrateSteps(connStr string, migrationsDir string, steps int) error {
+	m, err := prepare(connStr, migrationsDir)
+	defer cleanup(m)
 	if err != nil {
 		return err
 	}
-	return finish(m, m.Steps(steps), logger)
+	return finish(m, m.Steps(steps))
 }
 
-func prepare(connStr string, migrationsDir string, logger *logrus.Logger) (*migrate.Migrate, error) {
-	logger.Infoln("Applying migrations from directory ", fmt.Sprintf("file://%s", migrationsDir))
+func prepare(connStr string, migrationsDir string) (*migrate.Migrate, error) {
+	logrus.Infoln("Applying migrations from directory ", fmt.Sprintf("file://%s", migrationsDir))
 	m, err := migrate.New(fmt.Sprintf("file://%s", migrationsDir), connStr)
 	if err != nil {
 		return nil, err
@@ -37,22 +37,22 @@ func prepare(connStr string, migrationsDir string, logger *logrus.Logger) (*migr
 
 	version, dirty, err := m.Version()
 	if errors.Is(err, migrate.ErrNilVersion) {
-		logger.Infoln("No migration has been aplied, this is the first one")
+		logrus.Infoln("No migration has been aplied, this is the first one")
 	} else if err != nil {
 		return nil, err
 	}
-	logger.Infoln("Current migration version", version)
+	logrus.Infoln("Current migration version", version)
 
 	if dirty {
-		logger.Errorln("Current migration state is dirty")
+		logrus.Errorln("Current migration state is dirty")
 		return m, fmt.Errorf("DB is at schema version %v is dirty", version)
 	}
 	return m, nil
 }
 
-func finish(m *migrate.Migrate, err error, logger *logrus.Logger) error {
+func finish(m *migrate.Migrate, err error) error {
 	if errors.Is(err, migrate.ErrNoChange) {
-		logger.Infoln("No migrations were applied, already at latest version")
+		logrus.Infoln("No migrations were applied, already at latest version")
 	} else if err != nil {
 		return err
 	}
@@ -60,19 +60,19 @@ func finish(m *migrate.Migrate, err error, logger *logrus.Logger) error {
 	if errors.Is(err, migrate.ErrNilVersion) {
 		return err
 	}
-	logger.Infoln("Migrated to version ", version)
+	logrus.Infoln("Migrated to version ", version)
 	return nil
 }
 
-func cleanup(m *migrate.Migrate, logger *logrus.Logger) {
+func cleanup(m *migrate.Migrate) {
 	if m == nil {
 		return
 	}
 	srcErr, dbErr := m.Close()
 	if srcErr != nil {
-		logger.Errorln("Source error when closing migration", srcErr)
+		logrus.Errorln("Source error when closing migration", srcErr)
 	}
 	if dbErr != nil {
-		logger.Errorln("DB error when closing migration", dbErr)
+		logrus.Errorln("DB error when closing migration", dbErr)
 	}
 }
