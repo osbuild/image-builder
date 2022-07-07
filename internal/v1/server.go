@@ -28,7 +28,6 @@ import (
 )
 
 type Server struct {
-	logger    *logrus.Logger
 	echo      *echo.Echo
 	client    *composer.ComposerClient
 	spec      *openapi3.Swagger
@@ -59,7 +58,7 @@ type Handlers struct {
 	server *Server
 }
 
-func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.ComposerClient, dbase db.DB,
+func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
 	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string, allowFile string) error {
 	spec, err := GetSwagger()
 	if err != nil {
@@ -80,13 +79,12 @@ func Attach(echoServer *echo.Echo, logger *logrus.Logger, client *composer.Compo
 
 	majorVersion := strings.Split(spec.Info.Version, ".")[0]
 
-	allowList, err := common.LoadAllowList(allowFile, logger)
+	allowList, err := common.LoadAllowList(allowFile)
 	if err != nil {
 		return err
 	}
 
 	s := Server{
-		logger,
 		echoServer,
 		client,
 		spec,
@@ -221,7 +219,7 @@ func (s *Server) isEntitled(ctx echo.Context) bool {
 		// the user's org does not have an associated EBS account number, these
 		// are associated when a billing relationship exists, which is a decent
 		// proxy for RHEL entitlements
-		s.logger.Error("RHEL entitlement not present in identity header")
+		logrus.Error("RHEL entitlement not present in identity header")
 		return idh.Identity.AccountNumber != ""
 
 	}
@@ -589,11 +587,11 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 
 	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
 	if err != nil {
-		h.server.logger.Error("Error inserting id into db", err)
+		logrus.Error("Error inserting id into db", err)
 		return err
 	}
 
-	h.server.logger.Info("Compose result", composeResult)
+	logrus.Info("Compose result", composeResult)
 	return ctx.JSON(http.StatusCreated, ComposeResponse{
 		Id: composeResult.Id,
 	})
@@ -887,7 +885,7 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 
 	internalError := he.Code >= http.StatusInternalServerError && he.Code <= http.StatusNetworkAuthenticationRequired
 	if internalError {
-		s.logger.Errorln(fmt.Sprintf("Internal error %v: %v, %v", he.Code, he.Message, err))
+		logrus.Errorln(fmt.Sprintf("Internal error %v: %v, %v", he.Code, he.Message, err))
 		if strings.HasSuffix(c.Path(), "/compose") {
 			common.ComposeErrors.Inc()
 		}
@@ -908,7 +906,7 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 			})
 		}
 		if err != nil {
-			s.logger.Errorln(err)
+			logrus.Errorln(err)
 		}
 	}
 }
