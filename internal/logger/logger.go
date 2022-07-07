@@ -127,7 +127,7 @@ func NewLogger(level, key, secret, region, group, syslog_server string) (*logrus
 			return nil, err
 		}
 
-		logrus.AddHook(hook)
+		log.AddHook(hook)
 	}
 
 	return &log, nil
