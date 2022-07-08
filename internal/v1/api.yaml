@@ -574,6 +574,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Filesystem'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          description:
+            "list of users that a customer can add, also specifying their respective groups and SSH keys"
+    User:
+      type: object
+      required:
+        - name
+        - SSHKey
+      properties:
+        name:
+          type: string
+          example: "user1"
+        SSHKey:
+          type: string
+          example: "ssh-rsa AAAAB3NzaC1"
     Filesystem:
       type: object
       required:
