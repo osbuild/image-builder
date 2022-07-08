@@ -554,6 +554,11 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
+	// check here for installer types
+	if composeRequest.Customizations != nil && composeRequest.Customizations.Users != nil && !strings.Contains(string(imageType), "installer") {
+		return echo.NewHTTPError(http.StatusBadRequest, "User customization only applies to installer image types")
+	}
+
 	cloudCR := composer.ComposeRequest{
 		Distribution:   distroToStr(composeRequest.Distribution),
 		Customizations: buildCustomizations(composeRequest.Customizations),
@@ -758,6 +763,19 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			})
 		}
 		res.Filesystem = &fsc
+	}
+
+	if cust.Users != nil {
+		var users []composer.User
+		for _, u := range *cust.Users {
+			groups := &[]string{"wheel"}
+			users = append(users, composer.User{
+				Name:   u.Name,
+				Key:    &u.SSHKey,
+				Groups: groups,
+			})
+		}
+		res.Users = &users
 	}
 
 	return res
