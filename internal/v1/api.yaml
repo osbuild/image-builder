@@ -383,9 +383,11 @@ components:
     Distributions:
       type: string
       enum:
+        - rhel-8
         - rhel-84
         - rhel-85
         - rhel-86
+        - rhel-9
         - rhel-90
         - centos-8
         - centos-9
