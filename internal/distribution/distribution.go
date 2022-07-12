@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -99,8 +98,11 @@ func ReadDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 	if err != nil {
 		return
 	}
-
-	f, err := os.Open(filepath.Clean(path.Join(distsDir, distro, fmt.Sprintf("%s.json", distro))))
+	p, err := filepath.EvalSymlinks(filepath.Join(distsDir, distro))
+	if err != nil {
+		return
+	}
+	f, err := os.Open(filepath.Clean(filepath.Join(p, fmt.Sprintf("%s.json", filepath.Base(p)))))
 	if err != nil {
 		return
 	}
@@ -166,7 +168,11 @@ func FindPackages(distsDir, distro, arch, search string, is_entitled bool) ([]Pa
 		if len(r.ImageTypeTags) > 0 {
 			continue
 		}
-		f, err := os.Open(filepath.Clean(path.Join(distsDir, distro, fmt.Sprintf("%s-%s-%s-packages.json", distro, arch, r.Id))))
+		p, err := filepath.EvalSymlinks(filepath.Join(distsDir, distro))
+		if err != nil {
+			return nil, err
+		}
+		f, err := os.Open(filepath.Clean(filepath.Join(distsDir, distro, fmt.Sprintf("%s-%s-%s-packages.json", filepath.Base(p), arch, r.Id))))
 		if err != nil {
 			return nil, err
 		}

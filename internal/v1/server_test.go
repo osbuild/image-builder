@@ -163,7 +163,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, distro := range result {
-			require.Contains(t, []string{"rhel-84", "rhel-85", "rhel-86", "rhel-90", "centos-8", "centos-9"}, distro.Name)
+			require.Contains(t, []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-9", "rhel-90", "centos-8", "centos-9"}, distro.Name)
 		}
 	})
 
@@ -182,7 +182,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetPackages", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh", &tutils.AuthString0)
+		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 
 		var result PackagesResponse
@@ -194,23 +194,23 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		p1 := result.Data[0]
 		p2 := result.Data[1]
 
-		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=1", &tutils.AuthString0)
+		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=1", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 		err = json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Greater(t, result.Meta.Count, 1)
 		require.Equal(t, result.Data[0], p1)
 
-		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=1&offset=1", &tutils.AuthString0)
+		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=1&offset=1", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
 		err = json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Greater(t, result.Meta.Count, 1)
 		require.Equal(t, result.Data[0], p2)
 
-		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=-13", &tutils.AuthString0)
+		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=-13", &tutils.AuthString0)
 		require.Equal(t, 400, response.StatusCode)
-		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-84&architecture=x86_64&search=ssh&limit=13&offset=-2193", &tutils.AuthString0)
+		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=13&offset=-2193", &tutils.AuthString0)
 		require.Equal(t, 400, response.StatusCode)
 
 		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=x86_64&search=ssh", &tutils.AuthString0)
@@ -834,7 +834,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		}()
 		defer tokenSrv.Close()
 
-		payload := createPayload("rhel-86")
+		payload := createPayload("rhel-8")
 
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, http.StatusForbidden, response.StatusCode)
@@ -944,7 +944,7 @@ func TestComposeCustomizations(t *testing.T) {
 			Customizations: &Customizations{
 				Packages: nil,
 			},
-			Distribution: "rhel-84",
+			Distribution: "rhel-8",
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",

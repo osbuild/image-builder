@@ -178,7 +178,7 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
-	d, err := distribution.ReadDistribution(h.server.distsDir, distro)
+	d, err := distribution.ReadDistribution(h.server.distsDir, distroToStr(Distributions(distro)))
 	if err == distribution.DistributionNotFound {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -488,6 +488,15 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 	return cloudOptions
 }
 
+func distroToStr(distro Distributions) string {
+	switch distro {
+	case Distributions_rhel_8:
+		return string(Distributions_rhel_86)
+	default:
+		return string(distro)
+	}
+}
+
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
@@ -508,12 +517,12 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	allowOk, err := common.CheckAllow(idHeader.Identity.Internal.OrgID, string(composeRequest.Distribution), h.server.distsDir, h.server.allowList)
+	allowOk, err := common.CheckAllow(idHeader.Identity.Internal.OrgID, distroToStr(composeRequest.Distribution), h.server.distsDir, h.server.allowList)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if !allowOk {
-		message := fmt.Sprintf("This account's organization is not authorized to build %s images", string(composeRequest.Distribution))
+		message := fmt.Sprintf("This account's organization is not authorized to build %s images", distroToStr(composeRequest.Distribution))
 		return echo.NewHTTPError(http.StatusForbidden, message)
 	}
 
@@ -522,7 +531,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 
 	var repositories []composer.Repository
-	rs, err := distribution.RepositoriesForArch(h.server.distsDir, string(composeRequest.Distribution), composeRequest.ImageRequests[0].Architecture, h.server.isEntitled(ctx))
+	rs, err := distribution.RepositoriesForArch(h.server.distsDir, distroToStr(composeRequest.Distribution), composeRequest.ImageRequests[0].Architecture, h.server.isEntitled(ctx))
 	if err != nil {
 		return err
 	}
@@ -549,7 +558,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 
 	cloudCR := composer.ComposeRequest{
-		Distribution:   string(composeRequest.Distribution),
+		Distribution:   distroToStr(composeRequest.Distribution),
 		Customizations: buildCustomizations(composeRequest.Customizations),
 		ImageRequest: &composer.ImageRequest{
 			Architecture:  composeRequest.ImageRequests[0].Architecture,
@@ -760,7 +769,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 }
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
-	pkgs, err := distribution.FindPackages(h.server.distsDir, string(params.Distribution), params.Architecture, params.Search, h.server.isEntitled(ctx))
+	pkgs, err := distribution.FindPackages(h.server.distsDir, distroToStr(params.Distribution), params.Architecture, params.Search, h.server.isEntitled(ctx))
 	if err != nil {
 		return err
 	}
