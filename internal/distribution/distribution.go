@@ -106,8 +106,6 @@ func ReadDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 	if err != nil {
 		return
 	}
-	// nosec because of https://github.com/securego/gosec/issues/714
-	/* #nosec G307 */
 	defer func() {
 		err := f.Close()
 		if err != nil {
