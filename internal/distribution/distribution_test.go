@@ -82,20 +82,6 @@ func TestRepositoriesForArchWithUnsupportedArch(t *testing.T) {
 	require.Error(t, err, "Architecture not supported")
 }
 
-func TestAvailableDistributions(t *testing.T) {
-	result, err := AvailableDistributions("../../distributions", true)
-	require.NoError(t, err)
-	for _, distro := range result {
-		require.Contains(t, []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-9", "rhel-90", "centos-8", "centos-9"}, distro.Distribution.Name)
-	}
-
-	result, err = AvailableDistributions("../../distributions", false)
-	require.NoError(t, err)
-	for _, distro := range result {
-		require.Contains(t, []string{"centos-8", "centos-9"}, distro.Distribution.Name)
-	}
-}
-
 func TestFindPackages(t *testing.T) {
 	pkgs, err := FindPackages("../../distributions", "centos-8", "x86_64", "vim", false)
 	require.NoError(t, err)
