@@ -21,8 +21,6 @@ type DistributionItem struct {
 	RestrictedAccess bool   `json:"restrictedAccess"`
 }
 
-type Distributions []DistributionItem
-
 type DistributionFile struct {
 	ModulePlatformID string           `json:"module_platform_id"`
 	Distribution     DistributionItem `json:"distribution"`
@@ -120,13 +118,13 @@ func ReadDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 	return
 }
 
-func AvailableDistributions(distsDir string, is_entitled bool) (Distributions, error) {
+func AvailableDistributions(distsDir string, is_entitled bool) ([]DistributionFile, error) {
 	allDistros, err := allDistributions(distsDir)
 	if err != nil {
 		return nil, err
 	}
 
-	var distros Distributions
+	var distros []DistributionFile
 	for _, f := range allDistros {
 		df, err := ReadDistribution(distsDir, f)
 		if err != nil {
@@ -135,7 +133,7 @@ func AvailableDistributions(distsDir string, is_entitled bool) (Distributions, e
 		if !is_entitled && df.NeedsEntitlement() {
 			continue
 		}
-		distros = append(distros, df.Distribution)
+		distros = append(distros, df)
 	}
 	return distros, nil
 }
