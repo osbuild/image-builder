@@ -125,10 +125,12 @@ func (h *Handlers) GetVersion(ctx echo.Context) error {
 
 func (h *Handlers) GetReadiness(ctx echo.Context) error {
 	// make sure distributions are available
-	distributions, err := distribution.AvailableDistributions(h.server.distsDir, h.server.isEntitled(ctx))
+	adr, err := distribution.LoadDistroRegistry(h.server.distsDir)
 	if err != nil {
 		return err
 	}
+
+	distributions := adr.Available(h.server.isEntitled(ctx)).List()
 	if len(distributions) == 0 {
 		return echo.NewHTTPError(http.StatusInternalServerError, "no distributions defined")
 	}
@@ -159,13 +161,14 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
-	ds, err := distribution.AvailableDistributions(h.server.distsDir, h.server.isEntitled(ctx))
+	adr, err := distribution.LoadDistroRegistry(h.server.distsDir)
 	if err != nil {
 		return err
 	}
+	dr := adr.Available(h.server.isEntitled(ctx))
 
 	var distributions DistributionsResponse
-	for _, d := range ds {
+	for _, d := range dr.List() {
 		distributions = append(distributions, DistributionItem{
 			Description: d.Distribution.Description,
 			Name:        d.Distribution.Name,

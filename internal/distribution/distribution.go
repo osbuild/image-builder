@@ -118,26 +118,6 @@ func ReadDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 	return
 }
 
-func AvailableDistributions(distsDir string, is_entitled bool) ([]DistributionFile, error) {
-	allDistros, err := allDistributions(distsDir)
-	if err != nil {
-		return nil, err
-	}
-
-	var distros []DistributionFile
-	for _, f := range allDistros {
-		df, err := ReadDistribution(distsDir, f)
-		if err != nil {
-			return nil, err
-		}
-		if !is_entitled && df.NeedsEntitlement() {
-			continue
-		}
-		distros = append(distros, df)
-	}
-	return distros, nil
-}
-
 func RepositoriesForArch(distsDir, distro, arch string, is_entitled bool) ([]Repository, error) {
 	distribution, err := ReadDistribution(distsDir, distro)
 	if err != nil {
