@@ -8,8 +8,9 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/sirupsen/logrus"
+
+	"github.com/osbuild/image-builder/internal/distribution"
 )
 
 type AllowList map[string][]string
@@ -71,7 +72,12 @@ func (a AllowList) isAllowed(orgId, distro string) (bool, error) {
 // and distro are cross referenced against an allow list file which is pointed to by the ALLOW_FILE environment
 // variable.
 func CheckAllow(orgId, distro, distsDir string, allowList AllowList) (bool, error) {
-	isRestricted, err := distribution.IsRestricted(distsDir, distro)
+	d, err := distribution.ReadDistribution(distsDir, distro)
+	if err != nil {
+		return false, err
+	}
+
+	isRestricted := d.IsRestricted()
 	if err != nil {
 		return false, err
 	}
