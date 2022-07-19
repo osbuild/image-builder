@@ -167,8 +167,8 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 	var distributions DistributionsResponse
 	for _, d := range ds {
 		distributions = append(distributions, DistributionItem{
-			Description: d.Description,
-			Name:        d.Name,
+			Description: d.Distribution.Description,
+			Name:        d.Distribution.Name,
 		})
 	}
 
