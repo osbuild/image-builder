@@ -67,6 +67,10 @@ func (dist DistributionFile) NeedsEntitlement() bool {
 	return false
 }
 
+func (dist DistributionFile) IsRestricted() bool {
+	return dist.Distribution.RestrictedAccess
+}
+
 func allDistributions(distsDir string) ([]string, error) {
 	files, err := ioutil.ReadDir(distsDir)
 	if err != nil {
@@ -187,13 +191,4 @@ func FindPackages(distsDir, distro, arch, search string, is_entitled bool) ([]Pa
 		}
 	}
 	return pkgs, nil
-}
-
-func IsRestricted(distsDir, distro string) (bool, error) {
-	distributionFile, err := ReadDistribution(distsDir, distro)
-	if err != nil {
-		return true, err
-	}
-
-	return distributionFile.Distribution.RestrictedAccess, nil
 }
