@@ -74,7 +74,7 @@ func main() {
 	}
 
 	echoServer := echo.New()
-	err = v1.Attach(echoServer, client, dbase, aws, gcp, azure, conf.DistributionsDir, conf.QuotaFile, conf.AllowFile, adr)
+	err = v1.Attach(echoServer, client, dbase, aws, gcp, azure, conf.QuotaFile, conf.AllowFile, adr)
 	if err != nil {
 		panic(err)
 	}

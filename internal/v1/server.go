@@ -36,7 +36,6 @@ type Server struct {
 	aws        AWSConfig
 	gcp        GCPConfig
 	azure      AzureConfig
-	distsDir   string
 	quotaFile  string
 	allowList  common.AllowList
 	allDistros *distribution.AllDistroRegistry
@@ -60,7 +59,7 @@ type Handlers struct {
 }
 
 func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
-	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string, allowFile string, allDistros *distribution.AllDistroRegistry) error {
+	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, quotaFile string, allowFile string, allDistros *distribution.AllDistroRegistry) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -94,7 +93,6 @@ func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
 		awsConfig,
 		gcpConfig,
 		azureConfig,
-		distsDir,
 		quotaFile,
 		allowList,
 		allDistros,
