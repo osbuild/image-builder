@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/tutils"
 
@@ -96,8 +97,11 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir str
 	quotaFile, err := initQuotaFile(t)
 	require.NoError(t, err)
 
+	adr, err := distribution.LoadDistroRegistry(distsDir)
+	require.NoError(t, err)
+
 	echoServer := echo.New()
-	err = Attach(echoServer, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, distsDir, quotaFile, allowFile)
+	err = Attach(echoServer, client, dbase, AWSConfig{}, GCPConfig{}, AzureConfig{}, distsDir, quotaFile, allowFile, adr)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {

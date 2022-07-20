@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/logger"
 	v1 "github.com/osbuild/image-builder/internal/v1"
-	"github.com/sirupsen/logrus"
 
 	"github.com/labstack/echo/v4"
 )
@@ -66,8 +68,13 @@ func main() {
 		Location: conf.OsbuildAzureLocation,
 	}
 
+	adr, err := distribution.LoadDistroRegistry(conf.DistributionsDir)
+	if err != nil {
+		panic(err)
+	}
+
 	echoServer := echo.New()
-	err = v1.Attach(echoServer, client, dbase, aws, gcp, azure, conf.DistributionsDir, conf.QuotaFile, conf.AllowFile)
+	err = v1.Attach(echoServer, client, dbase, aws, gcp, azure, conf.DistributionsDir, conf.QuotaFile, conf.AllowFile, adr)
 	if err != nil {
 		panic(err)
 	}
