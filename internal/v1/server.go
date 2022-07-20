@@ -769,10 +769,17 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 }
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
-	pkgs, err := distribution.FindPackages(h.server.distsDir, distroToStr(params.Distribution), params.Architecture, params.Search, h.server.isEntitled(ctx))
+	dr := h.server.distroRegistry(ctx)
+	d, err := dr.Get(distroToStr(params.Distribution))
 	if err != nil {
 		return err
 	}
+	arch, err := d.Architecture(params.Architecture)
+	if err != nil {
+		return err
+	}
+
+	pkgs := arch.FindPackages(params.Search)
 	var packages []Package
 	for _, p := range pkgs {
 		packages = append(packages,
