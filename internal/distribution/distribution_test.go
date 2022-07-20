@@ -6,79 +6,51 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRepositoriesForArch(t *testing.T) {
-	result, err := RepositoriesForArch("../../distributions", "centos-8", "x86_64", false)
+func TestDistributionFile_Architecture(t *testing.T) {
+	adr, err := LoadDistroRegistry("../../distributions")
+	require.NoError(t, err)
+	d, err := adr.Available(false).Get("centos-8")
 	require.NoError(t, err)
 
-	require.ElementsMatch(t, []Repository{
-		{
-			Id:      "baseos",
-			Baseurl: "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/",
-			Rhsm:    false,
-		},
-		{
-			Id:      "appstream",
-			Baseurl: "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/",
-			Rhsm:    false,
-		},
-		{
-			Id:      "extras",
-			Baseurl: "http://mirror.centos.org/centos/8-stream/extras/x86_64/os/",
-			Rhsm:    false,
-		},
-		{
-			Id:            "google-compute-engine",
-			Baseurl:       "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
-			Rhsm:          false,
-			ImageTypeTags: []string{"gcp"},
-		},
-		{
-			Id:            "google-cloud-sdk",
-			Baseurl:       "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
-			Rhsm:          false,
-			ImageTypeTags: []string{"gcp"},
-		},
-	}, result)
-
-	result, err = RepositoriesForArch("../../distributions", "rhel-85", "x86_64", true)
+	arch, err := d.Architecture("x86_64")
 	require.NoError(t, err)
-	require.ElementsMatch(t, []Repository{
-		{
-			Id:      "baseos",
-			Baseurl: "https://cdn.redhat.com/content/dist/rhel8/8.5/x86_64/baseos/os",
-			Rhsm:    true,
-		},
-		{
-			Id:      "appstream",
-			Baseurl: "https://cdn.redhat.com/content/dist/rhel8/8.5/x86_64/appstream/os",
-			Rhsm:    true,
-		},
-		{
-			Id:      "ansible",
-			Baseurl: "https://cdn.redhat.com/content/dist/layered/rhel8/x86_64/ansible/2/os",
-			Rhsm:    true,
-		},
-		{
-			Id:            "google-compute-engine",
-			Baseurl:       "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
-			Rhsm:          false,
-			ImageTypeTags: []string{"gcp"},
-		},
-		{
-			Id:            "google-cloud-sdk",
-			Baseurl:       "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
-			Rhsm:          false,
-			ImageTypeTags: []string{"gcp"},
-		},
-	}, result)
 
-	_, err = RepositoriesForArch("../../distributions", "rhel-84", "x86_64", false)
-	require.Error(t, err, "users organization not entitled for distribution")
-}
+	require.Equal(t, &Architecture{
+		ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd"},
+		Repositories: []Repository{
+			{
+				Id:      "baseos",
+				Baseurl: "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/",
+				Rhsm:    false,
+			},
+			{
+				Id:      "appstream",
+				Baseurl: "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/",
+				Rhsm:    false,
+			},
+			{
+				Id:      "extras",
+				Baseurl: "http://mirror.centos.org/centos/8-stream/extras/x86_64/os/",
+				Rhsm:    false,
+			},
+			{
+				Id:            "google-compute-engine",
+				Baseurl:       "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
+				Rhsm:          false,
+				ImageTypeTags: []string{"gcp"},
+			},
+			{
+				Id:            "google-cloud-sdk",
+				Baseurl:       "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
+				Rhsm:          false,
+				ImageTypeTags: []string{"gcp"},
+			},
+		},
+	}, arch,
+	)
 
-func TestRepositoriesForArchWithUnsupportedArch(t *testing.T) {
-	result, err := RepositoriesForArch("../../distributions", "centos-8", "unsupported", true)
-	require.Nil(t, result)
+	arch, err = d.Architecture("unsupported")
+	require.Nil(t, arch)
 	require.Error(t, err, "Architecture not supported")
 }
 

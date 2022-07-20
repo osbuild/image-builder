@@ -69,6 +69,15 @@ func (dist DistributionFile) IsRestricted() bool {
 	return dist.Distribution.RestrictedAccess
 }
 
+func (dist DistributionFile) Architecture(arch string) (*Architecture, error) {
+	switch arch {
+	case "x86_64":
+		return dist.ArchX86, nil
+	default:
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "Architecture not supported")
+	}
+}
+
 func allDistributions(distsDir string) ([]string, error) {
 	files, err := ioutil.ReadDir(distsDir)
 	if err != nil {
