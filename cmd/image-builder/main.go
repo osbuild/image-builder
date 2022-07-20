@@ -73,6 +73,10 @@ func main() {
 		panic(err)
 	}
 
+	if len(adr.Available(true).List()) == 0 {
+		panic("no distributions defined")
+	}
+
 	echoServer := echo.New()
 	err = v1.Attach(echoServer, client, dbase, aws, gcp, azure, conf.QuotaFile, conf.AllowFile, adr)
 	if err != nil {

@@ -124,11 +124,6 @@ func (h *Handlers) GetVersion(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetReadiness(ctx echo.Context) error {
-	distributions := h.server.distroRegistry(ctx).List()
-	if len(distributions) == 0 {
-		return echo.NewHTTPError(http.StatusInternalServerError, "no distributions defined")
-	}
-
 	resp, err := h.server.client.OpenAPI()
 	if err != nil {
 		return err
