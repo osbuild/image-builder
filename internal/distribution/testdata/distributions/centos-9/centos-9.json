@@ -7,24 +7,6 @@
   },
   "x86_64": {
     "image_types": [ "ami", "vhd", "aws", "gcp", "azure", "edge-commit", "edge-installer", "edge-container", "rhel-edge-commit", "rhel-edge-installer", "guest-image", "image-installer", "vsphere" ],
-    "repositories": [{
-      "id": "baseos",
-      "baseurl": "http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/",
-      "rhsm": false
-    }, {
-      "id": "appstream",
-      "baseurl": "http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/",
-      "rhsm": false
-    }, {
-      "id": "google-compute-engine",
-      "baseurl": "https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable",
-      "rhsm": false,
-      "image_type_tags": ["gcp"]
-    }, {
-      "id": "google-cloud-sdk",
-      "baseurl": "https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64",
-      "rhsm": false,
-      "image_type_tags": ["gcp"]
-    }]
+    "repositories": []
   }
 }

@@ -30,6 +30,9 @@ type DistributionFile struct {
 type Architecture struct {
 	ImageTypes   []string     `json:"image_types"`
 	Repositories []Repository `json:"repositories"`
+
+	// not part of distro.json, loaded dynamically in ReadDistribution
+	Packages map[string][]Package
 }
 
 type Repository struct {
@@ -124,7 +127,41 @@ func ReadDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 		}
 	}()
 	err = json.NewDecoder(f).Decode(&d)
+	if err != nil {
+		return
+	}
+
+	x86Pkgs, err := readPackages(d.ArchX86.Repositories, "x86_64", distsDir, distroIn)
+	if err != nil {
+		return
+	}
+	d.ArchX86.Packages = x86Pkgs
+
 	return
+}
+
+func readPackages(repos []Repository, archName, distsDir, distroIn string) (map[string][]Package, error) {
+	pkgs := make(map[string][]Package)
+	for _, r := range repos {
+		p, err := filepath.EvalSymlinks(filepath.Join(distsDir, distroIn))
+		if err != nil {
+			return nil, err
+		}
+		f, err := os.Open(filepath.Clean(filepath.Join(distsDir, distroIn, fmt.Sprintf("%s-%s-%s-packages.json", filepath.Base(p), archName, r.Id))))
+		if err != nil {
+			return nil, err
+		}
+
+		var ps []Package
+		err = json.NewDecoder(f).Decode(&ps)
+		if err != nil {
+			return nil, err
+		}
+
+		pkgs[r.Id] = ps
+	}
+
+	return pkgs, nil
 }
 
 func RepositoriesForArch(distsDir, distro, arch string, is_entitled bool) ([]Repository, error) {

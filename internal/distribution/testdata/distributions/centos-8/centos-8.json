@@ -7,28 +7,6 @@
   },
   "x86_64": {
     "image_types": [ "aws", "gcp", "azure", "ami", "vhd" ],
-    "repositories": [{
-      "id": "baseos",
-      "baseurl": "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/",
-      "rhsm": false
-    }, {
-      "id": "appstream",
-      "baseurl": "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/",
-      "rhsm": false
-    }, {
-      "id": "extras",
-      "baseurl": "http://mirror.centos.org/centos/8-stream/extras/x86_64/os/",
-      "rhsm": false
-    }, {
-      "id": "google-compute-engine",
-      "baseurl": "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
-      "rhsm": false,
-      "image_type_tags": ["gcp"]
-    }, {
-      "id": "google-cloud-sdk",
-      "baseurl": "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
-      "rhsm": false,
-      "image_type_tags": ["gcp"]
-    }]
+    "repositories": []
   }
 }
