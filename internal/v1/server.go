@@ -171,7 +171,7 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
-	d, err := distribution.ReadDistribution(h.server.distsDir, distroToStr(Distributions(distro)))
+	d, err := h.server.distroRegistry(ctx).Get(distroToStr(Distributions(distro)))
 	if err == distribution.DistributionNotFound {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}

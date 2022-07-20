@@ -68,3 +68,14 @@ func (dr DistroRegistry) List() []*DistributionFile {
 
 	return ds
 }
+
+// Get returns a distribution with a specific name.
+// If it's not found, DistributionNotFound is returned.
+func (dr DistroRegistry) Get(name string) (*DistributionFile, error) {
+	df, found := dr.distros[name]
+	if !found {
+		return nil, DistributionNotFound
+	}
+
+	return df, nil
+}
