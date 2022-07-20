@@ -531,11 +531,11 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 
 	var repositories []composer.Repository
-	rs, err := distribution.RepositoriesForArch(h.server.distsDir, distroToStr(composeRequest.Distribution), composeRequest.ImageRequests[0].Architecture, h.server.isEntitled(ctx))
+	arch, err := d.Architecture(composeRequest.ImageRequests[0].Architecture)
 	if err != nil {
 		return err
 	}
-	for _, r := range rs {
+	for _, r := range arch.Repositories {
 		// If no image type tags are defined for the repo, add the repo
 		contains := len(r.ImageTypeTags) == 0
 		for _, it := range r.ImageTypeTags {
