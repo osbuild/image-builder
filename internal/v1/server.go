@@ -28,17 +28,18 @@ import (
 )
 
 type Server struct {
-	echo      *echo.Echo
-	client    *composer.ComposerClient
-	spec      *openapi3.Swagger
-	router    routers.Router
-	db        db.DB
-	aws       AWSConfig
-	gcp       GCPConfig
-	azure     AzureConfig
-	distsDir  string
-	quotaFile string
-	allowList common.AllowList
+	echo       *echo.Echo
+	client     *composer.ComposerClient
+	spec       *openapi3.Swagger
+	router     routers.Router
+	db         db.DB
+	aws        AWSConfig
+	gcp        GCPConfig
+	azure      AzureConfig
+	distsDir   string
+	quotaFile  string
+	allowList  common.AllowList
+	allDistros *distribution.AllDistroRegistry
 }
 
 type AWSConfig struct {
@@ -59,7 +60,7 @@ type Handlers struct {
 }
 
 func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
-	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string, allowFile string) error {
+	awsConfig AWSConfig, gcpConfig GCPConfig, azureConfig AzureConfig, distsDir string, quotaFile string, allowFile string, allDistros *distribution.AllDistroRegistry) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -96,6 +97,7 @@ func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
 		distsDir,
 		quotaFile,
 		allowList,
+		allDistros,
 	}
 	var h Handlers
 	h.server = &s
@@ -124,13 +126,7 @@ func (h *Handlers) GetVersion(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetReadiness(ctx echo.Context) error {
-	// make sure distributions are available
-	adr, err := distribution.LoadDistroRegistry(h.server.distsDir)
-	if err != nil {
-		return err
-	}
-
-	distributions := adr.Available(h.server.isEntitled(ctx)).List()
+	distributions := h.server.distroRegistry(ctx).List()
 	if len(distributions) == 0 {
 		return echo.NewHTTPError(http.StatusInternalServerError, "no distributions defined")
 	}
@@ -161,11 +157,7 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
-	adr, err := distribution.LoadDistroRegistry(h.server.distsDir)
-	if err != nil {
-		return err
-	}
-	dr := adr.Available(h.server.isEntitled(ctx))
+	dr := h.server.distroRegistry(ctx)
 
 	var distributions DistributionsResponse
 	for _, d := range dr.List() {
@@ -921,6 +913,10 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 			logrus.Errorln(err)
 		}
 	}
+}
+
+func (s *Server) distroRegistry(ctx echo.Context) *distribution.DistroRegistry {
+	return s.allDistros.Available(s.isEntitled(ctx))
 }
 
 func noAssociateAccounts(nextHandler echo.HandlerFunc) echo.HandlerFunc {
