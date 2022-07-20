@@ -510,17 +510,24 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	allowOk, err := common.CheckAllow(idHeader.Identity.Internal.OrgID, distroToStr(composeRequest.Distribution), h.server.distsDir, h.server.allowList)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if !allowOk {
-		message := fmt.Sprintf("This account's organization is not authorized to build %s images", distroToStr(composeRequest.Distribution))
-		return echo.NewHTTPError(http.StatusForbidden, message)
-	}
-
 	if (composeRequest.ImageRequests[0].UploadRequest == UploadRequest{}) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
+	}
+
+	d, err := h.server.distroRegistry(ctx).Get(distroToStr(composeRequest.Distribution))
+	if err != nil {
+		return err
+	}
+
+	if d.IsRestricted() {
+		allowOk, err := h.server.allowList.IsAllowed(idHeader.Identity.Internal.OrgID, distroToStr(composeRequest.Distribution))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		if !allowOk {
+			message := fmt.Sprintf("This account's organization is not authorized to build %s images", distroToStr(composeRequest.Distribution))
+			return echo.NewHTTPError(http.StatusForbidden, message)
+		}
 	}
 
 	var repositories []composer.Repository

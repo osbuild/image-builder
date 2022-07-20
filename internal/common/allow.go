@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/osbuild/image-builder/internal/distribution"
 )
 
 type AllowList map[string][]string
@@ -53,7 +51,7 @@ func LoadAllowList(allowFile string) (AllowList, error) {
 	return allowList, nil
 }
 
-func (a AllowList) isAllowed(orgId, distro string) (bool, error) {
+func (a AllowList) IsAllowed(orgId, distro string) (bool, error) {
 	for _, allowedDistro := range a[orgId] {
 		// path.Match() supports matching glob patterns for distros, e.g. fedora-*
 		match, err := path.Match(allowedDistro, distro)
@@ -65,25 +63,4 @@ func (a AllowList) isAllowed(orgId, distro string) (bool, error) {
 		}
 	}
 	return false, nil
-}
-
-// Returns true if the distribution requested is allowed to be built by the requesting account's organization.
-// If the requested distro is restricted ("restrictedAccess": true in the distribution's json file) then orgId
-// and distro are cross referenced against an allow list file which is pointed to by the ALLOW_FILE environment
-// variable.
-func CheckAllow(orgId, distro, distsDir string, allowList AllowList) (bool, error) {
-	d, err := distribution.ReadDistribution(distsDir, distro)
-	if err != nil {
-		return false, err
-	}
-
-	isRestricted := d.IsRestricted()
-	if err != nil {
-		return false, err
-	}
-
-	if !isRestricted {
-		return true, nil
-	}
-	return allowList.isAllowed(orgId, distro)
 }
