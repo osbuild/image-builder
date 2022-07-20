@@ -81,6 +81,24 @@ func (dist DistributionFile) Architecture(arch string) (*Architecture, error) {
 	}
 }
 
+func (arch Architecture) FindPackages(search string) []Package {
+	var pkgs []Package
+	for _, r := range arch.Repositories {
+		// Ignore repositories that do not apply to all for now
+		if len(r.ImageTypeTags) > 0 {
+			continue
+		}
+
+		ps := arch.Packages[r.Id]
+		for _, p := range ps {
+			if strings.Contains(p.Name, search) {
+				pkgs = append(pkgs, p)
+			}
+		}
+	}
+	return pkgs
+}
+
 func allDistributions(distsDir string) ([]string, error) {
 	files, err := ioutil.ReadDir(distsDir)
 	if err != nil {

@@ -57,9 +57,16 @@ func TestDistributionFile_Architecture(t *testing.T) {
 	require.Error(t, err, "Architecture not supported")
 }
 
-func TestFindPackages(t *testing.T) {
-	pkgs, err := FindPackages("../../distributions", "centos-8", "x86_64", "vim", false)
+func TestArchitecture_FindPackages(t *testing.T) {
+	adr, err := LoadDistroRegistry("../../distributions")
 	require.NoError(t, err)
+	d, err := adr.Available(false).Get("centos-8")
+	require.NoError(t, err)
+
+	arch, err := d.Architecture("x86_64")
+	require.NoError(t, err)
+
+	pkgs := arch.FindPackages("vim")
 	require.ElementsMatch(t, []Package{
 		{
 			Name:    "vim-minimal",
@@ -83,8 +90,13 @@ func TestFindPackages(t *testing.T) {
 		},
 	}, pkgs)
 
-	pkgs, err = FindPackages("../../distributions", "rhel-84", "x86_64", "vim", true)
+	d, err = adr.Available(true).Get("rhel-84")
 	require.NoError(t, err)
+
+	arch, err = d.Architecture("x86_64")
+	require.NoError(t, err)
+
+	pkgs = arch.FindPackages("vim")
 	require.ElementsMatch(t, []Package{
 		{
 			Name:    "vim-minimal",
@@ -107,9 +119,6 @@ func TestFindPackages(t *testing.T) {
 			Summary: "VIM filesystem layout",
 		},
 	}, pkgs)
-
-	_, err = FindPackages("../../distributions", "rhel-84", "x86_64", "vim", false)
-	require.Error(t, err, "users organization not entitled for distribution")
 }
 
 func TestInvalidDistribution(t *testing.T) {
