@@ -15,6 +15,9 @@ func TestDistributionFile_Architecture(t *testing.T) {
 	arch, err := d.Architecture("x86_64")
 	require.NoError(t, err)
 
+	// don't test packages, they are huge
+	arch.Packages = nil
+
 	require.Equal(t, &Architecture{
 		ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd"},
 		Repositories: []Repository{

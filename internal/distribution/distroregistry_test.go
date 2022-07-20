@@ -34,6 +34,9 @@ func TestDistroRegistry_Get(t *testing.T) {
 	require.Equal(t, "rhel-86", result.Distribution.Name)
 	require.Nil(t, err)
 
+	// don't test packages, they are huge
+	result.ArchX86.Packages = nil
+
 	require.Equal(t, &DistributionFile{
 		ModulePlatformID: "platform:el8",
 		Distribution: DistributionItem{
