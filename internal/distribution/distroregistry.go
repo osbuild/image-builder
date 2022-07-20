@@ -22,7 +22,7 @@ func LoadDistroRegistry(distsDir string) (*AllDistroRegistry, error) {
 	}
 
 	for _, f := range files {
-		d, err := ReadDistribution(distsDir, f.Name())
+		d, err := readDistribution(distsDir, f.Name())
 		if err != nil {
 			return nil, err
 		}

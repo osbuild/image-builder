@@ -122,7 +122,7 @@ func TestArchitecture_FindPackages(t *testing.T) {
 }
 
 func TestInvalidDistribution(t *testing.T) {
-	_, err := ReadDistribution("../../distributions", "none")
+	_, err := readDistribution("../../distributions", "none")
 	require.Error(t, err, DistributionNotFound)
 }
 
@@ -130,7 +130,7 @@ func TestDistributionFileIsRestricted(t *testing.T) {
 	distsDir := "testdata/distributions"
 
 	t.Run("distro is not restricted, has no restrictedAccess field", func(t *testing.T) {
-		d, err := ReadDistribution(distsDir, "rhel-90")
+		d, err := readDistribution(distsDir, "rhel-90")
 		require.NoError(t, err)
 		actual := d.IsRestricted()
 		expected := false
@@ -138,7 +138,7 @@ func TestDistributionFileIsRestricted(t *testing.T) {
 	})
 
 	t.Run("distro is not restricted, restrictedAccess field is false", func(t *testing.T) {
-		d, err := ReadDistribution(distsDir, "centos-9")
+		d, err := readDistribution(distsDir, "centos-9")
 		require.NoError(t, err)
 		actual := d.IsRestricted()
 		expected := false
@@ -146,7 +146,7 @@ func TestDistributionFileIsRestricted(t *testing.T) {
 	})
 
 	t.Run("distro is restricted, restrictedAccess field is true", func(t *testing.T) {
-		d, err := ReadDistribution(distsDir, "centos-8")
+		d, err := readDistribution(distsDir, "centos-8")
 		require.NoError(t, err)
 		actual := d.IsRestricted()
 		expected := true

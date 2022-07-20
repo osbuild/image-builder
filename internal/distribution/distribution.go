@@ -125,7 +125,7 @@ func validDistribution(distsDir, distro string) (string, error) {
 	return "", DistributionNotFound
 }
 
-func ReadDistribution(distsDir, distroIn string) (d DistributionFile, err error) {
+func readDistribution(distsDir, distroIn string) (d DistributionFile, err error) {
 	distro, err := validDistribution(distsDir, distroIn)
 	if err != nil {
 		return
