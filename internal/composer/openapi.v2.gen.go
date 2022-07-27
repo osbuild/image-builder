@@ -268,6 +268,7 @@ const (
 	ImageTypes_edge_container  ImageTypes = "edge-container"
 	ImageTypes_edge_installer  ImageTypes = "edge-installer"
 	ImageTypes_gcp             ImageTypes = "gcp"
+	ImageTypes_gcp_rhui        ImageTypes = "gcp-rhui"
 	ImageTypes_guest_image     ImageTypes = "guest-image"
 	ImageTypes_image_installer ImageTypes = "image-installer"
 	ImageTypes_vsphere         ImageTypes = "vsphere"
