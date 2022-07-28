@@ -306,6 +306,8 @@ func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeSt
 	case 5: // manifest error: depsolve dependency failure
 		fallthrough
 	case 9: // osbuild error: manifest dependency failure
+		fallthrough
+	case 28: // osbuild target errors are added to details
 		if composeErr.Details != nil {
 			intfs := (*composeErr.Details).([]interface{})
 			if len(intfs) == 0 {
