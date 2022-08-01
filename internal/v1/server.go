@@ -636,8 +636,6 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 			fallthrough
 		case ImageTypes_rhel_edge_commit:
 			composerImageType = composer.ImageTypes_edge_commit
-		case ImageTypes_edge_container:
-			composerImageType = composer.ImageTypes_edge_container
 		case ImageTypes_edge_installer:
 			fallthrough
 		case ImageTypes_rhel_edge_installer:

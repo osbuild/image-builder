@@ -6,7 +6,7 @@
     "restrictedAccess": false
   },
   "x86_64": {
-    "image_types": [ "ami", "vhd", "aws", "gcp", "azure", "edge-commit", "edge-installer", "edge-container", "rhel-edge-commit", "rhel-edge-installer", "guest-image", "image-installer", "vsphere" ],
+    "image_types": [ "ami", "vhd", "aws", "gcp", "azure", "edge-commit", "edge-installer", "rhel-edge-commit", "rhel-edge-installer", "guest-image", "image-installer", "vsphere" ],
     "repositories": []
   }
 }
