@@ -45,7 +45,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 			RestrictedAccess: false,
 		},
 		ArchX86: &Architecture{
-			ImageTypes: []string{"aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "edge-container", "guest-image", "image-installer", "vsphere"},
+			ImageTypes: []string{"aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "vsphere"},
 			Repositories: []Repository{
 				{
 					Id:            "baseos",

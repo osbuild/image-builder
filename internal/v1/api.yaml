@@ -415,7 +415,6 @@ components:
         - aws
         - azure
         - edge-commit
-        - edge-container
         - edge-installer
         - gcp
         - guest-image
