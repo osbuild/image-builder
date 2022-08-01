@@ -307,6 +307,8 @@ func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeSt
 		fallthrough
 	case 9: // osbuild error: manifest dependency failure
 		fallthrough
+	case 26: // ErrorJobDependency: generic dependency failure
+		fallthrough
 	case 28: // osbuild target errors are added to details
 		if composeErr.Details != nil {
 			intfs := (*composeErr.Details).([]interface{})
