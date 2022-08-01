@@ -1153,3 +1153,72 @@ func TestComposeStatusError(t *testing.T) {
 	}, result)
 
 }
+
+func TestComposeStatusError28(t *testing.T) {
+	// simulate osbuild-composer API
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+
+		//nolint
+		var osbuildErrorDetails interface{}
+		osbuildErrorDetails = [][]composer.ComposeStatusError{
+			[]composer.ComposeStatusError{
+				composer.ComposeStatusError{
+					Id:     12,
+					Reason: "InvalidAMIAttributeItemValue",
+				},
+			},
+		}
+
+		//nolint
+		s := composer.ComposeStatus{
+			ImageStatus: composer.ImageStatus{
+				Status: composer.ImageStatusValue_failure,
+				Error: &composer.ComposeStatusError{
+					Id:      28,
+					Reason:  "at least one target failed",
+					Details: &osbuildErrorDetails,
+				},
+			},
+		}
+		err := json.NewEncoder(w).Encode(s)
+		require.NoError(t, err)
+	}))
+	defer apiSrv.Close()
+
+	// insert a compose in the mock database
+	dbase := tutils.InitDB()
+	imageName := "MyImageName"
+	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
+	require.NoError(t, err)
+
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+		UUIDTest), &tutils.AuthString1)
+	require.Equal(t, 200, response.StatusCode)
+
+	var result ComposeStatus
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, ComposeStatus{
+		ImageStatus: ImageStatus{
+			Status: "failure",
+			Error: &ComposeStatusError{
+				Id:     12,
+				Reason: "InvalidAMIAttributeItemValue",
+			},
+		},
+	}, result)
+
+}

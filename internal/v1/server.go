@@ -306,8 +306,6 @@ func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeSt
 	case 5: // manifest error: depsolve dependency failure
 		fallthrough
 	case 9: // osbuild error: manifest dependency failure
-		fallthrough
-	case 28: // osbuild target errors are added to details
 		if composeErr.Details != nil {
 			intfs := (*composeErr.Details).([]interface{})
 			if len(intfs) == 0 {
@@ -327,6 +325,32 @@ func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeSt
 				return fbErr
 			}
 
+			return parseComposeStatusError(&newErr)
+		}
+		return fbErr
+	case 28: // osbuild target errors are added to details as an array of arrays of target error
+		if composeErr.Details != nil {
+			intfsa := (*composeErr.Details).([]interface{})
+			if len(intfsa) == 0 {
+				return fbErr
+			}
+			intfs := (intfsa[0]).([]interface{})
+			if len(intfs) == 0 {
+				return fbErr
+			}
+
+			// Try to remarshal the details as another composer.ComposeStatusError
+			jsonDetails, err := json.Marshal(intfs[0])
+			if err != nil {
+				logrus.Errorf("Error processing compose status error details: %v", err)
+				return fbErr
+			}
+			var newErr composer.ComposeStatusError
+			err = json.Unmarshal(jsonDetails, &newErr)
+			if err != nil {
+				logrus.Errorf("Error processing compose status error details: %v", err)
+				return fbErr
+			}
 			return parseComposeStatusError(&newErr)
 		}
 		return fbErr
