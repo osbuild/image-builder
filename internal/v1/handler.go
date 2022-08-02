@@ -486,6 +486,14 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 			logrus.Errorf("Unable to parse composer's compose response: %v", err)
 		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
+			var serviceStat composer.Error
+			if err := json.Unmarshal(body, &serviceStat); err != nil {
+				return httpError
+			}
+			if serviceStat.Id == "10" {
+				httpError.Message = "Error resolving OSTree repo"
+				httpError.Code = http.StatusBadRequest
+			}
 		}
 		return httpError
 	}
