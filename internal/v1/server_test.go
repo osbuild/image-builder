@@ -728,6 +728,58 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	require.Contains(t, body, "Failed posting compose request to osbuild-composer")
 }
 
+func TestComposeImageErrorResolvingOSTree(t *testing.T) {
+	// simulate osbuild-composer API
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		serviceStat := &composer.Error{
+			Id:     "10",
+			Reason: "not ok",
+		}
+		err := json.NewEncoder(w).Encode(serviceStat)
+		require.NoError(t, err)
+	}))
+	defer apiSrv.Close()
+
+	srv, tokenSrv := startServer(t, apiSrv.URL)
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	payload := ComposeRequest{
+		Customizations: &Customizations{
+			Packages: nil,
+		},
+		Distribution: "centos-8",
+		ImageRequests: []ImageRequest{
+			{
+				Architecture: "x86_64",
+				ImageType:    ImageTypesEdgeCommit,
+				Ostree: &OSTree{
+					Ref: strptr("edge/ref"),
+				},
+				UploadRequest: UploadRequest{
+					Type: UploadTypesAwsS3,
+					Options: AWSUploadRequestOptions{
+						ShareWithAccounts: []string{"test-account"},
+					},
+				},
+			},
+		},
+	}
+	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+	require.Equal(t, 400, response.StatusCode)
+	require.Contains(t, body, "Error resolving OSTree repo")
+}
+
 func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
