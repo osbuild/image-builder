@@ -131,8 +131,40 @@ const (
 	ComposeStatusValue_success ComposeStatusValue = "success"
 )
 
+// Container defines model for Container.
+type Container struct {
+
+	// Name to use for the container from the image
+	Name   *string `json:"name,omitempty"`
+	Source string  `json:"source"`
+
+	// Control TLS verifification
+	TlsVerify *bool `json:"tls_verify,omitempty"`
+}
+
+// ContainerUploadOptions defines model for ContainerUploadOptions.
+type ContainerUploadOptions struct {
+
+	// Name for the created container image
+	Name *string `json:"name,omitempty"`
+
+	// Tag for the created container image
+	Tag *string `json:"tag,omitempty"`
+}
+
+// ContainerUploadStatus defines model for ContainerUploadStatus.
+type ContainerUploadStatus struct {
+
+	// Digest of the manifest of the uploaded container on the registry
+	Digest string `json:"digest"`
+
+	// FQDN of the uploaded image
+	Url string `json:"url"`
+}
+
 // Customizations defines model for Customizations.
 type Customizations struct {
+	Containers *[]Container  `json:"containers,omitempty"`
 	Filesystem *[]Filesystem `json:"filesystem,omitempty"`
 	Packages   *[]string     `json:"packages,omitempty"`
 
@@ -384,10 +416,11 @@ type UploadTypes string
 
 // List of UploadTypes
 const (
-	UploadTypes_aws    UploadTypes = "aws"
-	UploadTypes_aws_s3 UploadTypes = "aws.s3"
-	UploadTypes_azure  UploadTypes = "azure"
-	UploadTypes_gcp    UploadTypes = "gcp"
+	UploadTypes_aws       UploadTypes = "aws"
+	UploadTypes_aws_s3    UploadTypes = "aws.s3"
+	UploadTypes_azure     UploadTypes = "azure"
+	UploadTypes_container UploadTypes = "container"
+	UploadTypes_gcp       UploadTypes = "gcp"
 )
 
 // User defines model for User.

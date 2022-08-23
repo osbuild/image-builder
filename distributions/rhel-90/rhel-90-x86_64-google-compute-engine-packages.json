@@ -22,5 +22,9 @@
   {
     "name": "google-rhui-client-rhel9",
     "summary": "RHUI config for GCE"
+  },
+  {
+    "name": "google-rhui-client-rhel9-ha",
+    "summary": "RHUI config for GCE (HA repo)"
   }
 ]

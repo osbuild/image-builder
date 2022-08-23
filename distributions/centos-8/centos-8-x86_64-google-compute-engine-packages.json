@@ -25,11 +25,11 @@
   },
   {
     "name": "google-rhui-client-rhel8",
-    "summary": "Custom configuration for a cloud client instance"
+    "summary": "RHUI config for GCE"
   },
   {
     "name": "google-rhui-client-rhel8-sap",
-    "summary": "Custom configuration for a cloud client instance"
+    "summary": "RHUI config for GCE"
   },
   {
     "name": "python3-google-compute-engine",

@@ -48,6 +48,10 @@
     "summary": "PDF mapping resources from Adobe"
   },
   {
+    "name": "adobe-source-code-pro-fonts",
+    "summary": "A set of mono-spaced OpenType fonts designed for coding environments"
+  },
+  {
     "name": "adwaita-cursor-theme",
     "summary": "Adwaita cursor theme"
   },
@@ -62,6 +66,14 @@
   {
     "name": "adwaita-qt5",
     "summary": "Adwaita Qt5 theme"
+  },
+  {
+    "name": "afterburn",
+    "summary": "Simple cloud provider agent"
+  },
+  {
+    "name": "afterburn-dracut",
+    "summary": "Dracut modules for afterburn"
   },
   {
     "name": "aide",
@@ -90,6 +102,10 @@
   {
     "name": "alsa-plugins-oss",
     "summary": "Oss PCM output plugin for ALSA"
+  },
+  {
+    "name": "alsa-plugins-pulseaudio",
+    "summary": "Alsa to PulseAudio backend"
   },
   {
     "name": "alsa-plugins-samplerate",
@@ -1024,6 +1040,10 @@
     "summary": "Documentation for Cargo"
   },
   {
+    "name": "catatonit",
+    "summary": "A signal-forwarding process manager for containers"
+  },
+  {
     "name": "cdi-api",
     "summary": "CDI API"
   },
@@ -1337,7 +1357,11 @@
   },
   {
     "name": "coreos-installer-dracut",
-    "summary": "coreos-installer provides coreos-installer as a dracut module."
+    "summary": "Dracut module for running coreos-installer in the initrd"
+  },
+  {
+    "name": "corosynclib",
+    "summary": "The Corosync Cluster Engine Libraries"
   },
   {
     "name": "cpp",
@@ -1620,6 +1644,10 @@
     "summary": "A utility which provides statistics based on the output of diff"
   },
   {
+    "name": "disruptor",
+    "summary": "Concurrent Programming Framework"
+  },
+  {
     "name": "dlm-lib",
     "summary": "Library for dlm"
   },
@@ -1756,6 +1784,10 @@
     "summary": "Set of libraries and drivers for fast packet processing"
   },
   {
+    "name": "dpdk-devel",
+    "summary": "Data Plane Development Kit development files"
+  },
+  {
     "name": "dpdk-doc",
     "summary": "Data Plane Development Kit API documentation"
   },
@@ -1806,6 +1838,10 @@
   {
     "name": "efivar",
     "summary": "Tools to manage UEFI variables"
+  },
+  {
+    "name": "egl-utils",
+    "summary": "EGL utilities"
   },
   {
     "name": "egl-wayland",
@@ -2072,6 +2108,10 @@
     "summary": "Daemon which handles requests from fence-virt"
   },
   {
+    "name": "fence-virtd-cpg",
+    "summary": "CPG/libvirt backend for fence-virtd"
+  },
+  {
     "name": "fence-virtd-libvirt",
     "summary": "Libvirt backend for fence-virtd"
   },
@@ -2300,6 +2340,10 @@
     "summary": "A freely licensed alternative to the GLUT library"
   },
   {
+    "name": "freeglut-devel",
+    "summary": "Freeglut developmental libraries and header files"
+  },
+  {
     "name": "freeipmi",
     "summary": "IPMI remote console and system management software"
   },
@@ -2426,6 +2470,118 @@
   {
     "name": "gcc-plugin-annobin",
     "summary": "The annobin plugin for gcc, built by the installed version of gcc"
+  },
+  {
+    "name": "gcc-toolset-12",
+    "summary": "Package that installs gcc-toolset-12"
+  },
+  {
+    "name": "gcc-toolset-12-annobin-annocheck",
+    "summary": "A tool for checking the security hardening status of binaries"
+  },
+  {
+    "name": "gcc-toolset-12-annobin-docs",
+    "summary": "Documentation and shell scripts for use with annobin"
+  },
+  {
+    "name": "gcc-toolset-12-annobin-plugin-gcc",
+    "summary": "annobin gcc plugin"
+  },
+  {
+    "name": "gcc-toolset-12-binutils",
+    "summary": "A GNU collection of binary utilities"
+  },
+  {
+    "name": "gcc-toolset-12-binutils-devel",
+    "summary": "BFD and opcodes static and dynamic libraries and header files"
+  },
+  {
+    "name": "gcc-toolset-12-binutils-gold",
+    "summary": "The GOLD linker, a faster alternative to the BFD linker"
+  },
+  {
+    "name": "gcc-toolset-12-build",
+    "summary": "Package shipping basic build configuration"
+  },
+  {
+    "name": "gcc-toolset-12-dwz",
+    "summary": "DWARF optimization and duplicate removal tool"
+  },
+  {
+    "name": "gcc-toolset-12-gcc",
+    "summary": "GCC version 12"
+  },
+  {
+    "name": "gcc-toolset-12-gcc-c++",
+    "summary": "C++ support for GCC version 12"
+  },
+  {
+    "name": "gcc-toolset-12-gcc-gfortran",
+    "summary": "Fortran support for GCC 12"
+  },
+  {
+    "name": "gcc-toolset-12-gcc-plugin-devel",
+    "summary": "Support for compiling GCC plugins"
+  },
+  {
+    "name": "gcc-toolset-12-gdb",
+    "summary": "A GNU source-level debugger for C, C++, Fortran, Go and other languages"
+  },
+  {
+    "name": "gcc-toolset-12-libasan-devel",
+    "summary": "The Address Sanitizer static library"
+  },
+  {
+    "name": "gcc-toolset-12-libatomic-devel",
+    "summary": "The GNU Atomic static library"
+  },
+  {
+    "name": "gcc-toolset-12-libgccjit",
+    "summary": "Library for embedding GCC inside programs and libraries"
+  },
+  {
+    "name": "gcc-toolset-12-libgccjit-devel",
+    "summary": "Support for embedding GCC inside programs and libraries"
+  },
+  {
+    "name": "gcc-toolset-12-libgccjit-docs",
+    "summary": "Documentation for embedding GCC inside programs and libraries"
+  },
+  {
+    "name": "gcc-toolset-12-libitm-devel",
+    "summary": "The GNU Transactional Memory support"
+  },
+  {
+    "name": "gcc-toolset-12-liblsan-devel",
+    "summary": "The Leak Sanitizer static library"
+  },
+  {
+    "name": "gcc-toolset-12-libquadmath-devel",
+    "summary": "GCC 12 __float128 support"
+  },
+  {
+    "name": "gcc-toolset-12-libstdc++-devel",
+    "summary": "Header files and libraries for C++ development"
+  },
+  {
+    "name": "gcc-toolset-12-libstdc++-docs",
+    "summary": "Documentation for the GNU standard C++ library"
+  },
+  {
+    "name": "gcc-toolset-12-libtsan-devel",
+    "summary": "The Thread Sanitizer static library"
+  },
+  {
+    "name": "gcc-toolset-12-libubsan-devel",
+    "summary": "The Undefined Behavior Sanitizer static library"
+  },
+  {
+    "name": "gcc-toolset-12-offload-nvptx",
+    "summary": "Offloading compiler to NVPTX"
+  },
+  {
+    "name": "gcc-toolset-12-runtime",
+    "summary": "Package that handles gcc-toolset-12 Software Collection."
   },
   {
     "name": "gcr",
@@ -2642,6 +2798,14 @@
   {
     "name": "giflib",
     "summary": "A library and utilities for processing GIFs"
+  },
+  {
+    "name": "gimp",
+    "summary": "GNU Image Manipulation Program"
+  },
+  {
+    "name": "gimp-libs",
+    "summary": "GIMP libraries"
   },
   {
     "name": "git",
@@ -2902,6 +3066,14 @@
   {
     "name": "gnome-kiosk",
     "summary": "Window management and application launching for GNOME"
+  },
+  {
+    "name": "gnome-kiosk-script-session",
+    "summary": "Basic session used for running kiosk application from shell script"
+  },
+  {
+    "name": "gnome-kiosk-search-appliance",
+    "summary": "Example search application application that uses GNOME Kiosk"
   },
   {
     "name": "gnome-logs",
@@ -3806,6 +3978,10 @@
   {
     "name": "httpd",
     "summary": "Apache HTTP Server"
+  },
+  {
+    "name": "httpd-core",
+    "summary": "httpd minimal core"
   },
   {
     "name": "httpd-devel",
@@ -4788,6 +4964,46 @@
     "summary": "International Components for Unicode"
   },
   {
+    "name": "idm-jss",
+    "summary": "Java Security Services (JSS)"
+  },
+  {
+    "name": "idm-ldapjdk",
+    "summary": "LDAP SDK"
+  },
+  {
+    "name": "idm-pki-acme",
+    "summary": "IDM PKI ACME Package"
+  },
+  {
+    "name": "idm-pki-base",
+    "summary": "IDM PKI Base Package"
+  },
+  {
+    "name": "idm-pki-ca",
+    "summary": "IDM PKI CA Package"
+  },
+  {
+    "name": "idm-pki-java",
+    "summary": "IDM PKI Base Java Package"
+  },
+  {
+    "name": "idm-pki-kra",
+    "summary": "IDM PKI KRA Package"
+  },
+  {
+    "name": "idm-pki-server",
+    "summary": "IDM PKI Server Package"
+  },
+  {
+    "name": "idm-pki-tools",
+    "summary": "IDM PKI Tools Package"
+  },
+  {
+    "name": "idm-tomcatjss",
+    "summary": "JSS Connector for Apache Tomcat"
+  },
+  {
     "name": "idn2",
     "summary": "IDNA2008 internationalized domain names conversion tool"
   },
@@ -4917,6 +5133,14 @@
   },
   {
     "name": "ipxe-bootimgs",
+    "summary": "Network boot loader images in bootable USB, CD, floppy and GRUB formats"
+  },
+  {
+    "name": "ipxe-bootimgs-aarch64",
+    "summary": "AArch64 Network boot loader images in bootable USB and GRUB formats"
+  },
+  {
+    "name": "ipxe-bootimgs-x86",
     "summary": "Network boot loader images in bootable USB, CD, floppy and GRUB formats"
   },
   {
@@ -5118,6 +5342,10 @@
   {
     "name": "jcl-over-slf4j",
     "summary": "JCL 1.1.1 implemented over SLF4J"
+  },
+  {
+    "name": "jctools",
+    "summary": "Java Concurrency Tools for the JVM"
   },
   {
     "name": "jdeparser",
@@ -5334,6 +5562,30 @@
   {
     "name": "keycloak-httpd-client-install",
     "summary": "Tools to configure Apache HTTPD as Keycloak client"
+  },
+  {
+    "name": "keylime",
+    "summary": "Open source TPM software for Bootstrapping and Maintaining Trust"
+  },
+  {
+    "name": "keylime-agent-rust",
+    "summary": "Rust agent for Keylime"
+  },
+  {
+    "name": "keylime-base",
+    "summary": "The base package contains the default configuration"
+  },
+  {
+    "name": "keylime-registrar",
+    "summary": "The Keylime Registrar component"
+  },
+  {
+    "name": "keylime-tenant",
+    "summary": "The Python Keylime Tenant"
+  },
+  {
+    "name": "keylime-verifier",
+    "summary": "The Python Keylime Verifier component"
   },
   {
     "name": "keyutils-libs-devel",
@@ -6544,6 +6796,10 @@
     "summary": "The Address Sanitizer runtime library"
   },
   {
+    "name": "libasan8",
+    "summary": "The Address Sanitizer runtime library from GCC 12"
+  },
+  {
     "name": "libasyncns",
     "summary": "Asynchronous Name Service Library"
   },
@@ -6944,6 +7200,22 @@
     "summary": "Library for accessing digital cameras"
   },
   {
+    "name": "libgpiod",
+    "summary": "C library and tools for interacting with linux GPIO char device"
+  },
+  {
+    "name": "libgpiod-c++",
+    "summary": "C++ bindings for libgpiod"
+  },
+  {
+    "name": "libgpiod-devel",
+    "summary": "Development package for libgpiod"
+  },
+  {
+    "name": "libgpiod-utils",
+    "summary": "Utilities for GPIO"
+  },
+  {
     "name": "libgs",
     "summary": "Library providing Ghostcript's core functionality"
   },
@@ -7010,6 +7282,14 @@
   {
     "name": "libi2c",
     "summary": "I2C/SMBus bus access library"
+  },
+  {
+    "name": "libi2cd",
+    "summary": "C library for interacting with linux I2C devices"
+  },
+  {
+    "name": "libi2cd-devel",
+    "summary": "Development package for libi2cd"
   },
   {
     "name": "libical",
@@ -7276,6 +7556,10 @@
     "summary": "Number to number name and money text conversion library"
   },
   {
+    "name": "libnvme",
+    "summary": "Linux-native nvme device management library"
+  },
+  {
     "name": "libodfgen",
     "summary": "An ODF generator library"
   },
@@ -7322,6 +7606,10 @@
   {
     "name": "libpaper",
     "summary": "Library and tools for handling papersize"
+  },
+  {
+    "name": "libpcap-devel",
+    "summary": "Libraries and header files for the libpcap library"
   },
   {
     "name": "libpciaccess-devel",
@@ -8184,6 +8472,10 @@
     "summary": "Header files and libraries used to build policy manipulation tools"
   },
   {
+    "name": "libsepol-utils",
+    "summary": "SELinux libsepol utilities"
+  },
+  {
     "name": "libserf",
     "summary": "High-Performance Asynchronous HTTP Client Library"
   },
@@ -8353,6 +8645,10 @@
   },
   {
     "name": "libtsan",
+    "summary": "The Thread Sanitizer runtime library"
+  },
+  {
+    "name": "libtsan2",
     "summary": "The Thread Sanitizer runtime library"
   },
   {
@@ -9360,6 +9656,10 @@
     "summary": "Tool to generate legacy X11 font system index files"
   },
   {
+    "name": "mkpasswd",
+    "summary": "Encrypt a password with crypt(3) function using a salt"
+  },
+  {
     "name": "mobile-broadband-provider-info",
     "summary": "Mobile broadband provider database"
   },
@@ -9470,6 +9770,10 @@
   {
     "name": "mpg123-libs",
     "summary": "Real time MPEG 1.0/2.0/2.5 audio player/decoder for layers 1, 2 and 3"
+  },
+  {
+    "name": "mpg123-plugins-pulseaudio",
+    "summary": "Pulseaudio output plug-in for mpg123"
   },
   {
     "name": "mpich",
@@ -9884,6 +10188,10 @@
     "summary": "A meta package that installs all available Nginx modules"
   },
   {
+    "name": "nginx-core",
+    "summary": "nginx minimal core"
+  },
+  {
     "name": "nginx-filesystem",
     "summary": "The basic directory layout for the Nginx server"
   },
@@ -10016,6 +10324,10 @@
     "summary": "A wrapper for the user, group and hosts NSS API"
   },
   {
+    "name": "nss_wrapper-libs",
+    "summary": "nss_library shared library only"
+  },
+  {
     "name": "ntpstat",
     "summary": "Utility to print NTP synchronization status"
   },
@@ -10026,6 +10338,10 @@
   {
     "name": "numactl-devel",
     "summary": "Development package for building Applications that use numa"
+  },
+  {
+    "name": "nvme-stas",
+    "summary": "NVMe STorage Appliance Services"
   },
   {
     "name": "objectweb-asm",
@@ -10098,6 +10414,10 @@
   {
     "name": "open-vm-tools-desktop",
     "summary": "User experience components for Open Virtual Machine Tools"
+  },
+  {
+    "name": "open-vm-tools-salt-minion",
+    "summary": "Script file to install/uninstall salt-minion"
   },
   {
     "name": "open-vm-tools-sdmp",
@@ -12428,6 +12748,10 @@
     "summary": "Support for using JAXB annotations as an alternative to \"native\" Jackson annotations"
   },
   {
+    "name": "pki-java",
+    "summary": "PKI Base Java Package"
+  },
+  {
     "name": "pki-kra",
     "summary": "PKI KRA Package"
   },
@@ -12660,6 +12984,10 @@
     "summary": "Glib wrapper for poppler"
   },
   {
+    "name": "poppler-qt5",
+    "summary": "Qt5 wrapper for poppler"
+  },
+  {
     "name": "poppler-utils",
     "summary": "Command line utilities for converting PDF files"
   },
@@ -12788,6 +13116,10 @@
     "summary": "Cross-vendor public domain suffix database"
   },
   {
+    "name": "pulseaudio",
+    "summary": "Improved Linux Sound Server"
+  },
+  {
     "name": "pulseaudio-libs",
     "summary": "Libraries for PulseAudio clients"
   },
@@ -12798,6 +13130,14 @@
   {
     "name": "pulseaudio-libs-glib2",
     "summary": "GLIB 2.x bindings for PulseAudio clients"
+  },
+  {
+    "name": "pulseaudio-module-bluetooth",
+    "summary": "Bluetooth support for the PulseAudio sound server"
+  },
+  {
+    "name": "pulseaudio-module-x11",
+    "summary": "X11 support for the PulseAudio sound server"
   },
   {
     "name": "pulseaudio-utils",
@@ -12826,6 +13166,10 @@
   {
     "name": "python-unversioned-command",
     "summary": "The \"python\" command that runs Python 3"
+  },
+  {
+    "name": "python3-alembic",
+    "summary": "Database migration tool for SQLAlchemy"
   },
   {
     "name": "python3-appdirs",
@@ -12940,6 +13284,10 @@
     "summary": "Linux Distribution - a Linux OS platform information API"
   },
   {
+    "name": "python3-dnf-plugin-modulesync",
+    "summary": "Download module metadata and packages and create repository"
+  },
+  {
     "name": "python3-dns",
     "summary": "DNS toolkit for Python"
   },
@@ -12964,8 +13312,20 @@
     "summary": "Python 3 bindings for GObject Introspection"
   },
   {
+    "name": "python3-greenlet",
+    "summary": "Lightweight in-process concurrent programming"
+  },
+  {
     "name": "python3-gssapi",
     "summary": "Python 3 Bindings for GSSAPI (RFC 2743/2744 and extensions)"
+  },
+  {
+    "name": "python3-i2c-tools",
+    "summary": "Python 3 bindings for Linux SMBus access through i2c-dev"
+  },
+  {
+    "name": "python3-idm-pki",
+    "summary": "IDM PKI Python 3 Package"
   },
   {
     "name": "python3-imath",
@@ -13032,12 +13392,20 @@
     "summary": "Tools to configure Apache HTTPD as Keycloak client"
   },
   {
+    "name": "python3-keylime",
+    "summary": "The Python Keylime module"
+  },
+  {
     "name": "python3-kickstart",
     "summary": "Python 3 library for manipulating kickstart files."
   },
   {
     "name": "python3-langtable",
     "summary": "Python module to query the langtable-data"
+  },
+  {
+    "name": "python3-lark-parser",
+    "summary": "Lark is a modern general-purpose parsing library for Python"
   },
   {
     "name": "python3-ldap",
@@ -13054,6 +13422,10 @@
   {
     "name": "python3-libevdev",
     "summary": "Python bindings to the libevdev evdev device wrapper library"
+  },
+  {
+    "name": "python3-libgpiod",
+    "summary": "Python 3 bindings for libgpiod"
   },
   {
     "name": "python3-libguestfs",
@@ -13074,6 +13446,10 @@
   {
     "name": "python3-libnmstate",
     "summary": "nmstate Python 3 API library"
+  },
+  {
+    "name": "python3-libnvme",
+    "summary": "Python3 bindings for libnvme"
   },
   {
     "name": "python3-libproxy",
@@ -13281,7 +13657,7 @@
   },
   {
     "name": "python3-pyqt5-sip",
-    "summary": "SIP - Python 3/C++ Bindings Generator for pyqt5"
+    "summary": "The sip module support for PyQt5"
   },
   {
     "name": "python3-pyrsistent",
@@ -13396,6 +13772,10 @@
     "summary": "Python 3 Client API for speech-dispatcher"
   },
   {
+    "name": "python3-sqlalchemy",
+    "summary": "Modular and flexible ORM library for Python"
+  },
+  {
     "name": "python3-subversion",
     "summary": "Python bindings for Subversion Version Control system"
   },
@@ -13428,6 +13808,10 @@
     "summary": "Python Library for Tom's Obvious, Minimal Language"
   },
   {
+    "name": "python3-tornado",
+    "summary": "Scalable, non-blocking web server and tools"
+  },
+  {
     "name": "python3-tracer",
     "summary": "Common files for tracer"
   },
@@ -13442,6 +13826,10 @@
   {
     "name": "python3-volume_key",
     "summary": "Python 3 bindings for libvolume_key"
+  },
+  {
+    "name": "python3-wcwidth",
+    "summary": "Measures number of Terminal column cells of wide-character codes"
   },
   {
     "name": "python3-wx-siplib",
@@ -13466,6 +13854,10 @@
   {
     "name": "qatzip-libs",
     "summary": "Libraries for the qatzip package"
+  },
+  {
+    "name": "qemu-ga-win",
+    "summary": "Qemus Guest agent for Windows"
   },
   {
     "name": "qemu-guest-agent",
@@ -14409,11 +14801,11 @@
   },
   {
     "name": "rust-std-static-wasm32-unknown-unknown",
-    "summary": "Standard library for Rust"
+    "summary": "Standard library for Rust wasm32-unknown-unknown"
   },
   {
     "name": "rust-std-static-wasm32-wasi",
-    "summary": "Standard library for Rust"
+    "summary": "Standard library for Rust wasm32-wasi"
   },
   {
     "name": "rust-toolset",
@@ -14708,6 +15100,10 @@
     "summary": "An Arabic script unicode font"
   },
   {
+    "name": "sip6",
+    "summary": "SIP - Python/C++ Bindings Generator"
+  },
+  {
     "name": "sisu",
     "summary": "Eclipse dependency injection framework"
   },
@@ -14836,8 +15232,16 @@
     "summary": "Simple SSL certificate generator"
   },
   {
+    "name": "ssh-key-dir",
+    "summary": "sshd AuthorizedKeysCommand to read ~/.ssh/authorized_keys.d"
+  },
+  {
     "name": "sshpass",
     "summary": "Non-interactive SSH authentication utility"
+  },
+  {
+    "name": "sssd-idp",
+    "summary": "Kerberos plugins and OIDC helper for external identity providers."
   },
   {
     "name": "stalld",
@@ -14870,6 +15274,10 @@
   {
     "name": "stress-ng",
     "summary": "Stress test a computer system in various ways"
+  },
+  {
+    "name": "subscription-manager-rhsm-certificates",
+    "summary": "Certificates required to communicate with a Red Hat Unified Entitlement Platform"
   },
   {
     "name": "subversion",
@@ -16780,6 +17188,10 @@
     "summary": "Additional tuned profile(s) targeted to Oracle loads"
   },
   {
+    "name": "tuned-profiles-postgresql",
+    "summary": "Additional tuned profile(s) targeted to PostgreSQL server loads"
+  },
+  {
     "name": "tuned-profiles-spectrumscale",
     "summary": "Additional tuned profile(s) optimized for IBM Spectrum Scale"
   },
@@ -17256,6 +17668,10 @@
     "summary": "Portal frontend service to flatpak"
   },
   {
+    "name": "xdg-desktop-portal-gnome",
+    "summary": "Backend implementation for xdg-desktop-portal using GNOME"
+  },
+  {
     "name": "xdg-desktop-portal-gtk",
     "summary": "Backend implementation for xdg-desktop-portal using GTK+"
   },
@@ -17338,6 +17754,10 @@
   {
     "name": "xmlsec1-openssl",
     "summary": "OpenSSL crypto plugin for XML Security Library"
+  },
+  {
+    "name": "xmlstarlet",
+    "summary": "Command Line XML Toolkit"
   },
   {
     "name": "xmlto",
@@ -17536,6 +17956,14 @@
     "summary": "Set environment and terminal settings to current window size"
   },
   {
+    "name": "xxhash",
+    "summary": "Extremely fast hash algorithm"
+  },
+  {
+    "name": "xxhash-libs",
+    "summary": "Extremely fast hash algorithm - library"
+  },
+  {
     "name": "xz-devel",
     "summary": "Devel libraries & headers for liblzma"
   },
@@ -17550,6 +17978,10 @@
   {
     "name": "yajl",
     "summary": "Yet Another JSON Library (YAJL)"
+  },
+  {
+    "name": "yara",
+    "summary": "Pattern matching Swiss knife for malware researchers"
   },
   {
     "name": "yelp",

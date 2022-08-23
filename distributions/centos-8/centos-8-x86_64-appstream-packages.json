@@ -2572,6 +2572,10 @@
     "summary": "Offloading compiler to NVPTX"
   },
   {
+    "name": "gcc-plugin-annobin",
+    "summary": "The annobin plugin for gcc, built by the installed version of gcc"
+  },
+  {
     "name": "gcc-toolset-10",
     "summary": "Package that installs gcc-toolset-10"
   },
@@ -5892,6 +5896,14 @@
     "summary": "Network boot loader images in bootable USB, CD, floppy and GRUB formats"
   },
   {
+    "name": "ipxe-bootimgs-aarch64",
+    "summary": "AArch64 Network boot loader images in bootable USB and GRUB formats"
+  },
+  {
+    "name": "ipxe-bootimgs-x86",
+    "summary": "X86 Network boot loader images in bootable USB, CD, floppy and GRUB formats"
+  },
+  {
     "name": "ipxe-roms",
     "summary": "Network boot loader roms in .rom format"
   },
@@ -8520,6 +8532,10 @@
     "summary": "Wrapper library for the Video Decode and Presentation API"
   },
   {
+    "name": "libverto-libev",
+    "summary": "libev module for libverto"
+  },
+  {
     "name": "libvirt",
     "summary": "Library providing a simple virtualization API"
   },
@@ -10294,6 +10310,10 @@
   {
     "name": "open-vm-tools-desktop",
     "summary": "User experience components for Open Virtual Machine Tools"
+  },
+  {
+    "name": "open-vm-tools-salt-minion",
+    "summary": "Script file to install/uninstall salt-minion"
   },
   {
     "name": "open-vm-tools-sdmp",
@@ -12176,6 +12196,10 @@
     "summary": "Glib wrapper for poppler"
   },
   {
+    "name": "poppler-qt5",
+    "summary": "Qt5 wrapper for poppler"
+  },
+  {
     "name": "poppler-utils",
     "summary": "Command line utilities for converting PDF files"
   },
@@ -12934,6 +12958,10 @@
   {
     "name": "python3-langtable",
     "summary": "Python module to query the langtable-data"
+  },
+  {
+    "name": "python3-lasso",
+    "summary": "Liberty Alliance Single Sign On (lasso) Python bindings"
   },
   {
     "name": "python3-ldap",
@@ -15092,6 +15120,10 @@
     "summary": "Non-interactive SSH authentication utility"
   },
   {
+    "name": "sssd-idp",
+    "summary": "Kerberos plugins and OIDC helper for external identity providers."
+  },
+  {
     "name": "stalld",
     "summary": "Daemon that finds starving tasks and gives them a temporary boost"
   },
@@ -16798,6 +16830,10 @@
   {
     "name": "tuned-gtk",
     "summary": "GTK GUI for tuned"
+  },
+  {
+    "name": "tuned-profiles-postgresql",
+    "summary": "Additional tuned profile(s) targeted to PostgreSQL server loads"
   },
   {
     "name": "tuned-utils",

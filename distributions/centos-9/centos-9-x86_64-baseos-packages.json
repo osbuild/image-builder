@@ -2060,6 +2060,10 @@
     "summary": "Legacy support library for NIS"
   },
   {
+    "name": "libnvme",
+    "summary": "Linux-native nvme device management library"
+  },
+  {
     "name": "libpath_utils",
     "summary": "Filesystem Path Utilities"
   },
@@ -2589,7 +2593,7 @@
   },
   {
     "name": "opencryptoki",
-    "summary": "Implementation of the PKCS#11 (Cryptoki) specification v2.11"
+    "summary": "Implementation of the PKCS#11 (Cryptoki) specification v3.0"
   },
   {
     "name": "opencryptoki-icsftok",
@@ -2776,6 +2780,10 @@
     "summary": "Internationalization pack for procps-ng"
   },
   {
+    "name": "protobuf-c",
+    "summary": "C bindings for Google's Protocol Buffers"
+  },
+  {
     "name": "psacct",
     "summary": "Utilities for monitoring process activities"
   },
@@ -2858,6 +2866,10 @@
   {
     "name": "python3-gobject-base",
     "summary": "Python 3 bindings for GObject Introspection base package"
+  },
+  {
+    "name": "python3-gobject-base-noarch",
+    "summary": "Python 3 bindings for GObject Introspection base (not architecture dependent)"
   },
   {
     "name": "python3-gpg",
