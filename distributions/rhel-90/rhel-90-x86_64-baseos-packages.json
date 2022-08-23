@@ -1732,6 +1732,18 @@
     "summary": "kpatch-patch manager plugin for DNF"
   },
   {
+    "name": "kpatch-patch-5_14_0-70_13_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-70.13.1.el9_0.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-70_17_1",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-70.17.1.el9_0.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-70_22_1",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-70.22.1.el9_0.x86_64"
+  },
+  {
     "name": "krb5-libs",
     "summary": "The non-admin shared libraries used by Kerberos 5"
   },

@@ -916,6 +916,10 @@
     "summary": "Object files for development using standard C libraries."
   },
   {
+    "name": "glibc-doc",
+    "summary": "Documentation for GNU libc"
+  },
+  {
     "name": "glibc-gconv-extra",
     "summary": "All iconv converter modules for glibc."
   },
@@ -2814,10 +2818,6 @@
   {
     "name": "libqmi-utils",
     "summary": "Utilities to use the QMI protocol from the command line"
-  },
-  {
-    "name": "libqrtr-glib",
-    "summary": "Support library to use and manage the QRTR (Qualcomm IPC Router) bus."
   },
   {
     "name": "libquadmath",

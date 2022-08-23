@@ -28,6 +28,10 @@
     "summary": "Release file for ConfigManagement SIG repository"
   },
   {
+    "name": "centos-release-gluster10",
+    "summary": "Gluster 10 packages from the CentOS Storage SIG repository"
+  },
+  {
     "name": "centos-release-gluster6",
     "summary": "Gluster 6 packages from the CentOS Storage SIG repository"
   },
@@ -158,6 +162,10 @@
   {
     "name": "centos-release-samba415",
     "summary": "Samba 4.15 packages from the CentOS Storage SIG repository"
+  },
+  {
+    "name": "centos-release-samba416",
+    "summary": "Samba 4.16 packages from the CentOS Storage SIG repository"
   },
   {
     "name": "centos-release-storage-common",

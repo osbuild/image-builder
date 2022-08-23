@@ -100,6 +100,10 @@
     "summary": "Oss PCM output plugin for ALSA"
   },
   {
+    "name": "alsa-plugins-pulseaudio",
+    "summary": "Alsa to PulseAudio backend"
+  },
+  {
     "name": "alsa-plugins-samplerate",
     "summary": "External rate converter plugin for ALSA"
   },
@@ -2838,6 +2842,14 @@
   {
     "name": "gnome-kiosk",
     "summary": "Window management and application launching for GNOME"
+  },
+  {
+    "name": "gnome-kiosk-script-session",
+    "summary": "Basic session used for running kiosk application from shell script"
+  },
+  {
+    "name": "gnome-kiosk-search-appliance",
+    "summary": "Example search application application that uses GNOME Kiosk"
   },
   {
     "name": "gnome-logs",
@@ -9848,6 +9860,10 @@
     "summary": "C binding of nmstate"
   },
   {
+    "name": "nmstate-plugin-ovsdb",
+    "summary": "nmstate plugin for OVS database manipulation"
+  },
+  {
     "name": "nodejs",
     "summary": "JavaScript runtime"
   },
@@ -12368,6 +12384,10 @@
     "summary": "Plexus Common Utilities"
   },
   {
+    "name": "plotnetcfg",
+    "summary": "A tool to plot network configuration"
+  },
+  {
     "name": "plotutils",
     "summary": "GNU vector and raster graphics utilities and libraries"
   },
@@ -12642,6 +12662,10 @@
   {
     "name": "protobuf",
     "summary": "Protocol Buffers - Google's data interchange format"
+  },
+  {
+    "name": "protobuf-c",
+    "summary": "C bindings for Google's Protocol Buffers"
   },
   {
     "name": "protobuf-lite",
@@ -13274,6 +13298,10 @@
   {
     "name": "python3-tbb",
     "summary": "Python 3 TBB module"
+  },
+  {
+    "name": "python3-tdb",
+    "summary": "Python3 bindings for the Tdb library"
   },
   {
     "name": "python3-tkinter",
@@ -14914,6 +14942,10 @@
   {
     "name": "tcsh",
     "summary": "An enhanced version of csh, the C shell"
+  },
+  {
+    "name": "tdb-tools",
+    "summary": "Developer tools for the Tdb library"
   },
   {
     "name": "teckit",

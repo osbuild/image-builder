@@ -64,6 +64,10 @@
     "summary": "Google Cloud CLI GKE Auth Plugin"
   },
   {
+    "name": "google-cloud-cli-harbourbridge",
+    "summary": "Google Cloud CLI Harbourbridge"
+  },
+  {
     "name": "google-cloud-cli-kpt",
     "summary": "Google Cloud CLI kpt"
   },
@@ -84,6 +88,10 @@
     "summary": "Google Cloud CLI Nomos"
   },
   {
+    "name": "google-cloud-cli-package-go-module",
+    "summary": "Google Cloud CLI Package Go Module"
+  },
+  {
     "name": "google-cloud-cli-pubsub-emulator",
     "summary": "Google Cloud CLI PubSub Emulator"
   },
@@ -94,6 +102,10 @@
   {
     "name": "google-cloud-cli-spanner-emulator",
     "summary": "Google Cloud CLI Spanner Emulator"
+  },
+  {
+    "name": "google-cloud-cli-terraform-tools",
+    "summary": "Google Cloud CLI Terraform Tools"
   },
   {
     "name": "google-cloud-cli-terraform-validator",
@@ -172,6 +184,10 @@
     "summary": "Google Cloud SDK"
   },
   {
+    "name": "google-cloud-sdk-harbourbridge",
+    "summary": "Google Cloud SDK"
+  },
+  {
     "name": "google-cloud-sdk-kind",
     "summary": "Google Cloud SDK"
   },
@@ -196,6 +212,10 @@
     "summary": "Google Cloud SDK"
   },
   {
+    "name": "google-cloud-sdk-package-go-module",
+    "summary": "Google Cloud SDK"
+  },
+  {
     "name": "google-cloud-sdk-pubsub-emulator",
     "summary": "Google Cloud SDK"
   },
@@ -205,6 +225,10 @@
   },
   {
     "name": "google-cloud-sdk-spanner-emulator",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-terraform-tools",
     "summary": "Google Cloud SDK"
   },
   {
