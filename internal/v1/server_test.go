@@ -60,6 +60,17 @@ func initQuotaFile(t *testing.T) (string, error) {
 	return file.Name(), nil
 }
 
+func makeUploadOptions(t *testing.T, uploadOptions interface{}) *composer.UploadOptions {
+	data, err := json.Marshal(uploadOptions)
+	require.NoError(t, err)
+
+	var result composer.UploadOptions
+	err = json.Unmarshal(data, &result)
+	require.NoError(t, err)
+
+	return &result
+}
+
 func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
 	var log = &logrus.Logger{
 		Out:       os.Stderr,
@@ -619,11 +630,11 @@ func TestComposeImage(t *testing.T) {
 				Users: &[]User{
 					{
 						Name:   "user-name0",
-						SSHKey: nil,
+						SSHKey: "",
 					},
 					{
 						Name:   "user-name1",
-						SSHKey: nil,
+						SSHKey: "",
 					},
 				},
 			},
@@ -926,18 +937,23 @@ func strptr(s string) *string {
 
 func TestComposeCustomizations(t *testing.T) {
 	// simulate osbuild-composer API
+	var composerRequest composer.ComposeRequest
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+
+		err := json.NewDecoder(r.Body).Decode(&composerRequest)
+		require.NoError(t, err)
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
 			Id: "fe93fb55-ae04-4e21-a8b4-25ba95c3fa64",
 		}
-		err := json.NewEncoder(w).Encode(result)
+		err = json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
 	}))
 	defer apiSrv.Close()
@@ -949,97 +965,274 @@ func TestComposeCustomizations(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	payloads := []ComposeRequest{
+	payloads := []struct {
+		imageBuilderRequest ComposeRequest
+		composerRequest     composer.ComposeRequest
+	}{
 		{
-			Customizations: &Customizations{
-				Packages: &[]string{
-					"some",
-					"packages",
-				},
-				PayloadRepositories: &[]Repository{
-					{
-						Baseurl:   common.StringToPtr("https://some-repo-base-url.org"),
-						CheckGpg:  common.BoolToPtr(false),
-						Gpgkey:    common.StringToPtr("some-gpg-key"),
-						IgnoreSsl: common.BoolToPtr(false),
-						Rhsm:      false,
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Packages: &[]string{
+						"some",
+						"packages",
+					},
+					PayloadRepositories: &[]Repository{
+						{
+							Baseurl:   common.StringToPtr("https://some-repo-base-url.org"),
+							CheckGpg:  common.BoolToPtr(false),
+							Gpgkey:    common.StringToPtr("some-gpg-key"),
+							IgnoreSsl: common.BoolToPtr(false),
+							Rhsm:      false,
+						},
+					},
+					Filesystem: &[]Filesystem{
+						{
+							Mountpoint: "/",
+							MinSize:    2147483648,
+						},
+						{
+							Mountpoint: "/var",
+							MinSize:    1073741824,
+						},
+					},
+					Users: &[]User{
+						{
+							Name:   "user",
+							SSHKey: "ssh-rsa AAAAB3NzaC1",
+						},
 					},
 				},
-				Filesystem: &[]Filesystem{
+				Distribution: "centos-8",
+				ImageRequests: []ImageRequest{
 					{
-						Mountpoint: "/",
-						MinSize:    2147483648,
-					},
-					{
-						Mountpoint: "/var",
-						MinSize:    1073741824,
-					},
-				},
-				Users: &[]User{
-					{
-						Name:   "user-name0",
-						SSHKey: nil,
-					},
-					{
-						Name:   "user-name1",
-						SSHKey: nil,
-					},
-				},
-			},
-			Distribution: "centos-8",
-			ImageRequests: []ImageRequest{
-				{
-					Architecture: "x86_64",
-					ImageType:    ImageTypes_image_installer,
-					UploadRequest: UploadRequest{
-						Type: UploadTypes_aws_s3,
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
+						Architecture: "x86_64",
+						ImageType:    ImageTypes_rhel_edge_installer,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypes_aws_s3,
+							Options: AWSS3UploadRequestOptions{},
 						},
 					},
 				},
 			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "centos-8",
+				Customizations: &composer.Customizations{
+					Packages: &[]string{
+						"some",
+						"packages",
+					},
+					PayloadRepositories: &[]composer.Repository{
+						{
+							Baseurl:   common.StringToPtr("https://some-repo-base-url.org"),
+							CheckGpg:  common.BoolToPtr(false),
+							Gpgkey:    common.StringToPtr("some-gpg-key"),
+							IgnoreSsl: common.BoolToPtr(false),
+							Rhsm:      common.BoolToPtr(false),
+						},
+					},
+					Filesystem: &[]composer.Filesystem{
+						{
+							Mountpoint: "/",
+							MinSize:    2147483648,
+						},
+						{
+							Mountpoint: "/var",
+							MinSize:    1073741824,
+						},
+					},
+					Users: &[]composer.User{
+						{
+							Name:   "user",
+							Key:    common.StringToPtr("ssh-rsa AAAAB3NzaC1"),
+							Groups: &[]string{"wheel"},
+						},
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypes_edge_installer,
+					Ostree:       nil,
+					Repositories: []composer.Repository{
+
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
 		},
 		{
-			Customizations: &Customizations{
-				Packages: nil,
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Packages: nil,
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypes_edge_commit,
+						Ostree: &OSTree{
+							Ref: strptr("edge/ref"),
+						},
+						UploadRequest: UploadRequest{
+							Type:    UploadTypes_aws_s3,
+							Options: AWSS3UploadRequestOptions{},
+						},
+					},
+				},
 			},
-			Distribution: "rhel-8",
-			ImageRequests: []ImageRequest{
-				{
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-86",
+				Customizations: &composer.Customizations{
+					Packages: nil,
+				},
+				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
-					ImageType:    ImageTypes_edge_commit,
-					Ostree: &OSTree{
+					ImageType:    composer.ImageTypes_edge_commit,
+					Ostree: &composer.OSTree{
 						Ref: strptr("edge/ref"),
 					},
-					UploadRequest: UploadRequest{
-						Type:    UploadTypes_aws_s3,
-						Options: AWSS3UploadRequestOptions{},
+					Repositories: []composer.Repository{
+						{
+							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/baseos/os"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(true),
+						},
+						{
+							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/appstream/os"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(true),
+						},
 					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
 				},
 			},
 		},
 		{
-			Customizations: &Customizations{
-				Packages: &[]string{"pkg"},
-				Subscription: &Subscription{
-					Organization: 000,
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Packages: &[]string{"pkg"},
+					Subscription: &Subscription{
+						Organization: 000,
+					},
+				},
+				Distribution: "centos-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypes_rhel_edge_commit,
+						Ostree: &OSTree{
+							Ref:    strptr("test/edge/ref"),
+							Url:    strptr("https://ostree.srv/"),
+							Parent: strptr("test/edge/ref2"),
+						},
+						UploadRequest: UploadRequest{
+							Type:    UploadTypes_aws_s3,
+							Options: AWSS3UploadRequestOptions{},
+						},
+					},
 				},
 			},
-			Distribution: "centos-8",
-			ImageRequests: []ImageRequest{
-				{
+			composerRequest: composer.ComposeRequest{
+				Distribution: "centos-8",
+				Customizations: &composer.Customizations{
+					Packages: &[]string{
+						"pkg",
+					},
+					Subscription: &composer.Subscription{
+						ActivationKey: "",
+						BaseUrl:       "",
+						Insights:      false,
+						Organization:  "0",
+						ServerUrl:     "",
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
-					ImageType:    ImageTypes_rhel_edge_commit,
-					Ostree: &OSTree{
+					ImageType:    composer.ImageTypes_edge_commit,
+					Ostree: &composer.OSTree{
 						Ref:    strptr("test/edge/ref"),
 						Url:    strptr("https://ostree.srv/"),
 						Parent: strptr("test/edge/ref2"),
 					},
-					UploadRequest: UploadRequest{
-						Type:    UploadTypes_aws_s3,
-						Options: AWSS3UploadRequestOptions{},
+					Repositories: []composer.Repository{
+
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
 					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
 				},
 			},
 		},
@@ -1047,13 +1240,17 @@ func TestComposeCustomizations(t *testing.T) {
 
 	for idx, payload := range payloads {
 		fmt.Printf("TT payload %d\n", idx)
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload.imageBuilderRequest)
 		require.Equal(t, http.StatusCreated, response.StatusCode)
 
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Equal(t, "fe93fb55-ae04-4e21-a8b4-25ba95c3fa64", result.Id)
+
+		//compare expected compose request with actual receieved compose request
+		require.Equal(t, payload.composerRequest, composerRequest)
+		composerRequest = composer.ComposeRequest{}
 	}
 }
 
