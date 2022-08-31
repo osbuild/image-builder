@@ -43,6 +43,8 @@ type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 }
 
+var contentHeaders = map[string]string{"Content-Type": "application/json"}
+
 func NewClient(conf ComposerClientConfig) (*ComposerClient, error) {
 	if conf.TokenURL == "" {
 		return nil, fmt.Errorf("Client needs token endpoint")
@@ -175,9 +177,21 @@ func (cc *ComposerClient) Compose(compose ComposeRequest) (*http.Response, error
 		return nil, err
 	}
 
-	return cc.request("POST", fmt.Sprintf("%s/compose", cc.composerURL), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf))
+	return cc.request("POST", fmt.Sprintf("%s/compose", cc.composerURL), contentHeaders, bytes.NewReader(buf))
 }
 
 func (cc *ComposerClient) OpenAPI() (*http.Response, error) {
 	return cc.request("GET", fmt.Sprintf("%s/openapi", cc.composerURL), nil, nil)
+}
+
+func (cc *ComposerClient) CloneCompose(id string, clone CloneComposeBody) (*http.Response, error) {
+	buf, err := json.Marshal(clone)
+	if err != nil {
+		return nil, err
+	}
+	return cc.request("POST", fmt.Sprintf("%s/composes/%s/clone", cc.composerURL, id), contentHeaders, bytes.NewReader(buf))
+}
+
+func (cc *ComposerClient) CloneStatus(id string) (*http.Response, error) {
+	return cc.request("GET", fmt.Sprintf("%s/clones/%s", cc.composerURL, id), nil, nil)
 }
