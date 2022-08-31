@@ -317,7 +317,7 @@ func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId string) er
 
 	_, err = h.server.db.GetCompose(composeId, idHeader.Identity.OrgID)
 	if err != nil {
-		if errors.As(err, &db.ComposeNotFoundError) {
+		if errors.Is(err, db.ComposeNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		} else {
 			return err
@@ -710,4 +710,191 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 	}
 
 	return res
+}
+
+func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
+	err := h.canUserAccessComposeId(ctx, composeId)
+	if err != nil {
+		return err
+	}
+
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+	imageType, err := h.server.db.GetComposeImageType(composeId, idHeader.Identity.OrgID)
+	if err != nil {
+		if errors.Is(err, db.ComposeNotFoundError) {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to find compose %v", composeId))
+		}
+		logrus.Errorf("Error querying image type for compose %v: %v", composeId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying the compose")
+	}
+
+	var resp *http.Response
+	var rawCR json.RawMessage
+	if ImageTypes(imageType) == ImageTypesAws || ImageTypes(imageType) == ImageTypesAmi {
+		var awsEC2CloneReq AWSEC2Clone
+		err = ctx.Bind(&awsEC2CloneReq)
+		if err != nil {
+			return err
+		}
+
+		rawCR, err = json.Marshal(awsEC2CloneReq)
+		if err != nil {
+			return err
+		}
+
+		resp, err = h.server.client.CloneCompose(composeId, composer.AWSEC2CloneCompose{
+			Region:            awsEC2CloneReq.Region,
+			ShareWithAccounts: awsEC2CloneReq.ShareWithAccounts,
+		})
+		if err != nil {
+			return err
+		}
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, "Cloning a compose is only available for AWS composes")
+	}
+
+	if resp == nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong creating the clone")
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		var cError composer.Error
+		err = json.NewDecoder(resp.Body).Decode(&cError)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to parse error returned by image-builder-composer service")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("image-builder-composer service returned an error: %s", cError.Reason))
+	}
+
+	var cloneResponse composer.CloneComposeResponse
+	err = json.NewDecoder(resp.Body).Decode(&cloneResponse)
+	if err != nil {
+		logrus.Errorf("Unable to decode CloneComposeResponse: %v", err)
+		return err
+	}
+
+	err = h.server.db.InsertClone(composeId, cloneResponse.Id.String(), rawCR)
+	if err != nil {
+		logrus.Errorf("Error inserting clone into db for compose %v: %v", err, composeId)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong saving the clone")
+	}
+
+	return ctx.JSON(http.StatusCreated, CloneResponse{
+		Id: cloneResponse.Id.String(),
+	})
+}
+
+func (h *Handlers) GetCloneStatus(ctx echo.Context, id string) error {
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	cloneEntry, err := h.server.db.GetClone(id, idHeader.Identity.OrgID)
+	if err != nil {
+		if errors.Is(err, db.CloneNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		logrus.Errorf("Error querying clone %v: %v", id, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying this clone")
+	}
+	if cloneEntry == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Requested clone cannot be found")
+	}
+
+	resp, err := h.server.client.CloneStatus(id)
+	if err != nil {
+		logrus.Errorf("Error requesting clone status for clone %v: %v", id, err)
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var cErr composer.Error
+		err = json.NewDecoder(resp.Body).Decode(&cErr)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to parse composer error")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to create clone job: %v", cErr.Reason))
+	}
+
+	var cloudStat composer.CloneStatus
+	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
+	if err != nil {
+		logrus.Errorf("Unable to decode clone status: %v", err)
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, UploadStatus{
+		Status:  UploadStatusStatus(cloudStat.Status),
+		Type:    UploadTypes(cloudStat.Type),
+		Options: cloudStat.Options,
+	})
+}
+
+func (h *Handlers) GetComposeClones(ctx echo.Context, composeId string, params GetComposeClonesParams) error {
+	err := h.canUserAccessComposeId(ctx, composeId)
+	if err != nil {
+		return err
+	}
+
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	limit := 100
+	if params.Limit != nil && *params.Limit > 0 {
+		limit = *params.Limit
+	}
+
+	offset := 0
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+
+	cloneEntries, count, err := h.server.db.GetClonesForCompose(composeId, idHeader.Identity.OrgID, limit, offset)
+	if err != nil {
+		logrus.Errorf("Error querying clones for compose %v: %v", composeId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying clones for this compose")
+	}
+
+	var data []ClonesResponseItem
+	for _, c := range cloneEntries {
+		data = append(data, ClonesResponseItem{
+			Id:        c.Id.String(),
+			Request:   c.Request,
+			CreatedAt: c.CreatedAt.String(),
+		})
+	}
+
+	lastOffset := count - 1
+	if lastOffset < 0 {
+		lastOffset = 0
+	}
+
+	spec, err := GetSwagger()
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, ClonesResponse{
+		Meta: struct {
+			Count int `json:"count"`
+		}{
+			count,
+		},
+		Links: struct {
+			First string `json:"first"`
+			Last  string `json:"last"`
+		}{
+			fmt.Sprintf("%v/v%v/composes/%v/clones?offset=%v&limit=%v",
+				RoutePrefix(), spec.Info.Version, composeId, 0, limit),
+			fmt.Sprintf("%v/v%v/composes/%v/clones?offset=%v&limit=%v",
+				RoutePrefix(), spec.Info.Version, composeId, lastOffset, limit),
+		},
+		Data: data,
+	})
 }
