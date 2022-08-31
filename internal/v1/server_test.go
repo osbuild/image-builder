@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -1398,4 +1399,145 @@ func TestComposeStatusError(t *testing.T) {
 		},
 	}, result)
 
+}
+
+func TestGetClones(t *testing.T) {
+	cloneId := uuid.MustParse("bf8c6b63-1213-4843-b33d-9748d9fdd8f5")
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		result := composer.CloneComposeResponse{
+			Id: cloneId,
+		}
+		err := json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	}))
+	defer apiSrv.Close()
+
+	dbase := tutils.InitDB()
+	err := dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
+{
+  "image_requests": [
+    {
+      "image_type": "aws",
+    }
+  ]
+}`))
+	require.NoError(t, err)
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	cloneReq := AWSEC2Clone{
+		Region: "us-east-2",
+	}
+	resp, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	var cResp CloneResponse
+	err = json.Unmarshal([]byte(body), &cResp)
+	require.NoError(t, err)
+	require.Equal(t, cloneId.String(), cResp.Id)
+
+	var csResp ClonesResponse
+	resp, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	err = json.Unmarshal([]byte(body), &csResp)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(csResp.Data))
+	require.Equal(t, cloneId.String(), csResp.Data[0].Id)
+
+	cloneReqExp, err := json.Marshal(cloneReq)
+	require.NoError(t, err)
+	cloneReqRecv, err := json.Marshal(csResp.Data[0].Request)
+	require.NoError(t, err)
+	require.Equal(t, cloneReqExp, cloneReqRecv)
+}
+
+func TestGetCloneStatus(t *testing.T) {
+	cloneId := uuid.MustParse("bf8c6b63-1213-4843-b33d-9748d9fdd8f5")
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+
+		if strings.HasSuffix(r.URL.Path, fmt.Sprintf("/clones/%v", cloneId)) && r.Method == "GET" {
+			w.WriteHeader(http.StatusOK)
+			usO := composer.AWSEC2UploadStatus{
+				Ami:    "ami-1",
+				Region: "us-east-2",
+			}
+			result := composer.CloneStatus{
+				Options: usO,
+				Status:  composer.Success,
+				Type:    composer.UploadTypesAws,
+			}
+			err := json.NewEncoder(w).Encode(result)
+			require.NoError(t, err)
+		} else if strings.HasSuffix(r.URL.Path, fmt.Sprintf("%v/clone", UUIDTest)) && r.Method == "POST" {
+			w.WriteHeader(http.StatusCreated)
+			result := composer.CloneComposeResponse{
+				Id: cloneId,
+			}
+			err := json.NewEncoder(w).Encode(result)
+			require.NoError(t, err)
+		} else {
+			require.FailNowf(t, "Unexpected request to mocked composer, path: %s", r.URL.Path)
+		}
+	}))
+	defer apiSrv.Close()
+
+	dbase := tutils.InitDB()
+	err := dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
+{
+  "image_requests": [
+    {
+      "image_type": "aws",
+    }
+  ]
+}`))
+	require.NoError(t, err)
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	cloneReq := AWSEC2Clone{
+		Region: "us-east-2",
+	}
+	resp, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	var cResp CloneResponse
+	err = json.Unmarshal([]byte(body), &cResp)
+	require.NoError(t, err)
+	require.Equal(t, cloneId.String(), cResp.Id)
+
+	var usResp UploadStatus
+	resp, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/clones/%s", cloneId), &tutils.AuthString0)
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	err = json.Unmarshal([]byte(body), &usResp)
+	require.NoError(t, err)
+	require.Equal(t, UploadStatusStatusSuccess, usResp.Status)
+	require.Equal(t, UploadTypesAws, usResp.Type)
+
+	var awsUS AWSUploadStatus
+	jsonUO, err := json.Marshal(usResp.Options)
+	require.NoError(t, err)
+	err = json.Unmarshal(jsonUO, &awsUS)
+	require.NoError(t, err)
+	require.Equal(t, "ami-1", awsUS.Ami)
+	require.Equal(t, "us-east-2", awsUS.Region)
 }

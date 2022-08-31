@@ -77,11 +77,13 @@ func PostResponseBody(t *testing.T, url string, compose interface{}) (*http.Resp
 
 type dB struct {
 	composes map[string][]db.ComposeEntry
+	clones   map[uuid.UUID][]db.CloneEntry
 }
 
 func InitDB() db.DB {
 	return &dB{
 		make(map[string][]db.ComposeEntry),
+		make(map[uuid.UUID][]db.CloneEntry),
 	}
 }
 
@@ -132,13 +134,49 @@ func (d *dB) GetComposeImageType(jobId string, orgId string) (string, error) {
 }
 
 func (d *dB) InsertClone(composeId, cloneId string, request json.RawMessage) error {
+	coId, err := uuid.Parse(composeId)
+	if err != nil {
+		return err
+	}
+
+	clId, err := uuid.Parse(cloneId)
+	if err != nil {
+		return err
+	}
+
+	entry := db.CloneEntry{
+		Id:        clId,
+		Request:   request,
+		CreatedAt: time.Now(),
+	}
+
+	if d.clones[coId] == nil {
+		d.clones[coId] = make([]db.CloneEntry, 0)
+	}
+	d.clones[coId] = append(d.clones[coId], entry)
 	return nil
+
 }
 
 func (d *dB) GetClonesForCompose(composeId, orgId string, limit, offset int) ([]db.CloneEntry, int, error) {
-	return nil, 0, nil
+	coId, err := uuid.Parse(composeId)
+	if err != nil {
+		return nil, 0, err
+	}
+	return d.clones[coId], len(d.clones[coId]), nil
 }
 
 func (d *dB) GetClone(id, orgId string) (*db.CloneEntry, error) {
+	clId, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range d.clones {
+		for _, cl := range v {
+			if cl.Id == clId {
+				return &cl, nil
+			}
+		}
+	}
 	return nil, nil
 }
