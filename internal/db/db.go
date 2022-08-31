@@ -29,7 +29,7 @@ type DB interface {
 	InsertCompose(jobId, accountNumber, orgId string, imageName *string, request json.RawMessage) error
 	GetComposes(orgId string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error)
 	GetCompose(jobId string, orgId string) (*ComposeEntry, error)
-	// Returns the count of compose requests performed by an *org_id* for a *duration*.
+	GetComposeImageType(jobId, orgId string) (string, error)
 	CountComposesSince(orgId string, duration time.Duration) (int, error)
 }
 
@@ -48,6 +48,11 @@ const (
 		SELECT job_id, request, created_at, image_name
 		FROM composes
 		WHERE org_id=$1 AND job_id=$2`
+
+	sqlGetComposeImageType = `
+		SELECT req->>'image_type'
+		FROM composes,jsonb_array_elements(composes.request->'image_requests') as req
+		WHERE org_id=$1 AND job_id = $2`
 
 	sqlCountComposesSince = `
 		SELECT COUNT(*)
@@ -94,7 +99,7 @@ func (db *dB) GetCompose(jobId string, orgId string) (*ComposeEntry, error) {
 	var compose ComposeEntry
 	err = result.Scan(&compose.Id, &compose.Request, &compose.CreatedAt, &compose.ImageName)
 	if err != nil {
-		if errors.As(err, &pgx.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ComposeNotFoundError
 		} else {
 			return nil, err
@@ -102,6 +107,29 @@ func (db *dB) GetCompose(jobId string, orgId string) (*ComposeEntry, error) {
 	}
 
 	return &compose, nil
+}
+
+func (db *dB) GetComposeImageType(jobId, orgId string) (string, error) {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Release()
+
+	result := conn.QueryRow(ctx, sqlGetComposeImageType, orgId, jobId)
+
+	var imageType string
+	err = result.Scan(&imageType)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ComposeNotFoundError
+		} else {
+			return "", err
+		}
+	}
+
+	return imageType, nil
 }
 
 func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error) {

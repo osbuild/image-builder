@@ -298,10 +298,49 @@ func testCountGetComposesSince(t *testing.T) {
 	require.Equal(t, job1, composes[0].Id)
 }
 
+func testGetComposeImageType(t *testing.T) {
+	d, err := db.InitDBConnectionPool(connStr(t))
+	require.NoError(t, err)
+	migrateUp(t)
+	defer tearDown(t)
+	conn := connect(t)
+	defer conn.Close(context.Background())
+
+	composeId := uuid.New().String()
+	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, composeId, `
+{
+  "customizations": {
+  },
+  "distribution": "rhel-8",
+  "image_requests": [
+    {
+      "architecture": "x86_64",
+      "image_type": "guest-image",
+      "upload_request": {
+        "type": "aws.s3",
+        "options": {
+        }
+      }
+    }
+  ]
+}
+`, ANR1, ORGID1)
+	require.NoError(t, err)
+
+	it, err := d.GetComposeImageType(composeId, ORGID1)
+	require.NoError(t, err)
+	require.Equal(t, "guest-image", it)
+
+	_, err = d.GetComposeImageType(composeId, ORGID2)
+	require.Error(t, err)
+}
+
 func TestMain(t *testing.T) {
 	tearDown(t)
 	testMigration(t)
 	testInsertCompose(t)
 	testGetCompose(t)
 	testCountComposesSince(t)
+	testGetComposeImageType(t)
 }

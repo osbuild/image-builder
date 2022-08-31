@@ -126,3 +126,7 @@ func (d *dB) CountComposesSince(orgId string, duration time.Duration) (int, erro
 	_, count, err := d.GetComposes(orgId, duration, 100, 0)
 	return count, err
 }
+
+func (d *dB) GetComposeImageType(jobId string, orgId string) (string, error) {
+	return "aws", nil
+}
