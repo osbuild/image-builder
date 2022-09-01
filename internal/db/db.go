@@ -34,11 +34,25 @@ type DB interface {
 }
 
 const (
+	sqlInsertCompose = `
+		INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name)
+		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)`
+
 	sqlGetComposes = `
-		SELECT job_id, request, created_at, image_name FROM composes WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4`
+		SELECT job_id, request, created_at, image_name
+		FROM composes WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2
+		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4`
+
+	sqlGetCompose = `
+		SELECT job_id, request, created_at, image_name
+		FROM composes
+		WHERE org_id=$1 AND job_id=$2`
 
 	sqlCountComposesSince = `
-		SELECT COUNT(*) FROM composes WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2`
+		SELECT COUNT(*)
+		FROM composes
+		WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2`
 )
 
 func InitDBConnectionPool(connStr string) (DB, error) {
@@ -63,7 +77,7 @@ func (db *dB) InsertCompose(jobId, accountNumber, orgId string, imageName *strin
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)", jobId, request, accountNumber, orgId, imageName)
+	_, err = conn.Exec(ctx, sqlInsertCompose, jobId, request, accountNumber, orgId, imageName)
 	return err
 }
 
@@ -75,8 +89,7 @@ func (db *dB) GetCompose(jobId string, orgId string) (*ComposeEntry, error) {
 	}
 	defer conn.Release()
 
-	result := conn.QueryRow(ctx, "SELECT job_id, request, created_at, image_name FROM composes WHERE org_id=$1 and job_id=$2",
-		orgId, jobId)
+	result := conn.QueryRow(ctx, sqlGetCompose, orgId, jobId)
 
 	var compose ComposeEntry
 	err = result.Scan(&compose.Id, &compose.Request, &compose.CreatedAt, &compose.ImageName)
