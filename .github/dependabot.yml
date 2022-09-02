@@ -5,8 +5,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      time: '4:00'
-    open-pull-requests-limit: 1
+      time: "04:00"
+    open-pull-requests-limit: 5
     rebase-strategy: "disabled"
 
   # Maintain dependencies for Go
@@ -14,6 +14,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-      time: '4:00'
-    open-pull-requests-limit: 1
+      time: "04:00"
+    open-pull-requests-limit: 5
     rebase-strategy: "disabled"
