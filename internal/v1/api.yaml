@@ -584,12 +584,12 @@ components:
       type: object
       required:
         - name
-        - SSHKey
+        - ssh_key
       properties:
         name:
           type: string
           example: "user1"
-        SSHKey:
+        ssh_key:
           type: string
           example: "ssh-rsa AAAAB3NzaC1"
     Filesystem:

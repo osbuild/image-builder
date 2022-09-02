@@ -771,7 +771,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			groups := &[]string{"wheel"}
 			users = append(users, composer.User{
 				Name:   u.Name,
-				Key:    &u.SSHKey,
+				Key:    &u.SshKey,
 				Groups: groups,
 			})
 		}

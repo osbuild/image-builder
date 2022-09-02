@@ -630,11 +630,11 @@ func TestComposeImage(t *testing.T) {
 				Users: &[]User{
 					{
 						Name:   "user-name0",
-						SSHKey: "",
+						SshKey: "",
 					},
 					{
 						Name:   "user-name1",
-						SSHKey: "",
+						SshKey: "",
 					},
 				},
 			},
@@ -998,7 +998,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Users: &[]User{
 						{
 							Name:   "user",
-							SSHKey: "ssh-rsa AAAAB3NzaC1",
+							SshKey: "ssh-rsa AAAAB3NzaC1",
 						},
 					},
 				},
