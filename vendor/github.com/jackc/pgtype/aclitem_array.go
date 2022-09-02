@@ -228,6 +228,12 @@ func (src *ACLItemArray) AssignTo(dst interface{}) error {
 			value = value.Elem()
 		}
 
+		switch value.Kind() {
+		case reflect.Array, reflect.Slice:
+		default:
+			return errors.Errorf("cannot assign %T to %T", src, dst)
+		}
+
 		if len(src.Elements) == 0 {
 			if value.Kind() == reflect.Slice {
 				value.Set(reflect.MakeSlice(value.Type(), 0, 0))
@@ -317,7 +323,7 @@ func (dst *ACLItemArray) DecodeText(ci *ConnInfo, src []byte) error {
 		for i, s := range uta.Elements {
 			var elem ACLItem
 			var elemSrc []byte
-			if s != "NULL" {
+			if s != "NULL" || uta.Quoted[i] {
 				elemSrc = []byte(s)
 			}
 			err = elem.DecodeText(ci, elemSrc)
