@@ -11,6 +11,7 @@ import (
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responsesObject
 type Responses map[string]*ResponseRef
 
 var _ jsonpointer.JSONPointable = (*Responses)(nil)
@@ -29,12 +30,12 @@ func (responses Responses) Get(status int) *ResponseRef {
 	return responses[strconv.FormatInt(int64(status), 10)]
 }
 
-func (responses Responses) Validate(c context.Context) error {
-	if len(responses) == 0 {
+func (value Responses) Validate(ctx context.Context) error {
+	if len(value) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
 	}
-	for _, v := range responses {
-		if err := v.Validate(c); err != nil {
+	for _, v := range value {
+		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
@@ -54,8 +55,10 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 }
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responseObject
 type Response struct {
 	ExtensionProps
+
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
 	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`
@@ -94,13 +97,24 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, response)
 }
 
-func (response *Response) Validate(c context.Context) error {
-	if response.Description == nil {
+func (value *Response) Validate(ctx context.Context) error {
+	if value.Description == nil {
 		return errors.New("a short description of the response is required")
 	}
 
-	if content := response.Content; content != nil {
-		if err := content.Validate(c); err != nil {
+	if content := value.Content; content != nil {
+		if err := content.Validate(ctx); err != nil {
+			return err
+		}
+	}
+	for _, header := range value.Headers {
+		if err := header.Validate(ctx); err != nil {
+			return err
+		}
+	}
+
+	for _, link := range value.Links {
+		if err := link.Validate(ctx); err != nil {
 			return err
 		}
 	}

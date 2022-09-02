@@ -8,9 +8,11 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// Components is specified by OpenAPI/Swagger standard version 3.0.
+// Components is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#componentsObject
 type Components struct {
 	ExtensionProps
+
 	Schemas         Schemas         `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Parameters      ParametersMap   `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Headers         Headers         `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -34,12 +36,12 @@ func (components *Components) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, components)
 }
 
-func (components *Components) Validate(c context.Context) (err error) {
+func (components *Components) Validate(ctx context.Context) (err error) {
 	for k, v := range components.Schemas {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -48,7 +50,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -57,7 +59,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -66,7 +68,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -75,7 +77,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}
@@ -84,7 +86,7 @@ func (components *Components) Validate(c context.Context) (err error) {
 		if err = ValidateIdentifier(k); err != nil {
 			return
 		}
-		if err = v.Validate(c); err != nil {
+		if err = v.Validate(ctx); err != nil {
 			return
 		}
 	}

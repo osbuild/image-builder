@@ -8,6 +8,7 @@ import (
 )
 
 // MediaType is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject
 type MediaType struct {
 	ExtensionProps
 
@@ -67,12 +68,12 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, mediaType)
 }
 
-func (mediaType *MediaType) Validate(c context.Context) error {
-	if mediaType == nil {
+func (value *MediaType) Validate(ctx context.Context) error {
+	if value == nil {
 		return nil
 	}
-	if schema := mediaType.Schema; schema != nil {
-		if err := schema.Validate(c); err != nil {
+	if schema := value.Schema; schema != nil {
+		if err := schema.Validate(ctx); err != nil {
 			return err
 		}
 	}

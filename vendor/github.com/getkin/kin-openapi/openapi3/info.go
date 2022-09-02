@@ -7,9 +7,11 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
-// Info is specified by OpenAPI/Swagger standard version 3.0.
+// Info is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#infoObject
 type Info struct {
 	ExtensionProps
+
 	Title          string   `json:"title" yaml:"title"` // Required
 	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
 	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
@@ -26,15 +28,15 @@ func (value *Info) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
-func (value *Info) Validate(c context.Context) error {
+func (value *Info) Validate(ctx context.Context) error {
 	if contact := value.Contact; contact != nil {
-		if err := contact.Validate(c); err != nil {
+		if err := contact.Validate(ctx); err != nil {
 			return err
 		}
 	}
 
 	if license := value.License; license != nil {
-		if err := license.Validate(c); err != nil {
+		if err := license.Validate(ctx); err != nil {
 			return err
 		}
 	}
@@ -50,9 +52,11 @@ func (value *Info) Validate(c context.Context) error {
 	return nil
 }
 
-// Contact is specified by OpenAPI/Swagger standard version 3.0.
+// Contact is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contactObject
 type Contact struct {
 	ExtensionProps
+
 	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
 	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
 	Email string `json:"email,omitempty" yaml:"email,omitempty"`
@@ -66,13 +70,15 @@ func (value *Contact) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
-func (value *Contact) Validate(c context.Context) error {
+func (value *Contact) Validate(ctx context.Context) error {
 	return nil
 }
 
-// License is specified by OpenAPI/Swagger standard version 3.0.
+// License is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#licenseObject
 type License struct {
 	ExtensionProps
+
 	Name string `json:"name" yaml:"name"` // Required
 	URL  string `json:"url,omitempty" yaml:"url,omitempty"`
 }
@@ -85,7 +91,7 @@ func (value *License) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, value)
 }
 
-func (value *License) Validate(c context.Context) error {
+func (value *License) Validate(ctx context.Context) error {
 	if value.Name == "" {
 		return errors.New("value of license name must be a non-empty string")
 	}
