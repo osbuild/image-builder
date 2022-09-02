@@ -76,7 +76,7 @@ func PostResponseBody(t *testing.T, url string, compose interface{}) (*http.Resp
 }
 
 type dB struct {
-	accountOwernship map[string][]db.ComposeEntry
+	composes map[string][]db.ComposeEntry
 }
 
 func InitDB() db.DB {
@@ -96,24 +96,24 @@ func (d *dB) InsertCompose(jobId, accountNumber, orgId string, imageName *string
 		CreatedAt: time.Now(),
 		ImageName: imageName,
 	}
-	if d.accountOwernship[orgId] == nil {
-		d.accountOwernship[orgId] = make([]db.ComposeEntry, 0)
+	if d.composes[orgId] == nil {
+		d.composes[orgId] = make([]db.ComposeEntry, 0)
 	}
-	d.accountOwernship[orgId] = append(d.accountOwernship[orgId], dbEntry)
+	d.composes[orgId] = append(d.composes[orgId], dbEntry)
 	return nil
 }
 
 func (d *dB) GetComposes(orgId string, since time.Duration, limit, offset int) ([]db.ComposeEntry, int, error) {
-	if d.accountOwernship[orgId] != nil {
-		return d.accountOwernship[orgId], len(d.accountOwernship[orgId]), nil
+	if d.composes[orgId] != nil {
+		return d.composes[orgId], len(d.composes[orgId]), nil
 	} else {
 		return make([]db.ComposeEntry, 0), 0, nil
 	}
 }
 
 func (d *dB) GetCompose(jobId string, orgId string) (*db.ComposeEntry, error) {
-	if d.accountOwernship[orgId] != nil {
-		for _, composeEntry := range d.accountOwernship[orgId] {
+	if d.composes[orgId] != nil {
+		for _, composeEntry := range d.composes[orgId] {
 			if composeEntry.Id.String() == jobId {
 				return &composeEntry, nil
 			}
