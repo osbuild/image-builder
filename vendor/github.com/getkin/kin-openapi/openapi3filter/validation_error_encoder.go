@@ -34,6 +34,8 @@ func (enc *ValidationErrorEncoder) Encode(ctx context.Context, err error, w http
 		cErr = convertBasicRequestError(e)
 	} else if e.Err == ErrInvalidRequired {
 		cErr = convertErrInvalidRequired(e)
+	} else if e.Err == ErrInvalidEmptyValue {
+		cErr = convertErrInvalidEmptyValue(e)
 	} else if innerErr, ok := e.Err.(*ParseError); ok {
 		cErr = convertParseError(e, innerErr)
 	} else if innerErr, ok := e.Err.(*openapi3.SchemaError); ok {
@@ -75,10 +77,23 @@ func convertBasicRequestError(e *RequestError) *ValidationError {
 }
 
 func convertErrInvalidRequired(e *RequestError) *ValidationError {
-	if e.Reason == ErrInvalidRequired.Error() && e.Parameter != nil {
+	if e.Err == ErrInvalidRequired && e.Parameter != nil {
 		return &ValidationError{
 			Status: http.StatusBadRequest,
 			Title:  fmt.Sprintf("parameter %q in %s is required", e.Parameter.Name, e.Parameter.In),
+		}
+	}
+	return &ValidationError{
+		Status: http.StatusBadRequest,
+		Title:  e.Error(),
+	}
+}
+
+func convertErrInvalidEmptyValue(e *RequestError) *ValidationError {
+	if e.Err == ErrInvalidEmptyValue && e.Parameter != nil {
+		return &ValidationError{
+			Status: http.StatusBadRequest,
+			Title:  fmt.Sprintf("parameter %q in %s is not allowed to be empty", e.Parameter.Name, e.Parameter.In),
 		}
 	}
 	return &ValidationError{
@@ -152,7 +167,7 @@ func convertSchemaError(e *RequestError, innerErr *openapi3.SchemaError) *Valida
 			strings.Join(enums, ", "))
 		value := fmt.Sprintf("%v", innerErr.Value)
 		if e.Parameter != nil &&
-			(e.Parameter.Explode == nil || *e.Parameter.Explode == true) &&
+			(e.Parameter.Explode == nil || *e.Parameter.Explode) &&
 			(e.Parameter.Style == "" || e.Parameter.Style == "form") &&
 			strings.Contains(value, ",") {
 			parts := strings.Split(value, ",")

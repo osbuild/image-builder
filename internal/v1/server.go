@@ -1,4 +1,4 @@
-//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=v1 --generate types,server,spec -o api.go api.yaml
+//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config server.cfg.yaml -o api.go api.yaml
 package v1
 
 import (
@@ -30,7 +30,7 @@ import (
 type Server struct {
 	echo       *echo.Echo
 	client     *composer.ComposerClient
-	spec       *openapi3.Swagger
+	spec       *openapi3.T
 	router     routers.Router
 	db         db.DB
 	aws        AWSConfig
@@ -65,7 +65,7 @@ func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
 		return err
 	}
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := openapi3.NewLoader()
 	if err := spec.Validate(loader.Context); err != nil {
 		return err
 	}
@@ -270,14 +270,14 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 
 	status := ComposeStatus{
 		ImageStatus: ImageStatus{
-			Status:       string(cloudStat.ImageStatus.Status),
+			Status:       ImageStatusStatus(cloudStat.ImageStatus.Status),
 			UploadStatus: nil,
 		},
 	}
 
 	if cloudStat.ImageStatus.UploadStatus != nil {
 		status.ImageStatus.UploadStatus = &UploadStatus{
-			Status:  string(cloudStat.ImageStatus.UploadStatus.Status),
+			Status:  UploadStatusStatus(cloudStat.ImageStatus.UploadStatus.Status),
 			Type:    UploadTypes(cloudStat.ImageStatus.UploadStatus.Type),
 			Options: cloudStat.ImageStatus.UploadStatus.Options,
 		}
@@ -480,8 +480,8 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 
 func distroToStr(distro Distributions) string {
 	switch distro {
-	case Distributions_rhel_8:
-		return string(Distributions_rhel_86)
+	case Rhel8:
+		return string(Rhel86)
 	default:
 		return string(distro)
 	}
@@ -528,7 +528,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 
 	var repositories []composer.Repository
-	arch, err := d.Architecture(composeRequest.ImageRequests[0].Architecture)
+	arch, err := d.Architecture(string(composeRequest.ImageRequests[0].Architecture))
 	if err != nil {
 		return err
 	}
@@ -563,7 +563,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		Distribution:   distroToStr(composeRequest.Distribution),
 		Customizations: buildCustomizations(composeRequest.Customizations),
 		ImageRequest: &composer.ImageRequest{
-			Architecture:  composeRequest.ImageRequests[0].Architecture,
+			Architecture:  string(composeRequest.ImageRequests[0].Architecture),
 			ImageType:     imageType,
 			Ostree:        buildOSTreeOptions(composeRequest.ImageRequests[0].Ostree),
 			Repositories:  repositories,
@@ -598,7 +598,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
+	err = h.server.db.InsertCompose(composeResult.Id.String(), idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return err
@@ -606,7 +606,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 
 	logrus.Info("Compose result", composeResult)
 	return ctx.JSON(http.StatusCreated, ComposeResponse{
-		Id: composeResult.Id,
+		Id: composeResult.Id.String(),
 	})
 }
 
@@ -617,13 +617,13 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to marshal UploadRequestOptions")
 	}
 	switch ur.Type {
-	case UploadTypes_aws:
+	case UploadTypesAws:
 		var composerImageType composer.ImageTypes
 		switch it {
-		case ImageTypes_aws:
+		case ImageTypesAws:
 			fallthrough
-		case ImageTypes_ami:
-			composerImageType = composer.ImageTypes_aws
+		case ImageTypesAmi:
+			composerImageType = composer.ImageTypesAws
 		default:
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
@@ -636,23 +636,23 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 			Region:            s.aws.Region,
 			ShareWithAccounts: awsOptions.ShareWithAccounts,
 		}, composerImageType, nil
-	case UploadTypes_aws_s3:
+	case UploadTypesAwsS3:
 		var composerImageType composer.ImageTypes
 		switch it {
-		case ImageTypes_edge_commit:
+		case ImageTypesEdgeCommit:
 			fallthrough
-		case ImageTypes_rhel_edge_commit:
-			composerImageType = composer.ImageTypes_edge_commit
-		case ImageTypes_edge_installer:
+		case ImageTypesRhelEdgeCommit:
+			composerImageType = composer.ImageTypesEdgeCommit
+		case ImageTypesEdgeInstaller:
 			fallthrough
-		case ImageTypes_rhel_edge_installer:
-			composerImageType = composer.ImageTypes_edge_installer
-		case ImageTypes_guest_image:
-			composerImageType = composer.ImageTypes_guest_image
-		case ImageTypes_image_installer:
-			composerImageType = composer.ImageTypes_image_installer
-		case ImageTypes_vsphere:
-			composerImageType = composer.ImageTypes_vsphere
+		case ImageTypesRhelEdgeInstaller:
+			composerImageType = composer.ImageTypesEdgeInstaller
+		case ImageTypesGuestImage:
+			composerImageType = composer.ImageTypesGuestImage
+		case ImageTypesImageInstaller:
+			composerImageType = composer.ImageTypesImageInstaller
+		case ImageTypesVsphere:
+			composerImageType = composer.ImageTypesVsphere
 		default:
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
@@ -664,11 +664,11 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		return composer.AWSS3UploadOptions{
 			Region: s.aws.Region,
 		}, composerImageType, nil
-	case UploadTypes_gcp:
+	case UploadTypesGcp:
 		var composerImageType composer.ImageTypes
 		switch it {
-		case ImageTypes_gcp:
-			composerImageType = composer.ImageTypes_gcp
+		case ImageTypesGcp:
+			composerImageType = composer.ImageTypesGcp
 		default:
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
@@ -682,13 +682,13 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 			Region:            s.gcp.Region,
 			ShareWithAccounts: &gcpOptions.ShareWithAccounts,
 		}, composerImageType, nil
-	case UploadTypes_azure:
+	case UploadTypesAzure:
 		var composerImageType composer.ImageTypes
 		switch it {
-		case ImageTypes_azure:
+		case ImageTypesAzure:
 			fallthrough
-		case ImageTypes_vhd:
-			composerImageType = composer.ImageTypes_azure
+		case ImageTypesVhd:
+			composerImageType = composer.ImageTypesAzure
 		default:
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
@@ -787,7 +787,7 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 	if err != nil {
 		return err
 	}
-	arch, err := d.Architecture(params.Architecture)
+	arch, err := d.Architecture(string(params.Architecture))
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,4 @@
+package: composer
+output: openapi.v2.gen.go
+generate:
+  models: true

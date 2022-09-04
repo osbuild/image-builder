@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 
@@ -321,7 +322,7 @@ func TestGetComposeStatus(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		s := composer.ComposeStatus{
 			ImageStatus: composer.ImageStatus{
-				Status: composer.ImageStatusValue_building,
+				Status: composer.ImageStatusValueBuilding,
 			},
 		}
 		err := json.NewEncoder(w).Encode(s)
@@ -552,9 +553,9 @@ func TestComposeImage(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
-					ImageType:    ImageTypes_aws,
+					ImageType:    ImageTypesAws,
 					UploadRequest: UploadRequest{
-						Type: UploadTypes_aws,
+						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
@@ -562,9 +563,9 @@ func TestComposeImage(t *testing.T) {
 				},
 				{
 					Architecture: "x86_64",
-					ImageType:    ImageTypes_ami,
+					ImageType:    ImageTypesAmi,
 					UploadRequest: UploadRequest{
-						Type: UploadTypes_aws,
+						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
@@ -584,7 +585,7 @@ func TestComposeImage(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture:  "x86_64",
-					ImageType:     ImageTypes_azure,
+					ImageType:     ImageTypesAzure,
 					UploadRequest: UploadRequest{},
 				},
 			},
@@ -604,9 +605,9 @@ func TestComposeImage(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "unsupported-arch",
-					ImageType:    ImageTypes_aws,
+					ImageType:    ImageTypesAws,
 					UploadRequest: UploadRequest{
-						Type: UploadTypes_aws,
+						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
@@ -642,9 +643,9 @@ func TestComposeImage(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
-					ImageType:    ImageTypes_ami,
+					ImageType:    ImageTypesAmi,
 					UploadRequest: UploadRequest{
-						Type: UploadTypes_aws,
+						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
@@ -665,7 +666,7 @@ func TestComposeImage(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
-					ImageType:    ImageTypes_azure,
+					ImageType:    ImageTypesAzure,
 					UploadRequest: UploadRequest{
 						Type: "unknown",
 						Options: AWSUploadRequestOptions{
@@ -711,9 +712,9 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: "x86_64",
-				ImageType:    ImageTypes_aws,
+				ImageType:    ImageTypesAws,
 				UploadRequest: UploadRequest{
-					Type: UploadTypes_aws,
+					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
 					},
@@ -755,9 +756,9 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: "x86_64",
-				ImageType:    ImageTypes_aws,
+				ImageType:    ImageTypesAws,
 				UploadRequest: UploadRequest{
-					Type: UploadTypes_aws,
+					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
 					},
@@ -781,7 +782,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
-			Id: "3aa7375a-534a-4de3-8caf-011e04f402d3",
+			Id: uuid.MustParse("3aa7375a-534a-4de3-8caf-011e04f402d3"),
 		}
 		err := json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
@@ -801,9 +802,9 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: "x86_64",
-				ImageType:    ImageTypes_aws,
+				ImageType:    ImageTypesAws,
 				UploadRequest: UploadRequest{
-					Type: UploadTypes_aws,
+					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
 					},
@@ -834,7 +835,7 @@ func TestComposeImageAllowList(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			result := composer.ComposeId{
-				Id: "3aa7375a-534a-4de3-8caf-011e04f402d3",
+				Id: uuid.MustParse("3aa7375a-534a-4de3-8caf-011e04f402d3"),
 			}
 			err := json.NewEncoder(w).Encode(result)
 			require.NoError(t, err)
@@ -848,9 +849,9 @@ func TestComposeImageAllowList(t *testing.T) {
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
-					ImageType:    ImageTypes_aws,
+					ImageType:    ImageTypesAws,
 					UploadRequest: UploadRequest{
-						Type: UploadTypes_aws,
+						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
 						},
@@ -951,7 +952,7 @@ func TestComposeCustomizations(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
-			Id: "fe93fb55-ae04-4e21-a8b4-25ba95c3fa64",
+			Id: uuid.MustParse("fe93fb55-ae04-4e21-a8b4-25ba95c3fa64"),
 		}
 		err = json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
@@ -1006,9 +1007,9 @@ func TestComposeCustomizations(t *testing.T) {
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
-						ImageType:    ImageTypes_rhel_edge_installer,
+						ImageType:    ImageTypesRhelEdgeInstaller,
 						UploadRequest: UploadRequest{
-							Type:    UploadTypes_aws_s3,
+							Type:    UploadTypesAwsS3,
 							Options: AWSS3UploadRequestOptions{},
 						},
 					},
@@ -1050,7 +1051,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
-					ImageType:    composer.ImageTypes_edge_installer,
+					ImageType:    composer.ImageTypesEdgeInstaller,
 					Ostree:       nil,
 					Repositories: []composer.Repository{
 
@@ -1100,12 +1101,12 @@ func TestComposeCustomizations(t *testing.T) {
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
-						ImageType:    ImageTypes_edge_commit,
+						ImageType:    ImageTypesEdgeCommit,
 						Ostree: &OSTree{
 							Ref: strptr("edge/ref"),
 						},
 						UploadRequest: UploadRequest{
-							Type:    UploadTypes_aws_s3,
+							Type:    UploadTypesAwsS3,
 							Options: AWSS3UploadRequestOptions{},
 						},
 					},
@@ -1118,7 +1119,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
-					ImageType:    composer.ImageTypes_edge_commit,
+					ImageType:    composer.ImageTypesEdgeCommit,
 					Ostree: &composer.OSTree{
 						Ref: strptr("edge/ref"),
 					},
@@ -1162,14 +1163,14 @@ func TestComposeCustomizations(t *testing.T) {
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
-						ImageType:    ImageTypes_rhel_edge_commit,
+						ImageType:    ImageTypesRhelEdgeCommit,
 						Ostree: &OSTree{
 							Ref:    strptr("test/edge/ref"),
 							Url:    strptr("https://ostree.srv/"),
 							Parent: strptr("test/edge/ref2"),
 						},
 						UploadRequest: UploadRequest{
-							Type:    UploadTypes_aws_s3,
+							Type:    UploadTypesAwsS3,
 							Options: AWSS3UploadRequestOptions{},
 						},
 					},
@@ -1191,7 +1192,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
-					ImageType:    composer.ImageTypes_edge_commit,
+					ImageType:    composer.ImageTypesEdgeCommit,
 					Ostree: &composer.OSTree{
 						Ref:    strptr("test/edge/ref"),
 						Url:    strptr("https://ostree.srv/"),
@@ -1353,7 +1354,7 @@ func TestComposeStatusError(t *testing.T) {
 
 		s := composer.ComposeStatus{
 			ImageStatus: composer.ImageStatus{
-				Status: composer.ImageStatusValue_failure,
+				Status: composer.ImageStatusValueFailure,
 				Error: &composer.ComposeStatusError{
 					Id:      9,
 					Reason:  "depenceny failed",

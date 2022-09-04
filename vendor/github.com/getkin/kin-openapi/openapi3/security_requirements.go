@@ -15,15 +15,17 @@ func (srs *SecurityRequirements) With(securityRequirement SecurityRequirement) *
 	return srs
 }
 
-func (srs SecurityRequirements) Validate(c context.Context) error {
-	for _, item := range srs {
-		if err := item.Validate(c); err != nil {
+func (value SecurityRequirements) Validate(ctx context.Context) error {
+	for _, item := range value {
+		if err := item.Validate(ctx); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// SecurityRequirement is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#securityRequirementObject
 type SecurityRequirement map[string][]string
 
 func NewSecurityRequirement() SecurityRequirement {
@@ -38,6 +40,6 @@ func (security SecurityRequirement) Authenticate(provider string, scopes ...stri
 	return security
 }
 
-func (security SecurityRequirement) Validate(c context.Context) error {
+func (value SecurityRequirement) Validate(ctx context.Context) error {
 	return nil
 }
