@@ -8,8 +8,11 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
+// PathItem is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#pathItemObject
 type PathItem struct {
 	ExtensionProps
+
 	Ref         string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Summary     string     `json:"summary,omitempty" yaml:"summary,omitempty"`
 	Description string     `json:"description,omitempty" yaml:"description,omitempty"`
@@ -116,9 +119,9 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 	}
 }
 
-func (pathItem *PathItem) Validate(c context.Context) error {
-	for _, operation := range pathItem.Operations() {
-		if err := operation.Validate(c); err != nil {
+func (value *PathItem) Validate(ctx context.Context) error {
+	for _, operation := range value.Operations() {
+		if err := operation.Validate(ctx); err != nil {
 			return err
 		}
 	}

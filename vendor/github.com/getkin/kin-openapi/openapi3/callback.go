@@ -13,7 +13,7 @@ var _ jsonpointer.JSONPointable = (*Callbacks)(nil)
 
 func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 	ref, ok := c[token]
-	if ref == nil || ok == false {
+	if ref == nil || !ok {
 		return nil, fmt.Errorf("object has no field %q", token)
 	}
 
@@ -23,12 +23,13 @@ func (c Callbacks) JSONLookup(token string) (interface{}, error) {
 	return ref.Value, nil
 }
 
-// Callback is specified by OpenAPI/Swagger standard version 3.0.
+// Callback is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#callbackObject
 type Callback map[string]*PathItem
 
-func (value Callback) Validate(c context.Context) error {
+func (value Callback) Validate(ctx context.Context) error {
 	for _, v := range value {
-		if err := v.Validate(c); err != nil {
+		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
