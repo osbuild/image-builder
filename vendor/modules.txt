@@ -179,6 +179,9 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/redhatinsights/app-common-go v1.6.3
+## explicit; go 1.17
+github.com/redhatinsights/app-common-go/pkg/api/v1
 # github.com/redhatinsights/identity v0.0.0-20220426090913-8179bb5bfb20
 ## explicit; go 1.16
 github.com/redhatinsights/identity
@@ -189,7 +192,7 @@ github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch
 ## explicit; go 1.13
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/syslog
-# github.com/stretchr/testify v1.7.1
+# github.com/stretchr/testify v1.8.0
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
@@ -271,6 +274,6 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+# gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
