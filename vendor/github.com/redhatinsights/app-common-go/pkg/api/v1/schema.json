@@ -1,0 +1,494 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/AppConfig",
+    "$id": "https://cloud.redhat.com/schemas/clowder-appconfig",
+    "title": "AppConfig",
+    "definitions": {
+        "AppConfig": {
+            "type": "object",
+            "description": "ClowdApp deployment configuration for Clowder enabled apps.",
+            "properties": {
+                "privatePort": {
+                    "description": "Defines the private port that the app should be configured to listen on for API traffic.",
+                    "type": "integer"
+                },
+                "publicPort": {
+                    "description": "Defines the public port that the app should be configured to listen on for API traffic.",
+                    "type": "integer"
+                },
+                "webPort": {
+                    "description": "Deprecated: Use 'publicPort' instead.",
+                    "type": "integer"
+                },
+                "metricsPort": {
+                    "description": "Defines the metrics port that the app should be configured to listen on for metric traffic.",
+                    "type": "integer"
+                },
+                "metricsPath": {
+                    "description": "Defines the path to the metrics server that the app should be configured to listen on for metric traffic.",
+                    "type": "string"
+                },
+                "logging": {
+                    "$ref": "#/definitions/LoggingConfig"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/AppMetadata"
+                },
+                "kafka": {
+                    "$ref": "#/definitions/KafkaConfig"
+                },
+                "database": {
+                    "$ref": "#/definitions/DatabaseConfig"
+                },
+                "objectStore": {
+                    "$ref": "#/definitions/ObjectStoreConfig"
+                },
+                "inMemoryDb": {
+                    "$ref": "#/definitions/InMemoryDBConfig"
+                },
+                "featureFlags": {
+                    "$ref": "#/definitions/FeatureFlagsConfig"
+                },
+                "endpoints": {
+                    "id": "endpoints",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DependencyEndpoint"
+                    }
+                },
+                "privateEndpoints": {
+                    "id": "privateEndpoints",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PrivateDependencyEndpoint"
+                    }
+                },
+                "BOPURL": {
+                    "description": "Defines the path to the BOPURL.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "metricsPort",
+                "metricsPath",
+                "logging"
+            ]
+        },
+        "LoggingConfig": {
+            "title": "LoggingConfig",
+            "type": "object",
+            "description": "Logging Configuration",
+            "properties": {
+                "type": {
+                    "description": "Defines the type of logging configuration",
+                    "type": "string"
+                },
+                "cloudwatch": {
+                    "$ref": "#/definitions/CloudWatchConfig"
+                }
+            },
+            "required": [
+                "type"
+            ]
+        },
+        "AppMetadata": {
+            "title": "AppMetadata",
+            "type": "object",
+            "description": "Arbitrary metadata pertaining to the application application",
+            "properties": {
+                "name": {
+                    "description": "Name of the ClowdApp",
+                    "type": "string"
+                },
+                "envName": {
+                    "description": "Name of the ClowdEnvironment this ClowdApp runs in",
+                    "type": "string"
+                },
+                "deployments": {
+                    "description": "Metadata pertaining to an application's deployments",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DeploymentMetadata"
+                    }
+                }
+            },
+            "required": []
+        },
+        "DeploymentMetadata": {
+            "title": "DeploymentMetadata",
+            "type": "object",
+            "description": "Deployment Metadata",
+            "properties": {
+                "name": {
+                    "description": "Name of deployment",
+                    "type": "string"
+                },
+                "image": {
+                    "description": "Image used by deployment",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "image"
+            ]
+        },
+        "CloudWatchConfig": {
+            "title": "CloudWatchConfig",
+            "type": "object",
+            "description": "Cloud Watch configuration",
+            "properties": {
+                "accessKeyId": {
+                    "description": "Defines the access key that the app should use for configuring CloudWatch.",
+                    "type": "string"
+                },
+                "secretAccessKey": {
+                    "description": "Defines the secret key that the app should use for configuring CloudWatch.",
+                    "type": "string"
+                },
+                "region": {
+                    "description": "Defines the region that the app should use for configuring CloudWatch.",
+                    "type": "string"
+                },
+                "logGroup": {
+                    "description": "Defines the logGroup that the app should use for configuring CloudWatch.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "accessKeyId",
+                "secretAccessKey",
+                "region",
+                "logGroup"
+            ]
+        },
+        "KafkaConfig": {
+            "id": "kafkaConfig",
+            "type": "object",
+            "description": "Kafka Configuration",
+            "properties": {
+                "brokers": {
+                    "description": "Defines the brokers the app should connect to for Kafka services.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/BrokerConfig"
+                    }
+                },
+                "topics": {
+                    "type": "array",
+                    "description": "Defines a list of the topic configurations available to the application.",
+                    "items": {
+                        "$ref": "#/definitions/TopicConfig"
+                    }
+                }
+            },
+            "required": [
+                "brokers",
+                "topics"
+            ]
+        },
+        "KafkaSASLConfig":{
+            "id": "kafkaSASLConfig",
+            "type": "object",
+            "description": "SASL Configuration for Kafka",
+            "properties": {
+                "username": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "securityProtocol": {
+                    "type": "string"
+                },
+                "saslMechanism": {
+                    "type": "string"
+                }
+            },
+            "required": []
+        },
+        "BrokerConfig": {
+            "id": "brokerConfig",
+            "type": "object",
+            "description": "Broker Configuration",
+            "properties": {
+                "hostname": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "cacert": {
+                    "type": "string"
+                },
+                "authtype": {
+                    "type": "string",
+                    "enum": ["mtls", "sasl"]
+                },
+                "sasl": {
+                    "$ref": "#/definitions/KafkaSASLConfig"
+                }
+            },
+            "required": [
+                "hostname"
+            ]
+        },
+        "TopicConfig": {
+            "id": "topicConfig",
+            "type": "object",
+            "description": "Topic Configuration",
+            "properties": {
+                "requestedName": {
+                    "description": "The name that the app requested in the ClowdApp definition.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name of the actual topic on the Kafka server.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "requestedName"
+            ]
+        },
+        "DatabaseConfig": {
+            "id": "database",
+            "title": "DatabaseConfig",
+            "type": "object",
+            "description": "Database Configuration",
+            "properties": {
+                "name": {
+                    "description": "Defines the database name.",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "Defines a username with standard access to the database.",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "Defines the password for the standard user.",
+                    "type": "string"
+                },
+                "hostname": {
+                    "description": "Defines the hostname of the database configured for the ClowdApp.",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Defines the port of the database configured for the ClowdApp.",
+                    "type": "integer"
+                },
+                "adminUsername": {
+                    "description": "Defines the pgAdmin username.",
+                    "type": "string"
+                },
+                "adminPassword": {
+                    "description": "Defines the pgAdmin password.",
+                    "type": "string"
+                },
+                "rdsCa": {
+                    "description": "Defines the CA used to access the database.",
+                    "type": "string"
+                },
+                "sslMode": {
+                    "description": "Defines the postgres SSL mode that should be used.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "username",
+                "password",
+                "hostname",
+                "port",
+                "adminUsername",
+                "adminPassword",
+                "sslMode"
+            ]
+        },
+        "ObjectStoreBucket": {
+            "id": "objectStoreBucket",
+            "type": "object",
+            "description": "Object Storage Bucket",
+            "properties": {
+                "accessKey": {
+                    "description": "Defines the access key for specificed bucket.",
+                    "type": "string"
+                },
+                "secretKey": {
+                    "description": "Defines the secret key for the specified bucket.",
+                    "type": "string"
+                },
+                "region": {
+                    "description": "Defines the region for the specified bucket.",
+                    "type": "string"
+                },
+                "requestedName": {
+                    "description": "The name that was requested for the bucket in the ClowdApp.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The actual name of the bucket being accessed.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "requestedName"
+            ]
+        },
+        "ObjectStoreConfig": {
+            "id": "objectStoreConfig",
+            "type": "object",
+            "description": "Object Storage Configuration",
+            "properties": {
+                "buckets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ObjectStoreBucket"
+                    }
+                },
+                "accessKey": {
+                    "description": "Defines the access key for the Object Storage server configuration.",
+                    "type": "string"
+                },
+                "secretKey": {
+                    "description": "Defines the secret key for the Object Storage server configuration.",
+                    "type": "string"
+                },
+                "hostname": {
+                    "description": "Defines the hostname for the Object Storage server configuration.",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Defines the port for the Object Storage server configuration.",
+                    "type": "integer"
+                },
+                "tls": {
+                    "description": "Details if the Object Server uses TLS.",
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "hostname",
+                "port",
+                "tls"
+            ]
+        },
+        "FeatureFlagsConfig": {
+            "id": "featureFlagsConfig",
+            "type": "object",
+            "description": "Feature Flags Configuration",
+            "properties": {
+                "hostname": {
+                    "description": "Defines the hostname for the FeatureFlags server",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Defines the port for the FeatureFlags server",
+                    "type": "integer"
+                },
+                "clientAccessToken": {
+                    "description": "Defines the client access token to use when connect to the FeatureFlags server",
+                    "type": "string"
+                },
+                "scheme": {
+                    "description": "Details the scheme to use for FeatureFlags http/https",
+                    "type": "string",
+                    "enum": ["http", "https"]
+                }
+            },
+            "required":[
+                "hostname",
+                "port",
+                "scheme"
+            ]
+        },
+        "InMemoryDBConfig": {
+            "id": "inMemoryDbConfig",
+            "type": "object",
+            "description": "In Memory DB Configuration",
+            "properties": {
+                "hostname": {
+                    "description": "Defines the hostname for the In Memory DB server configuration.",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Defines the port for the In Memory DB server configuration.",
+                    "type": "integer"
+                },
+                "username": {
+                    "description": "Defines the username for the In Memory DB server configuration.",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "Defines the password for the In Memory DB server configuration.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "hostname",
+                "port"
+
+            ]
+        },
+        "DependencyEndpoint": {
+            "id": "dependency",
+            "type": "object",
+            "description": "Dependent service connection info",
+            "properties": {
+                "name": {
+                    "description": "The PodSpec name of the dependent service inside the ClowdApp.",
+                    "type": "string"
+                },
+                "hostname": {
+                    "description": "The hostname of the dependent service.",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "The port of the dependent service.",
+                    "type": "integer"
+                },
+                "app": {
+                    "description": "The app name of the ClowdApp hosting the service.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "hostname",
+                "port",
+                "app"
+            ]
+        },
+        "PrivateDependencyEndpoint": {
+            "id": "privateDependency",
+            "type": "object",
+            "description": "Dependent service connection info",
+            "properties": {
+                "name": {
+                    "description": "The PodSpec name of the dependent service inside the ClowdApp.",
+                    "type": "string"
+                },
+                "hostname": {
+                    "description": "The hostname of the dependent service.",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "The port of the dependent service.",
+                    "type": "integer"
+                },
+                "app": {
+                    "description": "The app name of the ClowdApp hosting the service.",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "hostname",
+                "port",
+                "app"
+            ]
+        }
+    }
+}
