@@ -507,7 +507,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	if (composeRequest.ImageRequests[0].UploadRequest == UploadRequest{}) {
+	if (composeRequest.ImageRequests[0].UploadRequest == &UploadRequest{}) {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
@@ -610,23 +610,28 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	})
 }
 
-func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
+func (s *Server) buildAWSS3UploadOptions(options []byte, composerImageType composer.ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
+	var awsOptions AWSS3UploadRequestOptions
+	err := json.Unmarshal(options, &awsOptions)
+	if err != nil {
+		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
+	}
+	return composer.AWSS3UploadOptions{
+		Region: s.aws.Region,
+	}, composerImageType, nil
+}
+
+func (s *Server) buildUploadOptions(ur *UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
 	// HACK deepmap doesn't really support `oneOf`, so marshal and unmarshal into target object
 	optionsJSON, err := json.Marshal(ur.Options)
 	if err != nil {
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to marshal UploadRequestOptions")
 	}
-	switch ur.Type {
-	case UploadTypesAws:
-		var composerImageType composer.ImageTypes
-		switch it {
-		case ImageTypesAws:
-			fallthrough
-		case ImageTypesAmi:
-			composerImageType = composer.ImageTypesAws
-		default:
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
-		}
+
+	switch it {
+
+	// Upload Type AWS
+	case ImageTypesAmi, ImageTypesAws:
 		var awsOptions AWSUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &awsOptions)
 		if err != nil {
@@ -635,43 +640,22 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 		return composer.AWSEC2UploadOptions{
 			Region:            s.aws.Region,
 			ShareWithAccounts: awsOptions.ShareWithAccounts,
-		}, composerImageType, nil
-	case UploadTypesAwsS3:
-		var composerImageType composer.ImageTypes
-		switch it {
-		case ImageTypesEdgeCommit:
-			fallthrough
-		case ImageTypesRhelEdgeCommit:
-			composerImageType = composer.ImageTypesEdgeCommit
-		case ImageTypesEdgeInstaller:
-			fallthrough
-		case ImageTypesRhelEdgeInstaller:
-			composerImageType = composer.ImageTypesEdgeInstaller
-		case ImageTypesGuestImage:
-			composerImageType = composer.ImageTypesGuestImage
-		case ImageTypesImageInstaller:
-			composerImageType = composer.ImageTypesImageInstaller
-		case ImageTypesVsphere:
-			composerImageType = composer.ImageTypesVsphere
-		default:
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
-		}
-		var awsOptions AWSS3UploadRequestOptions
-		err = json.Unmarshal(optionsJSON, &awsOptions)
-		if err != nil {
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
-		}
-		return composer.AWSS3UploadOptions{
-			Region: s.aws.Region,
-		}, composerImageType, nil
-	case UploadTypesGcp:
-		var composerImageType composer.ImageTypes
-		switch it {
-		case ImageTypesGcp:
-			composerImageType = composer.ImageTypesGcp
-		default:
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
-		}
+		}, composer.ImageTypesAws, nil
+
+	// Upload Type AWS S3
+	case ImageTypesEdgeCommit, ImageTypesRhelEdgeCommit:
+		return s.buildAWSS3UploadOptions(optionsJSON, composer.ImageTypesEdgeCommit)
+	case ImageTypesEdgeInstaller, ImageTypesRhelEdgeInstaller:
+		return s.buildAWSS3UploadOptions(optionsJSON, composer.ImageTypesEdgeInstaller)
+	case ImageTypesGuestImage:
+		return s.buildAWSS3UploadOptions(optionsJSON, composer.ImageTypesGuestImage)
+	case ImageTypesImageInstaller:
+		return s.buildAWSS3UploadOptions(optionsJSON, composer.ImageTypesImageInstaller)
+	case ImageTypesVsphere:
+		return s.buildAWSS3UploadOptions(optionsJSON, composer.ImageTypesVsphere)
+
+	// Upload Type GCP
+	case ImageTypesGcp:
 		var gcpOptions GCPUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &gcpOptions)
 		if err != nil {
@@ -681,17 +665,10 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 			Bucket:            s.gcp.Bucket,
 			Region:            s.gcp.Region,
 			ShareWithAccounts: &gcpOptions.ShareWithAccounts,
-		}, composerImageType, nil
-	case UploadTypesAzure:
-		var composerImageType composer.ImageTypes
-		switch it {
-		case ImageTypesAzure:
-			fallthrough
-		case ImageTypesVhd:
-			composerImageType = composer.ImageTypesAzure
-		default:
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
-		}
+		}, composer.ImageTypesGcp, nil
+
+	// Upload Type Azure
+	case ImageTypesAzure, ImageTypesVhd:
 		var azureOptions AzureUploadRequestOptions
 		err = json.Unmarshal(optionsJSON, &azureOptions)
 		if err != nil {
@@ -702,7 +679,8 @@ func (s *Server) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.U
 			SubscriptionId: azureOptions.SubscriptionId,
 			ResourceGroup:  azureOptions.ResourceGroup,
 			Location:       s.azure.Location,
-		}, composerImageType, nil
+		}, composer.ImageTypesAzure, nil
+
 	default:
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
 	}

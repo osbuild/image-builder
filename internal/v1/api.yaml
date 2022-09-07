@@ -395,7 +395,6 @@ components:
       required:
         - architecture
         - image_type
-        - upload_request
       properties:
         architecture:
           type: string

@@ -554,7 +554,7 @@ func TestComposeImage(t *testing.T) {
 				{
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAws,
-					UploadRequest: UploadRequest{
+					UploadRequest: &UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
@@ -564,7 +564,7 @@ func TestComposeImage(t *testing.T) {
 				{
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAmi,
-					UploadRequest: UploadRequest{
+					UploadRequest: &UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
@@ -578,22 +578,19 @@ func TestComposeImage(t *testing.T) {
 		require.Contains(t, body, `Error at \"/image_requests\": maximum number of items is 1`)
 	})
 
-	t.Run("ErrorsForZeroUploadRequests", func(t *testing.T) {
+	t.Run("NoErrorsForZeroUploadRequests", func(t *testing.T) {
 		payload := ComposeRequest{
 			Customizations: nil,
 			Distribution:   "centos-8",
 			ImageRequests: []ImageRequest{
 				{
-					Architecture:  "x86_64",
-					ImageType:     ImageTypesAzure,
-					UploadRequest: UploadRequest{},
+					Architecture: "x86_64",
+					ImageType:    ImageTypesAzure,
 				},
 			},
 		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
-		require.Regexp(t, "image_requests/0/upload_request/options|image_requests/0/upload_request/type", body)
-		require.Regexp(t, "Value is not nullable|value is not one of the allowed values", body)
+		response, _ := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 200, response.StatusCode)
 	})
 
 	t.Run("ISEWhenRepositoriesNotFound", func(t *testing.T) {
@@ -606,7 +603,7 @@ func TestComposeImage(t *testing.T) {
 				{
 					Architecture: "unsupported-arch",
 					ImageType:    ImageTypesAws,
-					UploadRequest: UploadRequest{
+					UploadRequest: &UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
@@ -644,7 +641,7 @@ func TestComposeImage(t *testing.T) {
 				{
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAmi,
-					UploadRequest: UploadRequest{
+					UploadRequest: &UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
@@ -667,7 +664,7 @@ func TestComposeImage(t *testing.T) {
 				{
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAzure,
-					UploadRequest: UploadRequest{
+					UploadRequest: &UploadRequest{
 						Type: "unknown",
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
@@ -713,7 +710,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 			{
 				Architecture: "x86_64",
 				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
+				UploadRequest: &UploadRequest{
 					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
@@ -757,7 +754,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 			{
 				Architecture: "x86_64",
 				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
+				UploadRequest: &UploadRequest{
 					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
@@ -803,7 +800,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 			{
 				Architecture: "x86_64",
 				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
+				UploadRequest: &UploadRequest{
 					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
 						ShareWithAccounts: []string{"test-account"},
@@ -850,7 +847,7 @@ func TestComposeImageAllowList(t *testing.T) {
 				{
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAws,
-					UploadRequest: UploadRequest{
+					UploadRequest: &UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
 							ShareWithAccounts: []string{"test-account"},
@@ -1008,7 +1005,7 @@ func TestComposeCustomizations(t *testing.T) {
 					{
 						Architecture: "x86_64",
 						ImageType:    ImageTypesRhelEdgeInstaller,
-						UploadRequest: UploadRequest{
+						UploadRequest: &UploadRequest{
 							Type:    UploadTypesAwsS3,
 							Options: AWSS3UploadRequestOptions{},
 						},
@@ -1105,7 +1102,7 @@ func TestComposeCustomizations(t *testing.T) {
 						Ostree: &OSTree{
 							Ref: strptr("edge/ref"),
 						},
-						UploadRequest: UploadRequest{
+						UploadRequest: &UploadRequest{
 							Type:    UploadTypesAwsS3,
 							Options: AWSS3UploadRequestOptions{},
 						},
@@ -1169,7 +1166,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Url:    strptr("https://ostree.srv/"),
 							Parent: strptr("test/edge/ref2"),
 						},
-						UploadRequest: UploadRequest{
+						UploadRequest: &UploadRequest{
 							Type:    UploadTypesAwsS3,
 							Options: AWSS3UploadRequestOptions{},
 						},
