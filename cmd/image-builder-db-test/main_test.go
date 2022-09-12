@@ -76,6 +76,7 @@ func connect(t *testing.T) *pgx.Conn {
 func tearDown(t *testing.T) {
 	conn := connect(t)
 	defer conn.Close(context.Background())
+	conn.Exec(context.Background(), "drop table clones")
 	conn.Exec(context.Background(), "drop table composes")
 	conn.Exec(context.Background(), "drop table schema_migrations")
 }
@@ -129,14 +130,40 @@ func testMigration(t *testing.T) {
 	imageNameInvalid := strings.Repeat("a", 101)
 
 	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID1, &imageNameInvalid)
+	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, ORGID1, &imageNameInvalid)
 
 	migrateOneStep(t) // migrate to step 6
 
 	// Verify that after migration step 6 adding a compose request to the db requires a non empty org_id.
-	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
 	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, "")
 	require.Error(t, err)
+
+	// migration 7 alters the data type of the request column, make sure jsonb is queryable after
+	composeId7 := uuid.New().String()
+	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, composeId7, `
+{
+  "customizations": {
+  },
+  "distribution": "rhel-8",
+  "image_requests": [
+    {
+      "architecture": "x86_64",
+      "image_type": "guest-image",
+      "upload_request": {
+        "type": "aws.s3",
+        "options": {
+        }
+      }
+    }
+  ]
+}
+`, ANR1, ORGID1)
+	require.NoError(t, err)
+	migrateOneStep(t) // migrate to step 7
+
+	migrateOneStep(t) // migrate to step 8
 
 	// make sure migrating a fully migrated db doesn't error out
 	migrateUp(t)
@@ -145,7 +172,7 @@ func testMigration(t *testing.T) {
 	d, err := db.InitDBConnectionPool(connStr(t))
 	_, count, err := d.GetComposes(ORGID1, fortnight, 100, 0)
 	require.NoError(t, err)
-	require.Equal(t, 1, count)
+	require.Equal(t, 2, count)
 	_, count, err = d.GetComposes(ORGID2, fortnight, 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
@@ -154,13 +181,17 @@ func testMigration(t *testing.T) {
 	composeEntries, count, err := d.GetComposes(ORGID3, fortnight, 100, 0)
 	require.Nil(t, composeEntries[0].ImageName)
 	require.Equal(t, imageName, *composeEntries[1].ImageName)
+
+	it, err := d.GetComposeImageType(composeId7, ORGID1)
+	require.NoError(t, err)
+	require.Equal(t, "guest-image", it)
 }
 
 func testInsertCompose(t *testing.T) {
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
-	// teardwon
+	// teardown
 	defer tearDown(t)
 
 	imageName := "MyImageName"
@@ -183,7 +214,7 @@ func testGetCompose(t *testing.T) {
 
 	imageName := "MyImageName"
 
-	// teardwon
+	// teardown
 	defer tearDown(t)
 
 	// setup
@@ -228,7 +259,7 @@ func testCountComposesSince(t *testing.T) {
 
 	imageName := "MyImageName"
 
-	// teardwon
+	// teardown
 	defer tearDown(t)
 
 	// setup
@@ -264,7 +295,7 @@ func testCountGetComposesSince(t *testing.T) {
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
-	// teardwon
+	// teardown
 	defer tearDown(t)
 
 	// setup
@@ -336,6 +367,81 @@ func testGetComposeImageType(t *testing.T) {
 	require.Error(t, err)
 }
 
+func testClones(t *testing.T) {
+	d, err := db.InitDBConnectionPool(connStr(t))
+	require.NoError(t, err)
+	migrateUp(t)
+	defer tearDown(t)
+	conn := connect(t)
+	defer conn.Close(context.Background())
+
+	composeId := uuid.New().String()
+	cloneId := uuid.New().String()
+	cloneId2 := uuid.New().String()
+
+	// fkey constraint on compose id
+	require.Error(t, d.InsertClone(composeId, cloneId, []byte(`
+{
+  "region": "us-east-2"
+}
+`)))
+
+	require.NoError(t, d.InsertCompose(composeId, ANR1, ORGID1, nil, []byte(`
+{
+  "customizations": {
+  },
+  "distribution": "rhel-8",
+  "image_requests": [
+    {
+      "architecture": "x86_64",
+      "image_type": "guest-image",
+      "upload_request": {
+        "type": "aws.s3",
+        "options": {
+        }
+      }
+    }
+  ]
+}`)))
+
+	require.NoError(t, d.InsertClone(composeId, cloneId, []byte(`
+{
+  "region": "us-east-2"
+}
+`)))
+	require.NoError(t, d.InsertClone(composeId, cloneId2, []byte(`
+{
+  "region": "eu-central-1"
+}
+`)))
+
+	clones, count, err := d.GetClonesForCompose(composeId, ORGID2, 100, 0)
+	require.NoError(t, err)
+	require.Empty(t, clones)
+	require.Equal(t, 0, count)
+
+	clones, count, err = d.GetClonesForCompose(composeId, ORGID1, 1, 0)
+	require.NoError(t, err)
+	require.Len(t, clones, 1)
+	require.Equal(t, 2, count)
+	require.Equal(t, cloneId2, clones[0].Id.String())
+
+	clones, count, err = d.GetClonesForCompose(composeId, ORGID1, 100, 0)
+	require.NoError(t, err)
+	require.Len(t, clones, 2)
+	require.Equal(t, 2, count)
+	require.Equal(t, cloneId2, clones[0].Id.String())
+	require.Equal(t, cloneId, clones[1].Id.String())
+
+	entry, err := d.GetClone(cloneId, ORGID2)
+	require.ErrorIs(t, err, db.CloneNotFoundError)
+	require.Nil(t, entry)
+
+	entry, err = d.GetClone(cloneId, ORGID1)
+	require.NoError(t, err)
+	require.Equal(t, clones[1], *entry)
+}
+
 func TestMain(t *testing.T) {
 	tearDown(t)
 	testMigration(t)
@@ -343,4 +449,5 @@ func TestMain(t *testing.T) {
 	testGetCompose(t)
 	testCountComposesSince(t)
 	testGetComposeImageType(t)
+	testClones(t)
 }

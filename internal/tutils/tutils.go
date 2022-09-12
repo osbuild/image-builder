@@ -130,3 +130,15 @@ func (d *dB) CountComposesSince(orgId string, duration time.Duration) (int, erro
 func (d *dB) GetComposeImageType(jobId string, orgId string) (string, error) {
 	return "aws", nil
 }
+
+func (d *dB) InsertClone(composeId, cloneId string, request json.RawMessage) error {
+	return nil
+}
+
+func (d *dB) GetClonesForCompose(composeId, orgId string, limit, offset int) ([]db.CloneEntry, int, error) {
+	return nil, 0, nil
+}
+
+func (d *dB) GetClone(id, orgId string) (*db.CloneEntry, error) {
+	return nil, nil
+}

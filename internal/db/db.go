@@ -13,6 +13,7 @@ import (
 
 // ComposeNotFoundError occurs when no compose request is found for a user.
 var ComposeNotFoundError = errors.New("Compose not found")
+var CloneNotFoundError = errors.New("Clone not found")
 
 type dB struct {
 	Pool *pgxpool.Pool
@@ -25,12 +26,22 @@ type ComposeEntry struct {
 	ImageName *string
 }
 
+type CloneEntry struct {
+	Id        uuid.UUID
+	Request   json.RawMessage
+	CreatedAt time.Time
+}
+
 type DB interface {
 	InsertCompose(jobId, accountNumber, orgId string, imageName *string, request json.RawMessage) error
 	GetComposes(orgId string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error)
 	GetCompose(jobId string, orgId string) (*ComposeEntry, error)
 	GetComposeImageType(jobId, orgId string) (string, error)
 	CountComposesSince(orgId string, duration time.Duration) (int, error)
+
+	InsertClone(composeId, cloneId string, request json.RawMessage) error
+	GetClonesForCompose(composeId, orgId string, limit, offset int) ([]CloneEntry, int, error)
+	GetClone(id, orgId string) (*CloneEntry, error)
 }
 
 const (
@@ -58,6 +69,36 @@ const (
 		SELECT COUNT(*)
 		FROM composes
 		WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2`
+
+	sqlInsertClone = `
+		INSERT INTO clones(id, compose_id, request, created_at)
+		VALUES($1, $2, $3, CURRENT_TIMESTAMP)`
+
+	sqlGetClonesForCompose = `
+		SELECT clones.id, clones.request, clones.created_at
+		FROM clones
+		WHERE clones.compose_id=$1 AND $1 in (
+			SELECT composes.job_id
+			FROM composes
+			WHERE composes.org_id=$2)
+		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4`
+
+	sqlCountClonesForCompose = `
+		SELECT COUNT(*)
+		FROM clones
+		WHERE clones.compose_id=$1 AND $1 in (
+			SELECT composes.job_id
+			FROM composes
+			WHERE composes.org_id=$2)`
+
+	sqlGetClone = `
+		SELECT clones.id, clones.request, clones.created_at
+		FROM clones
+		WHERE clones.id=$1 AND clones.compose_id in (
+			SELECT composes.job_id
+			FROM composes
+			WHERE composes.org_id=$2)`
 )
 
 func InitDBConnectionPool(connStr string) (DB, error) {
@@ -192,4 +233,80 @@ func (db *dB) CountComposesSince(orgId string, duration time.Duration) (int, err
 	}
 
 	return count, nil
+}
+
+func (db *dB) InsertClone(composeId, cloneId string, request json.RawMessage) error {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+
+	_, err = conn.Exec(ctx, sqlInsertClone, cloneId, composeId, request)
+	return err
+}
+
+func (db *dB) GetClonesForCompose(composeId, orgId string, limit, offset int) ([]CloneEntry, int, error) {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer conn.Release()
+
+	rows, err := conn.Query(ctx, sqlGetClonesForCompose, composeId, orgId, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var clones []CloneEntry
+	for rows.Next() {
+		var id uuid.UUID
+		var request json.RawMessage
+		var createdAt time.Time
+		err = rows.Scan(&id, &request, &createdAt)
+		if err != nil {
+			return nil, 0, err
+		}
+		clones = append(clones, CloneEntry{
+			id,
+			request,
+			createdAt,
+		})
+	}
+	if err = rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	var count int
+	err = conn.QueryRow(ctx, sqlCountClonesForCompose, composeId, orgId).Scan(&count)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return clones, count, nil
+
+}
+
+func (db *dB) GetClone(id, orgId string) (*CloneEntry, error) {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+
+	var clone CloneEntry
+	err = conn.QueryRow(ctx, sqlGetClone, id, orgId).Scan(&clone.Id, &clone.Request, &clone.CreatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, CloneNotFoundError
+		} else {
+			return nil, err
+		}
+	}
+
+	return &clone, nil
 }
