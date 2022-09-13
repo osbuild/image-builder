@@ -643,6 +643,16 @@ components:
           example: 'ToucanResourceGroup'
           description: |
             Name of the resource group where the image should be uploaded.
+        image_name:
+          type: string
+          example: 'LinuxImage'
+          pattern: '(^[a-zA-Z0-9]$)|(^[a-zA-Z0-9][a-zA-Z0-9_\.-]*[a-zA-Z0-9_]$)'
+          minLength: 1
+          maxLength: 60
+          description: |
+            Name of the created image.
+            Must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens.
+            The total length is limited to 60 characters.
     Customizations:
       type: object
       properties:
