@@ -1238,6 +1238,83 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		{
+			imageBuilderRequest: ComposeRequest{
+				Distribution: "centos-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesAzure,
+						Ostree: &OSTree{
+							Ref:    strptr("test/edge/ref"),
+							Url:    strptr("https://ostree.srv/"),
+							Parent: strptr("test/edge/ref2"),
+						},
+						UploadRequest: UploadRequest{
+							Type: UploadTypesAzure,
+							Options: AzureUploadRequestOptions{
+								ResourceGroup:  "group",
+								SubscriptionId: "id",
+								TenantId:       "tenant",
+								ImageName:      strptr("azure-image"),
+							},
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution:   "centos-8",
+				Customizations: nil,
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesAzure,
+					Ostree: &composer.OSTree{
+						Ref:    strptr("test/edge/ref"),
+						Url:    strptr("https://ostree.srv/"),
+						Parent: strptr("test/edge/ref2"),
+					},
+					Repositories: []composer.Repository{
+
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AzureUploadOptions{
+						ImageName:      strptr("azure-image"),
+						ResourceGroup:  "group",
+						SubscriptionId: "id",
+						TenantId:       "tenant",
+					}),
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {

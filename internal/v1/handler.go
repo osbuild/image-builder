@@ -614,6 +614,7 @@ func (h *Handlers) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer
 			SubscriptionId: azureOptions.SubscriptionId,
 			ResourceGroup:  azureOptions.ResourceGroup,
 			Location:       h.server.azure.Location,
+			ImageName:      azureOptions.ImageName,
 		}, composerImageType, nil
 	default:
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
