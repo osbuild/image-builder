@@ -350,7 +350,7 @@ parameters:
     value: ""
   - name: COMPOSER_TOKEN_URL
     description: OpenId token endpoint
-    value: "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
+    value: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
   - name: ALLOWED_ORG_IDS
     description: Organization ids allowed to access the api, wildcard means everyone
     value: ""
