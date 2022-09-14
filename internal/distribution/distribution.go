@@ -25,6 +25,7 @@ type DistributionFile struct {
 	ModulePlatformID string           `json:"module_platform_id"`
 	Distribution     DistributionItem `json:"distribution"`
 	ArchX86          *Architecture    `json:"x86_64,omitempty"`
+	Aarch64          *Architecture    `json:"aarch64,omitempty"`
 }
 
 type Architecture struct {
@@ -76,6 +77,8 @@ func (dist DistributionFile) Architecture(arch string) (*Architecture, error) {
 	switch arch {
 	case "x86_64":
 		return dist.ArchX86, nil
+	case "aarch64":
+		return dist.Aarch64, nil
 	default:
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "Architecture not supported")
 	}

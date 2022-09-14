@@ -54,8 +54,6 @@ Test EL8:
     matrix:
       - PROVIDER:
           - aws
-          - azure
-          - gcp
         RUNNER:
           - aws/rhel-8.6-ga-x86_64
 

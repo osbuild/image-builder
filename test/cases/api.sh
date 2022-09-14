@@ -130,7 +130,7 @@ ADDRESS="localhost"
 BASEURL="http://$ADDRESS:$PORT/api/image-builder/v1.0"
 BASEURLMAJORVERSION="http://$ADDRESS:$PORT/api/image-builder/v1"
 REQUEST_FILE="${WORKDIR}/request.json"
-ARCH=$(uname -m)
+ARCH=aarch64
 
 DISTRO="rhel-8"
 SSH_USER="cloud-user"
