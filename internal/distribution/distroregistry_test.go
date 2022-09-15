@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/image-builder/internal/common"
 )
 
 func TestDistroRegistry_List(t *testing.T) {
@@ -49,25 +51,25 @@ func TestDistroRegistry_Get(t *testing.T) {
 			Repositories: []Repository{
 				{
 					Id:            "baseos",
-					Baseurl:       "https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/baseos/os",
+					Baseurl:       common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/baseos/os"),
 					Rhsm:          true,
 					ImageTypeTags: nil,
 				},
 				{
 					Id:            "appstream",
-					Baseurl:       "https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/appstream/os",
+					Baseurl:       common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/appstream/os"),
 					Rhsm:          true,
 					ImageTypeTags: nil,
 				},
 				{
 					Id:            "google-compute-engine",
-					Baseurl:       "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
+					Baseurl:       common.StringToPtr("https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"),
 					Rhsm:          false,
 					ImageTypeTags: []string{"gcp"},
 				},
 				{
 					Id:            "google-cloud-sdk",
-					Baseurl:       "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
+					Baseurl:       common.StringToPtr("https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"),
 					Rhsm:          false,
 					ImageTypeTags: []string{"gcp"},
 				},

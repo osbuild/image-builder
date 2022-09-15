@@ -14,6 +14,7 @@ import (
 )
 
 var DistributionNotFound = errors.New("Distribution not available")
+var RepoSourceError = errors.New("Repository must always have one of these properties: baseurl, metalink")
 
 type DistributionItem struct {
 	Description      string `json:"description"`
@@ -43,7 +44,8 @@ type Architecture struct {
 
 type Repository struct {
 	Id            string   `json:"id"`
-	Baseurl       string   `json:"baseurl"`
+	Baseurl       *string  `json:"baseurl"`
+	Metalink      *string  `json:"metalink"`
 	Rhsm          bool     `json:"rhsm"`
 	ImageTypeTags []string `json:"image_type_tags"`
 }
@@ -109,6 +111,28 @@ func (arch Architecture) FindPackages(search string) []Package {
 	return pkgs
 }
 
+func (arch Architecture) validate() error {
+	for _, r := range arch.Repositories {
+		sourceSet := false
+		if r.Baseurl != nil {
+			sourceSet = true
+		}
+
+		if r.Metalink != nil {
+			if sourceSet {
+				return RepoSourceError
+			}
+			sourceSet = true
+		}
+
+		if !sourceSet {
+			return RepoSourceError
+		}
+	}
+
+	return nil
+}
+
 func allDistributions(distsDir string) ([]string, error) {
 	files, err := ioutil.ReadDir(distsDir)
 	if err != nil {
@@ -156,6 +180,10 @@ func readDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 	}()
 	err = json.NewDecoder(f).Decode(&d)
 	if err != nil {
+		return
+	}
+
+	if err = d.ArchX86.validate(); err != nil {
 		return
 	}
 
