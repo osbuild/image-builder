@@ -3,7 +3,7 @@
   "distribution": {
     "name": "centos-9",
     "description": "CentOS Stream 9",
-    "restrictedAccess": false
+    "restricted_access": false
   },
   "x86_64": {
     "image_types": [ "ami", "vhd", "aws", "gcp", "azure", "edge-commit", "edge-installer", "rhel-edge-commit", "rhel-edge-installer", "guest-image", "image-installer", "vsphere" ],

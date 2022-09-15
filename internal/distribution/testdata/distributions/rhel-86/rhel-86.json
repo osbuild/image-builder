@@ -3,7 +3,7 @@
   "distribution": {
     "name": "rhel-86",
     "description": "Red Hat Enterprise Linux (RHEL) 8",
-    "restrictedAccess": true
+    "restricted_access": true
   },
   "x86_64": {
     "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "vsphere" ],

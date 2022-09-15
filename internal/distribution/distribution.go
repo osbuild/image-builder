@@ -18,7 +18,7 @@ var DistributionNotFound = errors.New("Distribution not available")
 type DistributionItem struct {
 	Description      string `json:"description"`
 	Name             string `json:"name"`
-	RestrictedAccess bool   `json:"restrictedAccess"`
+	RestrictedAccess bool   `json:"restricted_access"`
 
 	// NoPackageList is set to true for distributions that don't have their
 	// packages defined in /distributions. This is useful for distributions
