@@ -143,7 +143,7 @@ func TestInvalidDistribution(t *testing.T) {
 func TestDistributionFileIsRestricted(t *testing.T) {
 	distsDir := "testdata/distributions"
 
-	t.Run("distro is not restricted, has no restrictedAccess field", func(t *testing.T) {
+	t.Run("distro is not restricted, has no restricted_access field", func(t *testing.T) {
 		d, err := readDistribution(distsDir, "rhel-90")
 		require.NoError(t, err)
 		actual := d.IsRestricted()
@@ -151,7 +151,7 @@ func TestDistributionFileIsRestricted(t *testing.T) {
 		require.Equal(t, expected, actual)
 	})
 
-	t.Run("distro is not restricted, restrictedAccess field is false", func(t *testing.T) {
+	t.Run("distro is not restricted, restricted_access field is false", func(t *testing.T) {
 		d, err := readDistribution(distsDir, "centos-9")
 		require.NoError(t, err)
 		actual := d.IsRestricted()
@@ -159,7 +159,7 @@ func TestDistributionFileIsRestricted(t *testing.T) {
 		require.Equal(t, expected, actual)
 	})
 
-	t.Run("distro is restricted, restrictedAccess field is true", func(t *testing.T) {
+	t.Run("distro is restricted, restricted_access field is true", func(t *testing.T) {
 		d, err := readDistribution(distsDir, "centos-8")
 		require.NoError(t, err)
 		actual := d.IsRestricted()

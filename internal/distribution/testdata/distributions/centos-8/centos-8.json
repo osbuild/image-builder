@@ -3,7 +3,7 @@
   "distribution": {
     "name": "centos-8",
     "description": "CentOS Stream 8",
-    "restrictedAccess": true
+    "restricted_access": true
   },
   "x86_64": {
     "image_types": [ "aws", "gcp", "azure", "ami", "vhd" ],
