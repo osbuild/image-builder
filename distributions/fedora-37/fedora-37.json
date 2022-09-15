@@ -1,0 +1,40 @@
+{
+  "module_platform_id": "platform:f37",
+  "distribution": {
+    "name": "fedora-37",
+    "description": "Fedora Linux 37",
+    "no_package_list": true,
+    "restricted_access": true
+  },
+  "x86_64": {
+    "image_types": [
+      "aws",
+      "azure",
+      "guest-image",
+      "vsphere",
+      "edge-commit"
+    ],
+    "repositories": [
+      {
+        "id": "fedora",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-37&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "id": "updates",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f37&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "name": "fedora-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-37&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "name": "updates-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f37&arch=x86_64",
+        "rhsm": false
+      }
+    ]
+  }
+}

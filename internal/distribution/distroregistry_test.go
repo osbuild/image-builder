@@ -9,8 +9,8 @@ import (
 )
 
 func TestDistroRegistry_List(t *testing.T) {
-	allDistros := []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-9", "rhel-90", "centos-8", "centos-9"}
-	notEntitledDistros := []string{"centos-8", "centos-9"}
+	allDistros := []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-9", "rhel-90", "centos-8", "centos-9", "fedora-35", "fedora-36", "fedora-37", "fedora-38"}
+	notEntitledDistros := []string{"centos-8", "centos-9", "fedora-35", "fedora-36", "fedora-37", "fedora-38"}
 
 	dr, err := LoadDistroRegistry("../../distributions")
 	require.NoError(t, err)

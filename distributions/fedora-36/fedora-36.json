@@ -1,0 +1,40 @@
+{
+  "module_platform_id": "platform:f36",
+  "distribution": {
+    "name": "fedora-36",
+    "description": "Fedora Linux 36",
+    "no_package_list": true,
+    "restricted_access": true
+  },
+  "x86_64": {
+    "image_types": [
+      "aws",
+      "azure",
+      "guest-image",
+      "vsphere",
+      "edge-commit"
+    ],
+    "repositories": [
+      {
+        "id": "fedora",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-36&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "id": "updates",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f36&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "name": "fedora-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-36&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "name": "updates-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f36&arch=x86_64",
+        "rhsm": false
+      }
+    ]
+  }
+}
