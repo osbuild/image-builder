@@ -119,6 +119,20 @@ func TestArchitecture_FindPackages(t *testing.T) {
 			Summary: "VIM filesystem layout",
 		},
 	}, pkgs)
+
+	// load the test distributions and check that a distro with no_package_list == true works
+	adr, err = LoadDistroRegistry("testdata/distributions")
+	require.NoError(t, err)
+
+	d, err = adr.Available(true).Get("no-packages-distro")
+	require.NoError(t, err)
+
+	arch, err = d.Architecture("x86_64")
+	require.NoError(t, err)
+
+	pkgs = arch.FindPackages("vim")
+	require.Nil(t, pkgs)
+
 }
 
 func TestInvalidDistribution(t *testing.T) {

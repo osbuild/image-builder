@@ -19,6 +19,12 @@ type DistributionItem struct {
 	Description      string `json:"description"`
 	Name             string `json:"name"`
 	RestrictedAccess bool   `json:"restrictedAccess"`
+
+	// NoPackageList is set to true for distributions that don't have their
+	// packages defined in /distributions. This is useful for distributions
+	// that are not visible in the UI and their package lists are huge.
+	// This is very useful for Fedora.
+	NoPackageList bool `json:"no_package_list"`
 }
 
 type DistributionFile struct {
@@ -82,6 +88,10 @@ func (dist DistributionFile) Architecture(arch string) (*Architecture, error) {
 }
 
 func (arch Architecture) FindPackages(search string) []Package {
+	if arch.Packages == nil {
+		return nil
+	}
+
 	var pkgs []Package
 	for _, r := range arch.Repositories {
 		// Ignore repositories that do not apply to all for now
@@ -149,11 +159,14 @@ func readDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 		return
 	}
 
-	x86Pkgs, err := readPackages(d.ArchX86.Repositories, "x86_64", distsDir, distroIn)
-	if err != nil {
-		return
+	if !d.Distribution.NoPackageList {
+		var x86Pkgs map[string][]Package
+		x86Pkgs, err = readPackages(d.ArchX86.Repositories, "x86_64", distsDir, distroIn)
+		if err != nil {
+			return
+		}
+		d.ArchX86.Packages = x86Pkgs
 	}
-	d.ArchX86.Packages = x86Pkgs
 
 	return
 }

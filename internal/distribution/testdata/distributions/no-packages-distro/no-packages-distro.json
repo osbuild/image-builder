@@ -1,0 +1,21 @@
+{
+  "module_platform_id": "platform:npd",
+  "distribution": {
+    "name": "no-packages-distro",
+    "description": "A dummy distribution for testing the no_package_list field",
+    "no_package_list": true
+  },
+  "x86_64": {
+    "image_types": ["npd"],
+    "repositories": [
+      {
+        "id": "base",
+        "baseurl": "https://no-packages-distro.example.com/base/"
+      },
+      {
+        "id": "other",
+        "baseurl": "https://no-packages-distro.example.com/other/"
+      }
+    ]
+  }
+}
