@@ -445,8 +445,9 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		}
 		if contains {
 			repositories = append(repositories, composer.Repository{
-				Baseurl: common.StringToPtr(r.Baseurl),
-				Rhsm:    common.BoolToPtr(r.Rhsm),
+				Baseurl:  r.Baseurl,
+				Metalink: r.Metalink,
+				Rhsm:     common.BoolToPtr(r.Rhsm),
 			})
 		}
 	}
