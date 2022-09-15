@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ghodss/yaml"
+	"github.com/invopop/yaml"
 )
 
 func foundUnresolvedRef(ref string) error {
@@ -166,6 +166,10 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 
 // ResolveRefsIn expands references if for instance spec was just unmarshalled
 func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
+	if loader.Context == nil {
+		loader.Context = context.Background()
+	}
+
 	if loader.visitedPathItemRefs == nil {
 		loader.resetVisitedPathItemRefs()
 	}
@@ -406,7 +410,6 @@ func (loader *Loader) documentPathForRecursiveRef(current *url.URL, resolvedRef 
 		return current
 	}
 	return &url.URL{Path: path.Join(loader.rootDir, resolvedRef)}
-
 }
 
 func (loader *Loader) resolveRef(doc *T, ref string, path *url.URL) (*T, string, *url.URL, error) {
@@ -699,7 +702,8 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
-			documentPath = loader.documentPathForRecursiveRef(documentPath, resolved.Ref)
+			foundPath := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
+			documentPath = loader.documentPathForRecursiveRef(documentPath, foundPath)
 		}
 	}
 	value := component.Value
@@ -744,6 +748,21 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		}
 	}
 	return nil
+}
+
+func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, found *url.URL) string {
+	if referencedFilename := strings.Split(ref, "#")[0]; referencedFilename == "" {
+		if cur != nil {
+			return path.Base(cur.Path)
+		}
+		return ""
+	}
+	// ref. to external file
+	if resolved.Ref != "" {
+		return resolved.Ref
+	}
+	// found dest spec. file
+	return path.Dir(found.Path)[len(loader.rootDir):]
 }
 
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
@@ -821,7 +840,6 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 }
 
 func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documentPath *url.URL) (err error) {
-
 	if component == nil {
 		return errors.New("invalid callback: value MUST be an object")
 	}
