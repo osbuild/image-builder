@@ -888,7 +888,7 @@ components:
             https://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html
           items:
             type: string
-            patern: '^[0-9]{12}$'
+            pattern: '^[0-9]{12}$'
     CloneResponse:
       required:
         - id
