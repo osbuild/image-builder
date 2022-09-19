@@ -1,0 +1,38 @@
+{
+  "module_platform_id": "platform:f37",
+  "distribution": {
+    "name": "fedora-37",
+    "description": "Fedora 37"
+  },
+  "x86_64": {
+    "image_types": [
+      "ami",
+      "container",
+      "fedora-iot-commit",
+      "fedora-iot-raw-image",
+      "oci",
+      "openstack",
+      "qcow2",
+      "vhd",
+      "vmdk"
+    ],
+    "repositories": [
+      {
+        "id": "fedora",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-37&arch=x86_64"
+      },
+      {
+        "id": "updates",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f37&arch=x86_64"
+      },
+      {
+        "id": "modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-37&arch=x86_64"
+      },
+      {
+        "id": "updates-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f37&arch=x86_64"
+      }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "module_platform_id": "platform:f37",
+  "distribution": {
+    "name": "fedora-37",
+    "description": "Fedora 37",
+    "restrictedAccess": false
+  },
+  "x86_64": {
+    "image_types": [
+      "ami",
+      "vhd",
+      "aws",
+      "gcp",
+      "azure",
+      "iot-commit",
+      "iot-raw-image",
+      "guest-image",
+      "image-installer",
+      "vsphere"
+    ],
+    "repositories": []
+  }
+}

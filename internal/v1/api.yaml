@@ -503,6 +503,7 @@ components:
         - guest-image
         - image-installer
         - vsphere
+        - iot-raw-image
         # backwards compatible aliases
         - ami  # == aws
         - rhel-edge-commit  # == edge-commit
