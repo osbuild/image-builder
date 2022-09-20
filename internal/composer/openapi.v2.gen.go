@@ -84,6 +84,13 @@ type AWSEC2UploadStatus struct {
 
 // AWSS3UploadOptions defines model for AWSS3UploadOptions.
 type AWSS3UploadOptions struct {
+	// If set to false (the default value), a long, obfuscated URL
+	// is returned. Its expiration might be sooner than for other upload
+	// targets.
+	//
+	// If set to true, a shorter URL is returned and
+	// its expiration is the same as for the other upload targets.
+	Public *bool  `json:"public,omitempty"`
 	Region string `json:"region"`
 }
 
