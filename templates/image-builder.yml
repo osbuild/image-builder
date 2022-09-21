@@ -200,7 +200,7 @@ objects:
         volumes:
           - name: config-volume
             configMap:
-              name: image-builder-crc-quotas
+              name: image-builder-crc-config-files
               items:
               - key: quotas.json
                 path: org_quotas.json
