@@ -168,6 +168,8 @@ objects:
               value: "${DISTRIBUTIONS_DIR}"
             - name: QUOTA_FILE
               value: "/app/config/org_quotas.json"
+            - name: ALLOW_FILE
+              value: "/app/config/allow_list.json"
             - name: SYSLOG_SERVER
               value: "localhost:5140"
 
@@ -204,6 +206,8 @@ objects:
               items:
               - key: quotas.json
                 path: org_quotas.json
+              - key: allow_list.json
+                path: allow_list.json
           - name: fluentd-config
             configMap:
               name: fluentd-config
