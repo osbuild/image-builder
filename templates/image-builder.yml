@@ -78,7 +78,7 @@ objects:
             protocol: TCP
           volumeMounts:
             - name: config-volume
-              mountPath: /app/quotas
+              mountPath: /app/config
           env:
             - name: LISTEN_ADDRESS
               value: "${LISTEN_ADDRESS}"
@@ -167,7 +167,7 @@ objects:
             - name: DISTRIBUTIONS_DIR
               value: "${DISTRIBUTIONS_DIR}"
             - name: QUOTA_FILE
-              value: "/app/quotas/org_quotas.json"
+              value: "/app/config/org_quotas.json"
             - name: SYSLOG_SERVER
               value: "localhost:5140"
 
