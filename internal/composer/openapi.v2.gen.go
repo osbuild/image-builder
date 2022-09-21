@@ -43,6 +43,9 @@ const (
 	ImageTypesGcpRhui        ImageTypes = "gcp-rhui"
 	ImageTypesGuestImage     ImageTypes = "guest-image"
 	ImageTypesImageInstaller ImageTypes = "image-installer"
+	ImageTypesIotCommit      ImageTypes = "iot-commit"
+	ImageTypesIotContainer   ImageTypes = "iot-container"
+	ImageTypesIotRawImage    ImageTypes = "iot-raw-image"
 	ImageTypesVsphere        ImageTypes = "vsphere"
 )
 
