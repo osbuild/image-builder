@@ -167,7 +167,7 @@ objects:
             - name: DISTRIBUTIONS_DIR
               value: "${DISTRIBUTIONS_DIR}"
             - name: QUOTA_FILE
-              value: "/app/config/org_quotas.json"
+              value: "/app/config/quotas.json"
             - name: ALLOW_FILE
               value: "/app/config/allow_list.json"
             - name: SYSLOG_SERVER
@@ -205,7 +205,7 @@ objects:
               name: image-builder-crc-config-files
               items:
               - key: quotas.json
-                path: org_quotas.json
+                path: quotas.json
               - key: allow_list.json
                 path: allow_list.json
           - name: fluentd-config
