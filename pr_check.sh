@@ -3,4 +3,5 @@
 # for now until we determine which tests we want to run.
 set -euxo pipefail
 
+echo "HELLO"
 exit 0
