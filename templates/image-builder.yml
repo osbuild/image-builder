@@ -323,7 +323,7 @@ objects:
       <match **>
         @type splunk_hec
         hec_host "#{ENV['SPLUNK_HEC_URL']}"
-        hec_port 8088
+        hec_port "${SPLUNK_HEC_TOKEN}"
         hec_token "#{ENV['SPLUNK_HEC_TOKEN']}"
       </match>
 
@@ -391,3 +391,7 @@ parameters:
   - name: MEMORY_LIMIT
     description: Memory limit per container
     value: "512Mi"
+  - description: fluentd-hec splunk port
+    name: SPLUNK_HEC_PORT
+    value: "443"
+    required: true
