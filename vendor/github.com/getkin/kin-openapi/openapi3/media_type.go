@@ -2,9 +2,12 @@ package openapi3
 
 import (
 	"context"
+	"errors"
+	"fmt"
+
+	"github.com/go-openapi/jsonpointer"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
-	"github.com/go-openapi/jsonpointer"
 )
 
 // MediaType is specified by OpenAPI/Swagger 3.0 standard.
@@ -60,26 +63,51 @@ func (mediaType *MediaType) WithEncoding(name string, enc *Encoding) *MediaType 
 	return mediaType
 }
 
+// MarshalJSON returns the JSON encoding of MediaType.
 func (mediaType *MediaType) MarshalJSON() ([]byte, error) {
 	return jsoninfo.MarshalStrictStruct(mediaType)
 }
 
+// UnmarshalJSON sets MediaType to a copy of data.
 func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, mediaType)
 }
 
-func (value *MediaType) Validate(ctx context.Context) error {
-	if value == nil {
+// Validate returns an error if MediaType does not comply with the OpenAPI spec.
+func (mediaType *MediaType) Validate(ctx context.Context) error {
+	if mediaType == nil {
 		return nil
 	}
-	if schema := value.Schema; schema != nil {
+	if schema := mediaType.Schema; schema != nil {
 		if err := schema.Validate(ctx); err != nil {
 			return err
 		}
+		if mediaType.Example != nil && mediaType.Examples != nil {
+			return errors.New("example and examples are mutually exclusive")
+		}
+		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
+			return nil
+		}
+		if example := mediaType.Example; example != nil {
+			if err := validateExampleValue(example, schema.Value); err != nil {
+				return err
+			}
+		} else if examples := mediaType.Examples; examples != nil {
+			for k, v := range examples {
+				if err := v.Validate(ctx); err != nil {
+					return fmt.Errorf("%s: %w", k, err)
+				}
+				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
+					return fmt.Errorf("%s: %w", k, err)
+				}
+			}
+		}
 	}
+
 	return nil
 }
 
+// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
 func (mediaType MediaType) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":
