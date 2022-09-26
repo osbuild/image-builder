@@ -61,11 +61,6 @@ func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
 		return err
 	}
 
-	loader := openapi3.NewLoader()
-	if err := spec.Validate(loader.Context); err != nil {
-		return err
-	}
-
 	spec.AddServer(&openapi3.Server{URL: fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)})
 
 	router, err := legacyrouter.NewRouter(spec)

@@ -1541,3 +1541,10 @@ func TestGetCloneStatus(t *testing.T) {
 	require.Equal(t, "ami-1", awsUS.Ami)
 	require.Equal(t, "us-east-2", awsUS.Region)
 }
+
+func TestValidateSpec(t *testing.T) {
+	spec, err := GetSwagger()
+	require.NoError(t, err)
+	err = spec.Validate(context.Background())
+	require.NoError(t, err)
+}
