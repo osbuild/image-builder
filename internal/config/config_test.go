@@ -58,20 +58,3 @@ func TestEnvPointerValues(t *testing.T) {
 	require.Empty(t, config.CwAccessKeyID)
 	require.Empty(t, config.CwSecretAccessKey)
 }
-
-func TestErrors(t *testing.T) {
-	os.Clearenv()
-	os.Setenv("BAD_TYPE", "1000")
-
-	config := struct {
-		BadType int `env:"BAD_TYPE"`
-	}{}
-	err := LoadConfigFromEnv(&config)
-	require.Error(t, err, "Unsupported type")
-
-	config2 := struct {
-		BadType *int `env:"BAD_TYPE"`
-	}{}
-	err = LoadConfigFromEnv(&config2)
-	require.Error(t, err, "Unsupported type")
-}
