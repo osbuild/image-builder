@@ -62,37 +62,14 @@ objects:
           env:
           - name: MIGRATIONS_DIR
             value: "${MIGRATIONS_DIR}"
-
-      # Enable access to the api
       webServices:
         public:
           enabled: true
-          apiPath: image-builder/v1
-        private:
-          enabled: false
-        metrics:
-          enabled: false
+          apiPath: image-builder
 
-      # add database
     database:
       name: image-builder
       version: 12
-
-# service to access image-builder also on 8080
-- apiVersion: v1
-  kind: Service
-  metadata:
-    labels:
-      app: image-builder
-    name: image-builder
-  spec:
-    ports:
-      - name: image-builder-8080
-        protocol: TCP
-        port: 8080
-        targetPort: 8000
-    selector:
-      pod: image-builder-service
 
 parameters:
   - name: IMAGE
