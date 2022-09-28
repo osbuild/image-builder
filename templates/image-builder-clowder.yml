@@ -38,7 +38,7 @@ objects:
           - name: LISTEN_ADDRESS
             value: ${LISTEN_ADDRESS}
           - name: COMPOSER_TOKEN_URL
-            value: "${COMPOSER_TOKEN_URL}" 
+            value: "${COMPOSER_TOKEN_URL}"
           - name: DISTRIBUTIONS_DIR
             value: '/app/distributions'
           - name: CLOWDER_ENABLED
@@ -55,13 +55,13 @@ objects:
               secretKeyRef:
                 key: client_secret
                 name: composer-secrets
-        
+
       # Enable access to the api
       webServices:
-        public: 
+        public:
           enabled: true
           apiPath: image-builder/v1
-        private: 
+        private:
           enabled: false
         metrics:
           enabled: false
