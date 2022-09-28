@@ -13,7 +13,6 @@ import (
 	v1 "github.com/osbuild/image-builder/internal/v1"
 
 	"github.com/labstack/echo/v4"
-	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 )
 
 func main() {
@@ -31,14 +30,6 @@ func main() {
 	err := config.LoadConfigFromEnv(&conf)
 	if err != nil {
 		panic(err)
-	}
-
-	// Load database variables if running in ephemeral environment
-	if clowder.IsClowderEnabled() {
-		conf.PGHost = clowder.LoadedConfig.Database.Hostname
-		conf.PGDatabase = clowder.LoadedConfig.Database.Name
-		conf.PGUser = clowder.LoadedConfig.Database.Username
-		conf.PGPassword = clowder.LoadedConfig.Database.Password
 	}
 
 	err = logger.ConfigLogger(logrus.StandardLogger(), conf.LogLevel, conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup, conf.SyslogServer)

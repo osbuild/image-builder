@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+
+	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 )
 
-func LoadConfigFromEnv(intf interface{}) error {
-	t := reflect.TypeOf(intf).Elem()
-	v := reflect.ValueOf(intf).Elem()
+func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
+	t := reflect.TypeOf(conf).Elem()
+	v := reflect.ValueOf(conf).Elem()
 
 	for i := 0; i < v.NumField(); i++ {
 		fieldT := t.Field(i)
@@ -29,5 +31,14 @@ func LoadConfigFromEnv(intf interface{}) error {
 			}
 		}
 	}
+
+	// Load database variables if running in ephemeral environment
+	if clowder.IsClowderEnabled() {
+		conf.PGHost = clowder.LoadedConfig.Database.Hostname
+		conf.PGDatabase = clowder.LoadedConfig.Database.Name
+		conf.PGUser = clowder.LoadedConfig.Database.Username
+		conf.PGPassword = clowder.LoadedConfig.Database.Password
+	}
+
 	return nil
 }
