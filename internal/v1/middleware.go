@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers"
 	"github.com/labstack/echo/v4"
 )
 
@@ -12,8 +13,12 @@ func (s *Server) ValidateRequest(nextHandler echo.HandlerFunc) echo.HandlerFunc 
 		request := ctx.Request()
 
 		route, params, err := s.router.FindRoute(request)
-		if err != nil {
-			return err
+		if err == routers.ErrMethodNotAllowed {
+			return echo.NewHTTPError(http.StatusMethodNotAllowed, err)
+		} else if err == routers.ErrPathNotFound {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		} else if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 
 		requestValidationInput := &openapi3filter.RequestValidationInput{
