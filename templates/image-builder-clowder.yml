@@ -55,6 +55,13 @@ objects:
               secretKeyRef:
                 key: client_secret
                 name: composer-secrets
+        initContainers:
+        - name: image-builder-migrate
+          image: ${IMAGE}:${IMAGE_TAG}
+          command: [ "/app/image-builder-migrate-db" ]
+          env:
+          - name: MIGRATIONS_DIR
+            value: "${MIGRATIONS_DIR}"
 
       # Enable access to the api
       webServices:
@@ -108,3 +115,6 @@ parameters:
     value: "https://api.stage.openshift.com"
   - name: COMPOSER_TOKEN_URL
     value: "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
+  - name: MIGRATIONS_DIR
+    description: Directory containing migration files for aws rds
+    value: "/app/migrations"
