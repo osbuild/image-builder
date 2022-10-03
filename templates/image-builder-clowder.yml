@@ -14,6 +14,7 @@ objects:
       iqePlugin: image-builder
     deployments:
     - name: service
+      replicas: ${{REPLICAS}}
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         resources:
@@ -126,3 +127,6 @@ parameters:
   - name: OSBUILD_AWS_REGION
     description: default region which is used for s3 and ec2 images
     value: "us-east-1"
+  - name: REPLICAS
+    description: pod replicas
+    value: "3"
