@@ -105,7 +105,7 @@ parameters:
   - name: COMPOSER_URL
     value: "https://api.stage.openshift.com"
   - name: COMPOSER_TOKEN_URL
-    value: "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
+    value: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
   - name: MIGRATIONS_DIR
     description: Directory containing migration files for aws rds
     value: "/app/migrations"
