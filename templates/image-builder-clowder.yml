@@ -16,6 +16,13 @@ objects:
     - name: service
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
+        resources:
+          requests:
+            cpu: ${CPU_REQUEST}
+            memory: ${MEMORY_REQUEST}
+          limits:
+            cpu: ${CPU_LIMIT}
+            memory: ${MEMORY_LIMIT}
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -59,6 +66,13 @@ objects:
         - name: image-builder-migrate
           image: ${IMAGE}:${IMAGE_TAG}
           command: [ "/app/image-builder-migrate-db" ]
+          resources:
+            requests:
+              cpu: ${CPU_REQUEST}
+              memory: ${MEMORY_REQUEST}
+            limits:
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
           env:
           - name: MIGRATIONS_DIR
             value: "${MIGRATIONS_DIR}"
@@ -95,3 +109,15 @@ parameters:
   - name: MIGRATIONS_DIR
     description: Directory containing migration files for aws rds
     value: "/app/migrations"
+  - name: CPU_REQUEST
+    description: CPU request per container
+    value: 200m
+  - name: CPU_LIMIT
+    description: CPU limit per container
+    value: 1000m
+  - name: MEMORY_REQUEST
+    description: Memory request per container
+    value: 256Mi
+  - name: MEMORY_LIMIT
+    description: Memory limit per container
+    value: 512Mi
