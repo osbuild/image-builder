@@ -52,6 +52,8 @@ objects:
             value: ${CLOWDER_ENABLED}
           - name: COMPOSER_URL
             value: "${COMPOSER_URL}"
+          - name: OSBUILD_AWS_REGION
+            value: "${OSBUILD_AWS_REGION}"
           - name: COMPOSER_CLIENT_ID
             valueFrom:
               secretKeyRef:
@@ -121,3 +123,6 @@ parameters:
   - name: MEMORY_LIMIT
     description: Memory limit per container
     value: 512Mi
+  - name: OSBUILD_AWS_REGION
+    description: default region which is used for s3 and ec2 images
+    value: "us-east-1"
