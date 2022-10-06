@@ -214,7 +214,7 @@ objects:
         initContainers:
         - name: image-builder-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"
-          command: [ "/app/image-builder-migrate-db" ]
+          command: [ "/app/image-builder-migrate-db-tern" ]
           resources:
             requests:
               cpu: "${CPU_REQUEST}"
@@ -223,8 +223,6 @@ objects:
               cpu: "${CPU_LIMIT}"
               memory: "${MEMORY_LIMIT}"
           env:
-          - name: MIGRATIONS_DIR
-            value: "${MIGRATIONS_DIR}"
           # Credentials/configuration for AWS RDS.
           - name: PGHOST
             valueFrom:
@@ -373,9 +371,6 @@ parameters:
   - name: OSBUILD_AZURE_LOCATION
     description: Location in Azure to upload to
     value: "eastus"
-  - name: MIGRATIONS_DIR
-    description: Directory containing migration files for aws rds
-    value: "/app/migrations"
   - name: PGSSLMODE
     description: Sslmode for the connection to psql
     value: "require"

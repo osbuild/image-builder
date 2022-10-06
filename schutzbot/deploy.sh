@@ -42,9 +42,8 @@ sudo podman pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" "${QUAY_REP
 sudo podman run --pull=never --security-opt "label=disable" --net=host \
      -e PGHOST=localhost -e PGPORT=5432 -e PGDATABASE=imagebuilder \
      -e PGUSER=postgres -e PGPASSWORD=foobar \
-     -e MIGRATIONS_DIR="/app/migrations" \
      --name image-builder-migrate \
-     image-builder-test:"${QUAY_REPO_TAG}" /app/image-builder-migrate-db
+     image-builder-test:"${QUAY_REPO_TAG}" /app/image-builder-migrate-db-tern
 sudo podman logs image-builder-migrate
 
 echo "{\"000000\":{\"quota\":5,\"slidingWindow\":1209600000000000},\"000001\":{\"quota\":0,\"slidingWindow\":1209600000000000}}" > /tmp/quotas
