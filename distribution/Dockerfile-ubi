@@ -6,14 +6,19 @@ COPY . .
 ENV GOFLAGS=-mod=vendor
 RUN go install ./...
 
+FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder2
+RUN go install github.com/jackc/tern@latest
+
 # Build an extremely minimal container that only contains our Go application.
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 RUN mkdir /app
+RUN mkdir -p "/opt/migrate/"
 COPY --from=builder /opt/app-root/src/go/bin/image-builder /app/
-COPY --from=builder /opt/app-root/src/go/bin/image-builder-migrate-db /app/
+COPY --from=builder /opt/app-root/src/go/bin/image-builder-migrate-db-tern /app/
 COPY ./distributions /app/distributions
-COPY ./internal/db/migrations /app/migrations
+COPY ./internal/db/migrations-tern /app/migrations
 COPY ./distribution/openshift-startup.sh /opt/openshift-startup.sh
-ENV MIGRATIONS_DIR=/app/migrations
+COPY --from=builder2 /opt/app-root/src/go/bin/tern /opt/migrate/
+ENV TERN_MIGRATIONS_DIR=/app/migrations
 EXPOSE 8086
 CMD ["/opt/openshift-startup.sh"]

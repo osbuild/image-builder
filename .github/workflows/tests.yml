@@ -94,7 +94,15 @@ jobs:
         go-version: 1.17
     - env:
         MIGRATIONS_DIR: internal/db/migrations
+        TERN_MIGRATIONS_DIR: internal/db/migrations-tern
+        PGUSER: postgres
+        PGPASSWORD: foobar
+        PGDATABASE: imagebuilder
+        PGHOST: localhost
+        PGPORT: 5432
       run: |
+        go install github.com/jackc/tern@latest
+        tern migrate -m "$TERN_MIGRATIONS_DIR"
         make build
         ./image-builder-db-test
 

@@ -68,7 +68,7 @@ objects:
         initContainers:
         - name: image-builder-migrate
           image: ${IMAGE}:${IMAGE_TAG}
-          command: [ "/app/image-builder-migrate-db" ]
+          command: [ "/app/image-builder-migrate-db-tern" ]
           resources:
             requests:
               cpu: ${CPU_REQUEST}
@@ -76,9 +76,6 @@ objects:
             limits:
               cpu: ${CPU_LIMIT}
               memory: ${MEMORY_LIMIT}
-          env:
-          - name: MIGRATIONS_DIR
-            value: "${MIGRATIONS_DIR}"
       webServices:
         public:
           enabled: true
@@ -109,9 +106,6 @@ parameters:
     value: "https://api.stage.openshift.com"
   - name: COMPOSER_TOKEN_URL
     value: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
-  - name: MIGRATIONS_DIR
-    description: Directory containing migration files for aws rds
-    value: "/app/migrations"
   - name: CPU_REQUEST
     description: CPU request per container
     value: 200m
