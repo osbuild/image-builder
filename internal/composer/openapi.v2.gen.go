@@ -45,6 +45,7 @@ const (
 	ImageTypesImageInstaller ImageTypes = "image-installer"
 	ImageTypesIotCommit      ImageTypes = "iot-commit"
 	ImageTypesIotContainer   ImageTypes = "iot-container"
+	ImageTypesIotInstaller   ImageTypes = "iot-installer"
 	ImageTypesIotRawImage    ImageTypes = "iot-raw-image"
 	ImageTypesVsphere        ImageTypes = "vsphere"
 )
