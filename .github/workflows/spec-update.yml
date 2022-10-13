@@ -1,0 +1,28 @@
+name: composer spec update
+
+on:
+  schedule:
+    # Monday morning
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  scan:
+    name: "composer spec update"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3.0.2
+
+      - name: Run tools/update-spec.sh
+        run: |
+          tools/update-spec.sh
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          branch: update-spec
+          delete-branch: true
+          title: "internal/composer: update api spec"
+          commit-message: "internal/composer: update api spec"
+          body: Composer api spec update.

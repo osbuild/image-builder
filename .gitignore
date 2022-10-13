@@ -3,4 +3,3 @@ rpmbuild
 /image-builder-db-test
 /image-builder-migrate-db
 dnf-json
-/internal/composer/openapi.v2.yml

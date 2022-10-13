@@ -1,0 +1,1201 @@
+---
+openapi: 3.0.1
+info:
+  version: '2'
+  title: OSBuild Composer cloud api
+  description: Service to build and install images.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+- url: https://api.openshift.com/api/image-builder-composer/v2
+  description: Main (production) server
+- url: https://api.stage.openshift.com/api/image-builder-composer/v2
+  description: Staging server
+- url: /api/image-builder-composer/v2
+  description: current domain
+
+paths:
+  /openapi:
+    get:
+      operationId: getOpenapi
+      summary: Get the openapi spec in json format
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: openapi spec in json format
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /composes/{id}:
+    get:
+      operationId: getComposeStatus
+      summary: The status of a compose
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+          description: ID of compose status to get
+      description: |-
+        Get the status of a running or completed compose.
+        This includes whether or not the compose succeeded.
+      responses:
+        '200':
+          description: compose status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeStatus'
+        '400':
+          description: Invalid compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /composes/{id}/metadata:
+    get:
+      operationId: getComposeMetadata
+      summary: Get the metadata for a compose.
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose status to get
+      description: |-
+        Get the metadata of a finished compose.
+        The exact information returned depends on the requested image type.
+      responses:
+        '200':
+          description: The metadata for the given compose.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeMetadata'
+        '400':
+          description: Invalid compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/composes/{id}/logs':
+    get:
+      operationId: getComposeLogs
+      summary: Get logs for a compose.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose status to get
+      description: 'Get the status of a running or finished compose. This includes whether or not it succeeded, and also meta information about the result.'
+      responses:
+        '200':
+          description: The logs for the given compose, in no particular format (though valid JSON).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeLogs'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+  '/composes/{id}/manifests':
+    get:
+      operationId: getComposeManifests
+      summary: Get the manifests for a compose.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose status to get
+      description: 'Get the manifests of a running or finished compose. Returns one manifest for each image in the request. Each manifest conforms to the format defined at https://www.osbuild.org/man/osbuild-manifest.5'
+      responses:
+        '200':
+          description: The manifest for the given compose.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeManifests'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /composes/{id}/clone:
+    post:
+      operationId: postCloneCompose
+      summary: Clone an existing compose
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of the compose
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneComposeBody'
+      responses:
+        '201':
+          description: The new image is being created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneComposeResponse'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /clones/{id}:
+    get:
+      operationId: getCloneStatus
+      summary: The status of a cloned compose
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+          description: ID of image status to get
+      description: |-
+        Get the status of a running or completed image from a compose.
+        This includes whether or not the image creation succeeded.
+      responses:
+        '200':
+          description: image status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneStatus'
+        '400':
+          description: Invalid compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /compose:
+    post:
+      operationId: postCompose
+      summary: Create compose
+      description: Create a new compose, potentially consisting of several images and upload each to their destinations.
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComposeRequest'
+      responses:
+        '201':
+          description: Compose has started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeId'
+        '400':
+          description: Invalid compose request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /errors/{id}:
+    get:
+      operationId: getError
+      summary: Get error description
+      description: Get an instance of the error specified by id
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            example: '13'
+          required: true
+          description: ID of the error
+      responses:
+        '200':
+          description: Error description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown error id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /errors:
+    get:
+      operationId: getErrorList
+      summary: Get a list of all possible errors
+      security:
+        - Bearer: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        '200':
+          description: A list of errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown error id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    ObjectReference:
+      type: object
+      required:
+        - id
+        - kind
+        - href
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+
+    List:
+      type: object
+      properties:
+        kind:
+          type: string
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+      required:
+        - kind
+        - page
+        - size
+        - total
+        - items
+
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - code
+          - reason
+          - operation_id
+        properties:
+          code:
+            type: string
+          reason:
+            type: string
+          operation_id:
+            type: string
+          details: {}
+
+    ErrorList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - type: object
+        required:
+          - items
+        properties:
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/Error'
+
+    ComposeStatus:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - status
+          - image_status
+        properties:
+          status:
+            $ref: '#/components/schemas/ComposeStatusValue'
+          image_status:
+            $ref: '#/components/schemas/ImageStatus'
+          image_statuses:
+            type: array
+            items:
+              $ref: '#/components/schemas/ImageStatus'
+          koji_status:
+            $ref: '#/components/schemas/KojiStatus'
+    ComposeStatusValue:
+      type: string
+      enum:
+        - success
+        - failure
+        - pending
+      example: success
+    ComposeLogs:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - image_builds
+        properties:
+          image_builds:
+            type: array
+            items:
+              type: object
+              x-go-type: interface{}
+          koji:
+            $ref: '#/components/schemas/KojiLogs'
+    KojiLogs:
+      type: object
+      required:
+        - init
+        - import
+      properties:
+        init: {}
+        import: {}
+    ComposeManifests:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - manifests
+        properties:
+          manifests:
+            type: array
+            items:
+              type: object
+              x-go-type: interface{}
+    ImageStatus:
+      required:
+       - status
+      properties:
+        status:
+          $ref: '#/components/schemas/ImageStatusValue'
+        upload_status:
+          $ref: '#/components/schemas/UploadStatus'
+        error:
+          $ref: '#/components/schemas/ComposeStatusError'
+    ComposeStatusError:
+      required:
+       - id
+       - reason
+      properties:
+        id:
+          type: integer
+        reason:
+          type: string
+        details: {}
+    ImageStatusValue:
+      type: string
+      enum: ['success', 'failure', 'pending', 'building', 'uploading', 'registering']
+    UploadStatus:
+      required:
+        - status
+        - type
+        - options
+      properties:
+        status:
+          $ref: '#/components/schemas/UploadStatusValue'
+        type:
+          $ref: '#/components/schemas/UploadTypes'
+        options:
+          oneOf:
+            - $ref: '#/components/schemas/AWSEC2UploadStatus'
+            - $ref: '#/components/schemas/AWSS3UploadStatus'
+            - $ref: '#/components/schemas/GCPUploadStatus'
+            - $ref: '#/components/schemas/AzureUploadStatus'
+            - $ref: '#/components/schemas/ContainerUploadStatus'
+    UploadStatusValue:
+      type: string
+      enum: ['success', 'failure', 'pending', 'running']
+    UploadTypes:
+      type: string
+      enum:
+        - aws
+        - aws.s3
+        - gcp
+        - azure
+        - container
+    AWSEC2UploadStatus:
+      type: object
+      required:
+        - ami
+        - region
+      properties:
+        ami:
+          type: string
+          example: 'ami-0c830793775595d4b'
+        region:
+          type: string
+          example: 'eu-west-1'
+    AWSS3UploadStatus:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+    GCPUploadStatus:
+      type: object
+      required:
+        - project_id
+        - image_name
+      properties:
+        project_id:
+          type: string
+          example: 'ascendant-braid-303513'
+        image_name:
+          type: string
+          example: 'my-image'
+    AzureUploadStatus:
+      type: object
+      required:
+        - image_name
+      properties:
+        image_name:
+          type: string
+          example: 'my-image'
+    KojiStatus:
+      type: object
+      properties:
+        build_id:
+          type: integer
+          example: 42
+    ContainerUploadStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - url
+        - digest
+      properties:
+        url:
+          type: string
+          example: 'quay.io/myaccount/osbuild:latest'
+          description: |
+            FQDN of the uploaded image
+        digest:
+          type: string
+          description: |
+            Digest of the manifest of the uploaded container on the registry
+    ComposeMetadata:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        properties:
+          packages:
+            type: array
+            items:
+              $ref: '#/components/schemas/PackageMetadata'
+            description: 'Package list including NEVRA'
+          ostree_commit:
+            type: string
+            description: 'ID (hash) of the built commit'
+    PackageMetadata:
+      required:
+        - type
+        - name
+        - version
+        - release
+        - arch
+        - sigmd5
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        release:
+          type: string
+        epoch:
+          type: string
+        arch:
+          type: string
+        sigmd5:
+          type: string
+        signature:
+          type: string
+
+    ComposeRequest:
+      required:
+        - distribution
+      properties:
+        distribution:
+          type: string
+          example: 'rhel-8'
+        image_request:
+          $ref: '#/components/schemas/ImageRequest'
+        image_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageRequest'
+        customizations:
+          $ref: '#/components/schemas/Customizations'
+        koji:
+          $ref: '#/components/schemas/Koji'
+    ImageRequest:
+      required:
+        - architecture
+        - image_type
+        - repositories
+      properties:
+        architecture:
+          type: string
+          example: 'x86_64'
+        image_type:
+          $ref: '#/components/schemas/ImageTypes'
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+        ostree:
+          $ref: '#/components/schemas/OSTree'
+        upload_options:
+          $ref: '#/components/schemas/UploadOptions'
+    ImageTypes:
+      type: string
+      enum:
+        - aws
+        - aws-ha-rhui
+        - aws-rhui
+        - aws-sap-rhui
+        - azure
+        - azure-rhui
+        - edge-commit
+        - edge-container
+        - edge-installer
+        - gcp
+        - gcp-rhui
+        - guest-image
+        - image-installer
+        - iot-commit
+        - iot-container
+        - iot-installer
+        - iot-raw-image
+        - vsphere
+    Repository:
+      type: object
+      properties:
+        rhsm:
+          type: boolean
+          default: false
+          description: 'Determines whether a valid subscription is required to access this repository.'
+        baseurl:
+          type: string
+          format: uri
+          example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
+        mirrorlist:
+          type: string
+          format: uri
+          example: 'http://mirrorlist.centos.org/?release=8-stream&arch=aarch64&repo=BaseOS'
+        metalink:
+          type: string
+          format: uri
+          example: 'https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=x86_64'
+        gpgkey:
+          type: string
+          example: "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGAcScoBEADLf8YHkezJ6adlMYw7aGGIlJalt8Jj2x/B2K+hIfIuxGtpVj7e\nLRgDU76jaT5pVD5mFMJ3pkeneR/cTmqqQkNyQshX2oQXwEzUSb1CNMCfCGgkX8Q2\nzZkrIcCrF0Q2wrKblaudhU+iVanADsm18YEqsb5AU37dtUrM3QYdWg9R+XiPfV8R\nKBjT03vVBOdMSsY39LaCn6Ip1Ovp8IEo/IeEVY1qmCOPAaK0bJH3ufg4Cueks+TS\nwQWTeCLxuZL6OMXoOPKwvMQfxbg1XD8vuZ0Ktj/cNH2xau0xmsAu9HJpekvOPRxl\nyqtjyZfroVieFypwZgvQwtnnM8/gSEu/JVTrY052mEUT7Ccb74kcHFTFfMklnkG/\n0fU4ARa504H3xj0ktbe3vKcPXoPOuKBVsHSv00UGYAyPeuy+87cU/YEhM7k3SVKj\n6eIZgyiMO0wl1YGDRKculwks9A+ulkg1oTb4s3zmZvP07GoTxW42jaK5WS+NhZee\n860XoVhbc1KpS+jfZojsrEtZ8PbUZ+YvF8RprdWArjHbJk2JpRKAxThxsQAsBhG1\n0Lux2WaMB0g2I5PcMdJ/cqjo08ccrjBXuixWri5iu9MXp8qT/fSzNmsdIgn8/qZK\ni8Qulfu77uqhW/wt2btnitgRsqjhxMujYU4Zb4hktF8hKU/XX742qhL5KwARAQAB\ntDFGZWRvcmEgKDM1KSA8ZmVkb3JhLTM1LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEEeH6mrhFH7uVsQLMM20Y5cZhnxY8FAmAcScoCGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQ20Y5cZhnxY+NYA/7BYpglySAZYHhjyKh\n/+f6zPfVvbH20Eq3kI7OFBN0nLX+BU1muvS+qTuS3WLrB3m3GultpKREJKLtm5ED\n1rGzXAoT1yp9YI8LADdMCCOyjAjsoWU87YUuC+/bnjrTeR2LROCfyPC76W985iOV\nm5S+bsQDw7C2LrldAM4MDuoyZ1SitGaZ4KQLVt+TEa14isYSGCjzo7PY8V3JOk50\ngqWg82N/bm2EzS7T83WEDb1lvj4IlvxgIqKeg11zXYxmrYSZJJCfvzf+lNS6uxgH\njx/J0ylZ2LibGr6GAAyO9UWrAZSwSM0EcjT8wECnxkSDuyqmWwVvNBXuEIV8Oe3Y\nMiU1fJN8sd7DpsFx5M+XdnMnQS+HrjTPKD3mWrlAdnEThdYV8jZkpWhDys3/99eO\nhk0rLny0jNwkauf/iU8Oc6XvMkjLRMJg5U9VKyJuWWtzwXnjMN5WRFBqK4sZomMM\nftbTH1+5ybRW/A3vBbaxRW2t7UzNjczekSZEiaLN9L/HcJCIR1QF8682DdAlEF9d\nk2gQiYSQAaaJ0JJAzHvRkRJLLgK2YQYiHNVy2t3JyFfsram5wSCWOfhPeIyLBTZJ\nvrpNlPbefsT957Tf2BNIugzZrC5VxDSKkZgRh1VGvSIQnCyzkQy6EU2qPpiW59G/\nhPIXZrKocK3KLS9/izJQTRltjMA=\n=PfT7\n-----END PGP PUBLIC KEY BLOCK-----\n"
+          description: 'GPG key used to sign packages in this repository.'
+        check_gpg:
+          type: boolean
+        ignore_ssl:
+          type: boolean
+        package_sets:
+          type: array
+          example: ["build", "os"]
+          items:
+            type: string
+          description: |
+            Naming package sets for a repository assigns it to a specific part
+            (pipeline) of the build process.
+    UploadOptions:
+      anyOf:
+      - $ref: '#/components/schemas/AWSEC2UploadOptions'
+      - $ref: '#/components/schemas/AWSS3UploadOptions'
+      - $ref: '#/components/schemas/GCPUploadOptions'
+      - $ref: '#/components/schemas/AzureUploadOptions'
+      - $ref: '#/components/schemas/ContainerUploadOptions'
+      description: |
+        This should really be oneOf but AWSS3UploadOptions is a subset of
+        AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
+        are also valid AWSS3UploadOptionas objects which violates the oneOf
+        rules. Therefore, we have to use anyOf here but be aware that it isn't
+        possible to mix and match more schemas together.
+    AWSEC2UploadOptions:
+      type: object
+      required:
+        - region
+        - share_with_accounts
+      properties:
+        region:
+          type: string
+          example: 'eu-west-1'
+        snapshot_name:
+          type: string
+          example: 'my-snapshot'
+        share_with_accounts:
+          type: array
+          example: ['123456789012']
+          items:
+            type: string
+    AWSS3UploadOptions:
+      type: object
+      required:
+        - region
+      properties:
+        region:
+          type: string
+          example: 'eu-west-1'
+        public:
+          type: boolean
+          default: false
+          description: |
+            If set to false (the default value), a long, obfuscated URL
+            is returned. Its expiration might be sooner than for other upload
+            targets.
+            
+            If set to true, a shorter URL is returned and
+            its expiration is the same as for the other upload targets.
+    GCPUploadOptions:
+      type: object
+      required:
+        - region
+      properties:
+        region:
+          type: string
+          example: 'eu'
+          description: |
+            The GCP region where the OS image will be imported to and shared from.
+            The value must be a valid GCP location. See https://cloud.google.com/storage/docs/locations.
+            If not specified, the multi-region location closest to the source
+            (source Storage Bucket location) is chosen automatically.
+        bucket:
+          type: string
+          example: 'my-example-bucket'
+          description: 'Name of an existing STANDARD Storage class Bucket.'
+# don't expose the os type for now
+#        os:
+#          type: string
+#          example: 'rhel-8-byol'
+#          description: 'OS of the disk image being imported needed for installation of GCP guest tools.'
+        image_name:
+          type: string
+          example: 'my-image'
+          description: |
+            The name to use for the imported and shared Compute Engine image.
+            The image name must be unique within the GCP project, which is used
+            for the OS image upload and import. If not specified a random
+            'composer-api-<uuid>' string is used as the image name.
+        share_with_accounts:
+          type: array
+          example: [
+            'user:alice@example.com',
+            'serviceAccount:my-other-app@appspot.gserviceaccount.com',
+            'group:admins@example.com',
+            'domain:example.com'
+            ]
+          description: |
+            List of valid Google accounts to share the imported Compute Engine image with.
+            Each string must contain a specifier of the account type. Valid formats are:
+              - 'user:{emailid}': An email address that represents a specific
+                Google account. For example, 'alice@example.com'.
+              - 'serviceAccount:{emailid}': An email address that represents a
+                service account. For example, 'my-other-app@appspot.gserviceaccount.com'.
+              - 'group:{emailid}': An email address that represents a Google group.
+                For example, 'admins@example.com'.
+              - 'domain:{domain}': The G Suite domain (primary) that represents all
+                the users of that domain. For example, 'google.com' or 'example.com'.
+            If not specified, the imported Compute Engine image is not shared with any
+            account.
+          items:
+            type: string
+    AzureUploadOptions:
+      type: object
+      required:
+        - tenant_id
+        - subscription_id
+        - resource_group
+        - location
+      properties:
+        tenant_id:
+          type: string
+          example: '5c7ef5b6-1c3f-4da0-a622-0b060239d7d7'
+          description: |
+            ID of the tenant where the image should be uploaded.
+            How to find it in the Azure Portal:
+            https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant
+        subscription_id:
+          type: string
+          example: '4e5d8b2c-ab24-4413-90c5-612306e809e2'
+          description: |
+            ID of subscription where the image should be uploaded.
+        resource_group:
+          type: string
+          example: 'ToucanResourceGroup'
+          description: |
+            Name of the resource group where the image should be uploaded.
+        location:
+          type: string
+          example: 'westeurope'
+          description: |
+            Location where the image should be uploaded and registered.
+            How to list all locations:
+            https://docs.microsoft.com/en-us/cli/azure/account?view=azure-cli-latest#az_account_list_locations'
+        image_name:
+          type: string
+          example: 'my-image'
+          description: |
+            Name of the uploaded image. It must be unique in the given resource group.
+            If name is omitted from the request, a random one based on a UUID is
+            generated.
+    ContainerUploadOptions:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          example: 'osbuild'
+          description: |
+            Name for the created container image
+        tag:
+          type: string
+          example: 'latest'
+          description: |
+            Tag for the created container image
+    Customizations:
+      type: object
+      properties:
+        containers:
+          type: array
+          items:
+             $ref: '#/components/schemas/Container'
+             description: Container images to embed into the final artfact
+        subscription:
+          $ref: '#/components/schemas/Subscription'
+        packages:
+          type: array
+          example: ['postgres']
+          items:
+            type: string
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        payload_repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+          description: |
+            Extra repositories for packages specified in customizations. These
+            repositories will only be used to depsolve and retrieve packages
+            for the OS itself (they will not be available for the build root or
+            any other part of the build process). The package_sets field for these
+            repositories is ignored.
+        filesystem:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filesystem'
+        services:
+          type: object
+          additionalProperties: false
+          properties:
+            enabled:
+              description: List of services to enable by default
+              type: array
+              minItems: 1
+              items:
+                type: string
+                example: "nftables"
+            disabled:
+              description: List of services to disable by default
+              type: array
+              minItems: 1
+              items:
+                type: string
+                example: "firewalld"
+    Container:
+      type: object
+      required:
+        - source
+      properties:
+        source:
+          type: string
+          desription: Reference to the container to embed
+          example: 'registry.example.com/image:tag'
+        name:
+          type: string
+          description: Name to use for the container from the image
+        tls_verify:
+          type: boolean
+          description: Control TLS verifification
+          example: true
+    Filesystem:
+      type: object
+      required:
+        - mountpoint
+        - min_size
+      properties:
+        mountpoint:
+          type: string
+          example: '/var'
+        min_size:
+          x-go-type: uint64
+          example: 1024
+    OSTree:
+      type: object
+      properties:
+        url:
+          type: string
+        ref:
+          type: string
+          example: 'rhel/8/x86_64/edge'
+        parent:
+          type: string
+          description: >
+            Can be either a commit (example:
+            02604b2da6e954bd34b8b82a835e5a77d2b60ffa), or a branch-like
+            reference (example: rhel/8/x86_64/edge)
+          example: 'rhel/8/x86_64/edge'
+    Subscription:
+      type: object
+      required:
+        - organization
+        - activation_key
+        - server_url
+        - base_url
+        - insights
+      properties:
+        organization:
+          type: string
+          example: '2040324'
+        activation_key:
+          type: string
+          format: password
+          example: 'my-secret-key'
+        server_url:
+          type: string
+          format: uri
+          example: 'subscription.rhsm.redhat.com'
+        base_url:
+          type: string
+          format: uri
+          example: 'http://cdn.redhat.com/'
+        insights:
+          type: boolean
+          example: true
+    User:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "user1"
+        groups:
+          type: array
+          items:
+            type: string
+            example: "group1"
+        key:
+          type: string
+          example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
+    Koji:
+      type: object
+      required:
+        - server
+        - task_id
+        - name
+        - version
+        - release
+      properties:
+        server:
+          type: string
+          format: uri
+          example: 'https://koji.fedoraproject.org/kojihub'
+        task_id:
+          type: integer
+          example: 42
+        name:
+          type: string
+          example: Fedora-Cloud-Base
+        version:
+          type: string
+          example: '31'
+        release:
+          type: string
+          example: '20200907.0'
+    ComposeId:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - id
+        properties:
+          id:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+
+    CloneComposeBody:
+      oneOf:
+      - $ref: '#/components/schemas/AWSEC2CloneCompose'
+
+    AWSEC2CloneCompose:
+      type: object
+      required:
+        - region
+      properties:
+        region:
+          type: string
+        share_with_accounts:
+          type: array
+          example: ['123456789012']
+          items:
+            type: string
+
+    CloneComposeResponse:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - id
+        properties:
+          id:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+
+    CloneStatus:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/UploadStatus'
+
+  parameters:
+    page:
+      name: page
+      in: query
+      description: Page index
+      required: false
+      schema:
+        type: string
+      examples:
+        page:
+          value: "1"
+    size:
+      name: size
+      in: query
+      description: Number of items in each page
+      required: false
+      schema:
+        type: string
+      examples:
+        size:
+          value: "100"
+
+  securitySchemes:
+    Bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
