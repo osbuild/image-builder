@@ -590,7 +590,7 @@ func (h *Handlers) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into GCPUploadRequestOptions")
 		}
 		return composer.GCPUploadOptions{
-			Bucket:            h.server.gcp.Bucket,
+			Bucket:            &h.server.gcp.Bucket,
 			Region:            h.server.gcp.Region,
 			ShareWithAccounts: &gcpOptions.ShareWithAccounts,
 		}, composerImageType, nil

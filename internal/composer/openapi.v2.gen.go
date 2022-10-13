@@ -299,7 +299,7 @@ type Filesystem struct {
 // GCPUploadOptions defines model for GCPUploadOptions.
 type GCPUploadOptions struct {
 	// Name of an existing STANDARD Storage class Bucket.
-	Bucket string `json:"bucket"`
+	Bucket *string `json:"bucket,omitempty"`
 
 	// The name to use for the imported and shared Compute Engine image.
 	// The image name must be unique within the GCP project, which is used
