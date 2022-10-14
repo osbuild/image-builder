@@ -322,6 +322,30 @@ objects:
         hec_token "#{ENV['SPLUNK_HEC_TOKEN']}"
       </match>
 
+- apiVersion: metrics.console.redhat.com/v1alpha1
+  kind: FloorPlan
+  metadata:
+    name: imagebuilder
+  spec:
+    database:
+      secretName: ${FLOORIST_DB_SECRET_NAME}
+    objectStore:
+      secretName: ${FLOORIST_BUCKET_SECRET_NAME}
+    logLevel: ${FLOORIST_LOGLEVEL}
+    suspend: ${{FLOORIST_SUSPEND}}
+    queries:
+    - prefix: ${FLOORIST_QUERY_PREFIX}/builds
+      query: >-
+        select
+          job_id,created_at,org_id,account_number,request->>'distribution' as distribution,
+          req->>'architecture' as architecture,req->>'image_type' as image_type,req->'upload_request'->>'type' as upload_request_type,req->'ostree'->>'url' as ostree_url,
+          request->'customizations'->'packages' as packages,
+          request->'customizations'->'filesystem' as filesystem,
+          request->'customizations'->'payload_repositories' as payload_repositories,
+          jsonb_array_length(request->'customizations'->'users') as num_users
+        from
+          composes,jsonb_array_elements(composes.request->'image_requests') as req;
+
 # Parameters for the various configurations shown above.
 parameters:
   - description: image-builder image name
@@ -384,3 +408,18 @@ parameters:
     name: SPLUNK_HEC_PORT
     value: "443"
     required: true
+  - name: FLOORIST_LOGLEVEL
+    description: Floorist loglevel config
+    value: 'INFO'
+  - name: FLOORIST_SUSPEND
+    description: Disable Floorist cronjob execution
+    value: 'false'
+  - name: FLOORIST_DB_SECRET_NAME
+    description: Name of the secret for accessing the database for floorist
+    value: ""
+  - name: FLOORIST_BUCKET_SECRET_NAME
+    description: Name of the secret for accessing the bucket for the floorist data dump
+    value: ""
+  - name: FLOORIST_QUERY_PREFIX
+    description: Prefix for separating query data between prod and stage in the bucket
+    value: "image-builder"
