@@ -113,8 +113,8 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 
 	offset := 0
 	if params.Offset != nil {
-		if *params.Offset >= len(packages) {
-			offset = len(packages) - 1
+		if *params.Offset > len(packages) {
+			offset = len(packages)
 		} else if *params.Offset > 0 {
 			offset = *params.Offset
 		}
@@ -123,6 +123,11 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 	upto := offset + limit
 	if upto > len(packages) {
 		upto = len(packages)
+	}
+
+	lastOffset := len(packages) - 1
+	if lastOffset < 0 {
+		lastOffset = 0
 	}
 
 	return ctx.JSON(http.StatusOK, PackagesResponse{
@@ -135,10 +140,10 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 			First string `json:"first"`
 			Last  string `json:"last"`
 		}{
+			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=0&limit=%v",
+				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, limit),
 			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
-				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, offset, limit),
-			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
-				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, len(packages)-1, limit),
+				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, lastOffset, limit),
 		},
 		Data: packages[offset:upto],
 	})
@@ -380,8 +385,8 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 			First string `json:"first"`
 			Last  string `json:"last"`
 		}{
-			fmt.Sprintf("%v/v%v/composes?offset=%v&limit=%v",
-				RoutePrefix(), spec.Info.Version, offset, limit),
+			fmt.Sprintf("%v/v%v/composes?offset=0&limit=%v",
+				RoutePrefix(), spec.Info.Version, limit),
 			fmt.Sprintf("%v/v%v/composes?offset=%v&limit=%v",
 				RoutePrefix(), spec.Info.Version, lastOffset, limit),
 		},
