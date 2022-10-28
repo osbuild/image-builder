@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -22,6 +23,14 @@ func (servers Servers) Validate(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// BasePath returns the base path of the first server in the list, or /.
+func (servers Servers) BasePath() (string, error) {
+	for _, server := range servers {
+		return server.BasePath()
+	}
+	return "/", nil
 }
 
 func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) {
@@ -46,6 +55,30 @@ type Server struct {
 	URL         string                     `json:"url" yaml:"url"`
 	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
 	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+}
+
+// BasePath returns the base path extracted from the default values of variables, if any.
+// Assumes a valid struct (per Validate()).
+func (server *Server) BasePath() (string, error) {
+	if server == nil {
+		return "/", nil
+	}
+
+	uri := server.URL
+	for name, svar := range server.Variables {
+		uri = strings.ReplaceAll(uri, "{"+name+"}", svar.Default)
+	}
+
+	u, err := url.ParseRequestURI(uri)
+	if err != nil {
+		return "", err
+	}
+
+	if bp := u.Path; bp != "" {
+		return bp, nil
+	}
+
+	return "/", nil
 }
 
 // MarshalJSON returns the JSON encoding of Server.
@@ -134,15 +167,24 @@ func (server *Server) Validate(ctx context.Context) (err error) {
 	if server.URL == "" {
 		return errors.New("value of url must be a non-empty string")
 	}
+
 	opening, closing := strings.Count(server.URL, "{"), strings.Count(server.URL, "}")
 	if opening != closing {
 		return errors.New("server URL has mismatched { and }")
 	}
+
 	if opening != len(server.Variables) {
 		return errors.New("server has undeclared variables")
 	}
-	for name, v := range server.Variables {
-		if !strings.Contains(server.URL, fmt.Sprintf("{%s}", name)) {
+
+	variables := make([]string, 0, len(server.Variables))
+	for name := range server.Variables {
+		variables = append(variables, name)
+	}
+	sort.Strings(variables)
+	for _, name := range variables {
+		v := server.Variables[name]
+		if !strings.Contains(server.URL, "{"+name+"}") {
 			return errors.New("server has undeclared variables")
 		}
 		if err = v.Validate(ctx); err != nil {

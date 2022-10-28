@@ -8,11 +8,14 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"unicode/utf16"
 
 	"github.com/go-openapi/jsonpointer"
+	"github.com/mohae/deepcopy"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -727,7 +730,13 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
-	for _, ref := range schema.Properties {
+	properties := make([]string, 0, len(schema.Properties))
+	for name := range schema.Properties {
+		properties = append(properties, name)
+	}
+	sort.Strings(properties)
+	for _, name := range properties {
+		ref := schema.Properties[name]
 		v := ref.Value
 		if v == nil {
 			return foundUnresolvedRef(ref.Ref)
@@ -753,9 +762,15 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) (err error)
 		}
 	}
 
+	if v := schema.Default; v != nil {
+		if err := schema.VisitJSON(v); err != nil {
+			return fmt.Errorf("invalid default: %w", err)
+		}
+	}
+
 	if x := schema.Example; x != nil && !validationOpts.ExamplesValidationDisabled {
-		if err := validateExampleValue(x, schema); err != nil {
-			return fmt.Errorf("invalid schema example: %w", err)
+		if err := validateExampleValue(ctx, x, schema); err != nil {
+			return fmt.Errorf("invalid example: %w", err)
 		}
 	}
 
@@ -856,7 +871,7 @@ func (schema *Schema) visitJSON(settings *schemaValidationSettings, value interf
 func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, value interface{}) (err error) {
 	if enum := schema.Enum; len(enum) != 0 {
 		for _, v := range enum {
-			if value == v {
+			if reflect.DeepEqual(v, value) {
 				return
 			}
 		}
@@ -909,9 +924,17 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 			}
 		}
 
-		ok := 0
-		validationErrors := []error{}
-		for _, item := range v {
+		var (
+			ok               = 0
+			validationErrors = []error{}
+			matchedOneOfIdx  = 0
+			tempValue        = value
+		)
+		// make a deep copy to protect origin value from being injected default value that defined in mismatched oneOf schema
+		if settings.asreq || settings.asrep {
+			tempValue = deepcopy.Copy(value)
+		}
+		for idx, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
@@ -921,11 +944,12 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				continue
 			}
 
-			if err := v.visitJSON(settings, value); err != nil {
+			if err := v.visitJSON(settings, tempValue); err != nil {
 				validationErrors = append(validationErrors, err)
 				continue
 			}
 
+			matchedOneOfIdx = idx
 			ok++
 		}
 
@@ -956,17 +980,30 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 
 			return e
 		}
+
+		if settings.asreq || settings.asrep {
+			_ = v[matchedOneOfIdx].Value.visitJSON(settings, value)
+		}
 	}
 
 	if v := schema.AnyOf; len(v) > 0 {
-		ok := false
-		for _, item := range v {
+		var (
+			ok              = false
+			matchedAnyOfIdx = 0
+			tempValue       = value
+		)
+		// make a deep copy to protect origin value from being injected default value that defined in mismatched anyOf schema
+		if settings.asreq || settings.asrep {
+			tempValue = deepcopy.Copy(value)
+		}
+		for idx, item := range v {
 			v := item.Value
 			if v == nil {
 				return foundUnresolvedRef(item.Ref)
 			}
-			if err := v.visitJSON(settings, value); err == nil {
+			if err := v.visitJSON(settings, tempValue); err == nil {
 				ok = true
+				matchedAnyOfIdx = idx
 				break
 			}
 		}
@@ -980,6 +1017,8 @@ func (schema *Schema) visitSetOperations(settings *schemaValidationSettings, val
 				SchemaField: "anyOf",
 			}
 		}
+
+		_ = v[matchedAnyOfIdx].Value.visitJSON(settings, value)
 	}
 
 	for _, item := range schema.AllOf {
@@ -1410,20 +1449,37 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		return schema.expectedType(settings, TypeObject)
 	}
 
+	var me MultiError
+
 	if settings.asreq || settings.asrep {
-		for propName, propSchema := range schema.Properties {
+		properties := make([]string, 0, len(schema.Properties))
+		for propName := range schema.Properties {
+			properties = append(properties, propName)
+		}
+		sort.Strings(properties)
+		for _, propName := range properties {
+			propSchema := schema.Properties[propName]
+			reqRO := settings.asreq && propSchema.Value.ReadOnly
+			repWO := settings.asrep && propSchema.Value.WriteOnly
+
 			if value[propName] == nil {
-				if dlft := propSchema.Value.Default; dlft != nil {
+				if dlft := propSchema.Value.Default; dlft != nil && !reqRO && !repWO {
 					value[propName] = dlft
 					if f := settings.defaultsSet; f != nil {
 						settings.onceSettingDefaults.Do(f)
 					}
 				}
 			}
+
+			if value[propName] != nil {
+				if reqRO {
+					me = append(me, fmt.Errorf("readOnly property %q in request", propName))
+				} else if repWO {
+					me = append(me, fmt.Errorf("writeOnly property %q in response", propName))
+				}
+			}
 		}
 	}
-
-	var me MultiError
 
 	// "properties"
 	properties := schema.Properties
@@ -1468,7 +1524,13 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	if ref := schema.AdditionalProperties; ref != nil {
 		additionalProperties = ref.Value
 	}
-	for k, v := range value {
+	keys := make([]string, 0, len(value))
+	for k := range value {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := value[k]
 		if properties != nil {
 			propertyRef := properties[k]
 			if propertyRef != nil {

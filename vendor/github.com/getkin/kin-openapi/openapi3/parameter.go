@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 
 	"github.com/go-openapi/jsonpointer"
@@ -70,8 +71,8 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 // Validate returns an error if Parameters does not comply with the OpenAPI spec.
 func (parameters Parameters) Validate(ctx context.Context) error {
 	dupes := make(map[string]struct{})
-	for _, item := range parameters {
-		if v := item.Value; v != nil {
+	for _, parameterRef := range parameters {
+		if v := parameterRef.Value; v != nil {
 			key := v.In + ":" + v.Name
 			if _, ok := dupes[key]; ok {
 				return fmt.Errorf("more than one %q parameter has name %q", v.In, v.Name)
@@ -79,7 +80,7 @@ func (parameters Parameters) Validate(ctx context.Context) error {
 			dupes[key] = struct{}{}
 		}
 
-		if err := item.Validate(ctx); err != nil {
+		if err := parameterRef.Validate(ctx); err != nil {
 			return err
 		}
 	}
@@ -317,19 +318,26 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 		if parameter.Example != nil && parameter.Examples != nil {
 			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
 		}
-		if validationOpts := getValidationOptions(ctx); validationOpts.ExamplesValidationDisabled {
+
+		if vo := getValidationOptions(ctx); vo.ExamplesValidationDisabled {
 			return nil
 		}
 		if example := parameter.Example; example != nil {
-			if err := validateExampleValue(example, schema.Value); err != nil {
-				return err
+			if err := validateExampleValue(ctx, example, schema.Value); err != nil {
+				return fmt.Errorf("invalid example: %w", err)
 			}
 		} else if examples := parameter.Examples; examples != nil {
-			for k, v := range examples {
+			names := make([]string, 0, len(examples))
+			for name := range examples {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, k := range names {
+				v := examples[k]
 				if err := v.Validate(ctx); err != nil {
 					return fmt.Errorf("%s: %w", k, err)
 				}
-				if err := validateExampleValue(v.Value.Value, schema.Value); err != nil {
+				if err := validateExampleValue(ctx, v.Value.Value, schema.Value); err != nil {
 					return fmt.Errorf("%s: %w", k, err)
 				}
 			}
