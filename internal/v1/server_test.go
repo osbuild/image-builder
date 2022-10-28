@@ -535,7 +535,7 @@ func TestGetComposes(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 3, result.Meta.Count)
-	require.Equal(t, composeEntry.CreatedAt.String(), result.Data[0].CreatedAt)
+	require.Equal(t, composeEntry.CreatedAt.Format(time.RFC3339), result.Data[0].CreatedAt)
 	require.Equal(t, UUIDTest, result.Data[0].Id)
 }
 

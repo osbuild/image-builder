@@ -363,7 +363,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	var data []ComposesResponseItem
 	for _, c := range composes {
 		data = append(data, ComposesResponseItem{
-			CreatedAt: c.CreatedAt.String(),
+			CreatedAt: c.CreatedAt.Format(time.RFC3339),
 			Id:        c.Id.String(),
 			ImageName: c.ImageName,
 			Request:   c.Request,
@@ -881,7 +881,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId string, params G
 		data = append(data, ClonesResponseItem{
 			Id:        c.Id.String(),
 			Request:   c.Request,
-			CreatedAt: c.CreatedAt.String(),
+			CreatedAt: c.CreatedAt.Format(time.RFC3339),
 		})
 	}
 
