@@ -18,6 +18,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	ComposeRunningOrFailedError = "IMAGE-BUILDER-COMPOSER-31"
+)
+
 func (h *Handlers) GetVersion(ctx echo.Context) error {
 	version := Version{h.server.spec.Info.Version}
 	return ctx.JSON(http.StatusOK, version)
@@ -780,6 +784,9 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
 		err = json.NewDecoder(resp.Body).Decode(&cError)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to parse error returned by image-builder-composer service")
+		}
+		if cError.Code == ComposeRunningOrFailedError {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("image-builder-composer compose failed: %s", cError.Reason))
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("image-builder-composer service returned an error: %s", cError.Reason))
 	}
