@@ -110,10 +110,11 @@ type AzureUploadOptions struct {
 	// generated.
 	ImageName *string `json:"image_name,omitempty"`
 
-	// Location where the image should be uploaded and registered.
+	// Location of the provided resource_group, where the image should be uploaded and registered.
 	// How to list all locations:
 	// https://docs.microsoft.com/en-us/cli/azure/account?view=azure-cli-latest#az_account_list_locations'
-	Location string `json:"location"`
+	// If the location is not specified, it is deducted from the provided resource_group.
+	Location *string `json:"location,omitempty"`
 
 	// Name of the resource group where the image should be uploaded.
 	ResourceGroup string `json:"resource_group"`
