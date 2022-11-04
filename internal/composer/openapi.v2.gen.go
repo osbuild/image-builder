@@ -110,10 +110,11 @@ type AzureUploadOptions struct {
 	// generated.
 	ImageName *string `json:"image_name,omitempty"`
 
-	// Location where the image should be uploaded and registered.
+	// Location of the provided resource_group, where the image should be uploaded and registered.
 	// How to list all locations:
 	// https://docs.microsoft.com/en-us/cli/azure/account?view=azure-cli-latest#az_account_list_locations'
-	Location string `json:"location"`
+	// If the location is not specified, it is deducted from the provided resource_group.
+	Location *string `json:"location,omitempty"`
 
 	// Name of the resource group where the image should be uploaded.
 	ResourceGroup string `json:"resource_group"`
@@ -392,10 +393,19 @@ type List struct {
 
 // OSTree defines model for OSTree.
 type OSTree struct {
+	// A URL which, if set, is used for fetching content. Implies that `url` is set as well,
+	// which will be used for metadata only.
+	Contenturl *string `json:"contenturl,omitempty"`
+
 	// Can be either a commit (example: 02604b2da6e954bd34b8b82a835e5a77d2b60ffa), or a branch-like reference (example: rhel/8/x86_64/edge)
 	Parent *string `json:"parent,omitempty"`
 	Ref    *string `json:"ref,omitempty"`
-	Url    *string `json:"url,omitempty"`
+
+	// Determines whether a valid subscription manager (candlepin) identity is required to
+	// access this repository. Consumer certificates will be used as client certificates when
+	// fetching metadata and content.
+	Rhsm *bool   `json:"rhsm,omitempty"`
+	Url  *string `json:"url,omitempty"`
 }
 
 // ObjectReference defines model for ObjectReference.
