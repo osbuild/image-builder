@@ -645,15 +645,11 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 
 	cloudOptions := new(composer.OSTree)
 	if ostreeOptions != nil {
-		if ref := ostreeOptions.Ref; ref != nil {
-			cloudOptions.Ref = ref
-		}
-		if url := ostreeOptions.Url; url != nil {
-			cloudOptions.Url = url
-		}
-		if parent := ostreeOptions.Parent; parent != nil {
-			cloudOptions.Parent = parent
-		}
+		cloudOptions.Ref = ostreeOptions.Ref
+		cloudOptions.Url = ostreeOptions.Url
+		cloudOptions.Contenturl = ostreeOptions.Contenturl
+		cloudOptions.Parent = ostreeOptions.Parent
+		cloudOptions.Rhsm = ostreeOptions.Rhsm
 	}
 	return cloudOptions
 }
