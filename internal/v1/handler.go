@@ -626,13 +626,13 @@ func (h *Handlers) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer
 		if err != nil {
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into AzureUploadRequestOptions")
 		}
-		return composer.AzureUploadOptions{
+		uploadOptions := composer.AzureUploadOptions{
 			TenantId:       azureOptions.TenantId,
 			SubscriptionId: azureOptions.SubscriptionId,
 			ResourceGroup:  azureOptions.ResourceGroup,
-			Location:       h.server.azure.Location,
 			ImageName:      azureOptions.ImageName,
-		}, composerImageType, nil
+		}
+		return uploadOptions, composerImageType, nil
 	default:
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
 	}

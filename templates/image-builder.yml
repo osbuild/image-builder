@@ -157,9 +157,6 @@ objects:
               value: "${OSBUILD_GCP_REGION}"
             - name: OSBUILD_GCP_BUCKET
               value: "${OSBUILD_GCP_BUCKET}"
-            # Azure target specific variables passed to composer
-            - name: OSBUILD_AZURE_LOCATION
-              value: "${OSBUILD_AZURE_LOCATION}"
             - name: ALLOWED_ORG_IDS
               value: "${ALLOWED_ORG_IDS}"
             - name: ALLOWED_ACCOUNT_NUMBERS
@@ -368,9 +365,6 @@ parameters:
   - name: OSBUILD_GCP_BUCKET
     description: Bucket in GCP to upload to
     value: "image-upload-bkt-us"
-  - name: OSBUILD_AZURE_LOCATION
-    description: Location in Azure to upload to
-    value: "eastus"
   - name: PGSSLMODE
     description: Sslmode for the connection to psql
     value: "require"
