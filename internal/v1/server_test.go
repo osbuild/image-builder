@@ -1232,9 +1232,11 @@ func TestComposeCustomizations(t *testing.T) {
 						Architecture: "x86_64",
 						ImageType:    ImageTypesRhelEdgeCommit,
 						Ostree: &OSTree{
-							Ref:    strptr("test/edge/ref"),
-							Url:    strptr("https://ostree.srv/"),
-							Parent: strptr("test/edge/ref2"),
+							Ref:        strptr("test/edge/ref"),
+							Url:        strptr("https://ostree.srv/"),
+							Contenturl: strptr("https://ostree.srv/content"),
+							Parent:     strptr("test/edge/ref2"),
+							Rhsm:       common.BoolToPtr(true),
 						},
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesAwsS3,
@@ -1261,9 +1263,11 @@ func TestComposeCustomizations(t *testing.T) {
 					Architecture: "x86_64",
 					ImageType:    composer.ImageTypesEdgeCommit,
 					Ostree: &composer.OSTree{
-						Ref:    strptr("test/edge/ref"),
-						Url:    strptr("https://ostree.srv/"),
-						Parent: strptr("test/edge/ref2"),
+						Ref:        strptr("test/edge/ref"),
+						Url:        strptr("https://ostree.srv/"),
+						Contenturl: strptr("https://ostree.srv/content"),
+						Parent:     strptr("test/edge/ref2"),
+						Rhsm:       common.BoolToPtr(true),
 					},
 					Repositories: []composer.Repository{
 
