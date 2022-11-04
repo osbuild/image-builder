@@ -17,7 +17,6 @@ type ImageBuilderConfig struct {
 	OsbuildRegion        string `env:"OSBUILD_AWS_REGION"`
 	OsbuildGCPRegion     string `env:"OSBUILD_GCP_REGION"`
 	OsbuildGCPBucket     string `env:"OSBUILD_GCP_BUCKET"`
-	OsbuildAzureLocation string `env:"OSBUILD_AZURE_LOCATION"`
 	DistributionsDir     string `env:"DISTRIBUTIONS_DIR"`
 	MigrationsDir        string `env:"MIGRATIONS_DIR"`
 	TernExecutable       string `env:"TERN_EXECUTABLE"`

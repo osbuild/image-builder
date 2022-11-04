@@ -56,7 +56,6 @@ sudo podman run -d --pull=never --security-opt "label=disable" --net=host \
      -e OSBUILD_AWS_REGION="${AWS_REGION:-}" \
      -e OSBUILD_GCP_REGION="${GCP_REGION:-}" \
      -e OSBUILD_GCP_BUCKET="${GCP_BUCKET:-}" \
-     -e OSBUILD_AZURE_LOCATION="${AZURE_LOCATION:-}" \
      -e PGHOST=localhost -e PGPORT=5432 -e PGDATABASE=imagebuilder \
      -e PGUSER=postgres -e PGPASSWORD=foobar \
      -e ALLOWED_ORG_IDS="000000" \

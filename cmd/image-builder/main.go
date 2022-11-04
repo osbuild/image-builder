@@ -64,10 +64,6 @@ func main() {
 		Bucket: conf.OsbuildGCPBucket,
 	}
 
-	azure := v1.AzureConfig{
-		Location: conf.OsbuildAzureLocation,
-	}
-
 	adr, err := distribution.LoadDistroRegistry(conf.DistributionsDir)
 	if err != nil {
 		panic(err)
@@ -78,7 +74,7 @@ func main() {
 	}
 
 	echoServer := echo.New()
-	err = v1.Attach(echoServer, client, dbase, aws, gcp, azure, conf.QuotaFile, conf.AllowFile, adr)
+	err = v1.Attach(echoServer, client, dbase, aws, gcp, conf.QuotaFile, conf.AllowFile, adr)
 	if err != nil {
 		panic(err)
 	}
