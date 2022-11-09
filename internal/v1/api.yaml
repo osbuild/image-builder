@@ -470,6 +470,7 @@ components:
         - rhel-84
         - rhel-85
         - rhel-86
+        - rhel-87
         - rhel-9
         - rhel-90
         - centos-8
