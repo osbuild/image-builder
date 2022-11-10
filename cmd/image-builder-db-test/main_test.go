@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"strings"
 	"testing"
 	"time"
 
@@ -34,7 +33,6 @@ func conf(t *testing.T) *config.ImageBuilderConfig {
 	c := config.ImageBuilderConfig{
 		ListenAddress:     "unused",
 		LogLevel:          "INFO",
-		MigrationsDir:     "/usr/share/image-builder/migrations",
 		TernMigrationsDir: "/usr/share/image-builder/migrations-tern",
 		PGHost:            "localhost",
 		PGPort:            "5432",
@@ -53,20 +51,6 @@ func conf(t *testing.T) *config.ImageBuilderConfig {
 func connStr(t *testing.T) string {
 	c := conf(t)
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", c.PGUser, c.PGPassword, c.PGHost, c.PGPort, c.PGDatabase, c.PGSSLMode)
-}
-
-func migrateOneStep(t *testing.T) {
-	c := conf(t)
-
-	err := db.MigrateSteps(connStr(t), c.MigrationsDir, 1)
-	require.NoError(t, err)
-}
-
-func migrateUp(t *testing.T) {
-	c := conf(t)
-
-	err := db.Migrate(connStr(t), c.MigrationsDir)
-	require.NoError(t, err)
 }
 
 func migrateTern(t *testing.T) {
@@ -95,115 +79,6 @@ func tearDown(t *testing.T) {
 	conn.Exec(context.Background(), "drop table composes")
 	conn.Exec(context.Background(), "drop table if exists schema_migrations")
 	conn.Exec(context.Background(), "drop table if exists schema_version")
-}
-
-func testMigration(t *testing.T) {
-	defer tearDown(t) // tear-down cleanup the database
-
-	migrateOneStep(t) //migrate to step 1
-
-	conn := connect(t)
-	defer conn.Close(context.Background())
-	insert := "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-	_, err := conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, ORGID1)
-	require.NoError(t, err)
-
-	migrateOneStep(t) // migrate to step 2
-
-	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR2, ORGID2)
-	require.NoError(t, err)
-
-	// inserting data referring to account_id should fail after migration step 2
-	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, ORGID1)
-	require.Error(t, err)
-
-	migrateOneStep(t) // migrate to step 3
-
-	// Verify that after migration step 3 adding a compose request to the db requires a non empty account number.
-	insert = "INSERT INTO composes(job_id, request, created_at, account_id, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", "", ORGID1)
-	require.Error(t, err)
-
-	migrateOneStep(t) // migrate to step 4
-
-	imageName := "MyImageName"
-
-	// inserting image_name should succeed
-	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID3, &imageName)
-	require.NoError(t, err)
-
-	// inserting empty image_name should succeed
-	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID3, nil)
-	require.NoError(t, err)
-
-	migrateOneStep(t) // migrate to step 5
-
-	// inserting image_name with length > 101 should fail
-	imageNameInvalid := strings.Repeat("a", 101)
-
-	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, ORGID1, &imageNameInvalid)
-
-	migrateOneStep(t) // migrate to step 6
-
-	// Verify that after migration step 6 adding a compose request to the db requires a non empty org_id.
-	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR1, "")
-	require.Error(t, err)
-
-	// migration 7 alters the data type of the request column, make sure jsonb is queryable after
-	composeId7 := uuid.New().String()
-	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, composeId7, `
-{
-  "customizations": {
-  },
-  "distribution": "rhel-8",
-  "image_requests": [
-    {
-      "architecture": "x86_64",
-      "image_type": "guest-image",
-      "upload_request": {
-        "type": "aws.s3",
-        "options": {
-        }
-      }
-    }
-  ]
-}
-`, ANR1, ORGID1)
-	require.NoError(t, err)
-	migrateOneStep(t) // migrate to step 7
-
-	migrateOneStep(t) // migrate to step 8
-
-	// make sure migrating a fully migrated db doesn't error out
-	migrateUp(t)
-
-	// make sure tern migration on top a fully migrated golang-migrate db succeeds
-	migrateTern(t)
-
-	// Check data inserted at migration step 1 and 2 are still accessible
-	d, err := db.InitDBConnectionPool(connStr(t))
-	_, count, err := d.GetComposes(ORGID1, fortnight, 100, 0)
-	require.NoError(t, err)
-	require.Equal(t, 2, count)
-	_, count, err = d.GetComposes(ORGID2, fortnight, 100, 0)
-	require.NoError(t, err)
-	require.Equal(t, 1, count)
-
-	// check that the image names are as expected
-	composeEntries, count, err := d.GetComposes(ORGID3, fortnight, 100, 0)
-	require.Nil(t, composeEntries[0].ImageName)
-	require.Equal(t, imageName, *composeEntries[1].ImageName)
-
-	it, err := d.GetComposeImageType(composeId7, ORGID1)
-	require.NoError(t, err)
-	require.Equal(t, "guest-image", it)
 }
 
 func testInsertCompose(t *testing.T) {
@@ -439,9 +314,6 @@ func testClones(t *testing.T) {
 }
 
 func TestMain(t *testing.T) {
-	tearDown(t)
-	testMigration(t)
-
 	fns := []func(*testing.T){
 		testInsertCompose,
 		testGetCompose,
@@ -449,15 +321,7 @@ func TestMain(t *testing.T) {
 		testGetComposeImageType,
 		testClones,
 	}
-	// run remaining tests with golang-migrate + tern migration
-	for _, f := range fns {
-		migrateUp(t)
-		migrateTern(t)
-		f(t)
-		tearDown(t)
-	}
 
-	// run remaining tests with just tern migration
 	for _, f := range fns {
 		migrateTern(t)
 		f(t)
