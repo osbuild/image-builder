@@ -86,8 +86,37 @@ func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), noAssociateAccounts, s.ValidateRequest, common.PrometheusMW), &h)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), noAssociateAccounts, s.ValidateRequest, common.PrometheusMW), &h)
+
+	genericPaths := makeGenericPaths(spec.Paths)
+	majorRoutePrefix := fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion)
+	ocmMiddleware := ocmPrometheusMiddleware(majorRoutePrefix, genericPaths)
+	RegisterHandlers(
+		s.echo.Group(
+			majorRoutePrefix,
+			echo.WrapMiddleware(identity.Extractor),
+			echo.WrapMiddleware(identity.BasePolicy),
+			noAssociateAccounts,
+			s.ValidateRequest,
+			common.PrometheusMW,
+			ocmMiddleware,
+		),
+		&h,
+	)
+
+	minorRoutePrefix := fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)
+	ocmMiddleware = ocmPrometheusMiddleware(minorRoutePrefix, genericPaths)
+	RegisterHandlers(
+		s.echo.Group(
+			minorRoutePrefix,
+			echo.WrapMiddleware(identity.Extractor),
+			echo.WrapMiddleware(identity.BasePolicy),
+			noAssociateAccounts,
+			s.ValidateRequest,
+			common.PrometheusMW,
+			ocmMiddleware,
+		),
+		&h,
+	)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
