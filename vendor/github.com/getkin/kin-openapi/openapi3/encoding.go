@@ -3,6 +3,7 @@ package openapi3
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
@@ -10,7 +11,7 @@ import (
 // Encoding is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encodingObject
 type Encoding struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	ContentType   string  `json:"contentType,omitempty" yaml:"contentType,omitempty"`
 	Headers       Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -69,7 +70,14 @@ func (encoding *Encoding) Validate(ctx context.Context) error {
 	if encoding == nil {
 		return nil
 	}
-	for k, v := range encoding.Headers {
+
+	headers := make([]string, 0, len(encoding.Headers))
+	for k := range encoding.Headers {
+		headers = append(headers, k)
+	}
+	sort.Strings(headers)
+	for _, k := range headers {
+		v := encoding.Headers[k]
 		if err := ValidateIdentifier(k); err != nil {
 			return nil
 		}
@@ -88,7 +96,6 @@ func (encoding *Encoding) Validate(ctx context.Context) error {
 		sm.Style == SerializationPipeDelimited && sm.Explode,
 		sm.Style == SerializationPipeDelimited && !sm.Explode,
 		sm.Style == SerializationDeepObject && sm.Explode:
-		// it is a valid
 	default:
 		return fmt.Errorf("serialization method with style=%q and explode=%v is not supported by media type", sm.Style, sm.Explode)
 	}

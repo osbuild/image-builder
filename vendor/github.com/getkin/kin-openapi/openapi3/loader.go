@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,7 @@ import (
 )
 
 var CircularReferenceError = "kin-openapi bug found: circular schema reference not handled"
+var CircularReferenceCounter = 3
 
 func foundUnresolvedRef(ref string) error {
 	return fmt.Errorf("found unresolved ref: %q", ref)
@@ -35,7 +37,8 @@ type Loader struct {
 
 	Context context.Context
 
-	rootDir string
+	rootDir      string
+	rootLocation string
 
 	visitedPathItemRefs map[string]struct{}
 
@@ -53,7 +56,9 @@ type Loader struct {
 
 // NewLoader returns an empty Loader
 func NewLoader() *Loader {
-	return &Loader{}
+	return &Loader{
+		Context: context.Background(),
+	}
 }
 
 func (loader *Loader) resetVisitedPathItemRefs() {
@@ -147,6 +152,7 @@ func (loader *Loader) LoadFromDataWithPath(data []byte, location *url.URL) (*T, 
 func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.URL) (*T, error) {
 	if loader.visitedDocuments == nil {
 		loader.visitedDocuments = make(map[string]*T)
+		loader.rootLocation = location.Path
 	}
 	uri := location.String()
 	if doc, ok := loader.visitedDocuments[uri]; ok {
@@ -208,11 +214,19 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 			return
 		}
 	}
-	for _, component := range components.Examples {
+
+	examples := make([]string, 0, len(components.Examples))
+	for name := range components.Examples {
+		examples = append(examples, name)
+	}
+	sort.Strings(examples)
+	for _, name := range examples {
+		component := components.Examples[name]
 		if err = loader.resolveExampleRef(doc, component, location); err != nil {
 			return
 		}
 	}
+
 	for _, component := range components.Callbacks {
 		if err = loader.resolveCallbackRef(doc, component, location); err != nil {
 			return
@@ -411,6 +425,11 @@ func (loader *Loader) documentPathForRecursiveRef(current *url.URL, resolvedRef 
 	if loader.rootDir == "" {
 		return current
 	}
+
+	if resolvedRef == "" {
+		return &url.URL{Path: loader.rootLocation}
+	}
+
 	return &url.URL{Path: path.Join(loader.rootDir, resolvedRef)}
 }
 
@@ -587,7 +606,13 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	}
 
 	for _, contentType := range value.Content {
-		for name, example := range contentType.Examples {
+		examples := make([]string, 0, len(contentType.Examples))
+		for name := range contentType.Examples {
+			examples = append(examples, name)
+		}
+		sort.Strings(examples)
+		for _, name := range examples {
+			example := contentType.Examples[name]
 			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
 				return err
 			}
@@ -651,7 +676,13 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		if contentType == nil {
 			continue
 		}
-		for name, example := range contentType.Examples {
+		examples := make([]string, 0, len(contentType.Examples))
+		for name := range contentType.Examples {
+			examples = append(examples, name)
+		}
+		sort.Strings(examples)
+		for _, name := range examples {
+			example := contentType.Examples[name]
 			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
 				return err
 			}
@@ -696,7 +727,7 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			}
 			component.Value = &schema
 		} else {
-			if visitedLimit(visited, ref, 3) {
+			if visitedLimit(visited, ref) {
 				visited = append(visited, ref)
 				return fmt.Errorf("%s - %s", CircularReferenceError, strings.Join(visited, " -> "))
 			}
@@ -711,9 +742,16 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				return err
 			}
 			component.Value = resolved.Value
-			foundPath := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
+			foundPath, rerr := loader.getResolvedRefPath(ref, &resolved, documentPath, componentPath)
+			if rerr != nil {
+				return fmt.Errorf("failed to resolve file from reference %q: %w", ref, rerr)
+			}
 			documentPath = loader.documentPathForRecursiveRef(documentPath, foundPath)
 		}
+		if loader.visitedSchema == nil {
+			loader.visitedSchema = make(map[*Schema]struct{})
+		}
+		loader.visitedSchema[component.Value] = struct{}{}
 	}
 	value := component.Value
 	if value == nil {
@@ -759,19 +797,28 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 	return nil
 }
 
-func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, found *url.URL) string {
+func (loader *Loader) getResolvedRefPath(ref string, resolved *SchemaRef, cur, found *url.URL) (string, error) {
 	if referencedFilename := strings.Split(ref, "#")[0]; referencedFilename == "" {
 		if cur != nil {
-			return path.Base(cur.Path)
+			if loader.rootDir != "" && strings.HasPrefix(cur.Path, loader.rootDir) {
+				return cur.Path[len(loader.rootDir)+1:], nil
+			}
+
+			return path.Base(cur.Path), nil
 		}
-		return ""
+		return "", nil
 	}
 	// ref. to external file
 	if resolved.Ref != "" {
-		return resolved.Ref
+		return resolved.Ref, nil
 	}
+
+	if loader.rootDir == "" {
+		return found.Path, nil
+	}
+
 	// found dest spec. file
-	return path.Dir(found.Path)[len(loader.rootDir):]
+	return filepath.Rel(loader.rootDir, found.Path)
 }
 
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
@@ -1056,12 +1103,12 @@ func unescapeRefString(ref string) string {
 	return strings.Replace(strings.Replace(ref, "~1", "/", -1), "~0", "~", -1)
 }
 
-func visitedLimit(visited []string, ref string, limit int) bool {
+func visitedLimit(visited []string, ref string) bool {
 	visitedCount := 0
 	for _, v := range visited {
 		if v == ref {
 			visitedCount++
-			if visitedCount >= limit {
+			if visitedCount >= CircularReferenceCounter {
 				return true
 			}
 		}
