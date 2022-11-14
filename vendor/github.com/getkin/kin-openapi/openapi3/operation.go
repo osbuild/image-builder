@@ -14,7 +14,7 @@ import (
 // Operation represents "operation" specified by" OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 type Operation struct {
-	ExtensionProps
+	ExtensionProps `json:"-" yaml:"-"`
 
 	// Optional tags for documentation.
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
@@ -133,11 +133,13 @@ func (operation *Operation) Validate(ctx context.Context) error {
 			return err
 		}
 	}
+
 	if v := operation.RequestBody; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
 		}
 	}
+
 	if v := operation.Responses; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return err
@@ -145,10 +147,12 @@ func (operation *Operation) Validate(ctx context.Context) error {
 	} else {
 		return errors.New("value of responses must be an object")
 	}
+
 	if v := operation.ExternalDocs; v != nil {
 		if err := v.Validate(ctx); err != nil {
 			return fmt.Errorf("invalid external docs: %w", err)
 		}
 	}
+
 	return nil
 }
