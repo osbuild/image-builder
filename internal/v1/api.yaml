@@ -473,6 +473,7 @@ components:
         - rhel-87
         - rhel-9
         - rhel-90
+        - rhel-91
         - centos-8
         - centos-9
         - fedora-35
