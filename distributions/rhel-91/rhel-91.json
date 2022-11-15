@@ -1,0 +1,29 @@
+{
+  "module_platform_id": "platform:el9",
+  "distribution": {
+    "name": "rhel-91",
+    "description": "Red Hat Enterprise Linux (RHEL) 9"
+  },
+  "x86_64": {
+    "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "vsphere" ],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel9/9.1/x86_64/baseos/os",
+      "rhsm": true
+    }, {
+      "id": "appstream",
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel9/9.1/x86_64/appstream/os",
+      "rhsm": true
+    }, {
+      "id": "google-compute-engine",
+      "baseurl": "https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable",
+      "rhsm": false,
+      "image_type_tags": ["gcp"]
+    }, {
+      "id": "google-cloud-sdk",
+      "baseurl": "https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64",
+      "rhsm": false,
+      "image_type_tags": ["gcp"]
+    }]
+  }
+}
