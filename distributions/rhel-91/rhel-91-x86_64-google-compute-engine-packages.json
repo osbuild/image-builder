@@ -1,0 +1,30 @@
+[
+  {
+    "name": "gce-disk-expand",
+    "summary": "Google Compute Engine root disk expansion module"
+  },
+  {
+    "name": "google-compute-engine",
+    "summary": "Google Compute Engine guest environment."
+  },
+  {
+    "name": "google-compute-engine-oslogin",
+    "summary": "OS Login Functionality for Google Compute Engine"
+  },
+  {
+    "name": "google-guest-agent",
+    "summary": "Google Compute Engine guest agent."
+  },
+  {
+    "name": "google-osconfig-agent",
+    "summary": "Google Compute Engine guest environment."
+  },
+  {
+    "name": "google-rhui-client-rhel9",
+    "summary": "RHUI config for GCE"
+  },
+  {
+    "name": "google-rhui-client-rhel9-ha",
+    "summary": "RHUI config for GCE (HA repo)"
+  }
+]
