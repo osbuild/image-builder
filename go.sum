@@ -354,8 +354,8 @@ github.com/prometheus/procfs v0.6.0/go.mod h1:cz+aTbrPOrUb4q7XlbU9ygM+/jj0fzG6c1
 github.com/prometheus/procfs v0.7.3/go.mod h1:cz+aTbrPOrUb4q7XlbU9ygM+/jj0fzG6c1xBZuNvfVA=
 github.com/prometheus/procfs v0.8.0 h1:ODq8ZFEaYeCaZOJlZZdJA2AbQR98dSHSM1KW/You5mo=
 github.com/prometheus/procfs v0.8.0/go.mod h1:z7EfXMXOkbkqb9IINtpCn86r/to3BnA0uaxHdg830/4=
-github.com/redhatinsights/app-common-go v1.6.3 h1:HhjDKLBqQM5i8Ii58WLi5hG+lTNaKgpAEnJ2vdVUJtw=
-github.com/redhatinsights/app-common-go v1.6.3/go.mod h1:6gzRyg8ZyejwMCksukeAhh2ZXOB3uHSmBsbP06fG2PQ=
+github.com/redhatinsights/app-common-go v1.6.4 h1:L6xhROlGEXN4zvw51whl+ZxtMN1fcs3yj0Gz5A8AVXw=
+github.com/redhatinsights/app-common-go v1.6.4/go.mod h1:6gzRyg8ZyejwMCksukeAhh2ZXOB3uHSmBsbP06fG2PQ=
 github.com/redhatinsights/identity v0.0.0-20220426090913-8179bb5bfb20 h1:B2sqgQ+IOFPY9zcQHbwGcOZYGcFHuBJTP5mQMEZeNKs=
 github.com/redhatinsights/identity v0.0.0-20220426090913-8179bb5bfb20/go.mod h1:B0Dwuuaghxyqo8ltmLZyLpKQFKU6r8cE2YRrO0bVdXM=
 github.com/redhatinsights/platform-go-middlewares v0.20.0 h1:qwK9ArGYRlORsZ56PXXLJrGvzTsMe3bk2lR+WN5aIjM=

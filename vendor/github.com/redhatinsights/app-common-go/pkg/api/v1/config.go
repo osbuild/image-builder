@@ -41,7 +41,6 @@ func IsClowderEnabled() bool {
 
 func init() {
 	if !IsClowderEnabled() {
-		fmt.Println("Clowder is not enabled, skipping init...")
 		return
 	}
 	loadedConfig, err := loadConfig(os.Getenv("ACG_CONFIG"))

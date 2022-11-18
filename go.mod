@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/labstack/echo/v4 v4.9.0
 	github.com/prometheus/client_golang v1.13.0
-	github.com/redhatinsights/app-common-go v1.6.3
+	github.com/redhatinsights/app-common-go v1.6.4
 	github.com/redhatinsights/identity v0.0.0-20220426090913-8179bb5bfb20
 	github.com/redhatinsights/platform-go-middlewares v0.20.0
 	github.com/sirupsen/logrus v1.9.0
