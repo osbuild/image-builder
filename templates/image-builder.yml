@@ -416,10 +416,10 @@ parameters:
     value: 'false'
   - name: FLOORIST_DB_SECRET_NAME
     description: Name of the secret for accessing the database for floorist
-    value: ""
+    value: "image-builder-db"
   - name: FLOORIST_BUCKET_SECRET_NAME
     description: Name of the secret for accessing the bucket for the floorist data dump
-    value: ""
+    value: "floorist-bucket"
   - name: FLOORIST_QUERY_PREFIX
     description: Prefix for separating query data between prod and stage in the bucket
     value: "image-builder"
