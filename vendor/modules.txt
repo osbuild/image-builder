@@ -161,7 +161,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/redhatinsights/app-common-go v1.6.3
+# github.com/redhatinsights/app-common-go v1.6.4
 ## explicit; go 1.17
 github.com/redhatinsights/app-common-go/pkg/api/v1
 # github.com/redhatinsights/identity v0.0.0-20220426090913-8179bb5bfb20
