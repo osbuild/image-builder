@@ -36,6 +36,7 @@ const (
 	ImageTypesAwsSapRhui     ImageTypes = "aws-sap-rhui"
 	ImageTypesAzure          ImageTypes = "azure"
 	ImageTypesAzureRhui      ImageTypes = "azure-rhui"
+	ImageTypesAzureSapRhui   ImageTypes = "azure-sap-rhui"
 	ImageTypesEdgeCommit     ImageTypes = "edge-commit"
 	ImageTypesEdgeContainer  ImageTypes = "edge-container"
 	ImageTypesEdgeInstaller  ImageTypes = "edge-installer"
