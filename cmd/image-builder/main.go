@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 
-	err = logger.ConfigLogger(logrus.StandardLogger(), conf.LogLevel, conf.SyslogServer)
+	err = logger.ConfigLogger(logrus.StandardLogger(), conf.LogLevel)
 	if err != nil {
 		panic(err)
 	}

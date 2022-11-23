@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch"
 	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/syslog"
 )
 
 // If CW_AWS_ACCESS_KEY_ID is set in the environment it will assume that the
@@ -86,7 +85,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func ConfigLogger(log *logrus.Logger, level, syslog_server string) error {
+func ConfigLogger(log *logrus.Logger, level string) error {
 
 	// avoid configuring standard logger multiple times to avoid duplicate hooks
 	if stdLoggerConfigd && log == logrus.StandardLogger() {
@@ -110,15 +109,6 @@ func ConfigLogger(log *logrus.Logger, level, syslog_server string) error {
 	log.SetFormatter(&logrus.TextFormatter{
 		DisableColors: true,
 	})
-
-	if len(syslog_server) > 0 {
-		hook, err := syslog.NewSyslogHook("tcp", syslog_server, 0, "image-builder")
-		if err != nil {
-			return err
-		}
-
-		log.AddHook(hook)
-	}
 
 	if log == logrus.StandardLogger() {
 		stdLoggerConfigd = true
