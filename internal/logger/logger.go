@@ -86,7 +86,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func ConfigLogger(log *logrus.Logger, level, key, secret, region, group, syslog_server string) error {
+func ConfigLogger(log *logrus.Logger, level, syslog_server string) error {
 
 	// avoid configuring standard logger multiple times to avoid duplicate hooks
 	if stdLoggerConfigd && log == logrus.StandardLogger() {
@@ -107,23 +107,9 @@ func ConfigLogger(log *logrus.Logger, level, key, secret, region, group, syslog_
 	log.SetLevel(logLevel)
 	log.SetOutput(os.Stdout)
 	log.SetReportCaller(true)
-
-	if key != "" {
-		f := NewCloudwatchFormatter()
-		log.SetFormatter(f)
-		cred := credentials.NewStaticCredentials(key, secret, "")
-		awsconf := aws.NewConfig().WithRegion(region).WithCredentials(cred)
-		// avoid the cloudwatch sequence token to get out of sync using the unique hostname per pod
-		hook, err := cloudwatch.NewBatchingHook(group, f.Hostname, awsconf, 10*time.Second)
-		if err != nil {
-			return err
-		}
-		log.AddHook(hook)
-	} else {
-		log.SetFormatter(&logrus.TextFormatter{
-			DisableColors: true,
-		})
-	}
+	log.SetFormatter(&logrus.TextFormatter{
+		DisableColors: true,
+	})
 
 	if len(syslog_server) > 0 {
 		hook, err := syslog.NewSyslogHook("tcp", syslog_server, 0, "image-builder")
@@ -138,5 +124,19 @@ func ConfigLogger(log *logrus.Logger, level, key, secret, region, group, syslog_
 		stdLoggerConfigd = true
 	}
 
+	return nil
+}
+
+func AddCloudWatchHook(log *logrus.Logger, key, secret, region, group string) error {
+	f := NewCloudwatchFormatter()
+	log.SetFormatter(f)
+	cred := credentials.NewStaticCredentials(key, secret, "")
+	awsconf := aws.NewConfig().WithRegion(region).WithCredentials(cred)
+	// avoid the cloudwatch sequence token to get out of sync using the unique hostname per pod
+	hook, err := cloudwatch.NewBatchingHook(group, f.Hostname, awsconf, 10*time.Second)
+	if err != nil {
+		return err
+	}
+	log.AddHook(hook)
 	return nil
 }

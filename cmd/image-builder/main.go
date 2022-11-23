@@ -32,9 +32,16 @@ func main() {
 		panic(err)
 	}
 
-	err = logger.ConfigLogger(logrus.StandardLogger(), conf.LogLevel, conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup, conf.SyslogServer)
+	err = logger.ConfigLogger(logrus.StandardLogger(), conf.LogLevel, conf.SyslogServer)
 	if err != nil {
 		panic(err)
+	}
+
+	if conf.CwAccessKeyID != "" {
+		err = logger.AddCloudWatchHook(logrus.StandardLogger(), conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase, conf.PGSSLMode)

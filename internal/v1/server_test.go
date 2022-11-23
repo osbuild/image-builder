@@ -81,7 +81,7 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir str
 		Level:     logrus.DebugLevel,
 	}
 
-	err := logger.ConfigLogger(log, "DEBUG", "", "", "", "", "")
+	err := logger.ConfigLogger(log, "DEBUG", "")
 	require.NoError(t, err)
 
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
