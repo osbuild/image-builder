@@ -167,35 +167,20 @@ objects:
               value: "/app/config/quotas.json"
             - name: ALLOW_FILE
               value: "/app/config/allow_list.json"
-            - name: SYSLOG_SERVER
-              value: "localhost:5140"
-
-        - image: "quay.io/app-sre/fluentd-hec:1.2.13"
-          name: fluentd-sidecar
-          resources:
-            requests:
-              cpu: "${CPU_REQUEST}"
-              memory: "${MEMORY_REQUEST}"
-            limits:
-              cpu: "${CPU_REQUEST}"
-              memory: "${MEMORY_LIMIT}"
-          env:
             - name: SPLUNK_HEC_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: splunk
                   key: token
                   optional: false
-            - name: SPLUNK_HEC_URL
+            - name: SPLUNK_HEC_HOST
               valueFrom:
                 secretKeyRef:
                   name: splunk
                   key: url
                   optional: false
-          volumeMounts:
-            - name: fluentd-config
-              mountPath: /fluentd/etc
-              readOnly: true
+            - name: SPLUNK_HEC_PORT
+              value: "${SPLUNK_HECK_PORT}"
         volumes:
           - name: config-volume
             configMap:
@@ -205,9 +190,6 @@ objects:
                 path: quotas.json
               - key: allow_list.json
                 path: allow_list.json
-          - name: fluentd-config
-            configMap:
-              name: fluentd-config
         initContainers:
         - name: image-builder-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"
@@ -296,31 +278,6 @@ objects:
         targetPort: 8086
     selector:
       name: image-builder
-
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: fluentd-config
-  data:
-    fluent.conf: |
-      <source>
-        @type syslog
-        port 5140
-        bind 127.0.0.1
-        <transport tcp>
-        </transport>
-        tag image-builder
-        <parse>
-          time_format %Y-%m-%dT%H:%M:%SZ
-        </parse>
-      </source>
-
-      <match **>
-        @type splunk_hec
-        hec_host "#{ENV['SPLUNK_HEC_URL']}"
-        hec_port "${SPLUNK_HEC_PORT}"
-        hec_token "#{ENV['SPLUNK_HEC_TOKEN']}"
-      </match>
 
 - apiVersion: metrics.console.redhat.com/v1alpha1
   kind: FloorPlan
