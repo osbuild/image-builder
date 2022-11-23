@@ -44,6 +44,13 @@ func main() {
 		}
 	}
 
+	if conf.SplunkHost != "" {
+		err = logger.AddSplunkHook(logrus.StandardLogger(), conf.SplunkHost, conf.SplunkPort, conf.SplunkToken)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase, conf.PGSSLMode)
 	dbase, err := db.InitDBConnectionPool(connStr)
 	if err != nil {
