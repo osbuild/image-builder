@@ -140,3 +140,12 @@ func AddCloudWatchHook(log *logrus.Logger, key, secret, region, group string) er
 	log.AddHook(hook)
 	return nil
 }
+
+func AddSplunkHook(log *logrus.Logger, host, port, token string) error {
+	hook, err := NewSplunkHook(host, port, token, "image-builder")
+	if err != nil {
+		return err
+	}
+	log.AddHook(hook)
+	return nil
+}
