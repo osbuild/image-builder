@@ -19,7 +19,7 @@ func CreateLogger() *logrus.Logger {
 
 func TestNewLoggerDEBUG(t *testing.T) {
 	log := CreateLogger()
-	err := ConfigLogger(log, "DEBUG", "", "", "", "", "")
+	err := ConfigLogger(log, "DEBUG", "")
 
 	require.NoError(t, err)
 	require.Equal(t, logrus.DebugLevel, log.Level)
@@ -28,7 +28,7 @@ func TestNewLoggerDEBUG(t *testing.T) {
 
 func TestNewLoggerERROR(t *testing.T) {
 	log := CreateLogger()
-	err := ConfigLogger(log, "ERROR", "", "", "", "", "")
+	err := ConfigLogger(log, "ERROR", "")
 
 	require.NoError(t, err)
 	require.Equal(t, logrus.ErrorLevel, log.Level)
@@ -37,7 +37,7 @@ func TestNewLoggerERROR(t *testing.T) {
 
 func TestNewLoggerINFO(t *testing.T) {
 	log := CreateLogger()
-	err := ConfigLogger(log, "INFO", "", "", "", "", "")
+	err := ConfigLogger(log, "INFO", "")
 
 	require.NoError(t, err)
 	require.Equal(t, logrus.InfoLevel, log.Level)
@@ -46,7 +46,7 @@ func TestNewLoggerINFO(t *testing.T) {
 
 func TestNewLoggerUnknownLevel(t *testing.T) {
 	log := CreateLogger()
-	err := ConfigLogger(log, "DummyLevel", "", "", "", "", "")
+	err := ConfigLogger(log, "DummyLevel", "")
 
 	require.NoError(t, err)
 	require.Equal(t, logrus.InfoLevel, log.Level)
@@ -55,7 +55,9 @@ func TestNewLoggerUnknownLevel(t *testing.T) {
 
 func TestNewLoggerWithInvalidKeyAndSecret(t *testing.T) {
 	log := CreateLogger()
-	err := ConfigLogger(log, "DEBUG", "testKey", "testSecret", "us-east-1", "image-builder", "")
+	err := ConfigLogger(log, "DEBUG", "")
+	require.NoError(t, err)
+	err = AddCloudWatchHook(log, "testSecret", "us-east-1", "image-builder", "")
 
 	require.Error(t, err, "The security token included in the request is invalid")
 }
