@@ -180,7 +180,7 @@ objects:
                   key: url
                   optional: false
             - name: SPLUNK_HEC_PORT
-              value: "${SPLUNK_HECK_PORT}"
+              value: "${SPLUNK_HEC_PORT}"
         volumes:
           - name: config-volume
             configMap:
