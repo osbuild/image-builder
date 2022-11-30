@@ -91,6 +91,6 @@ func TestSplunkLogger(t *testing.T) {
 		ch <- true
 	}))
 	sl := NewSplunkLogger(srv.URL, "", "image-builder", "test-host")
-	sl.LogWithTime(time.Now(), "message")
+	require.NoError(t, sl.LogWithTime(time.Now(), "message"))
 	require.True(t, <-ch)
 }

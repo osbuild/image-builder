@@ -123,7 +123,7 @@ func (sl *SplunkLogger) SendPayloads(payloads []*SplunkPayload) error {
 	return nil
 }
 
-func (sl *SplunkLogger) LogWithTime(t time.Time, msg string) {
+func (sl *SplunkLogger) LogWithTime(t time.Time, msg string) error {
 	sp := SplunkPayload{
 		Time: t.Unix(),
 		Host: sl.hostname,
@@ -133,5 +133,10 @@ func (sl *SplunkLogger) LogWithTime(t time.Time, msg string) {
 			Host:    sl.hostname,
 		},
 	}
-	sl.payloads <- &sp
+	select {
+	case sl.payloads <- &sp:
+	default:
+		return fmt.Errorf("Error queueing splunk payload, channel full")
+	}
+	return nil
 }
