@@ -71,7 +71,14 @@ func TestSplunkLogger(t *testing.T) {
 	time.AfterFunc(time.Second*10, func() {
 		ch <- false
 	})
+	count := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// make sure the logger retries requests
+		if count == 0 {
+			count += 1
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		require.Equal(t, "Splunk", r.Header.Get("Authorization"))
 		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
 		var sp SplunkPayload
