@@ -29,8 +29,7 @@ func (sh *SplunkHook) Fire(entry *logrus.Entry) error {
 		return err
 	}
 
-	sh.sl.LogWithTime(entry.Time, msg)
-	return nil
+	return sh.sl.LogWithTime(entry.Time, msg)
 }
 
 func (sh *SplunkHook) Levels() []logrus.Level {
