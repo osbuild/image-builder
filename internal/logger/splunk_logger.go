@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 const (
@@ -40,7 +42,7 @@ type SplunkEvent struct {
 
 func NewSplunkLogger(url, token, source, hostname string) *SplunkLogger {
 	sl := &SplunkLogger{
-		client:   &http.Client{},
+		client:   retryablehttp.NewClient().StandardClient(),
 		url:      url,
 		token:    token,
 		source:   source,
