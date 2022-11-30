@@ -282,7 +282,8 @@ objects:
 - apiVersion: metrics.console.redhat.com/v1alpha1
   kind: FloorPlan
   metadata:
-    name: imagebuilder
+    name: image-builder
+    service: image-builder
   spec:
     database:
       secretName: ${FLOORIST_DB_SECRET_NAME}
