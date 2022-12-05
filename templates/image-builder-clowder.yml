@@ -49,12 +49,23 @@ objects:
             value: "${COMPOSER_TOKEN_URL}"
           - name: DISTRIBUTIONS_DIR
             value: '/app/distributions'
+          - name: QUOTA_FILE
+            value: "${QUOTA_FILE}"
+          - name: ALLOW_FILE
+            value: "${ALLOW_FILE}"
           - name: CLOWDER_ENABLED
             value: ${CLOWDER_ENABLED}
-          - name: COMPOSER_URL
-            value: "${COMPOSER_URL}"
           - name: OSBUILD_AWS_REGION
             value: "${OSBUILD_AWS_REGION}"
+          - name: OSBUILD_GCP_REGION
+            value: "${OSBUILD_GCP_REGION}"
+          - name: OSBUILD_GCP_BUCKET
+            value: "${OSBUILD_GCP_BUCKET}"
+          - name: PGSSLMODE
+            value: "${PGSSLMODE}"
+          # Configuration for the osbuild client within image-builder
+          - name: COMPOSER_URL
+            value: "${COMPOSER_URL}"
           - name: COMPOSER_CLIENT_ID
             valueFrom:
               secretKeyRef:
@@ -65,6 +76,59 @@ objects:
               secretKeyRef:
                 key: client_secret
                 name: composer-secrets
+          # Credentials/configuration for AWS cloudwatch.
+          - name: CW_AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: image-builder-cloudwatch
+                optional: true
+          - name: CW_AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: image-builder-cloudwatch
+                optional: true
+          - name: CW_LOG_GROUP
+            valueFrom:
+              secretKeyRef:
+                key: log_group_name
+                name: image-builder-cloudwatch
+                optional: true
+          - name: CW_AWS_REGION
+            valueFrom:
+              secretKeyRef:
+                key: aws_region
+                name: image-builder-cloudwatch
+                optional: true
+          # Splunk forwarding
+          - name: SPLUNK_HEC_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: splunk
+                key: token
+                optional: true
+          - name: SPLUNK_HEC_HOST
+            valueFrom:
+              secretKeyRef:
+                name: splunk
+                key: url
+                optional: true
+          - name: SPLUNK_HEC_PORT
+            value: "${SPLUNK_HEC_PORT}"
+        volumeMounts:
+          - name: config-volume
+            mountPath: /app/config
+        volumes:
+          - name: config-volume
+            configMap:
+              name: image-builder-crc-config-files
+              optional: true
+              items:
+              - key: quotas.json
+                path: quotas.json
+              - key: allow_list.json
+                path: allow_list.json
         initContainers:
         - name: image-builder-migrate
           image: ${IMAGE}:${IMAGE_TAG}
@@ -84,6 +148,31 @@ objects:
     database:
       name: image-builder
       version: 12
+
+- apiVersion: metrics.console.redhat.com/v1alpha1
+  kind: FloorPlan
+  metadata:
+    name: image-builder
+    service: image-builder
+  spec:
+    database:
+      secretName: ${FLOORIST_DB_SECRET_NAME}
+    objectStore:
+      secretName: ${FLOORIST_BUCKET_SECRET_NAME}
+    logLevel: ${FLOORIST_LOGLEVEL}
+    suspend: ${{FLOORIST_SUSPEND}}
+    queries:
+    - prefix: ${FLOORIST_QUERY_PREFIX}/builds
+      query: >-
+        select
+          job_id,created_at,org_id,account_number,request->>'distribution' as distribution,
+          req->>'architecture' as architecture,req->>'image_type' as image_type,req->'upload_request'->>'type' as upload_request_type,req->'ostree'->>'url' as ostree_url,
+          request->'customizations'->'packages' as packages,
+          request->'customizations'->'filesystem' as filesystem,
+          request->'customizations'->'payload_repositories' as payload_repositories,
+          jsonb_array_length(request->'customizations'->'users') as num_users
+        from
+          composes,jsonb_array_elements(composes.request->'image_requests') as req;
 
 parameters:
   - name: IMAGE
@@ -124,3 +213,34 @@ parameters:
   - name: REPLICAS
     description: pod replicas
     value: "3"
+  - name: FLOORIST_LOGLEVEL
+    description: Floorist loglevel config
+    value: 'INFO'
+  - name: FLOORIST_SUSPEND
+    description: Disable Floorist cronjob execution
+    value: 'false'
+  - name: FLOORIST_DB_SECRET_NAME
+    description: Name of the secret for accessing the database for floorist
+    value: "image-builder-db"
+  - name: FLOORIST_BUCKET_SECRET_NAME
+    description: Name of the secret for accessing the bucket for the floorist data dump
+    value: "floorist-bucket"
+  - name: FLOORIST_QUERY_PREFIX
+    description: Prefix for separating query data between prod and stage in the bucket
+    value: "image-builder"
+  - description: fluentd-hec splunk port
+    name: SPLUNK_HEC_PORT
+    value: "443"
+  - name: OSBUILD_GCP_REGION
+    description: Region in GCP to upload to
+    value: "us-east4"
+  - name: OSBUILD_GCP_BUCKET
+    description: Bucket in GCP to upload to
+    value: "image-upload-bkt-us"
+  - name: PGSSLMODE
+    description: Sslmode for the connection to psql
+    value: "prefer"
+  - name: QUOTA_FILE
+    value: ""
+  - name: ALLOW_FILE
+    value: ""
