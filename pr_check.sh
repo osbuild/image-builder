@@ -7,8 +7,9 @@ export APP_NAME="image-builder-crc"  # name of app-sre "application" folder this
 export COMPONENT_NAME="image-builder"  # name of app-sre "resourceTemplate" in deploy.yaml for this component
 export IMAGE="quay.io/cloudservices/image-builder"  # image location on quay
 
-export IQE_PLUGINS="image-builder-backend"  # name of the IQE plugin for this app.
+export IQE_PLUGINS="image-builder"  # name of the IQE plugin for this app.
 export IQE_CJI_TIMEOUT="30m"  # This is the time to wait for smoke test to complete or fail
+export IQE_MARKER_EXPRESSION="api" # run only api test
 export DOCKERFILE="distribution/Dockerfile-ubi"
 
 # Install bonfire repo/initialize
