@@ -36,6 +36,7 @@ const (
 	ImageTypesAwsSapRhui     ImageTypes = "aws-sap-rhui"
 	ImageTypesAzure          ImageTypes = "azure"
 	ImageTypesAzureRhui      ImageTypes = "azure-rhui"
+	ImageTypesAzureSapRhui   ImageTypes = "azure-sap-rhui"
 	ImageTypesEdgeCommit     ImageTypes = "edge-commit"
 	ImageTypesEdgeContainer  ImageTypes = "edge-container"
 	ImageTypesEdgeInstaller  ImageTypes = "edge-installer"
@@ -427,7 +428,10 @@ type PackageMetadata struct {
 	Version   string  `json:"version"`
 }
 
-// Repository defines model for Repository.
+// Repository configuration.
+// At least one of the 'baseurl', 'mirrorlist', 'metalink' properties must
+// be specified. If more of them are specified, the order of precedence is
+// the same as listed above.
 type Repository struct {
 	Baseurl  *string `json:"baseurl,omitempty"`
 	CheckGpg *bool   `json:"check_gpg,omitempty"`
