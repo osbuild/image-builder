@@ -149,6 +149,24 @@ objects:
         from
           composes,jsonb_array_elements(composes.request->'image_requests') as req;
 
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      service: image-builder
+    name: image-builder
+    annotations:
+      prometheus.io/path: /metrics
+      prometheus.io/scrape: 'true'
+  spec:
+    ports:
+      - name: image-builder
+        protocol: TCP
+        port: 8080
+        targetPort: 8000
+    selector:
+      name: image-builder
+
 parameters:
   - name: IMAGE
     value: quay.io/cloudservices/image-builder
