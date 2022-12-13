@@ -76,31 +76,6 @@ objects:
               secretKeyRef:
                 key: client_secret
                 name: composer-secrets
-          # Credentials/configuration for AWS cloudwatch.
-          - name: CW_AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                key: aws_access_key_id
-                name: image-builder-cloudwatch
-                optional: true
-          - name: CW_AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                key: aws_secret_access_key
-                name: image-builder-cloudwatch
-                optional: true
-          - name: CW_LOG_GROUP
-            valueFrom:
-              secretKeyRef:
-                key: log_group_name
-                name: image-builder-cloudwatch
-                optional: true
-          - name: CW_AWS_REGION
-            valueFrom:
-              secretKeyRef:
-                key: aws_region
-                name: image-builder-cloudwatch
-                optional: true
           # Splunk forwarding
           - name: SPLUNK_HEC_TOKEN
             valueFrom:
