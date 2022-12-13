@@ -32,12 +32,19 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 		}
 	}
 
-	// Load database variables if running in ephemeral environment
+	// Load variables if running as a ClowdApp
 	if clowder.IsClowderEnabled() {
 		conf.PGHost = clowder.LoadedConfig.Database.Hostname
 		conf.PGDatabase = clowder.LoadedConfig.Database.Name
 		conf.PGUser = clowder.LoadedConfig.Database.Username
 		conf.PGPassword = clowder.LoadedConfig.Database.Password
+
+		if clowder.LoadedConfig.Logging.Cloudwatch != nil {
+			conf.CwRegion = clowder.LoadedConfig.Logging.Cloudwatch.Region
+			conf.CwAccessKeyID = clowder.LoadedConfig.Logging.Cloudwatch.AccessKeyId
+			conf.CwSecretAccessKey = clowder.LoadedConfig.Logging.Cloudwatch.SecretAccessKey
+			conf.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
+		}
 	}
 
 	return nil
