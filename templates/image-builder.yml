@@ -165,7 +165,6 @@ objects:
         port: 8080
         targetPort: 8000
     selector:
-      app: image-builder
       pod: image-builder-service
 
 parameters:
