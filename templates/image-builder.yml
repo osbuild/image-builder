@@ -124,6 +124,9 @@ objects:
       name: image-builder
       version: 12
 
+    optionalDependencies:
+    - provisioning-backend
+
 - apiVersion: metrics.console.redhat.com/v1alpha1
   kind: FloorPlan
   metadata:

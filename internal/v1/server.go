@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
+	"github.com/osbuild/image-builder/internal/provisioning"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
@@ -25,7 +26,8 @@ import (
 
 type Server struct {
 	echo       *echo.Echo
-	client     *composer.ComposerClient
+	cClient    *composer.ComposerClient
+	pClient    *provisioning.ProvisioningClient
 	spec       *openapi3.T
 	router     routers.Router
 	db         db.DB
@@ -38,7 +40,8 @@ type Server struct {
 
 type ServerConfig struct {
 	EchoServer *echo.Echo
-	Client     *composer.ComposerClient
+	CompClient *composer.ComposerClient
+	ProvClient *provisioning.ProvisioningClient
 	DBase      db.DB
 	AwsConfig  AWSConfig
 	GcpConfig  GCPConfig
@@ -82,7 +85,8 @@ func Attach(conf *ServerConfig) error {
 
 	s := Server{
 		conf.EchoServer,
-		conf.Client,
+		conf.CompClient,
+		conf.ProvClient,
 		spec,
 		router,
 		conf.DBase,
