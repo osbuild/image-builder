@@ -42,53 +42,55 @@ def main():
     # arbitrary sleep until container is up
     time.sleep(1)
 
-    for distro in args.distro:
-        distro_data = {}
-        with open(distro) as f:
-            distro_data = json.load(f)
-        # make sure it's not empty
-        print('Calling dnf-json for ', distro_data['distribution'])
+    try:
+        for distro in args.distro:
+            distro_data = {}
+            with open(distro) as f:
+                distro_data = json.load(f)
+            # make sure it's not empty
+            print('Calling dnf-json for ', distro_data['distribution'])
 
-        visited_repo_ids = []
+            visited_repo_ids = []
 
-        for arch in SUPPORTED_ARCHS:
-            dnfjson_args = dnfjson_args_template.copy()
+            for arch in SUPPORTED_ARCHS:
+                dnfjson_args = dnfjson_args_template.copy()
 
-            repos = distro_data[arch]['repositories']
-            dnfjson_args['arguments'] = {
-                'module_platform_id': distro_data['module_platform_id'],
-                'cachedir': tempdir.name,
-                'arch': arch,
-                'latest': True,
-            }
+                repos = distro_data[arch]['repositories']
+                dnfjson_args['arguments'] = {
+                    'module_platform_id': distro_data['module_platform_id'],
+                    'cachedir': tempdir.name,
+                    'arch': arch,
+                    'latest': True,
+                }
 
-            for repo in distro_data[arch]['repositories']:
-                if repo['id'] in visited_repo_ids:
-                    continue
-                visited_repo_ids.append(repo['id'])
+                for repo in distro_data[arch]['repositories']:
+                    if repo['id'] in visited_repo_ids:
+                        continue
+                    visited_repo_ids.append(repo['id'])
 
-                if repo['rhsm']:
-                    repo['ignoressl'] = True
-                    repo['sslclientkey'] = args.key
-                    repo['sslclientcert'] = args.cert
-                if 'image_type_tags' in repo:
-                    repo.pop('image_type_tags')
-                dnfjson_args['arguments']['repos'] = [repo]
+                    if repo['rhsm']:
+                        repo['ignoressl'] = True
+                        repo['sslclientkey'] = args.key
+                        repo['sslclientcert'] = args.cert
+                    if 'image_type_tags' in repo:
+                        repo.pop('image_type_tags')
+                    dnfjson_args['arguments']['repos'] = [repo]
 
-                resp = requests.post("http://127.0.0.1:8088", data=json.dumps(dnfjson_args))
-                pkgs = [ {"name": p["name"], "summary": p["summary"]} for p in resp.json()['packages'] ]
-                filtered = []
-                [ filtered.append(p) for p in pkgs if p["name"] not in list(map(lambda p: p["name"], filtered)) ]
-                filtered.sort(key=lambda p: p["name"].lower())
+                    resp = requests.post("http://127.0.0.1:8088", data=json.dumps(dnfjson_args))
+                    pkgs = [ {"name": p["name"], "summary": p["summary"]} for p in resp.json()['packages'] ]
+                    filtered = []
+                    [ filtered.append(p) for p in pkgs if p["name"] not in list(map(lambda p: p["name"], filtered)) ]
+                    filtered.sort(key=lambda p: p["name"].lower())
 
-                outfile = os.path.join(DISTRIBUTION_DIR, distro_data['distribution']['name'],
-                                       '%s-%s-%s-packages.json' % (distro_data['distribution']['name'], arch, repo['id']))
-                with open(outfile, 'w+') as f:
-                    json.dump(filtered, f, indent=2)
-                    f.write('\n')
+                    outfile = os.path.join(DISTRIBUTION_DIR, distro_data['distribution']['name'],
+                                        '%s-%s-%s-packages.json' % (distro_data['distribution']['name'], arch, repo['id']))
+                    with open(outfile, 'w+') as f:
+                        json.dump(filtered, f, indent=2)
+                        f.write('\n')
+    finally:
+        dnfc.kill()
+        dnfc.remove()
 
-    dnfc.kill()
-    dnfc.remove()
     return 0
 
 if __name__ == '__main__':
