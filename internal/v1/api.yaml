@@ -588,12 +588,16 @@ components:
       enum: ['aws', 'gcp', 'azure', 'aws.s3']
     AWSUploadRequestOptions:
       type: object
-      required:
-        - share_with_accounts
       properties:
         share_with_accounts:
           type: array
           example: ['123456789012']
+          items:
+            type: string
+          uniqueItems: true
+        share_with_sources:
+          type: array
+          example: ['12345']
           items:
             type: string
           uniqueItems: true

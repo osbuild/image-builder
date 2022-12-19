@@ -1,0 +1,4 @@
+package: provisioning
+output: openapi.v1.gen.go
+generate:
+  models: true

@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
+	"github.com/osbuild/image-builder/internal/provisioning"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ func (h *Handlers) GetVersion(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetReadiness(ctx echo.Context) error {
-	resp, err := h.server.client.OpenAPI()
+	resp, err := h.server.cClient.OpenAPI()
 	if err != nil {
 		return err
 	}
@@ -195,7 +196,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		return err
 	}
 
-	resp, err := h.server.client.ComposeStatus(composeId)
+	resp, err := h.server.cClient.ComposeStatus(composeId)
 	if err != nil {
 		return err
 	}
@@ -300,7 +301,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error 
 		return err
 	}
 
-	resp, err := h.server.client.ComposeMetadata(composeId)
+	resp, err := h.server.cClient.ComposeMetadata(composeId)
 	if err != nil {
 		return err
 	}
@@ -497,7 +498,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		}
 	}
 
-	uploadOptions, imageType, err := h.buildUploadOptions(composeRequest.ImageRequests[0].UploadRequest, composeRequest.ImageRequests[0].ImageType)
+	uploadOptions, imageType, err := h.buildUploadOptions(ctx, composeRequest.ImageRequests[0].UploadRequest, composeRequest.ImageRequests[0].ImageType)
 	if err != nil {
 		return err
 	}
@@ -519,7 +520,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		},
 	}
 
-	resp, err := h.server.client.Compose(cloudCR)
+	resp, err := h.server.cClient.Compose(cloudCR)
 	if err != nil {
 		return err
 	}
@@ -575,7 +576,7 @@ func distroToStr(distro Distributions) string {
 	}
 }
 
-func (h *Handlers) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
+func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
 	// HACK deepmap doesn't really support `oneOf`, so marshal and unmarshal into target object
 	optionsJSON, err := json.Marshal(ur.Options)
 	if err != nil {
@@ -597,9 +598,42 @@ func (h *Handlers) buildUploadOptions(ur UploadRequest, it ImageTypes) (composer
 		if err != nil {
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
 		}
+
+		if (awsOptions.ShareWithAccounts == nil || len(*awsOptions.ShareWithAccounts) == 0) && (awsOptions.ShareWithSources == nil || len(*awsOptions.ShareWithSources) == 0) {
+			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Expected at least one source or account to share the image with")
+		}
+
+		var shareWithAccounts []string
+		if awsOptions.ShareWithAccounts != nil {
+			shareWithAccounts = append(shareWithAccounts, *awsOptions.ShareWithAccounts...)
+		}
+
+		if awsOptions.ShareWithSources != nil {
+			for _, source := range *awsOptions.ShareWithSources {
+				resp, err := h.server.pClient.GetAccountID(ctx.Request().Context(), source)
+				if err != nil {
+					logrus.Error(err)
+					return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
+				}
+
+				var aID provisioning.V1AccountIDTypeResponse
+				err = json.NewDecoder(resp.Body).Decode(&aID)
+				if err != nil {
+					return nil, "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", source))
+				}
+
+				if aID.Aws == nil || aID.Aws.AccountId == nil || len(*aID.Aws.AccountId) != 12 {
+					return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id: %v", source, aID.Aws.AccountId))
+				}
+
+				logrus.Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *aID.Aws.AccountId))
+				shareWithAccounts = append(shareWithAccounts, *aID.Aws.AccountId)
+			}
+		}
+
 		return composer.AWSEC2UploadOptions{
 			Region:            h.server.aws.Region,
-			ShareWithAccounts: awsOptions.ShareWithAccounts,
+			ShareWithAccounts: shareWithAccounts,
 		}, composerImageType, nil
 	case UploadTypesAwsS3:
 		var composerImageType composer.ImageTypes
@@ -796,7 +830,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
 			return err
 		}
 
-		resp, err = h.server.client.CloneCompose(composeId, composer.AWSEC2CloneCompose{
+		resp, err = h.server.cClient.CloneCompose(composeId, composer.AWSEC2CloneCompose{
 			Region:            awsEC2CloneReq.Region,
 			ShareWithAccounts: awsEC2CloneReq.ShareWithAccounts,
 		})
@@ -859,7 +893,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Requested clone cannot be found")
 	}
 
-	resp, err := h.server.client.CloneStatus(id)
+	resp, err := h.server.cClient.CloneStatus(id)
 	if err != nil {
 		logrus.Errorf("Error requesting clone status for clone %v: %v", id, err)
 		return err

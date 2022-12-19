@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/osbuild/image-builder/internal/provisioning"
 	v1 "github.com/osbuild/image-builder/internal/v1"
 
 	"github.com/labstack/echo/v4"
@@ -65,7 +66,13 @@ func main() {
 		OfflineToken: conf.ComposerOfflineToken,
 		ClientSecret: conf.ComposerClientSecret,
 	}
-	client, err := composer.NewClient(composerConf)
+	compClient, err := composer.NewClient(composerConf)
+	if err != nil {
+		panic(err)
+	}
+	provClient, err := provisioning.NewClient(provisioning.ProvisioningClientConfig{
+		URL: conf.ProvisioningURL,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -82,7 +89,8 @@ func main() {
 	echoServer := echo.New()
 	serverConfig := &v1.ServerConfig{
 		EchoServer: echoServer,
-		Client:     client,
+		CompClient: compClient,
+		ProvClient: provClient,
 		DBase:      dbase,
 		AwsConfig: v1.AWSConfig{
 			Region: conf.OsbuildRegion,

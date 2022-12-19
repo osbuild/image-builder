@@ -32,4 +32,5 @@ type ImageBuilderConfig struct {
 	SplunkHost           string `env:"SPLUNK_HEC_HOST"`
 	SplunkPort           string `env:"SPLUNK_HEC_PORT"`
 	SplunkToken          string `env:"SPLUNK_HEC_TOKEN"`
+	ProvisioningURL      string `env:"PROVISIONING_URL"`
 }

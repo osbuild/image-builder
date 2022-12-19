@@ -45,6 +45,10 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 			conf.CwSecretAccessKey = clowder.LoadedConfig.Logging.Cloudwatch.SecretAccessKey
 			conf.LogGroup = clowder.LoadedConfig.Logging.Cloudwatch.LogGroup
 		}
+
+		if endpoint, ok := clowder.DependencyEndpoints["provisioning-backend"]["api"]; ok {
+			conf.ProvisioningURL = fmt.Sprintf("http://%s:%d/api/provisioning/v1", endpoint.Hostname, endpoint.Port)
+		}
 	}
 
 	return nil

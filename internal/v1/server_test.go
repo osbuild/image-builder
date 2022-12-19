@@ -20,6 +20,7 @@ import (
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/osbuild/image-builder/internal/provisioning"
 	"github.com/osbuild/image-builder/internal/tutils"
 
 	"github.com/labstack/echo/v4"
@@ -72,7 +73,7 @@ func makeUploadOptions(t *testing.T, uploadOptions interface{}) *composer.Upload
 	return &result
 }
 
-func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
+func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
 	var log = &logrus.Logger{
 		Out:       os.Stderr,
 		Formatter: new(logrus.TextFormatter),
@@ -97,11 +98,16 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir str
 		require.NoError(t, err)
 	}))
 
-	client, err := composer.NewClient(composer.ComposerClientConfig{
+	compClient, err := composer.NewClient(composer.ComposerClientConfig{
 		ComposerURL:  url,
 		TokenURL:     tokenServer.URL,
 		ClientId:     "rhsm-api",
 		OfflineToken: "offlinetoken",
+	})
+	require.NoError(t, err)
+
+	provClient, err := provisioning.NewClient(provisioning.ProvisioningClientConfig{
+		URL: provURL,
 	})
 	require.NoError(t, err)
 
@@ -115,7 +121,8 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir str
 	echoServer := echo.New()
 	serverConfig := &ServerConfig{
 		EchoServer: echoServer,
-		Client:     client,
+		CompClient: compClient,
+		ProvClient: provClient,
 		DBase:      dbase,
 		QuotaFile:  quotaFile,
 		AllowFile:  allowFile,
@@ -145,12 +152,12 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir str
 	return echoServer, tokenServer
 }
 
-func startServer(t *testing.T, url string) (*echo.Echo, *httptest.Server) {
-	return startServerWithCustomDB(t, url, tutils.InitDB(), "../../distributions", "")
+func startServer(t *testing.T, url, provURL string) (*echo.Echo, *httptest.Server) {
+	return startServerWithCustomDB(t, url, provURL, tutils.InitDB(), "../../distributions", "")
 }
 
-func startServerWithAllowFile(t *testing.T, url string, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
-	return startServerWithCustomDB(t, url, tutils.InitDB(), distsDir, allowFile)
+func startServerWithAllowFile(t *testing.T, url, provURL, string, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
+	return startServerWithCustomDB(t, url, provURL, tutils.InitDB(), distsDir, allowFile)
 }
 
 // note: all of the sub-tests below don't actually talk to
@@ -158,7 +165,7 @@ func startServerWithAllowFile(t *testing.T, url string, distsDir string, allowFi
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "")
+	srv, tokenSrv := startServer(t, "", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -337,7 +344,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 }
 
 func TestOrgIdWildcard(t *testing.T) {
-	srv, tokenSrv := startServer(t, "")
+	srv, tokenSrv := startServer(t, "", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -351,7 +358,7 @@ func TestOrgIdWildcard(t *testing.T) {
 }
 
 func TestAccountNumberWildcard(t *testing.T) {
-	srv, tokenSrv := startServer(t, "")
+	srv, tokenSrv := startServer(t, "", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -390,7 +397,7 @@ func TestGetComposeStatus(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -437,7 +444,7 @@ func TestGetComposeStatus404(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -497,7 +504,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -529,7 +536,7 @@ func TestGetComposeMetadata404(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -548,7 +555,7 @@ func TestGetComposes(t *testing.T) {
 
 	dbase := tutils.InitDB()
 
-	db_srv, tokenSrv := startServerWithCustomDB(t, "", dbase, "../../distributions", "")
+	db_srv, tokenSrv := startServerWithCustomDB(t, "", "", dbase, "../../distributions", "")
 	defer func() {
 		err := db_srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -588,7 +595,7 @@ func TestGetComposes(t *testing.T) {
 func TestComposeImage(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "")
+	srv, tokenSrv := startServer(t, "", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -617,7 +624,7 @@ func TestComposeImage(t *testing.T) {
 					UploadRequest: UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
+							ShareWithAccounts: &[]string{"test-account"},
 						},
 					},
 				},
@@ -627,7 +634,7 @@ func TestComposeImage(t *testing.T) {
 					UploadRequest: UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
+							ShareWithAccounts: &[]string{"test-account"},
 						},
 					},
 				},
@@ -636,6 +643,26 @@ func TestComposeImage(t *testing.T) {
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
 		require.Contains(t, body, `Error at \"/image_requests\": maximum number of items is 1`)
+	})
+
+	t.Run("ErrorsForEmptyAccountsAndSources", func(t *testing.T) {
+		payload := ComposeRequest{
+			Customizations: nil,
+			Distribution:   "centos-8",
+			ImageRequests: []ImageRequest{
+				{
+					Architecture: "x86_64",
+					ImageType:    ImageTypesAws,
+					UploadRequest: UploadRequest{
+						Type:    UploadTypesAws,
+						Options: AWSUploadRequestOptions{},
+					},
+				},
+			},
+		}
+		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, response.StatusCode)
+		require.Contains(t, body, "Expected at least one source or account to share the image with")
 	})
 
 	t.Run("ErrorsForZeroUploadRequests", func(t *testing.T) {
@@ -669,7 +696,7 @@ func TestComposeImage(t *testing.T) {
 					UploadRequest: UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
+							ShareWithAccounts: &[]string{"test-account"},
 						},
 					},
 				},
@@ -707,7 +734,7 @@ func TestComposeImage(t *testing.T) {
 					UploadRequest: UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
+							ShareWithAccounts: &[]string{"test-account"},
 						},
 					},
 				},
@@ -730,7 +757,7 @@ func TestComposeImage(t *testing.T) {
 					UploadRequest: UploadRequest{
 						Type: "unknown",
 						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
+							ShareWithAccounts: &[]string{"test-account"},
 						},
 					},
 				},
@@ -758,7 +785,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -775,7 +802,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 				UploadRequest: UploadRequest{
 					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
-						ShareWithAccounts: []string{"test-account"},
+						ShareWithAccounts: &[]string{"test-account"},
 					},
 				},
 			},
@@ -805,7 +832,7 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -827,7 +854,7 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 				UploadRequest: UploadRequest{
 					Type: UploadTypesAwsS3,
 					Options: AWSUploadRequestOptions{
-						ShareWithAccounts: []string{"test-account"},
+						ShareWithAccounts: &[]string{"test-account"},
 					},
 				},
 			},
@@ -854,7 +881,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -871,7 +898,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 				UploadRequest: UploadRequest{
 					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
-						ShareWithAccounts: []string{"test-account"},
+						ShareWithAccounts: &[]string{"test-account"},
 					},
 				},
 			},
@@ -900,7 +927,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -917,7 +944,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 				UploadRequest: UploadRequest{
 					Type: UploadTypesAws,
 					Options: AWSUploadRequestOptions{
-						ShareWithAccounts: []string{"test-account"},
+						ShareWithAccounts: &[]string{"test-account"},
 					},
 				},
 			},
@@ -964,7 +991,7 @@ func TestComposeImageAllowList(t *testing.T) {
 					UploadRequest: UploadRequest{
 						Type: UploadTypesAws,
 						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: []string{"test-account"},
+							ShareWithAccounts: &[]string{"test-account"},
 						},
 					},
 				},
@@ -977,7 +1004,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, distsDir, allowFile)
+		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, "", "", distsDir, allowFile)
 		defer func() {
 			err := srv.Shutdown(context.Background())
 			require.NoError(t, err)
@@ -1000,7 +1027,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, distsDir, allowFile)
+		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, "", "", distsDir, allowFile)
 		defer func() {
 			err := srv.Shutdown(context.Background())
 			require.NoError(t, err)
@@ -1023,7 +1050,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, distsDir, "")
+		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, "", "", distsDir, "")
 		defer func() {
 			err := srv.Shutdown(context.Background())
 			require.NoError(t, err)
@@ -1070,7 +1097,25 @@ func TestComposeCustomizations(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL)
+	awsAccountId := "123456123456"
+	provSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		awsId := struct {
+			AccountId *string `json:"account_id,omitempty"`
+		}{
+			AccountId: &awsAccountId,
+		}
+		result := provisioning.V1AccountIDTypeResponse{
+			Aws: &awsId,
+		}
+
+		require.Equal(t, tutils.AuthString0, r.Header.Get("x-rh-identity"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		err := json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	}))
+
+	srv, tokenSrv := startServer(t, apiSrv.URL, provSrv.URL)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -1429,6 +1474,67 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		{
+			imageBuilderRequest: ComposeRequest{
+				Distribution: "centos-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesAws,
+						UploadRequest: UploadRequest{
+							Type: UploadTypesAws,
+							Options: AWSUploadRequestOptions{
+								ShareWithSources: &[]string{"1"},
+							},
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution:   "centos-8",
+				Customizations: nil,
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesAws,
+					Repositories: []composer.Repository{
+
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSEC2UploadOptions{
+						ShareWithAccounts: []string{awsAccountId},
+					}),
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {
@@ -1463,7 +1569,7 @@ func TestBuildOSTreeOptions(t *testing.T) {
 }
 
 func TestReadinessProbeNotReady(t *testing.T) {
-	srv, tokenSrv := startServer(t, "")
+	srv, tokenSrv := startServer(t, "", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -1489,7 +1595,7 @@ func TestReadinessProbeReady(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL, "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -1502,7 +1608,7 @@ func TestReadinessProbeReady(t *testing.T) {
 }
 
 func TestMetrics(t *testing.T) {
-	srv, tokenSrv := startServer(t, "")
+	srv, tokenSrv := startServer(t, "", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -1566,7 +1672,7 @@ func TestComposeStatusError(t *testing.T) {
 	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -1619,7 +1725,7 @@ func TestGetClones(t *testing.T) {
   ]
 }`))
 	require.NoError(t, err)
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -1697,7 +1803,7 @@ func TestGetCloneStatus(t *testing.T) {
   ]
 }`))
 	require.NoError(t, err)
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, dbase, "../../distributions", "")
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
