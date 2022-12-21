@@ -25,5 +25,17 @@
       "rhsm": false,
       "image_type_tags": ["gcp"]
     }]
+  },
+  "aarch64": {
+    "image_types": [ "aws", "guest-image", "image-installer" ],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "http://mirror.stream.centos.org/9-stream/BaseOS/aarch64/os/",
+      "rhsm": false
+    }, {
+      "id": "appstream",
+      "baseurl": "http://mirror.stream.centos.org/9-stream/AppStream/aarch64/os/",
+      "rhsm": false
+    }]
   }
 }

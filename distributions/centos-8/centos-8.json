@@ -29,5 +29,21 @@
       "rhsm": false,
       "image_type_tags": ["gcp"]
     }]
+  },
+  "aarch64": {
+    "image_types": [ "aws", "vhd" ],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "http://mirror.centos.org/centos/8-stream/BaseOS/aarch64/os/",
+      "rhsm": false
+    }, {
+      "id": "appstream",
+      "baseurl": "http://mirror.centos.org/centos/8-stream/AppStream/aarch64/os/",
+      "rhsm": false
+    }, {
+      "id": "extras",
+      "baseurl": "http://mirror.centos.org/centos/8-stream/extras/aarch64/os/",
+      "rhsm": false
+    }]
   }
 }

@@ -29,5 +29,21 @@
       "rhsm": false,
       "image_type_tags": ["gcp"]
     }]
+  },
+  "aarch64": {
+    "image_types": [ "aws" ],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.4/aarch64/baseos/os",
+      "rhsm": true
+    }, {
+      "id": "appstream",
+      "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.4/aarch64/appstream/os",
+      "rhsm": true
+    }, {
+      "id": "ansible",
+      "baseurl": "https://cdn.redhat.com/content/dist/layered/rhel8/aarch64/ansible/2/os",
+      "rhsm": true
+    }]
   }
 }

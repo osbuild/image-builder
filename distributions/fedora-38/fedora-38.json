@@ -26,13 +26,41 @@
         "rhsm": false
       },
       {
-        "name": "fedora-modular",
+        "id": "fedora-modular",
         "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-38&arch=x86_64",
         "rhsm": false
       },
       {
-        "name": "updates-modular",
+        "id": "updates-modular",
         "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f38&arch=x86_64",
+        "rhsm": false
+      }
+    ]
+  },
+  "aarch64": {
+    "image_types": [
+      "aws",
+      "guest-image"
+    ],
+    "repositories": [
+      {
+        "id": "fedora",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-38&arch=aarch64",
+        "rhsm": false
+      },
+      {
+        "id": "updates",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f38&arch=aarch64",
+        "rhsm": false
+      },
+      {
+        "id": "fedora-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-38&arch=aarch64",
+        "rhsm": false
+      },
+      {
+        "id": "updates-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f38&arch=aarch64",
         "rhsm": false
       }
     ]
