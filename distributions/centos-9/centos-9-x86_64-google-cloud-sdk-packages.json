@@ -80,6 +80,10 @@
     "summary": "Google Cloud CLI Local Extract"
   },
   {
+    "name": "google-cloud-cli-log-streaming",
+    "summary": "Google Cloud CLI Cloud Run Proxy"
+  },
+  {
     "name": "google-cloud-cli-minikube",
     "summary": "Google Cloud CLI Minikube"
   },
@@ -202,6 +206,10 @@
   {
     "name": "google-cloud-sdk-local-extract",
     "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-log-streaming",
+    "summary": "Google Cloud CLI Cloud Run Proxy"
   },
   {
     "name": "google-cloud-sdk-minikube",

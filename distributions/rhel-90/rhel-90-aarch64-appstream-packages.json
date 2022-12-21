@@ -48,10 +48,6 @@
     "summary": "PDF mapping resources from Adobe"
   },
   {
-    "name": "adobe-source-code-pro-fonts",
-    "summary": "A set of mono-spaced OpenType fonts designed for coding environments"
-  },
-  {
     "name": "adwaita-cursor-theme",
     "summary": "Adwaita cursor theme"
   },
@@ -388,28 +384,12 @@
     "summary": "Text based document generation"
   },
   {
-    "name": "aspnetcore-runtime-3.1",
-    "summary": "ASP.NET Core 3.1 runtime"
-  },
-  {
     "name": "aspnetcore-runtime-6.0",
     "summary": "ASP.NET Core 6.0 runtime"
   },
   {
-    "name": "aspnetcore-runtime-7.0",
-    "summary": "ASP.NET Core 7.0 runtime"
-  },
-  {
-    "name": "aspnetcore-targeting-pack-3.1",
-    "summary": "Targeting Pack for Microsoft.AspNetCore.App 3.1"
-  },
-  {
     "name": "aspnetcore-targeting-pack-6.0",
     "summary": "Targeting Pack for Microsoft.AspNetCore.App 6.0"
-  },
-  {
-    "name": "aspnetcore-targeting-pack-7.0",
-    "summary": "Targeting Pack for Microsoft.AspNetCore.App 7.0"
   },
   {
     "name": "assertj-core",
@@ -638,14 +618,6 @@
   {
     "name": "babl",
     "summary": "A dynamic, any to any, pixel format conversion library"
-  },
-  {
-    "name": "babl-devel",
-    "summary": "Headers for developing programs that will use babl"
-  },
-  {
-    "name": "babl-devel-docs",
-    "summary": "Documentation for developing programs that will use babl"
   },
   {
     "name": "bacula-client",
@@ -920,18 +892,6 @@
     "summary": "High-level tracing language for Linux eBPF"
   },
   {
-    "name": "brasero",
-    "summary": "Gnome CD/DVD burning application"
-  },
-  {
-    "name": "brasero-libs",
-    "summary": "Libraries for brasero"
-  },
-  {
-    "name": "brasero-nautilus",
-    "summary": "Nautilus extension for brasero"
-  },
-  {
     "name": "brlapi",
     "summary": "Application Programming Interface for BRLTTY"
   },
@@ -1040,10 +1000,6 @@
     "summary": "C++ API for the cairo graphics library"
   },
   {
-    "name": "capstone",
-    "summary": "A lightweight multi-platform, multi-architecture disassembly framework"
-  },
-  {
     "name": "cargo",
     "summary": "Rust's package manager and build tool"
   },
@@ -1058,26 +1014,6 @@
   {
     "name": "cdrskin",
     "summary": "Limited cdrecord compatibility wrapper to ease migration to libburn"
-  },
-  {
-    "name": "centos-backgrounds",
-    "summary": "CentOS-related desktop backgrounds"
-  },
-  {
-    "name": "centos-indexhtml",
-    "summary": "Browser default start page for CentOS"
-  },
-  {
-    "name": "centos-logos",
-    "summary": "CentOS-related icons and pictures"
-  },
-  {
-    "name": "centos-logos-httpd",
-    "summary": "CentOS-related icons and pictures used by httpd"
-  },
-  {
-    "name": "centos-logos-ipa",
-    "summary": "CentOS-related icons and pictures used by ipa"
   },
   {
     "name": "certmonger",
@@ -1098,10 +1034,6 @@
   {
     "name": "checkpolicy",
     "summary": "SELinux policy compiler"
-  },
-  {
-    "name": "cheese",
-    "summary": "Application for taking pictures and movies from a webcam"
   },
   {
     "name": "cheese-libs",
@@ -1288,10 +1220,6 @@
     "summary": "Compatibility Fortran runtime library version 4.8.5"
   },
   {
-    "name": "compat-libtiff3",
-    "summary": "Compatibility package for libtiff 3"
-  },
-  {
     "name": "compat-openssl11",
     "summary": "Utilities from the general purpose cryptography library with TLS implementation"
   },
@@ -1366,10 +1294,6 @@
   {
     "name": "coreos-installer-dracut",
     "summary": "Dracut module for running coreos-installer in the initrd"
-  },
-  {
-    "name": "corosynclib",
-    "summary": "The Corosync Cluster Engine Libraries"
   },
   {
     "name": "cpp",
@@ -1520,18 +1444,6 @@
     "summary": "CUPS printing system - tools for printer application"
   },
   {
-    "name": "curl-minimal",
-    "summary": "Conservatively configured build of curl for minimal installations"
-  },
-  {
-    "name": "cxl-cli",
-    "summary": "Manage CXL devices"
-  },
-  {
-    "name": "cxl-libs",
-    "summary": "Management library for CXL devices"
-  },
-  {
     "name": "cyrus-imapd",
     "summary": "A high-performance email, contacts and calendar server"
   },
@@ -1542,10 +1454,6 @@
   {
     "name": "cyrus-imapd-utils",
     "summary": "Cyrus IMAP server administration utilities"
-  },
-  {
-    "name": "cyrus-sasl",
-    "summary": "The Cyrus SASL library"
   },
   {
     "name": "cyrus-sasl-devel",
@@ -1574,14 +1482,6 @@
   {
     "name": "daxctl",
     "summary": "Manage Device-DAX instances"
-  },
-  {
-    "name": "daxctl-devel",
-    "summary": "Development files for libdaxctl"
-  },
-  {
-    "name": "daxio",
-    "summary": "Perform I/O on Device DAX devices or zero a Device DAX device"
   },
   {
     "name": "dbus-daemon",
@@ -1636,10 +1536,6 @@
     "summary": "A variable-width Latin-Greek-Cyrillic serif font family"
   },
   {
-    "name": "delve",
-    "summary": "A debugger for the Go programming language"
-  },
-  {
     "name": "desktop-file-utils",
     "summary": "Utilities for manipulating .desktop files"
   },
@@ -1680,24 +1576,8 @@
     "summary": "SGML and XML document type definitions for DocBook"
   },
   {
-    "name": "docbook-style-dsssl",
-    "summary": "Norman Walsh's modular stylesheets for DocBook"
-  },
-  {
     "name": "docbook-style-xsl",
     "summary": "Norman Walsh's XSL stylesheets for DocBook XML"
-  },
-  {
-    "name": "docbook-utils",
-    "summary": "Shell scripts for managing DocBook documents"
-  },
-  {
-    "name": "docbook-utils-pdf",
-    "summary": "A script for converting DocBook documents to PDF format"
-  },
-  {
-    "name": "docbook5-schemas",
-    "summary": "Norman Walsh's schemas (DTD, Relax NG, W3C schema) for Docbook 5.X"
   },
   {
     "name": "docbook5-style-xsl",
@@ -1712,80 +1592,32 @@
     "summary": "Libraries to parse configuration files"
   },
   {
-    "name": "dotnet-apphost-pack-3.1",
-    "summary": "Targeting Pack for Microsoft.NETCore.App 3.1"
-  },
-  {
     "name": "dotnet-apphost-pack-6.0",
     "summary": "Targeting Pack for Microsoft.NETCore.App 6.0"
-  },
-  {
-    "name": "dotnet-apphost-pack-7.0",
-    "summary": "Targeting Pack for Microsoft.NETCore.App 7.0"
   },
   {
     "name": "dotnet-host",
     "summary": ".NET command line launcher"
   },
   {
-    "name": "dotnet-hostfxr-3.1",
-    "summary": ".NET Core command line host resolver"
-  },
-  {
     "name": "dotnet-hostfxr-6.0",
     "summary": ".NET command line host resolver"
-  },
-  {
-    "name": "dotnet-hostfxr-7.0",
-    "summary": ".NET command line host resolver"
-  },
-  {
-    "name": "dotnet-runtime-3.1",
-    "summary": "NET Core 3.1 runtime"
   },
   {
     "name": "dotnet-runtime-6.0",
     "summary": "NET 6.0 runtime"
   },
   {
-    "name": "dotnet-runtime-7.0",
-    "summary": "NET 7.0 runtime"
-  },
-  {
-    "name": "dotnet-sdk-3.1",
-    "summary": ".NET Core 3.1 Software Development Kit"
-  },
-  {
     "name": "dotnet-sdk-6.0",
     "summary": ".NET 6.0 Software Development Kit"
-  },
-  {
-    "name": "dotnet-sdk-7.0",
-    "summary": ".NET 7.0 Software Development Kit"
-  },
-  {
-    "name": "dotnet-targeting-pack-3.1",
-    "summary": "Targeting Pack for Microsoft.NETCore.App 3.1"
   },
   {
     "name": "dotnet-targeting-pack-6.0",
     "summary": "Targeting Pack for Microsoft.NETCore.App 6.0"
   },
   {
-    "name": "dotnet-targeting-pack-7.0",
-    "summary": "Targeting Pack for Microsoft.NETCore.App 7.0"
-  },
-  {
-    "name": "dotnet-templates-3.1",
-    "summary": ".NET Core 3.1 templates"
-  },
-  {
     "name": "dotnet-templates-6.0",
     "summary": ".NET 6.0 templates"
-  },
-  {
-    "name": "dotnet-templates-7.0",
-    "summary": ".NET 7.0 templates"
   },
   {
     "name": "double-conversion",
@@ -1806,18 +1638,6 @@
   {
     "name": "dovecot-pigeonhole",
     "summary": "Sieve and managesieve plug-in for dovecot"
-  },
-  {
-    "name": "doxygen",
-    "summary": "A documentation system for C/C++"
-  },
-  {
-    "name": "doxygen-doxywizard",
-    "summary": "A GUI for creating and editing configuration files"
-  },
-  {
-    "name": "doxygen-latex",
-    "summary": "Support for producing latex/pdf output from doxygen"
   },
   {
     "name": "dpdk",
@@ -1868,8 +1688,8 @@
     "summary": "Ext2/3/4 file system specific libraries and headers"
   },
   {
-    "name": "edk2-ovmf",
-    "summary": "UEFI firmware for x86_64 virtual machines"
+    "name": "edk2-aarch64",
+    "summary": "UEFI firmware for aarch64 virtual machines"
   },
   {
     "name": "efi-srpm-macros",
@@ -1878,10 +1698,6 @@
   {
     "name": "efivar",
     "summary": "Tools to manage UEFI variables"
-  },
-  {
-    "name": "egl-utils",
-    "summary": "EGL utilities"
   },
   {
     "name": "egl-wayland",
@@ -1940,24 +1756,12 @@
     "summary": "A plain ASCII to PostScript converter"
   },
   {
-    "name": "eog",
-    "summary": "Eye of GNOME image viewer"
-  },
-  {
     "name": "esc",
     "summary": "Enterprise Security Client Smart Card Client"
   },
   {
     "name": "espeak-ng",
     "summary": "eSpeak NG Text-to-Speech"
-  },
-  {
-    "name": "eth-tools-basic",
-    "summary": "Management level tools and scripts"
-  },
-  {
-    "name": "eth-tools-fastfabric",
-    "summary": "Management level tools and scripts"
   },
   {
     "name": "evince",
@@ -2120,10 +1924,6 @@
     "summary": "Common base for Fence Agents"
   },
   {
-    "name": "fence-agents-compute",
-    "summary": "Fence agent for Nova compute nodes"
-  },
-  {
     "name": "fence-agents-ibm-powervs",
     "summary": "Fence agent for IBM PowerVS"
   },
@@ -2138,34 +1938,6 @@
   {
     "name": "fence-agents-virsh",
     "summary": "Fence agent for virtual machines based on libvirt"
-  },
-  {
-    "name": "fence-virt",
-    "summary": "A pluggable fencing framework for virtual machines"
-  },
-  {
-    "name": "fence-virtd",
-    "summary": "Daemon which handles requests from fence-virt"
-  },
-  {
-    "name": "fence-virtd-cpg",
-    "summary": "CPG/libvirt backend for fence-virtd"
-  },
-  {
-    "name": "fence-virtd-libvirt",
-    "summary": "Libvirt backend for fence-virtd"
-  },
-  {
-    "name": "fence-virtd-multicast",
-    "summary": "Multicast listener for fence-virtd"
-  },
-  {
-    "name": "fence-virtd-serial",
-    "summary": "Serial VMChannel listener for fence-virtd"
-  },
-  {
-    "name": "fence-virtd-tcp",
-    "summary": "TCP listener for fence-virtd"
   },
   {
     "name": "festival",
@@ -2204,10 +1976,6 @@
     "summary": "FFTW library, long double precision"
   },
   {
-    "name": "fftw-libs-quad",
-    "summary": "FFTW library, quadruple"
-  },
-  {
     "name": "fftw-libs-single",
     "summary": "FFTW library, single precision"
   },
@@ -2220,10 +1988,6 @@
     "summary": "Multithreaded IO generation tool"
   },
   {
-    "name": "fio-engine-dev-dax",
-    "summary": "PMDK dev-dax engine for fio."
-  },
-  {
     "name": "fio-engine-http",
     "summary": "HTTP engine for fio."
   },
@@ -2232,16 +1996,8 @@
     "summary": "Linux libaio engine for fio."
   },
   {
-    "name": "fio-engine-libpmem",
-    "summary": "PMDK pmemblk engine for fio."
-  },
-  {
     "name": "fio-engine-nbd",
     "summary": "Network Block Device engine for fio."
-  },
-  {
-    "name": "fio-engine-pmemblk",
-    "summary": "PMDK pmemblk engine for fio."
   },
   {
     "name": "fio-engine-rados",
@@ -2332,10 +2088,6 @@
     "summary": "C++ user interface toolkit"
   },
   {
-    "name": "flute",
-    "summary": "Java CSS parser using SAC"
-  },
-  {
     "name": "fontawesome-fonts",
     "summary": "Iconic font set"
   },
@@ -2368,20 +2120,8 @@
     "summary": "PPDs from printer manufacturers"
   },
   {
-    "name": "fprintd",
-    "summary": "D-Bus service for Fingerprint reader access"
-  },
-  {
-    "name": "fprintd-pam",
-    "summary": "PAM module for fingerprint authentication"
-  },
-  {
     "name": "freeglut",
     "summary": "A freely licensed alternative to the GLUT library"
-  },
-  {
-    "name": "freeglut-devel",
-    "summary": "Freeglut developmental libraries and header files"
   },
   {
     "name": "freeipmi",
@@ -2448,10 +2188,6 @@
     "summary": "Routing daemon"
   },
   {
-    "name": "frr-selinux",
-    "summary": "Selinux policy for FRR"
-  },
-  {
     "name": "fstrm",
     "summary": "Frame Streams implementation in C"
   },
@@ -2508,124 +2244,8 @@
     "summary": "Fortran support"
   },
   {
-    "name": "gcc-offload-nvptx",
-    "summary": "Offloading compiler to NVPTX"
-  },
-  {
     "name": "gcc-plugin-annobin",
     "summary": "The annobin plugin for gcc, built by the installed version of gcc"
-  },
-  {
-    "name": "gcc-toolset-12",
-    "summary": "Package that installs gcc-toolset-12"
-  },
-  {
-    "name": "gcc-toolset-12-annobin-annocheck",
-    "summary": "A tool for checking the security hardening status of binaries"
-  },
-  {
-    "name": "gcc-toolset-12-annobin-docs",
-    "summary": "Documentation and shell scripts for use with annobin"
-  },
-  {
-    "name": "gcc-toolset-12-annobin-plugin-gcc",
-    "summary": "annobin gcc plugin"
-  },
-  {
-    "name": "gcc-toolset-12-binutils",
-    "summary": "A GNU collection of binary utilities"
-  },
-  {
-    "name": "gcc-toolset-12-binutils-devel",
-    "summary": "BFD and opcodes static and dynamic libraries and header files"
-  },
-  {
-    "name": "gcc-toolset-12-binutils-gold",
-    "summary": "The GOLD linker, a faster alternative to the BFD linker"
-  },
-  {
-    "name": "gcc-toolset-12-build",
-    "summary": "Package shipping basic build configuration"
-  },
-  {
-    "name": "gcc-toolset-12-dwz",
-    "summary": "DWARF optimization and duplicate removal tool"
-  },
-  {
-    "name": "gcc-toolset-12-gcc",
-    "summary": "GCC version 12"
-  },
-  {
-    "name": "gcc-toolset-12-gcc-c++",
-    "summary": "C++ support for GCC version 12"
-  },
-  {
-    "name": "gcc-toolset-12-gcc-gfortran",
-    "summary": "Fortran support for GCC 12"
-  },
-  {
-    "name": "gcc-toolset-12-gcc-plugin-devel",
-    "summary": "Support for compiling GCC plugins"
-  },
-  {
-    "name": "gcc-toolset-12-gdb",
-    "summary": "A GNU source-level debugger for C, C++, Fortran, Go and other languages"
-  },
-  {
-    "name": "gcc-toolset-12-libasan-devel",
-    "summary": "The Address Sanitizer static library"
-  },
-  {
-    "name": "gcc-toolset-12-libatomic-devel",
-    "summary": "The GNU Atomic static library"
-  },
-  {
-    "name": "gcc-toolset-12-libgccjit",
-    "summary": "Library for embedding GCC inside programs and libraries"
-  },
-  {
-    "name": "gcc-toolset-12-libgccjit-devel",
-    "summary": "Support for embedding GCC inside programs and libraries"
-  },
-  {
-    "name": "gcc-toolset-12-libgccjit-docs",
-    "summary": "Documentation for embedding GCC inside programs and libraries"
-  },
-  {
-    "name": "gcc-toolset-12-libitm-devel",
-    "summary": "The GNU Transactional Memory support"
-  },
-  {
-    "name": "gcc-toolset-12-liblsan-devel",
-    "summary": "The Leak Sanitizer static library"
-  },
-  {
-    "name": "gcc-toolset-12-libquadmath-devel",
-    "summary": "GCC 12 __float128 support"
-  },
-  {
-    "name": "gcc-toolset-12-libstdc++-devel",
-    "summary": "Header files and libraries for C++ development"
-  },
-  {
-    "name": "gcc-toolset-12-libstdc++-docs",
-    "summary": "Documentation for the GNU standard C++ library"
-  },
-  {
-    "name": "gcc-toolset-12-libtsan-devel",
-    "summary": "The Thread Sanitizer static library"
-  },
-  {
-    "name": "gcc-toolset-12-libubsan-devel",
-    "summary": "The Undefined Behavior Sanitizer static library"
-  },
-  {
-    "name": "gcc-toolset-12-offload-nvptx",
-    "summary": "Offloading compiler to NVPTX"
-  },
-  {
-    "name": "gcc-toolset-12-runtime",
-    "summary": "Package that handles gcc-toolset-12 Software Collection."
   },
   {
     "name": "gcr",
@@ -2928,10 +2548,6 @@
     "summary": "Widget library for Glade UI designer"
   },
   {
-    "name": "glib-networking",
-    "summary": "Networking support for GLib"
-  },
-  {
     "name": "glib2-devel",
     "summary": "A library of handy utility functions"
   },
@@ -2950,10 +2566,6 @@
   {
     "name": "glibc-doc",
     "summary": "Documentation for GNU libc"
-  },
-  {
-    "name": "glibc-headers",
-    "summary": "Additional internal header files for glibc-devel."
   },
   {
     "name": "glibc-locale-source",
@@ -3292,10 +2904,6 @@
     "summary": "GNOME User Documentation"
   },
   {
-    "name": "gnome-video-effects",
-    "summary": "Collection of GStreamer video effects"
-  },
-  {
     "name": "gnu-efi",
     "summary": "Development Libraries and headers for EFI"
   },
@@ -3356,20 +2964,12 @@
     "summary": "Golang compiler miscellaneous sources"
   },
   {
-    "name": "golang-race",
-    "summary": "Golang std library with -race enabled"
-  },
-  {
     "name": "golang-src",
     "summary": "Golang compiler source tree"
   },
   {
     "name": "golang-tests",
     "summary": "Golang compiler tests for stdlib"
-  },
-  {
-    "name": "gom",
-    "summary": "GObject to SQLite object mapper library"
   },
   {
     "name": "google-carlito-fonts",
@@ -3728,36 +3328,8 @@
     "summary": "Series of optional and curated health checks"
   },
   {
-    "name": "greenboot-grub2",
-    "summary": "Grub2 specific scripts for greenboot"
-  },
-  {
-    "name": "greenboot-reboot",
-    "summary": "Reboot on red status for greenboot"
-  },
-  {
-    "name": "greenboot-rpm-ostree-grub2",
-    "summary": "Scripts for greenboot on rpm-ostree-based systems using the Grub2 bootloader"
-  },
-  {
-    "name": "greenboot-status",
-    "summary": "Message of the Day updater for greenboot"
-  },
-  {
-    "name": "grilo",
-    "summary": "Content discovery framework"
-  },
-  {
-    "name": "grilo-plugins",
-    "summary": "Plugins for the Grilo framework"
-  },
-  {
     "name": "groff",
     "summary": "A document formatting system"
-  },
-  {
-    "name": "gsettings-desktop-schemas",
-    "summary": "A collection of GSettings schemas"
   },
   {
     "name": "gsettings-desktop-schemas-devel",
@@ -3932,10 +3504,6 @@
     "summary": "A GObject for VNC connections"
   },
   {
-    "name": "ha-openstack-support",
-    "summary": "Support libraries for OpenStack agents"
-  },
-  {
     "name": "hamcrest",
     "summary": "Library of matchers for building test expressions"
   },
@@ -3954,14 +3522,6 @@
   {
     "name": "HdrHistogram_c",
     "summary": "C port of the HdrHistogram"
-  },
-  {
-    "name": "help2man",
-    "summary": "Create simple man pages from --help output"
-  },
-  {
-    "name": "hexchat",
-    "summary": "A popular and easy to use graphical IRC (chat) client"
   },
   {
     "name": "hexedit",
@@ -4022,10 +3582,6 @@
   {
     "name": "httpd",
     "summary": "Apache HTTP Server"
-  },
-  {
-    "name": "httpd-core",
-    "summary": "httpd minimal core"
   },
   {
     "name": "httpd-devel",
@@ -4888,10 +4444,6 @@
     "summary": "i2c tools written in Perl"
   },
   {
-    "name": "ibacm",
-    "summary": "InfiniBand Communication Manager Assistant"
-  },
-  {
     "name": "ibus",
     "summary": "Intelligent Input Bus for Linux OS"
   },
@@ -5008,60 +4560,12 @@
     "summary": "International Components for Unicode"
   },
   {
-    "name": "idm-jss",
-    "summary": "Java Security Services (JSS)"
-  },
-  {
-    "name": "idm-ldapjdk",
-    "summary": "LDAP SDK"
-  },
-  {
-    "name": "idm-pki-acme",
-    "summary": "IDM PKI ACME Package"
-  },
-  {
-    "name": "idm-pki-base",
-    "summary": "IDM PKI Base Package"
-  },
-  {
-    "name": "idm-pki-ca",
-    "summary": "IDM PKI CA Package"
-  },
-  {
-    "name": "idm-pki-java",
-    "summary": "IDM PKI Base Java Package"
-  },
-  {
-    "name": "idm-pki-kra",
-    "summary": "IDM PKI KRA Package"
-  },
-  {
-    "name": "idm-pki-server",
-    "summary": "IDM PKI Server Package"
-  },
-  {
-    "name": "idm-pki-tools",
-    "summary": "IDM PKI Tools Package"
-  },
-  {
-    "name": "idm-tomcatjss",
-    "summary": "JSS Connector for Apache Tomcat"
-  },
-  {
     "name": "idn2",
     "summary": "IDNA2008 internationalized domain names conversion tool"
   },
   {
     "name": "ignition",
     "summary": "First boot installer and configuration tool"
-  },
-  {
-    "name": "ignition-edge",
-    "summary": "Enablement glue for Ignition on ostree systems"
-  },
-  {
-    "name": "ignition-validate",
-    "summary": "Validation tool for Ignition configs"
   },
   {
     "name": "iio-sensor-proxy",
@@ -5094,6 +4598,10 @@
   {
     "name": "inkscape-view",
     "summary": "Viewing program for SVG files"
+  },
+  {
+    "name": "insights-client",
+    "summary": "Uploads Insights information to Red Hat on a periodic basis"
   },
   {
     "name": "intltool",
@@ -5184,16 +4692,12 @@
     "summary": "Utility to administer the Linux Virtual Server"
   },
   {
-    "name": "ipxe-bootimgs",
-    "summary": "Network boot loader images in bootable USB, CD, floppy and GRUB formats"
-  },
-  {
     "name": "ipxe-bootimgs-aarch64",
     "summary": "AArch64 Network boot loader images in bootable USB and GRUB formats"
   },
   {
     "name": "ipxe-bootimgs-x86",
-    "summary": "Network boot loader images in bootable USB, CD, floppy and GRUB formats"
+    "summary": "X86 Network boot loader images in bootable USB, CD, floppy and GRUB formats"
   },
   {
     "name": "ipxe-roms",
@@ -5614,34 +5118,6 @@
   {
     "name": "keycloak-httpd-client-install",
     "summary": "Tools to configure Apache HTTPD as Keycloak client"
-  },
-  {
-    "name": "keylime",
-    "summary": "Open source TPM software for Bootstrapping and Maintaining Trust"
-  },
-  {
-    "name": "keylime-agent-rust",
-    "summary": "Rust agent for Keylime"
-  },
-  {
-    "name": "keylime-base",
-    "summary": "The base package contains the default configuration"
-  },
-  {
-    "name": "keylime-registrar",
-    "summary": "The Keylime Registrar component"
-  },
-  {
-    "name": "keylime-selinux",
-    "summary": "keylime SELinux policy"
-  },
-  {
-    "name": "keylime-tenant",
-    "summary": "The Python Keylime Tenant"
-  },
-  {
-    "name": "keylime-verifier",
-    "summary": "The Python Keylime Verifier component"
   },
   {
     "name": "keyutils-libs-devel",
@@ -6788,10 +6264,6 @@
     "summary": "Liberty Alliance Single Sign On"
   },
   {
-    "name": "latex2html",
-    "summary": "Converts LaTeX documents to HTML"
-  },
-  {
     "name": "lato-fonts",
     "summary": "A sanserif typeface family"
   },
@@ -6852,10 +6324,6 @@
     "summary": "The Address Sanitizer runtime library"
   },
   {
-    "name": "libasan8",
-    "summary": "The Address Sanitizer runtime library from GCC 12"
-  },
-  {
     "name": "libasyncns",
     "summary": "Asynchronous Name Service Library"
   },
@@ -6870,10 +6338,6 @@
   {
     "name": "libbabeltrace",
     "summary": "Common Trace Format Babel Tower"
-  },
-  {
-    "name": "libbase",
-    "summary": "JFree Base Services"
   },
   {
     "name": "libblkid-devel",
@@ -6922,10 +6386,6 @@
   {
     "name": "libblockdev-nvdimm",
     "summary": "The NVDIMM plugin for the libblockdev library"
-  },
-  {
-    "name": "libblockdev-nvme",
-    "summary": "The NVMe plugin for the libblockdev library"
   },
   {
     "name": "libblockdev-part",
@@ -7172,18 +6632,6 @@
     "summary": "X.Org X11 libfontenc runtime library"
   },
   {
-    "name": "libfonts",
-    "summary": "TrueType Font Layouting"
-  },
-  {
-    "name": "libformula",
-    "summary": "Formula Parser"
-  },
-  {
-    "name": "libfprint",
-    "summary": "Toolkit for fingerprint scanner"
-  },
-  {
     "name": "libfreehand",
     "summary": "A library for import of Macromedia/Adobe FreeHand documents"
   },
@@ -7248,32 +6696,12 @@
     "summary": "A keyboard configuration library"
   },
   {
-    "name": "libgomp-offload-nvptx",
-    "summary": "GCC OpenMP v4.5 plugin for offloading to NVPTX"
-  },
-  {
     "name": "libgpg-error-devel",
     "summary": "Development files for the libgpg-error package"
   },
   {
     "name": "libgphoto2",
     "summary": "Library for accessing digital cameras"
-  },
-  {
-    "name": "libgpiod",
-    "summary": "C library and tools for interacting with linux GPIO char device"
-  },
-  {
-    "name": "libgpiod-c++",
-    "summary": "C++ bindings for libgpiod"
-  },
-  {
-    "name": "libgpiod-devel",
-    "summary": "Development package for libgpiod"
-  },
-  {
-    "name": "libgpiod-utils",
-    "summary": "Utilities for GPIO"
   },
   {
     "name": "libgs",
@@ -7344,14 +6772,6 @@
     "summary": "I2C/SMBus bus access library"
   },
   {
-    "name": "libi2cd",
-    "summary": "C library for interacting with linux I2C devices"
-  },
-  {
-    "name": "libi2cd-devel",
-    "summary": "Development package for libi2cd"
-  },
-  {
     "name": "libical",
     "summary": "Reference implementation of the iCalendar data type and serialization format"
   },
@@ -7402,10 +6822,6 @@
   {
     "name": "libinput-utils",
     "summary": "Utilities and tools for debugging libinput"
-  },
-  {
-    "name": "libipt",
-    "summary": "Intel Processor Trace Decoder Library"
   },
   {
     "name": "libiptcdata",
@@ -7472,16 +6888,8 @@
     "summary": "liblangtag data files"
   },
   {
-    "name": "liblayout",
-    "summary": "CSS based layouting framework"
-  },
-  {
     "name": "libldac",
     "summary": "A lossy audio codec for Bluetooth connections"
-  },
-  {
-    "name": "libloader",
-    "summary": "Resource Loading Framework"
   },
   {
     "name": "liblockfile",
@@ -7508,20 +6916,12 @@
     "summary": "Library for storing small metadata in the LUKSv1 header"
   },
   {
-    "name": "libmad",
-    "summary": "MPEG audio decoder library"
-  },
-  {
     "name": "libmatchbox",
     "summary": "Libraries for the Matchbox Desktop"
   },
   {
     "name": "libmaxminddb",
     "summary": "C library for the MaxMind DB file format"
-  },
-  {
-    "name": "libmediaart",
-    "summary": "Library for managing media art caches"
   },
   {
     "name": "libmicrohttpd",
@@ -7616,10 +7016,6 @@
     "summary": "Number to number name and money text conversion library"
   },
   {
-    "name": "libnvme",
-    "summary": "Linux-native nvme device management library"
-  },
-  {
     "name": "libodfgen",
     "summary": "An ODF generator library"
   },
@@ -7668,14 +7064,6 @@
     "summary": "Library and tools for handling papersize"
   },
   {
-    "name": "libpcap-devel",
-    "summary": "Libraries and header files for the libpcap library"
-  },
-  {
-    "name": "libpciaccess-devel",
-    "summary": "PCI access library development package"
-  },
-  {
     "name": "libpeas-gtk",
     "summary": "GTK+ plug-ins support for libpeas"
   },
@@ -7704,86 +7092,6 @@
     "summary": "Data files for libpinyin"
   },
   {
-    "name": "libpmem",
-    "summary": "Low-level persistent memory support library"
-  },
-  {
-    "name": "libpmem-debug",
-    "summary": "Debug variant of the low-level persistent memory library"
-  },
-  {
-    "name": "libpmem-devel",
-    "summary": "Development files for the low-level persistent memory library"
-  },
-  {
-    "name": "libpmem2",
-    "summary": "Low-level persistent memory support library"
-  },
-  {
-    "name": "libpmem2-debug",
-    "summary": "Debug variant of the low-level persistent memory library"
-  },
-  {
-    "name": "libpmem2-devel",
-    "summary": "Development files for the low-level persistent memory library"
-  },
-  {
-    "name": "libpmemblk",
-    "summary": "Persistent Memory Resident Array of Blocks library"
-  },
-  {
-    "name": "libpmemblk-debug",
-    "summary": "Debug variant of the Persistent Memory Resident Array of Blocks library"
-  },
-  {
-    "name": "libpmemblk-devel",
-    "summary": "Development files for the Persistent Memory Resident Array of Blocks library"
-  },
-  {
-    "name": "libpmemlog",
-    "summary": "Persistent Memory Resident Log File library"
-  },
-  {
-    "name": "libpmemlog-debug",
-    "summary": "Debug variant of the Persistent Memory Resident Log File library"
-  },
-  {
-    "name": "libpmemlog-devel",
-    "summary": "Development files for the Persistent Memory Resident Log File library"
-  },
-  {
-    "name": "libpmemobj",
-    "summary": "Persistent Memory Transactional Object Store library"
-  },
-  {
-    "name": "libpmemobj++-devel",
-    "summary": "C++ bindings for Persistent Memory Transactional Object Store library"
-  },
-  {
-    "name": "libpmemobj++-doc",
-    "summary": "HTML documentation for libpmemobj++"
-  },
-  {
-    "name": "libpmemobj-debug",
-    "summary": "Debug variant of the Persistent Memory Transactional Object Store library"
-  },
-  {
-    "name": "libpmemobj-devel",
-    "summary": "Development files for the Persistent Memory Transactional Object Store library"
-  },
-  {
-    "name": "libpmempool",
-    "summary": "Persistent Memory pool management library"
-  },
-  {
-    "name": "libpmempool-debug",
-    "summary": "Debug variant of the Persistent Memory pool management library"
-  },
-  {
-    "name": "libpmempool-devel",
-    "summary": "Development files for Persistent Memory pool management library"
-  },
-  {
     "name": "libpng-devel",
     "summary": "Development tools for programs to manipulate PNG image format files"
   },
@@ -7798,10 +7106,6 @@
   {
     "name": "libpq-devel",
     "summary": "Development files for building PostgreSQL client tools"
-  },
-  {
-    "name": "libproxy",
-    "summary": "A library handling all the details of proxy configuration"
   },
   {
     "name": "libproxy-bin",
@@ -7820,20 +7124,12 @@
     "summary": "Development files for libpsl"
   },
   {
-    "name": "libpsm2",
-    "summary": "Intel PSM Libraries"
-  },
-  {
     "name": "libpst-libs",
     "summary": "Shared library used by the pst utilities"
   },
   {
     "name": "libqb",
     "summary": "Library providing high performance logging, tracing, ipc, and poll"
-  },
-  {
-    "name": "libquadmath-devel",
-    "summary": "GCC __float128 support"
   },
   {
     "name": "libqxp",
@@ -7868,10 +7164,6 @@
     "summary": "The Reliable Event Logging Protocol library"
   },
   {
-    "name": "libreoffice-base",
-    "summary": "Database front-end for LibreOffice"
-  },
-  {
     "name": "libreoffice-calc",
     "summary": "LibreOffice Spreadsheet Application"
   },
@@ -7884,500 +7176,20 @@
     "summary": "LibreOffice data files"
   },
   {
-    "name": "libreoffice-draw",
-    "summary": "LibreOffice Drawing Application"
-  },
-  {
-    "name": "libreoffice-emailmerge",
-    "summary": "Email mail-merge component for LibreOffice"
-  },
-  {
-    "name": "libreoffice-filters",
-    "summary": "All import / export filters"
-  },
-  {
-    "name": "libreoffice-gdb-debug-support",
-    "summary": "Additional support for debugging with gdb"
-  },
-  {
     "name": "libreoffice-graphicfilter",
     "summary": "LibreOffice Extra Graphic filters"
-  },
-  {
-    "name": "libreoffice-gtk3",
-    "summary": "LibreOffice GTK+ 3 integration plug-in"
-  },
-  {
-    "name": "libreoffice-help-ar",
-    "summary": "Arabic help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-bg",
-    "summary": "Bulgarian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-bn",
-    "summary": "Bengali help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-ca",
-    "summary": "Catalan help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-cs",
-    "summary": "Czech help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-da",
-    "summary": "Danish help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-de",
-    "summary": "German help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-dz",
-    "summary": "Dzongkha help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-el",
-    "summary": "Greek help for LibreOffice"
   },
   {
     "name": "libreoffice-help-en",
     "summary": "English help for LibreOffice"
   },
   {
-    "name": "libreoffice-help-eo",
-    "summary": "Esperanto help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-es",
-    "summary": "Spanish help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-et",
-    "summary": "Estonian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-eu",
-    "summary": "Basque help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-fi",
-    "summary": "Finnish help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-fr",
-    "summary": "French help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-gl",
-    "summary": "Galician help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-gu",
-    "summary": "Gujarati help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-he",
-    "summary": "Hebrew help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-hi",
-    "summary": "Hindi help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-hr",
-    "summary": "Croatian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-hu",
-    "summary": "Hungarian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-id",
-    "summary": "Indonesian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-it",
-    "summary": "Italian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-ja",
-    "summary": "Japanese help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-ko",
-    "summary": "Korean help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-lt",
-    "summary": "Lithuanian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-lv",
-    "summary": "Latvian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-nb",
-    "summary": "Bokmal help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-nl",
-    "summary": "Dutch help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-nn",
-    "summary": "Nynorsk help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-pl",
-    "summary": "Polish help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-pt-BR",
-    "summary": "Brazilian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-pt-PT",
-    "summary": "Portuguese help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-ro",
-    "summary": "Romanian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-ru",
-    "summary": "Russian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-si",
-    "summary": "Sinhalese help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-sk",
-    "summary": "Slovak help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-sl",
-    "summary": "Slovenian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-sv",
-    "summary": "Swedish help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-ta",
-    "summary": "Tamil help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-tr",
-    "summary": "Turkish help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-uk",
-    "summary": "Ukrainian help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-zh-Hans",
-    "summary": "Simplified help for LibreOffice"
-  },
-  {
-    "name": "libreoffice-help-zh-Hant",
-    "summary": "Traditional help for LibreOffice"
-  },
-  {
     "name": "libreoffice-impress",
     "summary": "LibreOffice Presentation Application"
   },
   {
-    "name": "libreoffice-langpack-af",
-    "summary": "Afrikaans language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ar",
-    "summary": "Arabic language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-as",
-    "summary": "Assamese language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-bg",
-    "summary": "Bulgarian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-bn",
-    "summary": "Bengali language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-br",
-    "summary": "Breton language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ca",
-    "summary": "Catalan language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-cs",
-    "summary": "Czech language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-cy",
-    "summary": "Welsh language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-da",
-    "summary": "Danish language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-de",
-    "summary": "German language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-dz",
-    "summary": "Dzongkha language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-el",
-    "summary": "Greek language pack for LibreOffice"
-  },
-  {
     "name": "libreoffice-langpack-en",
     "summary": "English language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-eo",
-    "summary": "Esperanto language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-es",
-    "summary": "Spanish language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-et",
-    "summary": "Estonian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-eu",
-    "summary": "Basque language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-fa",
-    "summary": "Farsi language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-fi",
-    "summary": "Finnish language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-fr",
-    "summary": "French language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-fy",
-    "summary": "Frisian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ga",
-    "summary": "Irish language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-gl",
-    "summary": "Galician language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-gu",
-    "summary": "Gujarati language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-he",
-    "summary": "Hebrew language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-hi",
-    "summary": "Hindi language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-hr",
-    "summary": "Croatian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-hu",
-    "summary": "Hungarian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-id",
-    "summary": "Indonesian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-it",
-    "summary": "Italian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ja",
-    "summary": "Japanese language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-kk",
-    "summary": "Kazakh language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-kn",
-    "summary": "Kannada language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ko",
-    "summary": "Korean language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-lt",
-    "summary": "Lithuanian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-lv",
-    "summary": "Latvian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-mai",
-    "summary": "Maithili language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ml",
-    "summary": "Malayalam language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-mr",
-    "summary": "Marathi language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-nb",
-    "summary": "Bokmal language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-nl",
-    "summary": "Dutch language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-nn",
-    "summary": "Nynorsk language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-nr",
-    "summary": "Southern language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-nso",
-    "summary": "Northern language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-or",
-    "summary": "Odia language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-pa",
-    "summary": "Punjabi language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-pl",
-    "summary": "Polish language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-pt-BR",
-    "summary": "Brazilian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-pt-PT",
-    "summary": "Portuguese language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ro",
-    "summary": "Romanian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ru",
-    "summary": "Russian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-si",
-    "summary": "Sinhalese language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-sk",
-    "summary": "Slovak language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-sl",
-    "summary": "Slovenian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-sr",
-    "summary": "Serbian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ss",
-    "summary": "Swati language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-st",
-    "summary": "Southern language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-sv",
-    "summary": "Swedish language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ta",
-    "summary": "Tamil language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-te",
-    "summary": "Telugu language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-th",
-    "summary": "Thai language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-tn",
-    "summary": "Tswana language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-tr",
-    "summary": "Turkish language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ts",
-    "summary": "Tsonga language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-uk",
-    "summary": "Ukrainian language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-ve",
-    "summary": "Venda language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-xh",
-    "summary": "Xhosa language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-zh-Hans",
-    "summary": "Simplified language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-zh-Hant",
-    "summary": "Traditional language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-langpack-zu",
-    "summary": "Zulu language pack for LibreOffice"
-  },
-  {
-    "name": "libreoffice-math",
-    "summary": "LibreOffice Equation Editor Application"
   },
   {
     "name": "libreoffice-ogltrans",
@@ -8404,28 +7216,8 @@
     "summary": "Common UNO Runtime Environment"
   },
   {
-    "name": "libreoffice-voikko",
-    "summary": "Finnish spellchecker and hyphenator extension for LibreOffice"
-  },
-  {
-    "name": "libreoffice-wiki-publisher",
-    "summary": "Create Wiki articles on MediaWiki servers with LibreOffice"
-  },
-  {
     "name": "libreoffice-writer",
     "summary": "LibreOffice Word Processor Application"
-  },
-  {
-    "name": "libreoffice-x11",
-    "summary": "LibreOffice generic X11 support plug-in"
-  },
-  {
-    "name": "libreoffice-xsltfilter",
-    "summary": "Optional xsltfilter module for LibreOffice"
-  },
-  {
-    "name": "libreofficekit",
-    "summary": "A library providing access to LibreOffice functionality"
   },
   {
     "name": "libreport",
@@ -8460,10 +7252,6 @@
     "summary": "Library providing network API for libreport"
   },
   {
-    "name": "librepository",
-    "summary": "Hierarchical repository abstraction layer"
-  },
-  {
     "name": "libreswan",
     "summary": "Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec"
   },
@@ -8486,10 +7274,6 @@
   {
     "name": "librsvg2-tools",
     "summary": "Extra tools for librsvg"
-  },
-  {
-    "name": "librx",
-    "summary": "POSIX regexp functions"
   },
   {
     "name": "libsamplerate",
@@ -8532,16 +7316,8 @@
     "summary": "Header files and libraries used to build policy manipulation tools"
   },
   {
-    "name": "libsepol-utils",
-    "summary": "SELinux libsepol utilities"
-  },
-  {
     "name": "libserf",
     "summary": "High-Performance Asynchronous HTTP Client Library"
-  },
-  {
-    "name": "libserializer",
-    "summary": "JFreeReport General Serialization Framework"
   },
   {
     "name": "libshaderc",
@@ -8708,10 +7484,6 @@
     "summary": "The Thread Sanitizer runtime library"
   },
   {
-    "name": "libtsan2",
-    "summary": "The Thread Sanitizer runtime library"
-  },
-  {
     "name": "libubsan",
     "summary": "The Undefined Behavior Sanitizer runtime library"
   },
@@ -8742,14 +7514,6 @@
   {
     "name": "libv4l",
     "summary": "Collection of video4linux support libraries"
-  },
-  {
-    "name": "libva",
-    "summary": "Video Acceleration (VA) API for Linux"
-  },
-  {
-    "name": "libva-devel",
-    "summary": "Development files for libva"
   },
   {
     "name": "libvdpau",
@@ -9232,10 +7996,6 @@
     "summary": "Tools for connecting joysticks & legacy devices to the kernel's input subsystem"
   },
   {
-    "name": "linuxdoc-tools",
-    "summary": "A text formatting package based on SGML"
-  },
-  {
     "name": "linuxptp",
     "summary": "PTP implementation for Linux"
   },
@@ -9492,8 +8252,8 @@
     "summary": "RELAX NG schemas for all Mallard versions"
   },
   {
-    "name": "man-db-cron",
-    "summary": "Periodic update of man-db cache"
+    "name": "man-pages-overrides",
+    "summary": "Complementary and updated manual pages"
   },
   {
     "name": "mariadb",
@@ -9632,10 +8392,6 @@
     "summary": "A memory allocation tracer, like a hot spot analyzer for memory allocation"
   },
   {
-    "name": "memtest86+",
-    "summary": "Stand-alone memory tester for x86 and x86-64 computers"
-  },
-  {
     "name": "mesa-demos",
     "summary": "Mesa demos"
   },
@@ -9688,40 +8444,12 @@
     "summary": "Mesa libGLw development package"
   },
   {
-    "name": "mesa-libxatracker",
-    "summary": "Mesa XA state tracker"
-  },
-  {
-    "name": "mesa-vulkan-drivers",
-    "summary": "Mesa Vulkan drivers"
-  },
-  {
     "name": "micropipenv",
     "summary": "A simple wrapper around pip to support Pipenv and Poetry files"
   },
   {
-    "name": "mingw-filesystem-base",
-    "summary": "Generic files which are needed for both mingw32-filesystem and mingw64-filesystem"
-  },
-  {
-    "name": "mingw32-crt",
-    "summary": "MinGW Windows cross-compiler runtime for the win32 target"
-  },
-  {
-    "name": "mingw32-filesystem",
-    "summary": "MinGW cross compiler base filesystem and environment for the win32 target"
-  },
-  {
-    "name": "mingw32-srvany",
-    "summary": "Utility for creating services for Windows"
-  },
-  {
     "name": "mkfontscale",
     "summary": "Tool to generate legacy X11 font system index files"
-  },
-  {
-    "name": "mkpasswd",
-    "summary": "Encrypt a password with crypt(3) function using a salt"
   },
   {
     "name": "mobile-broadband-provider-info",
@@ -9864,10 +8592,6 @@
     "summary": "MPI tests package compiled against mvapich2"
   },
   {
-    "name": "mpitests-mvapich2-psm2",
-    "summary": "MPI tests package compiled against mvapich2 using OmniPath"
-  },
-  {
     "name": "mpitests-openmpi",
     "summary": "MPI tests package compiled against openmpi"
   },
@@ -9928,10 +8652,6 @@
     "summary": "Documentation files for mvapich2"
   },
   {
-    "name": "mvapich2-psm2",
-    "summary": "OSU MVAPICH2 MPI package 2.3 for Omni-Path adapters"
-  },
-  {
     "name": "mypaint-brushes",
     "summary": "Brushes to be used with the MyPaint library"
   },
@@ -9960,104 +8680,8 @@
     "summary": "A thesaurus library"
   },
   {
-    "name": "mythes-bg",
-    "summary": "Bulgarian thesaurus"
-  },
-  {
-    "name": "mythes-ca",
-    "summary": "Catalan thesaurus"
-  },
-  {
-    "name": "mythes-cs",
-    "summary": "Czech thesaurus"
-  },
-  {
-    "name": "mythes-da",
-    "summary": "Danish thesaurus"
-  },
-  {
-    "name": "mythes-de",
-    "summary": "German thesaurus"
-  },
-  {
-    "name": "mythes-el",
-    "summary": "Greek thesaurus"
-  },
-  {
     "name": "mythes-en",
     "summary": "English thesaurus"
-  },
-  {
-    "name": "mythes-eo",
-    "summary": "Esperanto thesaurus"
-  },
-  {
-    "name": "mythes-es",
-    "summary": "Spanish thesaurus"
-  },
-  {
-    "name": "mythes-fr",
-    "summary": "French thesaurus"
-  },
-  {
-    "name": "mythes-ga",
-    "summary": "Irish thesaurus"
-  },
-  {
-    "name": "mythes-hu",
-    "summary": "Hungarian thesaurus"
-  },
-  {
-    "name": "mythes-it",
-    "summary": "Italian thesaurus"
-  },
-  {
-    "name": "mythes-lv",
-    "summary": "Latvian thesaurus"
-  },
-  {
-    "name": "mythes-nb",
-    "summary": "Bokmaal thesaurus"
-  },
-  {
-    "name": "mythes-nl",
-    "summary": "Dutch thesaurus"
-  },
-  {
-    "name": "mythes-nn",
-    "summary": "Nynorsk thesaurus"
-  },
-  {
-    "name": "mythes-pl",
-    "summary": "Polish thesaurus"
-  },
-  {
-    "name": "mythes-pt",
-    "summary": "Portuguese thesaurus"
-  },
-  {
-    "name": "mythes-ro",
-    "summary": "Romanian thesaurus"
-  },
-  {
-    "name": "mythes-ru",
-    "summary": "Russian thesaurus"
-  },
-  {
-    "name": "mythes-sk",
-    "summary": "Slovak thesaurus"
-  },
-  {
-    "name": "mythes-sl",
-    "summary": "Slovenian thesaurus"
-  },
-  {
-    "name": "mythes-sv",
-    "summary": "Swedish thesaurus"
-  },
-  {
-    "name": "mythes-uk",
-    "summary": "Ukrainian thesaurus"
   },
   {
     "name": "nautilus",
@@ -10128,10 +8752,6 @@
     "summary": "Remote temporary filesystem disk plugin for nbdkit"
   },
   {
-    "name": "nbdkit-vddk-plugin",
-    "summary": "VMware VDDK plugin for nbdkit"
-  },
-  {
     "name": "nbdkit-xz-filter",
     "summary": "XZ filter for nbdkit"
   },
@@ -10146,10 +8766,6 @@
   {
     "name": "ncurses-term",
     "summary": "Terminal descriptions"
-  },
-  {
-    "name": "ndctl-devel",
-    "summary": "Development files for libndctl"
   },
   {
     "name": "neon",
@@ -10186,10 +8802,6 @@
   {
     "name": "netpbm",
     "summary": "A library for handling different graphics file formats"
-  },
-  {
-    "name": "netpbm-doc",
-    "summary": "Documentation for tools manipulating graphics files in netpbm supported formats"
   },
   {
     "name": "netpbm-progs",
@@ -10244,20 +8856,12 @@
     "summary": "Minimal NFS utilities for supporting clients"
   },
   {
-    "name": "nfsv4-client-utils",
-    "summary": "NFSv4 utilities for supporting client"
-  },
-  {
     "name": "nginx",
     "summary": "A high performance web server and reverse proxy server"
   },
   {
     "name": "nginx-all-modules",
     "summary": "A meta package that installs all available Nginx modules"
-  },
-  {
-    "name": "nginx-core",
-    "summary": "nginx minimal core"
   },
   {
     "name": "nginx-filesystem",
@@ -10392,10 +8996,6 @@
     "summary": "A wrapper for the user, group and hosts NSS API"
   },
   {
-    "name": "nss_wrapper-libs",
-    "summary": "nss_library shared library only"
-  },
-  {
     "name": "ntpstat",
     "summary": "Utility to print NTP synchronization status"
   },
@@ -10406,10 +9006,6 @@
   {
     "name": "numactl-devel",
     "summary": "Development package for building Applications that use numa"
-  },
-  {
-    "name": "nvme-stas",
-    "summary": "NVMe STorage Appliance Services"
   },
   {
     "name": "objectweb-asm",
@@ -10452,26 +9048,6 @@
     "summary": "Regular expressions library"
   },
   {
-    "name": "opa-address-resolution",
-    "summary": "OPA Address Resolution manager"
-  },
-  {
-    "name": "opa-basic-tools",
-    "summary": "OPA management level tools and scripts"
-  },
-  {
-    "name": "opa-fastfabric",
-    "summary": "Management level tools and scripts"
-  },
-  {
-    "name": "opa-fm",
-    "summary": "Intel Omni-Path Fabric Management Software"
-  },
-  {
-    "name": "opa-libopamgt",
-    "summary": "Omni-Path management API library"
-  },
-  {
     "name": "open-sans-fonts",
     "summary": "Open Sans is a humanist sans-serif typeface designed by Steve Matteson"
   },
@@ -10482,14 +9058,6 @@
   {
     "name": "open-vm-tools-desktop",
     "summary": "User experience components for Open Virtual Machine Tools"
-  },
-  {
-    "name": "open-vm-tools-salt-minion",
-    "summary": "Script file to install/uninstall salt-minion"
-  },
-  {
-    "name": "open-vm-tools-sdmp",
-    "summary": "Service Discovery components for Open Virtual Machine Tools"
   },
   {
     "name": "open-vm-tools-test",
@@ -10528,6 +9096,10 @@
     "summary": "OpenCL (Open Computing Language) header files"
   },
   {
+    "name": "opencsd",
+    "summary": "An open source CoreSight(tm) Trace Decode library"
+  },
+  {
     "name": "opendnssec",
     "summary": "DNSSEC key and zone management software"
   },
@@ -10550,10 +9122,6 @@
   {
     "name": "OpenIPMI-libs",
     "summary": "The OpenIPMI runtime libraries"
-  },
-  {
-    "name": "openjade",
-    "summary": "A DSSSL implementation"
   },
   {
     "name": "openjpeg2",
@@ -10606,10 +9174,6 @@
   {
     "name": "openslp-server",
     "summary": "OpenSLP server daemon"
-  },
-  {
-    "name": "opensp",
-    "summary": "SGML and XML parser"
   },
   {
     "name": "openssh-askpass",
@@ -10728,10 +9292,6 @@
     "summary": "Server and client commands for p11-kit"
   },
   {
-    "name": "pack",
-    "summary": "Convert code into runnable images"
-  },
-  {
     "name": "PackageKit",
     "summary": "Package management service"
   },
@@ -10808,10 +9368,6 @@
     "summary": "Plain Text to PostScript converter"
   },
   {
-    "name": "passt",
-    "summary": "User-mode networking daemons for virtual machines and namespaces"
-  },
-  {
     "name": "patch",
     "summary": "Utility for modifying/upgrading files"
   },
@@ -10832,16 +9388,8 @@
     "summary": "Portable C Audio Library"
   },
   {
-    "name": "pciutils",
-    "summary": "PCI bus related utilities"
-  },
-  {
     "name": "pciutils-devel",
     "summary": "Linux PCI development library"
-  },
-  {
-    "name": "pcm",
-    "summary": "Processor Counter Monitor"
   },
   {
     "name": "pcp",
@@ -11068,10 +9616,6 @@
     "summary": "Performance Co-Pilot (PCP) metrics for filesystem mounts"
   },
   {
-    "name": "pcp-pmda-mssql",
-    "summary": "Performance Co-Pilot (PCP) metrics for Microsoft SQL Server"
-  },
-  {
     "name": "pcp-pmda-mysql",
     "summary": "Performance Co-Pilot (PCP) metrics for MySQL"
   },
@@ -11200,10 +9744,6 @@
     "summary": "Performance Co-Pilot (PCP) metrics for the Unbound DNS Resolver"
   },
   {
-    "name": "pcp-pmda-vmware",
-    "summary": "Performance Co-Pilot (PCP) metrics for VMware"
-  },
-  {
     "name": "pcp-pmda-weblog",
     "summary": "Performance Co-Pilot (PCP) metrics from web server logs"
   },
@@ -11258,14 +9798,6 @@
   {
     "name": "pcre2-utf32",
     "summary": "UTF-32 variant of PCRE2"
-  },
-  {
-    "name": "pentaho-libxml",
-    "summary": "Namespace aware SAX-Parser utility library"
-  },
-  {
-    "name": "pentaho-reporting-flow-engine",
-    "summary": "Pentaho Flow Reporting Engine"
   },
   {
     "name": "perf",
@@ -12260,10 +10792,6 @@
     "summary": "Load functions only on demand"
   },
   {
-    "name": "perl-SGMLSpm",
-    "summary": "Perl library for parsing the output of nsgmls"
-  },
-  {
     "name": "perl-sigtrap",
     "summary": "Perl pragma to enable simple signal handling"
   },
@@ -12482,10 +11010,6 @@
   {
     "name": "perl-Unicode-Collate",
     "summary": "Unicode Collation Algorithm"
-  },
-  {
-    "name": "perl-Unicode-EastAsianWidth",
-    "summary": "East Asian Width properties"
   },
   {
     "name": "perl-Unicode-LineBreak",
@@ -12708,10 +11232,6 @@
     "summary": "A module for PHP applications which use XML"
   },
   {
-    "name": "pigz",
-    "summary": "Parallel implementation of gzip"
-  },
-  {
     "name": "pinentry",
     "summary": "Collection of simple PIN or passphrase entry dialogs"
   },
@@ -12756,10 +11276,6 @@
     "summary": "Libraries for PipeWire clients"
   },
   {
-    "name": "pipewire-media-session",
-    "summary": "PipeWire Media Session Manager"
-  },
-  {
     "name": "pipewire-pulseaudio",
     "summary": "PipeWire PulseAudio implementation"
   },
@@ -12774,10 +11290,6 @@
   {
     "name": "pixman-devel",
     "summary": "Pixel manipulation library development package"
-  },
-  {
-    "name": "pkgconf",
-    "summary": "Package compiler and linker metadata toolkit"
   },
   {
     "name": "pki-acme",
@@ -12818,10 +11330,6 @@
   {
     "name": "pki-jackson-module-jaxb-annotations",
     "summary": "Support for using JAXB annotations as an alternative to \"native\" Jackson annotations"
-  },
-  {
-    "name": "pki-java",
-    "summary": "PKI Base Java Package"
   },
   {
     "name": "pki-kra",
@@ -12956,14 +11464,6 @@
     "summary": "Plymouth \"Spinner\" theme"
   },
   {
-    "name": "pmdk-convert",
-    "summary": "Conversion tool for PMDK pools"
-  },
-  {
-    "name": "pmempool",
-    "summary": "Utilities for Persistent Memory"
-  },
-  {
     "name": "pmix",
     "summary": "Process Management Interface Exascale (PMIx)"
   },
@@ -13054,10 +11554,6 @@
   {
     "name": "poppler-glib",
     "summary": "Glib wrapper for poppler"
-  },
-  {
-    "name": "poppler-qt5",
-    "summary": "Qt5 wrapper for poppler"
   },
   {
     "name": "poppler-utils",
@@ -13240,10 +11736,6 @@
     "summary": "The \"python\" command that runs Python 3"
   },
   {
-    "name": "python3-alembic",
-    "summary": "Database migration tool for SQLAlchemy"
-  },
-  {
     "name": "python3-appdirs",
     "summary": "Python module for determining platform-specific directories"
   },
@@ -13356,14 +11848,6 @@
     "summary": "Linux Distribution - a Linux OS platform information API"
   },
   {
-    "name": "python3-dnf-plugin-modulesync",
-    "summary": "Download module metadata and packages and create repository"
-  },
-  {
-    "name": "python3-dns",
-    "summary": "DNS toolkit for Python"
-  },
-  {
     "name": "python3-enchant",
     "summary": "Python 3 bindings for Enchant spellchecking library"
   },
@@ -13384,20 +11868,8 @@
     "summary": "Python 3 bindings for GObject Introspection"
   },
   {
-    "name": "python3-greenlet",
-    "summary": "Lightweight in-process concurrent programming"
-  },
-  {
     "name": "python3-gssapi",
     "summary": "Python 3 Bindings for GSSAPI (RFC 2743/2744 and extensions)"
-  },
-  {
-    "name": "python3-i2c-tools",
-    "summary": "Python 3 bindings for Linux SMBus access through i2c-dev"
-  },
-  {
-    "name": "python3-idm-pki",
-    "summary": "IDM PKI Python 3 Package"
   },
   {
     "name": "python3-imath",
@@ -13464,10 +11936,6 @@
     "summary": "Tools to configure Apache HTTPD as Keycloak client"
   },
   {
-    "name": "python3-keylime",
-    "summary": "The Python Keylime module"
-  },
-  {
     "name": "python3-kickstart",
     "summary": "Python 3 library for manipulating kickstart files."
   },
@@ -13476,20 +11944,8 @@
     "summary": "Python module to query the langtable-data"
   },
   {
-    "name": "python3-lark-parser",
-    "summary": "Lark is a modern general-purpose parsing library for Python"
-  },
-  {
-    "name": "python3-lasso",
-    "summary": "Liberty Alliance Single Sign On (lasso) Python bindings"
-  },
-  {
     "name": "python3-ldap",
     "summary": "An object-oriented API to access LDAP directory servers"
-  },
-  {
-    "name": "python3-ldb",
-    "summary": "Python bindings for the LDB library"
   },
   {
     "name": "python3-lib389",
@@ -13498,10 +11954,6 @@
   {
     "name": "python3-libevdev",
     "summary": "Python bindings to the libevdev evdev device wrapper library"
-  },
-  {
-    "name": "python3-libgpiod",
-    "summary": "Python 3 bindings for libgpiod"
   },
   {
     "name": "python3-libguestfs",
@@ -13522,10 +11974,6 @@
   {
     "name": "python3-libnmstate",
     "summary": "nmstate Python 3 API library"
-  },
-  {
-    "name": "python3-libnvme",
-    "summary": "Python3 bindings for libnvme"
   },
   {
     "name": "python3-libproxy",
@@ -13550,10 +11998,6 @@
   {
     "name": "python3-libvirt",
     "summary": "The libvirt virtualization API python3 binding"
-  },
-  {
-    "name": "python3-libvoikko",
-    "summary": "Python interface to libvoikko"
   },
   {
     "name": "python3-lit",
@@ -13733,7 +12177,7 @@
   },
   {
     "name": "python3-pyqt5-sip",
-    "summary": "The sip module support for PyQt5"
+    "summary": "SIP - Python 3/C++ Bindings Generator for pyqt5"
   },
   {
     "name": "python3-pyrsistent",
@@ -13816,10 +12260,6 @@
     "summary": "API for Linux kernel LIO SCSI target"
   },
   {
-    "name": "python3-samba",
-    "summary": "Samba Python3 libraries"
-  },
-  {
     "name": "python3-sanlock",
     "summary": "Python bindings for the sanlock library"
   },
@@ -13848,20 +12288,8 @@
     "summary": "Python 3 Client API for speech-dispatcher"
   },
   {
-    "name": "python3-sqlalchemy",
-    "summary": "Modular and flexible ORM library for Python"
-  },
-  {
     "name": "python3-subversion",
     "summary": "Python bindings for Subversion Version Control system"
-  },
-  {
-    "name": "python3-systemd",
-    "summary": "Python module wrapping systemd functionality"
-  },
-  {
-    "name": "python3-talloc",
-    "summary": "Python bindings for the Talloc library"
   },
   {
     "name": "python3-tbb",
@@ -13872,20 +12300,12 @@
     "summary": "Python3 bindings for the Tdb library"
   },
   {
-    "name": "python3-tevent",
-    "summary": "Python 3 bindings for the Tevent library"
-  },
-  {
     "name": "python3-tkinter",
     "summary": "A GUI toolkit for Python"
   },
   {
     "name": "python3-toml",
     "summary": "Python Library for Tom's Obvious, Minimal Language"
-  },
-  {
-    "name": "python3-tornado",
-    "summary": "Scalable, non-blocking web server and tools"
   },
   {
     "name": "python3-tracer",
@@ -13900,16 +12320,8 @@
     "summary": "A GSSAPI/SPNEGO authentication handler for urllib/urllib2"
   },
   {
-    "name": "python3-virt-firmware",
-    "summary": "Tools for virtual machine firmware volumes"
-  },
-  {
     "name": "python3-volume_key",
     "summary": "Python 3 bindings for libvolume_key"
-  },
-  {
-    "name": "python3-wcwidth",
-    "summary": "Measures number of Terminal column cells of wide-character codes"
   },
   {
     "name": "python3-wx-siplib",
@@ -13918,26 +12330,6 @@
   {
     "name": "python3-yubico",
     "summary": "Pure-python library for interacting with Yubikeys"
-  },
-  {
-    "name": "qatengine",
-    "summary": "Intel QuickAssist Technology (QAT) OpenSSL Engine"
-  },
-  {
-    "name": "qatlib",
-    "summary": "Intel QuickAssist user space library"
-  },
-  {
-    "name": "qatlib-service",
-    "summary": "A daemon for qatlib resources management"
-  },
-  {
-    "name": "qatzip",
-    "summary": "Intel QuickAssist Technology (QAT) QATzip Library"
-  },
-  {
-    "name": "qatzip-libs",
-    "summary": "Libraries for the qatzip package"
   },
   {
     "name": "qemu-ga-win",
@@ -13968,10 +12360,6 @@
     "summary": "QEMU Ceph/RBD block driver"
   },
   {
-    "name": "qemu-kvm-block-ssh",
-    "summary": "QEMU SSH block driver"
-  },
-  {
     "name": "qemu-kvm-common",
     "summary": "QEMU common files needed by all QEMU targets"
   },
@@ -13996,48 +12384,20 @@
     "summary": "QEMU virtio-gpu-pci-gl display device"
   },
   {
-    "name": "qemu-kvm-device-display-virtio-vga",
-    "summary": "QEMU virtio-vga display device"
-  },
-  {
-    "name": "qemu-kvm-device-display-virtio-vga-gl",
-    "summary": "QEMU virtio-vga-gl display device"
-  },
-  {
     "name": "qemu-kvm-device-usb-host",
     "summary": "QEMU usb host device"
-  },
-  {
-    "name": "qemu-kvm-device-usb-redirect",
-    "summary": "QEMU usbredir support"
   },
   {
     "name": "qemu-kvm-docs",
     "summary": "qemu-kvm documentation"
   },
   {
-    "name": "qemu-kvm-hw-usbredir",
-    "summary": "QEMU usbredir support"
-  },
-  {
     "name": "qemu-kvm-tools",
     "summary": "qemu-kvm support tools"
   },
   {
-    "name": "qemu-kvm-ui-egl-headless",
-    "summary": "QEMU EGL headless driver"
-  },
-  {
-    "name": "qemu-kvm-ui-opengl",
-    "summary": "QEMU opengl support"
-  },
-  {
     "name": "qemu-pr-helper",
     "summary": "qemu-pr-helper utility for qemu-kvm"
-  },
-  {
-    "name": "qemu-virtiofsd",
-    "summary": "QEMU virtio-fs shared file system daemon"
   },
   {
     "name": "qgnomeplatform",
@@ -14520,20 +12880,36 @@
     "summary": "Files needed to develop programs which use the readline library"
   },
   {
-    "name": "realtime-tests",
-    "summary": "Programs that test various rt-features"
-  },
-  {
-    "name": "rear",
-    "summary": "Relax-and-Recover is a Linux disaster recovery and system migration tool"
-  },
-  {
     "name": "redfish-finder",
     "summary": "Utility for parsing SMBIOS information and configuring canonical BMC access"
   },
   {
+    "name": "redhat-backgrounds",
+    "summary": "Red Hat-related desktop backgrounds"
+  },
+  {
+    "name": "redhat-cloud-client-configuration",
+    "summary": "Red Hat cloud client configuration"
+  },
+  {
     "name": "redhat-display-fonts",
     "summary": "Red Hat Display fonts"
+  },
+  {
+    "name": "redhat-indexhtml",
+    "summary": "Browser default start page for Red Hat Enterprise Linux"
+  },
+  {
+    "name": "redhat-logos",
+    "summary": "Red Hat-related icons and pictures"
+  },
+  {
+    "name": "redhat-logos-httpd",
+    "summary": "Red Hat-related icons and pictures used by httpd"
+  },
+  {
+    "name": "redhat-logos-ipa",
+    "summary": "Red Hat-related icons and pictures used by ipa"
   },
   {
     "name": "redhat-mono-fonts",
@@ -14828,10 +13204,6 @@
     "summary": "An xUnit family unit testing framework for Ruby"
   },
   {
-    "name": "rubygem-thread_order",
-    "summary": "Test helper for ordering threaded code"
-  },
-  {
     "name": "rubygem-typeprof",
     "summary": "TypeProf is a type analysis tool for Ruby code based on abstract interpretation"
   },
@@ -14908,10 +13280,6 @@
     "summary": "Free Punjabi Unicode OpenType Serif Font"
   },
   {
-    "name": "sac",
-    "summary": "Java standard interface for CSS parser"
-  },
-  {
     "name": "samba-client",
     "summary": "Samba client programs"
   },
@@ -14930,10 +13298,6 @@
   {
     "name": "samba-winbind-krb5-locator",
     "summary": "Samba winbind krb5 locator"
-  },
-  {
-    "name": "samba-winexe",
-    "summary": "Samba Winexe Windows Binary"
   },
   {
     "name": "sane-airscan",
@@ -15032,14 +13396,6 @@
     "summary": "Disk scrubbing program"
   },
   {
-    "name": "SDL",
-    "summary": "A cross-platform multimedia library"
-  },
-  {
-    "name": "SDL-devel",
-    "summary": "Files needed to develop Simple DirectMedia Layer applications"
-  },
-  {
     "name": "sdl12-compat",
     "summary": "SDL 1.2 runtime compatibility library using SDL 2.0"
   },
@@ -15052,20 +13408,8 @@
     "summary": "Files needed to develop Simple DirectMedia Layer applications"
   },
   {
-    "name": "seabios",
-    "summary": "Open-source legacy BIOS implementation"
-  },
-  {
-    "name": "seabios-bin",
-    "summary": "Seabios for x86"
-  },
-  {
     "name": "seahorse",
     "summary": "A GNOME application for managing encryption keys"
-  },
-  {
-    "name": "seavgabios-bin",
-    "summary": "Seavgabios for x86"
   },
   {
     "name": "selinux-policy-devel",
@@ -15112,24 +13456,16 @@
     "summary": "X11 keymap client"
   },
   {
-    "name": "sevctl",
-    "summary": "Administrative utility for AMD SEV"
-  },
-  {
-    "name": "sgabios",
-    "summary": "Serial graphics BIOS option rom"
-  },
-  {
-    "name": "sgabios-bin",
-    "summary": "Sgabios for x86"
-  },
-  {
     "name": "sgml-common",
     "summary": "Common SGML catalog and DTD files"
   },
   {
     "name": "sgpio",
     "summary": "SGPIO captive backplane tool"
+  },
+  {
+    "name": "shim-unsigned-aarch64",
+    "summary": "First-stage UEFI bootloader"
   },
   {
     "name": "sid",
@@ -15182,10 +13518,6 @@
   {
     "name": "sil-scheherazade-fonts",
     "summary": "An Arabic script unicode font"
-  },
-  {
-    "name": "sip6",
-    "summary": "SIP - Python/C++ Bindings Generator"
   },
   {
     "name": "sisu",
@@ -15324,10 +13656,6 @@
     "summary": "Non-interactive SSH authentication utility"
   },
   {
-    "name": "sssd-idp",
-    "summary": "Kerberos plugins and OIDC helper for external identity providers."
-  },
-  {
     "name": "stalld",
     "summary": "Daemon that finds starving tasks and gives them a temporary boost"
   },
@@ -15358,10 +13686,6 @@
   {
     "name": "stress-ng",
     "summary": "Stress test a computer system in various ways"
-  },
-  {
-    "name": "subscription-manager-rhsm-certificates",
-    "summary": "Certificates required to communicate with a Red Hat Unified Entitlement Platform"
   },
   {
     "name": "subversion",
@@ -15578,18 +13902,6 @@
   {
     "name": "tex-preview",
     "summary": "Preview style files for LaTeX"
-  },
-  {
-    "name": "texi2html",
-    "summary": "A highly customizable texinfo to HTML and other formats translator"
-  },
-  {
-    "name": "texinfo",
-    "summary": "Tools needed to create Texinfo format documentation files"
-  },
-  {
-    "name": "texinfo-tex",
-    "summary": "Tools for formatting Texinfo documentation files using TeX"
   },
   {
     "name": "texlive",
@@ -17132,10 +15444,6 @@
     "summary": "Command line tools for Theora videos"
   },
   {
-    "name": "thermald",
-    "summary": "Thermal Management daemon"
-  },
-  {
     "name": "thunderbird",
     "summary": "Mozilla Thunderbird mail/newsgroup client"
   },
@@ -17212,16 +15520,8 @@
     "summary": "Tests for toolbox"
   },
   {
-    "name": "totem",
-    "summary": "Movie player for GNOME"
-  },
-  {
     "name": "totem-pl-parser",
     "summary": "Totem Playlist Parser library"
-  },
-  {
-    "name": "totem-video-thumbnailer",
-    "summary": "Totem video thumbnailer"
   },
   {
     "name": "tpm2-abrmd",
@@ -17238,6 +15538,10 @@
   {
     "name": "tpm2-pkcs11-tools",
     "summary": "The tools required to setup and configure TPM2 for PKCS#11"
+  },
+  {
+    "name": "tpm2-tools",
+    "summary": "A bunch of TPM testing toolS build upon tpm2-tss"
   },
   {
     "name": "tracer-common",
@@ -17270,10 +15574,6 @@
   {
     "name": "tuned-profiles-oracle",
     "summary": "Additional tuned profile(s) targeted to Oracle loads"
-  },
-  {
-    "name": "tuned-profiles-postgresql",
-    "summary": "Additional tuned profile(s) targeted to PostgreSQL server loads"
   },
   {
     "name": "tuned-profiles-spectrumscale",
@@ -17444,14 +15744,6 @@
     "summary": "USBGuard Tools"
   },
   {
-    "name": "usbredir",
-    "summary": "USB network redirection protocol libraries"
-  },
-  {
-    "name": "usbredir-server",
-    "summary": "Simple USB host TCP server"
-  },
-  {
     "name": "usermode-gtk",
     "summary": "Graphical tools for certain user account management tasks"
   },
@@ -17488,10 +15780,6 @@
     "summary": "High-performance HTTP accelerator"
   },
   {
-    "name": "varnish-devel",
-    "summary": "Development files for varnish"
-  },
-  {
     "name": "varnish-docs",
     "summary": "Documentation files for varnish"
   },
@@ -17524,20 +15812,8 @@
     "summary": "Common files used by the different Virtual Machine Manager interfaces"
   },
   {
-    "name": "virt-p2v",
-    "summary": "Convert a physical machine to run on KVM"
-  },
-  {
     "name": "virt-top",
     "summary": "Utility like top(1) for displaying virtualization stats"
-  },
-  {
-    "name": "virt-v2v",
-    "summary": "Convert a virtual machine to run on KVM"
-  },
-  {
-    "name": "virt-v2v-bash-completion",
-    "summary": "Bash tab-completion for virt-v2v"
   },
   {
     "name": "virt-viewer",
@@ -17550,10 +15826,6 @@
   {
     "name": "virt-win-reg",
     "summary": "Access and modify the Windows Registry of a Windows VM"
-  },
-  {
-    "name": "virtio-win",
-    "summary": "VirtIO para-virtualized drivers for Windows(R)"
   },
   {
     "name": "virtiofsd",
@@ -17756,10 +16028,6 @@
     "summary": "Portal frontend service to flatpak"
   },
   {
-    "name": "xdg-desktop-portal-gnome",
-    "summary": "Backend implementation for xdg-desktop-portal using GNOME"
-  },
-  {
     "name": "xdg-desktop-portal-gtk",
     "summary": "Backend implementation for xdg-desktop-portal using GTK+"
   },
@@ -17844,10 +16112,6 @@
     "summary": "OpenSSL crypto plugin for XML Security Library"
   },
   {
-    "name": "xmlstarlet",
-    "summary": "Command Line XML Toolkit"
-  },
-  {
     "name": "xmlto",
     "summary": "A tool for converting XML files to various formats"
   },
@@ -17858,10 +16122,6 @@
   {
     "name": "xmlto-xhtml",
     "summary": "A set of xmlto backends for xhtml1 source format"
-  },
-  {
-    "name": "xmltoman",
-    "summary": "Scripts for converting XML to roff or HTML"
   },
   {
     "name": "xorg-x11-drivers",
@@ -17886,10 +16146,6 @@
   {
     "name": "xorg-x11-drv-v4l",
     "summary": "Xorg X11 v4l video driver"
-  },
-  {
-    "name": "xorg-x11-drv-vmware",
-    "summary": "Xorg X11 vmware video driver"
   },
   {
     "name": "xorg-x11-drv-wacom",
@@ -18044,14 +16300,6 @@
     "summary": "Set environment and terminal settings to current window size"
   },
   {
-    "name": "xxhash",
-    "summary": "Extremely fast hash algorithm"
-  },
-  {
-    "name": "xxhash-libs",
-    "summary": "Extremely fast hash algorithm - library"
-  },
-  {
     "name": "xz-devel",
     "summary": "Devel libraries & headers for liblzma"
   },
@@ -18066,10 +16314,6 @@
   {
     "name": "yajl",
     "summary": "Yet Another JSON Library (YAJL)"
-  },
-  {
-    "name": "yara",
-    "summary": "Pattern matching Swiss knife for malware researchers"
   },
   {
     "name": "yelp",
@@ -18098,10 +16342,6 @@
   {
     "name": "zram-generator",
     "summary": "Systemd unit generator for zram swap devices"
-  },
-  {
-    "name": "zstd",
-    "summary": "Zstd compression library"
   },
   {
     "name": "zziplib",

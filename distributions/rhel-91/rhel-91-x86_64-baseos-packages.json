@@ -1732,6 +1732,10 @@
     "summary": "kpatch-patch manager plugin for DNF"
   },
   {
+    "name": "kpatch-patch-5_14_0-162_6_1",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-162.6.1.el9_1.x86_64"
+  },
+  {
     "name": "kpatch-patch-5_14_0-70_13_1",
     "summary": "Live kernel patching module for kernel-5.14.0-70.13.1.el9_0.x86_64"
   },

@@ -1,13 +1,5 @@
 [
   {
-    "name": "accel-config",
-    "summary": "Configure accelerator subsystem devices"
-  },
-  {
-    "name": "accel-config-libs",
-    "summary": "Configuration library for accelerator subsystem devices"
-  },
-  {
     "name": "acl",
     "summary": "Access control list utilities"
   },
@@ -94,10 +86,6 @@
   {
     "name": "binutils-gold",
     "summary": "The GOLD linker, a faster alternative to the BFD linker"
-  },
-  {
-    "name": "biosdevname",
-    "summary": "Udev helper for naming devices per BIOS names"
   },
   {
     "name": "bluez",
@@ -1408,35 +1396,23 @@
     "summary": "grub2 common layout"
   },
   {
-    "name": "grub2-efi-aa64-modules",
-    "summary": "Modules used to build custom grub.efi images"
-  },
-  {
-    "name": "grub2-efi-x64",
+    "name": "grub2-efi-aa64",
     "summary": "GRUB for EFI systems."
   },
   {
-    "name": "grub2-efi-x64-cdboot",
+    "name": "grub2-efi-aa64-cdboot",
     "summary": "Files used to boot removeable media with EFI"
+  },
+  {
+    "name": "grub2-efi-aa64-modules",
+    "summary": "Modules used to build custom grub.efi images"
   },
   {
     "name": "grub2-efi-x64-modules",
     "summary": "Modules used to build custom grub.efi images"
   },
   {
-    "name": "grub2-pc",
-    "summary": "Bootloader with support for Linux, Multiboot, and more"
-  },
-  {
-    "name": "grub2-pc-modules",
-    "summary": "Modules used to build custom grub images"
-  },
-  {
     "name": "grub2-tools",
-    "summary": "Support tools for GRUB."
-  },
-  {
-    "name": "grub2-tools-efi",
     "summary": "Support tools for GRUB."
   },
   {
@@ -1518,10 +1494,6 @@
   {
     "name": "integritysetup",
     "summary": "A utility for setting up dm-integrity volumes"
-  },
-  {
-    "name": "intel-cmt-cat",
-    "summary": "Provides command line interface to CMT, MBM, CAT, CDP and MBA technologies"
   },
   {
     "name": "iotop",
@@ -2124,10 +2096,6 @@
     "summary": "Support library to use and manage the QRTR (Qualcomm IPC Router) bus."
   },
   {
-    "name": "libquadmath",
-    "summary": "GCC __float128 shared support library"
-  },
-  {
     "name": "librdmacm",
     "summary": "Userspace RDMA Connection Manager"
   },
@@ -2182,10 +2150,6 @@
   {
     "name": "libsmbclient",
     "summary": "The SMB client library"
-  },
-  {
-    "name": "libsmbios",
-    "summary": "Libsmbios C/C++ shared libraries"
   },
   {
     "name": "libsolv",
@@ -2412,20 +2376,12 @@
     "summary": "Linux kernel and C library user-space interface documentation"
   },
   {
-    "name": "mcelog",
-    "summary": "Tool to translate x86-64 CPU Machine Check Exception data"
-  },
-  {
     "name": "mcstrans",
     "summary": "SELinux Translation Daemon"
   },
   {
     "name": "mdadm",
     "summary": "The mdadm program controls Linux md devices (software RAID arrays)"
-  },
-  {
-    "name": "microcode_ctl",
-    "summary": "CPU microcode updates for Intel x86 processors"
   },
   {
     "name": "microdnf",
@@ -2586,10 +2542,6 @@
   {
     "name": "numad",
     "summary": "NUMA user daemon"
-  },
-  {
-    "name": "numatop",
-    "summary": "Memory access locality characterization and analysis"
   },
   {
     "name": "nvme-cli",
@@ -2842,10 +2794,6 @@
   {
     "name": "python3-distro",
     "summary": "Linux Distribution - a Linux OS platform information API"
-  },
-  {
-    "name": "python3-dmidecode",
-    "summary": "Python 3 module to access DMI data"
   },
   {
     "name": "python3-dnf",
@@ -3220,11 +3168,7 @@
     "summary": "Shared MIME information database"
   },
   {
-    "name": "shim-ia32",
-    "summary": "First-stage UEFI bootloader"
-  },
-  {
-    "name": "shim-x64",
+    "name": "shim-aa64",
     "summary": "First-stage UEFI bootloader"
   },
   {
@@ -3356,22 +3300,6 @@
     "summary": "A utility which maintains a system's symbolic links"
   },
   {
-    "name": "syslinux",
-    "summary": "Simple kernel loader which boots from a FAT filesystem"
-  },
-  {
-    "name": "syslinux-extlinux",
-    "summary": "The EXTLINUX bootloader, for booting the local system."
-  },
-  {
-    "name": "syslinux-extlinux-nonlinux",
-    "summary": "The parts of the EXTLINUX bootloader which aren't run from linux."
-  },
-  {
-    "name": "syslinux-nonlinux",
-    "summary": "SYSLINUX modules which aren't run from linux."
-  },
-  {
     "name": "systemd",
     "summary": "System and Service Manager"
   },
@@ -3408,10 +3336,6 @@
     "summary": "GNU file archiving program"
   },
   {
-    "name": "tboot",
-    "summary": "Performs a verified launch using Intel TXT"
-  },
-  {
     "name": "tcl",
     "summary": "Tool Command Language, pronounced tickle"
   },
@@ -3432,10 +3356,6 @@
     "summary": "A terminal multiplexer"
   },
   {
-    "name": "tpm2-tools",
-    "summary": "A bunch of TPM testing toolS build upon tpm2-tss"
-  },
-  {
     "name": "tpm2-tss",
     "summary": "TPM2.0 Software Stack"
   },
@@ -3450,10 +3370,6 @@
   {
     "name": "tree",
     "summary": "File system tree viewer"
-  },
-  {
-    "name": "tss2",
-    "summary": "IBM's TCG Software Stack (TSS) for TPM 2.0 and related utilities"
   },
   {
     "name": "tuna",

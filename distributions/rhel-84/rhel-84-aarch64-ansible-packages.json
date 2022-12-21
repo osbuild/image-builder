@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ansible",
+    "summary": "SSH-based configuration management, deployment, and task execution system"
+  },
+  {
+    "name": "ansible-test",
+    "summary": "Tool for testing ansible plugin and module code"
+  },
+  {
+    "name": "sshpass",
+    "summary": "Non-interactive SSH authentication utility"
+  }
+]
