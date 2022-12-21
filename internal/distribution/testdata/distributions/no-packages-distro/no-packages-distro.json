@@ -17,5 +17,18 @@
         "baseurl": "https://no-packages-distro.example.com/other/"
       }
     ]
+  },
+  "aarch64": {
+    "image_types": ["npd"],
+    "repositories": [
+      {
+        "id": "base",
+        "baseurl": "https://no-packages-distro.example.com/base/aarch64"
+      },
+      {
+        "id": "other",
+        "baseurl": "https://no-packages-distro.example.com/other/aarch64"
+      }
+    ]
   }
 }

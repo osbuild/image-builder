@@ -7,5 +7,9 @@
   "x86_64": {
     "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "vsphere" ],
     "repositories": []
+  },
+  "aarch64": {
+    "image_types": [ "aws", "guest-image", "image-installer" ],
+    "repositories": []
   }
 }

@@ -32,6 +32,7 @@ type DistributionFile struct {
 	ModulePlatformID string           `json:"module_platform_id"`
 	Distribution     DistributionItem `json:"distribution"`
 	ArchX86          *Architecture    `json:"x86_64,omitempty"`
+	Aarch64          *Architecture    `json:"aarch64,omitempty"`
 }
 
 type Architecture struct {
@@ -84,6 +85,8 @@ func (dist DistributionFile) Architecture(arch string) (*Architecture, error) {
 	switch arch {
 	case "x86_64":
 		return dist.ArchX86, nil
+	case "aarch64":
+		return dist.Aarch64, nil
 	default:
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "Architecture not supported")
 	}
@@ -194,6 +197,13 @@ func readDistribution(distsDir, distroIn string) (d DistributionFile, err error)
 			return
 		}
 		d.ArchX86.Packages = x86Pkgs
+
+		var aarch64 map[string][]Package
+		aarch64, err = readPackages(d.Aarch64.Repositories, "aarch64", distsDir, distroIn)
+		if err != nil {
+			return
+		}
+		d.Aarch64.Packages = aarch64
 	}
 
 	return

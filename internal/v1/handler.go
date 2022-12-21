@@ -83,6 +83,12 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
 			ImageTypes: d.ArchX86.ImageTypes,
 		})
 	}
+	if d.Aarch64 != nil {
+		archs = append(archs, ArchitectureItem{
+			Arch:       "aarch64",
+			ImageTypes: d.Aarch64.ImageTypes,
+		})
+	}
 
 	return ctx.JSON(http.StatusOK, archs)
 }
