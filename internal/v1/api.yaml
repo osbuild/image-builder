@@ -260,7 +260,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: ['x86_64']
+            enum: ['x86_64', 'aarch64']
           description: architecture to look up packages for
         - in: query
           name: search
@@ -490,8 +490,9 @@ components:
           type: string
           enum:
             - x86_64
+            - aarch64
           description: |
-            CPU architecture of the image, only x86_64 is currently supported.
+            CPU architecture of the image, x86_64 and aarch64 are currently supported.
         image_type:
           $ref: '#/components/schemas/ImageTypes'
         upload_request:

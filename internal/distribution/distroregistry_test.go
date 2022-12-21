@@ -38,6 +38,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 
 	// don't test packages, they are huge
 	result.ArchX86.Packages = nil
+	result.Aarch64.Packages = nil
 
 	require.Equal(t, &DistributionFile{
 		ModulePlatformID: "platform:el8",
@@ -72,6 +73,23 @@ func TestDistroRegistry_Get(t *testing.T) {
 					Baseurl:       common.StringToPtr("https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"),
 					Rhsm:          false,
 					ImageTypeTags: []string{"gcp"},
+				},
+			},
+		},
+		Aarch64: &Architecture{
+			ImageTypes: []string{"aws", "guest-image", "image-installer"},
+			Repositories: []Repository{
+				{
+					Id:            "baseos",
+					Baseurl:       common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/aarch64/baseos/os"),
+					Rhsm:          true,
+					ImageTypeTags: nil,
+				},
+				{
+					Id:            "appstream",
+					Baseurl:       common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/aarch64/appstream/os"),
+					Rhsm:          true,
+					ImageTypeTags: nil,
 				},
 			},
 		},

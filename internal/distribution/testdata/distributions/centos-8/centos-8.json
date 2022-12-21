@@ -8,5 +8,9 @@
   "x86_64": {
     "image_types": [ "aws", "gcp", "azure", "ami", "vhd" ],
     "repositories": []
+  },
+  "aarch64": {
+    "image_types": [ "aws", "vhd" ],
+    "repositories": []
   }
 }

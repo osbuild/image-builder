@@ -203,58 +203,65 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 			ArchitectureItem{
 				Arch:       "x86_64",
 				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd"},
+			},
+			ArchitectureItem{
+				Arch:       "aarch64",
+				ImageTypes: []string{"aws", "vhd"},
 			}}, result)
 	})
 
 	t.Run("GetPackages", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
+		architectures := []string{"x86_64", "aarch64"}
+		for _, arch := range architectures {
+			response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh", arch), &tutils.AuthString0)
+			require.Equal(t, 200, response.StatusCode)
 
-		var result PackagesResponse
-		err := json.Unmarshal([]byte(body), &result)
-		require.NoError(t, err)
-		require.Contains(t, result.Data[0].Name, "ssh")
-		require.Greater(t, result.Meta.Count, 0)
-		require.Contains(t, result.Links.First, "search=ssh")
-		p1 := result.Data[0]
-		p2 := result.Data[1]
+			var result PackagesResponse
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Contains(t, result.Data[0].Name, "ssh")
+			require.Greater(t, result.Meta.Count, 0)
+			require.Contains(t, result.Links.First, "search=ssh")
+			p1 := result.Data[0]
+			p2 := result.Data[1]
 
-		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=4e3086991b3f452d82eed1f2122aefeb", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
-		err = json.Unmarshal([]byte(body), &result)
-		require.NoError(t, err)
-		require.Empty(t, result.Data)
-		require.Contains(t, body, "\"data\":[]")
+			response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
+			require.Equal(t, 200, response.StatusCode)
+			err = json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Empty(t, result.Data)
+			require.Contains(t, body, "\"data\":[]")
 
-		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?offset=121039&distribution=rhel-8&architecture=x86_64&search=4e3086991b3f452d82eed1f2122aefeb", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
-		err = json.Unmarshal([]byte(body), &result)
-		require.NoError(t, err)
-		require.Empty(t, result.Data)
-		require.Equal(t, "/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=x86_64&offset=0&limit=100", result.Links.First)
-		require.Equal(t, "/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=x86_64&offset=0&limit=100", result.Links.Last)
+			response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?offset=121039&distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
+			require.Equal(t, 200, response.StatusCode)
+			err = json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Empty(t, result.Data)
+			require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=%s&offset=0&limit=100", arch), result.Links.First)
+			require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=%s&offset=0&limit=100", arch), result.Links.Last)
 
-		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=1", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
-		err = json.Unmarshal([]byte(body), &result)
-		require.NoError(t, err)
-		require.Greater(t, result.Meta.Count, 1)
-		require.Equal(t, result.Data[0], p1)
+			response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1", arch), &tutils.AuthString0)
+			require.Equal(t, 200, response.StatusCode)
+			err = json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Greater(t, result.Meta.Count, 1)
+			require.Equal(t, result.Data[0], p1)
 
-		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=1&offset=1", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
-		err = json.Unmarshal([]byte(body), &result)
-		require.NoError(t, err)
-		require.Greater(t, result.Meta.Count, 1)
-		require.Equal(t, result.Data[0], p2)
+			response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1&offset=1", arch), &tutils.AuthString0)
+			require.Equal(t, 200, response.StatusCode)
+			err = json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Greater(t, result.Meta.Count, 1)
+			require.Equal(t, result.Data[0], p2)
 
-		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=-13", &tutils.AuthString0)
-		require.Equal(t, 400, response.StatusCode)
-		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=x86_64&search=ssh&limit=13&offset=-2193", &tutils.AuthString0)
-		require.Equal(t, 400, response.StatusCode)
+			response, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=-13", arch), &tutils.AuthString0)
+			require.Equal(t, 400, response.StatusCode)
+			response, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=13&offset=-2193", arch), &tutils.AuthString0)
+			require.Equal(t, 400, response.StatusCode)
 
-		response, _ = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=x86_64&search=ssh", &tutils.AuthString0)
-		require.Equal(t, 400, response.StatusCode)
+			response, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=%s&search=ssh", arch), &tutils.AuthString0)
+			require.Equal(t, 400, response.StatusCode)
+		}
 	})
 
 	t.Run("AccountNumberFallback", func(t *testing.T) {
