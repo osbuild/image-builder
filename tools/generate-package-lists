@@ -13,7 +13,7 @@ PROJECT_ROOT=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 DISTRIBUTION_DIR=os.path.join(PROJECT_ROOT, 'distributions')
 DNF_JSON=os.path.join(PROJECT_ROOT, "dnf-json")
 # List of archs to look for in the distro files
-SUPPORTED_ARCHS = [ 'x86_64' ]
+SUPPORTED_ARCHS = [ 'x86_64', 'aarch64' ]
 
 def main():
     parser = argparse.ArgumentParser(description='Generate package list for distributions')
@@ -64,9 +64,10 @@ def main():
                 }
 
                 for repo in distro_data[arch]['repositories']:
-                    if repo['id'] in visited_repo_ids:
+                    id_arch = f"{repo['id']}-{arch}"
+                    if id_arch in visited_repo_ids:
                         continue
-                    visited_repo_ids.append(repo['id'])
+                    visited_repo_ids.append(id_arch)
 
                     if repo['rhsm']:
                         repo['ignoressl'] = True
