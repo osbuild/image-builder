@@ -7,7 +7,7 @@ import (
 )
 
 // XML is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xmlObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xml-object
 type XML struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -29,6 +29,8 @@ func (xml *XML) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if XML does not comply with the OpenAPI spec.
-func (xml *XML) Validate(ctx context.Context) error {
+func (xml *XML) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	return nil // TODO
 }
