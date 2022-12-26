@@ -13,7 +13,7 @@ import (
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responsesObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responses-object
 type Responses map[string]*ResponseRef
 
 var _ jsonpointer.JSONPointable = (*Responses)(nil)
@@ -33,7 +33,9 @@ func (responses Responses) Get(status int) *ResponseRef {
 }
 
 // Validate returns an error if Responses does not comply with the OpenAPI spec.
-func (responses Responses) Validate(ctx context.Context) error {
+func (responses Responses) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if len(responses) == 0 {
 		return errors.New("the responses object MUST contain at least one response code")
 	}
@@ -66,7 +68,7 @@ func (responses Responses) JSONLookup(token string) (interface{}, error) {
 }
 
 // Response is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#responseObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
 type Response struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -111,11 +113,13 @@ func (response *Response) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Response does not comply with the OpenAPI spec.
-func (response *Response) Validate(ctx context.Context) error {
+func (response *Response) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if response.Description == nil {
 		return errors.New("a short description of the response is required")
 	}
-	if vo := getValidationOptions(ctx); !vo.ExamplesValidationDisabled {
+	if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {
 		vo.examplesValidationAsReq, vo.examplesValidationAsRes = false, true
 	}
 

@@ -9,7 +9,7 @@ import (
 )
 
 // T is the root of an OpenAPI v3 document
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oasObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#openapi-object
 type T struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -36,15 +36,13 @@ func (doc *T) UnmarshalJSON(data []byte) error {
 }
 
 func (doc *T) AddOperation(path string, method string, operation *Operation) {
-	paths := doc.Paths
-	if paths == nil {
-		paths = make(Paths)
-		doc.Paths = paths
+	if doc.Paths == nil {
+		doc.Paths = make(Paths)
 	}
-	pathItem := paths[path]
+	pathItem := doc.Paths[path]
 	if pathItem == nil {
 		pathItem = &PathItem{}
-		paths[path] = pathItem
+		doc.Paths[path] = pathItem
 	}
 	pathItem.SetOperation(method, operation)
 }
@@ -56,11 +54,7 @@ func (doc *T) AddServer(server *Server) {
 // Validate returns an error if T does not comply with the OpenAPI spec.
 // Validations Options can be provided to modify the validation behavior.
 func (doc *T) Validate(ctx context.Context, opts ...ValidationOption) error {
-	validationOpts := &ValidationOptions{}
-	for _, opt := range opts {
-		opt(validationOpts)
-	}
-	ctx = WithValidationOptions(ctx, validationOpts)
+	ctx = WithValidationOptions(ctx, opts...)
 
 	if doc.OpenAPI == "" {
 		return errors.New("value of openapi must be a non-empty string")

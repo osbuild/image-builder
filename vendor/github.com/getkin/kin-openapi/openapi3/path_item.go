@@ -10,7 +10,7 @@ import (
 )
 
 // PathItem is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#pathItemObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#path-item-object
 type PathItem struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -41,7 +41,7 @@ func (pathItem *PathItem) UnmarshalJSON(data []byte) error {
 }
 
 func (pathItem *PathItem) Operations() map[string]*Operation {
-	operations := make(map[string]*Operation, 4)
+	operations := make(map[string]*Operation)
 	if v := pathItem.Connect; v != nil {
 		operations[http.MethodConnect] = v
 	}
@@ -123,7 +123,9 @@ func (pathItem *PathItem) SetOperation(method string, operation *Operation) {
 }
 
 // Validate returns an error if PathItem does not comply with the OpenAPI spec.
-func (pathItem *PathItem) Validate(ctx context.Context) error {
+func (pathItem *PathItem) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	operations := pathItem.Operations()
 
 	methods := make([]string, 0, len(operations))

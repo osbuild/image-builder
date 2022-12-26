@@ -28,7 +28,7 @@ func (h Headers) JSONLookup(token string) (interface{}, error) {
 }
 
 // Header is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#headerObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#header-object
 type Header struct {
 	Parameter
 }
@@ -54,7 +54,9 @@ func (header *Header) SerializationMethod() (*SerializationMethod, error) {
 }
 
 // Validate returns an error if Header does not comply with the OpenAPI spec.
-func (header *Header) Validate(ctx context.Context) error {
+func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if header.Name != "" {
 		return errors.New("header 'name' MUST NOT be specified, it is given in the corresponding headers map")
 	}
