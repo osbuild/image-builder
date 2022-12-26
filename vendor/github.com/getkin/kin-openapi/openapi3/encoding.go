@@ -9,7 +9,7 @@ import (
 )
 
 // Encoding is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encodingObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#encoding-object
 type Encoding struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -66,7 +66,9 @@ func (encoding *Encoding) SerializationMethod() *SerializationMethod {
 }
 
 // Validate returns an error if Encoding does not comply with the OpenAPI spec.
-func (encoding *Encoding) Validate(ctx context.Context) error {
+func (encoding *Encoding) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if encoding == nil {
 		return nil
 	}

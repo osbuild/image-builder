@@ -69,7 +69,9 @@ func (parameters Parameters) GetByInAndName(in string, name string) *Parameter {
 }
 
 // Validate returns an error if Parameters does not comply with the OpenAPI spec.
-func (parameters Parameters) Validate(ctx context.Context) error {
+func (parameters Parameters) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	dupes := make(map[string]struct{})
 	for _, parameterRef := range parameters {
 		if v := parameterRef.Value; v != nil {
@@ -88,7 +90,7 @@ func (parameters Parameters) Validate(ctx context.Context) error {
 }
 
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameter-object
 type Parameter struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -247,7 +249,9 @@ func (parameter *Parameter) SerializationMethod() (*SerializationMethod, error) 
 }
 
 // Validate returns an error if Parameter does not comply with the OpenAPI spec.
-func (parameter *Parameter) Validate(ctx context.Context) error {
+func (parameter *Parameter) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if parameter.Name == "" {
 		return errors.New("parameter name can't be blank")
 	}
@@ -319,7 +323,7 @@ func (parameter *Parameter) Validate(ctx context.Context) error {
 			return fmt.Errorf("parameter %q example and examples are mutually exclusive", parameter.Name)
 		}
 
-		if vo := getValidationOptions(ctx); vo.ExamplesValidationDisabled {
+		if vo := getValidationOptions(ctx); vo.examplesValidationDisabled {
 			return nil
 		}
 		if example := parameter.Example; example != nil {

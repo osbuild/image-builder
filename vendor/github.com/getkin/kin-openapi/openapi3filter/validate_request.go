@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -136,7 +137,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	}
 
 	// Set default value if needed
-	if value == nil && schema != nil && schema.Default != nil {
+	if !options.SkipSettingDefaults && value == nil && schema != nil && schema.Default != nil {
 		value = schema.Default
 		req := input.Request
 		switch parameter.In {
@@ -178,6 +179,9 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		opts = make([]openapi3.SchemaValidationOption, 0, 1)
 		opts = append(opts, openapi3.MultiErrors())
 	}
+	if options.customSchemaErrorFunc != nil {
+		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
+	}
 	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
 	}
@@ -213,7 +217,19 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 			}
 		}
 		// Put the data back into the input
-		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+		req.Body = nil
+		if req.GetBody != nil {
+			if req.Body, err = req.GetBody(); err != nil {
+				req.Body = nil
+			}
+		}
+		if req.Body == nil {
+			req.ContentLength = int64(len(data))
+			req.GetBody = func() (io.ReadCloser, error) {
+				return io.NopCloser(bytes.NewReader(data)), nil
+			}
+			req.Body, _ = req.GetBody() // no error return
+		}
 	}
 
 	if len(data) == 0 {
@@ -258,17 +274,24 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	defaultsSet := false
 	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential opts here
 	opts = append(opts, openapi3.VisitAsRequest())
-	opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
+	if !options.SkipSettingDefaults {
+		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
+	}
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
+	}
+	if options.customSchemaErrorFunc != nil {
+		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
 	}
 
 	// Validate JSON with the schema
 	if err := contentType.Schema.Value.VisitJSON(value, opts...); err != nil {
+		schemaId := getSchemaIdentifier(contentType.Schema)
+		schemaId = prependSpaceIfNeeded(schemaId)
 		return &RequestError{
 			Input:       input,
 			RequestBody: requestBody,
-			Reason:      "doesn't match the schema",
+			Reason:      fmt.Sprintf("doesn't match schema%s", schemaId),
 			Err:         err,
 		}
 	}
@@ -284,7 +307,14 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 			}
 		}
 		// Put the data back into the input
-		req.Body = ioutil.NopCloser(bytes.NewReader(data))
+		if req.Body != nil {
+			req.Body.Close()
+		}
+		req.ContentLength = int64(len(data))
+		req.GetBody = func() (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(data)), nil
+		}
+		req.Body, _ = req.GetBody() // no error return
 	}
 
 	return nil

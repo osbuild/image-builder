@@ -12,7 +12,7 @@ import (
 )
 
 // MediaType is specified by OpenAPI/Swagger 3.0 standard.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#media-type-object
 type MediaType struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -75,7 +75,9 @@ func (mediaType *MediaType) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if MediaType does not comply with the OpenAPI spec.
-func (mediaType *MediaType) Validate(ctx context.Context) error {
+func (mediaType *MediaType) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if mediaType == nil {
 		return nil
 	}
@@ -88,7 +90,7 @@ func (mediaType *MediaType) Validate(ctx context.Context) error {
 			return errors.New("example and examples are mutually exclusive")
 		}
 
-		if vo := getValidationOptions(ctx); vo.ExamplesValidationDisabled {
+		if vo := getValidationOptions(ctx); vo.examplesValidationDisabled {
 			return nil
 		}
 

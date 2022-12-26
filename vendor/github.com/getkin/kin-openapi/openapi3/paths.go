@@ -12,7 +12,9 @@ import (
 type Paths map[string]*PathItem
 
 // Validate returns an error if Paths does not comply with the OpenAPI spec.
-func (paths Paths) Validate(ctx context.Context) error {
+func (paths Paths) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	normalizedPaths := make(map[string]string, len(paths))
 
 	keys := make([]string, 0, len(paths))
@@ -27,8 +29,8 @@ func (paths Paths) Validate(ctx context.Context) error {
 		}
 
 		if pathItem == nil {
-			paths[path] = &PathItem{}
-			pathItem = paths[path]
+			pathItem = &PathItem{}
+			paths[path] = pathItem
 		}
 
 		normalizedPath, _, varsInPath := normalizeTemplatedPath(path)
@@ -105,6 +107,37 @@ func (paths Paths) Validate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// InMatchingOrder returns paths in the order they are matched against URLs.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
+// When matching URLs, concrete (non-templated) paths would be matched
+// before their templated counterparts.
+func (paths Paths) InMatchingOrder() []string {
+	// NOTE: sorting by number of variables ASC then by descending lexicographical
+	// order seems to be a good heuristic.
+	if paths == nil {
+		return nil
+	}
+
+	vars := make(map[int][]string)
+	max := 0
+	for path := range paths {
+		count := strings.Count(path, "}")
+		vars[count] = append(vars[count], path)
+		if count > max {
+			max = count
+		}
+	}
+
+	ordered := make([]string, 0, len(paths))
+	for c := 0; c <= max; c++ {
+		if ps, ok := vars[c]; ok {
+			sort.Sort(sort.Reverse(sort.StringSlice(ps)))
+			ordered = append(ordered, ps...)
+		}
+	}
+	return ordered
 }
 
 // Find returns a path that matches the key.

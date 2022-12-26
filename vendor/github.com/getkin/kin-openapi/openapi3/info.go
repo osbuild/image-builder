@@ -8,7 +8,7 @@ import (
 )
 
 // Info is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#infoObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#info-object
 type Info struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -31,7 +31,9 @@ func (info *Info) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Info does not comply with the OpenAPI spec.
-func (info *Info) Validate(ctx context.Context) error {
+func (info *Info) Validate(ctx context.Context, opts ...ValidationOption) error {
+	ctx = WithValidationOptions(ctx, opts...)
+
 	if contact := info.Contact; contact != nil {
 		if err := contact.Validate(ctx); err != nil {
 			return err
@@ -56,7 +58,7 @@ func (info *Info) Validate(ctx context.Context) error {
 }
 
 // Contact is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contactObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contact-object
 type Contact struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -76,12 +78,14 @@ func (contact *Contact) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if Contact does not comply with the OpenAPI spec.
-func (contact *Contact) Validate(ctx context.Context) error {
+func (contact *Contact) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	return nil
 }
 
 // License is specified by OpenAPI/Swagger standard version 3.
-// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#licenseObject
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#license-object
 type License struct {
 	ExtensionProps `json:"-" yaml:"-"`
 
@@ -100,7 +104,9 @@ func (license *License) UnmarshalJSON(data []byte) error {
 }
 
 // Validate returns an error if License does not comply with the OpenAPI spec.
-func (license *License) Validate(ctx context.Context) error {
+func (license *License) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
 	if license.Name == "" {
 		return errors.New("value of license name must be a non-empty string")
 	}
