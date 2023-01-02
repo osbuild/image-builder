@@ -40,6 +40,7 @@ build:
     matrix:
       - RUNNER:
           - aws/rhel-8.6-ga-x86_64
+          - aws/rhel-8.6-ga-aarch64
 
 Test EL8:
   stage: test
@@ -58,6 +59,22 @@ Test EL8:
           - gcp
         RUNNER:
           - aws/rhel-8.6-ga-x86_64
+
+Test EL8/aarch64:
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+  script:
+    - schutzbot/ci_details.sh
+    - schutzbot/deploy.sh
+    - test/cases/api.sh ${PROVIDER}
+  parallel:
+    matrix:
+      - PROVIDER:
+          - aws
+        RUNNER:
+          - aws/rhel-8.6-ga-aarch64
 
 Test Load Test:
   stage: test
