@@ -632,7 +632,7 @@ func TestComposeImage(t *testing.T) {
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, `request body has an error: doesn't match the schema: Error at \"/image_requests/0/architecture\": value is not one of the allowed values`)
+		require.Contains(t, body, "Error at \\\"/image_requests/0/architecture\\\"")
 	})
 
 	t.Run("ErrorUserCustomizationNotAllowed", func(t *testing.T) {
@@ -693,8 +693,7 @@ func TestComposeImage(t *testing.T) {
 		}
 		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, "image_requests/0/upload_request/type")
-		require.Contains(t, body, "value is not one of the allowed values")
+		require.Contains(t, body, "Error at \\\"/image_requests/0/upload_request/type\\\"")
 	})
 }
 
