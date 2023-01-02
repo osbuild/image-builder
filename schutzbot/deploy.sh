@@ -14,7 +14,7 @@ sudo dnf install -y podman \
      qemu-kvm \
      jq
 
-sudo podman pull docker://quay.io/osbuild/postgres:latest
+sudo podman pull docker://quay.io/osbuild/postgres:13-alpine
 
 # Start Postgres container
 sudo podman run -p 5432:5432 --name image-builder-db \
@@ -34,8 +34,9 @@ for RETRY in {1..10}; do
 done
 
 # Pull image-builder image
+ARCH=$(uname -m)
 QUAY_REPO_URL="quay.io/osbuild/image-builder-test"
-QUAY_REPO_TAG="${CI_PIPELINE_ID}"
+QUAY_REPO_TAG="${CI_PIPELINE_ID}-$ARCH"
 sudo podman pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" "${QUAY_REPO_URL}":"${QUAY_REPO_TAG}"
 
 # Migrate

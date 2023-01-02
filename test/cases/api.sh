@@ -134,6 +134,17 @@ ARCH=$(uname -m)
 
 DISTRO="rhel-8"
 SSH_USER="cloud-user"
+
+if [[ "$ARCH" == "x86_64" ]]; then
+    INSTANCE_TYPE="t2.micro"
+elif [[ "$ARCH" == "aarch64" ]]; then
+    INSTANCE_TYPE="t4g.small"
+else
+  echo "Architecture not supported: $ARCH"
+  exit 1
+fi
+
+
 if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
     SSH_USER="ec2-user"
 fi
@@ -497,7 +508,7 @@ function Test_verifyComposeResultAWS() {
   chmod 400 ./keypair.pem
 
   # Create an instance based on the ami
-  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro \
+  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type "$INSTANCE_TYPE" \
 	  --key-name "key-for-$AMI_IMAGE_ID" \
 	  --tag-specifications 'ResourceType=instance,Tags=[{Key=gitlab-ci-test,Value=true}]' > "$WORKDIR/instances.json"
   AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
