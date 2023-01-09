@@ -224,6 +224,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		err = json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Empty(t, result.Data)
+		require.Contains(t, body, "\"data\":[]")
 
 		response, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/packages?offset=121039&distribution=rhel-8&architecture=x86_64&search=4e3086991b3f452d82eed1f2122aefeb", &tutils.AuthString0)
 		require.Equal(t, 200, response.StatusCode)
@@ -508,16 +509,6 @@ func TestGetComposes(t *testing.T) {
 	var UUIDTest3 string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc333"
 
 	dbase := tutils.InitDB()
-	imageName := "MyImageName"
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
-	require.NoError(t, err)
-	err = dbase.InsertCompose(UUIDTest2, "500000", "000000", &imageName, json.RawMessage("{}"))
-	require.NoError(t, err)
-	err = dbase.InsertCompose(UUIDTest3, "500000", "000000", &imageName, json.RawMessage("{}"))
-	require.NoError(t, err)
-
-	composeEntry, err := dbase.GetCompose(UUIDTest, "000000")
-	require.NoError(t, err)
 
 	db_srv, tokenSrv := startServerWithCustomDB(t, "", dbase, "../../distributions", "")
 	defer func() {
@@ -527,13 +518,29 @@ func TestGetComposes(t *testing.T) {
 	defer tokenSrv.Close()
 
 	var result ComposesResponse
-
 	resp, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
 
 	require.Equal(t, 200, resp.StatusCode)
-	err = json.Unmarshal([]byte(body), &result)
+	err := json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, 0, result.Meta.Count)
+	require.Contains(t, body, "\"data\":[]")
+
+	imageName := "MyImageName"
+	err = dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
+	require.NoError(t, err)
+	err = dbase.InsertCompose(UUIDTest2, "500000", "000000", &imageName, json.RawMessage("{}"))
+	require.NoError(t, err)
+	err = dbase.InsertCompose(UUIDTest3, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
+	composeEntry, err := dbase.GetCompose(UUIDTest, "000000")
+	require.NoError(t, err)
+
+	resp, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
+	require.Equal(t, 200, resp.StatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
 	require.Equal(t, 3, result.Meta.Count)
 	require.Equal(t, composeEntry.CreatedAt.Format(time.RFC3339), result.Data[0].CreatedAt)
 	require.Equal(t, UUIDTest, result.Data[0].Id)

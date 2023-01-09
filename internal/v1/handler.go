@@ -99,7 +99,7 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 	}
 
 	pkgs := arch.FindPackages(params.Search)
-	var packages []Package
+	packages := []Package{}
 	for _, p := range pkgs {
 		packages = append(packages,
 			Package{
@@ -364,7 +364,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 		return err
 	}
 
-	var data []ComposesResponseItem
+	data := []ComposesResponseItem{}
 	for _, c := range composes {
 		data = append(data, ComposesResponseItem{
 			CreatedAt: c.CreatedAt.Format(time.RFC3339),
