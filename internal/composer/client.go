@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -79,7 +79,7 @@ func createClient(composerURL string, ca string) (*http.Client, error) {
 	}
 
 	var tlsConfig *tls.Config
-	caCert, err := ioutil.ReadFile(filepath.Clean(ca))
+	caCert, err := os.ReadFile(filepath.Clean(ca))
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,6 @@ func createClient(composerURL string, ca string) (*http.Client, error) {
 		RootCAs:    caCertPool,
 	}
 
-	tlsConfig.BuildNameToCertificate()
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
 	return &http.Client{Transport: transport}, nil
 }

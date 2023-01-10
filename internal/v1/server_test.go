@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -40,7 +39,7 @@ func initQuotaFile(t *testing.T) (string, error) {
 	}
 
 	// get a temp file to store the quotas
-	file, err := ioutil.TempFile(t.TempDir(), "account_quotas.*.json")
+	file, err := os.CreateTemp(t.TempDir(), "account_quotas.*.json")
 	if err != nil {
 		return "", err
 	}

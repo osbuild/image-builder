@@ -3,7 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -58,7 +58,7 @@ func CheckQuota(orgID string, dB db.DB, quotaFile string) (bool, error) {
 	if _, ok := err.(*os.PathError); ok {
 		return false, fmt.Errorf("No config file for quotas found at %s\n", quotaFile)
 	} else {
-		rawJsonFile, err := ioutil.ReadAll(jsonFile)
+		rawJsonFile, err := io.ReadAll(jsonFile)
 		if err != nil {
 			return false, fmt.Errorf("Failed to read quota file %q: %s", quotaFile, err.Error())
 		}

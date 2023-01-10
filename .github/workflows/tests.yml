@@ -35,11 +35,10 @@ jobs:
             exit "0"
           fi
 
-      - name: Install golangci-lint
-        run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.30.0
-
-      - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --timeout 5m0s
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.50.1
 
       - name: Run unit tests
         run: go test -v -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...

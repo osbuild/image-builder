@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -137,7 +136,7 @@ func (arch Architecture) validate() error {
 }
 
 func allDistributions(distsDir string) ([]string, error) {
-	files, err := ioutil.ReadDir(distsDir)
+	files, err := os.ReadDir(distsDir)
 	if err != nil {
 		return nil, err
 	}
