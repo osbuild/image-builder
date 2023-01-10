@@ -3,7 +3,7 @@ package tutils
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -44,7 +44,7 @@ func GetResponseBody(t *testing.T, url string, auth *string) (*http.Response, st
 	response, err := client.Do(request)
 	require.NoError(t, err)
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	require.NoError(t, err)
 
 	err = response.Body.Close()
@@ -66,7 +66,7 @@ func PostResponseBody(t *testing.T, url string, compose interface{}) (*http.Resp
 	response, err := client.Do(request)
 	require.NoError(t, err)
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	require.NoError(t, err)
 
 	err = response.Body.Close()
