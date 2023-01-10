@@ -202,10 +202,34 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 			ArchitectureItem{
 				Arch:       "x86_64",
 				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd"},
+				Repositories: []Repository{
+					{
+						Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+						Rhsm:    false,
+					}, {
+						Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+						Rhsm:    false,
+					}, {
+						Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+						Rhsm:    false,
+					},
+				},
 			},
 			ArchitectureItem{
 				Arch:       "aarch64",
 				ImageTypes: []string{"aws", "vhd"},
+				Repositories: []Repository{
+					{
+						Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/aarch64/os/"),
+						Rhsm:    false,
+					}, {
+						Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/aarch64/os/"),
+						Rhsm:    false,
+					}, {
+						Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/aarch64/os/"),
+						Rhsm:    false,
+					},
+				},
 			}}, result)
 	})
 

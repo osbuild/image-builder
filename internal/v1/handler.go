@@ -77,16 +77,46 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
 	}
 
 	var archs Architectures
+	var reposArchX86 []Repository
+	var reposAarch64 []Repository
+	if d.ArchX86 != nil {
+		for _, r := range d.ArchX86.Repositories {
+			if r.ImageTypeTags == nil {
+				reposArchX86 = append(reposArchX86,
+					Repository{
+						Baseurl:  r.Baseurl,
+						Metalink: r.Metalink,
+						Rhsm:     r.Rhsm,
+					})
+			}
+		}
+	}
+
+	if d.Aarch64 != nil {
+		for _, r := range d.Aarch64.Repositories {
+			if r.ImageTypeTags == nil {
+				reposAarch64 = append(reposAarch64,
+					Repository{
+						Baseurl:  r.Baseurl,
+						Metalink: r.Metalink,
+						Rhsm:     r.Rhsm,
+					})
+			}
+		}
+	}
+
 	if d.ArchX86 != nil {
 		archs = append(archs, ArchitectureItem{
-			Arch:       "x86_64",
-			ImageTypes: d.ArchX86.ImageTypes,
+			Arch:         "x86_64",
+			ImageTypes:   d.ArchX86.ImageTypes,
+			Repositories: reposArchX86,
 		})
 	}
 	if d.Aarch64 != nil {
 		archs = append(archs, ArchitectureItem{
-			Arch:       "aarch64",
-			ImageTypes: d.Aarch64.ImageTypes,
+			Arch:         "aarch64",
+			ImageTypes:   d.Aarch64.ImageTypes,
+			Repositories: reposAarch64,
 		})
 	}
 
