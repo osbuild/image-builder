@@ -311,15 +311,30 @@ func TestGetComposes(t *testing.T) {
 // TestBuildOSTreeOptions checks if the buildOSTreeOptions utility function
 // properly transfers the ostree options to the Composer structure.
 func TestBuildOSTreeOptions(t *testing.T) {
-	cases := map[ImageRequest]*composer.OSTree{
-		{Ostree: nil}: nil,
-		{Ostree: &OSTree{Ref: common.ToPtr("someref")}}:                                           {Ref: common.ToPtr("someref")},
-		{Ostree: &OSTree{Ref: common.ToPtr("someref"), Url: common.ToPtr("https://example.org")}}: {Ref: common.ToPtr("someref"), Url: common.ToPtr("https://example.org")},
-		{Ostree: &OSTree{Url: common.ToPtr("https://example.org")}}:                               {Url: common.ToPtr("https://example.org")},
+	cases := []struct {
+		in  *OSTree
+		out *composer.OSTree
+	}{
+		{
+			nil,
+			nil,
+		},
+		{
+			&OSTree{Ref: common.ToPtr("someref")},
+			&composer.OSTree{Ref: common.ToPtr("someref")},
+		},
+		{
+			&OSTree{Ref: common.ToPtr("someref"), Url: common.ToPtr("https://example.org")},
+			&composer.OSTree{Ref: common.ToPtr("someref"), Url: common.ToPtr("https://example.org")},
+		},
+		{
+			&OSTree{Url: common.ToPtr("https://example.org")},
+			&composer.OSTree{Url: common.ToPtr("https://example.org")},
+		},
 	}
 
-	for in, expOut := range cases {
-		require.Equal(t, expOut, buildOSTreeOptions(in.Ostree), "input: %#v", in)
+	for _, c := range cases {
+		require.Equal(t, c.out, buildOSTreeOptions(c.in), "input: %#v", c.in)
 	}
 }
 
@@ -483,12 +498,13 @@ func TestGetCloneStatus(t *testing.T) {
 
 		if strings.HasSuffix(r.URL.Path, fmt.Sprintf("/clones/%v", cloneId)) && r.Method == "GET" {
 			w.WriteHeader(http.StatusOK)
-			usO := composer.AWSEC2UploadStatus{
+			var uo composer.CloneStatus_Options
+			require.NoError(t, uo.FromAWSEC2UploadStatus(composer.AWSEC2UploadStatus{
 				Ami:    "ami-1",
 				Region: "us-east-2",
-			}
+			}))
 			result := composer.CloneStatus{
-				Options: usO,
+				Options: uo,
 				Status:  composer.Success,
 				Type:    composer.UploadTypesAws,
 			}
