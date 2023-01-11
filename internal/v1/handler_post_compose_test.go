@@ -40,6 +40,10 @@ func TestValidateComposeRequest(t *testing.T) {
 	})
 
 	t.Run("ErrorsForTwoImageRequests", func(t *testing.T) {
+		var uo UploadRequest_Options
+		require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+			ShareWithAccounts: &[]string{"test-account"},
+		}))
 		payload := ComposeRequest{
 			Customizations: nil,
 			Distribution:   "centos-8",
@@ -48,20 +52,16 @@ func TestValidateComposeRequest(t *testing.T) {
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAws,
 					UploadRequest: UploadRequest{
-						Type: UploadTypesAws,
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: &[]string{"test-account"},
-						},
+						Type:    UploadTypesAws,
+						Options: uo,
 					},
 				},
 				{
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAmi,
 					UploadRequest: UploadRequest{
-						Type: UploadTypesAws,
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: &[]string{"test-account"},
-						},
+						Type:    UploadTypesAws,
+						Options: uo,
 					},
 				},
 			},
@@ -72,6 +72,9 @@ func TestValidateComposeRequest(t *testing.T) {
 	})
 
 	t.Run("ErrorsForEmptyAccountsAndSources", func(t *testing.T) {
+		var uo UploadRequest_Options
+		require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{}))
+
 		payload := ComposeRequest{
 			Customizations: nil,
 			Distribution:   "centos-8",
@@ -81,7 +84,7 @@ func TestValidateComposeRequest(t *testing.T) {
 					ImageType:    ImageTypesAws,
 					UploadRequest: UploadRequest{
 						Type:    UploadTypesAws,
-						Options: AWSUploadRequestOptions{},
+						Options: uo,
 					},
 				},
 			},
@@ -105,16 +108,18 @@ func TestValidateComposeRequest(t *testing.T) {
 		}
 		optionsJSON, _ := json.Marshal(options)
 
+		var auo UploadRequest_Options
 		var azureOptions AzureUploadRequestOptions
 		err := json.Unmarshal(optionsJSON, &azureOptions)
 		require.NoError(t, err)
+		require.NoError(t, auo.FromAzureUploadRequestOptions(azureOptions))
 
 		azureRequest := ImageRequest{
 			Architecture: "x86_64",
 			ImageType:    ImageTypesAzure,
 			UploadRequest: UploadRequest{
 				Type:    UploadTypesAzure,
-				Options: azureOptions,
+				Options: auo,
 			},
 		}
 
@@ -165,6 +170,11 @@ func TestValidateComposeRequest(t *testing.T) {
 	})
 
 	t.Run("ISEWhenRepositoriesNotFound", func(t *testing.T) {
+		var uo UploadRequest_Options
+		require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+			ShareWithAccounts: &[]string{"test-account"},
+		}))
+
 		// Distro arch isn't supported which triggers error when searching
 		// for repositories
 		payload := ComposeRequest{
@@ -175,10 +185,8 @@ func TestValidateComposeRequest(t *testing.T) {
 					Architecture: "unsupported-arch",
 					ImageType:    ImageTypesAws,
 					UploadRequest: UploadRequest{
-						Type: UploadTypesAws,
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: &[]string{"test-account"},
-						},
+						Type:    UploadTypesAws,
+						Options: uo,
 					},
 				},
 			},
@@ -189,6 +197,10 @@ func TestValidateComposeRequest(t *testing.T) {
 	})
 
 	t.Run("ErrorsForUnknownUploadType", func(t *testing.T) {
+		var uo UploadRequest_Options
+		require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+			ShareWithAccounts: &[]string{"test-account"},
+		}))
 		// UploadRequest Type isn't supported
 		payload := ComposeRequest{
 			Customizations: nil,
@@ -198,10 +210,8 @@ func TestValidateComposeRequest(t *testing.T) {
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAzure,
 					UploadRequest: UploadRequest{
-						Type: "unknown",
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: &[]string{"test-account"},
-						},
+						Type:    "unknown",
+						Options: uo,
 					},
 				},
 			},
@@ -236,21 +246,25 @@ func TestValidateComposeRequest(t *testing.T) {
 			},
 		}
 
+		var uo UploadRequest_Options
+		require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+			ShareWithAccounts: &[]string{"test-account"},
+		}))
 		awsUr := UploadRequest{
-			Type: UploadTypesAws,
-			Options: AWSUploadRequestOptions{
-				ShareWithAccounts: &[]string{"test-account"},
-			},
+			Type:    UploadTypesAws,
+			Options: uo,
 		}
 
+		var auo UploadRequest_Options
+		require.NoError(t, auo.FromAzureUploadRequestOptions(AzureUploadRequestOptions{
+			ResourceGroup:  "group",
+			SubscriptionId: common.ToPtr("id"),
+			TenantId:       common.ToPtr("tenant"),
+			ImageName:      common.ToPtr("azure-image"),
+		}))
 		azureUr := UploadRequest{
-			Type: UploadTypesAzure,
-			Options: AzureUploadRequestOptions{
-				ResourceGroup:  "group",
-				SubscriptionId: common.ToPtr("id"),
-				TenantId:       common.ToPtr("tenant"),
-				ImageName:      common.ToPtr("azure-image"),
-			},
+			Type:    UploadTypesAzure,
+			Options: auo,
 		}
 		for _, it := range []ImageTypes{ImageTypesAmi, ImageTypesAws} {
 			payload.ImageRequests[0].ImageType = it
@@ -433,6 +447,10 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
+	var uo UploadRequest_Options
+	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+		ShareWithAccounts: &[]string{"test-account"},
+	}))
 	payload := ComposeRequest{
 		Customizations: nil,
 		Distribution:   "centos-8",
@@ -441,10 +459,8 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 				Architecture: "x86_64",
 				ImageType:    ImageTypesAws,
 				UploadRequest: UploadRequest{
-					Type: UploadTypesAws,
-					Options: AWSUploadRequestOptions{
-						ShareWithAccounts: &[]string{"test-account"},
-					},
+					Type:    UploadTypesAws,
+					Options: uo,
 				},
 			},
 		},
@@ -479,6 +495,11 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
+	var uo UploadRequest_Options
+	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+		ShareWithAccounts: &[]string{"test-account"},
+	}))
+
 	payload := ComposeRequest{
 		Customizations: &Customizations{
 			Packages: nil,
@@ -492,10 +513,8 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 					Ref: common.ToPtr("edge/ref"),
 				},
 				UploadRequest: UploadRequest{
-					Type: UploadTypesAwsS3,
-					Options: AWSUploadRequestOptions{
-						ShareWithAccounts: &[]string{"test-account"},
-					},
+					Type:    UploadTypesAwsS3,
+					Options: uo,
 				},
 			},
 		},
@@ -527,6 +546,10 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
+	var uo UploadRequest_Options
+	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+		ShareWithAccounts: &[]string{"test-account"},
+	}))
 	payload := ComposeRequest{
 		Customizations: nil,
 		Distribution:   "centos-8",
@@ -535,10 +558,8 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 				Architecture: "x86_64",
 				ImageType:    ImageTypesAws,
 				UploadRequest: UploadRequest{
-					Type: UploadTypesAws,
-					Options: AWSUploadRequestOptions{
-						ShareWithAccounts: &[]string{"test-account"},
-					},
+					Type:    UploadTypesAws,
+					Options: uo,
 				},
 			},
 		},
@@ -573,6 +594,10 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
+	var uo UploadRequest_Options
+	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+		ShareWithAccounts: &[]string{"test-account"},
+	}))
 	payload := ComposeRequest{
 		Customizations: nil,
 		Distribution:   "centos-8",
@@ -581,10 +606,8 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 				Architecture: "x86_64",
 				ImageType:    ImageTypesAws,
 				UploadRequest: UploadRequest{
-					Type: UploadTypesAws,
-					Options: AWSUploadRequestOptions{
-						ShareWithAccounts: &[]string{"test-account"},
-					},
+					Type:    UploadTypesAws,
+					Options: uo,
 				},
 			},
 		},
@@ -621,6 +644,10 @@ func TestComposeImageAllowList(t *testing.T) {
 	}
 
 	createPayload := func(distro Distributions) ComposeRequest {
+		var uo UploadRequest_Options
+		require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+			ShareWithAccounts: &[]string{"test-account"},
+		}))
 		return ComposeRequest{
 			Customizations: nil,
 			Distribution:   distro,
@@ -629,10 +656,8 @@ func TestComposeImageAllowList(t *testing.T) {
 					Architecture: "x86_64",
 					ImageType:    ImageTypesAws,
 					UploadRequest: UploadRequest{
-						Type: UploadTypesAws,
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: &[]string{"test-account"},
-						},
+						Type:    UploadTypesAws,
+						Options: uo,
 					},
 				},
 			},
@@ -770,6 +795,26 @@ func TestComposeCustomizations(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
+	var uo UploadRequest_Options
+	require.NoError(t, uo.FromAWSS3UploadRequestOptions(AWSS3UploadRequestOptions{}))
+	var ec2uo UploadRequest_Options
+	require.NoError(t, ec2uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+		ShareWithAccounts: &[]string{awsAccountId},
+	}))
+	var auo UploadRequest_Options
+	require.NoError(t, auo.FromAzureUploadRequestOptions(AzureUploadRequestOptions{
+		ResourceGroup:  "group",
+		SubscriptionId: common.ToPtr("id"),
+		TenantId:       common.ToPtr("tenant"),
+		ImageName:      common.ToPtr("azure-image"),
+	}))
+	var auo2 UploadRequest_Options
+	require.NoError(t, auo2.FromAzureUploadRequestOptions(AzureUploadRequestOptions{
+		ResourceGroup: "group",
+		SourceId:      common.ToPtr("2"),
+		ImageName:     common.ToPtr("azure-image"),
+	}))
+
 	payloads := []struct {
 		imageBuilderRequest ComposeRequest
 		composerRequest     composer.ComposeRequest
@@ -826,7 +871,7 @@ func TestComposeCustomizations(t *testing.T) {
 						ImageType:    ImageTypesRhelEdgeInstaller,
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesAwsS3,
-							Options: AWSS3UploadRequestOptions{},
+							Options: uo,
 						},
 					},
 				},
@@ -935,7 +980,7 @@ func TestComposeCustomizations(t *testing.T) {
 						},
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesAwsS3,
-							Options: AWSS3UploadRequestOptions{},
+							Options: uo,
 						},
 					},
 				},
@@ -1001,7 +1046,7 @@ func TestComposeCustomizations(t *testing.T) {
 						},
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesAwsS3,
-							Options: AWSS3UploadRequestOptions{},
+							Options: uo,
 						},
 					},
 				},
@@ -1084,13 +1129,8 @@ func TestComposeCustomizations(t *testing.T) {
 							Parent: common.ToPtr("test/edge/ref2"),
 						},
 						UploadRequest: UploadRequest{
-							Type: UploadTypesAzure,
-							Options: AzureUploadRequestOptions{
-								ResourceGroup:  "group",
-								SubscriptionId: common.ToPtr("id"),
-								TenantId:       common.ToPtr("tenant"),
-								ImageName:      common.ToPtr("azure-image"),
-							},
+							Type:    UploadTypesAzure,
+							Options: auo,
 						},
 					},
 				},
@@ -1162,12 +1202,8 @@ func TestComposeCustomizations(t *testing.T) {
 							Parent: common.ToPtr("test/edge/ref2"),
 						},
 						UploadRequest: UploadRequest{
-							Type: UploadTypesAzure,
-							Options: AzureUploadRequestOptions{
-								ResourceGroup: "group",
-								SourceId:      common.ToPtr("2"),
-								ImageName:     common.ToPtr("azure-image"),
-							},
+							Type:    UploadTypesAzure,
+							Options: auo2,
 						},
 					},
 				},
@@ -1233,10 +1269,8 @@ func TestComposeCustomizations(t *testing.T) {
 						Architecture: "x86_64",
 						ImageType:    ImageTypesAws,
 						UploadRequest: UploadRequest{
-							Type: UploadTypesAws,
-							Options: AWSUploadRequestOptions{
-								ShareWithSources: &[]string{"1"},
-							},
+							Type:    UploadTypesAws,
+							Options: ec2uo,
 						},
 					},
 				},
@@ -1295,10 +1329,8 @@ func TestComposeCustomizations(t *testing.T) {
 						ImageType:    ImageTypesAws,
 						Size:         common.ToPtr(uint64(13958643712)),
 						UploadRequest: UploadRequest{
-							Type: UploadTypesAws,
-							Options: AWSUploadRequestOptions{
-								ShareWithSources: &[]string{"1"},
-							},
+							Type:    UploadTypesAws,
+							Options: ec2uo,
 						},
 					},
 				},
@@ -1367,7 +1399,7 @@ func TestComposeCustomizations(t *testing.T) {
 						ImageType:    ImageTypesGuestImage,
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesAwsS3,
-							Options: AWSS3UploadRequestOptions{},
+							Options: uo,
 						},
 					},
 				},

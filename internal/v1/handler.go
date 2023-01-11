@@ -246,20 +246,16 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 		return err
 	}
 
+	us, err := parseComposerUploadStatus(cloudStat.ImageStatus.UploadStatus)
+	if err != nil {
+		return err
+	}
 	status := ComposeStatus{
 		ImageStatus: ImageStatus{
 			Status:       ImageStatusStatus(cloudStat.ImageStatus.Status),
-			UploadStatus: nil,
+			UploadStatus: us,
 		},
 		Request: composeRequest,
-	}
-
-	if cloudStat.ImageStatus.UploadStatus != nil {
-		status.ImageStatus.UploadStatus = &UploadStatus{
-			Status:  UploadStatusStatus(cloudStat.ImageStatus.UploadStatus.Status),
-			Type:    UploadTypes(cloudStat.ImageStatus.UploadStatus.Type),
-			Options: cloudStat.ImageStatus.UploadStatus.Options,
-		}
 	}
 
 	if cloudStat.ImageStatus.Error != nil {
@@ -267,6 +263,68 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 	}
 
 	return ctx.JSON(http.StatusOK, status)
+}
+
+func parseComposerUploadStatus(us *composer.UploadStatus) (*UploadStatus, error) {
+	if us == nil {
+		return nil, nil
+	}
+
+	var options UploadStatus_Options
+	switch us.Type {
+	case composer.UploadTypesAws:
+		co, err := us.Options.AsAWSEC2UploadStatus()
+		if err != nil {
+			return nil, err
+		}
+		err = options.FromAWSUploadStatus(AWSUploadStatus{
+			Ami:    co.Ami,
+			Region: co.Region,
+		})
+		if err != nil {
+			return nil, err
+		}
+	case composer.UploadTypesAwsS3:
+		co, err := us.Options.AsAWSS3UploadStatus()
+		if err != nil {
+			return nil, err
+		}
+		err = options.FromAWSS3UploadStatus(AWSS3UploadStatus{
+			Url: co.Url,
+		})
+		if err != nil {
+			return nil, err
+		}
+	case composer.UploadTypesAzure:
+		co, err := us.Options.AsAzureUploadStatus()
+		if err != nil {
+			return nil, err
+		}
+		err = options.FromAzureUploadStatus(AzureUploadStatus{
+			ImageName: co.ImageName,
+		})
+		if err != nil {
+			return nil, err
+		}
+	case composer.UploadTypesGcp:
+		co, err := us.Options.AsGCPUploadStatus()
+		if err != nil {
+			return nil, err
+		}
+		err = options.FromGCPUploadStatus(GCPUploadStatus{
+			ImageName: co.ImageName,
+			ProjectId: co.ProjectId,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &UploadStatus{
+		Options: options,
+		Status:  UploadStatusStatus(us.Status),
+		Type:    UploadTypes(us.Type),
+	}, nil
 }
 
 func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeStatusError {
@@ -518,7 +576,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	if (composeRequest.ImageRequests[0].UploadRequest == UploadRequest{}) {
+	if string(composeRequest.ImageRequests[0].UploadRequest.Type) == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
@@ -637,11 +695,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 }
 
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
-	// HACK deepmap doesn't really support `oneOf`, so marshal and unmarshal into target object
-	optionsJSON, err := json.Marshal(ur.Options)
-	if err != nil {
-		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to marshal UploadRequestOptions")
-	}
+	var uploadOptions composer.UploadOptions
 	switch ur.Type {
 	case UploadTypesAws:
 		var composerImageType composer.ImageTypes
@@ -651,51 +705,53 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 		case ImageTypesAmi:
 			composerImageType = composer.ImageTypesAws
 		default:
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
-		var awsOptions AWSUploadRequestOptions
-		err = json.Unmarshal(optionsJSON, &awsOptions)
+		uo, err := ur.Options.AsAWSUploadRequestOptions()
 		if err != nil {
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to parse upload request options as aws options")
 		}
 
-		if (awsOptions.ShareWithAccounts == nil || len(*awsOptions.ShareWithAccounts) == 0) && (awsOptions.ShareWithSources == nil || len(*awsOptions.ShareWithSources) == 0) {
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Expected at least one source or account to share the image with")
+		if (uo.ShareWithAccounts == nil || len(*uo.ShareWithAccounts) == 0) && (uo.ShareWithSources == nil || len(*uo.ShareWithSources) == 0) {
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Expected at least one source or account to share the image with")
 		}
 
 		var shareWithAccounts []string
-		if awsOptions.ShareWithAccounts != nil {
-			shareWithAccounts = append(shareWithAccounts, *awsOptions.ShareWithAccounts...)
+		if uo.ShareWithAccounts != nil {
+			shareWithAccounts = append(shareWithAccounts, *uo.ShareWithAccounts...)
 		}
 
-		if awsOptions.ShareWithSources != nil {
-			for _, source := range *awsOptions.ShareWithSources {
+		if uo.ShareWithSources != nil {
+			for _, source := range *uo.ShareWithSources {
 				resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), source)
 				if err != nil {
 					logrus.Error(err)
-					return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
+					return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
 				}
 				defer closeBody(resp.Body)
 
 				var uploadInfo provisioning.V1SourceUploadInfoResponse
 				err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
 				if err != nil {
-					return nil, "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", source))
+					return uploadOptions, "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", source))
 				}
 
 				if uploadInfo.Aws == nil || uploadInfo.Aws.AccountId == nil || len(*uploadInfo.Aws.AccountId) != 12 {
-					return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id", source))
+					return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id", source))
 				}
 
 				ctx.Logger().Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *uploadInfo.Aws.AccountId))
 				shareWithAccounts = append(shareWithAccounts, *uploadInfo.Aws.AccountId)
 			}
 		}
-
-		return composer.AWSEC2UploadOptions{
+		err = uploadOptions.FromAWSEC2UploadOptions(composer.AWSEC2UploadOptions{
 			Region:            h.server.aws.Region,
 			ShareWithAccounts: shareWithAccounts,
-		}, composerImageType, nil
+		})
+		if err != nil {
+			return uploadOptions, "", err
+		}
+		return uploadOptions, composerImageType, nil
 	case UploadTypesAwsS3:
 		var composerImageType composer.ImageTypes
 		switch it {
@@ -718,34 +774,36 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 		case ImageTypesWsl:
 			composerImageType = composer.ImageTypesWsl
 		default:
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
-		var awsOptions AWSS3UploadRequestOptions
-		err = json.Unmarshal(optionsJSON, &awsOptions)
-		if err != nil {
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal UploadRequestOptions")
-		}
-		return composer.AWSS3UploadOptions{
+		err := uploadOptions.FromAWSS3UploadOptions(composer.AWSS3UploadOptions{
 			Region: h.server.aws.Region,
-		}, composerImageType, nil
+		})
+		if err != nil {
+			return uploadOptions, "", err
+		}
+		return uploadOptions, composerImageType, nil
 	case UploadTypesGcp:
 		var composerImageType composer.ImageTypes
 		switch it {
 		case ImageTypesGcp:
 			composerImageType = composer.ImageTypesGcp
 		default:
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
-		var gcpOptions GCPUploadRequestOptions
-		err = json.Unmarshal(optionsJSON, &gcpOptions)
+		uo, err := ur.Options.AsGCPUploadRequestOptions()
 		if err != nil {
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into GCPUploadRequestOptions")
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to parse upload request options as GCP options")
 		}
-		return composer.GCPUploadOptions{
+		err = uploadOptions.FromGCPUploadOptions(composer.GCPUploadOptions{
 			Bucket:            &h.server.gcp.Bucket,
 			Region:            h.server.gcp.Region,
-			ShareWithAccounts: gcpOptions.ShareWithAccounts,
-		}, composerImageType, nil
+			ShareWithAccounts: uo.ShareWithAccounts,
+		})
+		if err != nil {
+			return uploadOptions, "", err
+		}
+		return uploadOptions, composerImageType, nil
 	case UploadTypesAzure:
 		var composerImageType composer.ImageTypes
 		switch it {
@@ -754,32 +812,32 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 		case ImageTypesVhd:
 			composerImageType = composer.ImageTypesAzure
 		default:
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
-		}
-		var azureOptions AzureUploadRequestOptions
-		err = json.Unmarshal(optionsJSON, &azureOptions)
-		if err != nil {
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into AzureUploadRequestOptions")
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
 
-		if (azureOptions.SourceId == nil && (azureOptions.TenantId == nil || azureOptions.SubscriptionId == nil)) ||
-			(azureOptions.SourceId != nil && (azureOptions.TenantId != nil || azureOptions.SubscriptionId != nil)) {
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Request must contain either (1) a source id, and no tenant or subscription ids or (2) tenant and subscription ids, and no source id.")
+		uo, err := ur.Options.AsAzureUploadRequestOptions()
+		if err != nil {
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to parse upload request options as Azure options")
+		}
+
+		if (uo.SourceId == nil && (uo.TenantId == nil || uo.SubscriptionId == nil)) ||
+			(uo.SourceId != nil && (uo.TenantId != nil || uo.SubscriptionId != nil)) {
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Request must contain either (1) a source id, and no tenant or subscription ids or (2) tenant and subscription ids, and no source id.")
 		}
 
 		var tenantId string
 		var subscriptionId string
 
-		if azureOptions.SourceId == nil {
-			tenantId = *azureOptions.TenantId
-			subscriptionId = *azureOptions.SubscriptionId
+		if uo.SourceId == nil {
+			tenantId = *uo.TenantId
+			subscriptionId = *uo.SubscriptionId
 		}
 
-		if azureOptions.SourceId != nil {
-			resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), *azureOptions.SourceId)
+		if uo.SourceId != nil {
+			resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), *uo.SourceId)
 			if err != nil {
 				logrus.Error(err)
-				return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", *azureOptions.SourceId))
+				return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", *uo.SourceId))
 			}
 			defer closeBody(resp.Body)
 
@@ -787,27 +845,30 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 			err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
 
 			if err != nil {
-				return nil, "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", *azureOptions.SourceId))
+				return uploadOptions, "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", *uo.SourceId))
 			}
 
 			if uploadInfo.Azure == nil || uploadInfo.Azure.TenantId == nil || uploadInfo.Azure.SubscriptionId == nil {
-				return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an Azure tenant id or subscription id. ", *azureOptions.SourceId))
+				return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an Azure tenant id or subscription id. ", *uo.SourceId))
 			}
 
-			ctx.Logger().Info(fmt.Sprintf("Resolved source %s to tenant id %s and subscription id %s", *azureOptions.SourceId, *uploadInfo.Azure.TenantId, *uploadInfo.Azure.SubscriptionId))
+			ctx.Logger().Info(fmt.Sprintf("Resolved source %s to tenant id %s and subscription id %s", *uo.SourceId, *uploadInfo.Azure.TenantId, *uploadInfo.Azure.SubscriptionId))
 			tenantId = *uploadInfo.Azure.TenantId
 			subscriptionId = *uploadInfo.Azure.SubscriptionId
 		}
 
-		uploadOptions := composer.AzureUploadOptions{
+		err = uploadOptions.FromAzureUploadOptions(composer.AzureUploadOptions{
 			TenantId:       tenantId,
 			SubscriptionId: subscriptionId,
-			ResourceGroup:  azureOptions.ResourceGroup,
-			ImageName:      azureOptions.ImageName,
+			ResourceGroup:  uo.ResourceGroup,
+			ImageName:      uo.ImageName,
+		})
+		if err != nil {
+			return uploadOptions, "", err
 		}
 		return uploadOptions, composerImageType, nil
 	default:
-		return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
+		return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
 	}
 }
 
@@ -1045,10 +1106,16 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 			}
 		}
 
-		resp, err = h.server.cClient.CloneCompose(composeId, composer.AWSEC2CloneCompose{
+		var ccb composer.CloneComposeBody
+		err = ccb.FromAWSEC2CloneCompose(composer.AWSEC2CloneCompose{
 			Region:            awsEC2CloneReq.Region,
 			ShareWithAccounts: &shareWithAccounts,
 		})
+		if err != nil {
+			return err
+		}
+
+		resp, err = h.server.cClient.CloneCompose(composeId, ccb)
 		if err != nil {
 			return err
 		}
@@ -1130,10 +1197,26 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		return err
 	}
 
+	var options UploadStatus_Options
+	uo, err := cloudStat.Options.AsAWSEC2UploadStatus()
+	if err != nil {
+		logrus.Errorf("Unable to decode clone status: %v", err)
+		return err
+	}
+
+	err = options.FromAWSUploadStatus(AWSUploadStatus{
+		Ami:    uo.Ami,
+		Region: uo.Region,
+	})
+	if err != nil {
+		logrus.Errorf("Unable to encode clone status: %v", err)
+		return err
+	}
+
 	return ctx.JSON(http.StatusOK, UploadStatus{
 		Status:  UploadStatusStatus(cloudStat.Status),
 		Type:    UploadTypes(cloudStat.Type),
-		Options: cloudStat.Options,
+		Options: options,
 	})
 }
 
