@@ -30,7 +30,6 @@ var completeIdHeader string = `{
 		}
 	},
 	"identity": {
-		"account_number": "%s",
 		"type": "User",
 		"user": {
 		 	"username": "user",
@@ -48,7 +47,6 @@ var completeIdHeader string = `{
 
 var idHeaderWithoutEntitlements = `{
 	"identity": {
-		"account_number": "%s",
 		"type": "User",
 		"user": {
 			"username": "user",
@@ -64,16 +62,16 @@ var idHeaderWithoutEntitlements = `{
 	}
 }`
 
-func getBase64Header(header string, accountNumber string, orgId string) string {
-	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(header, accountNumber, orgId)))
+func getBase64Header(header string, orgId string) string {
+	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(header, orgId)))
 }
 
 // returns a base64 encoded string of the idHeader
-func GetCompleteBas64Header(accountNumber string, orgId string) string {
-	return getBase64Header(completeIdHeader, accountNumber, orgId)
+func GetCompleteBase64Header(orgId string) string {
+	return getBase64Header(completeIdHeader, orgId)
 }
 
 // returns a base64 encoded string of the idHeader without the orgId
-func GetBase64HeaderWithoutEntitlements(accountNumber string, orgId string) string {
-	return getBase64Header(idHeaderWithoutEntitlements, accountNumber, orgId)
+func GetBase64HeaderWithoutEntitlements(orgId string) string {
+	return getBase64Header(idHeaderWithoutEntitlements, orgId)
 }
