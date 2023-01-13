@@ -36,6 +36,17 @@ type Server struct {
 	allDistros *distribution.AllDistroRegistry
 }
 
+type ServerConfig struct {
+	EchoServer *echo.Echo
+	Client     *composer.ComposerClient
+	DBase      db.DB
+	AwsConfig  AWSConfig
+	GcpConfig  GCPConfig
+	QuotaFile  string
+	AllowFile  string
+	AllDistros *distribution.AllDistroRegistry
+}
+
 type AWSConfig struct {
 	Region string
 }
@@ -49,8 +60,7 @@ type Handlers struct {
 	server *Server
 }
 
-func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
-	awsConfig AWSConfig, gcpConfig GCPConfig, quotaFile string, allowFile string, allDistros *distribution.AllDistroRegistry) error {
+func Attach(conf *ServerConfig) error {
 	spec, err := GetSwagger()
 	if err != nil {
 		return err
@@ -65,22 +75,22 @@ func Attach(echoServer *echo.Echo, client *composer.ComposerClient, dbase db.DB,
 
 	majorVersion := strings.Split(spec.Info.Version, ".")[0]
 
-	allowList, err := common.LoadAllowList(allowFile)
+	allowList, err := common.LoadAllowList(conf.AllowFile)
 	if err != nil {
 		return err
 	}
 
 	s := Server{
-		echoServer,
-		client,
+		conf.EchoServer,
+		conf.Client,
 		spec,
 		router,
-		dbase,
-		awsConfig,
-		gcpConfig,
-		quotaFile,
+		conf.DBase,
+		conf.AwsConfig,
+		conf.GcpConfig,
+		conf.QuotaFile,
 		allowList,
-		allDistros,
+		conf.AllDistros,
 	}
 	var h Handlers
 	h.server = &s

@@ -70,14 +70,6 @@ func main() {
 		panic(err)
 	}
 
-	aws := v1.AWSConfig{
-		Region: conf.OsbuildRegion,
-	}
-	gcp := v1.GCPConfig{
-		Region: conf.OsbuildGCPRegion,
-		Bucket: conf.OsbuildGCPBucket,
-	}
-
 	adr, err := distribution.LoadDistroRegistry(conf.DistributionsDir)
 	if err != nil {
 		panic(err)
@@ -88,7 +80,23 @@ func main() {
 	}
 
 	echoServer := echo.New()
-	err = v1.Attach(echoServer, client, dbase, aws, gcp, conf.QuotaFile, conf.AllowFile, adr)
+	serverConfig := &v1.ServerConfig{
+		EchoServer: echoServer,
+		Client:     client,
+		DBase:      dbase,
+		AwsConfig: v1.AWSConfig{
+			Region: conf.OsbuildRegion,
+		},
+		GcpConfig: v1.GCPConfig{
+			Region: conf.OsbuildGCPRegion,
+			Bucket: conf.OsbuildGCPBucket,
+		},
+		QuotaFile:  conf.QuotaFile,
+		AllowFile:  conf.AllowFile,
+		AllDistros: adr,
+	}
+
+	err = v1.Attach(serverConfig)
 	if err != nil {
 		panic(err)
 	}
