@@ -14,12 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// org_id 000000, account_number 500000
-var AuthString0 = GetCompleteBas64Header("500000", "000000")
-var AuthString0WithoutEntitlements = GetBase64HeaderWithoutEntitlements("500000", "000000")
+// org_id 000000
+var AuthString0 = GetCompleteBase64Header("000000")
+var AuthString0WithoutEntitlements = GetBase64HeaderWithoutEntitlements("000000")
 
-// org_id 000001, account_number 600000
-var AuthString1 = GetCompleteBas64Header("600000", "000001")
+// org_id 000001
+var AuthString1 = GetCompleteBase64Header("000001")
 
 func GetResponseError(url string) (*http.Response, error) {
 	client := &http.Client{}

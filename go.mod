@@ -12,7 +12,7 @@ require (
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/redhatinsights/app-common-go v1.6.4
-	github.com/redhatinsights/identity v0.0.0-20220426090913-8179bb5bfb20
+	github.com/redhatinsights/identity v0.0.0-20220719174832-36a7b1cbeff1
 	github.com/redhatinsights/platform-go-middlewares v0.20.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1

@@ -308,15 +308,14 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 
 	t.Run("EmptyAccountNumber", func(t *testing.T) {
 		// AccoundNumber equals ""
-		auth := tutils.GetCompleteBas64Header("", "000000")
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 400, response.StatusCode)
-		require.Contains(t, body, "invalid or missing account number")
+		auth := tutils.GetCompleteBase64Header("000000")
+		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 200, response.StatusCode)
 	})
 
 	t.Run("EmptyOrgID", func(t *testing.T) {
 		// OrgID equals ""
-		auth := tutils.GetCompleteBas64Header("000000", "")
+		auth := tutils.GetCompleteBase64Header("")
 		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
 		require.Equal(t, 400, response.StatusCode)
 		require.Contains(t, body, "invalid or missing org_id")
