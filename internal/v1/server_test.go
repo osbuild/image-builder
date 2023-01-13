@@ -113,7 +113,16 @@ func startServerWithCustomDB(t *testing.T, url string, dbase db.DB, distsDir str
 	require.NoError(t, err)
 
 	echoServer := echo.New()
-	err = Attach(echoServer, client, dbase, AWSConfig{}, GCPConfig{}, quotaFile, allowFile, adr)
+	serverConfig := &ServerConfig{
+		EchoServer: echoServer,
+		Client:     client,
+		DBase:      dbase,
+		QuotaFile:  quotaFile,
+		AllowFile:  allowFile,
+		AllDistros: adr,
+	}
+
+	err = Attach(serverConfig)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	go func() {
