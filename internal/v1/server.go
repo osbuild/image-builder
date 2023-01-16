@@ -196,21 +196,22 @@ func (s *Server) distroRegistry(ctx echo.Context) *distribution.DistroRegistry {
 
 // return whether or not the calling context is entitled to consume RHEL content
 func (s *Server) isEntitled(ctx echo.Context) bool {
-	idh, err := getIdentityHeader(ctx)
-	if err != nil {
-		return false
-	}
+	_, err := getIdentityHeader(ctx)
 
-	entitled, ok := idh.Entitlements["rhel"]
-	// The entitlement should really be present in the identity header, just in case use account
-	// number as a fallback
-	if !ok {
-		// the user's org does not have an associated EBS account number, these
-		// are associated when a billing relationship exists, which is a decent
-		// proxy for RHEL entitlements
-		logrus.Error("RHEL entitlement not present in identity header")
-		return idh.Identity.AccountNumber != ""
+	// !disable rhel entitlements for now, as the new SKU filter seems to not recognize RHEL
+	// entitlements for a lot of accounts.
 
-	}
-	return entitled.IsEntitled
+	// entitled, ok := idh.Entitlements["rhel"]
+	// // The entitlement should really be present in the identity header, just in case use account
+	// // number as a fallback
+	// if !ok {
+	// 	// the user's org does not have an associated EBS account number, these
+	// 	// are associated when a billing relationship exists, which is a decent
+	// 	// proxy for RHEL entitlements
+	// 	logrus.Error("RHEL entitlement not present in identity header")
+	// 	return idh.Identity.AccountNumber != ""
+
+	// }
+	// return entitled.IsEntitled
+	return err == nil
 }
