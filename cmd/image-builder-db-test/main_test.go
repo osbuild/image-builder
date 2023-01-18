@@ -95,7 +95,7 @@ func testInsertCompose(t *testing.T) {
 	err = d.InsertCompose("toto", ANR1, ORGID1, &imageName, []byte("{}"))
 	require.Error(t, err)
 	err = d.InsertCompose(uuid.New().String(), "", ORGID1, &imageName, []byte("{}"))
-	require.Error(t, err)
+	require.NoError(t, err)
 }
 
 func testGetCompose(t *testing.T) {
