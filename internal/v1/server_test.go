@@ -1732,10 +1732,18 @@ func TestGetClones(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
+	var csResp ClonesResponse
+	resp, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	err = json.Unmarshal([]byte(body), &csResp)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(csResp.Data))
+	require.Contains(t, body, "\"data\":[]")
+
 	cloneReq := AWSEC2Clone{
 		Region: "us-east-2",
 	}
-	resp, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
+	resp, body = tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 
 	var cResp CloneResponse
@@ -1743,7 +1751,6 @@ func TestGetClones(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, cloneId.String(), cResp.Id)
 
-	var csResp ClonesResponse
 	resp, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	err = json.Unmarshal([]byte(body), &csResp)
