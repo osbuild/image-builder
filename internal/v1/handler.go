@@ -949,7 +949,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId string, params G
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying clones for this compose")
 	}
 
-	var data []ClonesResponseItem
+	data := []ClonesResponseItem{}
 	for _, c := range cloneEntries {
 		data = append(data, ClonesResponseItem{
 			Id:        c.Id.String(),
