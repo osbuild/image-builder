@@ -63,7 +63,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3.0.2
     - name: Run ShellCheck
-      uses: ludeeus/action-shellcheck@1.1.0
+      uses: ludeeus/action-shellcheck@2.0.0
       with:
         ignore: vendor # We don't want to fix the code in vendored dependencies
       env:
