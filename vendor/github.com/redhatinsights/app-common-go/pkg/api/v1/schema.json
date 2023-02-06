@@ -199,6 +199,7 @@
                     "type": "string"
                 },
                 "securityProtocol": {
+                    "description": "Deprecated: Use the top level securityProtocol field instead",
                     "type": "string"
                 },
                 "saslMechanism": {
@@ -227,6 +228,9 @@
                 },
                 "sasl": {
                     "$ref": "#/definitions/KafkaSASLConfig"
+                },
+                "securityProtocol": {
+                    "type": "string"
                 }
             },
             "required": [
