@@ -416,6 +416,9 @@ type BrokerConfig struct {
 
 	// Sasl corresponds to the JSON schema field "sasl".
 	Sasl *KafkaSASLConfig `json:"sasl,omitempty"`
+
+	// SecurityProtocol corresponds to the JSON schema field "securityProtocol".
+	SecurityProtocol *string `json:"securityProtocol,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -563,7 +566,7 @@ type KafkaSASLConfig struct {
 	// SaslMechanism corresponds to the JSON schema field "saslMechanism".
 	SaslMechanism *string `json:"saslMechanism,omitempty"`
 
-	// SecurityProtocol corresponds to the JSON schema field "securityProtocol".
+	// Deprecated: Use the top level securityProtocol field instead
 	SecurityProtocol *string `json:"securityProtocol,omitempty"`
 
 	// Username corresponds to the JSON schema field "username".
