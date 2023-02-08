@@ -33,7 +33,7 @@ func (h *Handlers) GetReadiness(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body)
 
 	if resp.StatusCode != 200 {
 		body, err := io.ReadAll(resp.Body)
@@ -200,7 +200,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body)
 
 	if resp.StatusCode == http.StatusNotFound {
 		body, err := io.ReadAll(resp.Body)
@@ -305,7 +305,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body)
 
 	if resp.StatusCode == http.StatusNotFound {
 		body, err := io.ReadAll(resp.Body)
@@ -524,7 +524,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body)
 	if resp.StatusCode != http.StatusCreated {
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed posting compose request to osbuild-composer")
 		body, err := io.ReadAll(resp.Body)
@@ -844,7 +844,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
 	if resp == nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong creating the clone")
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body)
 	if resp.StatusCode != http.StatusCreated {
 		var cError composer.Error
 		err = json.NewDecoder(resp.Body).Decode(&cError)
@@ -898,7 +898,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id string) error {
 		logrus.Errorf("Error requesting clone status for clone %v: %v", id, err)
 		return err
 	}
-	defer resp.Body.Close()
+	defer closeBody(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		var cErr composer.Error
 		err = json.NewDecoder(resp.Body).Decode(&cErr)
@@ -985,4 +985,11 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId string, params G
 		},
 		Data: data,
 	})
+}
+
+func closeBody(body io.Closer) {
+	err := body.Close()
+	if err != nil {
+		logrus.Errorf("closing response body failed: %v", err)
+	}
 }
