@@ -26,3 +26,5 @@ jobs:
           title: "internal/composer: update api spec"
           commit-message: "internal/composer: update api spec"
           body: Composer api spec update.
+          token: ${{ secrets.UPDATE_API_SPEC_TOKEN }}
+          author: schutzbot <schutzbot@gmail.com>
