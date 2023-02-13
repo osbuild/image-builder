@@ -101,6 +101,15 @@ paths:
     get:
       description: 'Return list of provisioning sources'
       operationId: getSourceList
+      parameters:
+      - name: provider
+        in: query
+        schema:
+          type: string
+          enum:
+            - aws
+            - azure
+            - gcp
       responses:
         '200':
           description: Returned on success.
@@ -114,9 +123,6 @@ paths:
           $ref: "#/components/responses/InternalError"
   /sources/{ID}/account_identity:
     get:
-        description: >
-          Return details needed to identify a hyperscaler account associated with a certain
-          source. The image builder service uses this to share an image with a specific source.
         parameters:
         - in: path
           name: ID
@@ -458,10 +464,14 @@ components:
           type: string
         fingerprint:
           type: string
+        fingerprint_legacy:
+          type: string
         id:
           format: int64
           type: integer
         name:
+          type: string
+        type:
           type: string
       type: object
     v1.PubkeyResponse:
@@ -470,10 +480,14 @@ components:
           type: string
         fingerprint:
           type: string
+        fingerprint_legacy:
+          type: string
         id:
           format: int64
           type: integer
         name:
+          type: string
+        type:
           type: string
       type: object
     v1.ReservationResponse:

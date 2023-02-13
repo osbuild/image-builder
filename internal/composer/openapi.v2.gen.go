@@ -456,7 +456,10 @@ type Subscription struct {
 	BaseUrl       string `json:"base_url"`
 	Insights      bool   `json:"insights"`
 	Organization  string `json:"organization"`
-	ServerUrl     string `json:"server_url"`
+
+	// Optional flag to use rhc to register the system, which also always enables Insights.
+	Rhc       *bool  `json:"rhc,omitempty"`
+	ServerUrl string `json:"server_url"`
 }
 
 // This should really be oneOf but AWSS3UploadOptions is a subset of

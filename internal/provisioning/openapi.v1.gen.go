@@ -68,18 +68,22 @@ type V1NoopReservationResponse struct {
 
 // V1PubkeyRequest defines model for v1.PubkeyRequest.
 type V1PubkeyRequest struct {
-	Body        *string `json:"body,omitempty"`
-	Fingerprint *string `json:"fingerprint,omitempty"`
-	Id          *int64  `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
+	Body              *string `json:"body,omitempty"`
+	Fingerprint       *string `json:"fingerprint,omitempty"`
+	FingerprintLegacy *string `json:"fingerprint_legacy,omitempty"`
+	Id                *int64  `json:"id,omitempty"`
+	Name              *string `json:"name,omitempty"`
+	Type              *string `json:"type,omitempty"`
 }
 
 // V1PubkeyResponse defines model for v1.PubkeyResponse.
 type V1PubkeyResponse struct {
-	Body        *string `json:"body,omitempty"`
-	Fingerprint *string `json:"fingerprint,omitempty"`
-	Id          *int64  `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
+	Body              *string `json:"body,omitempty"`
+	Fingerprint       *string `json:"fingerprint,omitempty"`
+	FingerprintLegacy *string `json:"fingerprint_legacy,omitempty"`
+	Id                *int64  `json:"id,omitempty"`
+	Name              *string `json:"name,omitempty"`
+	Type              *string `json:"type,omitempty"`
 }
 
 // V1ReservationResponse defines model for v1.ReservationResponse.
@@ -136,6 +140,14 @@ type CreatePubkeyJSONBody = V1PubkeyRequest
 
 // CreateAwsReservationJSONBody defines parameters for CreateAwsReservation.
 type CreateAwsReservationJSONBody = V1AWSReservationRequest
+
+// GetSourceListParams defines parameters for GetSourceList.
+type GetSourceListParams struct {
+	Provider *GetSourceListParamsProvider `form:"provider,omitempty" json:"provider,omitempty"`
+}
+
+// GetSourceListParamsProvider defines parameters for GetSourceList.
+type GetSourceListParamsProvider string
 
 // GetInstanceTypeListParams defines parameters for GetInstanceTypeList.
 type GetInstanceTypeListParams struct {
