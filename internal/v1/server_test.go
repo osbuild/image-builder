@@ -1344,6 +1344,7 @@ func TestComposeCustomizations(t *testing.T) {
 						ActivationKey: "",
 						BaseUrl:       "",
 						Insights:      false,
+						Rhc:           common.BoolToPtr(false),
 						Organization:  "0",
 						ServerUrl:     "",
 					},
