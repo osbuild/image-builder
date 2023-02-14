@@ -736,6 +736,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			ActivationKey: cust.Subscription.ActivationKey,
 			BaseUrl:       cust.Subscription.BaseUrl,
 			Insights:      cust.Subscription.Insights,
+			Rhc:           cust.Subscription.Rhc,
 			Organization:  fmt.Sprintf("%d", cust.Subscription.Organization),
 			ServerUrl:     cust.Subscription.ServerUrl,
 		}
