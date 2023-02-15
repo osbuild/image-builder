@@ -12,14 +12,9 @@ Run `make build` and migrate the db (this only needs to be done once) to the lat
 
 ```
 PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder
-MIGRATIONS_DIR=/home/sanne/workstuff/image-builder/internal/db/migrations/ ./image-builder-migrate-db
+MIGRATIONS_DIR=$HOME/image-builder/internal/db/migrations/ ./image-builder-migrate-db
 ```
 
-Start Image Builder:
-```
-PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder ALLOWED_ORG_IDS="*"
-DISTRIBUTIONS_DIR="/home/sanne/workstuff/image-builder/distributions" ./image-builder
-```
 
 To compose images locally, and if you have Composer running locally, add these to the environment:
 
@@ -28,10 +23,21 @@ OSBUILD_URL="https://localhost:8085" OSBUILD_CA_PATH="/etc/osbuild-composer/ca-c
 OSBUILD_CERT_PATH="/etc/osbuild-composer/client-crt.pem" OSBUILD_KEY_PATH="/etc/osbuild-composer/client-key.pem"
 ```
 
+Otherwise set some bogus values:
+```
+COMPOSER_TOKEN_URL=bogus COMPOSER_CLIENT_ID=bogus COMPOSER_CLIENT_SECRET=bogus
+```
+
+Start Image Builder:
+```
+PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder
+DISTRIBUTIONS_DIR="$HOME/image-builder/distributions" ./image-builder
+```
+
 # Testing
 
-This directory contains automated integration tests for Image
-Builder. Infrastructure related files can be found under schutzbot.
+This directory contains automated integration tests for Image Builder. Infrastructure related files
+can be found under schutzbot.
 
 ## Unit tests
 
