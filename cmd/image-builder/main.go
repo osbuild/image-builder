@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/labstack/gommon/random"
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/image-builder/internal/composer"
@@ -14,6 +17,7 @@ import (
 	v1 "github.com/osbuild/image-builder/internal/v1"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -87,6 +91,37 @@ func main() {
 	}
 
 	echoServer := echo.New()
+	echoServer.HideBanner = true
+	echoServer.Logger = common.Logger()
+	echoServer.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:     true,
+		LogStatus:  true,
+		LogLatency: true,
+		LogMethod:  true,
+		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
+			fields := logrus.Fields{
+				"uri":        values.URI,
+				"method":     values.Method,
+				"status":     values.Status,
+				"latency_ms": values.Latency.Milliseconds(),
+			}
+			rid := c.Request().Header.Get("X-Rh-Edge-Request-Id")
+			if rid != "" {
+				fields["request_id"] = strings.Replace(rid, "\n", "", -1)
+			} else {
+				fields["request_id"] = random.String(12)
+			}
+			if values.Error != nil {
+				fields["error"] = values.Error
+			}
+			logrus.WithFields(fields).Infof("Processed request %s %s", values.Method, values.URI)
+
+			return nil
+		},
+	}))
+	if conf.IsDebug() {
+		echoServer.Debug = true
+	}
 	serverConfig := &v1.ServerConfig{
 		EchoServer: echoServer,
 		CompClient: compClient,

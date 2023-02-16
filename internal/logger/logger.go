@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -43,7 +44,7 @@ func NewCloudwatchFormatter() *Formatter {
 	return f
 }
 
-//Format is the log formatter for the entry
+// Format is the log formatter for the entry
 func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	b := &bytes.Buffer{}
 
@@ -92,7 +93,9 @@ func ConfigLogger(log *logrus.Logger, level string) error {
 		return nil
 	}
 
-	switch level {
+	switch strings.ToUpper(level) {
+	case "TRACE":
+		logLevel = logrus.TraceLevel
 	case "DEBUG":
 		logLevel = logrus.DebugLevel
 	case "ERROR":

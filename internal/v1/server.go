@@ -21,7 +21,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redhatinsights/identity"
-	"github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -100,6 +99,7 @@ func Attach(conf *ServerConfig) error {
 	h.server = &s
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
+
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), noAssociateAccounts, s.ValidateRequest, common.PrometheusMW), &h)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), noAssociateAccounts, s.ValidateRequest, common.PrometheusMW), &h)
 
@@ -178,7 +178,7 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 
 	internalError := he.Code >= http.StatusInternalServerError && he.Code <= http.StatusNetworkAuthenticationRequired
 	if internalError {
-		logrus.Errorln(fmt.Sprintf("Internal error %v: %v, %v", he.Code, he.Message, err))
+		c.Logger().Errorf("Internal error %v: %v, %v", he.Code, he.Message, err)
 		if strings.HasSuffix(c.Path(), "/compose") {
 			common.ComposeErrors.Inc()
 		}
@@ -199,7 +199,7 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 			})
 		}
 		if err != nil {
-			logrus.Errorln(err)
+			c.Logger().Error(err)
 		}
 	}
 }
@@ -222,7 +222,7 @@ func (s *Server) isEntitled(ctx echo.Context) bool {
 		// the user's org does not have an associated EBS account number, these
 		// are associated when a billing relationship exists, which is a decent
 		// proxy for RHEL entitlements
-		logrus.Error("RHEL entitlement not present in identity header")
+		ctx.Logger().Error("RHEL entitlement not present in identity header")
 		return idh.Identity.AccountNumber != ""
 
 	}

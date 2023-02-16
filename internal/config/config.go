@@ -1,5 +1,7 @@
 package config
 
+import "strings"
+
 // Do not write this config to logs or stdout, it contains secrets!
 type ImageBuilderConfig struct {
 	ListenAddress        string `env:"LISTEN_ADDRESS"`
@@ -33,4 +35,9 @@ type ImageBuilderConfig struct {
 	SplunkPort           string `env:"SPLUNK_HEC_PORT"`
 	SplunkToken          string `env:"SPLUNK_HEC_TOKEN"`
 	ProvisioningURL      string `env:"PROVISIONING_URL"`
+}
+
+func (ibc *ImageBuilderConfig) IsDebug() bool {
+	level := strings.ToUpper(ibc.LogLevel)
+	return level == "TRACE" || level == "DEBUG"
 }
