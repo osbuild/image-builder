@@ -14,14 +14,6 @@ Image Builder is intended to be run within the
 The [latest api
 specification](https://github.com/osbuild/image-builder/blob/main/internal/v1/api.yaml).
 
-### Updating package lists
-
-`tools/generate-package-lists` can be used in combination with a `distributions/`
-file to generate a package list.
-
-If the repository requires a client tls key/cert you can supply them with
-`--key` and `--cert`.
-
 ### Contributing
 
-Please refer to the [developer guide](https://www.osbuild.org/guides/developer-guide/developer-guide.html) to learn about our workflow, code style and more.
+Please refer to the [hacking guide](HACKING.md) to learn more.

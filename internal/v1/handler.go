@@ -213,7 +213,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			logrus.Errorf("Unable to parse composer's compose response: %v", err)
+			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
 		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 		}
@@ -317,7 +317,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error 
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			logrus.Errorf("Unable to parse composer's compose response: %v", err)
+			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
 		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 		}
@@ -529,7 +529,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed posting compose request to osbuild-composer")
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			logrus.Errorf("Unable to parse composer's compose response: %v", err)
+			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
 		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 			var serviceStat composer.Error
@@ -561,7 +561,8 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	logrus.Info("Compose result", composeResult)
+	ctx.Logger().Info("Compose result", composeResult)
+
 	return ctx.JSON(http.StatusCreated, ComposeResponse{
 		Id: composeResult.Id.String(),
 	})
@@ -626,7 +627,7 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 					return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id: %v", source, aID.Aws.AccountId))
 				}
 
-				logrus.Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *aID.Aws.AccountId))
+				ctx.Logger().Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *aID.Aws.AccountId))
 				shareWithAccounts = append(shareWithAccounts, *aID.Aws.AccountId)
 			}
 		}
@@ -812,7 +813,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
 		if errors.Is(err, db.ComposeNotFoundError) {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to find compose %v", composeId))
 		}
-		logrus.Errorf("Error querying image type for compose %v: %v", composeId, err)
+		ctx.Logger().Errorf("Error querying image type for compose %v: %v", composeId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying the compose")
 	}
 
@@ -860,13 +861,13 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
 	var cloneResponse composer.CloneComposeResponse
 	err = json.NewDecoder(resp.Body).Decode(&cloneResponse)
 	if err != nil {
-		logrus.Errorf("Unable to decode CloneComposeResponse: %v", err)
+		ctx.Logger().Errorf("Unable to decode CloneComposeResponse: %v", err)
 		return err
 	}
 
 	err = h.server.db.InsertClone(composeId, cloneResponse.Id.String(), rawCR)
 	if err != nil {
-		logrus.Errorf("Error inserting clone into db for compose %v: %v", err, composeId)
+		ctx.Logger().Errorf("Error inserting clone into db for compose %v: %v", err, composeId)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong saving the clone")
 	}
 
@@ -886,7 +887,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id string) error {
 		if errors.Is(err, db.CloneNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
-		logrus.Errorf("Error querying clone %v: %v", id, err)
+		ctx.Logger().Errorf("Error querying clone %v: %v", id, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying this clone")
 	}
 	if cloneEntry == nil {
@@ -895,7 +896,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id string) error {
 
 	resp, err := h.server.cClient.CloneStatus(id)
 	if err != nil {
-		logrus.Errorf("Error requesting clone status for clone %v: %v", id, err)
+		ctx.Logger().Errorf("Error requesting clone status for clone %v: %v", id, err)
 		return err
 	}
 	defer closeBody(resp.Body)
@@ -911,7 +912,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id string) error {
 	var cloudStat composer.CloneStatus
 	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
 	if err != nil {
-		logrus.Errorf("Unable to decode clone status: %v", err)
+		ctx.Logger().Errorf("Unable to decode clone status: %v", err)
 		return err
 	}
 
@@ -945,7 +946,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId string, params G
 
 	cloneEntries, count, err := h.server.db.GetClonesForCompose(composeId, idHeader.Identity.OrgID, limit, offset)
 	if err != nil {
-		logrus.Errorf("Error querying clones for compose %v: %v", composeId, err)
+		ctx.Logger().Errorf("Error querying clones for compose %v: %v", composeId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying clones for this compose")
 	}
 
