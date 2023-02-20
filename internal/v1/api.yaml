@@ -933,6 +933,12 @@ components:
           items:
             type: string
             pattern: '^[0-9]{12}$'
+        share_with_sources:
+          type: array
+          example: ['12345']
+          items:
+            type: string
+          uniqueItems: true
     CloneResponse:
       required:
         - id

@@ -832,9 +832,37 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
 			return err
 		}
 
+		var shareWithAccounts []string
+		if awsEC2CloneReq.ShareWithAccounts != nil {
+			shareWithAccounts = append(shareWithAccounts, *awsEC2CloneReq.ShareWithAccounts...)
+		}
+
+		if awsEC2CloneReq.ShareWithSources != nil {
+			for _, source := range *awsEC2CloneReq.ShareWithSources {
+				resp, err := h.server.pClient.GetAccountID(ctx.Request().Context(), source)
+				if err != nil {
+					logrus.Error(err)
+					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
+				}
+
+				var aID provisioning.V1AccountIDTypeResponse
+				err = json.NewDecoder(resp.Body).Decode(&aID)
+				if err != nil {
+					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", source))
+				}
+
+				if aID.Aws == nil || aID.Aws.AccountId == nil || len(*aID.Aws.AccountId) != 12 {
+					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id: %v", source, aID.Aws.AccountId))
+				}
+
+				logrus.Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *aID.Aws.AccountId))
+				shareWithAccounts = append(shareWithAccounts, *aID.Aws.AccountId)
+			}
+		}
+
 		resp, err = h.server.cClient.CloneCompose(composeId, composer.AWSEC2CloneCompose{
 			Region:            awsEC2CloneReq.Region,
-			ShareWithAccounts: awsEC2CloneReq.ShareWithAccounts,
+			ShareWithAccounts: &shareWithAccounts,
 		})
 		if err != nil {
 			return err

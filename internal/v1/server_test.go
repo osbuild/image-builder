@@ -1701,6 +1701,8 @@ func TestComposeStatusError(t *testing.T) {
 
 func TestGetClones(t *testing.T) {
 	cloneId := uuid.MustParse("bf8c6b63-1213-4843-b33d-9748d9fdd8f5")
+	awsAccountId := "123456123456"
+
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -1708,13 +1710,37 @@ func TestGetClones(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
+
+		var cloneReq composer.AWSEC2CloneCompose
+		err := json.NewDecoder(r.Body).Decode(&cloneReq)
+		require.NoError(t, err)
+		require.Equal(t, awsAccountId, (*cloneReq.ShareWithAccounts)[0])
+
 		result := composer.CloneComposeResponse{
 			Id: cloneId,
 		}
-		err := json.NewEncoder(w).Encode(result)
+		err = json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
 	}))
 	defer apiSrv.Close()
+
+	provSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		awsId := struct {
+			AccountId *string `json:"account_id,omitempty"`
+		}{
+			AccountId: &awsAccountId,
+		}
+		result := provisioning.V1AccountIDTypeResponse{
+			Aws: &awsId,
+		}
+
+		require.Equal(t, tutils.AuthString0, r.Header.Get("x-rh-identity"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		err := json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	}))
+	defer provSrv.Close()
 
 	dbase := tutils.InitDB()
 	err := dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
@@ -1726,7 +1752,7 @@ func TestGetClones(t *testing.T) {
   ]
 }`))
 	require.NoError(t, err)
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
+	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, provSrv.URL, dbase, "../../distributions", "")
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -1742,7 +1768,8 @@ func TestGetClones(t *testing.T) {
 	require.Contains(t, body, "\"data\":[]")
 
 	cloneReq := AWSEC2Clone{
-		Region: "us-east-2",
+		Region:           "us-east-2",
+		ShareWithSources: &[]string{"1"},
 	}
 	resp, body = tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
