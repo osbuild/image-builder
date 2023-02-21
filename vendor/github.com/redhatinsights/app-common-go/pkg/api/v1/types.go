@@ -114,6 +114,9 @@ type AppConfig struct {
 	// traffic.
 	PublicPort *int `json:"publicPort,omitempty"`
 
+	// Defines the port CA path
+	TlsCAPath *string `json:"tlsCAPath,omitempty"`
+
 	// Deprecated: Use 'publicPort' instead.
 	WebPort *int `json:"webPort,omitempty"`
 }
@@ -503,6 +506,9 @@ type DependencyEndpoint struct {
 
 	// The port of the dependent service.
 	Port int `json:"port"`
+
+	// The TLS port of the dependent service.
+	TlsPort *int `json:"tlsPort,omitempty"`
 }
 
 // Deployment Metadata
@@ -634,6 +640,9 @@ type PrivateDependencyEndpoint struct {
 
 	// The port of the dependent service.
 	Port int `json:"port"`
+
+	// The TLS port of the dependent service.
+	TlsPort *int `json:"tlsPort,omitempty"`
 }
 
 // Topic Configuration

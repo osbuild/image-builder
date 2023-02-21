@@ -20,6 +20,10 @@
                     "description": "Deprecated: Use 'publicPort' instead.",
                     "type": "integer"
                 },
+                "tlsCAPath": {
+                    "description": "Defines the port CA path",
+                    "type": "string"
+                },
                 "metricsPort": {
                     "description": "Defines the metrics port that the app should be configured to listen on for metric traffic.",
                     "type": "integer"
@@ -456,6 +460,10 @@
                 "app": {
                     "description": "The app name of the ClowdApp hosting the service.",
                     "type": "string"
+                },
+                "tlsPort": {
+                    "description": "The TLS port of the dependent service.",
+                    "type": "integer"
                 }
             },
             "required": [
@@ -485,6 +493,10 @@
                 "app": {
                     "description": "The app name of the ClowdApp hosting the service.",
                     "type": "string"
+                },
+                "tlsPort": {
+                    "description": "The TLS port of the dependent service.",
+                    "type": "integer"
                 }
             },
             "required": [
