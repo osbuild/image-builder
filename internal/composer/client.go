@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type ComposerClient struct {
@@ -162,11 +164,11 @@ func (cc *ComposerClient) refreshToken() error {
 	return nil
 }
 
-func (cc *ComposerClient) ComposeStatus(id string) (*http.Response, error) {
+func (cc *ComposerClient) ComposeStatus(id uuid.UUID) (*http.Response, error) {
 	return cc.request("GET", fmt.Sprintf("%s/composes/%s", cc.composerURL, id), nil, nil)
 }
 
-func (cc *ComposerClient) ComposeMetadata(id string) (*http.Response, error) {
+func (cc *ComposerClient) ComposeMetadata(id uuid.UUID) (*http.Response, error) {
 	return cc.request("GET", fmt.Sprintf("%s/composes/%s/metadata", cc.composerURL, id), nil, nil)
 }
 
@@ -183,7 +185,7 @@ func (cc *ComposerClient) OpenAPI() (*http.Response, error) {
 	return cc.request("GET", fmt.Sprintf("%s/openapi", cc.composerURL), nil, nil)
 }
 
-func (cc *ComposerClient) CloneCompose(id string, clone CloneComposeBody) (*http.Response, error) {
+func (cc *ComposerClient) CloneCompose(id uuid.UUID, clone CloneComposeBody) (*http.Response, error) {
 	buf, err := json.Marshal(clone)
 	if err != nil {
 		return nil, err
@@ -191,6 +193,6 @@ func (cc *ComposerClient) CloneCompose(id string, clone CloneComposeBody) (*http
 	return cc.request("POST", fmt.Sprintf("%s/composes/%s/clone", cc.composerURL, id), contentHeaders, bytes.NewReader(buf))
 }
 
-func (cc *ComposerClient) CloneStatus(id string) (*http.Response, error) {
+func (cc *ComposerClient) CloneStatus(id uuid.UUID) (*http.Response, error) {
 	return cc.request("GET", fmt.Sprintf("%s/clones/%s", cc.composerURL, id), nil, nil)
 }

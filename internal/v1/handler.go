@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
@@ -190,7 +191,7 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 	})
 }
 
-func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId string) error {
+func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error {
 	err := h.canUserAccessComposeId(ctx, composeId)
 	if err != nil {
 		return err
@@ -295,7 +296,7 @@ func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeSt
 	}
 }
 
-func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error {
+func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) error {
 	err := h.canUserAccessComposeId(ctx, composeId)
 	if err != nil {
 		return err
@@ -355,7 +356,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId string) error 
 }
 
 // return an error if the user does not have the composeId associated to its OrgID in the DB, nil otherwise
-func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId string) error {
+func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId uuid.UUID) error {
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
 		return err
@@ -405,7 +406,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	for _, c := range composes {
 		data = append(data, ComposesResponseItem{
 			CreatedAt: c.CreatedAt.Format(time.RFC3339),
-			Id:        c.Id.String(),
+			Id:        c.Id,
 			ImageName: c.ImageName,
 			Request:   c.Request,
 		})
@@ -555,7 +556,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	err = h.server.db.InsertCompose(composeResult.Id.String(), idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
+	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return err
@@ -564,7 +565,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	ctx.Logger().Info("Compose result", composeResult)
 
 	return ctx.JSON(http.StatusCreated, ComposeResponse{
-		Id: composeResult.Id.String(),
+		Id: composeResult.Id,
 	})
 }
 
@@ -799,7 +800,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 	return res
 }
 
-func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
+func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 	err := h.canUserAccessComposeId(ctx, composeId)
 	if err != nil {
 		return err
@@ -894,18 +895,18 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId string) error {
 		return err
 	}
 
-	err = h.server.db.InsertClone(composeId, cloneResponse.Id.String(), rawCR)
+	err = h.server.db.InsertClone(composeId, cloneResponse.Id, rawCR)
 	if err != nil {
 		ctx.Logger().Errorf("Error inserting clone into db for compose %v: %v", err, composeId)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong saving the clone")
 	}
 
 	return ctx.JSON(http.StatusCreated, CloneResponse{
-		Id: cloneResponse.Id.String(),
+		Id: cloneResponse.Id,
 	})
 }
 
-func (h *Handlers) GetCloneStatus(ctx echo.Context, id string) error {
+func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
 		return err
@@ -952,7 +953,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id string) error {
 	})
 }
 
-func (h *Handlers) GetComposeClones(ctx echo.Context, composeId string, params GetComposeClonesParams) error {
+func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, params GetComposeClonesParams) error {
 	err := h.canUserAccessComposeId(ctx, composeId)
 	if err != nil {
 		return err
@@ -982,7 +983,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId string, params G
 	data := []ClonesResponseItem{}
 	for _, c := range cloneEntries {
 		data = append(data, ClonesResponseItem{
-			Id:        c.Id.String(),
+			Id:        c.Id,
 			Request:   c.Request,
 			CreatedAt: c.CreatedAt.Format(time.RFC3339),
 		})
