@@ -45,6 +45,10 @@ paths:
       responses:
         '200':
           description: returns this document
+          content:
+            application/json:
+              schema:
+                type: object
   /distributions:
     get:
       summary: get the available distributions
@@ -85,6 +89,7 @@ paths:
             type: integer
             default: 100
             minimum: 1
+            maximum: 100
           description: max amount of composes, default 100
         - in: query
           name: offset
@@ -108,6 +113,8 @@ paths:
           name: composeId
           schema:
             type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
           required: true
           description: Id of compose status to get
       description: "status of an image compose"
@@ -127,6 +134,8 @@ paths:
           name: composeId
           schema:
             type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
           required: true
           description: Id of compose metadata to get
       description: "metadata for an image compose"
@@ -148,6 +157,7 @@ paths:
           name: composeId
           schema:
             type: string
+            format: uuid
             example: '123e4567-e89b-12d3-a456-426655440000'
           required: true
           description: Id of compose to clone
@@ -174,6 +184,7 @@ paths:
           name: composeId
           schema:
             type: string
+            format: uuid
             example: '123e4567-e89b-12d3-a456-426655440000'
           required: true
           description: Id of compose to get the clones of
@@ -183,14 +194,15 @@ paths:
             type: integer
             default: 100
             minimum: 1
-          description: max amount of composes, default 100
+            maximum: 100
+          description: max amount of clones, default 100
         - in: query
           name: offset
           schema:
             type: integer
             default: 0
             minimum: 0
-          description: composes page offset, default 0
+          description: clones page offset, default 0
       description: |
         Returns a list of all the clones which were started for a compose
       operationId: getComposeClones
@@ -209,6 +221,7 @@ paths:
           name: id
           schema:
             type: string
+            format: uuid
             example: '123e4567-e89b-12d3-a456-426655440000'
           required: true
           description: Id of clone status to get
@@ -274,6 +287,7 @@ paths:
             type: integer
             default: 100
             minimum: 1
+            maximum: 100
           description: max amount of packages, default 100
         - in: query
           name: offset
@@ -448,6 +462,7 @@ components:
           example: 'my-image'
     ComposeRequest:
       type: object
+      additionalProperties: false
       required:
         - distribution
         - image_requests
@@ -487,6 +502,8 @@ components:
         - fedora-37
         - fedora-38
     ImageRequest:
+      type: object
+      additionalProperties: false
       required:
         - architecture
         - image_type
@@ -558,6 +575,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         request: {}
         created_at:
           type: string
@@ -569,6 +587,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
     UploadRequest:
       type: object
       required:
@@ -673,6 +692,7 @@ components:
           $ref: '#/components/schemas/Subscription'
         packages:
           type: array
+          maxItems: 10000
           example: ['postgresql']
           items:
             type: string
@@ -682,6 +702,7 @@ components:
             $ref: '#/components/schemas/Repository'
         filesystem:
           type: array
+          maxItems: 128
           items:
             $ref: '#/components/schemas/Filesystem'
         users:
@@ -908,6 +929,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         request: {}
         created_at:
           type: string
@@ -926,6 +948,7 @@ components:
             https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions
         share_with_accounts:
           type: array
+          maxItems: 100
           example: ['123456789012']
           description: |
             An array of AWS account IDs as described in
@@ -945,4 +968,5 @@ components:
       properties:
         id:
           type: string
+          format: uuid
           example: '123e4567-e89b-12d3-a456-426655440000'

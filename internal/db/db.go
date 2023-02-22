@@ -33,15 +33,15 @@ type CloneEntry struct {
 }
 
 type DB interface {
-	InsertCompose(jobId, accountNumber, orgId string, imageName *string, request json.RawMessage) error
+	InsertCompose(jobId uuid.UUID, accountNumber, orgId string, imageName *string, request json.RawMessage) error
 	GetComposes(orgId string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error)
-	GetCompose(jobId string, orgId string) (*ComposeEntry, error)
-	GetComposeImageType(jobId, orgId string) (string, error)
+	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
+	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
 	CountComposesSince(orgId string, duration time.Duration) (int, error)
 
-	InsertClone(composeId, cloneId string, request json.RawMessage) error
-	GetClonesForCompose(composeId, orgId string, limit, offset int) ([]CloneEntry, int, error)
-	GetClone(id, orgId string) (*CloneEntry, error)
+	InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error
+	GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
+	GetClone(id uuid.UUID, orgId string) (*CloneEntry, error)
 }
 
 const (
@@ -115,7 +115,7 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 	return &dB{pool}, nil
 }
 
-func (db *dB) InsertCompose(jobId, accountNumber, orgId string, imageName *string, request json.RawMessage) error {
+func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, orgId string, imageName *string, request json.RawMessage) error {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -127,7 +127,7 @@ func (db *dB) InsertCompose(jobId, accountNumber, orgId string, imageName *strin
 	return err
 }
 
-func (db *dB) GetCompose(jobId string, orgId string) (*ComposeEntry, error) {
+func (db *dB) GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -150,7 +150,7 @@ func (db *dB) GetCompose(jobId string, orgId string) (*ComposeEntry, error) {
 	return &compose, nil
 }
 
-func (db *dB) GetComposeImageType(jobId, orgId string) (string, error) {
+func (db *dB) GetComposeImageType(jobId uuid.UUID, orgId string) (string, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -235,7 +235,7 @@ func (db *dB) CountComposesSince(orgId string, duration time.Duration) (int, err
 	return count, nil
 }
 
-func (db *dB) InsertClone(composeId, cloneId string, request json.RawMessage) error {
+func (db *dB) InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -247,7 +247,7 @@ func (db *dB) InsertClone(composeId, cloneId string, request json.RawMessage) er
 	return err
 }
 
-func (db *dB) GetClonesForCompose(composeId, orgId string, limit, offset int) ([]CloneEntry, int, error) {
+func (db *dB) GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -290,7 +290,7 @@ func (db *dB) GetClonesForCompose(composeId, orgId string, limit, offset int) ([
 
 }
 
-func (db *dB) GetClone(id, orgId string) (*CloneEntry, error) {
+func (db *dB) GetClone(id uuid.UUID, orgId string) (*CloneEntry, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {

@@ -3,6 +3,7 @@ package tutils
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -87,13 +88,12 @@ func InitDB() db.DB {
 	}
 }
 
-func (d *dB) InsertCompose(jobId, accountNumber, orgId string, imageName *string, request json.RawMessage) error {
-	id, err := uuid.Parse(jobId)
-	if err != nil {
-		return err
+func (d *dB) InsertCompose(jobId uuid.UUID, accountNumber, orgId string, imageName *string, request json.RawMessage) error {
+	if jobId == uuid.Nil {
+		return errors.New("invalid jobId")
 	}
 	dbEntry := db.ComposeEntry{
-		Id:        id,
+		Id:        jobId,
 		Request:   request,
 		CreatedAt: time.Now(),
 		ImageName: imageName,
@@ -113,10 +113,10 @@ func (d *dB) GetComposes(orgId string, since time.Duration, limit, offset int) (
 	}
 }
 
-func (d *dB) GetCompose(jobId string, orgId string) (*db.ComposeEntry, error) {
+func (d *dB) GetCompose(jobId uuid.UUID, orgId string) (*db.ComposeEntry, error) {
 	if d.composes[orgId] != nil {
 		for _, composeEntry := range d.composes[orgId] {
-			if composeEntry.Id.String() == jobId {
+			if composeEntry.Id == jobId {
 				return &composeEntry, nil
 			}
 		}
@@ -129,47 +129,43 @@ func (d *dB) CountComposesSince(orgId string, duration time.Duration) (int, erro
 	return count, err
 }
 
-func (d *dB) GetComposeImageType(jobId string, orgId string) (string, error) {
+func (d *dB) GetComposeImageType(jobId uuid.UUID, orgId string) (string, error) {
 	return "aws", nil
 }
 
-func (d *dB) InsertClone(composeId, cloneId string, request json.RawMessage) error {
-	coId, err := uuid.Parse(composeId)
-	if err != nil {
-		return err
+func (d *dB) InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error {
+	if composeId == uuid.Nil {
+		return errors.New("invalid composeId")
 	}
 
-	clId, err := uuid.Parse(cloneId)
-	if err != nil {
-		return err
+	if cloneId == uuid.Nil {
+		return errors.New("invalid cloneId")
 	}
 
 	entry := db.CloneEntry{
-		Id:        clId,
+		Id:        cloneId,
 		Request:   request,
 		CreatedAt: time.Now(),
 	}
 
-	if d.clones[coId] == nil {
-		d.clones[coId] = make([]db.CloneEntry, 0)
+	if d.clones[composeId] == nil {
+		d.clones[composeId] = make([]db.CloneEntry, 0)
 	}
-	d.clones[coId] = append(d.clones[coId], entry)
+	d.clones[composeId] = append(d.clones[composeId], entry)
 	return nil
 
 }
 
-func (d *dB) GetClonesForCompose(composeId, orgId string, limit, offset int) ([]db.CloneEntry, int, error) {
-	coId, err := uuid.Parse(composeId)
-	if err != nil {
-		return nil, 0, err
+func (d *dB) GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]db.CloneEntry, int, error) {
+	if composeId == uuid.Nil {
+		return nil, 0, errors.New("invalid composeId")
 	}
-	return d.clones[coId], len(d.clones[coId]), nil
+	return d.clones[composeId], len(d.clones[composeId]), nil
 }
 
-func (d *dB) GetClone(id, orgId string) (*db.CloneEntry, error) {
-	clId, err := uuid.Parse(id)
-	if err != nil {
-		return nil, err
+func (d *dB) GetClone(clId uuid.UUID, orgId string) (*db.CloneEntry, error) {
+	if clId == uuid.Nil {
+		return nil, errors.New("invalid cloneId")
 	}
 	for _, v := range d.clones {
 		for _, cl := range v {

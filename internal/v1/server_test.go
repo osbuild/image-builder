@@ -26,7 +26,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var UUIDTest string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc93d"
+var UUIDTest = uuid.MustParse("d1f631ff-b3a6-4eec-aa99-9e81d99bc93d")
 
 // Create a temporary file containing quotas, returns the file name as a string
 func initQuotaFile(t *testing.T) (string, error) {
@@ -550,8 +550,8 @@ func TestGetComposeMetadata404(t *testing.T) {
 }
 
 func TestGetComposes(t *testing.T) {
-	var UUIDTest2 string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc222"
-	var UUIDTest3 string = "d1f631ff-b3a6-4eec-aa99-9e81d99bc333"
+	var UUIDTest2 = uuid.MustParse("d1f631ff-b3a6-4eec-aa99-9e81d99bc222")
+	var UUIDTest3 = uuid.MustParse("d1f631ff-b3a6-4eec-aa99-9e81d99bc333")
 
 	dbase := tutils.InitDB()
 
@@ -956,7 +956,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	var result ComposeResponse
 	err := json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, "3aa7375a-534a-4de3-8caf-011e04f402d3", result.Id)
+	require.Equal(t, uuid.MustParse("3aa7375a-534a-4de3-8caf-011e04f402d3"), result.Id)
 }
 
 func TestComposeImageAllowList(t *testing.T) {
@@ -1019,7 +1019,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
-		require.Equal(t, "3aa7375a-534a-4de3-8caf-011e04f402d3", result.Id)
+		require.Equal(t, uuid.MustParse("3aa7375a-534a-4de3-8caf-011e04f402d3"), result.Id)
 	})
 
 	t.Run("restricted distribution, forbidden", func(t *testing.T) {
@@ -1042,7 +1042,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
-		require.Equal(t, "", result.Id)
+		require.Equal(t, uuid.Nil, result.Id)
 	})
 
 	t.Run("restricted distribution, forbidden (no allowFile)", func(t *testing.T) {
@@ -1065,7 +1065,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
-		require.Equal(t, "", result.Id)
+		require.Equal(t, uuid.Nil, result.Id)
 	})
 }
 
@@ -1546,7 +1546,7 @@ func TestComposeCustomizations(t *testing.T) {
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
-		require.Equal(t, "fe93fb55-ae04-4e21-a8b4-25ba95c3fa64", result.Id)
+		require.Equal(t, uuid.MustParse("fe93fb55-ae04-4e21-a8b4-25ba95c3fa64"), result.Id)
 
 		//compare expected compose request with actual receieved compose request
 		require.Equal(t, payload.composerRequest, composerRequest)
@@ -1777,14 +1777,14 @@ func TestGetClones(t *testing.T) {
 	var cResp CloneResponse
 	err = json.Unmarshal([]byte(body), &cResp)
 	require.NoError(t, err)
-	require.Equal(t, cloneId.String(), cResp.Id)
+	require.Equal(t, cloneId, cResp.Id)
 
 	resp, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	err = json.Unmarshal([]byte(body), &csResp)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(csResp.Data))
-	require.Equal(t, cloneId.String(), csResp.Data[0].Id)
+	require.Equal(t, cloneId, csResp.Data[0].Id)
 
 	cloneReqExp, err := json.Marshal(cloneReq)
 	require.NoError(t, err)
@@ -1854,7 +1854,7 @@ func TestGetCloneStatus(t *testing.T) {
 	var cResp CloneResponse
 	err = json.Unmarshal([]byte(body), &cResp)
 	require.NoError(t, err)
-	require.Equal(t, cloneId.String(), cResp.Id)
+	require.Equal(t, cloneId, cResp.Id)
 
 	var usResp UploadStatus
 	resp, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/clones/%s", cloneId), &tutils.AuthString0)

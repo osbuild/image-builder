@@ -90,11 +90,9 @@ func testInsertCompose(t *testing.T) {
 	migrateTern(t)
 
 	// test
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
+	err = d.InsertCompose(uuid.New(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
-	err = d.InsertCompose("toto", ANR1, ORGID1, &imageName, []byte("{}"))
-	require.Error(t, err)
-	err = d.InsertCompose(uuid.New().String(), "", ORGID1, &imageName, []byte("{}"))
+	err = d.InsertCompose(uuid.New(), "", ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
 }
 
@@ -104,13 +102,13 @@ func testGetCompose(t *testing.T) {
 
 	imageName := "MyImageName"
 
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
+	err = d.InsertCompose(uuid.New(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
+	err = d.InsertCompose(uuid.New(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
+	err = d.InsertCompose(uuid.New(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New().String(), ANR1, ORGID1, &imageName, []byte("{}"))
+	err = d.InsertCompose(uuid.New(), ANR1, ORGID1, &imageName, []byte("{}"))
 	require.NoError(t, err)
 
 	// test
@@ -127,12 +125,12 @@ func testGetCompose(t *testing.T) {
 	require.Equal(t, 1, len(composes))
 
 	// GetCompose works as expected
-	compose, err := d.GetCompose(composes[0].Id.String(), ORGID1)
+	compose, err := d.GetCompose(composes[0].Id, ORGID1)
 	require.NoError(t, err)
 	require.Equal(t, composes[0], *compose)
 
 	// cross-account compose access not allowed
-	compose, err = d.GetCompose(composes[0].Id.String(), ORGID2)
+	compose, err = d.GetCompose(composes[0].Id, ORGID2)
 	require.Equal(t, db.ComposeNotFoundError, err)
 	require.Nil(t, compose)
 
@@ -210,7 +208,7 @@ func testGetComposeImageType(t *testing.T) {
 	conn := connect(t)
 	defer conn.Close(context.Background())
 
-	composeId := uuid.New().String()
+	composeId := uuid.New()
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
 	_, err = conn.Exec(context.Background(), insert, composeId, `
 {
@@ -246,9 +244,9 @@ func testClones(t *testing.T) {
 	conn := connect(t)
 	defer conn.Close(context.Background())
 
-	composeId := uuid.New().String()
-	cloneId := uuid.New().String()
-	cloneId2 := uuid.New().String()
+	composeId := uuid.New()
+	cloneId := uuid.New()
+	cloneId2 := uuid.New()
 
 	// fkey constraint on compose id
 	require.Error(t, d.InsertClone(composeId, cloneId, []byte(`
@@ -295,14 +293,14 @@ func testClones(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, clones, 1)
 	require.Equal(t, 2, count)
-	require.Equal(t, cloneId2, clones[0].Id.String())
+	require.Equal(t, cloneId2, clones[0].Id)
 
 	clones, count, err = d.GetClonesForCompose(composeId, ORGID1, 100, 0)
 	require.NoError(t, err)
 	require.Len(t, clones, 2)
 	require.Equal(t, 2, count)
-	require.Equal(t, cloneId2, clones[0].Id.String())
-	require.Equal(t, cloneId, clones[1].Id.String())
+	require.Equal(t, cloneId2, clones[0].Id)
+	require.Equal(t, cloneId, clones[1].Id)
 
 	entry, err := d.GetClone(cloneId, ORGID2)
 	require.ErrorIs(t, err, db.CloneNotFoundError)
