@@ -143,10 +143,10 @@ paths:
           '500':
             $ref: "#/components/responses/InternalError"
   /sources/{ID}/instance_types:
-      get:
-        description: 'Return a list of instance types (DEPRECATED: use /instance_types)'
-        operationId: getInstanceTypeList
-        parameters:
+    get:
+      description: 'Return a list of instance types (DEPRECATED: use /instance_types)'
+      operationId: getInstanceTypeList
+      parameters:
         - in: path
           name: ID
           schema:
@@ -159,20 +159,51 @@ paths:
           schema:
             type: string
           required: true
-          description: List instance types of the specified region
-        responses:
-          '200':
-            description: Return on success.
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/v1.InstanceTypeResponse'
-          '404':
-            $ref: "#/components/responses/NotFound"
-          '500':
-            $ref: "#/components/responses/InternalError"
+          description: Hyperscaler region
+      responses:
+        '200':
+          description: Return on success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/v1.InstanceTypeResponse'
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalError"
+  /sources/{ID}/launch_templates:
+    get:
+      description: Return a list of launch templates
+      operationId: getLaunchTemplatesList
+      parameters:
+        - in: path
+          name: ID
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: Source ID from Sources Database
+        - in: query
+          name: region
+          schema:
+            type: string
+          required: true
+          description: Hyperscaler region
+      responses:
+        '200':
+          description: Return on success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/v1.LaunchTemplatesResponse'
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalError"
   /instance_types/{PROVIDER}:
     get:
       description: >
@@ -264,6 +295,10 @@ paths:
         A reservation is a way to activate a job, keeps all data needed for a job to start.
         An AWS reservation is a reservation created for an AWS job. Image Builder UUID image
         is required, the service will also launch any AMI image prefixed with "ami-".
+        Optionally, AWS EC2 launch template ID can be provided. All flags set through this
+        endpoint override template values.
+        Public key must exist prior calling this endpoint and ID must be provided, even when
+        AWS EC2 launch template provides ssh-keys. Public key will be always be overwritten.
       requestBody:
         content:
           application/json:
@@ -278,6 +313,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/v1.AWSReservationResponse'
+        "500":
+          $ref: '#/components/responses/InternalError'
+  /reservations/azure:
+    post:
+      operationId: createAzureReservation
+      description: >
+        A reservation is a way to activate a job, keeps all data needed for a job to start.
+        An Azure reservation is a reservation created for an Azure job. Image Builder UUID image
+        is required and needs to be stored under same account as provided by SourceID.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/v1.AzureReservationRequest'
+        description: aws request body
+        required: true
+      responses:
+        '200':
+          description: 'Returned on success.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/v1.AzureReservationResponse'
         "500":
           $ref: '#/components/responses/InternalError'
   /reservations/aws/{ID}:
@@ -299,6 +357,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/v1.AWSReservationResponse'
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: '#/components/responses/InternalError'
+  /reservations/azure/{ID}:
+    get:
+      description: 'Return an Azure reservation with details by id'
+      operationId: getAzureReservationByID
+      parameters:
+        - in: path
+          name: ID
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: 'Reservation ID, must be an Azure reservation otherwise 404 is returned'
+      responses:
+        "200":
+          description: 'Returns detailed reservation information for an Azure reservation.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/v1.AzureReservationResponse'
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -369,6 +450,8 @@ components:
           type: string
         instance_type:
           type: string
+        launch_template_id:
+          type: string
         name:
           type: string
         poweroff:
@@ -396,6 +479,8 @@ components:
           items:
             type: string
           type: array
+        launch_template_id:
+          type: string
         name:
           type: string
         poweroff:
@@ -421,6 +506,55 @@ components:
       type: object
     v1.AvailabilityStatusRequest:
       properties:
+        source_id:
+          type: string
+      type: object
+    v1.AzureReservationRequest:
+      properties:
+        amount:
+          format: int64
+          type: integer
+        image_id:
+          type: string
+        instance_size:
+          type: string
+        location:
+          type: string
+        name:
+          type: string
+        poweroff:
+          type: boolean
+        pubkey_id:
+          format: int64
+          type: integer
+        source_id:
+          type: string
+      type: object
+    v1.AzureReservationResponse:
+      properties:
+        amount:
+          format: int64
+          type: integer
+        image_id:
+          type: string
+        instance_size:
+          type: string
+        instances:
+          items:
+            type: string
+          type: array
+        location:
+          type: string
+        name:
+          type: string
+        poweroff:
+          type: boolean
+        pubkey_id:
+          format: int64
+          type: integer
+        reservation_id:
+          format: int64
+          type: integer
         source_id:
           type: string
       type: object
@@ -451,6 +585,13 @@ components:
         vcpus:
           format: int32
           type: integer
+      type: object
+    v1.LaunchTemplatesResponse:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
       type: object
     v1.NoopReservationResponse:
       properties:
@@ -499,6 +640,7 @@ components:
           type: string
         finished_at:
           format: date-time
+          nullable: true
           type: string
         id:
           format: int64
@@ -518,6 +660,7 @@ components:
           format: int32
           type: integer
         success:
+          nullable: true
           type: boolean
       type: object
     v1.ResponseError:

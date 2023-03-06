@@ -9,14 +9,15 @@ import (
 
 // V1AWSReservationRequest defines model for v1.AWSReservationRequest.
 type V1AWSReservationRequest struct {
-	Amount       *int32  `json:"amount,omitempty"`
-	ImageId      *string `json:"image_id,omitempty"`
-	InstanceType *string `json:"instance_type,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	Poweroff     *bool   `json:"poweroff,omitempty"`
-	PubkeyId     *int64  `json:"pubkey_id,omitempty"`
-	Region       *string `json:"region,omitempty"`
-	SourceId     *string `json:"source_id,omitempty"`
+	Amount           *int32  `json:"amount,omitempty"`
+	ImageId          *string `json:"image_id,omitempty"`
+	InstanceType     *string `json:"instance_type,omitempty"`
+	LaunchTemplateId *string `json:"launch_template_id,omitempty"`
+	Name             *string `json:"name,omitempty"`
+	Poweroff         *bool   `json:"poweroff,omitempty"`
+	PubkeyId         *int64  `json:"pubkey_id,omitempty"`
+	Region           *string `json:"region,omitempty"`
+	SourceId         *string `json:"source_id,omitempty"`
 }
 
 // V1AWSReservationResponse defines model for v1.AWSReservationResponse.
@@ -26,6 +27,7 @@ type V1AWSReservationResponse struct {
 	ImageId          *string   `json:"image_id,omitempty"`
 	InstanceType     *string   `json:"instance_type,omitempty"`
 	Instances        *[]string `json:"instances,omitempty"`
+	LaunchTemplateId *string   `json:"launch_template_id,omitempty"`
 	Name             *string   `json:"name,omitempty"`
 	Poweroff         *bool     `json:"poweroff,omitempty"`
 	PubkeyId         *int64    `json:"pubkey_id,omitempty"`
@@ -46,6 +48,32 @@ type V1AvailabilityStatusRequest struct {
 	SourceId *string `json:"source_id,omitempty"`
 }
 
+// V1AzureReservationRequest defines model for v1.AzureReservationRequest.
+type V1AzureReservationRequest struct {
+	Amount       *int64  `json:"amount,omitempty"`
+	ImageId      *string `json:"image_id,omitempty"`
+	InstanceSize *string `json:"instance_size,omitempty"`
+	Location     *string `json:"location,omitempty"`
+	Name         *string `json:"name,omitempty"`
+	Poweroff     *bool   `json:"poweroff,omitempty"`
+	PubkeyId     *int64  `json:"pubkey_id,omitempty"`
+	SourceId     *string `json:"source_id,omitempty"`
+}
+
+// V1AzureReservationResponse defines model for v1.AzureReservationResponse.
+type V1AzureReservationResponse struct {
+	Amount        *int64    `json:"amount,omitempty"`
+	ImageId       *string   `json:"image_id,omitempty"`
+	InstanceSize  *string   `json:"instance_size,omitempty"`
+	Instances     *[]string `json:"instances,omitempty"`
+	Location      *string   `json:"location,omitempty"`
+	Name          *string   `json:"name,omitempty"`
+	Poweroff      *bool     `json:"poweroff,omitempty"`
+	PubkeyId      *int64    `json:"pubkey_id,omitempty"`
+	ReservationId *int64    `json:"reservation_id,omitempty"`
+	SourceId      *string   `json:"source_id,omitempty"`
+}
+
 // V1InstanceTypeResponse defines model for v1.InstanceTypeResponse.
 type V1InstanceTypeResponse struct {
 	Architecture *string `json:"architecture,omitempty"`
@@ -59,6 +87,12 @@ type V1InstanceTypeResponse struct {
 	StorageGb *int64  `json:"storage_gb,omitempty"`
 	Supported *bool   `json:"supported,omitempty"`
 	Vcpus     *int32  `json:"vcpus,omitempty"`
+}
+
+// V1LaunchTemplatesResponse defines model for v1.LaunchTemplatesResponse.
+type V1LaunchTemplatesResponse struct {
+	Id   *string `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
 // V1NoopReservationResponse defines model for v1.NoopReservationResponse.
@@ -90,14 +124,14 @@ type V1PubkeyResponse struct {
 type V1ReservationResponse struct {
 	CreatedAt  *time.Time `json:"created_at,omitempty"`
 	Error      *string    `json:"error,omitempty"`
-	FinishedAt *time.Time `json:"finished_at,omitempty"`
+	FinishedAt *time.Time `json:"finished_at"`
 	Id         *int64     `json:"id,omitempty"`
 	Provider   *int       `json:"provider,omitempty"`
 	Status     *string    `json:"status,omitempty"`
 	Step       *int32     `json:"step,omitempty"`
 	StepTitles *[]string  `json:"step_titles,omitempty"`
 	Steps      *int32     `json:"steps,omitempty"`
-	Success    *bool      `json:"success,omitempty"`
+	Success    *bool      `json:"success"`
 }
 
 // V1ResponseError defines model for v1.ResponseError.
@@ -141,6 +175,9 @@ type CreatePubkeyJSONBody = V1PubkeyRequest
 // CreateAwsReservationJSONBody defines parameters for CreateAwsReservation.
 type CreateAwsReservationJSONBody = V1AWSReservationRequest
 
+// CreateAzureReservationJSONBody defines parameters for CreateAzureReservation.
+type CreateAzureReservationJSONBody = V1AzureReservationRequest
+
 // GetSourceListParams defines parameters for GetSourceList.
 type GetSourceListParams struct {
 	Provider *GetSourceListParamsProvider `form:"provider,omitempty" json:"provider,omitempty"`
@@ -151,7 +188,13 @@ type GetSourceListParamsProvider string
 
 // GetInstanceTypeListParams defines parameters for GetInstanceTypeList.
 type GetInstanceTypeListParams struct {
-	// List instance types of the specified region
+	// Hyperscaler region
+	Region string `form:"region" json:"region"`
+}
+
+// GetLaunchTemplatesListParams defines parameters for GetLaunchTemplatesList.
+type GetLaunchTemplatesListParams struct {
+	// Hyperscaler region
 	Region string `form:"region" json:"region"`
 }
 
@@ -163,3 +206,6 @@ type CreatePubkeyJSONRequestBody = CreatePubkeyJSONBody
 
 // CreateAwsReservationJSONRequestBody defines body for CreateAwsReservation for application/json ContentType.
 type CreateAwsReservationJSONRequestBody = CreateAwsReservationJSONBody
+
+// CreateAzureReservationJSONRequestBody defines body for CreateAzureReservation for application/json ContentType.
+type CreateAzureReservationJSONRequestBody = CreateAzureReservationJSONBody
