@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/aws/aws-sdk-go v1.44.216
 	github.com/deepmap/oapi-codegen v1.11.0
-	github.com/getkin/kin-openapi v0.112.0
+	github.com/getkin/kin-openapi v0.114.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-retryablehttp v0.7.2
 	github.com/jackc/pgx/v4 v4.18.0
@@ -44,6 +44,7 @@ require (
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
+	github.com/perimeterx/marshmallow v1.1.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
