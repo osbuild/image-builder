@@ -22,6 +22,9 @@ import (
 
 const (
 	ComposeRunningOrFailedError = "IMAGE-BUILDER-COMPOSER-31"
+
+	// 10 GiB
+	FSMaxSize = 10737418240
 )
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {
@@ -504,9 +507,9 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	// check here for installer types
-	if composeRequest.Customizations != nil && composeRequest.Customizations.Users != nil && !strings.Contains(string(imageType), "installer") {
-		return echo.NewHTTPError(http.StatusBadRequest, "User customization only applies to installer image types")
+	err = validateCustomizations(&composeRequest)
+	if err != nil {
+		return err
 	}
 
 	cloudCR := composer.ComposeRequest{
@@ -724,6 +727,36 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 		cloudOptions.Rhsm = ostreeOptions.Rhsm
 	}
 	return cloudOptions
+}
+
+func validateCustomizations(cr *ComposeRequest) error {
+	cust := cr.Customizations
+	if cust == nil {
+		return nil
+	}
+	it := cr.ImageRequests[0].ImageType
+
+	if cust.Users != nil && !strings.Contains(string(it), "installer") {
+		return echo.NewHTTPError(http.StatusBadRequest, "User customization only applies to installer image types")
+	}
+
+	if cust.Filesystem != nil {
+		var totalSize uint64
+		for _, v := range *cust.Filesystem {
+			totalSize += v.MinSize
+		}
+
+		if totalSize > FSMaxSize {
+			switch it {
+			case ImageTypesAmi, ImageTypesAws:
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Total AWS image size cannot exceed %d bytes", FSMaxSize))
+			case ImageTypesAzure, ImageTypesVhd:
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Total Azure image size cannot exceed %d bytes", FSMaxSize))
+			}
+		}
+	}
+
+	return nil
 }
 
 func buildCustomizations(cust *Customizations) *composer.Customizations {

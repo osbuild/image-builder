@@ -767,6 +767,64 @@ func TestComposeImage(t *testing.T) {
 		require.Equal(t, 400, response.StatusCode)
 		require.Contains(t, body, "Error at \\\"/image_requests/0/upload_request/type\\\"")
 	})
+
+	t.Run("ErrorMaxSizeForAWSAndAzure", func(t *testing.T) {
+		// 12 GiB total
+		payload := ComposeRequest{
+			Customizations: &Customizations{
+				Filesystem: &[]Filesystem{
+					{
+						Mountpoint: "/",
+						MinSize:    2147483648,
+					},
+					{
+						Mountpoint: "/var",
+						MinSize:    10737418240,
+					},
+				},
+			},
+			Distribution: "centos-8",
+			ImageRequests: []ImageRequest{
+				{
+					Architecture:  "x86_64",
+					ImageType:     ImageTypesAmi,
+					UploadRequest: UploadRequest{},
+				},
+			},
+		}
+
+		awsUr := UploadRequest{
+			Type: UploadTypesAws,
+			Options: AWSUploadRequestOptions{
+				ShareWithAccounts: &[]string{"test-account"},
+			},
+		}
+
+		azureUr := UploadRequest{
+			Type: UploadTypesAzure,
+			Options: AzureUploadRequestOptions{
+				ResourceGroup:  "group",
+				SubscriptionId: "id",
+				TenantId:       "tenant",
+				ImageName:      strptr("azure-image"),
+			},
+		}
+		for _, it := range []ImageTypes{ImageTypesAmi, ImageTypesAws} {
+			payload.ImageRequests[0].ImageType = it
+			payload.ImageRequests[0].UploadRequest = awsUr
+			response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+			require.Equal(t, 400, response.StatusCode)
+			require.Contains(t, body, fmt.Sprintf("Total AWS image size cannot exceed %d bytes", FSMaxSize))
+		}
+
+		for _, it := range []ImageTypes{ImageTypesAzure, ImageTypesVhd} {
+			payload.ImageRequests[0].ImageType = it
+			payload.ImageRequests[0].UploadRequest = azureUr
+			response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+			require.Equal(t, 400, response.StatusCode)
+			require.Contains(t, body, fmt.Sprintf("Total Azure image size cannot exceed %d bytes", FSMaxSize))
+		}
+	})
 }
 
 func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
