@@ -665,6 +665,61 @@ func TestComposeImage(t *testing.T) {
 		require.Contains(t, body, "Expected at least one source or account to share the image with")
 	})
 
+	azureRequest := func(source_id, subscription_id, tenant_id string) ImageRequest {
+		options := make(map[string]string)
+		options["resource_group"] = "group"
+		if source_id != "" {
+			options["source_id"] = source_id
+		}
+		if subscription_id != "" {
+			options["subscription_id"] = subscription_id
+		}
+		if tenant_id != "" {
+			options["tenant_id"] = tenant_id
+		}
+		optionsJSON, _ := json.Marshal(options)
+
+		var azureOptions AzureUploadRequestOptions
+		err := json.Unmarshal(optionsJSON, &azureOptions)
+		require.NoError(t, err)
+
+		azureRequest := ImageRequest{
+			Architecture: "x86_64",
+			ImageType:    ImageTypesAzure,
+			UploadRequest: UploadRequest{
+				Type:    UploadTypesAzure,
+				Options: azureOptions,
+			},
+		}
+
+		return azureRequest
+	}
+
+	azureTests := []struct {
+		name    string
+		request ImageRequest
+	}{
+		{name: "AzureInvalid1", request: azureRequest("", "", "")},
+		{name: "AzureInvalid2", request: azureRequest("", "1", "")},
+		{name: "AzureInvalid3", request: azureRequest("", "", "1")},
+		{name: "AzureInvalid4", request: azureRequest("1", "1", "")},
+		{name: "AzureInvalid5", request: azureRequest("1", "", "1")},
+		{name: "AzureInvalid6", request: azureRequest("1", "1", "1")},
+	}
+
+	for _, tc := range azureTests {
+		t.Run(tc.name, func(t *testing.T) {
+			payload := ComposeRequest{
+				Customizations: nil,
+				Distribution:   "centos-8",
+				ImageRequests:  []ImageRequest{tc.request},
+			}
+			response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+			require.Equal(t, 400, response.StatusCode)
+			require.Contains(t, body, "Request must contain either (1) a source id, and no tenant or subscription ids or (2) tenant and subscription ids, and no source id.")
+		})
+	}
+
 	t.Run("ErrorsForZeroUploadRequests", func(t *testing.T) {
 		payload := ComposeRequest{
 			Customizations: nil,
@@ -804,8 +859,8 @@ func TestComposeImage(t *testing.T) {
 			Type: UploadTypesAzure,
 			Options: AzureUploadRequestOptions{
 				ResourceGroup:  "group",
-				SubscriptionId: "id",
-				TenantId:       "tenant",
+				SubscriptionId: strptr("id"),
+				TenantId:       strptr("tenant"),
 				ImageName:      strptr("azure-image"),
 			},
 		}
@@ -1157,13 +1212,28 @@ func TestComposeCustomizations(t *testing.T) {
 
 	awsAccountId := "123456123456"
 	provSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		awsId := struct {
-			AccountId *string `json:"account_id,omitempty"`
-		}{
-			AccountId: &awsAccountId,
+		var result provisioning.V1SourceUploadInfoResponse
+
+		if r.URL.Path == "/sources/1/upload_info" {
+			awsId := struct {
+				AccountId *string `json:"account_id,omitempty"`
+			}{
+				AccountId: &awsAccountId,
+			}
+			result.Aws = &awsId
 		}
-		result := provisioning.V1AccountIDTypeResponse{
-			Aws: &awsId,
+
+		if r.URL.Path == "/sources/2/upload_info" {
+			azureInfo := struct {
+				ResourceGroups *[]string `json:"resource_groups,omitempty"`
+				SubscriptionId *string   `json:"subscription_id,omitempty"`
+				TenantId       *string   `json:"tenant_id,omitempty"`
+			}{
+				SubscriptionId: strptr("id"),
+				TenantId:       strptr("tenant"),
+				ResourceGroups: &[]string{"group"},
+			}
+			result.Azure = &azureInfo
 		}
 
 		require.Equal(t, tutils.AuthString0, r.Header.Get("x-rh-identity"))
@@ -1456,6 +1526,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		// Test Azure with SubscriptionId and TenantId
 		{
 			imageBuilderRequest: ComposeRequest{
 				Distribution: "centos-8",
@@ -1472,9 +1543,86 @@ func TestComposeCustomizations(t *testing.T) {
 							Type: UploadTypesAzure,
 							Options: AzureUploadRequestOptions{
 								ResourceGroup:  "group",
-								SubscriptionId: "id",
-								TenantId:       "tenant",
+								SubscriptionId: strptr("id"),
+								TenantId:       strptr("tenant"),
 								ImageName:      strptr("azure-image"),
+							},
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution:   "centos-8",
+				Customizations: nil,
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesAzure,
+					Ostree: &composer.OSTree{
+						Ref:    strptr("test/edge/ref"),
+						Url:    strptr("https://ostree.srv/"),
+						Parent: strptr("test/edge/ref2"),
+					},
+					Repositories: []composer.Repository{
+
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AzureUploadOptions{
+						ImageName:      strptr("azure-image"),
+						ResourceGroup:  "group",
+						SubscriptionId: "id",
+						TenantId:       "tenant",
+					}),
+				},
+			},
+		},
+		// Test Azure with SourceId
+		{
+			imageBuilderRequest: ComposeRequest{
+				Distribution: "centos-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesAzure,
+						Ostree: &OSTree{
+							Ref:    strptr("test/edge/ref"),
+							Url:    strptr("https://ostree.srv/"),
+							Parent: strptr("test/edge/ref2"),
+						},
+						UploadRequest: UploadRequest{
+							Type: UploadTypesAzure,
+							Options: AzureUploadRequestOptions{
+								ResourceGroup: "group",
+								SourceId:      strptr("2"),
+								ImageName:     strptr("azure-image"),
 							},
 						},
 					},
@@ -1788,7 +1936,7 @@ func TestGetClones(t *testing.T) {
 		}{
 			AccountId: &awsAccountId,
 		}
-		result := provisioning.V1AccountIDTypeResponse{
+		result := provisioning.V1SourceUploadInfoResponse{
 			Aws: &awsId,
 		}
 

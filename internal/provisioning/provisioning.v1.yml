@@ -123,7 +123,31 @@ paths:
           $ref: "#/components/responses/InternalError"
   /sources/{ID}/account_identity:
     get:
-        parameters:
+      description: 'This endpoint is deprecated. Please use upload_info instead'
+      deprecated: true
+      parameters:
+      - in: path
+        name: ID
+        schema:
+          type: integer
+          format: int64
+        required: true
+        description: 'Source ID from Sources Database'
+      responses:
+        '200':
+          description: Return on success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/v1.AccountIDTypeResponse'
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalError"
+  /sources/{ID}/upload_info:
+    get:
+      description: 'This endpoint provides all necessary information to upload an image for given Source.'
+      parameters:
         - in: path
           name: ID
           schema:
@@ -131,22 +155,22 @@ paths:
             format: int64
           required: true
           description: 'Source ID from Sources Database'
-        responses:
-          '200':
-            description: Return on success.
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/v1.AccountIDTypeResponse'
-          '404':
-            $ref: "#/components/responses/NotFound"
-          '500':
-            $ref: "#/components/responses/InternalError"
+      responses:
+        '200':
+          description: Return on success.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/v1.SourceUploadInfoResponse'
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalError"
   /sources/{ID}/instance_types:
-      get:
-        description: 'Return a list of instance types (DEPRECATED: use /instance_types)'
-        operationId: getInstanceTypeList
-        parameters:
+    get:
+      description: 'Return a list of instance types (DEPRECATED: use /instance_types)'
+      operationId: getInstanceTypeList
+      parameters:
         - in: path
           name: ID
           schema:
@@ -159,20 +183,51 @@ paths:
           schema:
             type: string
           required: true
-          description: List instance types of the specified region
-        responses:
-          '200':
-            description: Return on success.
-            content:
-              application/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/v1.InstanceTypeResponse'
-          '404':
-            $ref: "#/components/responses/NotFound"
-          '500':
-            $ref: "#/components/responses/InternalError"
+          description: Hyperscaler region
+      responses:
+        '200':
+          description: Return on success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/v1.InstanceTypeResponse'
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalError"
+  /sources/{ID}/launch_templates:
+    get:
+      description: Return a list of launch templates
+      operationId: getLaunchTemplatesList
+      parameters:
+        - in: path
+          name: ID
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: Source ID from Sources Database
+        - in: query
+          name: region
+          schema:
+            type: string
+          required: true
+          description: Hyperscaler region
+      responses:
+        '200':
+          description: Return on success.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/v1.LaunchTemplatesResponse'
+        '404':
+          $ref: "#/components/responses/NotFound"
+        '500':
+          $ref: "#/components/responses/InternalError"
   /instance_types/{PROVIDER}:
     get:
       description: >
@@ -264,6 +319,10 @@ paths:
         A reservation is a way to activate a job, keeps all data needed for a job to start.
         An AWS reservation is a reservation created for an AWS job. Image Builder UUID image
         is required, the service will also launch any AMI image prefixed with "ami-".
+        Optionally, AWS EC2 launch template ID can be provided. All flags set through this
+        endpoint override template values.
+        Public key must exist prior calling this endpoint and ID must be provided, even when
+        AWS EC2 launch template provides ssh-keys. Public key will be always be overwritten.
       requestBody:
         content:
           application/json:
@@ -278,6 +337,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/v1.AWSReservationResponse'
+        "500":
+          $ref: '#/components/responses/InternalError'
+  /reservations/azure:
+    post:
+      operationId: createAzureReservation
+      description: >
+        A reservation is a way to activate a job, keeps all data needed for a job to start.
+        An Azure reservation is a reservation created for an Azure job. Image Builder UUID image
+        is required and needs to be stored under same account as provided by SourceID.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/v1.AzureReservationRequest'
+        description: aws request body
+        required: true
+      responses:
+        '200':
+          description: 'Returned on success.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/v1.AzureReservationResponse'
         "500":
           $ref: '#/components/responses/InternalError'
   /reservations/aws/{ID}:
@@ -299,6 +381,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/v1.AWSReservationResponse'
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: '#/components/responses/InternalError'
+  /reservations/azure/{ID}:
+    get:
+      description: 'Return an Azure reservation with details by id'
+      operationId: getAzureReservationByID
+      parameters:
+        - in: path
+          name: ID
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: 'Reservation ID, must be an Azure reservation otherwise 404 is returned'
+      responses:
+        "200":
+          description: 'Returns detailed reservation information for an Azure reservation.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/v1.AzureReservationResponse'
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -340,52 +445,36 @@ paths:
         "500":
           $ref: '#/components/responses/InternalError'
 components:
-  responses:
-    BadRequest:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/v1.ResponseError'
-      description: The request's parameters are not sufficient
-    InternalError:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/v1.ResponseError'
-      description: The server encountered with an internal error
-    NotFound:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/v1.ResponseError'
-      description: The specified resource was not found
   schemas:
     v1.AWSReservationRequest:
+      type: object
       properties:
         amount:
-          format: int32
           type: integer
+          format: int32
         image_id:
           type: string
         instance_type:
+          type: string
+        launch_template_id:
           type: string
         name:
           type: string
         poweroff:
           type: boolean
         pubkey_id:
-          format: int64
           type: integer
+          format: int64
         region:
           type: string
         source_id:
           type: string
-      type: object
     v1.AWSReservationResponse:
+      type: object
       properties:
         amount:
-          format: int32
           type: integer
+          format: int32
         aws_reservation_id:
           type: string
         image_id:
@@ -393,72 +482,140 @@ components:
         instance_type:
           type: string
         instances:
-          items:
-            type: string
           type: array
+          items:
+            type: object
+            properties:
+              detail:
+                type: object
+                properties:
+                  public_dns:
+                    type: string
+                  public_ipv4:
+                    type: string
+              instance_id:
+                type: string
+        launch_template_id:
+          type: string
         name:
           type: string
         poweroff:
           type: boolean
         pubkey_id:
-          format: int64
           type: integer
+          format: int64
         region:
           type: string
         reservation_id:
-          format: int64
           type: integer
+          format: int64
         source_id:
           type: string
-      type: object
     v1.AccountIDTypeResponse:
+      type: object
       properties:
         aws:
+          type: object
           properties:
             account_id:
               type: string
-          type: object
-      type: object
     v1.AvailabilityStatusRequest:
+      type: object
       properties:
         source_id:
           type: string
+    v1.AzureReservationRequest:
       type: object
+      properties:
+        amount:
+          type: integer
+          format: int64
+        image_id:
+          type: string
+        instance_size:
+          type: string
+        location:
+          type: string
+        name:
+          type: string
+        poweroff:
+          type: boolean
+        pubkey_id:
+          type: integer
+          format: int64
+        source_id:
+          type: string
+    v1.AzureReservationResponse:
+      type: object
+      properties:
+        amount:
+          type: integer
+          format: int64
+        image_id:
+          type: string
+        instance_size:
+          type: string
+        instances:
+          type: array
+          items:
+            type: string
+        location:
+          type: string
+        name:
+          type: string
+        poweroff:
+          type: boolean
+        pubkey_id:
+          type: integer
+          format: int64
+        reservation_id:
+          type: integer
+          format: int64
+        source_id:
+          type: string
     v1.InstanceTypeResponse:
+      type: object
       properties:
         architecture:
           type: string
         azure:
+          type: object
           properties:
             gen_v1:
               type: boolean
             gen_v2:
               type: boolean
-          type: object
         cores:
+          type: integer
           format: int32
-          type: integer
         memory_mib:
-          format: int64
           type: integer
+          format: int64
         name:
           type: string
         storage_gb:
-          format: int64
           type: integer
+          format: int64
         supported:
           type: boolean
         vcpus:
-          format: int32
           type: integer
+          format: int32
+    v1.LaunchTemplatesResponse:
       type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
     v1.NoopReservationResponse:
+      type: object
       properties:
         reservation_id:
-          format: int64
           type: integer
-      type: object
+          format: int64
     v1.PubkeyRequest:
+      type: object
       properties:
         body:
           type: string
@@ -467,14 +624,14 @@ components:
         fingerprint_legacy:
           type: string
         id:
-          format: int64
           type: integer
+          format: int64
         name:
           type: string
         type:
           type: string
-      type: object
     v1.PubkeyResponse:
+      type: object
       properties:
         body:
           type: string
@@ -483,44 +640,46 @@ components:
         fingerprint_legacy:
           type: string
         id:
-          format: int64
           type: integer
+          format: int64
         name:
           type: string
         type:
           type: string
-      type: object
     v1.ReservationResponse:
+      type: object
       properties:
         created_at:
-          format: date-time
           type: string
+          format: date-time
         error:
           type: string
         finished_at:
-          format: date-time
           type: string
+          format: date-time
+          nullable: true
         id:
-          format: int64
           type: integer
+          format: int64
         provider:
           type: integer
         status:
           type: string
         step:
-          format: int32
           type: integer
+          format: int32
         step_titles:
+          type: array
           items:
             type: string
-          type: array
         steps:
-          format: int32
           type: integer
+          format: int32
         success:
           type: boolean
-      type: object
+          nullable: true
     v1.ResponseError:
+      type: object
       properties:
         build_time:
           type: string
@@ -532,8 +691,8 @@ components:
           type: string
         version:
           type: string
-      type: object
     v1.SourceResponse:
+      type: object
       properties:
         id:
           type: string
@@ -543,10 +702,51 @@ components:
           type: string
         uid:
           type: string
+    v1.SourceUploadInfoResponse:
       type: object
+      properties:
+        aws:
+          type: object
+          nullable: true
+          properties:
+            account_id:
+              type: string
+        azure:
+          type: object
+          nullable: true
+          properties:
+            resource_groups:
+              type: array
+              items:
+                type: string
+            subscription_id:
+              type: string
+            tenant_id:
+              type: string
+        provider:
+          type: string
+  responses:
+    BadRequest:
+      description: The request's parameters are not valid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/v1.ResponseError'
+    InternalError:
+      description: The server encountered an internal error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/v1.ResponseError'
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/v1.ResponseError'
 servers:
-- description: Local development
-  url: http://0.0.0.0:{port}/api/{applicationName}
+- url: http://0.0.0.0:{port}/api/{applicationName}
+  description: Local development
   variables:
     applicationName:
       default: provisioning

@@ -654,10 +654,14 @@ components:
     AzureUploadRequestOptions:
       type: object
       required:
-        - tenant_id
-        - subscription_id
         - resource_group
       properties:
+        source_id:
+          type: string
+          example: '12345'
+          description: |
+            ID of the source that will be used to resolve the tenant and subscription IDs.
+            Do not provide a tenant_id or subscription_id when providing a source_id.
         tenant_id:
           type: string
           example: '5c7ef5b6-1c3f-4da0-a622-0b060239d7d7'
@@ -665,11 +669,13 @@ components:
             ID of the tenant where the image should be uploaded. This link explains how
             to find it in the Azure Portal:
             https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant
+            When providing a tenant_id, also be sure to provide a subscription_id and do not include a source_id.
         subscription_id:
           type: string
           example: '4e5d8b2c-ab24-4413-90c5-612306e809e2'
           description: |
             ID of subscription where the image should be uploaded.
+            When providing a subscription_id, also be sure to provide a tenant_id and do not include a source_id.
         resource_group:
           type: string
           example: 'ToucanResourceGroup'
