@@ -615,24 +615,24 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 
 		if awsOptions.ShareWithSources != nil {
 			for _, source := range *awsOptions.ShareWithSources {
-				resp, err := h.server.pClient.GetAccountID(ctx.Request().Context(), source)
+				resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), source)
 				if err != nil {
 					logrus.Error(err)
 					return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
 				}
 
-				var aID provisioning.V1AccountIDTypeResponse
-				err = json.NewDecoder(resp.Body).Decode(&aID)
+				var uploadInfo provisioning.V1SourceUploadInfoResponse
+				err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
 				if err != nil {
 					return nil, "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", source))
 				}
 
-				if aID.Aws == nil || aID.Aws.AccountId == nil || len(*aID.Aws.AccountId) != 12 {
+				if uploadInfo.Aws == nil || uploadInfo.Aws.AccountId == nil || len(*uploadInfo.Aws.AccountId) != 12 {
 					return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id", source))
 				}
 
-				ctx.Logger().Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *aID.Aws.AccountId))
-				shareWithAccounts = append(shareWithAccounts, *aID.Aws.AccountId)
+				ctx.Logger().Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *uploadInfo.Aws.AccountId))
+				shareWithAccounts = append(shareWithAccounts, *uploadInfo.Aws.AccountId)
 			}
 		}
 
@@ -701,9 +701,46 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 		if err != nil {
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Unable to unmarshal into AzureUploadRequestOptions")
 		}
+
+		if (azureOptions.SourceId == nil && (azureOptions.TenantId == nil || azureOptions.SubscriptionId == nil)) ||
+			(azureOptions.SourceId != nil && (azureOptions.TenantId != nil || azureOptions.SubscriptionId != nil)) {
+			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Request must contain either (1) a source id, and no tenant or subscription ids or (2) tenant and subscription ids, and no source id.")
+		}
+
+		var tenantId string
+		var subscriptionId string
+
+		if azureOptions.SourceId == nil {
+			tenantId = *azureOptions.TenantId
+			subscriptionId = *azureOptions.SubscriptionId
+		}
+
+		if azureOptions.SourceId != nil {
+			resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), *azureOptions.SourceId)
+			if err != nil {
+				logrus.Error(err)
+				return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", *azureOptions.SourceId))
+			}
+
+			var uploadInfo provisioning.V1SourceUploadInfoResponse
+			err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
+
+			if err != nil {
+				return nil, "", echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", *azureOptions.SourceId))
+			}
+
+			if uploadInfo.Azure == nil || uploadInfo.Azure.TenantId == nil || uploadInfo.Azure.SubscriptionId == nil {
+				return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an Azure tenant id or subscription id. ", *azureOptions.SourceId))
+			}
+
+			ctx.Logger().Info(fmt.Sprintf("Resolved source %s to tenant id %s and subscription id %s", *azureOptions.SourceId, *uploadInfo.Azure.TenantId, *uploadInfo.Azure.SubscriptionId))
+			tenantId = *uploadInfo.Azure.TenantId
+			subscriptionId = *uploadInfo.Azure.SubscriptionId
+		}
+
 		uploadOptions := composer.AzureUploadOptions{
-			TenantId:       azureOptions.TenantId,
-			SubscriptionId: azureOptions.SubscriptionId,
+			TenantId:       tenantId,
+			SubscriptionId: subscriptionId,
 			ResourceGroup:  azureOptions.ResourceGroup,
 			ImageName:      azureOptions.ImageName,
 		}
@@ -873,24 +910,24 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 
 		if awsEC2CloneReq.ShareWithSources != nil {
 			for _, source := range *awsEC2CloneReq.ShareWithSources {
-				resp, err := h.server.pClient.GetAccountID(ctx.Request().Context(), source)
+				resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), source)
 				if err != nil {
 					logrus.Error(err)
 					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
 				}
 
-				var aID provisioning.V1AccountIDTypeResponse
-				err = json.NewDecoder(resp.Body).Decode(&aID)
+				var uploadInfo provisioning.V1SourceUploadInfoResponse
+				err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
 				if err != nil {
 					return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to resolve source: %s", source))
 				}
 
-				if aID.Aws == nil || aID.Aws.AccountId == nil || len(*aID.Aws.AccountId) != 12 {
-					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id: %v", source, aID.Aws.AccountId))
+				if uploadInfo.Aws == nil || uploadInfo.Aws.AccountId == nil || len(*uploadInfo.Aws.AccountId) != 12 {
+					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id: %v", source, uploadInfo.Aws.AccountId))
 				}
 
-				logrus.Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *aID.Aws.AccountId))
-				shareWithAccounts = append(shareWithAccounts, *aID.Aws.AccountId)
+				logrus.Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *uploadInfo.Aws.AccountId))
+				shareWithAccounts = append(shareWithAccounts, *uploadInfo.Aws.AccountId)
 			}
 		}
 
