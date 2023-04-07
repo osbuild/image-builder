@@ -1,0 +1,123 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: image-builder-stage-e2e
+objects:
+- apiVersion: batch/v1
+  kind: Job
+  metadata:
+    name: image-builder-stage-e2e-${IMAGE_TAG}-${UID}
+    annotations:
+      "ignore-check.kube-linter.io/no-liveness-probe": "probes not required on Job pods"
+      "ignore-check.kube-linter.io/no-readiness-probe": "probes not required on Job pods"
+  spec:
+    template:
+      spec:
+        imagePullSecrets:
+        - name: quay-cloudservices-pull
+        restartPolicy: Never
+        volumes:
+        - name: sel-shm
+          emptyDir:
+            medium: Memory
+        containers:
+        - name: image-builder-stage-e2e-iqe-${IMAGE_TAG}-${UID}
+          args:
+          - run
+          env:
+          - name: ENV_FOR_DYNACONF
+            value: ${ENV_FOR_DYNACONF}
+          - name: IQE_PLUGINS
+            value: ${IQE_PLUGINS}
+          - name: IQE_MARKER_EXPRESSION
+            value: ${IQE_MARKER_EXPRESSION}
+          - name: IQE_FILTER_EXPRESSION
+            value: ${IQE_FILTER_EXPRESSION}
+          - name: IQE_LOG_LEVEL
+            value: ${IQE_LOG_LEVEL}
+          - name: IQE_REQUIREMENTS
+            value: ${IQE_REQUIREMENTS}
+          - name: IQE_REQUIREMENTS_PRIORITY
+            value: ${IQE_REQUIREMENTS_PRIORITY}
+          - name: IQE_TEST_IMPORTANCE
+            value: ${IQE_TEST_IMPORTANCE}
+          - name: DYNACONF_IQE_VAULT_LOADER_ENABLED
+            value: "true"
+          - name: DYNACONF_IQE_VAULT_VERIFY
+            value: "true"
+          - name: DYNACONF_IQE_VAULT_URL
+            valueFrom:
+              secretKeyRef:
+                key: url
+                name: iqe-vault
+                optional: true
+          - name: DYNACONF_IQE_VAULT_MOUNT_POINT
+            valueFrom:
+              secretKeyRef:
+                key: mountPoint
+                name: iqe-vault
+                optional: true
+          - name: DYNACONF_IQE_VAULT_ROLE_ID
+            valueFrom:
+              secretKeyRef:
+                key: roleId
+                name: iqe-vault
+                optional: true
+          - name: DYNACONF_IQE_VAULT_SECRET_ID
+            valueFrom:
+              secretKeyRef:
+                key: secretId
+                name: iqe-vault
+                optional: true
+          image: ${IQE_IMAGE}
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        - name: image-builder-stage-e2e-selenium-${UID}
+          image: ${IQE_SEL_IMAGE}
+          resources:
+            limits:
+              cpu: 300m
+              memory: 1Gi
+            requests:
+              cpu: 150m
+              memory: 512Mi
+          volumeMounts:
+            - name: sel-shm
+              mountPath: /dev/shm
+parameters:
+- name: IMAGE_TAG
+  value: ''
+  required: true
+- name: UID
+  description: "Unique job name suffix"
+  generate: expression
+  from: "[a-z0-9]{6}"
+- name: IQE_IMAGE
+  description: "container image path for the iqe plugin"
+  value: quay.io/cloudservices/iqe-tests:hms-integration
+- name: ENV_FOR_DYNACONF
+  value: stage_proxy
+- name: IQE_PLUGINS
+  value: hms_integration
+- name: IQE_MARKER_EXPRESSION
+  value: ''
+- name: IQE_FILTER_EXPRESSION
+  value: ''
+- name: IQE_LOG_LEVEL
+  value: info
+- name: IQE_REQUIREMENTS
+  value: ''
+- name: IQE_REQUIREMENTS_PRIORITY
+  value: ''
+- name: IQE_TEST_IMPORTANCE
+  value: ''
+- name: IQE_SEL_IMAGE
+  value: 'quay.io/redhatqe/selenium-standalone:ff_91.9.1esr_chrome_103.0.5060.114'
