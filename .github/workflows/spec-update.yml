@@ -19,7 +19,7 @@ jobs:
           tools/update-spec.sh
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v5
         with:
           branch: update-spec
           delete-branch: true
