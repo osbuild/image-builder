@@ -54,9 +54,8 @@ github.com/davecgh/go-spew/spew
 ## explicit; go 1.16
 github.com/deepmap/oapi-codegen/pkg/runtime
 github.com/deepmap/oapi-codegen/pkg/types
-# github.com/getkin/kin-openapi v0.112.0
+# github.com/getkin/kin-openapi v0.115.0
 ## explicit; go 1.16
-github.com/getkin/kin-openapi/jsoninfo
 github.com/getkin/kin-openapi/openapi3
 github.com/getkin/kin-openapi/openapi3filter
 github.com/getkin/kin-openapi/routers
@@ -151,6 +150,9 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 ## explicit
 github.com/mohae/deepcopy
+# github.com/perimeterx/marshmallow v1.1.4
+## explicit; go 1.17
+github.com/perimeterx/marshmallow
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
