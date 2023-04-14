@@ -824,7 +824,7 @@ func TestComposeImage(t *testing.T) {
 	})
 
 	t.Run("ErrorMaxSizeForAWSAndAzure", func(t *testing.T) {
-		// 12 GiB total
+		// 66 GiB total
 		payload := ComposeRequest{
 			Customizations: &Customizations{
 				Filesystem: &[]Filesystem{
@@ -834,7 +834,7 @@ func TestComposeImage(t *testing.T) {
 					},
 					{
 						Mountpoint: "/var",
-						MinSize:    10737418240,
+						MinSize:    68719476736,
 					},
 				},
 			},
