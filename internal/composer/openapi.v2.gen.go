@@ -478,6 +478,9 @@ type Repository struct {
 	Baseurl  *string `json:"baseurl,omitempty"`
 	CheckGpg *bool   `json:"check_gpg,omitempty"`
 
+	// Enables gpg verification of the repository metadata
+	CheckRepoGpg *bool `json:"check_repo_gpg,omitempty"`
+
 	// GPG key used to sign packages in this repository.
 	Gpgkey     *string `json:"gpgkey,omitempty"`
 	IgnoreSsl  *bool   `json:"ignore_ssl,omitempty"`
