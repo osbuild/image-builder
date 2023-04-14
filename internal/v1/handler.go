@@ -23,8 +23,8 @@ import (
 const (
 	ComposeRunningOrFailedError = "IMAGE-BUILDER-COMPOSER-31"
 
-	// 10 GiB
-	FSMaxSize = 10737418240
+	// 64 GiB
+	FSMaxSize = 68719476736
 )
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {
