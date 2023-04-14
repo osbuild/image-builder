@@ -1,4 +1,4 @@
-name: composer spec update
+name: Spec update
 
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   scan:
-    name: "composer spec update"
+    name: "spec update"
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -19,12 +19,12 @@ jobs:
           tools/update-spec.sh
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v5
         with:
           branch: update-spec
           delete-branch: true
-          title: "internal/composer: update api spec"
-          commit-message: "internal/composer: update api spec"
+          title: "internal: update api specs"
+          commit-message: "internal: update api specs"
           body: Composer api spec update.
           token: ${{ secrets.UPDATE_API_SPEC_TOKEN }}
           author: schutzbot <schutzbot@gmail.com>
