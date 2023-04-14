@@ -896,6 +896,11 @@ components:
           type: string
         check_gpg:
           type: boolean
+        check_repo_gpg:
+          type: boolean
+          default: false
+          description: |
+            Enables gpg verification of the repository metadata
         ignore_ssl:
           type: boolean
     ClonesResponse:

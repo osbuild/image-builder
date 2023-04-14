@@ -1263,11 +1263,12 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					PayloadRepositories: &[]Repository{
 						{
-							Baseurl:   common.StringToPtr("https://some-repo-base-url.org"),
-							CheckGpg:  common.BoolToPtr(false),
-							Gpgkey:    common.StringToPtr("some-gpg-key"),
-							IgnoreSsl: common.BoolToPtr(false),
-							Rhsm:      false,
+							Baseurl:      common.StringToPtr("https://some-repo-base-url.org"),
+							CheckGpg:     common.BoolToPtr(true),
+							CheckRepoGpg: common.BoolToPtr(true),
+							Gpgkey:       common.StringToPtr("some-gpg-key"),
+							IgnoreSsl:    common.BoolToPtr(false),
+							Rhsm:         false,
 						},
 					},
 					Filesystem: &[]Filesystem{
@@ -1308,11 +1309,12 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					PayloadRepositories: &[]composer.Repository{
 						{
-							Baseurl:   common.StringToPtr("https://some-repo-base-url.org"),
-							CheckGpg:  common.BoolToPtr(false),
-							Gpgkey:    common.StringToPtr("some-gpg-key"),
-							IgnoreSsl: common.BoolToPtr(false),
-							Rhsm:      common.BoolToPtr(false),
+							Baseurl:      common.StringToPtr("https://some-repo-base-url.org"),
+							CheckGpg:     common.BoolToPtr(true),
+							CheckRepoGpg: common.BoolToPtr(true),
+							Gpgkey:       common.StringToPtr("some-gpg-key"),
+							IgnoreSsl:    common.BoolToPtr(false),
+							Rhsm:         common.BoolToPtr(false),
 						},
 					},
 					Filesystem: &[]composer.Filesystem{
