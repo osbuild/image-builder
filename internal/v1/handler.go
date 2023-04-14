@@ -826,6 +826,9 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			if payloadRepository.CheckGpg != nil {
 				payloadRepositories[i].CheckGpg = payloadRepository.CheckGpg
 			}
+			if payloadRepository.CheckRepoGpg != nil {
+				payloadRepositories[i].CheckRepoGpg = payloadRepository.CheckRepoGpg
+			}
 			if payloadRepository.Gpgkey != nil {
 				payloadRepositories[i].Gpgkey = payloadRepository.Gpgkey
 			}
