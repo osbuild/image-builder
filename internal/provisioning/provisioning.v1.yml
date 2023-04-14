@@ -558,7 +558,17 @@ components:
         instances:
           type: array
           items:
-            type: string
+            type: object
+            properties:
+              detail:
+                type: object
+                properties:
+                  public_dns:
+                    type: string
+                  public_ipv4:
+                    type: string
+              instance_id:
+                type: string
         location:
           type: string
         name:

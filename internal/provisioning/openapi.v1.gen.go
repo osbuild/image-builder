@@ -68,16 +68,22 @@ type V1AzureReservationRequest struct {
 
 // V1AzureReservationResponse defines model for v1.AzureReservationResponse.
 type V1AzureReservationResponse struct {
-	Amount        *int64    `json:"amount,omitempty"`
-	ImageId       *string   `json:"image_id,omitempty"`
-	InstanceSize  *string   `json:"instance_size,omitempty"`
-	Instances     *[]string `json:"instances,omitempty"`
-	Location      *string   `json:"location,omitempty"`
-	Name          *string   `json:"name,omitempty"`
-	Poweroff      *bool     `json:"poweroff,omitempty"`
-	PubkeyId      *int64    `json:"pubkey_id,omitempty"`
-	ReservationId *int64    `json:"reservation_id,omitempty"`
-	SourceId      *string   `json:"source_id,omitempty"`
+	Amount       *int64  `json:"amount,omitempty"`
+	ImageId      *string `json:"image_id,omitempty"`
+	InstanceSize *string `json:"instance_size,omitempty"`
+	Instances    *[]struct {
+		Detail *struct {
+			PublicDns  *string `json:"public_dns,omitempty"`
+			PublicIpv4 *string `json:"public_ipv4,omitempty"`
+		} `json:"detail,omitempty"`
+		InstanceId *string `json:"instance_id,omitempty"`
+	} `json:"instances,omitempty"`
+	Location      *string `json:"location,omitempty"`
+	Name          *string `json:"name,omitempty"`
+	Poweroff      *bool   `json:"poweroff,omitempty"`
+	PubkeyId      *int64  `json:"pubkey_id,omitempty"`
+	ReservationId *int64  `json:"reservation_id,omitempty"`
+	SourceId      *string `json:"source_id,omitempty"`
 }
 
 // V1InstanceTypeResponse defines model for v1.InstanceTypeResponse.
