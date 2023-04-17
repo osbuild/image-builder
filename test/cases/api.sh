@@ -267,7 +267,7 @@ function createReqFileAWS() {
       "base-url": "https://cdn.redhat.com/",
       "server-url": "subscription.rhsm.redhat.com",
       "insights": true,
-      "rhc": false
+      "rhc": true
     }
   }
 }
