@@ -12,6 +12,7 @@ objects:
       "ignore-check.kube-linter.io/no-liveness-probe": "probes not required on Job pods"
       "ignore-check.kube-linter.io/no-readiness-probe": "probes not required on Job pods"
   spec:
+    backoffLimit: 0
     template:
       spec:
         imagePullSecrets:
@@ -23,11 +24,15 @@ objects:
             medium: Memory
         containers:
         - name: image-builder-stage-e2e-iqe-${IMAGE_TAG}-${UID}
+          image: ${IQE_IMAGE}
+          imagePullPolicy: Always
           args:
           - run
           env:
           - name: ENV_FOR_DYNACONF
             value: ${ENV_FOR_DYNACONF}
+          - name: DYNACONF_MAIN__use_beta
+            value: ${USE_BETA}
           - name: IQE_PLUGINS
             value: ${IQE_PLUGINS}
           - name: IQE_MARKER_EXPRESSION
@@ -70,7 +75,6 @@ objects:
                 key: secretId
                 name: iqe-vault
                 optional: true
-          image: ${IQE_IMAGE}
           resources:
             limits:
               cpu: "1"
@@ -105,6 +109,8 @@ parameters:
   value: quay.io/cloudservices/iqe-tests:hms-integration
 - name: ENV_FOR_DYNACONF
   value: stage_proxy
+- name: USE_BETA
+  value: "true"
 - name: IQE_PLUGINS
   value: hms_integration
 - name: IQE_MARKER_EXPRESSION
