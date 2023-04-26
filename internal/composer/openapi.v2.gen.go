@@ -250,13 +250,39 @@ type ContainerUploadStatus struct {
 	Url string `json:"url"`
 }
 
+// Repository configuration for custom repositories.
+// At least one of the 'baseurl', 'mirrorlist', 'metalink' properties must
+// be specified. If more of them are specified, the order of precedence is
+// the same as listed above. Id is required.
+type CustomRepository struct {
+	Baseurl      *[]string `json:"baseurl,omitempty"`
+	CheckGpg     *bool     `json:"check_gpg,omitempty"`
+	CheckRepoGpg *bool     `json:"check_repo_gpg,omitempty"`
+	Filename     *string   `json:"filename,omitempty"`
+
+	// GPG key used to sign packages in this repository. Can be a gpg key or a URL
+	Gpgkey     *[]string `json:"gpgkey,omitempty"`
+	Id         string    `json:"id"`
+	Metalink   *string   `json:"metalink,omitempty"`
+	Mirrorlist *string   `json:"mirrorlist,omitempty"`
+	Name       *string   `json:"name,omitempty"`
+	Priority   *int      `json:"priority,omitempty"`
+	SslVerify  *bool     `json:"ssl_verify,omitempty"`
+}
+
 // Customizations defines model for Customizations.
 type Customizations struct {
-	Containers  *[]Container  `json:"containers,omitempty"`
-	Directories *[]Directory  `json:"directories,omitempty"`
-	Files       *[]File       `json:"files,omitempty"`
-	Filesystem  *[]Filesystem `json:"filesystem,omitempty"`
-	Packages    *[]string     `json:"packages,omitempty"`
+	Containers *[]Container `json:"containers,omitempty"`
+
+	// Repository configuration that will get saved to the image under the
+	// `/etc/yum.repos.d` directory. These repos are not used for depsolving
+	// or retrieving packages and only for ensuring the configuration is set
+	// in the final image.
+	CustomRepositories *[]CustomRepository `json:"custom_repositories,omitempty"`
+	Directories        *[]Directory        `json:"directories,omitempty"`
+	Files              *[]File             `json:"files,omitempty"`
+	Filesystem         *[]Filesystem       `json:"filesystem,omitempty"`
+	Packages           *[]string           `json:"packages,omitempty"`
 
 	// Extra repositories for packages specified in customizations. These
 	// repositories will only be used to depsolve and retrieve packages
