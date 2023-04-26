@@ -1287,6 +1287,14 @@ func TestComposeCustomizations(t *testing.T) {
 							SshKey: "ssh-rsa AAAAB3NzaC1",
 						},
 					},
+					CustomRepositories: &[]CustomRepository{
+						{
+							Id:       "some-repo-id",
+							Baseurl:  &[]string{"https://some-repo-base-url.org"},
+							Gpgkey:   &[]string{"some-gpg-key"},
+							CheckGpg: common.BoolToPtr(true),
+						},
+					},
 				},
 				Distribution: "centos-8",
 				ImageRequests: []ImageRequest{
@@ -1332,6 +1340,14 @@ func TestComposeCustomizations(t *testing.T) {
 							Name:   "user",
 							Key:    common.StringToPtr("ssh-rsa AAAAB3NzaC1"),
 							Groups: &[]string{"wheel"},
+						},
+					},
+					CustomRepositories: &[]composer.CustomRepository{
+						{
+							Id:       "some-repo-id",
+							Baseurl:  &[]string{"https://some-repo-base-url.org"},
+							Gpgkey:   &[]string{"some-gpg-key"},
+							CheckGpg: common.BoolToPtr(true),
 						},
 					},
 				},
