@@ -846,6 +846,49 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		res.PayloadRepositories = &payloadRepositories
 	}
 
+	if cust.CustomRepositories != nil {
+		customRepositories := make([]composer.CustomRepository, len(*cust.CustomRepositories))
+		for i, customRepository := range *cust.CustomRepositories {
+			if customRepository.Id != "" {
+				customRepositories[i].Id = customRepository.Id
+			}
+			if customRepository.Name != nil {
+				customRepositories[i].Name = customRepository.Name
+			}
+			if customRepository.Filename != nil {
+				customRepositories[i].Filename = customRepository.Filename
+			}
+			if customRepository.Baseurl != nil {
+				customRepositories[i].Baseurl = customRepository.Baseurl
+			}
+			if customRepository.Baseurl != nil {
+				customRepositories[i].Baseurl = customRepository.Baseurl
+			}
+			if customRepository.CheckGpg != nil {
+				customRepositories[i].CheckGpg = customRepository.CheckGpg
+			}
+			if customRepository.CheckRepoGpg != nil {
+				customRepositories[i].CheckRepoGpg = customRepository.CheckRepoGpg
+			}
+			if customRepository.Gpgkey != nil {
+				customRepositories[i].Gpgkey = customRepository.Gpgkey
+			}
+			if customRepository.SslVerify != nil {
+				customRepositories[i].SslVerify = customRepository.SslVerify
+			}
+			if customRepository.Metalink != nil {
+				customRepositories[i].Metalink = customRepository.Metalink
+			}
+			if customRepository.Mirrorlist != nil {
+				customRepositories[i].Mirrorlist = customRepository.Mirrorlist
+			}
+			if customRepository.Priority != nil {
+				customRepositories[i].Priority = customRepository.Priority
+			}
+		}
+		res.CustomRepositories = &customRepositories
+	}
+
 	if cust.Filesystem != nil && len(*cust.Filesystem) > 1 {
 		var fsc []composer.Filesystem
 		for _, v := range *cust.Filesystem {
