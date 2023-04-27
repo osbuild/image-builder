@@ -210,9 +210,6 @@ function instanceCheck() {
   set -eu
   [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]
 
-  # Verify yum install a small package. It will fail if no available repo.
-  $_ssh sudo dnf -y install dos2unix
-
   # Unregister subscription
   $_ssh sudo subscription-manager unregister
 }
