@@ -861,9 +861,6 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			if customRepository.Baseurl != nil {
 				customRepositories[i].Baseurl = customRepository.Baseurl
 			}
-			if customRepository.Baseurl != nil {
-				customRepositories[i].Baseurl = customRepository.Baseurl
-			}
 			if customRepository.CheckGpg != nil {
 				customRepositories[i].CheckGpg = customRepository.CheckGpg
 			}
@@ -884,6 +881,9 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			}
 			if customRepository.Priority != nil {
 				customRepositories[i].Priority = customRepository.Priority
+			}
+			if customRepository.Enabled != nil {
+				customRepositories[i].Enabled = customRepository.Enabled
 			}
 		}
 		res.CustomRepositories = &customRepositories

@@ -947,6 +947,8 @@ components:
           type: boolean
         check_repo_gpg:
           type: boolean
+        enabled:
+          type: boolean
         priority:
           type: integer
         ssl_verify:
