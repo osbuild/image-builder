@@ -258,6 +258,7 @@ type CustomRepository struct {
 	Baseurl      *[]string `json:"baseurl,omitempty"`
 	CheckGpg     *bool     `json:"check_gpg,omitempty"`
 	CheckRepoGpg *bool     `json:"check_repo_gpg,omitempty"`
+	Enabled      *bool     `json:"enabled,omitempty"`
 	Filename     *string   `json:"filename,omitempty"`
 
 	// GPG key used to sign packages in this repository. Can be a gpg key or a URL
