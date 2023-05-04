@@ -34,7 +34,7 @@ func GetResponseError(url string) (*http.Response, error) {
 	return client.Do(request)
 }
 
-func GetResponseBody(t *testing.T, url string, auth *string) (*http.Response, string) {
+func GetResponseBody(t *testing.T, url string, auth *string) (int, string) {
 	client := &http.Client{}
 	request, err := http.NewRequest("GET", url, nil)
 	require.NoError(t, err)
@@ -44,17 +44,18 @@ func GetResponseBody(t *testing.T, url string, auth *string) (*http.Response, st
 
 	response, err := client.Do(request)
 	require.NoError(t, err)
+	if err != nil {
+		/* #nosec G307 */
+		defer response.Body.Close()
+	}
 
 	body, err := io.ReadAll(response.Body)
 	require.NoError(t, err)
 
-	err = response.Body.Close()
-	require.NoError(t, err)
-
-	return response, string(body)
+	return response.StatusCode, string(body)
 }
 
-func PostResponseBody(t *testing.T, url string, compose interface{}) (*http.Response, string) {
+func PostResponseBody(t *testing.T, url string, compose interface{}) (int, string) {
 	buf, err := json.Marshal(compose)
 	require.NoError(t, err)
 
@@ -66,14 +67,15 @@ func PostResponseBody(t *testing.T, url string, compose interface{}) (*http.Resp
 
 	response, err := client.Do(request)
 	require.NoError(t, err)
+	if err != nil {
+		/* #nosec G307 */
+		defer response.Body.Close()
+	}
 
 	body, err := io.ReadAll(response.Body)
 	require.NoError(t, err)
 
-	err = response.Body.Close()
-	require.NoError(t, err)
-
-	return response, string(body)
+	return response.StatusCode, string(body)
 }
 
 type dB struct {

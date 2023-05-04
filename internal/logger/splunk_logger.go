@@ -111,6 +111,11 @@ func (sl *SplunkLogger) SendPayloads(payloads []*SplunkPayload) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to close response body when sending payloads")
+		}
+	}()
 
 	if res.StatusCode != http.StatusOK {
 		buf := bytes.Buffer{}
