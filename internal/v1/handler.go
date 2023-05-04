@@ -620,6 +620,7 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 					logrus.Error(err)
 					return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
 				}
+				defer closeBody(resp.Body)
 
 				var uploadInfo provisioning.V1SourceUploadInfoResponse
 				err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
@@ -721,6 +722,7 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 				logrus.Error(err)
 				return nil, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", *azureOptions.SourceId))
 			}
+			defer closeBody(resp.Body)
 
 			var uploadInfo provisioning.V1SourceUploadInfoResponse
 			err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
@@ -961,6 +963,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 					logrus.Error(err)
 					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
 				}
+				defer closeBody(resp.Body)
 
 				var uploadInfo provisioning.V1SourceUploadInfoResponse
 				err = json.NewDecoder(resp.Body).Decode(&uploadInfo)

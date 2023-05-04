@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type ComposerClient struct {
@@ -153,6 +154,11 @@ func (cc *ComposerClient) refreshToken() error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.Errorf("Error closing body after refreshing composer client token: %v", err)
+		}
+	}()
 
 	var tr tokenResponse
 	err = json.NewDecoder(resp.Body).Decode(&tr)

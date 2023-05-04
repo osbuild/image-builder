@@ -140,6 +140,9 @@ func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, dis
 	tries := 0
 	for tries < 5 {
 		resp, err := tutils.GetResponseError("http://localhost:8086/status")
+		if err == nil {
+			defer resp.Body.Close()
+		}
 		if err == nil && resp.StatusCode == http.StatusOK {
 			break
 		} else if tries == 4 {
@@ -173,14 +176,14 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	defer tokenSrv.Close()
 
 	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", nil)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", nil)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, "missing x-rh-identity header")
 	})
 
 	t.Run("GetVersion", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
 
 		var result Version
 		err := json.Unmarshal([]byte(body), &result)
@@ -189,14 +192,14 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetOpenapiJson", func(t *testing.T) {
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/openapi.json", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/openapi.json", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
 		// note: not asserting body b/c response is too big
 	})
 
 	t.Run("GetDistributions", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
 
 		var result DistributionsResponse
 		err := json.Unmarshal([]byte(body), &result)
@@ -208,8 +211,8 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetArchitectures", func(t *testing.T) {
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-8", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-8", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
 
 		var result Architectures
 		err := json.Unmarshal([]byte(body), &result)
@@ -252,8 +255,8 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	t.Run("GetPackages", func(t *testing.T) {
 		architectures := []string{"x86_64", "aarch64"}
 		for _, arch := range architectures {
-			response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh", arch), &tutils.AuthString0)
-			require.Equal(t, 200, response.StatusCode)
+			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
 
 			var result PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
@@ -264,82 +267,82 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 			p1 := result.Data[0]
 			p2 := result.Data[1]
 
-			response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
-			require.Equal(t, 200, response.StatusCode)
+			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
 			err = json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Empty(t, result.Data)
 			require.Contains(t, body, "\"data\":[]")
 
-			response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?offset=121039&distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
-			require.Equal(t, 200, response.StatusCode)
+			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?offset=121039&distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
 			err = json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Empty(t, result.Data)
 			require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=%s&offset=0&limit=100", arch), result.Links.First)
 			require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=%s&offset=0&limit=100", arch), result.Links.Last)
 
-			response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1", arch), &tutils.AuthString0)
-			require.Equal(t, 200, response.StatusCode)
+			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
 			err = json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Greater(t, result.Meta.Count, 1)
 			require.Equal(t, result.Data[0], p1)
 
-			response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1&offset=1", arch), &tutils.AuthString0)
-			require.Equal(t, 200, response.StatusCode)
+			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1&offset=1", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
 			err = json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Greater(t, result.Meta.Count, 1)
 			require.Equal(t, result.Data[0], p2)
 
-			response, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=-13", arch), &tutils.AuthString0)
-			require.Equal(t, 400, response.StatusCode)
-			response, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=13&offset=-2193", arch), &tutils.AuthString0)
-			require.Equal(t, 400, response.StatusCode)
+			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=-13", arch), &tutils.AuthString0)
+			require.Equal(t, 400, respStatusCode)
+			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=13&offset=-2193", arch), &tutils.AuthString0)
+			require.Equal(t, 400, respStatusCode)
 
-			response, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=%s&search=ssh", arch), &tutils.AuthString0)
-			require.Equal(t, 400, response.StatusCode)
+			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=%s&search=ssh", arch), &tutils.AuthString0)
+			require.Equal(t, 400, respStatusCode)
 		}
 	})
 
 	t.Run("AccountNumberFallback", func(t *testing.T) {
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0WithoutEntitlements)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0WithoutEntitlements)
+		require.Equal(t, 200, respStatusCode)
 	})
 
 	t.Run("BogusAuthString", func(t *testing.T) {
 		auth := "notbase64"
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, "unable to b64 decode x-rh-identity header")
 	})
 
 	t.Run("BogusBase64AuthString", func(t *testing.T) {
 		auth := "dGhpcyBpcyBkZWZpbml0ZWx5IG5vdCBqc29uCg=="
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, "does not contain valid JSON")
 	})
 
 	t.Run("EmptyAccountNumber", func(t *testing.T) {
 		// AccoundNumber equals ""
 		auth := tutils.GetCompleteBase64Header("000000")
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 200, respStatusCode)
 	})
 
 	t.Run("EmptyOrgID", func(t *testing.T) {
 		// OrgID equals ""
 		auth := tutils.GetCompleteBase64Header("")
-		response, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &auth)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, "invalid or missing org_id")
 	})
 
 	t.Run("StatusCheck", func(t *testing.T) {
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/status", nil)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/status", nil)
+		require.Equal(t, 200, respStatusCode)
 	})
 }
 
@@ -352,8 +355,8 @@ func TestOrgIdWildcard(t *testing.T) {
 	defer tokenSrv.Close()
 
 	t.Run("Authorized", func(t *testing.T) {
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
 	})
 }
 
@@ -366,8 +369,8 @@ func TestAccountNumberWildcard(t *testing.T) {
 	defer tokenSrv.Close()
 
 	t.Run("Authorized", func(t *testing.T) {
-		response, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
-		require.Equal(t, 200, response.StatusCode)
+		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
 	})
 }
 
@@ -404,9 +407,9 @@ func TestGetComposeStatus(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		UUIDTest), &tutils.AuthString1)
-	require.Equal(t, 200, response.StatusCode)
+	require.Equal(t, 200, respStatusCode)
 
 	var result ComposeStatus
 	err = json.Unmarshal([]byte(body), &result)
@@ -417,9 +420,9 @@ func TestGetComposeStatus(t *testing.T) {
 		},
 	}, result)
 
-	response, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		UUIDTest), &tutils.AuthString1)
-	require.Equal(t, 200, response.StatusCode)
+	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, ComposeStatus{
@@ -451,9 +454,9 @@ func TestGetComposeStatus404(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		UUIDTest), &tutils.AuthString0)
-	require.Equal(t, 404, response.StatusCode)
+	require.Equal(t, 404, respStatusCode)
 	require.Contains(t, body, "Compose not found")
 }
 
@@ -514,9 +517,9 @@ func TestGetComposeMetadata(t *testing.T) {
 	var result composer.ComposeMetadata
 
 	// Get API response and compare
-	response, body := tutils.GetResponseBody(t,
+	respStatusCode, body := tutils.GetResponseBody(t,
 		fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata", UUIDTest), &tutils.AuthString0)
-	require.Equal(t, 200, response.StatusCode)
+	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, *result.Packages, testPackages)
@@ -543,9 +546,9 @@ func TestGetComposeMetadata404(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata",
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata",
 		UUIDTest), &tutils.AuthString0)
-	require.Equal(t, 404, response.StatusCode)
+	require.Equal(t, 404, respStatusCode)
 	require.Contains(t, body, "Compose not found")
 }
 
@@ -563,9 +566,9 @@ func TestGetComposes(t *testing.T) {
 	defer tokenSrv.Close()
 
 	var result ComposesResponse
-	resp, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
 
-	require.Equal(t, 200, resp.StatusCode)
+	require.Equal(t, 200, respStatusCode)
 	err := json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, 0, result.Meta.Count)
@@ -582,8 +585,8 @@ func TestGetComposes(t *testing.T) {
 	composeEntry, err := dbase.GetCompose(UUIDTest, "000000")
 	require.NoError(t, err)
 
-	resp, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
-	require.Equal(t, 200, resp.StatusCode)
+	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
+	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, 3, result.Meta.Count)
@@ -608,8 +611,8 @@ func TestComposeImage(t *testing.T) {
 			Distribution:   "centos-8",
 			ImageRequests:  []ImageRequest{},
 		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, `Error at \"/image_requests\": minimum number of items is 1`)
 	})
 
@@ -640,8 +643,8 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, `Error at \"/image_requests\": maximum number of items is 1`)
 	})
 
@@ -660,8 +663,8 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, "Expected at least one source or account to share the image with")
 	})
 
@@ -714,8 +717,8 @@ func TestComposeImage(t *testing.T) {
 				Distribution:   "centos-8",
 				ImageRequests:  []ImageRequest{tc.request},
 			}
-			response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-			require.Equal(t, 400, response.StatusCode)
+			respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+			require.Equal(t, 400, respStatusCode)
 			require.Contains(t, body, "Request must contain either (1) a source id, and no tenant or subscription ids or (2) tenant and subscription ids, and no source id.")
 		})
 	}
@@ -732,8 +735,8 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, respStatusCode)
 		require.Regexp(t, "image_requests/0/upload_request/options|image_requests/0/upload_request/type", body)
 		require.Regexp(t, "Value is not nullable|value is not one of the allowed values", body)
 	})
@@ -757,8 +760,8 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, "Error at \\\"/image_requests/0/architecture\\\"")
 	})
 
@@ -795,8 +798,8 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, "User customization only applies to installer image types")
 	})
 
@@ -818,8 +821,8 @@ func TestComposeImage(t *testing.T) {
 				},
 			},
 		}
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, 400, respStatusCode)
 		require.Contains(t, body, "Error at \\\"/image_requests/0/upload_request/type\\\"")
 	})
 
@@ -867,16 +870,16 @@ func TestComposeImage(t *testing.T) {
 		for _, it := range []ImageTypes{ImageTypesAmi, ImageTypesAws} {
 			payload.ImageRequests[0].ImageType = it
 			payload.ImageRequests[0].UploadRequest = awsUr
-			response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-			require.Equal(t, 400, response.StatusCode)
+			respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+			require.Equal(t, 400, respStatusCode)
 			require.Contains(t, body, fmt.Sprintf("Total AWS image size cannot exceed %d bytes", FSMaxSize))
 		}
 
 		for _, it := range []ImageTypes{ImageTypesAzure, ImageTypesVhd} {
 			payload.ImageRequests[0].ImageType = it
 			payload.ImageRequests[0].UploadRequest = azureUr
-			response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-			require.Equal(t, 400, response.StatusCode)
+			respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+			require.Equal(t, 400, respStatusCode)
 			require.Contains(t, body, fmt.Sprintf("Total Azure image size cannot exceed %d bytes", FSMaxSize))
 		}
 	})
@@ -921,8 +924,8 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 			},
 		},
 	}
-	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-	require.Equal(t, http.StatusInternalServerError, response.StatusCode)
+	respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+	require.Equal(t, http.StatusInternalServerError, respStatusCode)
 	require.Contains(t, body, "Failed posting compose request to osbuild-composer")
 }
 
@@ -973,8 +976,8 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 			},
 		},
 	}
-	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-	require.Equal(t, 400, response.StatusCode)
+	respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+	require.Equal(t, 400, respStatusCode)
 	require.Contains(t, body, "Error resolving OSTree repo")
 }
 
@@ -1017,8 +1020,8 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 			},
 		},
 	}
-	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-	require.Equal(t, 500, response.StatusCode)
+	respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+	require.Equal(t, 500, respStatusCode)
 	require.Contains(t, body, "Internal Server Error")
 }
 
@@ -1063,8 +1066,8 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 			},
 		},
 	}
-	response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-	require.Equal(t, http.StatusCreated, response.StatusCode)
+	respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+	require.Equal(t, http.StatusCreated, respStatusCode)
 
 	var result ComposeResponse
 	err := json.Unmarshal([]byte(body), &result)
@@ -1126,8 +1129,8 @@ func TestComposeImageAllowList(t *testing.T) {
 
 		payload := createPayload("centos-8")
 
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, http.StatusCreated, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, http.StatusCreated, respStatusCode)
 
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
@@ -1149,8 +1152,8 @@ func TestComposeImageAllowList(t *testing.T) {
 
 		payload := createPayload("rhel-8")
 
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, http.StatusForbidden, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, http.StatusForbidden, respStatusCode)
 
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
@@ -1172,8 +1175,8 @@ func TestComposeImageAllowList(t *testing.T) {
 
 		payload := createPayload("centos-8")
 
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, http.StatusForbidden, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+		require.Equal(t, http.StatusForbidden, respStatusCode)
 
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
@@ -1764,8 +1767,8 @@ func TestComposeCustomizations(t *testing.T) {
 
 	for idx, payload := range payloads {
 		fmt.Printf("TT payload %d\n", idx)
-		response, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload.imageBuilderRequest)
-		require.Equal(t, http.StatusCreated, response.StatusCode)
+		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload.imageBuilderRequest)
+		require.Equal(t, http.StatusCreated, respStatusCode)
 
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
@@ -1801,9 +1804,9 @@ func TestReadinessProbeNotReady(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	response, _ := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
-	require.NotEqual(t, 200, response.StatusCode)
-	require.NotEqual(t, 404, response.StatusCode)
+	respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
+	require.NotEqual(t, 200, respStatusCode)
+	require.NotEqual(t, 404, respStatusCode)
 }
 
 func TestReadinessProbeReady(t *testing.T) {
@@ -1827,8 +1830,8 @@ func TestReadinessProbeReady(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	response, body := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
-	require.Equal(t, 200, response.StatusCode)
+	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
+	require.Equal(t, 200, respStatusCode)
 	require.Contains(t, body, "{\"readiness\":\"ready\"}")
 }
 
@@ -1840,8 +1843,8 @@ func TestMetrics(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	response, body := tutils.GetResponseBody(t, "http://localhost:8086/metrics", nil)
-	require.Equal(t, 200, response.StatusCode)
+	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/metrics", nil)
+	require.Equal(t, 200, respStatusCode)
 	require.Contains(t, body, "image_builder_crc_compose_requests_total")
 	require.Contains(t, body, "image_builder_crc_compose_errors")
 }
@@ -1904,9 +1907,9 @@ func TestComposeStatusError(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	response, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		UUIDTest), &tutils.AuthString1)
-	require.Equal(t, 200, response.StatusCode)
+	require.Equal(t, 200, respStatusCode)
 
 	var result ComposeStatus
 	err = json.Unmarshal([]byte(body), &result)
@@ -1984,8 +1987,8 @@ func TestGetClones(t *testing.T) {
 	defer tokenSrv.Close()
 
 	var csResp ClonesResponse
-	resp, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &csResp)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(csResp.Data))
@@ -1995,16 +1998,16 @@ func TestGetClones(t *testing.T) {
 		Region:           "us-east-2",
 		ShareWithSources: &[]string{"1"},
 	}
-	resp, body = tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
-	require.Equal(t, http.StatusCreated, resp.StatusCode)
+	respStatusCode, body = tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
+	require.Equal(t, http.StatusCreated, respStatusCode)
 
 	var cResp CloneResponse
 	err = json.Unmarshal([]byte(body), &cResp)
 	require.NoError(t, err)
 	require.Equal(t, cloneId, cResp.Id)
 
-	resp, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &csResp)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(csResp.Data))
@@ -2072,8 +2075,8 @@ func TestGetCloneStatus(t *testing.T) {
 	cloneReq := AWSEC2Clone{
 		Region: "us-east-2",
 	}
-	resp, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
-	require.Equal(t, http.StatusCreated, resp.StatusCode)
+	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
+	require.Equal(t, http.StatusCreated, respStatusCode)
 
 	var cResp CloneResponse
 	err = json.Unmarshal([]byte(body), &cResp)
@@ -2081,9 +2084,9 @@ func TestGetCloneStatus(t *testing.T) {
 	require.Equal(t, cloneId, cResp.Id)
 
 	var usResp UploadStatus
-	resp, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/clones/%s", cloneId), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/clones/%s", cloneId), &tutils.AuthString0)
 
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &usResp)
 	require.NoError(t, err)
 	require.Equal(t, UploadStatusStatusSuccess, usResp.Status)
