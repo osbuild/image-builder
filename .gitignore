@@ -4,3 +4,6 @@ rpmbuild
 /image-builder-migrate-db
 /image-builder-migrate-db-tern
 dnf-json
+/.envrc
+/.fleet
+/.idea
