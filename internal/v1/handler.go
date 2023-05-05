@@ -195,7 +195,7 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 }
 
 func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error {
-	err := h.canUserAccessComposeId(ctx, composeId)
+	composeEntry, err := h.getComposeByIdAndOrgId(ctx, composeId)
 	if err != nil {
 		return err
 	}
@@ -224,6 +224,12 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 		return httpError
 	}
 
+	var composeRequest ComposeRequest
+	err = json.Unmarshal(composeEntry.Request, &composeRequest)
+	if err != nil {
+		return err
+	}
+
 	var cloudStat composer.ComposeStatus
 	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
 	if err != nil {
@@ -235,6 +241,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 			Status:       ImageStatusStatus(cloudStat.ImageStatus.Status),
 			UploadStatus: nil,
 		},
+		Request: composeRequest,
 	}
 
 	if cloudStat.ImageStatus.UploadStatus != nil {
@@ -358,22 +365,28 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) err
 	return ctx.JSON(http.StatusOK, status)
 }
 
-// return an error if the user does not have the composeId associated to its OrgID in the DB, nil otherwise
-func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId uuid.UUID) error {
+// return compose from the database or error when user does not have composeId associated to its OrgId in the DB
+func (h *Handlers) getComposeByIdAndOrgId(ctx echo.Context, composeId uuid.UUID) (*db.ComposeEntry, error) {
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = h.server.db.GetCompose(composeId, idHeader.Identity.OrgID)
+	composeEntry, err := h.server.db.GetCompose(composeId, idHeader.Identity.OrgID)
 	if err != nil {
 		if errors.Is(err, db.ComposeNotFoundError) {
-			return echo.NewHTTPError(http.StatusNotFound, err)
+			return nil, echo.NewHTTPError(http.StatusNotFound, err)
 		} else {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return composeEntry, nil
+}
+
+// return an error if the user does not have the composeId associated to its OrgID in the DB, nil otherwise
+func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId uuid.UUID) error {
+	_, err := h.getComposeByIdAndOrgId(ctx, composeId)
+	return err
 }
 
 func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error {

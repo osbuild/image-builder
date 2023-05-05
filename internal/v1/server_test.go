@@ -398,7 +398,12 @@ func TestGetComposeStatus(t *testing.T) {
 	// insert a compose in the mock database
 	dbase := tutils.InitDB()
 	imageName := "MyImageName"
-	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
+	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage(`
+		{
+			"distribution": "rhel-9",
+			"image_requests": [],
+			"image_name": "myimage"
+		}`))
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
@@ -419,6 +424,11 @@ func TestGetComposeStatus(t *testing.T) {
 		ImageStatus: ImageStatus{
 			Status: "building",
 		},
+		Request: ComposeRequest{
+			Distribution:  "rhel-9",
+			ImageName:     common.StringToPtr("myimage"),
+			ImageRequests: []ImageRequest{},
+		},
 	}, result)
 
 	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
@@ -429,6 +439,11 @@ func TestGetComposeStatus(t *testing.T) {
 	require.Equal(t, ComposeStatus{
 		ImageStatus: ImageStatus{
 			Status: "building",
+		},
+		Request: ComposeRequest{
+			Distribution:  "rhel-9",
+			ImageName:     common.StringToPtr("myimage"),
+			ImageRequests: []ImageRequest{},
 		},
 	}, result)
 }
@@ -1923,6 +1938,7 @@ func TestComposeStatusError(t *testing.T) {
 				Reason: "Marking errors: package",
 			},
 		},
+		Request: ComposeRequest{},
 	}, result)
 
 }

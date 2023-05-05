@@ -379,9 +379,12 @@ components:
     ComposeStatus:
       required:
         - image_status
+        - request
       properties:
         image_status:
           $ref: '#/components/schemas/ImageStatus'
+        request:
+          $ref: "#/components/schemas/ComposeRequest"
     ImageStatus:
       required:
        - status
