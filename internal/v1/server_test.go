@@ -119,6 +119,7 @@ func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, dis
 	require.NoError(t, err)
 
 	echoServer := echo.New()
+	echoServer.HideBanner = true
 	serverConfig := &ServerConfig{
 		EchoServer: echoServer,
 		CompClient: compClient,
