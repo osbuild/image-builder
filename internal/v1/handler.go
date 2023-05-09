@@ -73,7 +73,7 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 }
 
 func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
-	d, err := h.server.distroRegistry(ctx).Get(distroToStr(Distributions(distro)))
+	d, err := h.server.distroRegistry(ctx).Get(string(Distributions(distro)))
 	if err == distribution.DistributionNotFound {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -130,7 +130,7 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
 	dr := h.server.distroRegistry(ctx)
-	d, err := dr.Get(distroToStr(params.Distribution))
+	d, err := dr.Get(string(params.Distribution))
 	if err != nil {
 		return err
 	}
@@ -476,18 +476,18 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
-	d, err := h.server.distroRegistry(ctx).Get(distroToStr(composeRequest.Distribution))
+	d, err := h.server.distroRegistry(ctx).Get(string(composeRequest.Distribution))
 	if err != nil {
 		return err
 	}
 
 	if d.IsRestricted() {
-		allowOk, err := h.server.allowList.IsAllowed(idHeader.Identity.Internal.OrgID, distroToStr(composeRequest.Distribution))
+		allowOk, err := h.server.allowList.IsAllowed(idHeader.Identity.Internal.OrgID, string(composeRequest.Distribution))
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		if !allowOk {
-			message := fmt.Sprintf("This account's organization is not authorized to build %s images", distroToStr(composeRequest.Distribution))
+			message := fmt.Sprintf("This account's organization is not authorized to build %s images", string(composeRequest.Distribution))
 			return echo.NewHTTPError(http.StatusForbidden, message)
 		}
 	}
@@ -526,7 +526,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 
 	cloudCR := composer.ComposeRequest{
-		Distribution:   distroToStr(composeRequest.Distribution),
+		Distribution:   string(composeRequest.Distribution),
 		Customizations: buildCustomizations(composeRequest.Customizations),
 		ImageRequest: &composer.ImageRequest{
 			Architecture:  string(composeRequest.ImageRequests[0].Architecture),
@@ -583,15 +583,6 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, ComposeResponse{
 		Id: composeResult.Id,
 	})
-}
-
-func distroToStr(distro Distributions) string {
-	switch distro {
-	case Rhel8:
-		return string(Rhel86)
-	default:
-		return string(distro)
-	}
 }
 
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
