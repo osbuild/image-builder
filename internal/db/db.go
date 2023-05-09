@@ -26,6 +26,8 @@ type DB interface {
 	InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error
 	GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
 	GetClone(id uuid.UUID, orgId string) (*CloneEntry, error)
+
+	Close() error
 }
 
 type ComposeEntry struct {
@@ -52,4 +54,8 @@ const (
 type dB struct {
 	pool   *sql.DB
 	dbType DBType
+}
+
+func (d *dB) Close() error {
+	return d.pool.Close()
 }

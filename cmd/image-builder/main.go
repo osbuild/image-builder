@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/labstack/gommon/random"
 	"github.com/osbuild/image-builder/internal/common"
@@ -61,6 +64,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer dbase.Close()
 
 	composerConf := composer.ComposerClientConfig{
 		ComposerURL:  conf.ComposerURL,
@@ -144,9 +148,20 @@ func main() {
 		panic(err)
 	}
 
-	logrus.Infof("🚀 Starting image-builder server on %v ...\n", conf.ListenAddress)
-	err = echoServer.Start(conf.ListenAddress)
-	if err != nil {
-		panic(err)
-	}
+	go func() {
+		logrus.Infof("🚀 Starting image-builder server on %v ...\n", conf.ListenAddress)
+		err = echoServer.Start(conf.ListenAddress)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	sigint := make(chan os.Signal, 1)
+
+	signal.Notify(sigint, syscall.SIGTERM)
+	signal.Notify(sigint, syscall.SIGINT)
+
+	// block until interrupted
+	<-sigint
+	logrus.Info("Shutting down")
 }
