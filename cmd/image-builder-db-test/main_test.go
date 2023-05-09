@@ -238,6 +238,35 @@ func testGetComposeImageType(t *testing.T) {
 	require.Error(t, err)
 }
 
+func testDeleteCompose(t *testing.T) {
+	d, err := db.InitDBConnectionPool(connStr(t))
+	require.NoError(t, err)
+	conn := connect(t)
+	defer conn.Close(context.Background())
+
+	composeId := uuid.New()
+	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
+	_, err = conn.Exec(context.Background(), insert, composeId, "{}", ANR1, ORGID1)
+
+	err = d.DeleteCompose(composeId, ORGID2)
+	require.Equal(t, db.ComposeNotFoundError, err)
+
+	err = d.DeleteCompose(uuid.New(), ORGID1)
+	require.Equal(t, db.ComposeNotFoundError, err)
+
+	err = d.DeleteCompose(composeId, ORGID1)
+	require.NoError(t, err)
+
+	_, count, err := d.GetComposes(ORGID1, fortnight, 100, 0)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
+
+	// delete composes still counts towards quota
+	count, err = d.CountComposesSince(ORGID1, fortnight)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+}
+
 func testClones(t *testing.T) {
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
@@ -317,6 +346,7 @@ func TestMain(t *testing.T) {
 		testGetCompose,
 		testCountComposesSince,
 		testGetComposeImageType,
+		testDeleteCompose,
 		testClones,
 	}
 

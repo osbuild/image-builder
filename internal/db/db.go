@@ -38,6 +38,7 @@ type DB interface {
 	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
 	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
 	CountComposesSince(orgId string, duration time.Duration) (int, error)
+	DeleteCompose(jobId uuid.UUID, orgId string) error
 
 	InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error
 	GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
@@ -51,24 +52,36 @@ const (
 
 	sqlGetComposes = `
 		SELECT job_id, request, created_at, image_name
-		FROM composes WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2
+		FROM composes
+		WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2 AND deleted=FALSE
 		ORDER BY created_at DESC
 		LIMIT $3 OFFSET $4`
 
 	sqlGetCompose = `
 		SELECT job_id, request, created_at, image_name
 		FROM composes
-		WHERE org_id=$1 AND job_id=$2`
+		WHERE org_id=$1 AND job_id=$2 AND deleted=FALSE`
 
 	sqlGetComposeImageType = `
 		SELECT req->>'image_type'
 		FROM composes,jsonb_array_elements(composes.request->'image_requests') as req
 		WHERE org_id=$1 AND job_id = $2`
 
+	sqlCountActiveComposesSince = `
+		SELECT COUNT(*)
+		FROM composes
+		WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2 AND deleted = FALSE`
+
 	sqlCountComposesSince = `
 		SELECT COUNT(*)
 		FROM composes
 		WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2`
+
+	sqlDeleteCompose = `
+		UPDATE composes
+		SET deleted = TRUE
+		WHERE org_id=$1 AND job_id=$2
+        `
 
 	sqlInsertClone = `
 		INSERT INTO clones(id, compose_id, request, created_at)
@@ -208,7 +221,7 @@ func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int) 
 	}
 
 	var count int
-	err = conn.QueryRow(ctx, sqlCountComposesSince, orgId, since).Scan(&count)
+	err = conn.QueryRow(ctx, sqlCountActiveComposesSince, orgId, since).Scan(&count)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -233,6 +246,22 @@ func (db *dB) CountComposesSince(orgId string, duration time.Duration) (int, err
 	}
 
 	return count, nil
+}
+
+func (db *dB) DeleteCompose(jobId uuid.UUID, orgId string) error {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+
+	tag, err := conn.Exec(ctx, sqlDeleteCompose, orgId, jobId)
+	if tag.RowsAffected() != 1 {
+		return ComposeNotFoundError
+	}
+
+	return err
 }
 
 func (db *dB) InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error {
