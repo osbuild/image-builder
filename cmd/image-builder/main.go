@@ -57,7 +57,7 @@ func main() {
 	}
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase, conf.PGSSLMode)
-	dbase, err := db.InitDBConnectionPool(connStr)
+	dbase, err := db.PSQL(connStr)
 	if err != nil {
 		panic(err)
 	}

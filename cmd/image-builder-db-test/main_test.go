@@ -82,7 +82,7 @@ func tearDown(t *testing.T) {
 }
 
 func testInsertCompose(t *testing.T) {
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.PSQL(connStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
@@ -97,7 +97,7 @@ func testInsertCompose(t *testing.T) {
 }
 
 func testGetCompose(t *testing.T) {
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.PSQL(connStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
@@ -137,7 +137,7 @@ func testGetCompose(t *testing.T) {
 }
 
 func testCountComposesSince(t *testing.T) {
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.PSQL(connStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
@@ -170,7 +170,7 @@ func testCountComposesSince(t *testing.T) {
 }
 
 func testCountGetComposesSince(t *testing.T) {
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.PSQL(connStr(t))
 	require.NoError(t, err)
 
 	conn := connect(t)
@@ -203,7 +203,7 @@ func testCountGetComposesSince(t *testing.T) {
 }
 
 func testGetComposeImageType(t *testing.T) {
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.PSQL(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
 	defer conn.Close(context.Background())
@@ -239,7 +239,7 @@ func testGetComposeImageType(t *testing.T) {
 }
 
 func testDeleteCompose(t *testing.T) {
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.PSQL(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
 	defer conn.Close(context.Background())
@@ -268,7 +268,7 @@ func testDeleteCompose(t *testing.T) {
 }
 
 func testClones(t *testing.T) {
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.PSQL(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
 	defer conn.Close(context.Background())
