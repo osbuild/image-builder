@@ -1434,7 +1434,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-86",
+				Distribution: "rhel-8",
 				Customizations: &composer.Customizations{
 					Packages: nil,
 				},
@@ -1446,7 +1446,7 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/baseos/os"),
+							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.7/x86_64/baseos/os"),
 							CheckGpg:    nil,
 							Gpgkey:      nil,
 							IgnoreSsl:   nil,
@@ -1456,7 +1456,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Rhsm:        common.BoolToPtr(true),
 						},
 						{
-							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/appstream/os"),
+							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.7/x86_64/appstream/os"),
 							CheckGpg:    nil,
 							Gpgkey:      nil,
 							IgnoreSsl:   nil,
