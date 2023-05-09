@@ -1,6 +1,8 @@
 # Use a builder container to build the Go application (which we extract in
 # the second container).
-FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
+# TODO latest go toolset (1.19) is broken
+# FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:1.18.10 AS builder
 WORKDIR $GOPATH/go/src/github.com/osbuild/image-builder
 COPY . .
 ENV GOFLAGS=-mod=vendor
