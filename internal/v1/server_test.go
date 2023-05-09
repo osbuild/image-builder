@@ -157,11 +157,15 @@ func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, dis
 }
 
 func startServer(t *testing.T, url, provURL string) (*echo.Echo, *httptest.Server) {
-	return startServerWithCustomDB(t, url, provURL, tutils.InitDB(), "../../distributions", "")
+	dbase, err := db.SQLite(t.TempDir(), "../db/migrations-sqlite")
+	require.NoError(t, err)
+	return startServerWithCustomDB(t, url, provURL, dbase, "../../distributions", "")
 }
 
 func startServerWithAllowFile(t *testing.T, url, provURL, string, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
-	return startServerWithCustomDB(t, url, provURL, tutils.InitDB(), distsDir, allowFile)
+	dbase, err := db.SQLite(t.TempDir(), "../db/migrations-sqlite")
+	require.NoError(t, err)
+	return startServerWithCustomDB(t, url, provURL, dbase, distsDir, allowFile)
 }
 
 // note: all of the sub-tests below don't actually talk to
@@ -396,9 +400,10 @@ func TestGetComposeStatus(t *testing.T) {
 	defer apiSrv.Close()
 
 	// insert a compose in the mock database
-	dbase := tutils.InitDB()
+	dbase, err := db.SQLite(t.TempDir(), "../db/migrations-sqlite")
+	require.NoError(t, err)
 	imageName := "MyImageName"
-	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage(`
+	err = dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage(`
 		{
 			"distribution": "rhel-9",
 			"image_requests": [],
@@ -518,9 +523,10 @@ func TestGetComposeMetadata(t *testing.T) {
 	defer apiSrv.Close()
 
 	// insert a compose in the mock database
-	dbase := tutils.InitDB()
+	dbase, err := db.SQLite(t.TempDir(), "../db/migrations-sqlite")
+	require.NoError(t, err)
 	imageName := "MyImageName"
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
+	err = dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
@@ -572,7 +578,8 @@ func TestGetComposes(t *testing.T) {
 	var UUIDTest2 = uuid.MustParse("d1f631ff-b3a6-4eec-aa99-9e81d99bc222")
 	var UUIDTest3 = uuid.MustParse("d1f631ff-b3a6-4eec-aa99-9e81d99bc333")
 
-	dbase := tutils.InitDB()
+	dbase, err := db.SQLite(t.TempDir(), "../db/migrations-sqlite")
+	require.NoError(t, err)
 
 	db_srv, tokenSrv := startServerWithCustomDB(t, "", "", dbase, "../../distributions", "")
 	defer func() {
@@ -585,7 +592,7 @@ func TestGetComposes(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
 
 	require.Equal(t, 200, respStatusCode)
-	err := json.Unmarshal([]byte(body), &result)
+	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, 0, result.Meta.Count)
 	require.Contains(t, body, "\"data\":[]")
@@ -1222,7 +1229,7 @@ func TestComposeCustomizations(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
-			Id: uuid.MustParse("fe93fb55-ae04-4e21-a8b4-25ba95c3fa64"),
+			Id: uuid.New(),
 		}
 		err = json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
@@ -1789,7 +1796,7 @@ func TestComposeCustomizations(t *testing.T) {
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
-		require.Equal(t, uuid.MustParse("fe93fb55-ae04-4e21-a8b4-25ba95c3fa64"), result.Id)
+		require.NotEqual(t, uuid.Nil, result.Id)
 
 		//compare expected compose request with actual receieved compose request
 		require.Equal(t, payload.composerRequest, composerRequest)
@@ -1911,9 +1918,10 @@ func TestComposeStatusError(t *testing.T) {
 	defer apiSrv.Close()
 
 	// insert a compose in the mock database
-	dbase := tutils.InitDB()
+	dbase, err := db.SQLite(t.TempDir(), "../db/migrations-sqlite")
+	require.NoError(t, err)
 	imageName := "MyImageName"
-	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
+	err = dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
@@ -1986,12 +1994,13 @@ func TestGetClones(t *testing.T) {
 	}))
 	defer provSrv.Close()
 
-	dbase := tutils.InitDB()
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
+	dbase, err := db.SQLite(t.TempDir(), "../db/migrations-sqlite")
+	require.NoError(t, err)
+	err = dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
 {
   "image_requests": [
     {
-      "image_type": "aws",
+      "image_type": "aws"
     }
   ]
 }`))
@@ -2072,12 +2081,13 @@ func TestGetCloneStatus(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase := tutils.InitDB()
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
+	dbase, err := db.SQLite(t.TempDir(), "../db/migrations-sqlite")
+	require.NoError(t, err)
+	err = dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
 {
   "image_requests": [
     {
-      "image_type": "aws",
+      "image_type": "aws"
     }
   ]
 }`))
