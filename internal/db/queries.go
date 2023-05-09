@@ -33,6 +33,11 @@ const (
 		FROM composes,jsonb_array_elements(composes.request->'image_requests') as req
 		WHERE org_id=$1 AND job_id = $2`
 
+	sqlGetComposeImageTypeSQLite = `
+		SELECT composes.request->>'$.image_requests[0].image_type'
+		FROM composes
+		WHERE org_id=$1 AND job_id = $2`
+
 	sqlCountActiveComposesSince = `
 		SELECT COUNT(*)
 		FROM composes
@@ -107,6 +112,7 @@ func (d *dB) GetComposeImageType(jobId uuid.UUID, orgId string) (string, error) 
 		if d.dbType == dbTypePSQL {
 			return sqlGetComposeImageTypePSQL
 		}
+		return sqlGetComposeImageTypeSQLite
 	}
 
 	ctx := context.Background()

@@ -13,6 +13,8 @@ import (
 var ComposeNotFoundError = errors.New("Compose not found")
 var CloneNotFoundError = errors.New("Clone not found")
 
+var UnsupportedQuery = errors.New("Unsupported query")
+
 type DB interface {
 	InsertCompose(jobId uuid.UUID, accountNumber, orgId string, imageName *string, request json.RawMessage) error
 	GetComposes(orgId string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error)
