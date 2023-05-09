@@ -106,17 +106,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComposesResponse'
   /composes/{composeId}:
+    parameters:
+      - in: path
+        name: composeId
+        schema:
+          type: string
+          format: uuid
+          example: '123e4567-e89b-12d3-a456-426655440000'
+        required: true
+        description: Id of compose
     get:
       summary: get status of an image compose
-      parameters:
-        - in: path
-          name: composeId
-          schema:
-            type: string
-            format: uuid
-            example: '123e4567-e89b-12d3-a456-426655440000'
-          required: true
-          description: Id of compose status to get
       description: "status of an image compose"
       operationId: getComposeStatus
       responses:
@@ -126,6 +126,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ComposeStatus'
+    delete:
+      summary: delete a compose
+      description: |
+        Deletes a compose, the compose will still count towards quota.
+      operationId: deleteCompose
+      responses:
+        200:
+          description: OK
   /composes/{composeId}/metadata:
     get:
       summary: get metadata of an image compose

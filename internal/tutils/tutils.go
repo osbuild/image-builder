@@ -126,6 +126,10 @@ func (d *dB) GetCompose(jobId uuid.UUID, orgId string) (*db.ComposeEntry, error)
 	return nil, db.ComposeNotFoundError
 }
 
+func (d *dB) DeleteCompose(jobId uuid.UUID, orgId string) error {
+	return nil
+}
+
 func (d *dB) CountComposesSince(orgId string, duration time.Duration) (int, error) {
 	_, count, err := d.GetComposes(orgId, duration, 100, 0)
 	return count, err
