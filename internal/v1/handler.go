@@ -306,6 +306,23 @@ func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeSt
 	}
 }
 
+func (h *Handlers) DeleteCompose(ctx echo.Context, composeId uuid.UUID) error {
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = h.server.db.DeleteCompose(composeId, idHeader.Identity.OrgID)
+	if err != nil {
+		if errors.Is(err, db.ComposeNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return ctx.NoContent(http.StatusOK)
+}
+
 func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) error {
 	err := h.canUserAccessComposeId(ctx, composeId)
 	if err != nil {
