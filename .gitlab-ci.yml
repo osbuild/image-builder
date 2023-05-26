@@ -39,8 +39,8 @@ build:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-8.6-ga-aarch64
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.7-ga-aarch64
 
 Test EL8:
   stage: test
@@ -58,7 +58,7 @@ Test EL8:
           - azure
           - gcp
         RUNNER:
-          - aws/rhel-8.6-ga-x86_64
+          - aws/rhel-8.7-ga-x86_64
 
 Test EL8/aarch64:
   stage: test
@@ -74,7 +74,7 @@ Test EL8/aarch64:
       - PROVIDER:
           - aws
         RUNNER:
-          - aws/rhel-8.6-ga-aarch64
+          - aws/rhel-8.7-ga-aarch64
 
 Test Load Test:
   stage: test
@@ -87,7 +87,7 @@ Test Load Test:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-ga-x86_64
+          - aws/rhel-8.7-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 SonarQube:
@@ -96,7 +96,7 @@ SonarQube:
   script:
     - schutzbot/sonarqube.sh
   variables:
-    RUNNER: aws/centos-stream-8-x86_64
+    RUNNER: aws/rhel-8.7-ga-x86_64
     INTERNAL_NETWORK: "true"
     GIT_DEPTH: 0
 
