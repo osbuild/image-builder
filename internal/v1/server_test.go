@@ -207,7 +207,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, distro := range result {
-			require.Contains(t, []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-9", "rhel-90", "rhel-91", "rhel-92", "centos-8", "centos-9", "fedora-35", "fedora-36", "fedora-37", "fedora-38"}, distro.Name)
+			require.Contains(t, []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-9", "rhel-90", "rhel-91", "rhel-92", "centos-8", "centos-9", "fedora-35", "fedora-36", "fedora-37", "fedora-38"}, distro.Name)
 		}
 	})
 
@@ -1446,7 +1446,7 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.7/x86_64/baseos/os"),
+							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/baseos/os"),
 							CheckGpg:    nil,
 							Gpgkey:      nil,
 							IgnoreSsl:   nil,
@@ -1456,7 +1456,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Rhsm:        common.BoolToPtr(true),
 						},
 						{
-							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.7/x86_64/appstream/os"),
+							Baseurl:     common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/appstream/os"),
 							CheckGpg:    nil,
 							Gpgkey:      nil,
 							IgnoreSsl:   nil,
