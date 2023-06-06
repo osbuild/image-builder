@@ -50,6 +50,7 @@ const (
 	ImageTypesIotInstaller   ImageTypes = "iot-installer"
 	ImageTypesIotRawImage    ImageTypes = "iot-raw-image"
 	ImageTypesVsphere        ImageTypes = "vsphere"
+	ImageTypesVsphereOva     ImageTypes = "vsphere-ova"
 )
 
 // Defines values for UploadStatusValue.
@@ -250,35 +251,30 @@ type ContainerUploadStatus struct {
 	Url string `json:"url"`
 }
 
-// Repository configuration for custom repositories.
-// At least one of the 'baseurl', 'mirrorlist', 'metalink' properties must
-// be specified. If more of them are specified, the order of precedence is
-// the same as listed above. Id is required.
+// CustomRepository defines model for CustomRepository.
 type CustomRepository struct {
 	Baseurl      *[]string `json:"baseurl,omitempty"`
 	CheckGpg     *bool     `json:"check_gpg,omitempty"`
 	CheckRepoGpg *bool     `json:"check_repo_gpg,omitempty"`
 	Enabled      *bool     `json:"enabled,omitempty"`
 	Filename     *string   `json:"filename,omitempty"`
-
-	// GPG key used to sign packages in this repository. Can be a gpg key or a URL
-	Gpgkey     *[]string `json:"gpgkey,omitempty"`
-	Id         string    `json:"id"`
-	Metalink   *string   `json:"metalink,omitempty"`
-	Mirrorlist *string   `json:"mirrorlist,omitempty"`
-	Name       *string   `json:"name,omitempty"`
-	Priority   *int      `json:"priority,omitempty"`
-	SslVerify  *bool     `json:"ssl_verify,omitempty"`
+	Gpgkey       *[]string `json:"gpgkey,omitempty"`
+	Id           string    `json:"id"`
+	Metalink     *string   `json:"metalink,omitempty"`
+	Mirrorlist   *string   `json:"mirrorlist,omitempty"`
+	Name         *string   `json:"name,omitempty"`
+	Priority     *int      `json:"priority,omitempty"`
+	SslVerify    *bool     `json:"ssl_verify,omitempty"`
 }
 
 // Customizations defines model for Customizations.
 type Customizations struct {
 	Containers *[]Container `json:"containers,omitempty"`
 
-	// Repository configuration that will get saved to the image under the
-	// `/etc/yum.repos.d` directory. These repos are not used for depsolving
-	// or retrieving packages and only for ensuring the configuration is set
-	// in the final image.
+	// Extra repositories for packages specified in customizations. These
+	// repositories will be used to depsolve and retrieve packages. Additionally,
+	// these packages will be saved and imported to the `/etc/yum.repos.d/` directory
+	// on the image
 	CustomRepositories *[]CustomRepository `json:"custom_repositories,omitempty"`
 	Directories        *[]Directory        `json:"directories,omitempty"`
 	Files              *[]File             `json:"files,omitempty"`
