@@ -86,6 +86,20 @@ type V1AzureReservationResponse struct {
 	SourceId      *string `json:"source_id,omitempty"`
 }
 
+// V1GenericReservationResponsePayload defines model for v1.GenericReservationResponsePayload.
+type V1GenericReservationResponsePayload struct {
+	CreatedAt  *time.Time `json:"created_at,omitempty"`
+	Error      *string    `json:"error,omitempty"`
+	FinishedAt *time.Time `json:"finished_at"`
+	Id         *int64     `json:"id,omitempty"`
+	Provider   *int       `json:"provider,omitempty"`
+	Status     *string    `json:"status,omitempty"`
+	Step       *int32     `json:"step,omitempty"`
+	StepTitles *[]string  `json:"step_titles,omitempty"`
+	Steps      *int32     `json:"steps,omitempty"`
+	Success    *bool      `json:"success"`
+}
+
 // V1InstanceTypeResponse defines model for v1.InstanceTypeResponse.
 type V1InstanceTypeResponse struct {
 	Architecture *string `json:"architecture,omitempty"`
@@ -114,12 +128,8 @@ type V1NoopReservationResponse struct {
 
 // V1PubkeyRequest defines model for v1.PubkeyRequest.
 type V1PubkeyRequest struct {
-	Body              *string `json:"body,omitempty"`
-	Fingerprint       *string `json:"fingerprint,omitempty"`
-	FingerprintLegacy *string `json:"fingerprint_legacy,omitempty"`
-	Id                *int64  `json:"id,omitempty"`
-	Name              *string `json:"name,omitempty"`
-	Type              *string `json:"type,omitempty"`
+	Body *string `json:"body,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
 // V1PubkeyResponse defines model for v1.PubkeyResponse.
@@ -132,27 +142,15 @@ type V1PubkeyResponse struct {
 	Type              *string `json:"type,omitempty"`
 }
 
-// V1ReservationResponse defines model for v1.ReservationResponse.
-type V1ReservationResponse struct {
-	CreatedAt  *time.Time `json:"created_at,omitempty"`
-	Error      *string    `json:"error,omitempty"`
-	FinishedAt *time.Time `json:"finished_at"`
-	Id         *int64     `json:"id,omitempty"`
-	Provider   *int       `json:"provider,omitempty"`
-	Status     *string    `json:"status,omitempty"`
-	Step       *int32     `json:"step,omitempty"`
-	StepTitles *[]string  `json:"step_titles,omitempty"`
-	Steps      *int32     `json:"steps,omitempty"`
-	Success    *bool      `json:"success"`
-}
-
 // V1ResponseError defines model for v1.ResponseError.
 type V1ResponseError struct {
-	BuildTime *string `json:"build_time,omitempty"`
-	Error     *string `json:"error,omitempty"`
-	Msg       *string `json:"msg,omitempty"`
-	TraceId   *string `json:"trace_id,omitempty"`
-	Version   *string `json:"version,omitempty"`
+	BuildTime   *string `json:"build_time,omitempty"`
+	EdgeId      *string `json:"edge_id,omitempty"`
+	Environment *string `json:"environment,omitempty"`
+	Error       *string `json:"error,omitempty"`
+	Msg         *string `json:"msg,omitempty"`
+	TraceId     *string `json:"trace_id,omitempty"`
+	Version     *string `json:"version,omitempty"`
 }
 
 // V1SourceResponse defines model for v1.SourceResponse.
