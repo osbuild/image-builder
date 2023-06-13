@@ -34,8 +34,6 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 250,
-      "iteration": 1651238407501,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -43,7 +41,7 @@ data:
           "collapsed": false,
           "datasource": {
             "type": "prometheus",
-            "uid": "PC1EAC84DCBBF0697"
+            "uid": "${datasource}"
           },
           "gridPos": {
             "h": 1,
@@ -53,6 +51,15 @@ data:
           },
           "id": 121,
           "panels": [],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A"
+            }
+          ],
           "title": "SLO Overview",
           "type": "row"
         },
@@ -127,7 +134,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.4.1",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
               "datasource": {
@@ -216,9 +223,12 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.4.1",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
+              "datasource": {
+                "uid": "${datasource}"
+              },
               "expr": "1 - sum(rate(api_3scale_gateway_api_status{exported_service=\"image-builder\",status=\"5xx\"}[$__range])) / sum(rate(api_3scale_gateway_api_status{exported_service=\"image-builder\"}[$__range]))",
               "instant": true,
               "refId": "A"
@@ -277,9 +287,12 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.4.1",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
+              "datasource": {
+                "uid": "${datasource}"
+              },
               "expr": "sum(up{job=\"image-builder\"})",
               "interval": "",
               "legendFormat": "",
@@ -360,9 +373,12 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.4.1",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
+              "datasource": {
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "histogram_quantile(0.9, sum(rate(image_builder_crc_http_duration_seconds_bucket[$__range])) by (le))",
               "instant": true,
@@ -378,7 +394,7 @@ data:
           "collapsed": false,
           "datasource": {
             "type": "prometheus",
-            "uid": "PC1EAC84DCBBF0697"
+            "uid": "${datasource}"
           },
           "gridPos": {
             "h": 1,
@@ -388,6 +404,15 @@ data:
           },
           "id": 128,
           "panels": [],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A"
+            }
+          ],
           "title": "Compose Success Rate",
           "type": "row"
         },
@@ -402,6 +427,8 @@ data:
                 "mode": "thresholds"
               },
               "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
@@ -454,8 +481,9 @@ data:
           "options": {
             "legend": {
               "calcs": [],
-              "displayMode": "hidden",
-              "placement": "bottom"
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": false
             },
             "tooltip": {
               "mode": "single",
@@ -464,6 +492,9 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "(\n  sum(increase(image_builder_crc_compose_errors[$__range]))\n  /\n  sum(increase(image_builder_crc_compose_requests_total[$__range]))\n)",
               "interval": "",
@@ -556,9 +587,12 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.4.1",
+          "pluginVersion": "9.3.8",
           "targets": [
             {
+              "datasource": {
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "28 * 24 * (1 - $stability_slo)\n/\n(\n  (\n    sum(rate(image_builder_crc_compose_errors[$__range]))\n    /\n    sum(rate(image_builder_crc_compose_requests_total[$__range]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
@@ -583,6 +617,8 @@ data:
                 "mode": "thresholds"
               },
               "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
@@ -647,8 +683,9 @@ data:
           "options": {
             "legend": {
               "calcs": [],
-              "displayMode": "hidden",
-              "placement": "bottom"
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": false
             },
             "tooltip": {
               "mode": "single",
@@ -678,7 +715,7 @@ data:
           "collapsed": false,
           "datasource": {
             "type": "prometheus",
-            "uid": "PC1EAC84DCBBF0697"
+            "uid": "${datasource}"
           },
           "gridPos": {
             "h": 1,
@@ -688,6 +725,15 @@ data:
           },
           "id": 139,
           "panels": [],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "refId": "A"
+            }
+          ],
           "title": "Request Latency",
           "type": "row"
         },
@@ -737,8 +783,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -764,8 +809,9 @@ data:
           "options": {
             "legend": {
               "calcs": [],
-              "displayMode": "hidden",
-              "placement": "bottom"
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": false
             },
             "tooltip": {
               "mode": "single",
@@ -830,8 +876,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -939,8 +984,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -967,8 +1011,9 @@ data:
           "options": {
             "legend": {
               "calcs": [],
-              "displayMode": "hidden",
-              "placement": "bottom"
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": false
             },
             "tooltip": {
               "mode": "single",
@@ -978,6 +1023,9 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
+              "datasource": {
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_crc_http_duration_seconds_bucket{le=\"0.5\"}[$__range]))\n      /\n      sum(increase(image_builder_crc_http_duration_seconds_count[$__range]))\n    ) OR on() vector(1) # set fallback for empty query result\n  ) - $latency_slo)\n/\n(1 - $latency_slo)",
               "instant": false,
@@ -992,14 +1040,14 @@ data:
         }
       ],
       "refresh": false,
-      "schemaVersion": 35,
+      "schemaVersion": 37,
       "style": "dark",
       "tags": [],
       "templating": {
         "list": [
           {
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "crcs02ue1-prometheus",
               "value": "crcs02ue1-prometheus"
             },
@@ -1134,5 +1182,6 @@ data:
       "timezone": "",
       "title": "Image Builder CRC",
       "uid": "image-builder-crc",
-      "version": 9
+      "version": 9,
+      "weekStart": ""
     }
