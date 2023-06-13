@@ -1,6 +1,9 @@
 package prometheus
 
 import (
+	"errors"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -23,6 +26,7 @@ var (
 	}, []string{"path"})
 )
 
+// TODO deprecate
 var (
 	composeRequests = promauto.NewCounter(prometheus.CounterOpts{
 		Name:      "compose_requests_total",
@@ -32,6 +36,7 @@ var (
 	})
 )
 
+// TODO deprecate
 var (
 	ComposeErrors = promauto.NewCounter(prometheus.CounterOpts{
 		Name:      "compose_errors",
@@ -41,8 +46,27 @@ var (
 	})
 )
 
+var (
+	ReqCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name:      "request_count",
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Help:      "total number of http requests",
+	}, []string{"method", "path", "code"})
+)
+
+func pathLabel(path string) string {
+	r := regexp.MustCompile(":(.*)")
+	segments := strings.Split(path, "/")
+	for i, segment := range segments {
+		segments[i] = r.ReplaceAllString(segment, "-")
+	}
+	return strings.Join(segments, "/")
+}
+
 func PrometheusMW(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
+		// TODO deprecate
 		if strings.HasSuffix(ctx.Path(), "/compose") {
 			composeRequests.Inc()
 		}
@@ -50,5 +74,32 @@ func PrometheusMW(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 		timer := prometheus.NewTimer(httpDuration.WithLabelValues(ctx.Path()))
 		defer timer.ObserveDuration()
 		return nextHandler(ctx)
+	}
+}
+
+func StatusMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		// call the next handler to see if
+		// an error occurred, see:
+		// - https://github.com/labstack/echo/issues/1837#issuecomment-816399630
+		// - https://github.com/labstack/echo/discussions/1820#discussioncomment-529428
+		err := next(ctx)
+
+		path := pathLabel(ctx.Path())
+		method := ctx.Request().Method
+		status := ctx.Response().Status
+
+		httpErr := new(echo.HTTPError)
+		if errors.As(err, &httpErr) {
+			status = httpErr.Code
+		}
+
+		ReqCounter.WithLabelValues(
+			method,
+			path,
+			strconv.Itoa(status),
+		).Inc()
+
+		return err
 	}
 }
