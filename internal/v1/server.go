@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
+	"github.com/osbuild/image-builder/internal/prometheus"
 	"github.com/osbuild/image-builder/internal/provisioning"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -100,8 +101,17 @@ func Attach(conf *ServerConfig) error {
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
 
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), noAssociateAccounts, s.ValidateRequest, common.PrometheusMW), &h)
-	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy), noAssociateAccounts, s.ValidateRequest, common.PrometheusMW), &h)
+	middlewares := []echo.MiddlewareFunc{
+		prometheus.StatusMiddleware,
+		echo.WrapMiddleware(identity.Extractor),
+		echo.WrapMiddleware(identity.BasePolicy),
+		noAssociateAccounts,
+		s.ValidateRequest,
+		prometheus.PrometheusMW,
+	}
+
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), middlewares...), &h)
+	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), middlewares...), &h)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
@@ -179,8 +189,9 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 	internalError := he.Code >= http.StatusInternalServerError && he.Code <= http.StatusNetworkAuthenticationRequired
 	if internalError {
 		c.Logger().Errorf("Internal error %v: %v, %v", he.Code, he.Message, err)
+		// TODO deprecate in favour of the status middleware
 		if strings.HasSuffix(c.Path(), "/compose") {
-			common.ComposeErrors.Inc()
+			prometheus.ComposeErrors.Inc()
 		}
 	}
 
