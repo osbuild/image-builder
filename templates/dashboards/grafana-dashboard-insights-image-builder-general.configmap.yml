@@ -191,7 +191,7 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "continuous-BlYlRd"
+                "mode": "thresholds"
               },
               "custom": {
                 "axisCenteredZero": false,
