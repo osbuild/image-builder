@@ -160,7 +160,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "sum by (path) (rate(image_builder_crc_request_count{status!~\"5.*\"}[$__rate_interval]))",
+              "expr": "sum by (path) (rate(image_builder_crc_request_count{code!~\"5.*\"}[$__rate_interval]))",
               "interval": "",
               "legendFormat": "{{path}}  success/sec",
               "range": true,
