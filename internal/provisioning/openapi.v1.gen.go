@@ -86,6 +86,41 @@ type V1AzureReservationResponse struct {
 	SourceId      *string `json:"source_id,omitempty"`
 }
 
+// V1GCPReservationRequest defines model for v1.GCPReservationRequest.
+type V1GCPReservationRequest struct {
+	Amount             *int64  `json:"amount,omitempty"`
+	ImageId            *string `json:"image_id,omitempty"`
+	LaunchTemplateName *string `json:"launch_template_name,omitempty"`
+	MachineType        *string `json:"machine_type,omitempty"`
+	NamePattern        *string `json:"name_pattern,omitempty"`
+	Poweroff           *bool   `json:"poweroff,omitempty"`
+	PubkeyId           *int64  `json:"pubkey_id,omitempty"`
+	SourceId           *string `json:"source_id,omitempty"`
+	Zone               *string `json:"zone,omitempty"`
+}
+
+// V1GCPReservationResponse defines model for v1.GCPReservationResponse.
+type V1GCPReservationResponse struct {
+	Amount           *int64  `json:"amount,omitempty"`
+	GcpOperationName *string `json:"gcp_operation_name,omitempty"`
+	ImageId          *string `json:"image_id,omitempty"`
+	Instances        *[]struct {
+		Detail *struct {
+			PublicDns  *string `json:"public_dns,omitempty"`
+			PublicIpv4 *string `json:"public_ipv4,omitempty"`
+		} `json:"detail,omitempty"`
+		InstanceId *string `json:"instance_id,omitempty"`
+	} `json:"instances,omitempty"`
+	LaunchTemplateName *string `json:"launch_template_name,omitempty"`
+	MachineType        *string `json:"machine_type,omitempty"`
+	NamePattern        *string `json:"name_pattern,omitempty"`
+	Poweroff           *bool   `json:"poweroff,omitempty"`
+	PubkeyId           *int64  `json:"pubkey_id,omitempty"`
+	ReservationId      *int64  `json:"reservation_id,omitempty"`
+	SourceId           *string `json:"source_id,omitempty"`
+	Zone               *string `json:"zone,omitempty"`
+}
+
 // V1GenericReservationResponsePayload defines model for v1.GenericReservationResponsePayload.
 type V1GenericReservationResponsePayload struct {
 	CreatedAt  *time.Time `json:"created_at,omitempty"`
@@ -171,7 +206,8 @@ type V1SourceUploadInfoResponse struct {
 		SubscriptionId *string   `json:"subscription_id,omitempty"`
 		TenantId       *string   `json:"tenant_id,omitempty"`
 	} `json:"azure"`
-	Provider *string `json:"provider,omitempty"`
+	Gcp      *interface{} `json:"gcp"`
+	Provider *string      `json:"provider,omitempty"`
 }
 
 // InternalError defines model for InternalError.
@@ -200,6 +236,9 @@ type CreateAwsReservationJSONBody = V1AWSReservationRequest
 
 // CreateAzureReservationJSONBody defines parameters for CreateAzureReservation.
 type CreateAzureReservationJSONBody = V1AzureReservationRequest
+
+// CreateGCPReservationJSONBody defines parameters for CreateGCPReservation.
+type CreateGCPReservationJSONBody = V1GCPReservationRequest
 
 // GetSourceListParams defines parameters for GetSourceList.
 type GetSourceListParams struct {
@@ -232,3 +271,6 @@ type CreateAwsReservationJSONRequestBody = CreateAwsReservationJSONBody
 
 // CreateAzureReservationJSONRequestBody defines body for CreateAzureReservation for application/json ContentType.
 type CreateAzureReservationJSONRequestBody = CreateAzureReservationJSONBody
+
+// CreateGCPReservationJSONRequestBody defines body for CreateGCPReservation for application/json ContentType.
+type CreateGCPReservationJSONRequestBody = CreateGCPReservationJSONBody

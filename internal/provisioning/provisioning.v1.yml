@@ -138,6 +138,71 @@ components:
                     format: int64
                 source_id:
                     type: string
+        v1.GCPReservationRequest:
+            type: object
+            properties:
+                amount:
+                    type: integer
+                    format: int64
+                image_id:
+                    type: string
+                launch_template_name:
+                    type: string
+                machine_type:
+                    type: string
+                name_pattern:
+                    type: string
+                poweroff:
+                    type: boolean
+                pubkey_id:
+                    type: integer
+                    format: int64
+                source_id:
+                    type: string
+                zone:
+                    type: string
+        v1.GCPReservationResponse:
+            type: object
+            properties:
+                amount:
+                    type: integer
+                    format: int64
+                gcp_operation_name:
+                    type: string
+                image_id:
+                    type: string
+                instances:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            detail:
+                                type: object
+                                properties:
+                                    public_dns:
+                                        type: string
+                                    public_ipv4:
+                                        type: string
+                            instance_id:
+                                type: string
+                launch_template_name:
+                    type: string
+                machine_type:
+                    type: string
+                name_pattern:
+                    type: string
+                poweroff:
+                    type: boolean
+                pubkey_id:
+                    type: integer
+                    format: int64
+                reservation_id:
+                    type: integer
+                    format: int64
+                source_id:
+                    type: string
+                zone:
+                    type: string
         v1.GenericReservationResponsePayload:
             type: object
             properties:
@@ -283,6 +348,8 @@ components:
                             type: string
                         tenant_id:
                             type: string
+                gcp:
+                    nullable: true
                 provider:
                     type: string
     responses:
@@ -416,6 +483,49 @@ components:
                 pubkey_id: 42
                 reservation_id: 1310
                 source_id: "654321"
+        v1.GCPReservationRequestPayloadExample:
+            value:
+                amount: 1
+                image_id: 08a48fed-de87-40ab-a571-f64e30bd0aa8
+                launch_template_name: ""
+                machine_type: e2-micro
+                name_pattern: my-instance
+                poweroff: false
+                pubkey_id: 42
+                source_id: "654321"
+                zone: us-east-4
+        v1.GCPReservationResponsePayloadDoneExample:
+            value:
+                amount: 1
+                gcp_operation_name: operation-1686646674436-5fdff07e43209-66146b7e-f3f65ec5
+                image_id: 08a48fed-de87-40ab-a571-f64e30bd0aa8
+                instances:
+                    - detail:
+                        publicdns: ""
+                        publicipv4: 10.0.0.88
+                      instance_id: "3003942005876582747"
+                launch_template_name: template-1
+                machine_type: e2-micro
+                name_pattern: my-instance
+                poweroff: false
+                pubkey_id: 42
+                reservation_id: 1305
+                source_id: "654321"
+                zone: us-east-4
+        v1.GCPReservationResponsePayloadPendingExample:
+            value:
+                amount: 1
+                gcp_operation_name: operation-1686646674436-5fdff07e43209-66146b7e-f3f65ec5
+                image_id: 08a48fed-de87-40ab-a571-f64e30bd0aa8
+                instances: []
+                launch_template_name: template-1
+                machine_type: e2-micro
+                name_pattern: my-instance
+                poweroff: false
+                pubkey_id: 42
+                reservation_id: 1305
+                source_id: "654321"
+                zone: us-east-4
         v1.GenericReservationResponsePayloadFailureExample:
             value:
                 created_at: "2013-05-13T19:20:15Z"
@@ -523,6 +633,15 @@ components:
                   storage_gb: 4096
                   supported: true
                   vcpus: 128
+        v1.InstanceTypesGCPResponse:
+            value:
+                - arch: x86_64
+                  cores: 0
+                  memory_mib: 15623
+                  name: e2-highcpu-16
+                  storage_gb: 0
+                  supported: true
+                  vcpus: 16
         v1.LaunchTemplateListResponse:
             value:
                 - id: lt-9843797432897342
@@ -565,6 +684,7 @@ components:
                 aws:
                     account_id: "78462784632"
                 azure: null
+                gcp: null
                 provider: aws
         v1.SourceUploadInfoAzureResponse:
             value:
@@ -575,13 +695,14 @@ components:
                         - MyGroup 42
                     subscriptionid: 617807e1-e4e0-4855-983c-1e3ce1e49674
                     tenantid: 617807e1-e4e0-481c-983c-be3ce1e49253
+                gcp: null
                 provider: azure
 info:
     title: provisioning-api
     description: Provisioning service API
     license:
         name: GPL-3.0
-    version: 1.0.0
+    version: 1.1.0
 paths:
     /availability_status/sources:
         post:
@@ -865,7 +986,7 @@ paths:
                 A reservation is a way to activate a job, keeps all data needed for a job to start. An Azure reservation is a reservation created for an Azure job. Image Builder UUID image is required and needs to be stored under same account as provided by SourceID.
             operationId: createAzureReservation
             requestBody:
-                description: aws request body
+                description: azure request body
                 required: true
                 content:
                     application/json:
@@ -909,6 +1030,54 @@ paths:
                                     $ref: '#/components/examples/v1.AzureReservationResponsePayloadDoneExample'
                                 pending:
                                     $ref: '#/components/examples/v1.AzureReservationResponsePayloadPendingExample'
+                "404":
+                    $ref: '#/components/responses/NotFound'
+                "500":
+                    $ref: '#/components/responses/InternalError'
+    /reservations/gcp:
+        post:
+            tags:
+                - Reservation
+            description: |
+                A reservation is a way to activate a job, keeps all data needed for a job to start. A GCP reservation is a reservation created for a GCP job. Image Builder UUID image is required and needs to be shared with the service account. Furthermore, by specifying the name pattern for example as "instance", instances names will be created in the format: "instance-#####".
+            operationId: createGCPReservation
+            requestBody:
+                description: gcp request body
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/v1.GCPReservationRequest'
+            responses:
+                "200":
+                    description: Returned on success.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/v1.GCPReservationResponse'
+                "500":
+                    $ref: '#/components/responses/InternalError'
+    /reservations/gcp/{ID}:
+        get:
+            tags:
+                - Reservation
+            description: Return an GCP reservation with details by id
+            operationId: getGCPReservationByID
+            parameters:
+                - name: ID
+                  in: path
+                  description: Reservation ID, must be an GCP reservation otherwise 404 is returned
+                  required: true
+                  schema:
+                    type: integer
+                    format: int64
+            responses:
+                "200":
+                    description: Returns detailed reservation information for an GCP reservation.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/v1.GCPReservationResponse'
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
