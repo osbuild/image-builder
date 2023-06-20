@@ -679,6 +679,8 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 			composerImageType = composer.ImageTypesImageInstaller
 		case ImageTypesVsphere:
 			composerImageType = composer.ImageTypesVsphere
+		case ImageTypesVsphereOva:
+			composerImageType = composer.ImageTypesVsphereOva
 		default:
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
 		}
