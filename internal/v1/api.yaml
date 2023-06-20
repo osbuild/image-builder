@@ -546,6 +546,7 @@ components:
         - guest-image
         - image-installer
         - vsphere
+        - vsphere-ova
         # backwards compatible aliases
         - ami  # == aws
         - rhel-edge-commit  # == edge-commit
