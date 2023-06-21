@@ -221,7 +221,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.Equal(t, Architectures{
 			ArchitectureItem{
 				Arch:       "x86_64",
-				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd"},
+				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd", "guest-image", "image-installer", "vsphere", "vsphere-ova"},
 				Repositories: []Repository{
 					{
 						Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
@@ -237,7 +237,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 			},
 			ArchitectureItem{
 				Arch:       "aarch64",
-				ImageTypes: []string{"aws", "vhd"},
+				ImageTypes: []string{"aws", "guest-image", "image-installer"},
 				Repositories: []Repository{
 					{
 						Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/aarch64/os/"),
