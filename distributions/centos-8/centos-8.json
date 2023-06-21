@@ -5,7 +5,7 @@
     "description": "CentOS Stream 8"
   },
   "x86_64": {
-    "image_types": [ "aws", "gcp", "azure", "ami", "vhd" ],
+    "image_types": [ "aws", "gcp", "azure", "ami", "vhd", "vsphere", "vsphere-ova" ],
     "repositories": [{
       "id": "baseos",
       "baseurl": "http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/",
