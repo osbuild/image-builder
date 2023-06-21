@@ -5,7 +5,7 @@
     "description": "Red Hat Enterprise Linux (RHEL) 8"
   },
   "x86_64": {
-    "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "vsphere" ],
+    "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "vsphere", "vsphere-ova" ],
     "repositories": [{
       "id": "baseos",
       "baseurl": "https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/baseos/os",
