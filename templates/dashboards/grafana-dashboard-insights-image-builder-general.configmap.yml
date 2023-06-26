@@ -758,8 +758,8 @@ data:
             "auto_min": "10s",
             "current": {
               "selected": true,
-              "text": "6h",
-              "value": "6h"
+              "text": "30m",
+              "value": "30m"
             },
             "hide": 0,
             "name": "interval",
@@ -770,7 +770,7 @@ data:
                 "value": "5m"
               },
               {
-                "selected": false,
+                "selected": true,
                 "text": "30m",
                 "value": "30m"
               },
@@ -780,7 +780,7 @@ data:
                 "value": "1h"
               },
               {
-                "selected": true,
+                "selected": false,
                 "text": "6h",
                 "value": "6h"
               },
@@ -840,7 +840,7 @@ data:
         ]
       },
       "time": {
-        "from": "now-28d",
+        "from": "now-6h",
         "to": "now"
       },
       "timepicker": {
@@ -871,6 +871,6 @@ data:
       "timezone": "",
       "title": "Image Builder CRC",
       "uid": "image-builder-crc",
-      "version": 11,
+      "version": 12,
       "weekStart": ""
     }
