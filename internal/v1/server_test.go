@@ -1314,6 +1314,9 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg: common.BoolToPtr(true),
 						},
 					},
+					Openscap: &OpenSCAP{
+						ProfileId: "test-profile",
+					},
 				},
 				Distribution: "centos-8",
 				ImageRequests: []ImageRequest{
@@ -1368,6 +1371,9 @@ func TestComposeCustomizations(t *testing.T) {
 							Gpgkey:   &[]string{"some-gpg-key"},
 							CheckGpg: common.BoolToPtr(true),
 						},
+					},
+					Openscap: &composer.OpenSCAP{
+						ProfileId: "test-profile",
 					},
 				},
 				ImageRequest: &composer.ImageRequest{

@@ -914,6 +914,12 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		res.CustomRepositories = &customRepositories
 	}
 
+	if cust.Openscap != nil {
+		res.Openscap = &composer.OpenSCAP{
+			ProfileId: cust.Openscap.ProfileId,
+		}
+	}
+
 	if cust.Filesystem != nil && len(*cust.Filesystem) > 1 {
 		var fsc []composer.Filesystem
 		for _, v := range *cust.Filesystem {
