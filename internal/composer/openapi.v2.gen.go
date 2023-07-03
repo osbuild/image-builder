@@ -49,6 +49,7 @@ const (
 	ImageTypesIotContainer   ImageTypes = "iot-container"
 	ImageTypesIotInstaller   ImageTypes = "iot-installer"
 	ImageTypesIotRawImage    ImageTypes = "iot-raw-image"
+	ImageTypesLiveInstaller  ImageTypes = "live-installer"
 	ImageTypesVsphere        ImageTypes = "vsphere"
 	ImageTypesVsphereOva     ImageTypes = "vsphere-ova"
 )
@@ -279,6 +280,7 @@ type Customizations struct {
 	Directories        *[]Directory        `json:"directories,omitempty"`
 	Files              *[]File             `json:"files,omitempty"`
 	Filesystem         *[]Filesystem       `json:"filesystem,omitempty"`
+	Openscap           *OpenSCAP           `json:"openscap,omitempty"`
 	Packages           *[]string           `json:"packages,omitempty"`
 
 	// Extra repositories for packages specified in customizations. These
@@ -479,6 +481,11 @@ type ObjectReference struct {
 	Href string `json:"href"`
 	Id   string `json:"id"`
 	Kind string `json:"kind"`
+}
+
+// OpenSCAP defines model for OpenSCAP.
+type OpenSCAP struct {
+	ProfileId string `json:"profile_id"`
 }
 
 // PackageMetadata defines model for PackageMetadata.
