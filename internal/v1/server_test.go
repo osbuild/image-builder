@@ -26,7 +26,29 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var UUIDTest = uuid.MustParse("d1f631ff-b3a6-4eec-aa99-9e81d99bc93d")
+var dbc *tutils.PSQLContainer
+
+func TestMain(m *testing.M) {
+	code := runTests(m)
+	os.Exit(code)
+}
+
+func runTests(m *testing.M) int {
+	d, err := tutils.NewPSQLContainer()
+	if err != nil {
+		panic(err)
+	}
+
+	dbc = d
+	code := m.Run()
+	defer func() {
+		err = dbc.Stop()
+		if err != nil {
+			logrus.Errorf("Error stopping postgres container: %v", err)
+		}
+	}()
+	return code
+}
 
 // Create a temporary file containing quotas, returns the file name as a string
 func initQuotaFile(t *testing.T) (string, error) {
@@ -157,11 +179,15 @@ func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, dis
 }
 
 func startServer(t *testing.T, url, provURL string) (*echo.Echo, *httptest.Server) {
-	return startServerWithCustomDB(t, url, provURL, tutils.InitDB(), "../../distributions", "")
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+	return startServerWithCustomDB(t, url, provURL, dbase, "../../distributions", "")
 }
 
 func startServerWithAllowFile(t *testing.T, url, provURL, string, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
-	return startServerWithCustomDB(t, url, provURL, tutils.InitDB(), distsDir, allowFile)
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+	return startServerWithCustomDB(t, url, provURL, dbase, distsDir, allowFile)
 }
 
 // note: all of the sub-tests below don't actually talk to
@@ -377,7 +403,6 @@ func TestAccountNumberWildcard(t *testing.T) {
 
 // note: this scenario needs to talk to a simulated osbuild-composer API
 func TestGetComposeStatus(t *testing.T) {
-	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -395,10 +420,11 @@ func TestGetComposeStatus(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	// insert a compose in the mock database
-	dbase := tutils.InitDB()
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
 	imageName := "MyImageName"
-	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage(`
+	id := uuid.New()
+	err = dbase.InsertCompose(id, "600000", "000001", &imageName, json.RawMessage(`
 		{
 			"distribution": "rhel-9",
 			"image_requests": [],
@@ -414,7 +440,7 @@ func TestGetComposeStatus(t *testing.T) {
 	defer tokenSrv.Close()
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
-		UUIDTest), &tutils.AuthString1)
+		id), &tutils.AuthString1)
 	require.Equal(t, 200, respStatusCode)
 
 	var result ComposeStatus
@@ -432,7 +458,7 @@ func TestGetComposeStatus(t *testing.T) {
 	}, result)
 
 	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
-		UUIDTest), &tutils.AuthString1)
+		id), &tutils.AuthString1)
 	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -450,7 +476,7 @@ func TestGetComposeStatus(t *testing.T) {
 
 // note: this scenario needs to talk to a simulated osbuild-composer API
 func TestGetComposeStatus404(t *testing.T) {
-	// simulate osbuild-composer API
+	id := uuid.New().String()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -471,13 +497,13 @@ func TestGetComposeStatus404(t *testing.T) {
 	defer tokenSrv.Close()
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
-		UUIDTest), &tutils.AuthString0)
+		id), &tutils.AuthString0)
 	require.Equal(t, 404, respStatusCode)
 	require.Contains(t, body, "Compose not found")
 }
 
 func TestGetComposeMetadata(t *testing.T) {
-	// simulate osbuild-composer API
+	id := uuid.New()
 	testPackages := []composer.PackageMetadata{
 		{
 			Arch:      "ArchTest2",
@@ -517,10 +543,10 @@ func TestGetComposeMetadata(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	// insert a compose in the mock database
-	dbase := tutils.InitDB()
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
 	imageName := "MyImageName"
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
+	err = dbase.InsertCompose(id, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
@@ -534,7 +560,7 @@ func TestGetComposeMetadata(t *testing.T) {
 
 	// Get API response and compare
 	respStatusCode, body := tutils.GetResponseBody(t,
-		fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata", UUIDTest), &tutils.AuthString0)
+		fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata", id), &tutils.AuthString0)
 	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -542,7 +568,7 @@ func TestGetComposeMetadata(t *testing.T) {
 }
 
 func TestGetComposeMetadata404(t *testing.T) {
-	// simulate osbuild-composer API
+	id := uuid.New().String()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -563,16 +589,17 @@ func TestGetComposeMetadata404(t *testing.T) {
 	defer tokenSrv.Close()
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata",
-		UUIDTest), &tutils.AuthString0)
+		id), &tutils.AuthString0)
 	require.Equal(t, 404, respStatusCode)
 	require.Contains(t, body, "Compose not found")
 }
 
 func TestGetComposes(t *testing.T) {
-	var UUIDTest2 = uuid.MustParse("d1f631ff-b3a6-4eec-aa99-9e81d99bc222")
-	var UUIDTest3 = uuid.MustParse("d1f631ff-b3a6-4eec-aa99-9e81d99bc333")
-
-	dbase := tutils.InitDB()
+	id := uuid.New()
+	id2 := uuid.New()
+	id3 := uuid.New()
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
 
 	db_srv, tokenSrv := startServerWithCustomDB(t, "", "", dbase, "../../distributions", "")
 	defer func() {
@@ -585,20 +612,20 @@ func TestGetComposes(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
 
 	require.Equal(t, 200, respStatusCode)
-	err := json.Unmarshal([]byte(body), &result)
+	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, 0, result.Meta.Count)
 	require.Contains(t, body, "\"data\":[]")
 
 	imageName := "MyImageName"
-	err = dbase.InsertCompose(UUIDTest, "500000", "000000", &imageName, json.RawMessage("{}"))
+	err = dbase.InsertCompose(id, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
-	err = dbase.InsertCompose(UUIDTest2, "500000", "000000", &imageName, json.RawMessage("{}"))
+	err = dbase.InsertCompose(id2, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
-	err = dbase.InsertCompose(UUIDTest3, "500000", "000000", &imageName, json.RawMessage("{}"))
+	err = dbase.InsertCompose(id3, "500000", "000000", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	composeEntry, err := dbase.GetCompose(UUIDTest, "000000")
+	composeEntry, err := dbase.GetCompose(id, "000000")
 	require.NoError(t, err)
 
 	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
@@ -606,8 +633,8 @@ func TestGetComposes(t *testing.T) {
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, 3, result.Meta.Count)
-	require.Equal(t, composeEntry.CreatedAt.Format(time.RFC3339), result.Data[0].CreatedAt)
-	require.Equal(t, UUIDTest, result.Data[0].Id)
+	require.Equal(t, composeEntry.CreatedAt.Format(time.RFC3339), result.Data[2].CreatedAt)
+	require.Equal(t, composeEntry.Id, result.Data[2].Id)
 }
 
 // note: these scenarios don't needs to talk to a simulated osbuild-composer API
@@ -902,7 +929,6 @@ func TestComposeImage(t *testing.T) {
 }
 
 func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
-	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -946,7 +972,6 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 }
 
 func TestComposeImageErrorResolvingOSTree(t *testing.T) {
-	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -998,7 +1023,6 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 }
 
 func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
-	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -1042,7 +1066,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 }
 
 func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
-	// simulate osbuild-composer API
+	id := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -1052,7 +1076,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
-			Id: uuid.MustParse("3aa7375a-534a-4de3-8caf-011e04f402d3"),
+			Id: id,
 		}
 		err := json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
@@ -1088,12 +1112,13 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	var result ComposeResponse
 	err := json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, uuid.MustParse("3aa7375a-534a-4de3-8caf-011e04f402d3"), result.Id)
+	require.Equal(t, id, result.Id)
 }
 
 func TestComposeImageAllowList(t *testing.T) {
 	distsDir := "../distribution/testdata/distributions"
 	allowFile := "../common/testdata/allow.json"
+	id := uuid.New()
 
 	createApiSrv := func() *httptest.Server {
 		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1105,7 +1130,7 @@ func TestComposeImageAllowList(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			result := composer.ComposeId{
-				Id: uuid.MustParse("3aa7375a-534a-4de3-8caf-011e04f402d3"),
+				Id: id,
 			}
 			err := json.NewEncoder(w).Encode(result)
 			require.NoError(t, err)
@@ -1132,7 +1157,6 @@ func TestComposeImageAllowList(t *testing.T) {
 	}
 
 	t.Run("restricted distribution, allowed", func(t *testing.T) {
-		// simulate osbuild-composer API
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
@@ -1151,11 +1175,10 @@ func TestComposeImageAllowList(t *testing.T) {
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
-		require.Equal(t, uuid.MustParse("3aa7375a-534a-4de3-8caf-011e04f402d3"), result.Id)
+		require.Equal(t, id, result.Id)
 	})
 
 	t.Run("restricted distribution, forbidden", func(t *testing.T) {
-		// simulate osbuild-composer API
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
@@ -1178,7 +1201,6 @@ func TestComposeImageAllowList(t *testing.T) {
 	})
 
 	t.Run("restricted distribution, forbidden (no allowFile)", func(t *testing.T) {
-		// simulate osbuild-composer API
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
@@ -1207,7 +1229,7 @@ func strptr(s string) *string {
 }
 
 func TestComposeCustomizations(t *testing.T) {
-	// simulate osbuild-composer API
+	var id uuid.UUID
 	var composerRequest composer.ComposeRequest
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
@@ -1221,8 +1243,9 @@ func TestComposeCustomizations(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
+		id = uuid.New()
 		result := composer.ComposeId{
-			Id: uuid.MustParse("fe93fb55-ae04-4e21-a8b4-25ba95c3fa64"),
+			Id: id,
 		}
 		err = json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
@@ -1795,7 +1818,7 @@ func TestComposeCustomizations(t *testing.T) {
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
-		require.Equal(t, uuid.MustParse("fe93fb55-ae04-4e21-a8b4-25ba95c3fa64"), result.Id)
+		require.Equal(t, id, result.Id)
 
 		//compare expected compose request with actual receieved compose request
 		require.Equal(t, payload.composerRequest, composerRequest)
@@ -1832,7 +1855,6 @@ func TestReadinessProbeNotReady(t *testing.T) {
 }
 
 func TestReadinessProbeReady(t *testing.T) {
-	// simulate osbuild-composer API
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -1872,7 +1894,7 @@ func TestMetrics(t *testing.T) {
 }
 
 func TestComposeStatusError(t *testing.T) {
-	// simulate osbuild-composer API
+	id := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -1916,10 +1938,10 @@ func TestComposeStatusError(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	// insert a compose in the mock database
-	dbase := tutils.InitDB()
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
 	imageName := "MyImageName"
-	err := dbase.InsertCompose(UUIDTest, "600000", "000001", &imageName, json.RawMessage("{}"))
+	err = dbase.InsertCompose(id, "600000", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
@@ -1930,7 +1952,7 @@ func TestComposeStatusError(t *testing.T) {
 	defer tokenSrv.Close()
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
-		UUIDTest), &tutils.AuthString1)
+		id), &tutils.AuthString1)
 	require.Equal(t, 200, respStatusCode)
 
 	var result ComposeStatus
@@ -1950,7 +1972,8 @@ func TestComposeStatusError(t *testing.T) {
 }
 
 func TestGetClones(t *testing.T) {
-	cloneId := uuid.MustParse("bf8c6b63-1213-4843-b33d-9748d9fdd8f5")
+	id := uuid.New()
+	cloneId := uuid.New()
 	awsAccountId := "123456123456"
 
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1992,12 +2015,13 @@ func TestGetClones(t *testing.T) {
 	}))
 	defer provSrv.Close()
 
-	dbase := tutils.InitDB()
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+	err = dbase.InsertCompose(id, "500000", "000000", nil, json.RawMessage(`
 {
   "image_requests": [
     {
-      "image_type": "aws",
+      "image_type": "aws"
     }
   ]
 }`))
@@ -2010,7 +2034,7 @@ func TestGetClones(t *testing.T) {
 	defer tokenSrv.Close()
 
 	var csResp ClonesResponse
-	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", id), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &csResp)
 	require.NoError(t, err)
@@ -2021,7 +2045,7 @@ func TestGetClones(t *testing.T) {
 		Region:           "us-east-2",
 		ShareWithSources: &[]string{"1"},
 	}
-	respStatusCode, body = tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
+	respStatusCode, body = tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", id), cloneReq)
 	require.Equal(t, http.StatusCreated, respStatusCode)
 
 	var cResp CloneResponse
@@ -2029,7 +2053,7 @@ func TestGetClones(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, cloneId, cResp.Id)
 
-	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", UUIDTest), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clones", id), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &csResp)
 	require.NoError(t, err)
@@ -2044,7 +2068,8 @@ func TestGetClones(t *testing.T) {
 }
 
 func TestGetCloneStatus(t *testing.T) {
-	cloneId := uuid.MustParse("bf8c6b63-1213-4843-b33d-9748d9fdd8f5")
+	cloneId := uuid.New()
+	id := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -2065,7 +2090,7 @@ func TestGetCloneStatus(t *testing.T) {
 			}
 			err := json.NewEncoder(w).Encode(result)
 			require.NoError(t, err)
-		} else if strings.HasSuffix(r.URL.Path, fmt.Sprintf("%v/clone", UUIDTest)) && r.Method == "POST" {
+		} else if strings.HasSuffix(r.URL.Path, fmt.Sprintf("%v/clone", id)) && r.Method == "POST" {
 			w.WriteHeader(http.StatusCreated)
 			result := composer.CloneComposeResponse{
 				Id: cloneId,
@@ -2078,12 +2103,13 @@ func TestGetCloneStatus(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase := tutils.InitDB()
-	err := dbase.InsertCompose(UUIDTest, "500000", "000000", nil, json.RawMessage(`
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+	err = dbase.InsertCompose(id, "500000", "000000", nil, json.RawMessage(`
 {
   "image_requests": [
     {
-      "image_type": "aws",
+      "image_type": "aws"
     }
   ]
 }`))
@@ -2098,7 +2124,7 @@ func TestGetCloneStatus(t *testing.T) {
 	cloneReq := AWSEC2Clone{
 		Region: "us-east-2",
 	}
-	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", UUIDTest), cloneReq)
+	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/clone", id), cloneReq)
 	require.Equal(t, http.StatusCreated, respStatusCode)
 
 	var cResp CloneResponse
