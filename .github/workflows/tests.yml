@@ -40,6 +40,9 @@ jobs:
         with:
           version: v1.50.1
 
+      - name: install tern
+        run: go install github.com/jackc/tern@latest
+
       - name: Run unit tests
         run: go test -v -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...
 
