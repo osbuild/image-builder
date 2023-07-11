@@ -510,8 +510,6 @@ components:
         - rhel-92
         - centos-8
         - centos-9
-        - fedora-35
-        - fedora-36
         - fedora-37
         - fedora-38
     ImageRequest:
