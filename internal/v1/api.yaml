@@ -512,6 +512,7 @@ components:
         - centos-9
         - fedora-37
         - fedora-38
+        - fedora-39
     ImageRequest:
       type: object
       additionalProperties: false
