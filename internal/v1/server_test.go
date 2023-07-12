@@ -233,7 +233,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, distro := range result {
-			require.Contains(t, []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-9", "rhel-90", "rhel-91", "rhel-92", "centos-8", "centos-9", "fedora-35", "fedora-36", "fedora-37", "fedora-38", "fedora-39"}, distro.Name)
+			require.Contains(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "centos-8", "centos-9", "fedora-35", "fedora-36", "fedora-37", "fedora-38", "fedora-39"}, distro.Name)
 		}
 	})
 
@@ -1463,7 +1463,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-8",
+				Distribution: "rhel-88",
 				Customizations: &composer.Customizations{
 					Packages: nil,
 				},
