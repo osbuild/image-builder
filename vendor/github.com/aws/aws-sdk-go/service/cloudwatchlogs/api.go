@@ -56,18 +56,44 @@ func (c *CloudWatchLogs) AssociateKmsKeyRequest(input *AssociateKmsKeyInput) (re
 
 // AssociateKmsKey API operation for Amazon CloudWatch Logs.
 //
-// Associates the specified KMS key with the specified log group.
+// Associates the specified KMS key with either one log group in the account,
+// or with all stored CloudWatch Logs query insights results in the account.
 //
-// Associating a KMS key with a log group overrides any existing associations
-// between the log group and a KMS key. After a KMS key is associated with a
-// log group, all newly ingested data for the log group is encrypted using the
-// KMS key. This association is stored as long as the data encrypted with the
-// KMS keyis still within CloudWatch Logs. This enables CloudWatch Logs to decrypt
-// this data whenever it is requested.
+// When you use AssociateKmsKey, you specify either the logGroupName parameter
+// or the resourceIdentifier parameter. You can't specify both of those parameters
+// in the same operation.
+//
+//   - Specify the logGroupName parameter to cause all log events stored in
+//     the log group to be encrypted with that key. Only the log events ingested
+//     after the key is associated are encrypted with that key. Associating a
+//     KMS key with a log group overrides any existing associations between the
+//     log group and a KMS key. After a KMS key is associated with a log group,
+//     all newly ingested data for the log group is encrypted using the KMS key.
+//     This association is stored as long as the data encrypted with the KMS
+//     key is still within CloudWatch Logs. This enables CloudWatch Logs to decrypt
+//     this data whenever it is requested. Associating a key with a log group
+//     does not cause the results of queries of that log group to be encrypted
+//     with that key. To have query results encrypted with a KMS key, you must
+//     use an AssociateKmsKey operation with the resourceIdentifier parameter
+//     that specifies a query-result resource.
+//
+//   - Specify the resourceIdentifier parameter with a query-result resource,
+//     to use that key to encrypt the stored results of all future StartQuery
+//     (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_StartQuery.html)
+//     operations in the account. The response from a GetQueryResults (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_GetQueryResults.html)
+//     operation will still return the query results in plain text. Even if you
+//     have not associated a key with your query results, the query results are
+//     encrypted when stored, using the default CloudWatch Logs method. If you
+//     run a query from a monitoring account that queries logs in a source account,
+//     the query results key from the monitoring account, if any, is used.
+//
+// If you delete the key that is used to encrypt log events or log group query
+// results, then all the associated stored log events or query results that
+// were encrypted with that key will be unencryptable and unusable.
 //
 // CloudWatch Logs supports only symmetric KMS keys. Do not use an associate
-// an asymmetric KMS key with your log group. For more information, see Using
-// Symmetric and Asymmetric Keys (https://docs.aws.amazon.com/kms/latest/developerguide/symmetric-asymmetric.html).
+// an asymmetric KMS key with your log group or query results. For more information,
+// see Using Symmetric and Asymmetric Keys (https://docs.aws.amazon.com/kms/latest/developerguide/symmetric-asymmetric.html).
 //
 // It can take up to 5 minutes for this operation to take effect.
 //
@@ -393,8 +419,8 @@ func (c *CloudWatchLogs) CreateLogGroupRequest(input *CreateLogGroupInput) (req 
 // with the KMS key is still within CloudWatch Logs. This enables CloudWatch
 // Logs to decrypt this data whenever it is requested.
 //
-// If you attempt to associate a KMS key with the log group but the KMS keydoes
-// not exist or the KMS key is disabled, you receive an InvalidParameterException
+// If you attempt to associate a KMS key with the log group but the KMS key
+// does not exist or the KMS key is disabled, you receive an InvalidParameterException
 // error.
 //
 // CloudWatch Logs supports only symmetric KMS keys. Do not associate an asymmetric
@@ -545,6 +571,98 @@ func (c *CloudWatchLogs) CreateLogStream(input *CreateLogStreamInput) (*CreateLo
 // for more information on using Contexts.
 func (c *CloudWatchLogs) CreateLogStreamWithContext(ctx aws.Context, input *CreateLogStreamInput, opts ...request.Option) (*CreateLogStreamOutput, error) {
 	req, out := c.CreateLogStreamRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteAccountPolicy = "DeleteAccountPolicy"
+
+// DeleteAccountPolicyRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteAccountPolicy operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteAccountPolicy for more information on using the DeleteAccountPolicy
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteAccountPolicyRequest method.
+//	req, resp := client.DeleteAccountPolicyRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteAccountPolicy
+func (c *CloudWatchLogs) DeleteAccountPolicyRequest(input *DeleteAccountPolicyInput) (req *request.Request, output *DeleteAccountPolicyOutput) {
+	op := &request.Operation{
+		Name:       opDeleteAccountPolicy,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteAccountPolicyInput{}
+	}
+
+	output = &DeleteAccountPolicyOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteAccountPolicy API operation for Amazon CloudWatch Logs.
+//
+// Deletes a CloudWatch Logs account policy.
+//
+// To use this operation, you must be signed on with the logs:DeleteDataProtectionPolicy
+// and logs:DeleteAccountPolicy permissions.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch Logs's
+// API operation DeleteAccountPolicy for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidParameterException
+//     A parameter is specified incorrectly.
+//
+//   - ResourceNotFoundException
+//     The specified resource does not exist.
+//
+//   - ServiceUnavailableException
+//     The service cannot complete the request.
+//
+//   - OperationAbortedException
+//     Multiple concurrent requests to update the same resource were in conflict.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DeleteAccountPolicy
+func (c *CloudWatchLogs) DeleteAccountPolicy(input *DeleteAccountPolicyInput) (*DeleteAccountPolicyOutput, error) {
+	req, out := c.DeleteAccountPolicyRequest(input)
+	return out, req.Send()
+}
+
+// DeleteAccountPolicyWithContext is the same as DeleteAccountPolicy with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteAccountPolicy for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatchLogs) DeleteAccountPolicyWithContext(ctx aws.Context, input *DeleteAccountPolicyInput, opts ...request.Option) (*DeleteAccountPolicyOutput, error) {
+	req, out := c.DeleteAccountPolicyRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1356,6 +1474,94 @@ func (c *CloudWatchLogs) DeleteSubscriptionFilter(input *DeleteSubscriptionFilte
 // for more information on using Contexts.
 func (c *CloudWatchLogs) DeleteSubscriptionFilterWithContext(ctx aws.Context, input *DeleteSubscriptionFilterInput, opts ...request.Option) (*DeleteSubscriptionFilterOutput, error) {
 	req, out := c.DeleteSubscriptionFilterRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeAccountPolicies = "DescribeAccountPolicies"
+
+// DescribeAccountPoliciesRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeAccountPolicies operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeAccountPolicies for more information on using the DescribeAccountPolicies
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeAccountPoliciesRequest method.
+//	req, resp := client.DescribeAccountPoliciesRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeAccountPolicies
+func (c *CloudWatchLogs) DescribeAccountPoliciesRequest(input *DescribeAccountPoliciesInput) (req *request.Request, output *DescribeAccountPoliciesOutput) {
+	op := &request.Operation{
+		Name:       opDescribeAccountPolicies,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeAccountPoliciesInput{}
+	}
+
+	output = &DescribeAccountPoliciesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeAccountPolicies API operation for Amazon CloudWatch Logs.
+//
+// Returns a list of all CloudWatch Logs account policies in the account.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch Logs's
+// API operation DescribeAccountPolicies for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidParameterException
+//     A parameter is specified incorrectly.
+//
+//   - OperationAbortedException
+//     Multiple concurrent requests to update the same resource were in conflict.
+//
+//   - ResourceNotFoundException
+//     The specified resource does not exist.
+//
+//   - ServiceUnavailableException
+//     The service cannot complete the request.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/DescribeAccountPolicies
+func (c *CloudWatchLogs) DescribeAccountPolicies(input *DescribeAccountPoliciesInput) (*DescribeAccountPoliciesOutput, error) {
+	req, out := c.DescribeAccountPoliciesRequest(input)
+	return out, req.Send()
+}
+
+// DescribeAccountPoliciesWithContext is the same as DescribeAccountPolicies with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeAccountPolicies for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatchLogs) DescribeAccountPoliciesWithContext(ctx aws.Context, input *DescribeAccountPoliciesInput, opts ...request.Option) (*DescribeAccountPoliciesOutput, error) {
+	req, out := c.DescribeAccountPoliciesRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2482,14 +2688,30 @@ func (c *CloudWatchLogs) DisassociateKmsKeyRequest(input *DisassociateKmsKeyInpu
 
 // DisassociateKmsKey API operation for Amazon CloudWatch Logs.
 //
-// Disassociates the associated KMS key from the specified log group.
+// Disassociates the specified KMS key from the specified log group or from
+// all CloudWatch Logs Insights query results in the account.
 //
-// After the KMS key is disassociated from the log group, CloudWatch Logs stops
-// encrypting newly ingested data for the log group. All previously ingested
-// data remains encrypted, and CloudWatch Logs requires permissions for the
-// KMS key whenever the encrypted data is requested.
+// When you use DisassociateKmsKey, you specify either the logGroupName parameter
+// or the resourceIdentifier parameter. You can't specify both of those parameters
+// in the same operation.
 //
-// Note that it can take up to 5 minutes for this operation to take effect.
+//   - Specify the logGroupName parameter to stop using the KMS key to encrypt
+//     future log events ingested and stored in the log group. Instead, they
+//     will be encrypted with the default CloudWatch Logs method. The log events
+//     that were ingested while the key was associated with the log group are
+//     still encrypted with that key. Therefore, CloudWatch Logs will need permissions
+//     for the key whenever that data is accessed.
+//
+//   - Specify the resourceIdentifier parameter with the query-result resource
+//     to stop using the KMS key to encrypt the results of all future StartQuery
+//     (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_StartQuery.html)
+//     operations in the account. They will instead be encrypted with the default
+//     CloudWatch Logs method. The results from queries that ran while the key
+//     was associated with the account are still encrypted with that key. Therefore,
+//     CloudWatch Logs will need permissions for the key whenever that data is
+//     accessed.
+//
+// It can take up to 5 minutes for this operation to take effect.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2587,7 +2809,7 @@ func (c *CloudWatchLogs) FilterLogEventsRequest(input *FilterLogEventsInput) (re
 // or filter the results using a filter pattern, a time range, and the name
 // of the log stream.
 //
-// You must have the logs;FilterLogEvents permission to perform this operation.
+// You must have the logs:FilterLogEvents permission to perform this operation.
 //
 // You can specify the log group to search by using either logGroupIdentifier
 // or logGroupName. You must include one of these two parameters, but you can't
@@ -3427,6 +3649,129 @@ func (c *CloudWatchLogs) ListTagsLogGroupWithContext(ctx aws.Context, input *Lis
 	return out, req.Send()
 }
 
+const opPutAccountPolicy = "PutAccountPolicy"
+
+// PutAccountPolicyRequest generates a "aws/request.Request" representing the
+// client's request for the PutAccountPolicy operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See PutAccountPolicy for more information on using the PutAccountPolicy
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the PutAccountPolicyRequest method.
+//	req, resp := client.PutAccountPolicyRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutAccountPolicy
+func (c *CloudWatchLogs) PutAccountPolicyRequest(input *PutAccountPolicyInput) (req *request.Request, output *PutAccountPolicyOutput) {
+	op := &request.Operation{
+		Name:       opPutAccountPolicy,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &PutAccountPolicyInput{}
+	}
+
+	output = &PutAccountPolicyOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// PutAccountPolicy API operation for Amazon CloudWatch Logs.
+//
+// Creates an account-level data protection policy that applies to all log groups
+// in the account. A data protection policy can help safeguard sensitive data
+// that's ingested by your log groups by auditing and masking the sensitive
+// log data. Each account can have only one account-level policy.
+//
+// Sensitive data is detected and masked when it is ingested into a log group.
+// When you set a data protection policy, log events ingested into the log groups
+// before that time are not masked.
+//
+// If you use PutAccountPolicy to create a data protection policy for your whole
+// account, it applies to both existing log groups and all log groups that are
+// created later in this account. The account policy is applied to existing
+// log groups with eventual consistency. It might take up to 5 minutes before
+// sensitive data in existing log groups begins to be masked.
+//
+// By default, when a user views a log event that includes masked data, the
+// sensitive data is replaced by asterisks. A user who has the logs:Unmask permission
+// can use a GetLogEvents (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_GetLogEvents.html)
+// or FilterLogEvents (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_FilterLogEvents.html)
+// operation with the unmask parameter set to true to view the unmasked log
+// events. Users with the logs:Unmask can also view unmasked data in the CloudWatch
+// Logs console by running a CloudWatch Logs Insights query with the unmask
+// query command.
+//
+// For more information, including a list of types of data that can be audited
+// and masked, see Protect sensitive log data with masking (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html).
+//
+// To use the PutAccountPolicy operation, you must be signed on with the logs:PutDataProtectionPolicy
+// and logs:PutAccountPolicy permissions.
+//
+// The PutAccountPolicy operation applies to all log groups in the account.
+// You can also use PutDataProtectionPolicy (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutDataProtectionPolicy.html)
+// to create a data protection policy that applies to just one log group. If
+// a log group has its own data protection policy and the account also has an
+// account-level data protection policy, then the two policies are cumulative.
+// Any sensitive term specified in either policy is masked.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch Logs's
+// API operation PutAccountPolicy for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidParameterException
+//     A parameter is specified incorrectly.
+//
+//   - OperationAbortedException
+//     Multiple concurrent requests to update the same resource were in conflict.
+//
+//   - ServiceUnavailableException
+//     The service cannot complete the request.
+//
+//   - LimitExceededException
+//     You have reached the maximum number of resources that can be created.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/logs-2014-03-28/PutAccountPolicy
+func (c *CloudWatchLogs) PutAccountPolicy(input *PutAccountPolicyInput) (*PutAccountPolicyOutput, error) {
+	req, out := c.PutAccountPolicyRequest(input)
+	return out, req.Send()
+}
+
+// PutAccountPolicyWithContext is the same as PutAccountPolicy with the addition of
+// the ability to pass a context and additional request options.
+//
+// See PutAccountPolicy for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CloudWatchLogs) PutAccountPolicyWithContext(ctx aws.Context, input *PutAccountPolicyInput, opts ...request.Option) (*PutAccountPolicyOutput, error) {
+	req, out := c.PutAccountPolicyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opPutDataProtectionPolicy = "PutDataProtectionPolicy"
 
 // PutDataProtectionPolicyRequest generates a "aws/request.Request" representing the
@@ -3489,6 +3834,15 @@ func (c *CloudWatchLogs) PutDataProtectionPolicyRequest(input *PutDataProtection
 //
 // For more information, including a list of types of data that can be audited
 // and masked, see Protect sensitive log data with masking (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html).
+//
+// The PutDataProtectionPolicy operation applies to only the specified log group.
+// You can also use PutAccountPolicy (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutAccountPolicy.html)
+// to create an account-level data protection policy that applies to all log
+// groups in the account, including both existing log groups and log groups
+// that are created level. If a log group has its own data protection policy
+// and the account also has an account-level data protection policy, then the
+// two policies are cumulative. Any sensitive term specified in either policy
+// is masked.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3796,6 +4150,8 @@ func (c *CloudWatchLogs) PutLogEventsRequest(input *PutLogEventsInput) (req *req
 //
 //   - A batch of log events in a single request cannot span more than 24 hours.
 //     Otherwise, the operation fails.
+//
+//   - Each log event can be no larger than 256 KB.
 //
 //   - The maximum number of log events in a batch is 10,000.
 //
@@ -4323,8 +4679,9 @@ func (c *CloudWatchLogs) PutSubscriptionFilterRequest(input *PutSubscriptionFilt
 //   - An Amazon Kinesis data stream belonging to the same account as the subscription
 //     filter, for same-account delivery.
 //
-//   - A logical destination that belongs to a different account, for cross-account
-//     delivery.
+//   - A logical destination created with PutDestination (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutDestination.html)
+//     that belongs to a different account, for cross-account delivery. We currently
+//     support Kinesis Data Streams and Kinesis Data Firehose as logical destinations.
 //
 //   - An Amazon Kinesis Data Firehose delivery stream that belongs to the
 //     same account as the subscription filter, for same-account delivery.
@@ -4336,8 +4693,8 @@ func (c *CloudWatchLogs) PutSubscriptionFilterRequest(input *PutSubscriptionFilt
 // If you are updating an existing filter, you must specify the correct name
 // in filterName.
 //
-// To perform a PutSubscriptionFilter operation, you must also have the iam:PassRole
-// permission.
+// To perform a PutSubscriptionFilter operation for any destination except a
+// Lambda function, you must also have the iam:PassRole permission.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4433,7 +4790,17 @@ func (c *CloudWatchLogs) StartQueryRequest(input *StartQueryInput) (req *request
 //
 // For more information, see CloudWatch Logs Insights Query Syntax (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html).
 //
-// Queries time out after 15 minutes of runtime. If your queries are timing
+// After you run a query using StartQuery, the query results are stored by CloudWatch
+// Logs. You can use GetQueryResults (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_GetQueryResults.html)
+// to retrieve the results of a query, using the queryId that StartQuery returns.
+//
+// If you have associated a KMS key with the query results in this account,
+// then StartQuery (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_StartQuery.html)
+// uses that key to encrypt the results when it stores them. If no key is associated
+// with query results, the query results are encrypted with the default CloudWatch
+// Logs encryption method.
+//
+// Queries time out after 60 minutes of runtime. If your queries are timing
 // out, reduce the time range being searched or partition your query into a
 // number of queries.
 //
@@ -4443,7 +4810,7 @@ func (c *CloudWatchLogs) StartQueryRequest(input *StartQueryInput) (req *request
 // For a cross-account StartQuery operation, the query definition must be defined
 // in the monitoring account.
 //
-// You can have up to 20 concurrent CloudWatch Logs insights queries, including
+// You can have up to 30 concurrent CloudWatch Logs insights queries, including
 // queries that have been added to dashboards.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -5066,6 +5433,85 @@ func (c *CloudWatchLogs) UntagResourceWithContext(ctx aws.Context, input *UntagR
 	return out, req.Send()
 }
 
+// A structure that contains information about one CloudWatch Logs account policy.
+type AccountPolicy struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Web Services account ID that the policy applies to.
+	AccountId *string `locationName:"accountId" min:"12" type:"string"`
+
+	// The date and time that this policy was most recently updated.
+	LastUpdatedTime *int64 `locationName:"lastUpdatedTime" type:"long"`
+
+	// The policy document for this account policy.
+	//
+	// The JSON specified in policyDocument can be up to 30,720 characters.
+	PolicyDocument *string `locationName:"policyDocument" type:"string"`
+
+	// The name of the account policy.
+	PolicyName *string `locationName:"policyName" type:"string"`
+
+	// The type of policy for this account policy.
+	PolicyType *string `locationName:"policyType" type:"string" enum:"PolicyType"`
+
+	// The scope of the account policy.
+	Scope *string `locationName:"scope" type:"string" enum:"Scope"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AccountPolicy) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AccountPolicy) GoString() string {
+	return s.String()
+}
+
+// SetAccountId sets the AccountId field's value.
+func (s *AccountPolicy) SetAccountId(v string) *AccountPolicy {
+	s.AccountId = &v
+	return s
+}
+
+// SetLastUpdatedTime sets the LastUpdatedTime field's value.
+func (s *AccountPolicy) SetLastUpdatedTime(v int64) *AccountPolicy {
+	s.LastUpdatedTime = &v
+	return s
+}
+
+// SetPolicyDocument sets the PolicyDocument field's value.
+func (s *AccountPolicy) SetPolicyDocument(v string) *AccountPolicy {
+	s.PolicyDocument = &v
+	return s
+}
+
+// SetPolicyName sets the PolicyName field's value.
+func (s *AccountPolicy) SetPolicyName(v string) *AccountPolicy {
+	s.PolicyName = &v
+	return s
+}
+
+// SetPolicyType sets the PolicyType field's value.
+func (s *AccountPolicy) SetPolicyType(v string) *AccountPolicy {
+	s.PolicyType = &v
+	return s
+}
+
+// SetScope sets the Scope field's value.
+func (s *AccountPolicy) SetScope(v string) *AccountPolicy {
+	s.Scope = &v
+	return s
+}
+
 type AssociateKmsKeyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5079,8 +5525,24 @@ type AssociateKmsKeyInput struct {
 
 	// The name of the log group.
 	//
-	// LogGroupName is a required field
-	LogGroupName *string `locationName:"logGroupName" min:"1" type:"string" required:"true"`
+	// In your AssociateKmsKey operation, you must specify either the resourceIdentifier
+	// parameter or the logGroup parameter, but you can't specify both.
+	LogGroupName *string `locationName:"logGroupName" min:"1" type:"string"`
+
+	// Specifies the target for this operation. You must specify one of the following:
+	//
+	//    * Specify the following ARN to have future GetQueryResults (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_GetQueryResults.html)
+	//    operations in this account encrypt the results with the specified KMS
+	//    key. Replace REGION and ACCOUNT_ID with your Region and account ID. arn:aws:logs:REGION:ACCOUNT_ID:query-result:*
+	//
+	//    * Specify the ARN of a log group to have CloudWatch Logs use the KMS key
+	//    to encrypt log events that are ingested and stored by that log group.
+	//    The log group ARN must be in the following format. Replace REGION and
+	//    ACCOUNT_ID with your Region and account ID. arn:aws:logs:REGION:ACCOUNT_ID:log-group:LOG_GROUP_NAME
+	//
+	// In your AssociateKmsKey operation, you must specify either the resourceIdentifier
+	// parameter or the logGroup parameter, but you can't specify both.
+	ResourceIdentifier *string `locationName:"resourceIdentifier" min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -5107,11 +5569,11 @@ func (s *AssociateKmsKeyInput) Validate() error {
 	if s.KmsKeyId == nil {
 		invalidParams.Add(request.NewErrParamRequired("KmsKeyId"))
 	}
-	if s.LogGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("LogGroupName"))
-	}
 	if s.LogGroupName != nil && len(*s.LogGroupName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("LogGroupName", 1))
+	}
+	if s.ResourceIdentifier != nil && len(*s.ResourceIdentifier) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceIdentifier", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -5129,6 +5591,12 @@ func (s *AssociateKmsKeyInput) SetKmsKeyId(v string) *AssociateKmsKeyInput {
 // SetLogGroupName sets the LogGroupName field's value.
 func (s *AssociateKmsKeyInput) SetLogGroupName(v string) *AssociateKmsKeyInput {
 	s.LogGroupName = &v
+	return s
+}
+
+// SetResourceIdentifier sets the ResourceIdentifier field's value.
+func (s *AssociateKmsKeyInput) SetResourceIdentifier(v string) *AssociateKmsKeyInput {
+	s.ResourceIdentifier = &v
 	return s
 }
 
@@ -5650,6 +6118,88 @@ func (s *DataAlreadyAcceptedException) StatusCode() int {
 // RequestID returns the service's response RequestID for request.
 func (s *DataAlreadyAcceptedException) RequestID() string {
 	return s.RespMetadata.RequestID
+}
+
+type DeleteAccountPolicyInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the policy to delete.
+	//
+	// PolicyName is a required field
+	PolicyName *string `locationName:"policyName" type:"string" required:"true"`
+
+	// The type of policy to delete. Currently, the only valid value is DATA_PROTECTION_POLICY.
+	//
+	// PolicyType is a required field
+	PolicyType *string `locationName:"policyType" type:"string" required:"true" enum:"PolicyType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteAccountPolicyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteAccountPolicyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteAccountPolicyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteAccountPolicyInput"}
+	if s.PolicyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyName"))
+	}
+	if s.PolicyType == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPolicyName sets the PolicyName field's value.
+func (s *DeleteAccountPolicyInput) SetPolicyName(v string) *DeleteAccountPolicyInput {
+	s.PolicyName = &v
+	return s
+}
+
+// SetPolicyType sets the PolicyType field's value.
+func (s *DeleteAccountPolicyInput) SetPolicyType(v string) *DeleteAccountPolicyInput {
+	s.PolicyType = &v
+	return s
+}
+
+type DeleteAccountPolicyOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteAccountPolicyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteAccountPolicyOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteDataProtectionPolicyInput struct {
@@ -6334,6 +6884,111 @@ func (s DeleteSubscriptionFilterOutput) GoString() string {
 	return s.String()
 }
 
+type DescribeAccountPoliciesInput struct {
+	_ struct{} `type:"structure"`
+
+	// If you are using an account that is set up as a monitoring account for CloudWatch
+	// unified cross-account observability, you can use this to specify the account
+	// ID of a source account. If you do, the operation returns the account policy
+	// for the specified account. Currently, you can specify only one account ID
+	// in this parameter.
+	//
+	// If you omit this parameter, only the policy in the current account is returned.
+	AccountIdentifiers []*string `locationName:"accountIdentifiers" type:"list"`
+
+	// Use this parameter to limit the returned policies to only the policy with
+	// the name that you specify.
+	PolicyName *string `locationName:"policyName" type:"string"`
+
+	// Use this parameter to limit the returned policies to only the policies that
+	// match the policy type that you specify. Currently, the only valid value is
+	// DATA_PROTECTION_POLICY.
+	//
+	// PolicyType is a required field
+	PolicyType *string `locationName:"policyType" type:"string" required:"true" enum:"PolicyType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeAccountPoliciesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeAccountPoliciesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeAccountPoliciesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeAccountPoliciesInput"}
+	if s.PolicyType == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAccountIdentifiers sets the AccountIdentifiers field's value.
+func (s *DescribeAccountPoliciesInput) SetAccountIdentifiers(v []*string) *DescribeAccountPoliciesInput {
+	s.AccountIdentifiers = v
+	return s
+}
+
+// SetPolicyName sets the PolicyName field's value.
+func (s *DescribeAccountPoliciesInput) SetPolicyName(v string) *DescribeAccountPoliciesInput {
+	s.PolicyName = &v
+	return s
+}
+
+// SetPolicyType sets the PolicyType field's value.
+func (s *DescribeAccountPoliciesInput) SetPolicyType(v string) *DescribeAccountPoliciesInput {
+	s.PolicyType = &v
+	return s
+}
+
+type DescribeAccountPoliciesOutput struct {
+	_ struct{} `type:"structure"`
+
+	// An array of structures that contain information about the CloudWatch Logs
+	// account policies that match the specified filters.
+	AccountPolicies []*AccountPolicy `locationName:"accountPolicies" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeAccountPoliciesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeAccountPoliciesOutput) GoString() string {
+	return s.String()
+}
+
+// SetAccountPolicies sets the AccountPolicies field's value.
+func (s *DescribeAccountPoliciesOutput) SetAccountPolicies(v []*AccountPolicy) *DescribeAccountPoliciesOutput {
+	s.AccountPolicies = v
+	return s
+}
+
 type DescribeDestinationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6581,9 +7236,6 @@ type DescribeLogGroupsInput struct {
 	// If this parameter is set to true and accountIdentifiers contains a null value,
 	// the operation returns all log groups in the monitoring account and all log
 	// groups in all source accounts that are linked to the monitoring account.
-	//
-	// If you specify includeLinkedAccounts in your request, then metricFilterCount,
-	// retentionInDays, and storedBytes are not included in the response.
 	IncludeLinkedAccounts *bool `locationName:"includeLinkedAccounts" type:"boolean"`
 
 	// The maximum number of items returned. If you don't specify a value, the default
@@ -6594,6 +7246,9 @@ type DescribeLogGroupsInput struct {
 	// groups that have names that match the string based on a case-sensitive substring
 	// search. For example, if you specify Foo, log groups named FooBar, aws/Foo,
 	// and GroupFoo would match, but foo, F/o/o and Froo would not match.
+	//
+	// If you specify logGroupNamePattern in your request, then only arn, creationTime,
+	// and logGroupName are included in the response.
 	//
 	// logGroupNamePattern and logGroupNamePrefix are mutually exclusive. Only one
 	// of these parameters can be passed.
@@ -7590,8 +8245,27 @@ type DisassociateKmsKeyInput struct {
 
 	// The name of the log group.
 	//
-	// LogGroupName is a required field
-	LogGroupName *string `locationName:"logGroupName" min:"1" type:"string" required:"true"`
+	// In your DisassociateKmsKey operation, you must specify either the resourceIdentifier
+	// parameter or the logGroup parameter, but you can't specify both.
+	LogGroupName *string `locationName:"logGroupName" min:"1" type:"string"`
+
+	// Specifies the target for this operation. You must specify one of the following:
+	//
+	//    * Specify the ARN of a log group to stop having CloudWatch Logs use the
+	//    KMS key to encrypt log events that are ingested and stored by that log
+	//    group. After you run this operation, CloudWatch Logs encrypts ingested
+	//    log events with the default CloudWatch Logs method. The log group ARN
+	//    must be in the following format. Replace REGION and ACCOUNT_ID with your
+	//    Region and account ID. arn:aws:logs:REGION:ACCOUNT_ID:log-group:LOG_GROUP_NAME
+	//
+	//    * Specify the following ARN to stop using this key to encrypt the results
+	//    of future StartQuery (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_StartQuery.html)
+	//    operations in this account. Replace REGION and ACCOUNT_ID with your Region
+	//    and account ID. arn:aws:logs:REGION:ACCOUNT_ID:query-result:*
+	//
+	// In your DisssociateKmsKey operation, you must specify either the resourceIdentifier
+	// parameter or the logGroup parameter, but you can't specify both.
+	ResourceIdentifier *string `locationName:"resourceIdentifier" min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -7615,11 +8289,11 @@ func (s DisassociateKmsKeyInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *DisassociateKmsKeyInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "DisassociateKmsKeyInput"}
-	if s.LogGroupName == nil {
-		invalidParams.Add(request.NewErrParamRequired("LogGroupName"))
-	}
 	if s.LogGroupName != nil && len(*s.LogGroupName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("LogGroupName", 1))
+	}
+	if s.ResourceIdentifier != nil && len(*s.ResourceIdentifier) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceIdentifier", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -7631,6 +8305,12 @@ func (s *DisassociateKmsKeyInput) Validate() error {
 // SetLogGroupName sets the LogGroupName field's value.
 func (s *DisassociateKmsKeyInput) SetLogGroupName(v string) *DisassociateKmsKeyInput {
 	s.LogGroupName = &v
+	return s
+}
+
+// SetResourceIdentifier sets the ResourceIdentifier field's value.
+func (s *DisassociateKmsKeyInput) SetResourceIdentifier(v string) *DisassociateKmsKeyInput {
+	s.ResourceIdentifier = &v
 	return s
 }
 
@@ -8478,9 +9158,9 @@ type GetLogGroupFieldsInput struct {
 	// You must include either logGroupIdentifier or logGroupName, but not both.
 	LogGroupName *string `locationName:"logGroupName" min:"1" type:"string"`
 
-	// The time to set as the center of the query. If you specify time, the 15 minutes
-	// before this time are queries. If you omit time, the 8 minutes before and
-	// 8 minutes after this time are searched.
+	// The time to set as the center of the query. If you specify time, the 8 minutes
+	// before and 8 minutes after this time are searched. If you omit time, the
+	// most recent 15 minutes up to the current time are searched.
 	//
 	// The time value is specified as epoch time, which is the number of seconds
 	// since January 1, 1970, 00:00:00 UTC.
@@ -8714,6 +9394,12 @@ func (s *GetQueryResultsInput) SetQueryId(v string) *GetQueryResultsInput {
 type GetQueryResultsOutput struct {
 	_ struct{} `type:"structure"`
 
+	// If you associated an KMS key with the CloudWatch Logs Insights query results
+	// in this account, this field displays the ARN of the key that's used to encrypt
+	// the query results when StartQuery (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_StartQuery.html)
+	// stores them.
+	EncryptionKey *string `locationName:"encryptionKey" type:"string"`
+
 	// The log events that matched the query criteria during the most recent time
 	// it ran.
 	//
@@ -8724,14 +9410,14 @@ type GetQueryResultsOutput struct {
 
 	// Includes the number of log events scanned by the query, the number of log
 	// events that matched the query criteria, and the total number of bytes in
-	// the log events that were scanned. These values reflect the full raw results
-	// of the query.
+	// the scanned log events. These values reflect the full raw results of the
+	// query.
 	Statistics *QueryStatistics `locationName:"statistics" type:"structure"`
 
 	// The status of the most recent running of the query. Possible values are Cancelled,
 	// Complete, Failed, Running, Scheduled, Timeout, and Unknown.
 	//
-	// Queries time out after 15 minutes of runtime. To avoid having your queries
+	// Queries time out after 60 minutes of runtime. To avoid having your queries
 	// time out, reduce the time range being searched or partition your query into
 	// a number of queries.
 	Status *string `locationName:"status" type:"string" enum:"QueryStatus"`
@@ -8753,6 +9439,12 @@ func (s GetQueryResultsOutput) String() string {
 // value will be replaced with "sensitive".
 func (s GetQueryResultsOutput) GoString() string {
 	return s.String()
+}
+
+// SetEncryptionKey sets the EncryptionKey field's value.
+func (s *GetQueryResultsOutput) SetEncryptionKey(v string) *GetQueryResultsOutput {
+	s.EncryptionKey = &v
+	return s
 }
 
 // SetResults sets the Results field's value.
@@ -8778,7 +9470,7 @@ func (s *GetQueryResultsOutput) SetStatus(v string) *GetQueryResultsOutput {
 type InputLogEvent struct {
 	_ struct{} `type:"structure"`
 
-	// The raw event message.
+	// The raw event message. Each log event can be no larger than 256 KB.
 	//
 	// Message is a required field
 	Message *string `locationName:"message" min:"1" type:"string" required:"true"`
@@ -9285,6 +9977,10 @@ type LogGroup struct {
 	// one in the past. For more information, see PutDataProtectionPolicy (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutDataProtectionPolicy.html).
 	DataProtectionStatus *string `locationName:"dataProtectionStatus" type:"string" enum:"DataProtectionStatus"`
 
+	// Displays all the properties that this log group has inherited from account-level
+	// settings.
+	InheritedProperties []*string `locationName:"inheritedProperties" type:"list" enum:"InheritedProperty"`
+
 	// The Amazon Resource Name (ARN) of the KMS key to use when encrypting log
 	// data.
 	KmsKeyId *string `locationName:"kmsKeyId" type:"string"`
@@ -9297,7 +9993,7 @@ type LogGroup struct {
 
 	// The number of days to retain the log events in the specified log group. Possible
 	// values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731,
-	// 1827, 2192, 2557, 2922, 3288, and 3653.
+	// 1096, 1827, 2192, 2557, 2922, 3288, and 3653.
 	//
 	// To set a log group so that its log events do not expire, use DeleteRetentionPolicy
 	// (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteRetentionPolicy.html).
@@ -9340,6 +10036,12 @@ func (s *LogGroup) SetCreationTime(v int64) *LogGroup {
 // SetDataProtectionStatus sets the DataProtectionStatus field's value.
 func (s *LogGroup) SetDataProtectionStatus(v string) *LogGroup {
 	s.DataProtectionStatus = &v
+	return s
+}
+
+// SetInheritedProperties sets the InheritedProperties field's value.
+func (s *LogGroup) SetInheritedProperties(v []*string) *LogGroup {
+	s.InheritedProperties = v
 	return s
 }
 
@@ -9962,6 +10664,153 @@ func (s *OutputLogEvent) SetTimestamp(v int64) *OutputLogEvent {
 	return s
 }
 
+type PutAccountPolicyInput struct {
+	_ struct{} `type:"structure"`
+
+	// Specify the data protection policy, in JSON.
+	//
+	// This policy must include two JSON blocks:
+	//
+	//    * The first block must include both a DataIdentifer array and an Operation
+	//    property with an Audit action. The DataIdentifer array lists the types
+	//    of sensitive data that you want to mask. For more information about the
+	//    available options, see Types of data that you can mask (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-types.html).
+	//    The Operation property with an Audit action is required to find the sensitive
+	//    data terms. This Audit action must contain a FindingsDestination object.
+	//    You can optionally use that FindingsDestination object to list one or
+	//    more destinations to send audit findings to. If you specify destinations
+	//    such as log groups, Kinesis Data Firehose streams, and S3 buckets, they
+	//    must already exist.
+	//
+	//    * The second block must include both a DataIdentifer array and an Operation
+	//    property with an Deidentify action. The DataIdentifer array must exactly
+	//    match the DataIdentifer array in the first block of the policy. The Operation
+	//    property with the Deidentify action is what actually masks the data, and
+	//    it must contain the "MaskConfig": {} object. The "MaskConfig": {} object
+	//    must be empty.
+	//
+	// For an example data protection policy, see the Examples section on this page.
+	//
+	// The contents of the two DataIdentifer arrays must match exactly.
+	//
+	// In addition to the two JSON blocks, the policyDocument can also include Name,
+	// Description, and Version fields. The Name is different than the operation's
+	// policyName parameter, and is used as a dimension when CloudWatch Logs reports
+	// audit findings metrics to CloudWatch.
+	//
+	// The JSON specified in policyDocument can be up to 30,720 characters.
+	//
+	// PolicyDocument is a required field
+	PolicyDocument *string `locationName:"policyDocument" type:"string" required:"true"`
+
+	// A name for the policy. This must be unique within the account.
+	//
+	// PolicyName is a required field
+	PolicyName *string `locationName:"policyName" type:"string" required:"true"`
+
+	// Currently the only valid value for this parameter is DATA_PROTECTION_POLICY.
+	//
+	// PolicyType is a required field
+	PolicyType *string `locationName:"policyType" type:"string" required:"true" enum:"PolicyType"`
+
+	// Currently the only valid value for this parameter is ALL, which specifies
+	// that the data protection policy applies to all log groups in the account.
+	// If you omit this parameter, the default of ALL is used.
+	Scope *string `locationName:"scope" type:"string" enum:"Scope"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s PutAccountPolicyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s PutAccountPolicyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutAccountPolicyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutAccountPolicyInput"}
+	if s.PolicyDocument == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyDocument"))
+	}
+	if s.PolicyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyName"))
+	}
+	if s.PolicyType == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetPolicyDocument sets the PolicyDocument field's value.
+func (s *PutAccountPolicyInput) SetPolicyDocument(v string) *PutAccountPolicyInput {
+	s.PolicyDocument = &v
+	return s
+}
+
+// SetPolicyName sets the PolicyName field's value.
+func (s *PutAccountPolicyInput) SetPolicyName(v string) *PutAccountPolicyInput {
+	s.PolicyName = &v
+	return s
+}
+
+// SetPolicyType sets the PolicyType field's value.
+func (s *PutAccountPolicyInput) SetPolicyType(v string) *PutAccountPolicyInput {
+	s.PolicyType = &v
+	return s
+}
+
+// SetScope sets the Scope field's value.
+func (s *PutAccountPolicyInput) SetScope(v string) *PutAccountPolicyInput {
+	s.Scope = &v
+	return s
+}
+
+type PutAccountPolicyOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The account policy that you created.
+	AccountPolicy *AccountPolicy `locationName:"accountPolicy" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s PutAccountPolicyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s PutAccountPolicyOutput) GoString() string {
+	return s.String()
+}
+
+// SetAccountPolicy sets the AccountPolicy field's value.
+func (s *PutAccountPolicyOutput) SetAccountPolicy(v *AccountPolicy) *PutAccountPolicyOutput {
+	s.AccountPolicy = v
+	return s
+}
+
 type PutDataProtectionPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9994,7 +10843,13 @@ type PutDataProtectionPolicyInput struct {
 	//
 	// For an example data protection policy, see the Examples section on this page.
 	//
-	// The contents of two DataIdentifer arrays must match exactly.
+	// The contents of the two DataIdentifer arrays must match exactly.
+	//
+	// In addition to the two JSON blocks, the policyDocument can also include Name,
+	// Description, and Version fields. The Name is used as a dimension when CloudWatch
+	// Logs reports audit findings metrics to CloudWatch.
+	//
+	// The JSON specified in policyDocument can be up to 30,720 characters.
 	//
 	// PolicyDocument is a required field
 	PolicyDocument *string `locationName:"policyDocument" type:"string" required:"true"`
@@ -10244,12 +11099,12 @@ type PutDestinationPolicyInput struct {
 
 	// Specify true if you are updating an existing destination policy to grant
 	// permission to an organization ID instead of granting permission to individual
-	// AWS accounts. Before you update a destination policy this way, you must first
-	// update the subscription filters in the accounts that send logs to this destination.
-	// If you do not, the subscription filters might stop working. By specifying
-	// true for forceUpdate, you are affirming that you have already updated the
-	// subscription filters. For more information, see Updating an existing cross-account
-	// subscription (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Cross-Account-Log_Subscription-Update.html)
+	// Amazon Web Services accounts. Before you update a destination policy this
+	// way, you must first update the subscription filters in the accounts that
+	// send logs to this destination. If you do not, the subscription filters might
+	// stop working. By specifying true for forceUpdate, you are affirming that
+	// you have already updated the subscription filters. For more information,
+	// see Updating an existing cross-account subscription (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Cross-Account-Log_Subscription-Update.html)
 	//
 	// If you omit this parameter, the default of false is used.
 	ForceUpdate *bool `locationName:"forceUpdate" type:"boolean"`
@@ -10866,7 +11721,7 @@ type PutRetentionPolicyInput struct {
 
 	// The number of days to retain the log events in the specified log group. Possible
 	// values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731,
-	// 1827, 2192, 2557, 2922, 3288, and 3653.
+	// 1096, 1827, 2192, 2557, 2922, 3288, and 3653.
 	//
 	// To set a log group so that its log events do not expire, use DeleteRetentionPolicy
 	// (https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteRetentionPolicy.html).
@@ -11791,19 +12646,19 @@ type StartQueryInput struct {
 	// If you specify an ARN, the ARN can't end with an asterisk (*).
 	//
 	// A StartQuery operation must include exactly one of the following parameters:
-	// logGroupName, logGroupNames or logGroupIdentifiers.
+	// logGroupName, logGroupNames, or logGroupIdentifiers.
 	LogGroupIdentifiers []*string `locationName:"logGroupIdentifiers" type:"list"`
 
 	// The log group on which to perform the query.
 	//
 	// A StartQuery operation must include exactly one of the following parameters:
-	// logGroupName, logGroupNames or logGroupIdentifiers.
+	// logGroupName, logGroupNames, or logGroupIdentifiers.
 	LogGroupName *string `locationName:"logGroupName" min:"1" type:"string"`
 
 	// The list of log groups to be queried. You can include up to 50 log groups.
 	//
 	// A StartQuery operation must include exactly one of the following parameters:
-	// logGroupName, logGroupNames or logGroupIdentifiers.
+	// logGroupName, logGroupNames, or logGroupIdentifiers.
 	LogGroupNames []*string `locationName:"logGroupNames" type:"list"`
 
 	// The query string to use. For more information, see CloudWatch Logs Insights
@@ -12772,6 +13627,18 @@ func ExportTaskStatusCode_Values() []string {
 }
 
 const (
+	// InheritedPropertyAccountDataProtection is a InheritedProperty enum value
+	InheritedPropertyAccountDataProtection = "ACCOUNT_DATA_PROTECTION"
+)
+
+// InheritedProperty_Values returns all elements of the InheritedProperty enum
+func InheritedProperty_Values() []string {
+	return []string{
+		InheritedPropertyAccountDataProtection,
+	}
+}
+
+const (
 	// OrderByLogStreamName is a OrderBy enum value
 	OrderByLogStreamName = "LogStreamName"
 
@@ -12784,6 +13651,18 @@ func OrderBy_Values() []string {
 	return []string{
 		OrderByLogStreamName,
 		OrderByLastEventTime,
+	}
+}
+
+const (
+	// PolicyTypeDataProtectionPolicy is a PolicyType enum value
+	PolicyTypeDataProtectionPolicy = "DATA_PROTECTION_POLICY"
+)
+
+// PolicyType_Values returns all elements of the PolicyType enum
+func PolicyType_Values() []string {
+	return []string{
+		PolicyTypeDataProtectionPolicy,
 	}
 }
 
@@ -12820,6 +13699,18 @@ func QueryStatus_Values() []string {
 		QueryStatusCancelled,
 		QueryStatusTimeout,
 		QueryStatusUnknown,
+	}
+}
+
+const (
+	// ScopeAll is a Scope enum value
+	ScopeAll = "ALL"
+)
+
+// Scope_Values returns all elements of the Scope enum
+func Scope_Values() []string {
+	return []string{
+		ScopeAll,
 	}
 }
 
