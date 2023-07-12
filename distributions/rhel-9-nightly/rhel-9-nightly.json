@@ -1,0 +1,44 @@
+{
+  "module_platform_id": "platform:el9",
+  "distribution": {
+    "name": "rhel-9-nightly",
+    "composer_name": "rhel-9",
+    "description": "Red Hat Enterprise Linux (RHEL) 9 Nightly",
+    "no_package_list": true,
+    "restricted_access": true
+  },
+  "x86_64": {
+    "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "vsphere", "vsphere-ova" ],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9/compose/BaseOS/x86_64/os/",
+      "rhsm": false
+    }, {
+      "id": "appstream",
+      "baseurl": "http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9/compose/AppStream/x86_64/os/",
+      "rhsm": false
+    }, {
+      "id": "google-compute-engine",
+      "baseurl": "https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable",
+      "rhsm": false,
+      "image_type_tags": ["gcp"]
+    }, {
+      "id": "google-cloud-sdk",
+      "baseurl": "https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64",
+      "rhsm": false,
+      "image_type_tags": ["gcp"]
+    }]
+  },
+  "aarch64": {
+    "image_types": [ "aws", "guest-image", "image-installer" ],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9/compose/BaseOS/aarch64/os/",
+      "rhsm": false
+    }, {
+      "id": "appstream",
+      "baseurl": "http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9/compose/AppStream/aarch64/os/",
+      "rhsm": false
+    }]
+  }
+}

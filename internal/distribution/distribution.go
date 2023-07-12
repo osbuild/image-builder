@@ -16,9 +16,10 @@ var DistributionNotFound = errors.New("Distribution not available")
 var RepoSourceError = errors.New("Repository must always have one of these properties: baseurl, metalink")
 
 type DistributionItem struct {
-	Description      string `json:"description"`
-	Name             string `json:"name"`
-	RestrictedAccess bool   `json:"restricted_access"`
+	Description      string  `json:"description"`
+	Name             string  `json:"name"`
+	ComposerName     *string `json:"composer_name"`
+	RestrictedAccess bool    `json:"restricted_access"`
 
 	// NoPackageList is set to true for distributions that don't have their
 	// packages defined in /distributions. This is useful for distributions

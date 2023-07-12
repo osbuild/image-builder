@@ -542,8 +542,13 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
+	distro := d.Distribution.Name
+	if d.Distribution.ComposerName != nil {
+		distro = *d.Distribution.ComposerName
+	}
+
 	cloudCR := composer.ComposeRequest{
-		Distribution:   string(composeRequest.Distribution),
+		Distribution:   distro,
 		Customizations: buildCustomizations(composeRequest.Customizations),
 		ImageRequest: &composer.ImageRequest{
 			Architecture:  string(composeRequest.ImageRequests[0].Architecture),
