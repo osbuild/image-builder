@@ -3,18 +3,22 @@
 Image Builder needs a database running, the easiest way is to run a container like so:
 
 ```
-sudo podman run -p 5432:5432 --name image-builder-db --health-cmd "pg_isready -u postgres -d imagebuilder"
---health-interval 10s --health-timeout 5s --health-retries 5 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=foobar -e
-POSTGRES_DB=imagebuilder postgres
+sudo podman run -p 5432:5432 --name image-builder-db --health-cmd "pg_isready -u postgres -d imagebuilder" --health-interval 10s --health-timeout 5s --health-retries 5 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=foobar -e POSTGRES_DB=imagebuilder postgres
 ```
+
+Open `image-builder-migrate-db-tern.go` file (under `image-builder/cmd` folder) and update 2 variables:
+1) TernExecutable with path to tern executable location.
+   If you don't have tern tool you can install it with -
+   `go install github.com/jackc/tern/v2@latest`
+2) TernMigrationsDir with path to migration dir -
+   `$HOME/image-builder/internal/db/migrations-tern`
+
 
 Run `make build` and migrate the db (this only needs to be done once) to the latest version:
 
 ```
-PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder
-MIGRATIONS_DIR=$HOME/image-builder/internal/db/migrations/ ./image-builder-migrate-db
+PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder MIGRATIONS_DIR=$HOME/image-builder/internal/db/migrations-tern ./image-builder-migrate-db-tern
 ```
-
 
 To compose images locally, and if you have Composer running locally, add these to the environment:
 
@@ -23,15 +27,9 @@ OSBUILD_URL="https://localhost:8085" OSBUILD_CA_PATH="/etc/osbuild-composer/ca-c
 OSBUILD_CERT_PATH="/etc/osbuild-composer/client-crt.pem" OSBUILD_KEY_PATH="/etc/osbuild-composer/client-key.pem"
 ```
 
-Otherwise set some bogus values:
+Otherwise set some other values and Start Image Builder:
 ```
-COMPOSER_TOKEN_URL=bogus COMPOSER_CLIENT_ID=bogus COMPOSER_CLIENT_SECRET=bogus
-```
-
-Start Image Builder:
-```
-PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder
-DISTRIBUTIONS_DIR="$HOME/image-builder/distributions" ./image-builder
+PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=imagebuilder DISTRIBUTIONS_DIR="$HOME/image-builder/distributions" COMPOSER_TOKEN_URL=test COMPOSER_CLIENT_ID=test COMPOSER_CLIENT_SECRET=test ./image-builder
 ```
 
 # Testing
