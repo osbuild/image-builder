@@ -2,12 +2,12 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: image-builder-stage-e2e
+  name: image-builder-e2e
 objects:
 - apiVersion: batch/v1
   kind: Job
   metadata:
-    name: image-builder-stage-e2e-${IMAGE_TAG}-${UID}
+    name: image-builder-e2e-${IMAGE_TAG}-${UID}
     annotations:
       "ignore-check.kube-linter.io/no-liveness-probe": "probes not required on Job pods"
       "ignore-check.kube-linter.io/no-readiness-probe": "probes not required on Job pods"
@@ -23,7 +23,7 @@ objects:
           emptyDir:
             medium: Memory
         containers:
-        - name: image-builder-stage-e2e-iqe-${IMAGE_TAG}-${UID}
+        - name: image-builder-e2e-iqe-${IMAGE_TAG}-${UID}
           image: ${IQE_IMAGE}
           imagePullPolicy: Always
           args:
@@ -33,6 +33,8 @@ objects:
             value: ${ENV_FOR_DYNACONF}
           - name: DYNACONF_MAIN__use_beta
             value: ${USE_BETA}
+          - name: IQE_IBUTSU_SOURCE
+            value: image-builder-e2e-${IMAGE_TAG}-${UID}-${ENV_FOR_DYNACONF}
           - name: IQE_PLUGINS
             value: ${IQE_PLUGINS}
           - name: IQE_MARKER_EXPRESSION
@@ -84,7 +86,7 @@ objects:
               memory: 1Gi
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
-        - name: image-builder-stage-e2e-selenium-${UID}
+        - name: image-builder-e2e-sel-${IMAGE_TAG}-${UID}
           image: ${IQE_SEL_IMAGE}
           resources:
             limits:
