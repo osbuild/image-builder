@@ -20,20 +20,20 @@ const (
 
 // the QUOTA_FILE needs to contain data arranged as such:
 //
-// {
-//     "000000":{
-//         "quota":2,
-//         "slidingWindow":1209600000000000
-//     },
-//     "000001":{
-//         "quota":0,
-//         "slidingWindow":1209600000000000
-//     },
-//     "default":{
-//         "quota":100,
-//         "slidingWindow":1209600000000000
-//     }
-// }
+//	{
+//	    "000000":{
+//	        "quota":2,
+//	        "slidingWindow":1209600000000000
+//	    },
+//	    "000001":{
+//	        "quota":0,
+//	        "slidingWindow":1209600000000000
+//	    },
+//	    "default":{
+//	        "quota":100,
+//	        "slidingWindow":1209600000000000
+//	    }
+//	}
 //
 // The unit for the sliding window is the nanosecond.
 type Quota struct {
