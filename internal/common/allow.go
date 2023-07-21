@@ -17,11 +17,12 @@ type AllowList map[string][]string
 // string is given as the argument, returns an empty AllowList.
 //
 // The allow file must conform to the following json schema:
-// {
-// 	"000000": ["fedora-*"]
-//  "000001": ["fedora-34", "fedora-35", "fedora-36"]
-//  "000002": []
-// }
+//
+//	{
+//		"000000": ["fedora-*"]
+//	 "000001": ["fedora-34", "fedora-35", "fedora-36"]
+//	 "000002": []
+//	}
 func LoadAllowList(allowFile string) (AllowList, error) {
 	if allowFile == "" {
 		return AllowList{}, nil
