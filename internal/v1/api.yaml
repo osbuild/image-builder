@@ -484,6 +484,10 @@ components:
           type: string
           example: "MyImageName"
           maxLength: 100
+        image_description:
+          type: string
+          example: "MyImageDescription"
+          maxLength: 250
         image_requests:
           type: array
           minItems: 1
