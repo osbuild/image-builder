@@ -808,44 +808,6 @@ func TestComposeImage(t *testing.T) {
 		require.Contains(t, body, "Error at \\\"/image_requests/0/architecture\\\"")
 	})
 
-	t.Run("ErrorUserCustomizationNotAllowed", func(t *testing.T) {
-		// User customization only permitted for installer types
-		payload := ComposeRequest{
-			Customizations: &Customizations{
-				Packages: &[]string{
-					"some",
-					"packages",
-				},
-				Users: &[]User{
-					{
-						Name:   "user-name0",
-						SshKey: "",
-					},
-					{
-						Name:   "user-name1",
-						SshKey: "",
-					},
-				},
-			},
-			Distribution: "centos-8",
-			ImageRequests: []ImageRequest{
-				{
-					Architecture: "x86_64",
-					ImageType:    ImageTypesAmi,
-					UploadRequest: UploadRequest{
-						Type: UploadTypesAws,
-						Options: AWSUploadRequestOptions{
-							ShareWithAccounts: &[]string{"test-account"},
-						},
-					},
-				},
-			},
-		}
-		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, respStatusCode)
-		require.Contains(t, body, "User customization only applies to installer image types")
-	})
-
 	t.Run("ErrorsForUnknownUploadType", func(t *testing.T) {
 		// UploadRequest Type isn't supported
 		payload := ComposeRequest{

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
@@ -802,10 +803,6 @@ func validateCustomizations(cr *ComposeRequest) error {
 		return nil
 	}
 	it := cr.ImageRequests[0].ImageType
-
-	if cust.Users != nil && !strings.Contains(string(it), "installer") {
-		return echo.NewHTTPError(http.StatusBadRequest, "User customization only applies to installer image types")
-	}
 
 	if cust.Filesystem != nil {
 		var totalSize uint64
