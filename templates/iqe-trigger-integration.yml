@@ -80,21 +80,21 @@ objects:
           resources:
             limits:
               cpu: "1"
-              memory: 2Gi
+              memory: 1.5Gi
             requests:
-              cpu: 500m
-              memory: 1Gi
+              cpu: 250m
+              memory: 512Mi
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - name: image-builder-e2e-sel-${IMAGE_TAG}-${UID}
           image: ${IQE_SEL_IMAGE}
           resources:
             limits:
-              cpu: 300m
-              memory: 1Gi
+              cpu: 500m
+              memory: 1.5Gi
             requests:
-              cpu: 150m
-              memory: 512Mi
+              cpu: 100m
+              memory: 256Mi
           volumeMounts:
             - name: sel-shm
               mountPath: /dev/shm
