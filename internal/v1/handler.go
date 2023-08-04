@@ -438,11 +438,16 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 
 	data := []ComposesResponseItem{}
 	for _, c := range composes {
+		var cmpr ComposeRequest
+		err = json.Unmarshal(c.Request, &cmpr)
+		if err != nil {
+			return err
+		}
 		data = append(data, ComposesResponseItem{
 			CreatedAt: c.CreatedAt.Format(time.RFC3339),
 			Id:        c.Id,
 			ImageName: c.ImageName,
-			Request:   c.Request,
+			Request:   cmpr,
 		})
 	}
 
