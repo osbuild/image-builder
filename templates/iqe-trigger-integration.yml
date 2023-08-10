@@ -120,7 +120,7 @@ parameters:
 - name: IQE_PLUGINS
   value: hms_integration
 - name: IQE_MARKER_EXPRESSION
-  value: ''
+  value: 'image_builder'
 - name: IQE_FILTER_EXPRESSION
   value: ''
 - name: IQE_LOG_LEVEL
