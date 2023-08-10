@@ -35,6 +35,10 @@ objects:
             value: ${USE_BETA}
           - name: IQE_IBUTSU_SOURCE
             value: image-builder-e2e-${IMAGE_TAG}-${UID}-${ENV_FOR_DYNACONF}
+          - name: IQE_BROWSERLOG
+            value: ${IQE_BROWSERLOG}
+          - name: IQE_NETLOG
+            value: ${IQE_NETLOG}
           - name: IQE_PLUGINS
             value: ${IQE_PLUGINS}
           - name: IQE_MARKER_EXPRESSION
@@ -129,3 +133,7 @@ parameters:
   value: ''
 - name: IQE_SEL_IMAGE
   value: 'quay.io/redhatqe/selenium-standalone:ff_91.9.1esr_chrome_103.0.5060.114'
+- name: IQE_BROWSERLOG
+  value: "1"
+- name: IQE_NETLOG
+  value: "1"
