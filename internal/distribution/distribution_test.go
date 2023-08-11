@@ -25,28 +25,28 @@ func TestDistributionFile_Architecture(t *testing.T) {
 		Repositories: []Repository{
 			{
 				Id:      "baseos",
-				Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+				Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
 				Rhsm:    false,
 			},
 			{
 				Id:      "appstream",
-				Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+				Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
 				Rhsm:    false,
 			},
 			{
 				Id:      "extras",
-				Baseurl: common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+				Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
 				Rhsm:    false,
 			},
 			{
 				Id:            "google-compute-engine",
-				Baseurl:       common.StringToPtr("https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"),
+				Baseurl:       common.ToPtr("https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"),
 				Rhsm:          false,
 				ImageTypeTags: []string{"gcp"},
 			},
 			{
 				Id:            "google-cloud-sdk",
-				Baseurl:       common.StringToPtr("https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"),
+				Baseurl:       common.ToPtr("https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"),
 				Rhsm:          false,
 				ImageTypeTags: []string{"gcp"},
 			},
@@ -181,8 +181,8 @@ func TestArchitecture_validate(t *testing.T) {
 			Architecture{
 				ImageTypes: nil,
 				Repositories: []Repository{
-					{Baseurl: common.StringToPtr("http://example.com/repo1")},
-					{Metalink: common.StringToPtr("http://example.com/repo2")},
+					{Baseurl: common.ToPtr("http://example.com/repo1")},
+					{Metalink: common.ToPtr("http://example.com/repo2")},
 				},
 				Packages: nil,
 			},
@@ -194,8 +194,8 @@ func TestArchitecture_validate(t *testing.T) {
 				ImageTypes: nil,
 				Repositories: []Repository{
 					{
-						Baseurl:  common.StringToPtr("http://example.com/repo1"),
-						Metalink: common.StringToPtr("http://example.com/repo2"),
+						Baseurl:  common.ToPtr("http://example.com/repo1"),
+						Metalink: common.ToPtr("http://example.com/repo2"),
 					},
 				},
 				Packages: nil,

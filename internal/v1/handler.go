@@ -528,7 +528,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 			repositories = append(repositories, composer.Repository{
 				Baseurl:  r.Baseurl,
 				Metalink: r.Metalink,
-				Rhsm:     common.BoolToPtr(r.Rhsm),
+				Rhsm:     common.ToPtr(r.Rhsm),
 			})
 		}
 	}
@@ -873,7 +873,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			if payloadRepository.Mirrorlist != nil {
 				payloadRepositories[i].Mirrorlist = payloadRepository.Mirrorlist
 			}
-			payloadRepositories[i].Rhsm = common.BoolToPtr(payloadRepository.Rhsm)
+			payloadRepositories[i].Rhsm = common.ToPtr(payloadRepository.Rhsm)
 		}
 		res.PayloadRepositories = &payloadRepositories
 	}

@@ -52,25 +52,25 @@ func TestDistroRegistry_Get(t *testing.T) {
 			Repositories: []Repository{
 				{
 					Id:            "baseos",
-					Baseurl:       common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/baseos/os"),
+					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/baseos/os"),
 					Rhsm:          true,
 					ImageTypeTags: nil,
 				},
 				{
 					Id:            "appstream",
-					Baseurl:       common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/appstream/os"),
+					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/appstream/os"),
 					Rhsm:          true,
 					ImageTypeTags: nil,
 				},
 				{
 					Id:            "google-compute-engine",
-					Baseurl:       common.StringToPtr("https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"),
+					Baseurl:       common.ToPtr("https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"),
 					Rhsm:          false,
 					ImageTypeTags: []string{"gcp"},
 				},
 				{
 					Id:            "google-cloud-sdk",
-					Baseurl:       common.StringToPtr("https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"),
+					Baseurl:       common.ToPtr("https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"),
 					Rhsm:          false,
 					ImageTypeTags: []string{"gcp"},
 				},
@@ -81,13 +81,13 @@ func TestDistroRegistry_Get(t *testing.T) {
 			Repositories: []Repository{
 				{
 					Id:            "baseos",
-					Baseurl:       common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/aarch64/baseos/os"),
+					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/aarch64/baseos/os"),
 					Rhsm:          true,
 					ImageTypeTags: nil,
 				},
 				{
 					Id:            "appstream",
-					Baseurl:       common.StringToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/aarch64/appstream/os"),
+					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/aarch64/appstream/os"),
 					Rhsm:          true,
 					ImageTypeTags: nil,
 				},
