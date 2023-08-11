@@ -1770,6 +1770,69 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		{
+			imageBuilderRequest: ComposeRequest{
+				Distribution: "centos-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesAws,
+						Size:         common.ToPtr(uint64(13958643712)),
+						UploadRequest: UploadRequest{
+							Type: UploadTypesAws,
+							Options: AWSUploadRequestOptions{
+								ShareWithSources: &[]string{"1"},
+							},
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution:   "centos-8",
+				Customizations: nil,
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesAws,
+					Size:         common.ToPtr(uint64(13958643712)),
+					Repositories: []composer.Repository{
+
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+						{
+							Baseurl:     common.StringToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.BoolToPtr(false),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSEC2UploadOptions{
+						ShareWithAccounts: []string{awsAccountId},
+					}),
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {
