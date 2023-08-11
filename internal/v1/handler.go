@@ -538,7 +538,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	err = validateCustomizations(&composeRequest)
+	err = validateComposeRequest(&composeRequest)
 	if err != nil {
 		return err
 	}
@@ -554,6 +554,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		ImageRequest: &composer.ImageRequest{
 			Architecture:  string(composeRequest.ImageRequests[0].Architecture),
 			ImageType:     imageType,
+			Size:          composeRequest.ImageRequests[0].Size,
 			Ostree:        buildOSTreeOptions(composeRequest.ImageRequests[0].Ostree),
 			Repositories:  repositories,
 			UploadOptions: &uploadOptions,
@@ -797,26 +798,30 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 	return cloudOptions
 }
 
-func validateCustomizations(cr *ComposeRequest) error {
+// validateComposeRequest makes sure the image size is not too large for AWS or Azure
+// It takes into account the requested image size, and the total size of requested
+// filesystem customizations.
+func validateComposeRequest(cr *ComposeRequest) error {
+	var totalSize uint64
 	cust := cr.Customizations
-	if cust == nil {
-		return nil
-	}
-	it := cr.ImageRequests[0].ImageType
-
-	if cust.Filesystem != nil {
-		var totalSize uint64
+	if cust != nil && cust.Filesystem != nil {
 		for _, v := range *cust.Filesystem {
 			totalSize += v.MinSize
 		}
+	}
 
-		if totalSize > FSMaxSize {
-			switch it {
-			case ImageTypesAmi, ImageTypesAws:
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Total AWS image size cannot exceed %d bytes", FSMaxSize))
-			case ImageTypesAzure, ImageTypesVhd:
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Total Azure image size cannot exceed %d bytes", FSMaxSize))
-			}
+	// The total size will be the larger of the requested size or the filesystems
+	if cr.ImageRequests[0].Size != nil && *cr.ImageRequests[0].Size > totalSize {
+		totalSize = *cr.ImageRequests[0].Size
+	}
+
+	if totalSize > FSMaxSize {
+		it := cr.ImageRequests[0].ImageType
+		switch it {
+		case ImageTypesAmi, ImageTypesAws:
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Total AWS image size cannot exceed %d bytes", FSMaxSize))
+		case ImageTypesAzure, ImageTypesVhd:
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Total Azure image size cannot exceed %d bytes", FSMaxSize))
 		}
 	}
 
