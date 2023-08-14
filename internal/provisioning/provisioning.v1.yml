@@ -146,7 +146,7 @@ components:
                     format: int64
                 image_id:
                     type: string
-                launch_template_name:
+                launch_template_id:
                     type: string
                 machine_type:
                     type: string
@@ -185,7 +185,7 @@ components:
                                         type: string
                             instance_id:
                                 type: string
-                launch_template_name:
+                launch_template_id:
                     type: string
                 machine_type:
                     type: string
@@ -203,7 +203,7 @@ components:
                     type: string
                 zone:
                     type: string
-        v1.GenericReservationResponsePayload:
+        v1.GenericReservationResponse:
             type: object
             properties:
                 created_at:
@@ -270,6 +270,125 @@ components:
                     type: string
                 name:
                     type: string
+        v1.ListGenericReservationResponse:
+            type: object
+            properties:
+                data:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            created_at:
+                                type: string
+                                format: date-time
+                            error:
+                                type: string
+                            finished_at:
+                                type: string
+                                format: date-time
+                                nullable: true
+                            id:
+                                type: integer
+                                format: int64
+                            provider:
+                                type: integer
+                            status:
+                                type: string
+                            step:
+                                type: integer
+                                format: int32
+                            step_titles:
+                                type: array
+                                items:
+                                    type: string
+                            steps:
+                                type: integer
+                                format: int32
+                            success:
+                                type: boolean
+                                nullable: true
+        v1.ListInstaceTypeResponse:
+            type: object
+            properties:
+                data:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            architecture:
+                                type: string
+                            azure:
+                                type: object
+                                properties:
+                                    gen_v1:
+                                        type: boolean
+                                    gen_v2:
+                                        type: boolean
+                            cores:
+                                type: integer
+                                format: int32
+                            memory_mib:
+                                type: integer
+                                format: int64
+                            name:
+                                type: string
+                            storage_gb:
+                                type: integer
+                                format: int64
+                            supported:
+                                type: boolean
+                            vcpus:
+                                type: integer
+                                format: int32
+        v1.ListLaunchTemplateResponse:
+            type: object
+            properties:
+                data:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: string
+                            name:
+                                type: string
+        v1.ListPubkeyResponse:
+            type: object
+            properties:
+                data:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            body:
+                                type: string
+                            fingerprint:
+                                type: string
+                            fingerprint_legacy:
+                                type: string
+                            id:
+                                type: integer
+                                format: int64
+                            name:
+                                type: string
+                            type:
+                                type: string
+        v1.ListSourceResponse:
+            type: object
+            properties:
+                data:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: string
+                            name:
+                                type: string
+                            source_type_id:
+                                type: string
+                            uid:
+                                type: string
         v1.NoopReservationResponse:
             type: object
             properties:
@@ -487,7 +606,7 @@ components:
             value:
                 amount: 1
                 image_id: 08a48fed-de87-40ab-a571-f64e30bd0aa8
-                launch_template_name: ""
+                launch_template_id: ""
                 machine_type: e2-micro
                 name_pattern: my-instance
                 poweroff: false
@@ -504,7 +623,7 @@ components:
                         publicdns: ""
                         publicipv4: 10.0.0.88
                       instance_id: "3003942005876582747"
-                launch_template_name: template-1
+                launch_template_id: "4883371230199373111"
                 machine_type: e2-micro
                 name_pattern: my-instance
                 poweroff: false
@@ -518,7 +637,7 @@ components:
                 gcp_operation_name: operation-1686646674436-5fdff07e43209-66146b7e-f3f65ec5
                 image_id: 08a48fed-de87-40ab-a571-f64e30bd0aa8
                 instances: []
-                launch_template_name: template-1
+                launch_template_id: "4883371230199373111"
                 machine_type: e2-micro
                 name_pattern: my-instance
                 poweroff: false
@@ -543,45 +662,46 @@ components:
                 success: false
         v1.GenericReservationResponsePayloadListExample:
             value:
-                - created_at: "2013-05-13T19:20:15Z"
-                  error: ""
-                  finished_at: null
-                  id: 1310
-                  provider: 1
-                  status: Started Ensure public key
-                  step: 1
-                  step_titles:
-                    - Ensure public key
-                    - Launch instance(s)
-                    - Fetch instance(s) description
-                  steps: 3
-                  success: null
-                - created_at: "2013-05-13T19:20:15Z"
-                  error: ""
-                  finished_at: "2013-05-13T19:20:25Z"
-                  id: 1305
-                  provider: 1
-                  status: Finished Fetch instance(s) description
-                  step: 3
-                  step_titles:
-                    - Ensure public key
-                    - Launch instance(s)
-                    - Fetch instance(s) description
-                  steps: 3
-                  success: true
-                - created_at: "2013-05-13T19:20:15Z"
-                  error: 'cannot launch ec2 instance: VPCIdNotSpecified: No default VPC for this user. GroupName is only supported for EC2-Classic and default VPC'
-                  finished_at: "2013-05-13T19:20:25Z"
-                  id: 1313
-                  provider: 1
-                  status: Finished Launch instance(s)
-                  step: 2
-                  step_titles:
-                    - Ensure public key
-                    - Launch instance(s)
-                    - Fetch instance(s) description
-                  steps: 3
-                  success: false
+                data:
+                    - created_at: "2013-05-13T19:20:15Z"
+                      error: ""
+                      finished_at: null
+                      id: 1310
+                      provider: 1
+                      status: Started Ensure public key
+                      step: 1
+                      step_titles:
+                        - Ensure public key
+                        - Launch instance(s)
+                        - Fetch instance(s) description
+                      steps: 3
+                      success: null
+                    - created_at: "2013-05-13T19:20:15Z"
+                      error: ""
+                      finished_at: "2013-05-13T19:20:25Z"
+                      id: 1305
+                      provider: 1
+                      status: Finished Fetch instance(s) description
+                      step: 3
+                      step_titles:
+                        - Ensure public key
+                        - Launch instance(s)
+                        - Fetch instance(s) description
+                      steps: 3
+                      success: true
+                    - created_at: "2013-05-13T19:20:15Z"
+                      error: 'cannot launch ec2 instance: VPCIdNotSpecified: No default VPC for this user. GroupName is only supported for EC2-Classic and default VPC'
+                      finished_at: "2013-05-13T19:20:25Z"
+                      id: 1313
+                      provider: 1
+                      status: Finished Launch instance(s)
+                      step: 2
+                      step_titles:
+                        - Ensure public key
+                        - Launch instance(s)
+                        - Fetch instance(s) description
+                      steps: 3
+                      success: false
         v1.GenericReservationResponsePayloadPendingExample:
             value:
                 created_at: "2013-05-13T19:20:15Z"
@@ -614,49 +734,54 @@ components:
                 success: true
         v1.InstanceTypesAWSResponse:
             value:
-                - arch: x86_64
-                  cores: 16
-                  memory_mib: 65536
-                  name: c5a.8xlarge
-                  storage_gb: 0
-                  supported: true
-                  vcpus: 32
+                data:
+                    - arch: x86_64
+                      cores: 16
+                      memory_mib: 65536
+                      name: c5a.8xlarge
+                      storage_gb: 0
+                      supported: true
+                      vcpus: 32
         v1.InstanceTypesAzureResponse:
             value:
-                - arch: x86_64
-                  azure:
-                    gen_v1: true
-                    gen_v2: true
-                  cores: 64
-                  memory_mib: 2e+06
-                  name: Standard_M128s
-                  storage_gb: 4096
-                  supported: true
-                  vcpus: 128
+                data:
+                    - arch: x86_64
+                      azure:
+                        gen_v1: true
+                        gen_v2: true
+                      cores: 64
+                      memory_mib: 2e+06
+                      name: Standard_M128s
+                      storage_gb: 4096
+                      supported: true
+                      vcpus: 128
         v1.InstanceTypesGCPResponse:
             value:
-                - arch: x86_64
-                  cores: 0
-                  memory_mib: 15623
-                  name: e2-highcpu-16
-                  storage_gb: 0
-                  supported: true
-                  vcpus: 16
+                data:
+                    - arch: x86_64
+                      cores: 0
+                      memory_mib: 15623
+                      name: e2-highcpu-16
+                      storage_gb: 0
+                      supported: true
+                      vcpus: 16
         v1.LaunchTemplateListResponse:
             value:
-                - id: lt-9843797432897342
-                  name: XXL large backend API
+                data:
+                    - id: lt-9843797432897342
+                      name: XXL large backend API
         v1.NoopReservationResponsePayloadExample:
             value:
                 reservation_id: 1310
         v1.PubkeyListResponseExample:
             value:
-                - body: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEhnn80ZywmjeBFFOGm+cm+5HUwm62qTVnjKlOdYFLHN lzap
-                  fingerprint: gL/y6MvNmJ8jDXtsL/oMmK8jUuIefN39BBuvYw/Rndk=
-                  fingerprint_legacy: ee:f1:d4:62:99:ab:17:d9:3b:00:66:62:32:b2:55:9e
-                  id: 1
-                  name: My key
-                  type: ssh-ed25519
+                data:
+                    - body: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEhnn80ZywmjeBFFOGm+cm+5HUwm62qTVnjKlOdYFLHN lzap
+                      fingerprint: gL/y6MvNmJ8jDXtsL/oMmK8jUuIefN39BBuvYw/Rndk=
+                      fingerprint_legacy: ee:f1:d4:62:99:ab:17:d9:3b:00:66:62:32:b2:55:9e
+                      id: 1
+                      name: My key
+                      type: ssh-ed25519
         v1.PubkeyRequestExample:
             value:
                 body: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEhnn80ZywmjeBFFOGm+cm+5HUwm62qTVnjKlOdYFLHN lzap
@@ -671,14 +796,15 @@ components:
                 type: ssh-ed25519
         v1.SourceListResponseExample:
             value:
-                - id: "654321"
-                  name: My AWS account
-                  source_type_id: ""
-                  uid: ""
-                - id: "543621"
-                  name: My other AWS account
-                  source_type_id: ""
-                  uid: ""
+                data:
+                    - id: "654321"
+                      name: My AWS account
+                      source_type_id: ""
+                      uid: ""
+                    - id: "543621"
+                      name: My other AWS account
+                      source_type_id: ""
+                      uid: ""
         v1.SourceUploadInfoAWSResponse:
             value:
                 aws:
@@ -702,7 +828,7 @@ info:
     description: Provisioning service API
     license:
         name: GPL-3.0
-    version: 1.2.0
+    version: 1.5.0
 paths:
     /availability_status/sources:
         post:
@@ -758,9 +884,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/v1.InstanceTypeResponse'
+                                $ref: '#/components/schemas/v1.ListInstaceTypeResponse'
                             examples:
                                 aws:
                                     $ref: '#/components/examples/v1.InstanceTypesAWSResponse'
@@ -783,9 +907,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/v1.PubkeyResponse'
+                                $ref: '#/components/schemas/v1.ListPubkeyResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.PubkeyListResponseExample'
@@ -882,9 +1004,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/v1.GenericReservationResponsePayload'
+                                $ref: '#/components/schemas/v1.ListGenericReservationResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.GenericReservationResponsePayloadListExample'
@@ -910,7 +1030,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/v1.GenericReservationResponsePayload'
+                                $ref: '#/components/schemas/v1.GenericReservationResponse'
                             examples:
                                 failure:
                                     $ref: '#/components/examples/v1.GenericReservationResponsePayloadFailureExample'
@@ -927,7 +1047,7 @@ paths:
             tags:
                 - Reservation
             description: |
-                A reservation is a way to activate a job, keeps all data needed for a job to start. An AWS reservation is a reservation created for an AWS job. Image Builder UUID image is required, the service will also launch any AMI image prefixed with "ami-". Optionally, AWS EC2 launch template ID can be provided. All flags set through this endpoint override template values. Public key must exist prior calling this endpoint and ID must be provided, even when AWS EC2 launch template provides ssh-keys. Public key will be always be overwritten.
+                A reservation is a way to activate a job, keeps all data needed for a job to start. An AWS reservation is a reservation created for an AWS job. Image Builder UUID image is required, the service will also launch any AMI image prefixed with "ami-". Optionally, AWS EC2 launch template ID can be provided. All flags set through this endpoint override template values. Public key must exist prior calling this endpoint and ID must be provided, even when AWS EC2 launch template provides ssh-keys. Public key will be always be overwritten. A single account can create maximum of 2 reservations per second.
             operationId: createAwsReservation
             requestBody:
                 description: aws request body
@@ -983,7 +1103,7 @@ paths:
             tags:
                 - Reservation
             description: |
-                A reservation is a way to activate a job, keeps all data needed for a job to start. An Azure reservation is a reservation created for an Azure job. Image Builder UUID image is required and needs to be stored under same account as provided by SourceID.
+                A reservation is a way to activate a job, keeps all data needed for a job to start. An Azure reservation is a reservation created for an Azure job. Image Builder UUID image is required and needs to be stored under same account as provided by SourceID. A single account can create maximum of 2 reservations per second.
             operationId: createAzureReservation
             requestBody:
                 description: azure request body
@@ -1039,7 +1159,7 @@ paths:
             tags:
                 - Reservation
             description: |
-                A reservation is a way to activate a job, keeps all data needed for a job to start. A GCP reservation is a reservation created for a GCP job. Image Builder UUID image is required and needs to be shared with the service account. Furthermore, by specifying the name pattern for example as "instance", instances names will be created in the format: "instance-#####".
+                A reservation is a way to activate a job, keeps all data needed for a job to start. A GCP reservation is a reservation created for a GCP job. Image Builder UUID image is required and needs to be shared with the service account. Furthermore, by specifying the name pattern for example as "instance", instances names will be created in the format: "instance-#####". A single account can create maximum of 2 reservations per second.
             operationId: createGCPReservation
             requestBody:
                 description: gcp request body
@@ -1123,9 +1243,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/v1.SourceResponse'
+                                $ref: '#/components/schemas/v1.ListSourceResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.SourceListResponseExample'
@@ -1183,9 +1301,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/v1.InstanceTypeResponse'
+                                $ref: '#/components/schemas/v1.ListInstaceTypeResponse'
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
@@ -1220,9 +1336,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/v1.LaunchTemplatesResponse'
+                                $ref: '#/components/schemas/v1.ListLaunchTemplateResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.LaunchTemplateListResponse'

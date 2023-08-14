@@ -88,15 +88,15 @@ type V1AzureReservationResponse struct {
 
 // V1GCPReservationRequest defines model for v1.GCPReservationRequest.
 type V1GCPReservationRequest struct {
-	Amount             *int64  `json:"amount,omitempty"`
-	ImageId            *string `json:"image_id,omitempty"`
-	LaunchTemplateName *string `json:"launch_template_name,omitempty"`
-	MachineType        *string `json:"machine_type,omitempty"`
-	NamePattern        *string `json:"name_pattern,omitempty"`
-	Poweroff           *bool   `json:"poweroff,omitempty"`
-	PubkeyId           *int64  `json:"pubkey_id,omitempty"`
-	SourceId           *string `json:"source_id,omitempty"`
-	Zone               *string `json:"zone,omitempty"`
+	Amount           *int64  `json:"amount,omitempty"`
+	ImageId          *string `json:"image_id,omitempty"`
+	LaunchTemplateId *string `json:"launch_template_id,omitempty"`
+	MachineType      *string `json:"machine_type,omitempty"`
+	NamePattern      *string `json:"name_pattern,omitempty"`
+	Poweroff         *bool   `json:"poweroff,omitempty"`
+	PubkeyId         *int64  `json:"pubkey_id,omitempty"`
+	SourceId         *string `json:"source_id,omitempty"`
+	Zone             *string `json:"zone,omitempty"`
 }
 
 // V1GCPReservationResponse defines model for v1.GCPReservationResponse.
@@ -111,18 +111,18 @@ type V1GCPReservationResponse struct {
 		} `json:"detail,omitempty"`
 		InstanceId *string `json:"instance_id,omitempty"`
 	} `json:"instances,omitempty"`
-	LaunchTemplateName *string `json:"launch_template_name,omitempty"`
-	MachineType        *string `json:"machine_type,omitempty"`
-	NamePattern        *string `json:"name_pattern,omitempty"`
-	Poweroff           *bool   `json:"poweroff,omitempty"`
-	PubkeyId           *int64  `json:"pubkey_id,omitempty"`
-	ReservationId      *int64  `json:"reservation_id,omitempty"`
-	SourceId           *string `json:"source_id,omitempty"`
-	Zone               *string `json:"zone,omitempty"`
+	LaunchTemplateId *string `json:"launch_template_id,omitempty"`
+	MachineType      *string `json:"machine_type,omitempty"`
+	NamePattern      *string `json:"name_pattern,omitempty"`
+	Poweroff         *bool   `json:"poweroff,omitempty"`
+	PubkeyId         *int64  `json:"pubkey_id,omitempty"`
+	ReservationId    *int64  `json:"reservation_id,omitempty"`
+	SourceId         *string `json:"source_id,omitempty"`
+	Zone             *string `json:"zone,omitempty"`
 }
 
-// V1GenericReservationResponsePayload defines model for v1.GenericReservationResponsePayload.
-type V1GenericReservationResponsePayload struct {
+// V1GenericReservationResponse defines model for v1.GenericReservationResponse.
+type V1GenericReservationResponse struct {
 	CreatedAt  *time.Time `json:"created_at,omitempty"`
 	Error      *string    `json:"error,omitempty"`
 	FinishedAt *time.Time `json:"finished_at"`
@@ -135,25 +135,67 @@ type V1GenericReservationResponsePayload struct {
 	Success    *bool      `json:"success"`
 }
 
-// V1InstanceTypeResponse defines model for v1.InstanceTypeResponse.
-type V1InstanceTypeResponse struct {
-	Architecture *string `json:"architecture,omitempty"`
-	Azure        *struct {
-		GenV1 *bool `json:"gen_v1,omitempty"`
-		GenV2 *bool `json:"gen_v2,omitempty"`
-	} `json:"azure,omitempty"`
-	Cores     *int32  `json:"cores,omitempty"`
-	MemoryMib *int64  `json:"memory_mib,omitempty"`
-	Name      *string `json:"name,omitempty"`
-	StorageGb *int64  `json:"storage_gb,omitempty"`
-	Supported *bool   `json:"supported,omitempty"`
-	Vcpus     *int32  `json:"vcpus,omitempty"`
+// V1ListGenericReservationResponse defines model for v1.ListGenericReservationResponse.
+type V1ListGenericReservationResponse struct {
+	Data *[]struct {
+		CreatedAt  *time.Time `json:"created_at,omitempty"`
+		Error      *string    `json:"error,omitempty"`
+		FinishedAt *time.Time `json:"finished_at"`
+		Id         *int64     `json:"id,omitempty"`
+		Provider   *int       `json:"provider,omitempty"`
+		Status     *string    `json:"status,omitempty"`
+		Step       *int32     `json:"step,omitempty"`
+		StepTitles *[]string  `json:"step_titles,omitempty"`
+		Steps      *int32     `json:"steps,omitempty"`
+		Success    *bool      `json:"success"`
+	} `json:"data,omitempty"`
 }
 
-// V1LaunchTemplatesResponse defines model for v1.LaunchTemplatesResponse.
-type V1LaunchTemplatesResponse struct {
-	Id   *string `json:"id,omitempty"`
-	Name *string `json:"name,omitempty"`
+// V1ListInstaceTypeResponse defines model for v1.ListInstaceTypeResponse.
+type V1ListInstaceTypeResponse struct {
+	Data *[]struct {
+		Architecture *string `json:"architecture,omitempty"`
+		Azure        *struct {
+			GenV1 *bool `json:"gen_v1,omitempty"`
+			GenV2 *bool `json:"gen_v2,omitempty"`
+		} `json:"azure,omitempty"`
+		Cores     *int32  `json:"cores,omitempty"`
+		MemoryMib *int64  `json:"memory_mib,omitempty"`
+		Name      *string `json:"name,omitempty"`
+		StorageGb *int64  `json:"storage_gb,omitempty"`
+		Supported *bool   `json:"supported,omitempty"`
+		Vcpus     *int32  `json:"vcpus,omitempty"`
+	} `json:"data,omitempty"`
+}
+
+// V1ListLaunchTemplateResponse defines model for v1.ListLaunchTemplateResponse.
+type V1ListLaunchTemplateResponse struct {
+	Data *[]struct {
+		Id   *string `json:"id,omitempty"`
+		Name *string `json:"name,omitempty"`
+	} `json:"data,omitempty"`
+}
+
+// V1ListPubkeyResponse defines model for v1.ListPubkeyResponse.
+type V1ListPubkeyResponse struct {
+	Data *[]struct {
+		Body              *string `json:"body,omitempty"`
+		Fingerprint       *string `json:"fingerprint,omitempty"`
+		FingerprintLegacy *string `json:"fingerprint_legacy,omitempty"`
+		Id                *int64  `json:"id,omitempty"`
+		Name              *string `json:"name,omitempty"`
+		Type              *string `json:"type,omitempty"`
+	} `json:"data,omitempty"`
+}
+
+// V1ListSourceResponse defines model for v1.ListSourceResponse.
+type V1ListSourceResponse struct {
+	Data *[]struct {
+		Id           *string `json:"id,omitempty"`
+		Name         *string `json:"name,omitempty"`
+		SourceTypeId *string `json:"source_type_id,omitempty"`
+		Uid          *string `json:"uid,omitempty"`
+	} `json:"data,omitempty"`
 }
 
 // V1NoopReservationResponse defines model for v1.NoopReservationResponse.
@@ -186,14 +228,6 @@ type V1ResponseError struct {
 	Msg         *string `json:"msg,omitempty"`
 	TraceId     *string `json:"trace_id,omitempty"`
 	Version     *string `json:"version,omitempty"`
-}
-
-// V1SourceResponse defines model for v1.SourceResponse.
-type V1SourceResponse struct {
-	Id           *string `json:"id,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	SourceTypeId *string `json:"source_type_id,omitempty"`
-	Uid          *string `json:"uid,omitempty"`
 }
 
 // V1SourceUploadInfoResponse defines model for v1.SourceUploadInfoResponse.
