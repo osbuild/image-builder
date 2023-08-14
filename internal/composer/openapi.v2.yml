@@ -26,6 +26,10 @@ paths:
       responses:
         '200':
           description: openapi spec in json format
+          content:
+            application/json:
+              schema:
+                type: object
         '500':
           description: Unexpected error occurred
           content:
@@ -719,6 +723,7 @@ components:
           type: string
 
     ComposeRequest:
+      additionalProperties: false
       required:
         - distribution
       properties:
@@ -736,6 +741,7 @@ components:
         koji:
           $ref: '#/components/schemas/Koji'
     ImageRequest:
+      additionalProperties: false
       required:
         - architecture
         - image_type
@@ -754,6 +760,13 @@ components:
           $ref: '#/components/schemas/OSTree'
         upload_options:
           $ref: '#/components/schemas/UploadOptions'
+        size:
+          x-go-type: uint64
+          default: 0
+          example: 4294967296
+          description: |
+            Size of image, in bytes. When set to 0 the image size is a minimum
+            defined by the image type.
     ImageTypes:
       type: string
       enum:
@@ -877,14 +890,29 @@ components:
       - $ref: '#/components/schemas/GCPUploadOptions'
       - $ref: '#/components/schemas/AzureUploadOptions'
       - $ref: '#/components/schemas/ContainerUploadOptions'
+      - $ref: '#/components/schemas/LocalUploadOptions'
       description: |
         This should really be oneOf but AWSS3UploadOptions is a subset of
         AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
         are also valid AWSS3UploadOptionas objects which violates the oneOf
         rules. Therefore, we have to use anyOf here but be aware that it isn't
         possible to mix and match more schemas together.
+    LocalUploadOptions:
+      type: object
+      additionalProperties: false
+      required:
+        - local_save
+      properties:
+        local_save:
+          type: boolean
+          default: false
+          description: |
+            This is used in combination with the OSBUILD_LOCALSAVE environmental
+            variable on the server to enable saving the compose locally. This
+            is for development use only, and is not available to users.
     AWSEC2UploadOptions:
       type: object
+      additionalProperties: false
       required:
         - region
         - share_with_accounts
@@ -902,6 +930,7 @@ components:
             type: string
     AWSS3UploadOptions:
       type: object
+      additionalProperties: false
       required:
         - region
       properties:
@@ -915,11 +944,12 @@ components:
             If set to false (the default value), a long, obfuscated URL
             is returned. Its expiration might be sooner than for other upload
             targets.
-            
+
             If set to true, a shorter URL is returned and
             its expiration is the same as for the other upload targets.
     GCPUploadOptions:
       type: object
+      additionalProperties: false
       required:
         - region
       properties:
@@ -973,6 +1003,7 @@ components:
             type: string
     AzureUploadOptions:
       type: object
+      additionalProperties: false
       required:
         - tenant_id
         - subscription_id
@@ -1026,6 +1057,7 @@ components:
             Tag for the created container image
     Customizations:
       type: object
+      additionalProperties: false
       properties:
         containers:
           type: array
@@ -1103,7 +1135,7 @@ components:
       properties:
         source:
           type: string
-          desription: Reference to the container to embed
+          description: Reference to the container to embed
           example: 'registry.example.com/image:tag'
         name:
           type: string
@@ -1189,7 +1221,8 @@ components:
           example: '/var'
         min_size:
           x-go-type: uint64
-          example: 1024
+          example: 2147483648
+          description: 'size of the filesystem in bytes'
     OSTree:
       type: object
       properties:
@@ -1252,6 +1285,7 @@ components:
             Optional flag to use rhc to register the system, which also always enables Insights.
     User:
       type: object
+      additionalProperties: false
       required:
         - name
       properties:
@@ -1268,6 +1302,7 @@ components:
           example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
     Koji:
       type: object
+      additionalProperties: false
       required:
         - server
         - task_id
@@ -1309,6 +1344,7 @@ components:
 
     AWSEC2CloneCompose:
       type: object
+      additionalProperties: false
       required:
         - region
       properties:

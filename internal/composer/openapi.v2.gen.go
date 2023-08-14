@@ -227,8 +227,10 @@ type ComposeStatusValue string
 // Container defines model for Container.
 type Container struct {
 	// Name to use for the container from the image
-	Name   *string `json:"name,omitempty"`
-	Source string  `json:"source"`
+	Name *string `json:"name,omitempty"`
+
+	// Reference to the container to embed
+	Source string `json:"source"`
 
 	// Control TLS verifification
 	TlsVerify *bool `json:"tls_verify,omitempty"`
@@ -361,6 +363,7 @@ type File struct {
 
 // Filesystem defines model for Filesystem.
 type Filesystem struct {
+	// size of the filesystem in bytes
 	MinSize    uint64 `json:"min_size"`
 	Mountpoint string `json:"mountpoint"`
 }
@@ -410,6 +413,10 @@ type ImageRequest struct {
 	Ostree       *OSTree      `json:"ostree,omitempty"`
 	Repositories []Repository `json:"repositories"`
 
+	// Size of image, in bytes. When set to 0 the image size is a minimum
+	// defined by the image type.
+	Size *uint64 `json:"size,omitempty"`
+
 	// This should really be oneOf but AWSS3UploadOptions is a subset of
 	// AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
 	// are also valid AWSS3UploadOptionas objects which violates the oneOf
@@ -457,6 +464,14 @@ type List struct {
 	Page  int    `json:"page"`
 	Size  int    `json:"size"`
 	Total int    `json:"total"`
+}
+
+// LocalUploadOptions defines model for LocalUploadOptions.
+type LocalUploadOptions struct {
+	// This is used in combination with the OSBUILD_LOCALSAVE environmental
+	// variable on the server to enable saving the compose locally. This
+	// is for development use only, and is not available to users.
+	LocalSave bool `json:"local_save"`
 }
 
 // OSTree defines model for OSTree.
