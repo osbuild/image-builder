@@ -905,6 +905,8 @@ components:
       properties:
         rhsm:
           type: boolean
+        name:
+          type: string
         baseurl:
           type: string
           format: uri
