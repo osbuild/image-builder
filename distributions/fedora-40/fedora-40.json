@@ -13,7 +13,7 @@
       "guest-image",
       "vsphere",
       "vsphere-ova",
-      "edge-commit"
+      "iot-commit"
     ],
     "repositories": [
       {
