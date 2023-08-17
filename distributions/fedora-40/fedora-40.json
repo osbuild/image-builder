@@ -1,0 +1,68 @@
+{
+  "module_platform_id": "platform:f40",
+  "distribution": {
+    "name": "fedora-40",
+    "description": "Fedora Linux 40",
+    "no_package_list": true,
+    "restricted_access": true
+  },
+  "x86_64": {
+    "image_types": [
+      "aws",
+      "azure",
+      "guest-image",
+      "vsphere",
+      "edge-commit"
+    ],
+    "repositories": [
+      {
+        "id": "fedora",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-40&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "id": "updates",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f40&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "id": "fedora-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-40&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "id": "updates-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f40&arch=x86_64",
+        "rhsm": false
+      }
+    ]
+  },
+  "aarch64": {
+    "image_types": [
+      "aws",
+      "guest-image"
+    ],
+    "repositories": [
+      {
+        "id": "fedora",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-40&arch=aarch64",
+        "rhsm": false
+      },
+      {
+        "id": "updates",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f40&arch=aarch64",
+        "rhsm": false
+      },
+      {
+        "id": "fedora-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-40&arch=aarch64",
+        "rhsm": false
+      },
+      {
+        "id": "updates-modular",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f40&arch=aarch64",
+        "rhsm": false
+      }
+    ]
+  }
+}
