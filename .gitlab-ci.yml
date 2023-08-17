@@ -39,8 +39,8 @@ build:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-8.7-ga-aarch64
+          - aws/rhel-8.8-ga-x86_64
+          - aws/rhel-8.8-ga-aarch64
 
 Test EL8:
   stage: test
@@ -58,7 +58,7 @@ Test EL8:
           - azure
           - gcp
         RUNNER:
-          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
 
 Test EL8/aarch64:
   stage: test
@@ -74,7 +74,7 @@ Test EL8/aarch64:
       - PROVIDER:
           - aws
         RUNNER:
-          - aws/rhel-8.7-ga-aarch64
+          - aws/rhel-8.8-ga-aarch64
 
 Test Load Test:
   stage: test
@@ -87,7 +87,7 @@ Test Load Test:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 SonarQube:
@@ -96,7 +96,7 @@ SonarQube:
   script:
     - schutzbot/sonarqube.sh
   variables:
-    RUNNER: aws/rhel-8.7-ga-x86_64
+    RUNNER: aws/rhel-8.8-ga-x86_64
     INTERNAL_NETWORK: "true"
     GIT_DEPTH: 0
 
@@ -104,7 +104,7 @@ Load test Success:
   stage: finish
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $LOAD_TEST == "true"'
-  script: 
+  script:
     - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
 
 Load test Fail:
@@ -112,7 +112,7 @@ Load test Fail:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $LOAD_TEST == "true"'
       when: on_failure
-  script: 
+  script:
     - schutzbot/slack_notification.sh FAILED ":big-sad:"
 
 finish:
