@@ -27,12 +27,12 @@
         "rhsm": false
       },
       {
-        "name": "fedora-modular",
+        "id": "fedora-modular",
         "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-37&arch=x86_64",
         "rhsm": false
       },
       {
-        "name": "updates-modular",
+        "id": "updates-modular",
         "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f37&arch=x86_64",
         "rhsm": false
       }
@@ -55,12 +55,12 @@
         "rhsm": false
       },
       {
-        "name": "fedora-modular",
+        "id": "fedora-modular",
         "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-modular-37&arch=aarch64",
         "rhsm": false
       },
       {
-        "name": "updates-modular",
+        "id": "updates-modular",
         "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-modular-f37&arch=aarch64",
         "rhsm": false
       }
