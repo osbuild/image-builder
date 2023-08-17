@@ -12,6 +12,7 @@
       "azure",
       "guest-image",
       "vsphere",
+      "vsphere-ova",
       "edge-commit"
     ],
     "repositories": [
