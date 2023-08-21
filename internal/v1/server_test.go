@@ -1833,6 +1833,70 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		// just one partition
+		{
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Filesystem: &[]Filesystem{
+						{
+							MinSize:    10 * 1024 * 1024 * 1024,
+							Mountpoint: "/",
+						},
+					},
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesGuestImage,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: AWSS3UploadRequestOptions{},
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-88",
+				Customizations: &composer.Customizations{
+					Filesystem: &[]composer.Filesystem{
+						{
+							MinSize:    10 * 1024 * 1024 * 1024,
+							Mountpoint: "/",
+						},
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/baseos/os"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.ToPtr(true),
+						},
+						{
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/appstream/os"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {

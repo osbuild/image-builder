@@ -927,7 +927,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		}
 	}
 
-	if cust.Filesystem != nil && len(*cust.Filesystem) > 1 {
+	if cust.Filesystem != nil && len(*cust.Filesystem) > 0 {
 		var fsc []composer.Filesystem
 		for _, v := range *cust.Filesystem {
 			fsc = append(fsc, composer.Filesystem{
