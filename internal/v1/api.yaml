@@ -558,6 +558,7 @@ components:
         - image-installer
         - vsphere
         - vsphere-ova
+        - wsl
         # backwards compatible aliases
         - ami  # == aws
         - rhel-edge-commit  # == edge-commit
