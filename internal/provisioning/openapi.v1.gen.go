@@ -149,6 +149,13 @@ type V1ListGenericReservationResponse struct {
 		Steps      *int32     `json:"steps,omitempty"`
 		Success    *bool      `json:"success"`
 	} `json:"data,omitempty"`
+	Links *struct {
+		Next     *string `json:"next,omitempty"`
+		Previous *string `json:"previous,omitempty"`
+	} `json:"links,omitempty"`
+	Metadata *struct {
+		Total *int `json:"total,omitempty"`
+	} `json:"metadata,omitempty"`
 }
 
 // V1ListInstaceTypeResponse defines model for v1.ListInstaceTypeResponse.
@@ -186,6 +193,13 @@ type V1ListPubkeyResponse struct {
 		Name              *string `json:"name,omitempty"`
 		Type              *string `json:"type,omitempty"`
 	} `json:"data,omitempty"`
+	Links *struct {
+		Next     *string `json:"next,omitempty"`
+		Previous *string `json:"previous,omitempty"`
+	} `json:"links,omitempty"`
+	Metadata *struct {
+		Total *int `json:"total,omitempty"`
+	} `json:"metadata,omitempty"`
 }
 
 // V1ListSourceResponse defines model for v1.ListSourceResponse.
@@ -196,6 +210,13 @@ type V1ListSourceResponse struct {
 		SourceTypeId *string `json:"source_type_id,omitempty"`
 		Uid          *string `json:"uid,omitempty"`
 	} `json:"data,omitempty"`
+	Links *struct {
+		Next     *string `json:"next,omitempty"`
+		Previous *string `json:"previous,omitempty"`
+	} `json:"links,omitempty"`
+	Metadata *struct {
+		Total *int `json:"total,omitempty"`
+	} `json:"metadata,omitempty"`
 }
 
 // V1NoopReservationResponse defines model for v1.NoopReservationResponse.
@@ -244,6 +265,12 @@ type V1SourceUploadInfoResponse struct {
 	Provider *string      `json:"provider,omitempty"`
 }
 
+// Limit defines model for Limit.
+type Limit = int
+
+// Offset defines model for Offset.
+type Offset = int
+
 // InternalError defines model for InternalError.
 type InternalError = V1ResponseError
 
@@ -262,8 +289,26 @@ type GetInstanceTypeListAllParams struct {
 	Zone *string `form:"zone,omitempty" json:"zone,omitempty"`
 }
 
+// GetPubkeyListParams defines parameters for GetPubkeyList.
+type GetPubkeyListParams struct {
+	// The number of items to return
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// The number of items to skip before starting to collect the result set
+	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // CreatePubkeyJSONBody defines parameters for CreatePubkey.
 type CreatePubkeyJSONBody = V1PubkeyRequest
+
+// GetReservationsListParams defines parameters for GetReservationsList.
+type GetReservationsListParams struct {
+	// The number of items to return
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// The number of items to skip before starting to collect the result set
+	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
+}
 
 // CreateAwsReservationJSONBody defines parameters for CreateAwsReservation.
 type CreateAwsReservationJSONBody = V1AWSReservationRequest
@@ -277,6 +322,12 @@ type CreateGCPReservationJSONBody = V1GCPReservationRequest
 // GetSourceListParams defines parameters for GetSourceList.
 type GetSourceListParams struct {
 	Provider *GetSourceListParamsProvider `form:"provider,omitempty" json:"provider,omitempty"`
+
+	// The number of items to return
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// The number of items to skip before starting to collect the result set
+	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // GetSourceListParamsProvider defines parameters for GetSourceList.
