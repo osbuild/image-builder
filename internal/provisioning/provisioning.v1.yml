@@ -307,6 +307,18 @@ components:
                             success:
                                 type: boolean
                                 nullable: true
+                links:
+                    type: object
+                    properties:
+                        next:
+                            type: string
+                        previous:
+                            type: string
+                metadata:
+                    type: object
+                    properties:
+                        total:
+                            type: integer
         v1.ListInstaceTypeResponse:
             type: object
             properties:
@@ -373,6 +385,18 @@ components:
                                 type: string
                             type:
                                 type: string
+                links:
+                    type: object
+                    properties:
+                        next:
+                            type: string
+                        previous:
+                            type: string
+                metadata:
+                    type: object
+                    properties:
+                        total:
+                            type: integer
         v1.ListSourceResponse:
             type: object
             properties:
@@ -389,6 +413,18 @@ components:
                                 type: string
                             uid:
                                 type: string
+                links:
+                    type: object
+                    properties:
+                        next:
+                            type: string
+                        previous:
+                            type: string
+                metadata:
+                    type: object
+                    properties:
+                        total:
+                            type: integer
         v1.NoopReservationResponse:
             type: object
             properties:
@@ -471,6 +507,21 @@ components:
                     nullable: true
                 provider:
                     type: string
+    parameters:
+        Limit:
+            name: limit
+            in: query
+            description: The number of items to return
+            schema:
+                type: integer
+                default: 100
+        Offset:
+            name: offset
+            in: query
+            description: The number of items to skip before starting to collect the result set
+            schema:
+                type: integer
+                default: 0
     responses:
         BadRequest:
             description: The request's parameters are not valid
@@ -702,6 +753,11 @@ components:
                         - Fetch instance(s) description
                       steps: 3
                       success: false
+                links:
+                    next: ""
+                    previous: ""
+                metadata:
+                    total: 3
         v1.GenericReservationResponsePayloadPendingExample:
             value:
                 created_at: "2013-05-13T19:20:15Z"
@@ -779,9 +835,14 @@ components:
                     - body: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEhnn80ZywmjeBFFOGm+cm+5HUwm62qTVnjKlOdYFLHN lzap
                       fingerprint: gL/y6MvNmJ8jDXtsL/oMmK8jUuIefN39BBuvYw/Rndk=
                       fingerprint_legacy: ee:f1:d4:62:99:ab:17:d9:3b:00:66:62:32:b2:55:9e
-                      id: 1
+                      id: 3
                       name: My key
                       type: ssh-ed25519
+                links:
+                    next: ""
+                    previous: /api/provisioning/v1/pubkeys?limit=2&offset=0
+                metadata:
+                    total: 3
         v1.PubkeyRequestExample:
             value:
                 body: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEhnn80ZywmjeBFFOGm+cm+5HUwm62qTVnjKlOdYFLHN lzap
@@ -805,6 +866,11 @@ components:
                       name: My other AWS account
                       source_type_id: ""
                       uid: ""
+                links:
+                    next: ""
+                    previous: /api/provisioning/v1/sources?limit=2&offset=0
+                metadata:
+                    total: 4
         v1.SourceUploadInfoAWSResponse:
             value:
                 aws:
@@ -901,6 +967,9 @@ paths:
             description: |
                 A pubkey represents an SSH public portion of a key pair with name and body. This operation returns list of all pubkeys for particular account.
             operationId: getPubkeyList
+            parameters:
+                - $ref: '#/components/parameters/Limit'
+                - $ref: '#/components/parameters/Offset'
             responses:
                 "200":
                     description: Returned on success.
@@ -998,6 +1067,9 @@ paths:
             description: |
                 A reservation is a way to activate a job, keeps all data needed for a job to start. This operation returns list of all reservations for particular account. To get a reservation with common fields, use /reservations/ID. To get a detailed reservation with all fields which are different per provider, use /reservations/aws/ID. Reservation can be in three states: pending, success, failed. This can be recognized by the success field (null for pending, true for success, false for failure). See the examples.
             operationId: getReservationsList
+            parameters:
+                - $ref: '#/components/parameters/Limit'
+                - $ref: '#/components/parameters/Offset'
             responses:
                 "200":
                     description: Returned on success.
@@ -1237,6 +1309,8 @@ paths:
                         - aws
                         - azure
                         - gcp
+                - $ref: '#/components/parameters/Limit'
+                - $ref: '#/components/parameters/Offset'
             responses:
                 "200":
                     description: Returned on success.

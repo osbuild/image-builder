@@ -52,6 +52,7 @@ const (
 	ImageTypesLiveInstaller  ImageTypes = "live-installer"
 	ImageTypesVsphere        ImageTypes = "vsphere"
 	ImageTypesVsphereOva     ImageTypes = "vsphere-ova"
+	ImageTypesWsl            ImageTypes = "wsl"
 )
 
 // Defines values for UploadStatusValue.
