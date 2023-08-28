@@ -1029,7 +1029,8 @@ components:
         id:
           type: string
           format: uuid
-        request: {}
+        request:
+          $ref: '#/components/schemas/CloneRequest'
         created_at:
           type: string
     CloneRequest:

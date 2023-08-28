@@ -1144,9 +1144,15 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 
 	data := []ClonesResponseItem{}
 	for _, c := range cloneEntries {
+		var cr CloneRequest
+		err = json.Unmarshal(c.Request, &cr)
+		if err != nil {
+			return echo.NewHTTPError(
+				http.StatusInternalServerError, "Something went wrong querying clones for this compose")
+		}
 		data = append(data, ClonesResponseItem{
 			Id:        c.Id,
-			Request:   c.Request,
+			Request:   cr,
 			CreatedAt: c.CreatedAt.Format(time.RFC3339),
 		})
 	}
