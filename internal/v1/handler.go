@@ -1152,6 +1152,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 		}
 		data = append(data, ClonesResponseItem{
 			Id:        c.Id,
+			ComposeId: composeId,
 			Request:   cr,
 			CreatedAt: c.CreatedAt.Format(time.RFC3339),
 		})

@@ -1023,12 +1023,17 @@ components:
     ClonesResponseItem:
       required:
         - id
+        - compose_id
         - request
         - created_at
       properties:
         id:
           type: string
           format: uuid
+        compose_id:
+          type: string
+          format: uuid
+          description: 'UUID of the parent compose of the clone'
         request:
           $ref: '#/components/schemas/CloneRequest'
         created_at:
