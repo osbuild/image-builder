@@ -586,6 +586,16 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 				httpError.Message = "Error resolving OSTree repo"
 				httpError.Code = http.StatusBadRequest
 			}
+			// missing baseurl in payload repository
+			if serviceStat.Id == "24" {
+				httpError.Message = serviceStat.Reason
+				httpError.Code = http.StatusBadRequest
+			}
+			// gpg key not set when check_gpg is true
+			if serviceStat.Id == "29" {
+				httpError.Message = serviceStat.Reason
+				httpError.Code = http.StatusBadRequest
+			}
 		}
 		return httpError
 	}
