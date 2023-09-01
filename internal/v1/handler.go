@@ -14,7 +14,6 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
-	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/provisioning"
 
 	"github.com/labstack/echo/v4"
@@ -86,11 +85,8 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, distributions)
 }
 
-func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
-	d, err := h.server.distroRegistry(ctx).Get(string(Distributions(distro)))
-	if err == distribution.DistributionNotFound {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
+func (h *Handlers) GetArchitectures(ctx echo.Context, distro Distributions) error {
+	d, err := h.server.getDistro(ctx, distro)
 	if err != nil {
 		return err
 	}
@@ -143,11 +139,11 @@ func (h *Handlers) GetArchitectures(ctx echo.Context, distro string) error {
 }
 
 func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error {
-	dr := h.server.distroRegistry(ctx)
-	d, err := dr.Get(string(params.Distribution))
+	d, err := h.server.getDistro(ctx, params.Distribution)
 	if err != nil {
 		return err
 	}
+
 	arch, err := d.Architecture(string(params.Architecture))
 	if err != nil {
 		return err
@@ -512,20 +508,9 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
-	d, err := h.server.distroRegistry(ctx).Get(string(composeRequest.Distribution))
+	d, err := h.server.getDistro(ctx, composeRequest.Distribution)
 	if err != nil {
 		return err
-	}
-
-	if d.IsRestricted() {
-		allowOk, err := h.server.allowList.IsAllowed(idHeader.Identity.Internal.OrgID, string(composeRequest.Distribution))
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		if !allowOk {
-			message := fmt.Sprintf("This account's organization is not authorized to build %s images", string(composeRequest.Distribution))
-			return echo.NewHTTPError(http.StatusForbidden, message)
-		}
 	}
 
 	var repositories []composer.Repository
