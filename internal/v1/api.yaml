@@ -267,6 +267,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+        '403':
+          description: user is not allowed to build this distribution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
   /packages:
     get:
       parameters:
@@ -346,6 +352,8 @@ components:
           type: string
     DistributionsResponse:
       type: array
+      description: |
+        List of distributions this user is allowed to build.
       items:
         $ref: '#/components/schemas/DistributionItem'
     DistributionItem:
@@ -501,6 +509,11 @@ components:
             $ref: '#/components/schemas/Customizations'
     Distributions:
       type: string
+      description: |
+        List of all distributions that image builder supports. A user might not have access to
+        restricted distributions.
+
+        Restricted distributions include the RHEL nightlies and the Fedora distributions.
       enum:
         - rhel-8
         - rhel-8-nightly
