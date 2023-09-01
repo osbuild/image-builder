@@ -51,11 +51,13 @@ paths:
                 type: object
   /distributions:
     get:
-      summary: get the available distributions
+      summary: get the distributions available to this user
       operationId: getDistributions
       responses:
         '200':
-          description: a list of available distributions
+          description: |
+            A list of distributions this user has access to. Some distributions are restricted, so
+            this list might not correspond to the Distributions (enum) schema for a given user.
           content:
             application/json:
               schema:
@@ -67,7 +69,7 @@ paths:
         - in: path
           name: distribution
           schema:
-            type: string
+            $ref: '#/components/schemas/Distributions'
           required: true
           description: distribution for which to look up available architectures
           example: 'rhel-84'
@@ -79,6 +81,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Architectures'
+        '403':
+          description: user is not allowed to build or query this distribution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
   /composes:
     get:
       summary: get a collection of previous compose requests for the logged in user
@@ -317,6 +325,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PackagesResponse'
+        '403':
+          description: user is not allowed to build or query this distribution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
 
 components:
   schemas:

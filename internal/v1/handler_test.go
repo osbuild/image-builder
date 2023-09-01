@@ -45,102 +45,6 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		// note: not asserting body b/c response is too big
 	})
 
-	t.Run("GetArchitectures", func(t *testing.T) {
-		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-8", &tutils.AuthString0)
-		require.Equal(t, 200, respStatusCode)
-
-		var result Architectures
-		err := json.Unmarshal([]byte(body), &result)
-		require.NoError(t, err)
-		require.Equal(t, Architectures{
-			ArchitectureItem{
-				Arch:       "x86_64",
-				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd", "guest-image", "image-installer", "vsphere", "vsphere-ova", "wsl"},
-				Repositories: []Repository{
-					{
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
-						Rhsm:    false,
-					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
-						Rhsm:    false,
-					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
-						Rhsm:    false,
-					},
-				},
-			},
-			ArchitectureItem{
-				Arch:       "aarch64",
-				ImageTypes: []string{"aws", "guest-image", "image-installer"},
-				Repositories: []Repository{
-					{
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/aarch64/os/"),
-						Rhsm:    false,
-					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/aarch64/os/"),
-						Rhsm:    false,
-					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/aarch64/os/"),
-						Rhsm:    false,
-					},
-				},
-			}}, result)
-	})
-
-	t.Run("GetPackages", func(t *testing.T) {
-		architectures := []string{"x86_64", "aarch64"}
-		for _, arch := range architectures {
-			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
-
-			var result PackagesResponse
-			err := json.Unmarshal([]byte(body), &result)
-			require.NoError(t, err)
-			require.Contains(t, result.Data[0].Name, "ssh")
-			require.Greater(t, result.Meta.Count, 0)
-			require.Contains(t, result.Links.First, "search=ssh")
-			p1 := result.Data[0]
-			p2 := result.Data[1]
-
-			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
-			err = json.Unmarshal([]byte(body), &result)
-			require.NoError(t, err)
-			require.Empty(t, result.Data)
-			require.Contains(t, body, "\"data\":[]")
-
-			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?offset=121039&distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
-			err = json.Unmarshal([]byte(body), &result)
-			require.NoError(t, err)
-			require.Empty(t, result.Data)
-			require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=%s&offset=0&limit=100", arch), result.Links.First)
-			require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=%s&offset=0&limit=100", arch), result.Links.Last)
-
-			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
-			err = json.Unmarshal([]byte(body), &result)
-			require.NoError(t, err)
-			require.Greater(t, result.Meta.Count, 1)
-			require.Equal(t, result.Data[0], p1)
-
-			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1&offset=1", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
-			err = json.Unmarshal([]byte(body), &result)
-			require.NoError(t, err)
-			require.Greater(t, result.Meta.Count, 1)
-			require.Equal(t, result.Data[0], p2)
-
-			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=-13", arch), &tutils.AuthString0)
-			require.Equal(t, 400, respStatusCode)
-			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=13&offset=-2193", arch), &tutils.AuthString0)
-			require.Equal(t, 400, respStatusCode)
-
-			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=%s&search=ssh", arch), &tutils.AuthString0)
-			require.Equal(t, 400, respStatusCode)
-		}
-	})
-
 	t.Run("StatusCheck", func(t *testing.T) {
 		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/status", nil)
 		require.Equal(t, 200, respStatusCode)
@@ -634,6 +538,163 @@ func TestValidateSpec(t *testing.T) {
 	require.NoError(t, err)
 	err = spec.Validate(context.Background())
 	require.NoError(t, err)
+}
+
+func TestGetArchitectures(t *testing.T) {
+	distsDir := "../../distributions"
+	allowFile := "../common/testdata/allow.json"
+	srv, tokenSrv := startServerWithAllowFile(t, "", "", "", distsDir, allowFile)
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	t.Run("Basic centos-8", func(t *testing.T) {
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-8", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
+
+		var result Architectures
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, Architectures{
+			ArchitectureItem{
+				Arch:       "x86_64",
+				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd", "guest-image", "image-installer", "vsphere", "vsphere-ova", "wsl"},
+				Repositories: []Repository{
+					{
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+						Rhsm:    false,
+					}, {
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+						Rhsm:    false,
+					}, {
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+						Rhsm:    false,
+					},
+				},
+			},
+			ArchitectureItem{
+				Arch:       "aarch64",
+				ImageTypes: []string{"aws", "guest-image", "image-installer"},
+				Repositories: []Repository{
+					{
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/aarch64/os/"),
+						Rhsm:    false,
+					}, {
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/aarch64/os/"),
+						Rhsm:    false,
+					}, {
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/aarch64/os/"),
+						Rhsm:    false,
+					},
+				},
+			}}, result)
+	})
+
+	t.Run("Restricted distribution", func(t *testing.T) {
+		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/fedora-39", &tutils.AuthString1)
+		require.Equal(t, 403, respStatusCode)
+	})
+
+	t.Run("Restricted, but allowed distribution", func(t *testing.T) {
+		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/fedora-39", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
+	})
+}
+
+func TestGetPackages(t *testing.T) {
+	distsDir := "../../distributions"
+	allowFile := "../common/testdata/allow.json"
+	srv, tokenSrv := startServerWithAllowFile(t, "", "", "", distsDir, allowFile)
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+	architectures := []string{"x86_64", "aarch64"}
+
+	t.Run("Simple search", func(t *testing.T) {
+		for _, arch := range architectures {
+			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+
+			var result PackagesResponse
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Contains(t, result.Data[0].Name, "ssh")
+			require.Greater(t, result.Meta.Count, 0)
+			require.Contains(t, result.Links.First, "search=ssh")
+		}
+	})
+
+	t.Run("Empty search", func(t *testing.T) {
+		for _, arch := range architectures {
+			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+			var result PackagesResponse
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Empty(t, result.Data)
+			require.Contains(t, body, "\"data\":[]")
+
+			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?offset=121039&distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+			err = json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Empty(t, result.Data)
+			require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=%s&offset=0&limit=100", arch), result.Links.First)
+			require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/packages?search=4e3086991b3f452d82eed1f2122aefeb&distribution=rhel-8&architecture=%s&offset=0&limit=100", arch), result.Links.Last)
+		}
+	})
+
+	t.Run("Search with limit", func(t *testing.T) {
+		for _, arch := range architectures {
+			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+			var result PackagesResponse
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Greater(t, result.Meta.Count, 1)
+		}
+	})
+
+	t.Run("Search with offset", func(t *testing.T) {
+		for _, arch := range architectures {
+			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1&offset=1", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+			var result PackagesResponse
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Greater(t, result.Meta.Count, 1)
+
+		}
+	})
+
+	t.Run("Search with invalid parameters", func(t *testing.T) {
+		for _, arch := range architectures {
+			respStatusCode, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=-13", arch), &tutils.AuthString0)
+			require.Equal(t, 400, respStatusCode)
+			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=13&offset=-2193", arch), &tutils.AuthString0)
+			require.Equal(t, 400, respStatusCode)
+			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=%s&search=ssh", arch), &tutils.AuthString0)
+			require.Equal(t, 400, respStatusCode)
+		}
+	})
+
+	t.Run("Search restricted distribution", func(t *testing.T) {
+		for _, arch := range architectures {
+			respStatusCode, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=fedora-39&architecture=%s&search=ssh", arch), &tutils.AuthString1)
+			require.Equal(t, 403, respStatusCode)
+		}
+	})
+
+	t.Run("Search restricted, but allowed distribution", func(t *testing.T) {
+		for _, arch := range architectures {
+			respStatusCode, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=fedora-39&architecture=%s&search=ssh", arch), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+		}
+	})
 }
 
 func TestGetDistributions(t *testing.T) {

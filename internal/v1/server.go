@@ -219,6 +219,34 @@ func (s *Server) distroRegistry(ctx echo.Context) *distribution.DistroRegistry {
 	return s.allDistros.Available(s.isEntitled(ctx))
 }
 
+// wraps DistroRegistry.Get and verifies the user has access
+func (s *Server) getDistro(ctx echo.Context, distro Distributions) (*distribution.DistributionFile, error) {
+	d, err := s.distroRegistry(ctx).Get(string(distro))
+	if err == distribution.DistributionNotFound {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if d.IsRestricted() {
+		allowOk, err := s.allowList.IsAllowed(idHeader.Identity.Internal.OrgID, d.Distribution.Name)
+		if err != nil {
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		if !allowOk {
+			message := fmt.Sprintf("This account's organization is not authorized to build %s images", string(d.Distribution.Name))
+			return nil, echo.NewHTTPError(http.StatusForbidden, message)
+		}
+	}
+	return d, nil
+}
+
 // return whether or not the calling context is entitled to consume RHEL content
 func (s *Server) isEntitled(ctx echo.Context) bool {
 	idh, err := getIdentityHeader(ctx)
