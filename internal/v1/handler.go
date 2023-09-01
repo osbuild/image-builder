@@ -61,12 +61,25 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
 	dr := h.server.distroRegistry(ctx)
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
 
 	var distributions DistributionsResponse
-	for _, d := range dr.List() {
+	for k, d := range dr.Map() {
+		if d.IsRestricted() {
+			allowOk, err := h.server.allowList.IsAllowed(idHeader.Identity.Internal.OrgID, d.Distribution.Name)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			}
+			if !allowOk {
+				continue
+			}
+		}
 		distributions = append(distributions, DistributionItem{
 			Description: d.Distribution.Description,
-			Name:        d.Distribution.Name,
+			Name:        k,
 		})
 	}
 

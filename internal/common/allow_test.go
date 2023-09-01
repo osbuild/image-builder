@@ -45,7 +45,7 @@ func TestLoadAllowList(t *testing.T) {
 
 	t.Run("valid allowFile exists", func(t *testing.T) {
 		actual, _ := LoadAllowList("testdata/allow.json")
-		expected := AllowList{"000000": {"fedora-*", "centos-*"}, "000001": {}}
+		expected := AllowList{"000000": {"fedora-*", "centos-*", "rhel-*-nightly"}, "000001": {}}
 		require.Equal(t, expected, actual)
 	})
 }

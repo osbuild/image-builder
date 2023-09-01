@@ -45,19 +45,6 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		// note: not asserting body b/c response is too big
 	})
 
-	t.Run("GetDistributions", func(t *testing.T) {
-		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString0)
-		require.Equal(t, 200, respStatusCode)
-
-		var result DistributionsResponse
-		err := json.Unmarshal([]byte(body), &result)
-		require.NoError(t, err)
-
-		for _, distro := range result {
-			require.Contains(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "centos-8", "centos-9", "fedora-35", "fedora-36", "fedora-37", "fedora-38", "fedora-39"}, distro.Name)
-		}
-	})
-
 	t.Run("GetArchitectures", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-8", &tutils.AuthString0)
 		require.Equal(t, 200, respStatusCode)
@@ -647,4 +634,41 @@ func TestValidateSpec(t *testing.T) {
 	require.NoError(t, err)
 	err = spec.Validate(context.Background())
 	require.NoError(t, err)
+}
+
+func TestGetDistributions(t *testing.T) {
+	distsDir := "../../distributions"
+	allowFile := "../common/testdata/allow.json"
+	srv, tokenSrv := startServerWithAllowFile(t, "", "", "", distsDir, allowFile)
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	t.Run("Access to restricted distributions", func(t *testing.T) {
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString0)
+		require.Equal(t, 200, respStatusCode)
+		var result DistributionsResponse
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		distros := []string{}
+		for _, distro := range result {
+			distros = append(distros, distro.Name)
+		}
+		require.ElementsMatch(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "centos-8", "centos-9", "fedora-37", "fedora-38", "fedora-39"}, distros)
+	})
+
+	t.Run("No access to restricted distributions", func(t *testing.T) {
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString1)
+		require.Equal(t, 200, respStatusCode)
+		var result DistributionsResponse
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		distros := []string{}
+		for _, distro := range result {
+			distros = append(distros, distro.Name)
+		}
+		require.ElementsMatch(t, []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-9", "rhel-90", "rhel-91", "rhel-92", "centos-8", "centos-9"}, distros)
+	})
 }
