@@ -69,6 +69,11 @@ func (dr DistroRegistry) List() []*DistributionFile {
 	return ds
 }
 
+// Map returns all distribution in the registry, as a ib_distro_name -> composer_distro_name map.
+func (dr DistroRegistry) Map() map[string]*DistributionFile {
+	return dr.distros
+}
+
 // Get returns a distribution with a specific name.
 // If it's not found, DistributionNotFound is returned.
 func (dr DistroRegistry) Get(name string) (*DistributionFile, error) {
