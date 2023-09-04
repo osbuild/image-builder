@@ -208,6 +208,7 @@ type V1ListSourceResponse struct {
 		Id           *string `json:"id,omitempty"`
 		Name         *string `json:"name,omitempty"`
 		SourceTypeId *string `json:"source_type_id,omitempty"`
+		Status       *string `json:"status,omitempty"`
 		Uid          *string `json:"uid,omitempty"`
 	} `json:"data,omitempty"`
 	Links *struct {
