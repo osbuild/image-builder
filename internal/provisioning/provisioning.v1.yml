@@ -411,6 +411,8 @@ components:
                                 type: string
                             source_type_id:
                                 type: string
+                            status:
+                                type: string
                             uid:
                                 type: string
                 links:
@@ -479,6 +481,8 @@ components:
                 name:
                     type: string
                 source_type_id:
+                    type: string
+                status:
                     type: string
                 uid:
                     type: string
@@ -861,10 +865,12 @@ components:
                     - id: "654321"
                       name: My AWS account
                       source_type_id: ""
+                      status: available
                       uid: ""
                     - id: "543621"
                       name: My other AWS account
                       source_type_id: ""
+                      status: available
                       uid: ""
                 links:
                     next: ""
@@ -894,7 +900,7 @@ info:
     description: Provisioning service API
     license:
         name: GPL-3.0
-    version: 1.5.0
+    version: 1.6.0
 paths:
     /availability_status/sources:
         post:
