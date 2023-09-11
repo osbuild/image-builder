@@ -42,13 +42,6 @@ type V1AWSReservationResponse struct {
 	SourceId         *string `json:"source_id,omitempty"`
 }
 
-// V1AccountIDTypeResponse defines model for v1.AccountIDTypeResponse.
-type V1AccountIDTypeResponse struct {
-	Aws *struct {
-		AccountId *string `json:"account_id,omitempty"`
-	} `json:"aws,omitempty"`
-}
-
 // V1AvailabilityStatusRequest defines model for v1.AvailabilityStatusRequest.
 type V1AvailabilityStatusRequest struct {
 	SourceId *string `json:"source_id,omitempty"`
@@ -149,11 +142,11 @@ type V1ListGenericReservationResponse struct {
 		Steps      *int32     `json:"steps,omitempty"`
 		Success    *bool      `json:"success"`
 	} `json:"data,omitempty"`
-	Links *struct {
-		Next     *string `json:"next,omitempty"`
-		Previous *string `json:"previous,omitempty"`
-	} `json:"links,omitempty"`
 	Metadata *struct {
+		Links *struct {
+			Next     *string `json:"next,omitempty"`
+			Previous *string `json:"previous,omitempty"`
+		} `json:"links,omitempty"`
 		Total *int `json:"total,omitempty"`
 	} `json:"metadata,omitempty"`
 }
@@ -181,6 +174,13 @@ type V1ListLaunchTemplateResponse struct {
 		Id   *string `json:"id,omitempty"`
 		Name *string `json:"name,omitempty"`
 	} `json:"data,omitempty"`
+	Metadata *struct {
+		Links *struct {
+			Next     *string `json:"next,omitempty"`
+			Previous *string `json:"previous,omitempty"`
+		} `json:"links,omitempty"`
+		Total *int `json:"total,omitempty"`
+	} `json:"metadata,omitempty"`
 }
 
 // V1ListPubkeyResponse defines model for v1.ListPubkeyResponse.
@@ -193,11 +193,11 @@ type V1ListPubkeyResponse struct {
 		Name              *string `json:"name,omitempty"`
 		Type              *string `json:"type,omitempty"`
 	} `json:"data,omitempty"`
-	Links *struct {
-		Next     *string `json:"next,omitempty"`
-		Previous *string `json:"previous,omitempty"`
-	} `json:"links,omitempty"`
 	Metadata *struct {
+		Links *struct {
+			Next     *string `json:"next,omitempty"`
+			Previous *string `json:"previous,omitempty"`
+		} `json:"links,omitempty"`
 		Total *int `json:"total,omitempty"`
 	} `json:"metadata,omitempty"`
 }
@@ -211,11 +211,11 @@ type V1ListSourceResponse struct {
 		Status       *string `json:"status,omitempty"`
 		Uid          *string `json:"uid,omitempty"`
 	} `json:"data,omitempty"`
-	Links *struct {
-		Next     *string `json:"next,omitempty"`
-		Previous *string `json:"previous,omitempty"`
-	} `json:"links,omitempty"`
 	Metadata *struct {
+		Links *struct {
+			Next     *string `json:"next,omitempty"`
+			Previous *string `json:"previous,omitempty"`
+		} `json:"links,omitempty"`
 		Total *int `json:"total,omitempty"`
 	} `json:"metadata,omitempty"`
 }
@@ -227,7 +227,10 @@ type V1NoopReservationResponse struct {
 
 // V1PubkeyRequest defines model for v1.PubkeyRequest.
 type V1PubkeyRequest struct {
+	// Add a public part of a SSH key pair.
 	Body *string `json:"body,omitempty"`
+
+	// Enter the name of the newly created pubkey.
 	Name *string `json:"name,omitempty"`
 }
 
@@ -272,6 +275,9 @@ type Limit = int
 // Offset defines model for Offset.
 type Offset = int
 
+// Token defines model for Token.
+type Token = string
+
 // InternalError defines model for InternalError.
 type InternalError = V1ResponseError
 
@@ -292,10 +298,10 @@ type GetInstanceTypeListAllParams struct {
 
 // GetPubkeyListParams defines parameters for GetPubkeyList.
 type GetPubkeyListParams struct {
-	// The number of items to return
+	// The number of items to return.
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 
-	// The number of items to skip before starting to collect the result set
+	// The number of items to skip before starting to collect the result set.
 	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
@@ -304,10 +310,10 @@ type CreatePubkeyJSONBody = V1PubkeyRequest
 
 // GetReservationsListParams defines parameters for GetReservationsList.
 type GetReservationsListParams struct {
-	// The number of items to return
+	// The number of items to return.
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 
-	// The number of items to skip before starting to collect the result set
+	// The number of items to skip before starting to collect the result set.
 	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
@@ -324,26 +330,26 @@ type CreateGCPReservationJSONBody = V1GCPReservationRequest
 type GetSourceListParams struct {
 	Provider *GetSourceListParamsProvider `form:"provider,omitempty" json:"provider,omitempty"`
 
-	// The number of items to return
+	// The number of items to return.
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 
-	// The number of items to skip before starting to collect the result set
+	// The number of items to skip before starting to collect the result set.
 	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // GetSourceListParamsProvider defines parameters for GetSourceList.
 type GetSourceListParamsProvider string
 
-// GetInstanceTypeListParams defines parameters for GetInstanceTypeList.
-type GetInstanceTypeListParams struct {
-	// Hyperscaler region
-	Region string `form:"region" json:"region"`
-}
-
 // GetLaunchTemplatesListParams defines parameters for GetLaunchTemplatesList.
 type GetLaunchTemplatesListParams struct {
 	// Hyperscaler region
 	Region string `form:"region" json:"region"`
+
+	// The token used for requesting the next page of results; empty token for the first page
+	Token *Token `form:"token,omitempty" json:"token,omitempty"`
+
+	// The number of items to return.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // AvailabilityStatusJSONRequestBody defines body for AvailabilityStatus for application/json ContentType.
