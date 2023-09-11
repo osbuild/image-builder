@@ -307,16 +307,16 @@ components:
                             success:
                                 type: boolean
                                 nullable: true
-                links:
-                    type: object
-                    properties:
-                        next:
-                            type: string
-                        previous:
-                            type: string
                 metadata:
                     type: object
                     properties:
+                        links:
+                            type: object
+                            properties:
+                                next:
+                                    type: string
+                                previous:
+                                    type: string
                         total:
                             type: integer
         v1.ListInstaceTypeResponse:
@@ -364,6 +364,18 @@ components:
                                 type: string
                             name:
                                 type: string
+                metadata:
+                    type: object
+                    properties:
+                        links:
+                            type: object
+                            properties:
+                                next:
+                                    type: string
+                                previous:
+                                    type: string
+                        total:
+                            type: integer
         v1.ListPubkeyResponse:
             type: object
             properties:
@@ -385,16 +397,16 @@ components:
                                 type: string
                             type:
                                 type: string
-                links:
-                    type: object
-                    properties:
-                        next:
-                            type: string
-                        previous:
-                            type: string
                 metadata:
                     type: object
                     properties:
+                        links:
+                            type: object
+                            properties:
+                                next:
+                                    type: string
+                                previous:
+                                    type: string
                         total:
                             type: integer
         v1.ListSourceResponse:
@@ -415,16 +427,16 @@ components:
                                 type: string
                             uid:
                                 type: string
-                links:
-                    type: object
-                    properties:
-                        next:
-                            type: string
-                        previous:
-                            type: string
                 metadata:
                     type: object
                     properties:
+                        links:
+                            type: object
+                            properties:
+                                next:
+                                    type: string
+                                previous:
+                                    type: string
                         total:
                             type: integer
         v1.NoopReservationResponse:
@@ -438,8 +450,10 @@ components:
             properties:
                 body:
                     type: string
+                    description: Add a public part of a SSH key pair.
                 name:
                     type: string
+                    description: Enter the name of the newly created pubkey.
         v1.PubkeyResponse:
             type: object
             properties:
@@ -515,17 +529,24 @@ components:
         Limit:
             name: limit
             in: query
-            description: The number of items to return
+            description: The number of items to return.
             schema:
                 type: integer
                 default: 100
         Offset:
             name: offset
             in: query
-            description: The number of items to skip before starting to collect the result set
+            description: The number of items to skip before starting to collect the result set.
             schema:
                 type: integer
                 default: 0
+        Token:
+            name: token
+            in: query
+            description: The token used for requesting the next page of results; empty token for the first page
+            schema:
+                type: string
+                default: ""
     responses:
         BadRequest:
             description: The request's parameters are not valid
@@ -757,10 +778,10 @@ components:
                         - Fetch instance(s) description
                       steps: 3
                       success: false
-                links:
-                    next: ""
-                    previous: ""
                 metadata:
+                    links:
+                        next: ""
+                        previous: ""
                     total: 3
         v1.GenericReservationResponsePayloadPendingExample:
             value:
@@ -830,6 +851,11 @@ components:
                 data:
                     - id: lt-9843797432897342
                       name: XXL large backend API
+                metadata:
+                    links:
+                        next: ""
+                        previous: ""
+                    total: 0
         v1.NoopReservationResponsePayloadExample:
             value:
                 reservation_id: 1310
@@ -842,10 +868,10 @@ components:
                       id: 3
                       name: My key
                       type: ssh-ed25519
-                links:
-                    next: ""
-                    previous: /api/provisioning/v1/pubkeys?limit=2&offset=0
                 metadata:
+                    links:
+                        next: ""
+                        previous: /api/provisioning/v1/pubkeys?limit=2&offset=0
                     total: 3
         v1.PubkeyRequestExample:
             value:
@@ -872,10 +898,10 @@ components:
                       source_type_id: ""
                       status: available
                       uid: ""
-                links:
-                    next: ""
-                    previous: /api/provisioning/v1/sources?limit=2&offset=0
                 metadata:
+                    links:
+                        next: ""
+                        previous: /api/provisioning/v1/sources?limit=2&offset=0
                     total: 4
         v1.SourceUploadInfoAWSResponse:
             value:
@@ -900,7 +926,7 @@ info:
     description: Provisioning service API
     license:
         name: GPL-3.0
-    version: 1.6.0
+    version: 1.7.0
 paths:
     /availability_status/sources:
         post:
@@ -971,14 +997,14 @@ paths:
             tags:
                 - Pubkey
             description: |
-                A pubkey represents an SSH public portion of a key pair with name and body. This operation returns list of all pubkeys for particular account.
+                Returns a list of all public keys available in a particular account.
             operationId: getPubkeyList
             parameters:
                 - $ref: '#/components/parameters/Limit'
                 - $ref: '#/components/parameters/Offset'
             responses:
                 "200":
-                    description: Returned on success.
+                    description: OK. Returned on success.
                     content:
                         application/json:
                             schema:
@@ -992,7 +1018,7 @@ paths:
             tags:
                 - Pubkey
             description: |
-                A pubkey represents an SSH public portion of a key pair with name and body. When pubkey is created, it is stored in the Provisioning database. Pubkeys are uploaded to clouds when an instance is launched. Some fields (e.g. type or fingerprint) are read only.
+                Creates a new public key and stores it in the provisioning database. Public keys are uploaded to clouds at the time of launching an instance. Some fields such as type or fingerprint are read-only.
             operationId: createPubkey
             requestBody:
                 description: request body
@@ -1006,7 +1032,7 @@ paths:
                                 $ref: '#/components/examples/v1.PubkeyRequestExample'
             responses:
                 "200":
-                    description: Returned on success.
+                    description: OK. Returned on success.
                     content:
                         application/json:
                             schema:
@@ -1021,12 +1047,12 @@ paths:
             tags:
                 - Pubkey
             description: |
-                A pubkey represents an SSH public portion of a key pair with name and body. If a pubkey was uploaded to one or more clouds, the deletion request will attempt to delete those SSH keys from all clouds. This means in order to delete a pubkey the account must have valid credentials to all cloud accounts the pubkey was uploaded to, otherwise the delete operation will fail and the pubkey will not be deleted from Provisioning database. This operation returns no body.
+                Deletes SSH keys that were uploaded with the specified public key from all the clouds. If a public key (pubkey) has been uploaded to one or more cloud providers, the deletion request attempts to remove those SSH keys from all associated clouds. Therefore, to delete a public key, the account must possess valid credentials for all cloud accounts to which the pubkey was uploaded. Otherwise, the delete operation fails, and the public key is not removed from the Provisioning database. This operation does not return a response body.
             operationId: removePubkeyById
             parameters:
                 - name: ID
                   in: path
-                  description: Database ID of resource.
+                  description: Enter the database ID of resource.
                   required: true
                   schema:
                     type: integer
@@ -1041,8 +1067,7 @@ paths:
         get:
             tags:
                 - Pubkey
-            description: |
-                A pubkey represents an SSH public portion of a key pair with name and body. Pubkeys must have unique name and body (SSH public key fingerprint) per each account. Pubkey type is detected during create operation as well as fingerprints. Currently two types are supported: RSA and ssh-ed25519. Also, two fingerprint types are calculated: standard SHA fingerprint and legacy MD5 fingerprint available under fingerprint_legacy field. Fingerprints are used to check uniqueness of key.
+            description: Gets details of the specified public key.
             operationId: getPubkeyById
             parameters:
                 - name: ID
@@ -1054,7 +1079,7 @@ paths:
                     format: int64
             responses:
                 "200":
-                    description: Returned on success
+                    description: OK. Returned on success
                     content:
                         application/json:
                             schema:
@@ -1329,72 +1354,14 @@ paths:
                                     $ref: '#/components/examples/v1.SourceListResponseExample'
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /sources/{ID}/account_identity:
-        get:
-            tags:
-                - Source
-            description: This endpoint is deprecated. Please use upload_info instead
-            operationId: getSourceAccountIdentity
-            parameters:
-                - name: ID
-                  in: path
-                  description: Source ID from Sources Database
-                  required: true
-                  schema:
-                    type: integer
-                    format: int64
-            responses:
-                "200":
-                    description: Return on success.
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.AccountIDTypeResponse'
-                "404":
-                    $ref: '#/components/responses/NotFound'
-                "500":
-                    $ref: '#/components/responses/InternalError'
-            deprecated: true
-    /sources/{ID}/instance_types:
-        get:
-            tags:
-                - Source
-            description: Deprecated endpoint, use /instance_types instead.
-            operationId: getInstanceTypeList
-            parameters:
-                - name: ID
-                  in: path
-                  description: Source ID from Sources Database
-                  required: true
-                  schema:
-                    type: integer
-                    format: int64
-                - name: region
-                  in: query
-                  description: Hyperscaler region
-                  required: true
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    description: Return on success.
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.ListInstaceTypeResponse'
-                "404":
-                    $ref: '#/components/responses/NotFound'
-                "500":
-                    $ref: '#/components/responses/InternalError'
-            deprecated: true
     /sources/{ID}/launch_templates:
         get:
             tags:
                 - Source
             description: |
                 Return a list of launch templates.
-                A launch template is a configuration set with a name that is available through hyperscaler API. When creating reservations, launch template can be provided in order to set additional configuration for instances.
-                Currently only AWS Launch Templates are supported.
+                A launch template is a configuration set with a name that is available through hyperscaler API. When creating reservations, launch template can be provided in order to set additional configuration for instances. In GCP, when using templates, propagated user attributes are not overridden or updated. Only new attributes are added to the instance.
+                Currently AWS and GCP Launch Templates are supported.
             operationId: getLaunchTemplatesList
             parameters:
                 - name: ID
@@ -1410,6 +1377,8 @@ paths:
                   required: true
                   schema:
                     type: string
+                - $ref: '#/components/parameters/Token'
+                - $ref: '#/components/parameters/Limit'
             responses:
                 "200":
                     description: Return on success.
@@ -1467,4 +1436,5 @@ servers:
             default: "8000"
 tags:
     - name: Pubkey
-      description: Public SSH keys operations
+      description: |
+        A pubkey represents the SSH public portion of a key pair with a name and body. Public key types and fingerprints are detected during their creation process. Two types are supported: RSA and ssh-ed25519. Fingerprints are calculated in two ways: using the standard SHA method and the legacy MD5 method, which is available under the fingerprint_legacy field. Each public key has a unique name and body and helps in verifying the uniqueness of the keys. Using this API, you can perform the following operations.
