@@ -33,7 +33,7 @@ type CloneEntry struct {
 }
 
 type DB interface {
-	InsertCompose(jobId uuid.UUID, accountNumber, orgId string, imageName *string, request json.RawMessage) error
+	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage) error
 	GetComposes(orgId string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error)
 	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
 	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
@@ -47,8 +47,8 @@ type DB interface {
 
 const (
 	sqlInsertCompose = `
-		INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name)
-		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5)`
+		INSERT INTO composes(job_id, request, created_at, account_number, email, org_id, image_name)
+		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6)`
 
 	sqlGetComposes = `
 		SELECT job_id, request, created_at, image_name
@@ -128,7 +128,7 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 	return &dB{pool}, nil
 }
 
-func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, orgId string, imageName *string, request json.RawMessage) error {
+func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage) error {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -136,7 +136,7 @@ func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, orgId string, imageN
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, sqlInsertCompose, jobId, request, accountNumber, orgId, imageName)
+	_, err = conn.Exec(ctx, sqlInsertCompose, jobId, request, accountNumber, email, orgId, imageName)
 	return err
 }
 
