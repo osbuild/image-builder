@@ -382,7 +382,7 @@ func TestComposeStatusError(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 	imageName := "MyImageName"
-	err = dbase.InsertCompose(id, "600000", "000001", &imageName, json.RawMessage("{}"))
+	err = dbase.InsertCompose(id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")

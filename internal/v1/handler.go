@@ -609,7 +609,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
+	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.User.Email, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return err
