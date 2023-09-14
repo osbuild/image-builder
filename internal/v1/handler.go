@@ -416,6 +416,19 @@ func (h *Handlers) canUserAccessComposeId(ctx echo.Context, composeId uuid.UUID)
 	return err
 }
 
+func convertIgnoreImageTypeToSlice(ignoreImageTypes *[]ImageTypes) []string {
+	if ignoreImageTypes == nil {
+		return nil
+	}
+
+	stringSlice := make([]string, len(*ignoreImageTypes))
+	for i, imageType := range *ignoreImageTypes {
+		stringSlice[i] = string(imageType)
+	}
+
+	return stringSlice
+}
+
 func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error {
 	spec, err := GetSwagger()
 	if err != nil {
@@ -438,9 +451,10 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
+	ignoreImageTypeStrings := convertIgnoreImageTypeToSlice(params.IgnoreImageTypes)
 
 	// composes in the last 14 days
-	composes, count, err := h.server.db.GetComposes(idHeader.Identity.OrgID, (time.Hour * 24 * 14), limit, offset)
+	composes, count, err := h.server.db.GetComposes(idHeader.Identity.OrgID, (time.Hour * 24 * 14), limit, offset, ignoreImageTypeStrings)
 	if err != nil {
 		return err
 	}
