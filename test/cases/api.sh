@@ -613,7 +613,7 @@ function Test_verifyComposeResultAzure() {
       --network-security-group "nsg-$TEST_ID" \
       --public-ip-address "ip-$TEST_ID" \
       --location "$AZURE_LOCATION" \
-      --tags gitlab-ci-test=true 
+      --tags gitlab-ci-test=true
 
   # create the instance
   AZURE_INSTANCE_NAME="vm-$TEST_ID"

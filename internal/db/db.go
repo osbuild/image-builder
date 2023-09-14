@@ -34,7 +34,7 @@ type CloneEntry struct {
 
 type DB interface {
 	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage) error
-	GetComposes(orgId string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error)
+	GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
 	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
 	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
 	CountComposesSince(orgId string, duration time.Duration) (int, error)
@@ -51,11 +51,14 @@ const (
 		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6)`
 
 	sqlGetComposes = `
-		SELECT job_id, request, created_at, image_name
-		FROM composes
-		WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2 AND deleted=FALSE
+	        SELECT job_id, request, created_at, image_name
+	        FROM composes
+		WHERE org_id = $1
+		AND CURRENT_TIMESTAMP - created_at <= $2
+		AND ($3::text[] is NULL OR request->'image_requests'->0->>'image_type' <> ALL($3))
+		AND deleted = FALSE
 		ORDER BY created_at DESC
-		LIMIT $3 OFFSET $4`
+		LIMIT $4 OFFSET $5`
 
 	sqlGetCompose = `
 		SELECT job_id, request, created_at, image_name
@@ -70,7 +73,8 @@ const (
 	sqlCountActiveComposesSince = `
 		SELECT COUNT(*)
 		FROM composes
-		WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2 AND deleted = FALSE`
+		WHERE org_id=$1 AND CURRENT_TIMESTAMP - created_at <= $2 AND deleted = FALSE
+		AND ($3::text[] is NULL OR request->'image_requests'->0->>'image_type' <> ALL($3))`
 
 	sqlCountComposesSince = `
 		SELECT COUNT(*)
@@ -186,15 +190,15 @@ func (db *dB) GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
 	return imageType, nil
 }
 
-func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int) ([]ComposeEntry, int, error) {
+func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer conn.Release()
+	result, err := conn.Query(ctx, sqlGetComposes, orgId, since, ignoreImageTypes, limit, offset)
 
-	result, err := conn.Query(ctx, sqlGetComposes, orgId, since, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -221,7 +225,7 @@ func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int) 
 	}
 
 	var count int
-	err = conn.QueryRow(ctx, sqlCountActiveComposesSince, orgId, since).Scan(&count)
+	err = conn.QueryRow(ctx, sqlCountActiveComposesSince, orgId, since, ignoreImageTypes).Scan(&count)
 	if err != nil {
 		return nil, 0, err
 	}

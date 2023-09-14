@@ -106,6 +106,16 @@ paths:
             default: 0
             minimum: 0
           description: composes page offset, default 0
+        - in: query
+          name: ignoreImageTypes
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ImageTypes'
+              example: ['rhel-edge-installer', 'rhel-edge-commit', ...]
+          description: |
+            Filter the composes on image type. The filter is optional and can be specified multiple times.
       responses:
         '200':
           description: a list of composes

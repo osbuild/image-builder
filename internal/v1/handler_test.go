@@ -248,6 +248,10 @@ func TestGetComposes(t *testing.T) {
 	id := uuid.New()
 	id2 := uuid.New()
 	id3 := uuid.New()
+	id4 := uuid.New()
+	id5 := uuid.New()
+	id6 := uuid.New()
+
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
@@ -282,9 +286,26 @@ func TestGetComposes(t *testing.T) {
 	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, 3, result.Meta.Count)
 	require.Equal(t, composeEntry.CreatedAt.Format(time.RFC3339), result.Data[2].CreatedAt)
 	require.Equal(t, composeEntry.Id, result.Data[2].Id)
+	require.Equal(t, 3, result.Meta.Count)
+	require.Equal(t, 3, len(result.Data))
+
+	err = dbase.InsertCompose(id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`))
+	require.NoError(t, err)
+	err = dbase.InsertCompose(id5, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
+	require.NoError(t, err)
+	err = dbase.InsertCompose(id6, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-commit"}]}`))
+	require.NoError(t, err)
+
+	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes?ignoreImageTypes=edge-installer&ignoreImageTypes=aws", &tutils.AuthString0)
+	require.NoError(t, err)
+
+	require.Equal(t, 200, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(result.Data))
+	require.Equal(t, 1, result.Meta.Count)
 }
 
 // TestBuildOSTreeOptions checks if the buildOSTreeOptions utility function
