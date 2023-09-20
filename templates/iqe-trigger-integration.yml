@@ -87,7 +87,7 @@ objects:
               memory: 1.5Gi
             requests:
               cpu: 250m
-              memory: 512Mi
+              memory: 1Gi
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - name: image-builder-e2e-sel-${TEST_TYPE}-${IMAGE_TAG}-${UID}
@@ -98,7 +98,7 @@ objects:
               memory: 2Gi
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 1Gi
           volumeMounts:
             - name: sel-shm
               mountPath: /dev/shm
