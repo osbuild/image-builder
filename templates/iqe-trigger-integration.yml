@@ -83,22 +83,22 @@ objects:
                 optional: true
           resources:
             limits:
-              cpu: "1"
-              memory: 1.5Gi
+              cpu: ${IQE_CPU_LIMIT}
+              memory: ${IQE_MEMORY_LIMIT}
             requests:
-              cpu: 250m
-              memory: 1Gi
+              cpu: ${IQE_CPU_REQUEST}
+              memory: ${IQE_MEMORY_REQUEST}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
         - name: image-builder-e2e-sel-${TEST_TYPE}-${IMAGE_TAG}-${UID}
           image: ${IQE_SEL_IMAGE}
           resources:
             limits:
-              cpu: 500m
-              memory: 2Gi
+              cpu: ${SELENIUM_CPU_LIMIT}
+              memory: ${SELENIUM_MEMORY_LIMIT}
             requests:
-              cpu: 100m
-              memory: 1Gi
+              cpu: ${SELENIUM_CPU_REQUEST}
+              memory: ${SELENIUM_MEMORY_REQUEST}
           volumeMounts:
             - name: sel-shm
               mountPath: /dev/shm
@@ -139,3 +139,19 @@ parameters:
   value: "1"
 - name: TEST_TYPE
   value: ''
+- name: IQE_CPU_LIMIT
+  value: 1
+- name: IQE_MEMORY_LIMIT
+  value: 1.5Gi
+- name: IQE_CPU_REQUEST
+  value: 250m
+- name: IQE_MEMORY_REQUEST
+  value: 1Gi
+- name: SELENIUM_CPU_LIMIT
+  value: 500m
+- name: SELENIUM_MEMORY_LIMIT
+  value: 2Gi
+- name: SELENIUM_CPU_REQUEST
+  value: 100m
+- name: SELENIUM_MEMORY_REQUEST
+  value: 1Gi
