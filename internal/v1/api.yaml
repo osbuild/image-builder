@@ -1019,6 +1019,28 @@ components:
         profile_id:
           type: string
           example: "xccdf_org.ssgproject.content_profile_cis"
+        tailoring:
+          $ref: '#/components/schemas/OpenSCAPTailoring'
+          description: 'Additional rules which creates a tailoring file that can extend the base profile'
+    OpenSCAPTailoring:
+      type: object
+      properties:
+        selected:
+          type: array
+          example: [ 'bind_crypto_policy' ]
+          description: |
+            Rules to be included in the scan and remediation.
+            The rule ID can be either full, or just the suffix
+          items:
+            type: string
+        unselected:
+          type: array
+          example: [ 'xccdf_org.ssgproject.content_rule_rpm_verify_hashes' ]
+          description: |
+            Rules to be excluded from the scan and remediation
+            The rule ID can be either full, or just the suffix
+          items:
+            type: string
     ClonesResponse:
       required:
         - meta

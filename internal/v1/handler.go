@@ -940,6 +940,15 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		res.Openscap = &composer.OpenSCAP{
 			ProfileId: cust.Openscap.ProfileId,
 		}
+		if tailoring := cust.Openscap.Tailoring; tailoring != nil {
+			res.Openscap.Tailoring = &composer.OpenSCAPTailoring{}
+			if tailoring.Selected != nil && len(*tailoring.Selected) > 0 {
+				res.Openscap.Tailoring.Selected = tailoring.Selected
+			}
+			if tailoring.Unselected != nil && len(*tailoring.Unselected) > 0 {
+				res.Openscap.Tailoring.Unselected = tailoring.Unselected
+			}
+		}
 	}
 
 	if cust.Filesystem != nil && len(*cust.Filesystem) > 0 {
