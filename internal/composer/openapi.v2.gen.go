@@ -501,7 +501,14 @@ type ObjectReference struct {
 
 // OpenSCAP defines model for OpenSCAP.
 type OpenSCAP struct {
-	ProfileId string `json:"profile_id"`
+	ProfileId string             `json:"profile_id"`
+	Tailoring *OpenSCAPTailoring `json:"tailoring,omitempty"`
+}
+
+// OpenSCAPTailoring defines model for OpenSCAPTailoring.
+type OpenSCAPTailoring struct {
+	Selected   *[]string `json:"selected,omitempty"`
+	Unselected *[]string `json:"unselected,omitempty"`
 }
 
 // PackageMetadata defines model for PackageMetadata.
