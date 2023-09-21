@@ -140,7 +140,7 @@ parameters:
 - name: TEST_TYPE
   value: ''
 - name: IQE_CPU_LIMIT
-  value: 1
+  value: "1"
 - name: IQE_MEMORY_LIMIT
   value: 1.5Gi
 - name: IQE_CPU_REQUEST
