@@ -50,6 +50,7 @@ const (
 	ImageTypesIotInstaller   ImageTypes = "iot-installer"
 	ImageTypesIotRawImage    ImageTypes = "iot-raw-image"
 	ImageTypesLiveInstaller  ImageTypes = "live-installer"
+	ImageTypesOci            ImageTypes = "oci"
 	ImageTypesVsphere        ImageTypes = "vsphere"
 	ImageTypesVsphereOva     ImageTypes = "vsphere-ova"
 	ImageTypesWsl            ImageTypes = "wsl"
@@ -65,11 +66,12 @@ const (
 
 // Defines values for UploadTypes.
 const (
-	UploadTypesAws       UploadTypes = "aws"
-	UploadTypesAwsS3     UploadTypes = "aws.s3"
-	UploadTypesAzure     UploadTypes = "azure"
-	UploadTypesContainer UploadTypes = "container"
-	UploadTypesGcp       UploadTypes = "gcp"
+	UploadTypesAws              UploadTypes = "aws"
+	UploadTypesAwsS3            UploadTypes = "aws.s3"
+	UploadTypesAzure            UploadTypes = "azure"
+	UploadTypesContainer        UploadTypes = "container"
+	UploadTypesGcp              UploadTypes = "gcp"
+	UploadTypesOciObjectstorage UploadTypes = "oci.objectstorage"
 )
 
 // AWSEC2CloneCompose defines model for AWSEC2CloneCompose.
@@ -475,6 +477,14 @@ type LocalUploadOptions struct {
 	LocalSave bool `json:"local_save"`
 }
 
+// OCIUploadOptions defines model for OCIUploadOptions.
+type OCIUploadOptions = map[string]interface{}
+
+// OCIUploadStatus defines model for OCIUploadStatus.
+type OCIUploadStatus struct {
+	Url string `json:"url"`
+}
+
 // OSTree defines model for OSTree.
 type OSTree struct {
 	// A URL which, if set, is used for fetching content. Implies that `url` is set as well,
@@ -501,7 +511,14 @@ type ObjectReference struct {
 
 // OpenSCAP defines model for OpenSCAP.
 type OpenSCAP struct {
-	ProfileId string `json:"profile_id"`
+	ProfileId string             `json:"profile_id"`
+	Tailoring *OpenSCAPTailoring `json:"tailoring,omitempty"`
+}
+
+// OpenSCAPTailoring defines model for OpenSCAPTailoring.
+type OpenSCAPTailoring struct {
+	Selected   *[]string `json:"selected,omitempty"`
+	Unselected *[]string `json:"unselected,omitempty"`
 }
 
 // PackageMetadata defines model for PackageMetadata.
