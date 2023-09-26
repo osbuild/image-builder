@@ -11,8 +11,10 @@ Image Builder is intended to be run within the
 
 ### OpenAPI spec
 
-The [latest api
-specification](https://github.com/osbuild/image-builder/blob/main/internal/v1/api.yaml).
+The latest OpenAPI specification:
+
+* [raw YAML](https://github.com/osbuild/image-builder/blob/main/internal/v1/api.yaml)
+* [on-line version](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/osbuild/image-builder/main/internal/v1/api.yaml)
 
 ### Contributing
 
