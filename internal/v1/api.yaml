@@ -15,9 +15,11 @@ servers:
 paths:
   /version:
     get:
-      summary: get the service version
-      description: "get the service version"
+      summary: get version
+      description: "Get the service version."
       operationId: getVersion
+      tags:
+        - meta
       responses:
         '200':
           description: a service version
@@ -27,8 +29,11 @@ paths:
                 $ref: '#/components/schemas/Version'
   /ready:
     get:
-      summary: return the readiness
+      summary: return readiness
+      description: "Return the service readiness."
       operationId: getReadiness
+      tags:
+        - meta
       responses:
         '200':
           description: readiness
@@ -38,7 +43,8 @@ paths:
                 $ref: '#/components/schemas/Readiness'
   /openapi.json:
     get:
-      summary: get the openapi json specification
+      summary: get spec
+      description: "Get the OpenAPI JSON specification."
       operationId: getOpenapiJson
       tags:
         - meta
@@ -51,8 +57,11 @@ paths:
                 type: object
   /distributions:
     get:
-      summary: get the distributions available to this user
+      summary: get distributions
+      description: "Get the distributions available to this user."
       operationId: getDistributions
+      tags:
+        - distribution
       responses:
         '200':
           description: |
@@ -64,16 +73,20 @@ paths:
                 $ref: '#/components/schemas/DistributionsResponse'
   /architectures/{distribution}:
     get:
-      summary: get the architectures and their image types available for a given distribution
+      summary: get architectures for distribution
+      description: "Get the architectures and their image types available for a given distribution."
       parameters:
         - in: path
           name: distribution
           schema:
             $ref: '#/components/schemas/Distributions'
           required: true
-          description: distribution for which to look up available architectures
+          description: "Distribution for which to look up available architectures."
           example: 'rhel-84'
       operationId: getArchitectures
+      tags:
+        - distribution
+        - architecture
       responses:
         '200':
           description: a list of available architectures and their associated image types
@@ -89,7 +102,11 @@ paths:
                 $ref: '#/components/schemas/HTTPErrorList'
   /composes:
     get:
-      summary: get a collection of previous compose requests for the logged in user
+      summary: get composes
+      description: "Get a collection of previous compose requests for the logged in user."
+      operationId: getComposes
+      tags:
+        - compose
       parameters:
         - in: query
           name: limit
@@ -98,14 +115,14 @@ paths:
             default: 100
             minimum: 1
             maximum: 100
-          description: max amount of composes, default 100
+          description: "Max amount of composes."
         - in: query
           name: offset
           schema:
             type: integer
             default: 0
             minimum: 0
-          description: composes page offset, default 0
+          description: "Composes page offset."
         - in: query
           name: ignoreImageTypes
           required: false
@@ -132,11 +149,13 @@ paths:
           format: uuid
           example: '123e4567-e89b-12d3-a456-426655440000'
         required: true
-        description: Id of compose
+        description: ID of compose
     get:
-      summary: get status of an image compose
-      description: "status of an image compose"
+      summary: get compose status
+      description: "Status of an image compose."
       operationId: getComposeStatus
+      tags:
+        - compose
       responses:
         '200':
           description: compose status
@@ -145,16 +164,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ComposeStatus'
     delete:
-      summary: delete a compose
+      summary: delete compose
       description: |
         Deletes a compose, the compose will still count towards quota.
       operationId: deleteCompose
+      tags:
+        - compose
       responses:
         200:
           description: OK
   /composes/{composeId}/metadata:
     get:
-      summary: get metadata of an image compose
+      summary: get compose metadata
+      description: "Get metadata of an image compose."
+      tags:
+        - compose
       parameters:
         - in: path
           name: composeId
@@ -164,7 +188,6 @@ paths:
             example: '123e4567-e89b-12d3-a456-426655440000'
           required: true
           description: Id of compose metadata to get
-      description: "metadata for an image compose"
       operationId: getComposeMetadata
       responses:
         '200':
@@ -175,7 +198,9 @@ paths:
                 $ref: '#/components/schemas/ComposeMetadata'
   /composes/{composeId}/clone:
     post:
-      summary: clone a compose
+      summary: clone compose
+      tags:
+        - compose
       description: |
         Clones a compose. Only composes with the 'aws' image type currently support cloning.
       parameters:
@@ -186,7 +211,7 @@ paths:
             format: uuid
             example: '123e4567-e89b-12d3-a456-426655440000'
           required: true
-          description: Id of compose to clone
+          description: ID of compose to clone
       operationId: cloneCompose
       requestBody:
         required: true
@@ -204,7 +229,7 @@ paths:
                 $ref: "#/components/schemas/CloneResponse"
   /composes/{composeId}/clones:
     get:
-      summary: get clones of a compose
+      summary: get compose clones
       parameters:
         - in: path
           name: composeId
@@ -230,8 +255,10 @@ paths:
             minimum: 0
           description: clones page offset, default 0
       description: |
-        Returns a list of all the clones which were started for a compose
+        Returns a list of all the clones which were started for a compose.
       operationId: getComposeClones
+      tags:
+        - compose
       responses:
         '200':
           description: compose clones
@@ -241,7 +268,7 @@ paths:
                 $ref: '#/components/schemas/ClonesResponse'
   /clones/{id}:
     get:
-      summary: get status of a compose clone
+      summary: get clone status
       parameters:
         - in: path
           name: id
@@ -251,8 +278,10 @@ paths:
             example: '123e4567-e89b-12d3-a456-426655440000'
           required: true
           description: Id of clone status to get
-      description: status of a clone
+      description: "Get status of a compose clone."
       operationId: getCloneStatus
+      tags:
+        - clone
       responses:
         '200':
           description: clone status
@@ -263,8 +292,10 @@ paths:
   /compose:
     post:
       summary: compose image
-      description: "compose image"
+      description: "Compose an image."
       operationId: composeImage
+      tags:
+        - compose
       requestBody:
         required: true
         description: details of image to be composed
@@ -328,6 +359,11 @@ paths:
             default: 0
             minimum: 0
           description: packages page offset, default 0
+      summary: get packages
+      description: "Get packages."
+      operationId: getPackages
+      tags:
+        - package
       responses:
         '200':
           description: a list of packages
@@ -746,6 +782,8 @@ components:
       type: object
     GCPUploadRequestOptions:
       type: object
+      required:
+        - share_with_accounts
       properties:
         share_with_accounts:
           type: array
