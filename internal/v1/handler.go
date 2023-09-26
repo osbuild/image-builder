@@ -730,7 +730,7 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 		return composer.GCPUploadOptions{
 			Bucket:            &h.server.gcp.Bucket,
 			Region:            h.server.gcp.Region,
-			ShareWithAccounts: &gcpOptions.ShareWithAccounts,
+			ShareWithAccounts: gcpOptions.ShareWithAccounts,
 		}, composerImageType, nil
 	case UploadTypesAzure:
 		var composerImageType composer.ImageTypes
