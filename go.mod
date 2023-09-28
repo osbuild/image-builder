@@ -3,10 +3,11 @@ module github.com/osbuild/image-builder
 go 1.19
 
 require (
-	github.com/BurntSushi/toml v0.3.1
+	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.45.18
 	github.com/deepmap/oapi-codegen v1.12.4
 	github.com/getkin/kin-openapi v0.112.0
+	github.com/getsentry/sentry-go v0.25.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-retryablehttp v0.7.2
 	github.com/jackc/pgx/v4 v4.18.1

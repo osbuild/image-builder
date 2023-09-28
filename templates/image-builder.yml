@@ -91,6 +91,12 @@ objects:
                 optional: true
           - name: SPLUNK_HEC_PORT
             value: "${SPLUNK_HEC_PORT}"
+          - name: GLITCHTIP_DSN
+            valueFrom:
+              secretKeyRef:
+                key: image-builder-stage-dsn
+                name: dsn
+                optional: true
         volumeMounts:
           - name: config-volume
             mountPath: /app/config

@@ -35,6 +35,7 @@ type ImageBuilderConfig struct {
 	SplunkPort           string `env:"SPLUNK_HEC_PORT"`
 	SplunkToken          string `env:"SPLUNK_HEC_TOKEN"`
 	ProvisioningURL      string `env:"PROVISIONING_URL"`
+	GlitchTipDSN         string `env:"GLITCHTIP_DSN"`
 }
 
 func (ibc *ImageBuilderConfig) IsDebug() bool {
