@@ -18,6 +18,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/getsentry/sentry-go"
+	sentryecho "github.com/getsentry/sentry-go/echo"
 )
 
 func main() {
@@ -35,6 +38,15 @@ func main() {
 	err := config.LoadConfigFromEnv(&conf)
 	if err != nil {
 		panic(err)
+	}
+
+	if conf.GlitchTipDSN != "" {
+		err = sentry.Init(sentry.ClientOptions{
+			Dsn: conf.GlitchTipDSN,
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	err = logger.ConfigLogger(logrus.StandardLogger(), conf.LogLevel)
@@ -119,6 +131,9 @@ func main() {
 			return nil
 		},
 	}))
+	if conf.GlitchTipDSN != "" {
+		echoServer.Use(sentryecho.New(sentryecho.Options{}))
+	}
 	if conf.IsDebug() {
 		echoServer.Debug = true
 	}
