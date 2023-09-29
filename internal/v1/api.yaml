@@ -341,6 +341,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+  /oscap/{distribution}/profiles:
+    parameters:
+      - in: path
+        name: distribution
+        schema:
+          $ref: '#/components/schemas/Distributions'
+        required: true
+    get:
+      summary: get the available profiles for a given distribution
+      operationId: getOscapProfiles
+      responses:
+        '200':
+          description: |
+            A list of profiles configurable for this distribution.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributionProfileResponse'
 
 components:
   schemas:
@@ -1111,3 +1129,29 @@ components:
           type: string
           format: uuid
           example: '123e4567-e89b-12d3-a456-426655440000'
+    DistributionProfileResponse:
+      type: array
+      description: |
+        List of profiles for a given distribution
+      items:
+        $ref: '#/components/schemas/DistributionProfileItem'
+    DistributionProfileItem:
+      type: string
+      enum:
+        - xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced
+        - xccdf_org.ssgproject.content_profile_anssi_bp28_high
+        - xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary
+        - xccdf_org.ssgproject.content_profile_anssi_bp28_minimal
+        - xccdf_org.ssgproject.content_profile_cis
+        - xccdf_org.ssgproject.content_profile_cis_server_l1
+        - xccdf_org.ssgproject.content_profile_cis_workstation_l1
+        - xccdf_org.ssgproject.content_profile_cis_workstation_l2
+        - xccdf_org.ssgproject.content_profile_cui
+        - xccdf_org.ssgproject.content_profile_e8
+        - xccdf_org.ssgproject.content_profile_hipaa
+        - xccdf_org.ssgproject.content_profile_ism_o
+        - xccdf_org.ssgproject.content_profile_ospp
+        - xccdf_org.ssgproject.content_profile_pci-dss
+        - xccdf_org.ssgproject.content_profile_standard
+        - xccdf_org.ssgproject.content_profile_stig
+        - xccdf_org.ssgproject.content_profile_stig_gui
