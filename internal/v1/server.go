@@ -25,29 +25,31 @@ import (
 )
 
 type Server struct {
-	echo       *echo.Echo
-	cClient    *composer.ComposerClient
-	pClient    *provisioning.ProvisioningClient
-	spec       *openapi3.T
-	router     routers.Router
-	db         db.DB
-	aws        AWSConfig
-	gcp        GCPConfig
-	quotaFile  string
-	allowList  common.AllowList
-	allDistros *distribution.AllDistroRegistry
+	echo             *echo.Echo
+	cClient          *composer.ComposerClient
+	pClient          *provisioning.ProvisioningClient
+	spec             *openapi3.T
+	router           routers.Router
+	db               db.DB
+	aws              AWSConfig
+	gcp              GCPConfig
+	quotaFile        string
+	allowList        common.AllowList
+	allDistros       *distribution.AllDistroRegistry
+	distributionsDir string
 }
 
 type ServerConfig struct {
-	EchoServer *echo.Echo
-	CompClient *composer.ComposerClient
-	ProvClient *provisioning.ProvisioningClient
-	DBase      db.DB
-	AwsConfig  AWSConfig
-	GcpConfig  GCPConfig
-	QuotaFile  string
-	AllowFile  string
-	AllDistros *distribution.AllDistroRegistry
+	EchoServer       *echo.Echo
+	CompClient       *composer.ComposerClient
+	ProvClient       *provisioning.ProvisioningClient
+	DBase            db.DB
+	AwsConfig        AWSConfig
+	GcpConfig        GCPConfig
+	QuotaFile        string
+	AllowFile        string
+	AllDistros       *distribution.AllDistroRegistry
+	DistributionsDir string
 }
 
 type AWSConfig struct {
@@ -95,6 +97,7 @@ func Attach(conf *ServerConfig) error {
 		conf.QuotaFile,
 		allowList,
 		conf.AllDistros,
+		conf.DistributionsDir,
 	}
 	var h Handlers
 	h.server = &s

@@ -359,6 +359,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DistributionProfileResponse'
+  /oscap/{distribution}/{profile}/customizations:
+    parameters:
+      - in: path
+        name: distribution
+        schema:
+          $ref: '#/components/schemas/Distributions'
+        required: true
+      - in: path
+        name: profile
+        schema:
+          $ref: '#/components/schemas/DistributionProfileItem'
+        required: true
+        description: Name of the profile to retrieve customizations from
+    get:
+      summary: get the customizations for a given distribution and profile
+      operationId: getOscapCustomizations
+      responses:
+        '200':
+          description: |
+            A customizations array updated with the needed elements.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customizations'
 
 components:
   schemas:

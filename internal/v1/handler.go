@@ -1306,3 +1306,11 @@ func (h *Handlers) GetOscapProfiles(ctx echo.Context, distribution Distributions
 	}
 	return ctx.JSON(http.StatusOK, profiles)
 }
+
+func (h *Handlers) GetOscapCustomizations(ctx echo.Context, distribution Distributions, profile DistributionProfileItem) error {
+	customizations, err := loadOscapCustomizations(h.server.distributionsDir, distribution, profile)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	return ctx.JSON(http.StatusOK, customizations)
+}

@@ -139,13 +139,14 @@ func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, dis
 	echoServer := echo.New()
 	echoServer.HideBanner = true
 	serverConfig := &ServerConfig{
-		EchoServer: echoServer,
-		CompClient: compClient,
-		ProvClient: provClient,
-		DBase:      dbase,
-		QuotaFile:  quotaFile,
-		AllowFile:  allowFile,
-		AllDistros: adr,
+		EchoServer:       echoServer,
+		CompClient:       compClient,
+		ProvClient:       provClient,
+		DBase:            dbase,
+		QuotaFile:        quotaFile,
+		AllowFile:        allowFile,
+		AllDistros:       adr,
+		DistributionsDir: distsDir,
 	}
 
 	err = Attach(serverConfig)

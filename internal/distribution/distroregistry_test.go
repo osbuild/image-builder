@@ -42,6 +42,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 
 	require.Equal(t, &DistributionFile{
 		ModulePlatformID: "platform:el8",
+		OscapName:        "rhel8",
 		Distribution: DistributionItem{
 			Description:      "Red Hat Enterprise Linux (RHEL) 8",
 			Name:             "rhel-86",
