@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -847,6 +850,92 @@ func TestGetProfiles(t *testing.T) {
 		for _, dist := range []Distributions{Fedora37, Fedora38, Fedora39, Fedora40, Rhel90} {
 			respStatusCode, _ := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
+			require.Equal(t, 400, respStatusCode)
+		}
+	})
+}
+
+func TestGetCustomizations(t *testing.T) {
+	srv, tokenSrv := startServer(t, "", "")
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	t.Run("Access all customizations and check that they match", func(t *testing.T) {
+		for _, dist := range []Distributions{
+			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel8Nightly, Rhel9, Rhel91, Rhel92, Rhel9Nightly, Centos8, Centos9,
+		} {
+			respStatusCode, body := tutils.GetResponseBody(t,
+				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+			var result DistributionProfileResponse
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			for _, profile := range result {
+				// Get the customization from the API
+				var result Customizations
+				respStatusCode, body := tutils.GetResponseBody(t,
+					fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/%s/customizations", dist, profile), &tutils.AuthString0)
+				require.Equal(t, 200, respStatusCode)
+				err := json.Unmarshal([]byte(body), &result)
+				require.NoError(t, err)
+				// load the corresponding file from the disk
+				require.NoError(t, err)
+				jsonFile, err := os.Open(
+					path.Join(
+						"../../distributions",
+						string(dist),
+						"oscap",
+						string(profile),
+						"customizations.json"))
+				require.NoError(t, err)
+				defer jsonFile.Close()
+				bytes, err := io.ReadAll(jsonFile)
+				require.NoError(t, err)
+				var customizations Customizations
+				err = json.Unmarshal(bytes, &customizations)
+				require.NoError(t, err)
+				// Make sure we get the same result both ways
+				if result.Packages == nil {
+					require.Nil(t, customizations.Packages)
+				} else {
+					require.ElementsMatch(t, *customizations.Packages, *result.Packages)
+				}
+				if result.Filesystem == nil {
+					require.Nil(t, customizations.Filesystem)
+				} else {
+					require.ElementsMatch(t, *customizations.Filesystem, *result.Filesystem)
+				}
+			}
+		}
+	})
+	t.Run("Access customizations on a distro that does not have customizations returns an error", func(t *testing.T) {
+		for _, dist := range []Distributions{Rhel8} {
+			respStatusCode, body := tutils.GetResponseBody(t,
+				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+			var result DistributionProfileResponse
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			for _, profile := range result {
+				respStatusCode, _ := tutils.GetResponseBody(t,
+					fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/%s/customizations", Fedora40, profile), &tutils.AuthString0)
+				require.Equal(t, 400, respStatusCode)
+			}
+		}
+	})
+	t.Run("Access non existing customizations on a distro returns an error", func(t *testing.T) {
+		for _, dist := range []Distributions{Rhel8} {
+			respStatusCode, body := tutils.GetResponseBody(t,
+				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
+			require.Equal(t, 200, respStatusCode)
+			var result DistributionProfileResponse
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			respStatusCode, _ = tutils.GetResponseBody(t,
+				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/%s/customizations", dist, "badprofile"), &tutils.AuthString0)
 			require.Equal(t, 400, respStatusCode)
 		}
 	})

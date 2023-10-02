@@ -134,9 +134,10 @@ func main() {
 			Region: conf.OsbuildGCPRegion,
 			Bucket: conf.OsbuildGCPBucket,
 		},
-		QuotaFile:  conf.QuotaFile,
-		AllowFile:  conf.AllowFile,
-		AllDistros: adr,
+		QuotaFile:        conf.QuotaFile,
+		AllowFile:        conf.AllowFile,
+		AllDistros:       adr,
+		DistributionsDir: conf.DistributionsDir,
 	}
 
 	err = v1.Attach(serverConfig)
