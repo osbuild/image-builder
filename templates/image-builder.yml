@@ -124,6 +124,9 @@ objects:
       name: image-builder
       version: 12
 
+    dependencies:
+    - compliance-ssg
+
     optionalDependencies:
     - provisioning-backend
 
