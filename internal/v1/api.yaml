@@ -349,7 +349,7 @@ paths:
           $ref: '#/components/schemas/Distributions'
         required: true
     get:
-      summary: get the available profiles for a given distribution
+      summary: get the available profiles for a given distribution. This is a temporary endpoint meant to be removed soon.
       operationId: getOscapProfiles
       responses:
         '200':
@@ -373,7 +373,7 @@ paths:
         required: true
         description: Name of the profile to retrieve customizations from
     get:
-      summary: get the customizations for a given distribution and profile
+      summary: get the customizations for a given distribution and profile. This is a temporary endpoint meant to be removed soon.
       operationId: getOscapCustomizations
       responses:
         '200':
