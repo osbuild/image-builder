@@ -1,5 +1,6 @@
 {
   "module_platform_id": "platform:f37",
+  "oscap_name": "fedora",
   "distribution": {
     "name": "fedora-37",
     "description": "Fedora Linux 37",

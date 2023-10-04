@@ -7,3 +7,4 @@ dnf-json
 /.envrc
 /.fleet
 /.idea
+/gen-oscap

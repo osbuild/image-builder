@@ -33,6 +33,7 @@ type DistributionFile struct {
 	Distribution     DistributionItem `json:"distribution"`
 	ArchX86          *Architecture    `json:"x86_64,omitempty"`
 	Aarch64          *Architecture    `json:"aarch64,omitempty"`
+	OscapName        string           `json:"oscap_name"`
 }
 
 type Architecture struct {
