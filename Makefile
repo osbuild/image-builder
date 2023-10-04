@@ -3,6 +3,7 @@ PACKAGE_NAME = image-builder
 .PHONY: build
 build:
 	go build -o image-builder ./cmd/image-builder/
+	go build -o gen-oscap ./cmd/oscap
 	go build -o image-builder-migrate-db-tern ./cmd/image-builder-migrate-db-tern/
 	go test -c -tags=integration -o image-builder-db-test ./cmd/image-builder-db-test/
 
@@ -18,3 +19,7 @@ check-api-spec:
 .PHONY: ubi-container
 ubi-container:
 	podman build -t osbuild/image-builder -f distribution/Dockerfile-ubi .
+
+.PHONY: generate-openscap-blueprints
+generate-openscap-blueprints:
+	go run ./cmd/oscap/ ./distributions

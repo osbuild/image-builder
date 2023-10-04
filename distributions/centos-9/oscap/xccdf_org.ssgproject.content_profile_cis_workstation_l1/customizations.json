@@ -1,0 +1,1 @@
+{"filesystem":[{"min_size":2147483648,"mountpoint":"/dev/shm"},{"min_size":1073741824,"mountpoint":"/tmp"}],"packages":["aide","sudo","rsyslog","nftables","libselinux"]}

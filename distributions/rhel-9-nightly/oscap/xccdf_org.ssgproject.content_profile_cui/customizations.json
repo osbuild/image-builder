@@ -1,0 +1,1 @@
+{"filesystem":[{"min_size":10737418240,"mountpoint":"/var/log/audit"}],"packages":["crypto-policies","sudo","gnutls-utils","openscap-scanner","scap-security-guide","subscription-manager","dnf-automatic","tmux","audit","firewalld","fapolicyd","chrony","openssh-clients","openssh-server","usbguard"]}

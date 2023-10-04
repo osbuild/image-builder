@@ -1,5 +1,6 @@
 {
   "module_platform_id": "platform:el8",
+  "oscap_name": "centos8",
   "distribution": {
     "name": "centos-8",
     "description": "CentOS Stream 8"

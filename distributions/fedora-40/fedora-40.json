@@ -1,5 +1,6 @@
 {
   "module_platform_id": "platform:f40",
+  "oscap_name": "fedora",
   "distribution": {
     "name": "fedora-40",
     "description": "Fedora Linux 40",

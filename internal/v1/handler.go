@@ -1300,70 +1300,9 @@ func closeBody(body io.Closer) {
 }
 
 func (h *Handlers) GetOscapProfiles(ctx echo.Context, distribution Distributions) error {
-	switch distribution {
-	case Centos8:
-		fallthrough
-	case Rhel8:
-		fallthrough
-	case Rhel84:
-		fallthrough
-	case Rhel85:
-		fallthrough
-	case Rhel86:
-		fallthrough
-	case Rhel87:
-		fallthrough
-	case Rhel88:
-		fallthrough
-	case Rhel8Nightly:
-		return ctx.JSON(http.StatusOK, DistributionProfileResponse{
-			XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
-			XccdfOrgSsgprojectContentProfileAnssiBp28High,
-			XccdfOrgSsgprojectContentProfileAnssiBp28Intermediary,
-			XccdfOrgSsgprojectContentProfileAnssiBp28Minimal,
-			XccdfOrgSsgprojectContentProfileCis,
-			XccdfOrgSsgprojectContentProfileCisServerL1,
-			XccdfOrgSsgprojectContentProfileCisWorkstationL1,
-			XccdfOrgSsgprojectContentProfileCisWorkstationL2,
-			XccdfOrgSsgprojectContentProfileCui,
-			XccdfOrgSsgprojectContentProfileE8,
-			XccdfOrgSsgprojectContentProfileHipaa,
-			XccdfOrgSsgprojectContentProfileIsmO,
-			XccdfOrgSsgprojectContentProfileOspp,
-			XccdfOrgSsgprojectContentProfilePciDss,
-			XccdfOrgSsgprojectContentProfileStig,
-			XccdfOrgSsgprojectContentProfileStigGui,
-		})
-	case Centos9:
-		fallthrough
-	case Rhel9:
-		fallthrough
-	case Rhel91:
-		fallthrough
-	case Rhel92:
-		fallthrough
-	case Rhel9Nightly:
-		return ctx.JSON(http.StatusOK, DistributionProfileResponse{
-			XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
-			XccdfOrgSsgprojectContentProfileAnssiBp28High,
-			XccdfOrgSsgprojectContentProfileAnssiBp28Intermediary,
-			XccdfOrgSsgprojectContentProfileAnssiBp28Minimal,
-			XccdfOrgSsgprojectContentProfileCis,
-			XccdfOrgSsgprojectContentProfileCisServerL1,
-			XccdfOrgSsgprojectContentProfileCisWorkstationL1,
-			XccdfOrgSsgprojectContentProfileCisWorkstationL2,
-			XccdfOrgSsgprojectContentProfileCui,
-			XccdfOrgSsgprojectContentProfileE8,
-			XccdfOrgSsgprojectContentProfileHipaa,
-			XccdfOrgSsgprojectContentProfileIsmO,
-			XccdfOrgSsgprojectContentProfileOspp,
-			XccdfOrgSsgprojectContentProfilePciDss,
-			XccdfOrgSsgprojectContentProfileStig,
-			XccdfOrgSsgprojectContentProfileStigGui,
-		})
-	case Rhel90:
-		fallthrough
-	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "No profile for the specified distribution")
+	profiles, err := OscapProfiles(distribution)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
+	return ctx.JSON(http.StatusOK, profiles)
 }
