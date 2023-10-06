@@ -15,5 +15,9 @@ updates:
     schedule:
       interval: "daily"
       time: "04:00"
-    open-pull-requests-limit: 5
+    groups:
+      go-deps:
+        patterns:
+          - "*"  # group all dependency updates into one PR
+    open-pull-requests-limit: 1
     rebase-strategy: "disabled"
