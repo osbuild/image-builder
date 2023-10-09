@@ -1445,6 +1445,51 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		{
+			imageBuilderRequest: ComposeRequest{
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesOci,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesOciObjectstorage,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-88",
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesOci,
+					Repositories: []composer.Repository{
+						{
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/baseos/os"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.ToPtr(true),
+						},
+						{
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/appstream/os"),
+							CheckGpg:    nil,
+							Gpgkey:      nil,
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.OCIUploadOptions{}),
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {

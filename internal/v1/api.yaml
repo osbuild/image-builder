@@ -506,6 +506,7 @@ components:
             - $ref: '#/components/schemas/AWSS3UploadStatus'
             - $ref: '#/components/schemas/GCPUploadStatus'
             - $ref: '#/components/schemas/AzureUploadStatus'
+            - $ref: '#/components/schemas/OCIUploadStatus'
     AWSUploadStatus:
       type: object
       required:
@@ -545,6 +546,13 @@ components:
         image_name:
           type: string
           example: 'my-image'
+    OCIUploadStatus:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
     ComposeRequest:
       type: object
       additionalProperties: false
@@ -636,6 +644,7 @@ components:
         - gcp
         - guest-image
         - image-installer
+        - oci
         - vsphere
         - vsphere-ova
         - wsl
@@ -709,9 +718,15 @@ components:
             - $ref: '#/components/schemas/AWSS3UploadRequestOptions'
             - $ref: '#/components/schemas/GCPUploadRequestOptions'
             - $ref: '#/components/schemas/AzureUploadRequestOptions'
+            - $ref: '#/components/schemas/OCIUploadRequestOptions'
     UploadTypes:
       type: string
-      enum: ['aws', 'gcp', 'azure', 'aws.s3']
+      enum:
+      - aws
+      - gcp
+      - azure
+      - aws.s3
+      - oci.objectstorage
     AWSUploadRequestOptions:
       type: object
       properties:
@@ -796,6 +811,8 @@ components:
             Name of the created image.
             Must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens.
             The total length is limited to 60 characters.
+    OCIUploadRequestOptions:
+      type: object
     Customizations:
       type: object
       properties:

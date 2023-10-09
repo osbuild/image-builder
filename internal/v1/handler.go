@@ -318,6 +318,17 @@ func parseComposerUploadStatus(us *composer.UploadStatus) (*UploadStatus, error)
 		if err != nil {
 			return nil, err
 		}
+	case composer.UploadTypesOciObjectstorage:
+		co, err := us.Options.AsOCIUploadStatus()
+		if err != nil {
+			return nil, err
+		}
+		err = options.FromOCIUploadStatus(OCIUploadStatus{
+			Url: co.Url,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &UploadStatus{
@@ -867,6 +878,15 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 			return uploadOptions, "", err
 		}
 		return uploadOptions, composerImageType, nil
+	case UploadTypesOciObjectstorage:
+		if it != ImageTypesOci {
+			return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, "Invalid image type for upload target")
+		}
+		err := uploadOptions.FromOCIUploadOptions(composer.OCIUploadOptions{})
+		if err != nil {
+			return uploadOptions, "", err
+		}
+		return uploadOptions, composer.ImageTypesOci, err
 	default:
 		return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unknown UploadRequest type %s", ur.Type))
 	}
