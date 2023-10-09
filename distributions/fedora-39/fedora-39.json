@@ -12,6 +12,7 @@
       "aws",
       "azure",
       "guest-image",
+      "oci",
       "vsphere",
       "vsphere-ova",
       "iot-commit"
