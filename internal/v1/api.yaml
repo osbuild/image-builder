@@ -383,6 +383,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Customizations'
+  /experimental/blueprint:
+    post:
+      summary: create blueprint
+      description: "create blueprint"
+      operationId: createBlueprint
+      requestBody:
+        required: true
+        description: details of blueprint
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBlueprintRequest"
+      responses:
+        '201':
+          description: blueprint was saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBlueprintResponse'
+        '400':
+          description: blueprint is malformed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
+        '403':
+          description: user is not allowed to create blueprints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
 
 components:
   schemas:
@@ -581,6 +612,43 @@ components:
             Array of exactly one image request. Having more image requests in one compose is currently not supported.
         customizations:
             $ref: '#/components/schemas/Customizations'
+    CreateBlueprintRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - description
+        - distribution
+        - image_requests
+        - customizations
+      properties:
+        name:
+          type: string
+          example: "My Blueprint"
+          maxLength: 100
+        description:
+          type: string
+          example: "My blueprint description"
+          maxLength: 250
+        distribution:
+          $ref: '#/components/schemas/Distributions'
+        image_requests:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ImageRequest'
+          uniqueItems: true
+          description: |
+            Array of image requests. Having more image requests in a single blueprint is currently not supported.
+        customizations:
+          $ref: '#/components/schemas/Customizations'
+    CreateBlueprintResponse:
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
     Distributions:
       type: string
       description: |

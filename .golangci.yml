@@ -1,3 +1,6 @@
 linters:
   enable:
   - bodyclose
+run:
+  skip-dirs:
+    - vendor
