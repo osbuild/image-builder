@@ -49,6 +49,8 @@ func NewPSQLContainer() (*PSQLContainer, error) {
 	out, err := exec.Command(
 		rt,
 		"run",
+		"--mount=type=tmpfs,destination=/var/lib/postgresql/data",
+		"--mount=type=tmpfs,destination=/dev/shm",
 		"--detach",
 		"--rm",
 		"--name", name,
@@ -87,6 +89,9 @@ func (p *PSQLContainer) execCommand(args ...string) (string, error) {
 	}
 	/* #nosec G204 */
 	out, err := exec.Command(rt, args...).CombinedOutput()
+	if err != nil {
+		err = fmt.Errorf("command %s %s error: %w, output: %s", rt, args, err, out)
+	}
 	return strings.TrimSpace(string(out)), err
 }
 
@@ -124,9 +129,9 @@ func (p *PSQLContainer) NewDB() (db.DB, error) {
 		"--user", user,
 	)
 
-	_, err = cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("tern command error: %w, output: %s", err, out)
 	}
 	return db.InitDBConnectionPool(fmt.Sprintf("postgres://postgres@localhost:%d/%s", p.port, dbName))
 }

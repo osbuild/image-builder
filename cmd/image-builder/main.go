@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/labstack/gommon/random"
-	"github.com/osbuild/image-builder/internal/common"
 	"github.com/sirupsen/logrus"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"

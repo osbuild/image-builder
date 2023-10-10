@@ -14,6 +14,7 @@ import (
 // ComposeNotFoundError occurs when no compose request is found for a user.
 var ComposeNotFoundError = errors.New("Compose not found")
 var CloneNotFoundError = errors.New("Clone not found")
+var AffectedRowsMismatchError = errors.New("Unexpected affected rows")
 
 type dB struct {
 	Pool *pgxpool.Pool
@@ -32,6 +33,14 @@ type CloneEntry struct {
 	CreatedAt time.Time
 }
 
+type BlueprintEntry struct {
+	Id          uuid.UUID
+	Version     int
+	Body        json.RawMessage
+	Name        string
+	Description string
+}
+
 type DB interface {
 	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage) error
 	GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
@@ -43,6 +52,10 @@ type DB interface {
 	InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error
 	GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
 	GetClone(id uuid.UUID, orgId string) (*CloneEntry, error)
+
+	InsertBlueprint(id uuid.UUID, orgID, accountNumber, name, description string, bodyVersion int, body json.RawMessage) error
+	GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error)
+	DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error
 }
 
 const (

@@ -4,7 +4,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/osbuild/image-builder/internal/v1"
 	"os/exec"
 	"testing"
 	"time"
@@ -64,8 +66,8 @@ func migrateTern(t *testing.T) {
 		"--host", c.PGHost, "--port", c.PGPort,
 		"--user", c.PGUser, "--password", c.PGPassword,
 		"--sslmode", c.PGSSLMode)
-	err := cmd.Run()
-	require.NoError(t, err)
+	output, err := cmd.CombinedOutput()
+	require.NoErrorf(t, err, "tern command failed with non-zero code, combined output: %s", string(output))
 }
 
 func connect(t *testing.T) *pgx.Conn {
@@ -77,10 +79,14 @@ func connect(t *testing.T) *pgx.Conn {
 func tearDown(t *testing.T) {
 	conn := connect(t)
 	defer conn.Close(context.Background())
-	conn.Exec(context.Background(), "drop table clones")
-	conn.Exec(context.Background(), "drop table composes")
-	conn.Exec(context.Background(), "drop table if exists schema_migrations")
-	conn.Exec(context.Background(), "drop table if exists schema_version")
+	_, err := conn.Exec(context.Background(), "drop schema public cascade")
+	require.NoError(t, err)
+	_, err = conn.Exec(context.Background(), "create schema public")
+	require.NoError(t, err)
+	_, err = conn.Exec(context.Background(), "grant all on schema public to postgres")
+	require.NoError(t, err)
+	_, err = conn.Exec(context.Background(), "grant all on schema public to public")
+	require.NoError(t, err)
 }
 
 func testInsertCompose(t *testing.T) {
@@ -342,7 +348,41 @@ func testClones(t *testing.T) {
 	require.Equal(t, clones[1], *entry)
 }
 
-func TestMain(t *testing.T) {
+func testBlueprints(t *testing.T) {
+	d, err := db.InitDBConnectionPool(connStr(t))
+	require.NoError(t, err)
+	conn := connect(t)
+	defer conn.Close(context.Background())
+
+	b1 := v1.BlueprintV1{
+		Version:     1,
+		Name:        "name",
+		Description: "desc",
+	}
+	body, err := json.Marshal(b1)
+	require.NoError(t, err)
+
+	id := uuid.New()
+	err = d.InsertBlueprint(id, ORGID1, ANR1, "name", "desc", 1, body)
+	require.NoError(t, err)
+
+	entry, err := d.GetBlueprint(id, ORGID1, ANR1)
+	require.NoError(t, err)
+	b2, err := v1.BlueprintFromEntry(entry)
+	require.NoError(t, err)
+	require.Equal(t, b1, b2)
+
+	err = d.DeleteBlueprint(id, ORGID1, ANR1)
+	require.NoError(t, err)
+}
+
+func runTest(t *testing.T, f func(*testing.T)) {
+	migrateTern(t)
+	defer tearDown(t)
+	f(t)
+}
+
+func TestAll(t *testing.T) {
 	fns := []func(*testing.T){
 		testInsertCompose,
 		testGetCompose,
@@ -350,11 +390,10 @@ func TestMain(t *testing.T) {
 		testGetComposeImageType,
 		testDeleteCompose,
 		testClones,
+		testBlueprints,
 	}
 
 	for _, f := range fns {
-		migrateTern(t)
-		f(t)
-		tearDown(t)
+		runTest(t, f)
 	}
 }
