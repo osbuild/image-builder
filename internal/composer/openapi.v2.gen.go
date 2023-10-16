@@ -293,10 +293,32 @@ type Customizations struct {
 	// on the image
 	CustomRepositories *[]CustomRepository `json:"custom_repositories,omitempty"`
 	Directories        *[]Directory        `json:"directories,omitempty"`
-	Files              *[]File             `json:"files,omitempty"`
-	Filesystem         *[]Filesystem       `json:"filesystem,omitempty"`
-	Openscap           *OpenSCAP           `json:"openscap,omitempty"`
-	Packages           *[]string           `json:"packages,omitempty"`
+
+	// Fdo FIDO device onboard configuration
+	Fdo        *FDO          `json:"fdo,omitempty"`
+	Files      *[]File       `json:"files,omitempty"`
+	Filesystem *[]Filesystem `json:"filesystem,omitempty"`
+
+	// Firewall Firewalld configuration
+	Firewall *FirewallCustomization `json:"firewall,omitempty"`
+
+	// Group List of groups to create
+	Group *[]Group `json:"group,omitempty"`
+
+	// Hostname Configures the hostname
+	Hostname *string `json:"hostname,omitempty"`
+
+	// Ignition Ignition configuration
+	Ignition *Ignition `json:"ignition,omitempty"`
+
+	// InstallationDevice Name of the installation device, currently only useful for the edge-simplified-installer type
+	InstallationDevice *string `json:"installation_device,omitempty"`
+	Kernel             *Kernel `json:"kernel,omitempty"`
+
+	// Locale Locale configuration
+	Locale   *Locale   `json:"locale,omitempty"`
+	Openscap *OpenSCAP `json:"openscap,omitempty"`
+	Packages *[]string `json:"packages,omitempty"`
 
 	// PayloadRepositories Extra repositories for packages specified in customizations. These
 	// repositories will only be used to depsolve and retrieve packages
@@ -304,15 +326,15 @@ type Customizations struct {
 	// any other part of the build process). The package_sets field for these
 	// repositories is ignored.
 	PayloadRepositories *[]Repository `json:"payload_repositories,omitempty"`
-	Services            *struct {
-		// Disabled List of services to disable by default
-		Disabled *[]string `json:"disabled,omitempty"`
+	Services            *Services     `json:"services,omitempty"`
 
-		// Enabled List of services to enable by default
-		Enabled *[]string `json:"enabled,omitempty"`
-	} `json:"services,omitempty"`
+	// Sshkey List of ssh keys
+	Sshkey       *[]SSHKey     `json:"sshkey,omitempty"`
 	Subscription *Subscription `json:"subscription,omitempty"`
-	Users        *[]User       `json:"users,omitempty"`
+
+	// Timezone Timezone configuration
+	Timezone *Timezone `json:"timezone,omitempty"`
+	Users    *[]User   `json:"users,omitempty"`
 }
 
 // Directory A custom directory to create in the final artifact.
@@ -375,6 +397,14 @@ type ErrorList struct {
 	Total int     `json:"total"`
 }
 
+// FDO FIDO device onboard configuration
+type FDO struct {
+	DiunPubKeyHash         *string `json:"diun_pub_key_hash,omitempty"`
+	DiunPubKeyInsecure     *string `json:"diun_pub_key_insecure,omitempty"`
+	DiunPubKeyRootCerts    *string `json:"diun_pub_key_root_certs,omitempty"`
+	ManufacturingServerUrl *string `json:"manufacturing_server_url,omitempty"`
+}
+
 // File A custom file to create in the final artifact.
 type File struct {
 	// Data Contents of the file as plain text
@@ -425,6 +455,21 @@ type Filesystem struct {
 	Mountpoint string `json:"mountpoint"`
 }
 
+// FirewallCustomization Firewalld configuration
+type FirewallCustomization struct {
+	// Ports List of ports (or port ranges) and protocols to open
+	Ports *[]string `json:"ports,omitempty"`
+
+	// Services Firewalld services to enable or disable
+	Services *struct {
+		// Disabled List of services to disable
+		Disabled *[]string `json:"disabled,omitempty"`
+
+		// Enabled List of services to enable
+		Enabled *[]string `json:"enabled,omitempty"`
+	} `json:"services,omitempty"`
+}
+
 // GCPUploadOptions defines model for GCPUploadOptions.
 type GCPUploadOptions struct {
 	// Bucket Name of an existing STANDARD Storage class Bucket.
@@ -463,6 +508,32 @@ type GCPUploadStatus struct {
 	ProjectId string `json:"project_id"`
 }
 
+// Group defines model for Group.
+type Group struct {
+	// Gid Group id of the group to create (optional)
+	Gid *int `json:"gid,omitempty"`
+
+	// Name Name of the group to create
+	Name string `json:"name"`
+}
+
+// Ignition Ignition configuration
+type Ignition struct {
+	Embedded  *IgnitionEmbedded  `json:"embedded,omitempty"`
+	Firstboot *IgnitionFirstboot `json:"firstboot,omitempty"`
+}
+
+// IgnitionEmbedded defines model for IgnitionEmbedded.
+type IgnitionEmbedded struct {
+	Config string `json:"config"`
+}
+
+// IgnitionFirstboot defines model for IgnitionFirstboot.
+type IgnitionFirstboot struct {
+	// Url Provisioning URL
+	Url string `json:"url"`
+}
+
 // ImageRequest defines model for ImageRequest.
 type ImageRequest struct {
 	Architecture string       `json:"architecture"`
@@ -494,6 +565,15 @@ type ImageStatusValue string
 
 // ImageTypes defines model for ImageTypes.
 type ImageTypes string
+
+// Kernel defines model for Kernel.
+type Kernel struct {
+	// Append Appends arguments to the bootloader kernel command line
+	Append *string `json:"append,omitempty"`
+
+	// Name Name of the kernel to use
+	Name *string `json:"name,omitempty"`
+}
 
 // Koji defines model for Koji.
 type Koji struct {
@@ -529,6 +609,15 @@ type LocalUploadOptions struct {
 	// variable on the server to enable saving the compose locally. This
 	// is for development use only, and is not available to users.
 	LocalSave bool `json:"local_save"`
+}
+
+// Locale Locale configuration
+type Locale struct {
+	// Keyboard Sets the keyboard layout
+	Keyboard *string `json:"keyboard,omitempty"`
+
+	// Languages List of locales to be installed, the first one becomes primary, subsequent ones are secondary
+	Languages *[]string `json:"languages,omitempty"`
 }
 
 // OCIUploadOptions defines model for OCIUploadOptions.
@@ -612,6 +701,24 @@ type Repository struct {
 	Rhsm *bool `json:"rhsm,omitempty"`
 }
 
+// SSHKey defines model for SSHKey.
+type SSHKey struct {
+	// Key Adds the key to the user's authorized_keys file
+	Key string `json:"key"`
+
+	// User User to configure the ssh key for
+	User string `json:"user"`
+}
+
+// Services defines model for Services.
+type Services struct {
+	// Disabled List of services to disable by default
+	Disabled *[]string `json:"disabled,omitempty"`
+
+	// Enabled List of services to enable by default
+	Enabled *[]string `json:"enabled,omitempty"`
+}
+
 // Subscription defines model for Subscription.
 type Subscription struct {
 	ActivationKey string `json:"activation_key"`
@@ -622,6 +729,15 @@ type Subscription struct {
 	// Rhc Optional flag to use rhc to register the system, which also always enables Insights.
 	Rhc       *bool  `json:"rhc,omitempty"`
 	ServerUrl string `json:"server_url"`
+}
+
+// Timezone Timezone configuration
+type Timezone struct {
+	// Ntpservers List of ntp servers
+	Ntpservers *[]string `json:"ntpservers,omitempty"`
+
+	// Timezone Name of the timezone, defaults to UTC
+	Timezone *string `json:"timezone,omitempty"`
 }
 
 // UploadOptions This should really be oneOf but AWSS3UploadOptions is a subset of

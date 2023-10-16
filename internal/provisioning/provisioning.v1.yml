@@ -44,6 +44,10 @@ components:
                             detail:
                                 type: object
                                 properties:
+                                    private_ipv4:
+                                        type: string
+                                    private_ipv6:
+                                        type: string
                                     public_dns:
                                         type: string
                                     public_ipv4:
@@ -98,6 +102,9 @@ components:
                 pubkey_id:
                     type: integer
                     format: int64
+                resource_group:
+                    type: string
+                    description: Azure resource group name to deploy the VM resources into. Optional, defaults to 'redhat-deployed'.
                 source_id:
                     type: string
         v1.AzureReservationResponse:
@@ -118,6 +125,10 @@ components:
                             detail:
                                 type: object
                                 properties:
+                                    private_ipv4:
+                                        type: string
+                                    private_ipv6:
+                                        type: string
                                     public_dns:
                                         type: string
                                     public_ipv4:
@@ -179,6 +190,10 @@ components:
                             detail:
                                 type: object
                                 properties:
+                                    private_ipv4:
+                                        type: string
+                                    private_ipv6:
+                                        type: string
                                     public_dns:
                                         type: string
                                     public_ipv4:
@@ -616,8 +631,10 @@ components:
                 instance_type: t3.small
                 instances:
                     - detail:
-                        publicdns: ""
-                        publicipv4: 10.0.0.88
+                        privateipv4: 172.31.36.10
+                        privateipv6: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+                        publicdns: ec2-184-73-141-211.compute-1.amazonaws.com
+                        publicipv4: 184.73.141.211
                       instance_id: i-2324343212
                 launch_template_id: ""
                 name: my-instance
@@ -645,10 +662,11 @@ components:
                 amount: 1
                 image_id: composer-api-081fc867-838f-44a5-af03-8b8def808431
                 instance_size: Basic_A0
-                location: useast
+                location: useast_1
                 name: my-instance
                 poweroff: false
                 pubkey_id: 42
+                resource_group: redhat-hcc
                 source_id: "654321"
         v1.AzureReservationResponsePayloadDoneExample:
             value:
@@ -657,6 +675,8 @@ components:
                 instance_size: Basic_A0
                 instances:
                     - detail:
+                        privateipv4: 172.22.0.1
+                        privateipv6: ""
                         publicdns: ""
                         publicipv4: 10.0.0.88
                       instance_id: /subscriptions/4b9d213f-712f-4d17-a483-8a10bbe9df3a/resourceGroups/redhat-deployed/providers/Microsoft.Compute/images/composer-api-92ea98f8-7697-472e-80b1-7454fa0e7fa7
@@ -696,6 +716,8 @@ components:
                 image_id: 08a48fed-de87-40ab-a571-f64e30bd0aa8
                 instances:
                     - detail:
+                        privateipv4: 10.198.0.2
+                        privateipv6: ""
                         publicdns: ""
                         publicipv4: 10.0.0.88
                       instance_id: "3003942005876582747"
@@ -926,7 +948,7 @@ info:
     description: Provisioning service API
     license:
         name: GPL-3.0
-    version: 1.7.0
+    version: 1.8.0
 paths:
     /availability_status/sources:
         post:
@@ -1262,7 +1284,7 @@ paths:
             tags:
                 - Reservation
             description: |
-                A reservation is a way to activate a job, keeps all data needed for a job to start. A GCP reservation is a reservation created for a GCP job. Image Builder UUID image is required and needs to be shared with the service account. Furthermore, by specifying the name pattern for example as "instance", instances names will be created in the format: "instance-#####". A single account can create maximum of 2 reservations per second.
+                A reservation is a way to activate a job, keeps all data needed for a job to start. A GCP reservation is a reservation created for a GCP job. Image Builder UUID image is required and needs to be shared with the service account. Furthermore, by specifying the RFC-1035 compatible name pattern for example as "instance", instances names will be created in the format: "instance-#####". A single account can create maximum of 2 reservations per second.
             operationId: createGCPReservation
             requestBody:
                 description: gcp request body
