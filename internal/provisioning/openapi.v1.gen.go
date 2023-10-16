@@ -35,8 +35,10 @@ type V1AWSReservationResponse struct {
 	InstanceType     *string `json:"instance_type,omitempty"`
 	Instances        *[]struct {
 		Detail *struct {
-			PublicDns  *string `json:"public_dns,omitempty"`
-			PublicIpv4 *string `json:"public_ipv4,omitempty"`
+			PrivateIpv4 *string `json:"private_ipv4,omitempty"`
+			PrivateIpv6 *string `json:"private_ipv6,omitempty"`
+			PublicDns   *string `json:"public_dns,omitempty"`
+			PublicIpv4  *string `json:"public_ipv4,omitempty"`
 		} `json:"detail,omitempty"`
 		InstanceId *string `json:"instance_id,omitempty"`
 	} `json:"instances,omitempty"`
@@ -63,7 +65,10 @@ type V1AzureReservationRequest struct {
 	Name         *string `json:"name,omitempty"`
 	Poweroff     *bool   `json:"poweroff,omitempty"`
 	PubkeyId     *int64  `json:"pubkey_id,omitempty"`
-	SourceId     *string `json:"source_id,omitempty"`
+
+	// ResourceGroup Azure resource group name to deploy the VM resources into. Optional, defaults to 'redhat-deployed'.
+	ResourceGroup *string `json:"resource_group,omitempty"`
+	SourceId      *string `json:"source_id,omitempty"`
 }
 
 // V1AzureReservationResponse defines model for v1.AzureReservationResponse.
@@ -73,8 +78,10 @@ type V1AzureReservationResponse struct {
 	InstanceSize *string `json:"instance_size,omitempty"`
 	Instances    *[]struct {
 		Detail *struct {
-			PublicDns  *string `json:"public_dns,omitempty"`
-			PublicIpv4 *string `json:"public_ipv4,omitempty"`
+			PrivateIpv4 *string `json:"private_ipv4,omitempty"`
+			PrivateIpv6 *string `json:"private_ipv6,omitempty"`
+			PublicDns   *string `json:"public_dns,omitempty"`
+			PublicIpv4  *string `json:"public_ipv4,omitempty"`
 		} `json:"detail,omitempty"`
 		InstanceId *string `json:"instance_id,omitempty"`
 	} `json:"instances,omitempty"`
@@ -106,8 +113,10 @@ type V1GCPReservationResponse struct {
 	ImageId          *string `json:"image_id,omitempty"`
 	Instances        *[]struct {
 		Detail *struct {
-			PublicDns  *string `json:"public_dns,omitempty"`
-			PublicIpv4 *string `json:"public_ipv4,omitempty"`
+			PrivateIpv4 *string `json:"private_ipv4,omitempty"`
+			PrivateIpv6 *string `json:"private_ipv6,omitempty"`
+			PublicDns   *string `json:"public_dns,omitempty"`
+			PublicIpv4  *string `json:"public_ipv4,omitempty"`
 		} `json:"detail,omitempty"`
 		InstanceId *string `json:"instance_id,omitempty"`
 	} `json:"instances,omitempty"`
