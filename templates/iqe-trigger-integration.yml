@@ -92,6 +92,9 @@ objects:
           terminationMessagePolicy: File
         - name: image-builder-e2e-sel-${TEST_TYPE}-${IMAGE_TAG}-${UID}
           image: ${IQE_SEL_IMAGE}
+          env:
+            - name: JAVA_OPTS
+              value: ${SELENIUM_JAVA_OPTS}
           resources:
             limits:
               cpu: ${SELENIUM_CPU_LIMIT}
@@ -155,3 +158,5 @@ parameters:
   value: 100m
 - name: SELENIUM_MEMORY_REQUEST
   value: 1Gi
+- name: SELENIUM_JAVA_OPTS
+  value: ''
