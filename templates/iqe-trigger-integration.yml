@@ -93,7 +93,7 @@ objects:
         - name: image-builder-e2e-sel-${TEST_TYPE}-${IMAGE_TAG}-${UID}
           image: ${IQE_SEL_IMAGE}
           env:
-            - name: JAVA_OPTS
+            - name: _JAVA_OPTIONS
               value: ${SELENIUM_JAVA_OPTS}
           resources:
             limits:
