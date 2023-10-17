@@ -484,14 +484,15 @@ func TestGetCloneStatus(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, cloneId, cResp.Id)
 
-	var usResp UploadStatus
+	var usResp CloneStatusResponse
 	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/clones/%s", cloneId), &tutils.AuthString0)
 
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &usResp)
 	require.NoError(t, err)
-	require.Equal(t, UploadStatusStatusSuccess, usResp.Status)
+	require.Equal(t, CloneStatusResponseStatusSuccess, usResp.Status)
 	require.Equal(t, UploadTypesAws, usResp.Type)
+	require.Equal(t, id, *usResp.ComposeId)
 
 	var awsUS AWSUploadStatus
 	jsonUO, err := json.Marshal(usResp.Options)

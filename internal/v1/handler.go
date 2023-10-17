@@ -1231,7 +1231,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		return err
 	}
 
-	var options UploadStatus_Options
+	var options CloneStatusResponse_Options
 	uo, err := cloudStat.Options.AsAWSEC2UploadStatus()
 	if err != nil {
 		logrus.Errorf("Unable to decode clone status: %v", err)
@@ -1247,10 +1247,11 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, UploadStatus{
-		Status:  UploadStatusStatus(cloudStat.Status),
-		Type:    UploadTypes(cloudStat.Type),
-		Options: options,
+	return ctx.JSON(http.StatusOK, CloneStatusResponse{
+		ComposeId: &cloneEntry.ComposeId,
+		Status:    CloneStatusResponseStatus(cloudStat.Status),
+		Type:      UploadTypes(cloudStat.Type),
+		Options:   options,
 	})
 }
 
