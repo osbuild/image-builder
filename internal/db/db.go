@@ -30,6 +30,7 @@ type ComposeEntry struct {
 
 type CloneEntry struct {
 	Id        uuid.UUID
+	ComposeId uuid.UUID
 	Request   json.RawMessage
 	CreatedAt time.Time
 }
@@ -106,7 +107,7 @@ const (
 		VALUES($1, $2, $3, CURRENT_TIMESTAMP)`
 
 	sqlGetClonesForCompose = `
-		SELECT clones.id, clones.request, clones.created_at
+		SELECT clones.id, clones.compose_id, clones.request, clones.created_at
 		FROM clones
 		WHERE clones.compose_id=$1 AND $1 in (
 			SELECT composes.job_id
@@ -124,7 +125,7 @@ const (
 			WHERE composes.org_id=$2)`
 
 	sqlGetClone = `
-		SELECT clones.id, clones.request, clones.created_at
+		SELECT clones.id, clones.compose_id, clones.request, clones.created_at
 		FROM clones
 		WHERE clones.id=$1 AND clones.compose_id in (
 			SELECT composes.job_id
@@ -313,14 +314,16 @@ func (db *dB) GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offs
 	var clones []CloneEntry
 	for rows.Next() {
 		var id uuid.UUID
+		var composeID uuid.UUID
 		var request json.RawMessage
 		var createdAt time.Time
-		err = rows.Scan(&id, &request, &createdAt)
+		err = rows.Scan(&id, &composeID, &request, &createdAt)
 		if err != nil {
 			return nil, 0, err
 		}
 		clones = append(clones, CloneEntry{
 			id,
+			composeID,
 			request,
 			createdAt,
 		})
@@ -348,7 +351,7 @@ func (db *dB) GetClone(id uuid.UUID, orgId string) (*CloneEntry, error) {
 	defer conn.Release()
 
 	var clone CloneEntry
-	err = conn.QueryRow(ctx, sqlGetClone, id, orgId).Scan(&clone.Id, &clone.Request, &clone.CreatedAt)
+	err = conn.QueryRow(ctx, sqlGetClone, id, orgId).Scan(&clone.Id, &clone.ComposeId, &clone.Request, &clone.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, CloneNotFoundError

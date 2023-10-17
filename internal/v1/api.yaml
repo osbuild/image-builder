@@ -259,7 +259,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UploadStatus'
+                $ref: '#/components/schemas/CloneStatusResponse'
   /compose:
     post:
       summary: compose image
@@ -520,6 +520,16 @@ components:
         reason:
           type: string
         details: {}
+    CloneStatusResponse:
+      required:
+        - compose_id
+      allOf:
+        - type: object
+          properties:
+            compose_id:
+              type: string
+              format: uuid
+        - $ref: '#/components/schemas/UploadStatus'
     UploadStatus:
       required:
         - status
