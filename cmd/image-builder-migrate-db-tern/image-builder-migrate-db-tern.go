@@ -6,7 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/osbuild/image-builder/internal/config"
-	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/osbuild/image-builder/logger"
 	"github.com/sirupsen/logrus"
 )
 

@@ -12,9 +12,9 @@ import (
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
-	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/provisioning"
 	v1 "github.com/osbuild/image-builder/internal/v1"
+	"github.com/osbuild/image-builder/logger"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"

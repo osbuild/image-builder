@@ -17,9 +17,9 @@ import (
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
-	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/provisioning"
 	"github.com/osbuild/image-builder/internal/tutils"
+	"github.com/osbuild/image-builder/logger"
 )
 
 var dbc *tutils.PSQLContainer
