@@ -1490,6 +1490,60 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		// One partition + partition_mode lvm
+		{
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Filesystem: &[]Filesystem{
+						{
+							MinSize:    10 * 1024 * 1024 * 1024,
+							Mountpoint: "/",
+						},
+					},
+					PartitioningMode: common.ToPtr(Lvm),
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesGuestImage,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-88",
+				Customizations: &composer.Customizations{
+					Filesystem: &[]composer.Filesystem{
+						{
+							MinSize:    10 * 1024 * 1024 * 1024,
+							Mountpoint: "/",
+						},
+					},
+					PartitioningMode: common.ToPtr(composer.Lvm),
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl: common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/baseos/os"),
+							Rhsm:    common.ToPtr(true),
+						},
+						{
+							Baseurl: common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.8/x86_64/appstream/os"),
+							Rhsm:    common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {
