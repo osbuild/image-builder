@@ -1061,6 +1061,17 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		res.Users = &users
 	}
 
+	if cust.PartitioningMode != nil {
+		switch *cust.PartitioningMode {
+		case AutoLvm:
+			res.PartitioningMode = common.ToPtr(composer.AutoLvm)
+		case Lvm:
+			res.PartitioningMode = common.ToPtr(composer.Lvm)
+		case Raw:
+			res.PartitioningMode = common.ToPtr(composer.Raw)
+		}
+	}
+
 	return res
 }
 
