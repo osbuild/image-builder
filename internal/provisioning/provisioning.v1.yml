@@ -95,6 +95,7 @@ components:
                     type: string
                 location:
                     type: string
+                    description: Location (also known as region) to deploy the VM into, be aware it needs to be the same as the image location. Defaults to the Resource Group location, or 'eastus' when also creating the resource group.
                 name:
                     type: string
                 poweroff:
@@ -104,7 +105,7 @@ components:
                     format: int64
                 resource_group:
                     type: string
-                    description: Azure resource group name to deploy the VM resources into. Optional, defaults to 'redhat-deployed'.
+                    description: Azure resource group name to deploy the VM resources into. Optional, defaults to images resource group and when not found to 'redhat-deployed'.
                 source_id:
                     type: string
         v1.AzureReservationResponse:
@@ -147,6 +148,8 @@ components:
                 reservation_id:
                     type: integer
                     format: int64
+                resource_group:
+                    type: string
                 source_id:
                     type: string
         v1.GCPReservationRequest:
@@ -662,7 +665,7 @@ components:
                 amount: 1
                 image_id: composer-api-081fc867-838f-44a5-af03-8b8def808431
                 instance_size: Basic_A0
-                location: useast_1
+                location: useast
                 name: my-instance
                 poweroff: false
                 pubkey_id: 42
@@ -685,6 +688,7 @@ components:
                 poweroff: false
                 pubkey_id: 42
                 reservation_id: 1310
+                resource_group: myCustom Azure RG
                 source_id: "654321"
         v1.AzureReservationResponsePayloadPendingExample:
             value:
@@ -697,6 +701,7 @@ components:
                 poweroff: false
                 pubkey_id: 42
                 reservation_id: 1310
+                resource_group: myCustom Azure RG
                 source_id: "654321"
         v1.GCPReservationRequestPayloadExample:
             value:
@@ -948,7 +953,7 @@ info:
     description: Provisioning service API
     license:
         name: GPL-3.0
-    version: 1.8.0
+    version: 1.9.0
 paths:
     /availability_status/sources:
         post:
