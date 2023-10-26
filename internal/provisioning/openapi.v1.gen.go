@@ -61,12 +61,14 @@ type V1AzureReservationRequest struct {
 	Amount       *int64  `json:"amount,omitempty"`
 	ImageId      *string `json:"image_id,omitempty"`
 	InstanceSize *string `json:"instance_size,omitempty"`
-	Location     *string `json:"location,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	Poweroff     *bool   `json:"poweroff,omitempty"`
-	PubkeyId     *int64  `json:"pubkey_id,omitempty"`
 
-	// ResourceGroup Azure resource group name to deploy the VM resources into. Optional, defaults to 'redhat-deployed'.
+	// Location Location (also known as region) to deploy the VM into, be aware it needs to be the same as the image location. Defaults to the Resource Group location, or 'eastus' when also creating the resource group.
+	Location *string `json:"location,omitempty"`
+	Name     *string `json:"name,omitempty"`
+	Poweroff *bool   `json:"poweroff,omitempty"`
+	PubkeyId *int64  `json:"pubkey_id,omitempty"`
+
+	// ResourceGroup Azure resource group name to deploy the VM resources into. Optional, defaults to images resource group and when not found to 'redhat-deployed'.
 	ResourceGroup *string `json:"resource_group,omitempty"`
 	SourceId      *string `json:"source_id,omitempty"`
 }
@@ -90,6 +92,7 @@ type V1AzureReservationResponse struct {
 	Poweroff      *bool   `json:"poweroff,omitempty"`
 	PubkeyId      *int64  `json:"pubkey_id,omitempty"`
 	ReservationId *int64  `json:"reservation_id,omitempty"`
+	ResourceGroup *string `json:"resource_group,omitempty"`
 	SourceId      *string `json:"source_id,omitempty"`
 }
 

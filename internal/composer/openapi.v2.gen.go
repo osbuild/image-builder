@@ -21,6 +21,13 @@ const (
 	ComposeStatusValueSuccess ComposeStatusValue = "success"
 )
 
+// Defines values for CustomizationsPartitioningMode.
+const (
+	AutoLvm CustomizationsPartitioningMode = "auto-lvm"
+	Lvm     CustomizationsPartitioningMode = "lvm"
+	Raw     CustomizationsPartitioningMode = "raw"
+)
+
 // Defines values for ImageStatusValue.
 const (
 	ImageStatusValueBuilding    ImageStatusValue = "building"
@@ -320,6 +327,12 @@ type Customizations struct {
 	Openscap *OpenSCAP `json:"openscap,omitempty"`
 	Packages *[]string `json:"packages,omitempty"`
 
+	// PartitioningMode Select how the disk image will be partitioned. 'auto-lvm' will use raw unless
+	// there are one or more mountpoints in which case it will use LVM. 'lvm' always
+	// uses LVM, even when there are no extra mountpoints. 'raw' uses raw partitions
+	// even when there are one or more mountpoints.
+	PartitioningMode *CustomizationsPartitioningMode `json:"partitioning_mode,omitempty"`
+
 	// PayloadRepositories Extra repositories for packages specified in customizations. These
 	// repositories will only be used to depsolve and retrieve packages
 	// for the OS itself (they will not be available for the build root or
@@ -336,6 +349,12 @@ type Customizations struct {
 	Timezone *Timezone `json:"timezone,omitempty"`
 	Users    *[]User   `json:"users,omitempty"`
 }
+
+// CustomizationsPartitioningMode Select how the disk image will be partitioned. 'auto-lvm' will use raw unless
+// there are one or more mountpoints in which case it will use LVM. 'lvm' always
+// uses LVM, even when there are no extra mountpoints. 'raw' uses raw partitions
+// even when there are one or more mountpoints.
+type CustomizationsPartitioningMode string
 
 // Directory A custom directory to create in the final artifact.
 type Directory struct {
