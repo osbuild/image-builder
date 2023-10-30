@@ -114,8 +114,11 @@ trap cleanup EXIT
 
 ############### Common functions and variables ################
 
-ACCOUNT0_ORG0="eyJlbnRpdGxlbWVudHMiOnsicmhlbCI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImluc2lnaHRzIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwic21hcnRfbWFuYWdlbWVudCI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sIm9wZW5zaGlmdCI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImh5YnJpZCI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sIm1pZ3JhdGlvbnMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJhbnNpYmxlIjp7ImlzX2VudGl0bGVkIjp0cnVlfX0sImlkZW50aXR5Ijp7ImFjY291bnRfbnVtYmVyIjoiMDAwMDAwIiwidHlwZSI6IlVzZXIiLCJ1c2VyIjp7InVzZXJuYW1lIjoidXNlciIsImVtYWlsIjoidXNlckB1c2VyLnVzZXIiLCJmaXJzdF9uYW1lIjoidXNlciIsImxhc3RfbmFtZSI6InVzZXIiLCJpc19hY3RpdmUiOnRydWUsImlzX29yZ19hZG1pbiI6dHJ1ZSwiaXNfaW50ZXJuYWwiOnRydWUsImxvY2FsZSI6ImVuLVVTIn0sImludGVybmFsIjp7Im9yZ19pZCI6IjAwMDAwMCJ9fX0K"
-ACCOUNT1_ORG1="eyJlbnRpdGxlbWVudHMiOnsicmhlbCI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImluc2lnaHRzIjp7ImlzX2VudGl0bGVkIjp0cnVlfSwic21hcnRfbWFuYWdlbWVudCI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sIm9wZW5zaGlmdCI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sImh5YnJpZCI6eyJpc19lbnRpdGxlZCI6dHJ1ZX0sIm1pZ3JhdGlvbnMiOnsiaXNfZW50aXRsZWQiOnRydWV9LCJhbnNpYmxlIjp7ImlzX2VudGl0bGVkIjp0cnVlfX0sImlkZW50aXR5Ijp7ImFjY291bnRfbnVtYmVyIjoiMDAwMDAxIiwidHlwZSI6IlVzZXIiLCJ1c2VyIjp7InVzZXJuYW1lIjoidXNlciIsImVtYWlsIjoidXNlckB1c2VyLnVzZXIiLCJmaXJzdF9uYW1lIjoidXNlciIsImxhc3RfbmFtZSI6InVzZXIiLCJpc19hY3RpdmUiOnRydWUsImlzX29yZ19hZG1pbiI6dHJ1ZSwiaXNfaW50ZXJuYWwiOnRydWUsImxvY2FsZSI6ImVuLVVTIn0sImludGVybmFsIjp7Im9yZ19pZCI6IjAwMDAwMSJ9fX0="
+ACCOUNT0_ORG0='{"entitlements":{"rhel":{"is_entitled":true},"insights":{"is_entitled":true},"smart_management":{"is_entitled":true},"openshift":{"is_entitled":true},"hybrid":{"is_entitled":true},"migrations":{"is_entitled":true},"ansible":{"is_entitled":true}},"identity":{"account_number":"000000","type":"User","user":{"username":"user","email":"user@user.user","first_name":"user","last_name":"user","is_active":true,"is_org_admin":true,"is_internal":true,"locale":"en-US"},"internal":{"org_id":"000000"}}}'
+ACCOUNT1_ORG1='{"entitlements":{"rhel":{"is_entitled":true},"insights":{"is_entitled":true},"smart_management":{"is_entitled":true},"openshift":{"is_entitled":true},"hybrid":{"is_entitled":true},"migrations":{"is_entitled":true},"ansible":{"is_entitled":true}},"identity":{"account_number":"000001","type":"User","user":{"username":"user","email":"user@user.user","first_name":"user","last_name":"user","is_active":true,"is_org_admin":true,"is_internal":true,"locale":"en-US"},"internal":{"org_id":"000001"}}}'
+
+ACCOUNT0_ORG0=$(echo "$ACCOUNT0_ORG0" | base64 -w 0)
+ACCOUNT1_ORG1=$(echo "$ACCOUNT1_ORG1" | base64 -w 0)
 
 CLOUD_PROVIDER_AWS="aws"
 CLOUD_PROVIDER_GCP="gcp"
