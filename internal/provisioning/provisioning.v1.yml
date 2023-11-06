@@ -98,6 +98,7 @@ components:
                     description: Location (also known as region) to deploy the VM into, be aware it needs to be the same as the image location. Defaults to the Resource Group location, or 'eastus' when also creating the resource group.
                 name:
                     type: string
+                    description: Name of the instance, to keep names unique, it will be suffixed with UUID. Optional, defaults to 'redhat-vm''
                 poweroff:
                     type: boolean
                 pubkey_id:
@@ -958,7 +959,7 @@ paths:
     /availability_status/sources:
         post:
             tags:
-                - AvailabilityStatus
+                - Source
             description: |
                 Schedules a background operation of Sources availability check. These checks are are performed in separate process at it's own pace. Results are sent via Kafka to Sources. There is no output from this REST operation available, no tracking of jobs is possible.
             operationId: availabilityStatus
@@ -1465,3 +1466,9 @@ tags:
     - name: Pubkey
       description: |
         A pubkey represents the SSH public portion of a key pair with a name and body. Public key types and fingerprints are detected during their creation process. Two types are supported: RSA and ssh-ed25519. Fingerprints are calculated in two ways: using the standard SHA method and the legacy MD5 method, which is available under the fingerprint_legacy field. Each public key has a unique name and body and helps in verifying the uniqueness of the keys. Using this API, you can perform the following operations.
+    - name: Reservation
+      description: |
+        A reservation represents a request for launching one or more instances from a single image. This reservation triggers a background job, that will Launch set amount of instances with the same configuration. The configuration decides target provider, instance size and ssh pubkey to use for the default user.
+    - name: Source
+      description: |
+        A Source represents a connection with public cloud account. These endpoints serve as convenient way to read information about available Sources to deploy instances into. The source of through is different application called Sources.

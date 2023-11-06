@@ -64,6 +64,8 @@ type V1AzureReservationRequest struct {
 
 	// Location Location (also known as region) to deploy the VM into, be aware it needs to be the same as the image location. Defaults to the Resource Group location, or 'eastus' when also creating the resource group.
 	Location *string `json:"location,omitempty"`
+
+	// Name Name of the instance, to keep names unique, it will be suffixed with UUID. Optional, defaults to 'redhat-vm''
 	Name     *string `json:"name,omitempty"`
 	Poweroff *bool   `json:"poweroff,omitempty"`
 	PubkeyId *int64  `json:"pubkey_id,omitempty"`
