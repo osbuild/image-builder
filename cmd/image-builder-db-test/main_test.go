@@ -6,10 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/osbuild/image-builder/internal/v1"
 	"os/exec"
 	"testing"
 	"time"
+
+	v1 "github.com/osbuild/image-builder/internal/v1"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"

@@ -2,8 +2,9 @@ package v1
 
 import (
 	"encoding/json"
-	"github.com/osbuild/image-builder/internal/db"
 	"net/http"
+
+	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
