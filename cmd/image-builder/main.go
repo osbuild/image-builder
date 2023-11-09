@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/labstack/gommon/random"
-	"github.com/sirupsen/logrus"
-
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/config"
@@ -16,11 +13,13 @@ import (
 	"github.com/osbuild/image-builder/internal/provisioning"
 	v1 "github.com/osbuild/image-builder/internal/v1"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
+	"github.com/labstack/gommon/random"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -134,6 +133,10 @@ func main() {
 	if conf.GlitchTipDSN != "" {
 		echoServer.Use(sentryecho.New(sentryecho.Options{}))
 	}
+	// log stack traces into standard logger as error (instead of stdout)
+	echoServer.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
+		LogLevel: log.ERROR,
+	}))
 	if conf.IsDebug() {
 		echoServer.Debug = true
 	}
