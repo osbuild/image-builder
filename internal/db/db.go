@@ -25,6 +25,7 @@ type ComposeEntry struct {
 	Request   json.RawMessage
 	CreatedAt time.Time
 	ImageName *string
+	ClientId  *string
 }
 
 type CloneEntry struct {
@@ -42,7 +43,7 @@ type BlueprintEntry struct {
 }
 
 type DB interface {
-	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage) error
+	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string) error
 	GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
 	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
 	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
@@ -60,11 +61,11 @@ type DB interface {
 
 const (
 	sqlInsertCompose = `
-		INSERT INTO composes(job_id, request, created_at, account_number, email, org_id, image_name)
-		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6)`
+		INSERT INTO composes(job_id, request, created_at, account_number, email, org_id, image_name, client_id)
+		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6, $7)`
 
 	sqlGetComposes = `
-	        SELECT job_id, request, created_at, image_name
+	        SELECT job_id, request, created_at, image_name, client_id
 	        FROM composes
 		WHERE org_id = $1
 		AND CURRENT_TIMESTAMP - created_at <= $2
@@ -74,7 +75,7 @@ const (
 		LIMIT $4 OFFSET $5`
 
 	sqlGetCompose = `
-		SELECT job_id, request, created_at, image_name
+		SELECT job_id, request, created_at, image_name, client_id
 		FROM composes
 		WHERE org_id=$1 AND job_id=$2 AND deleted=FALSE`
 
@@ -145,7 +146,7 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 	return &dB{pool}, nil
 }
 
-func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage) error {
+func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string) error {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -153,7 +154,7 @@ func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string,
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, sqlInsertCompose, jobId, request, accountNumber, email, orgId, imageName)
+	_, err = conn.Exec(ctx, sqlInsertCompose, jobId, request, accountNumber, email, orgId, imageName, clientId)
 	return err
 }
 
@@ -168,7 +169,7 @@ func (db *dB) GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error) {
 	result := conn.QueryRow(ctx, sqlGetCompose, orgId, jobId)
 
 	var compose ComposeEntry
-	err = result.Scan(&compose.Id, &compose.Request, &compose.CreatedAt, &compose.ImageName)
+	err = result.Scan(&compose.Id, &compose.Request, &compose.CreatedAt, &compose.ImageName, &compose.ClientId)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ComposeNotFoundError
@@ -222,7 +223,8 @@ func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int, 
 		var request json.RawMessage
 		var createdAt time.Time
 		var imageName *string
-		err = result.Scan(&jobId, &request, &createdAt, &imageName)
+		var clientId *string
+		err = result.Scan(&jobId, &request, &createdAt, &imageName, &clientId)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -231,6 +233,7 @@ func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int, 
 			request,
 			createdAt,
 			imageName,
+			clientId,
 		})
 	}
 	if err = result.Err(); err != nil {
