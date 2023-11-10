@@ -540,6 +540,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 			Id:        c.Id,
 			ImageName: c.ImageName,
 			Request:   cmpr,
+			ClientId:  (*ClientId)(c.ClientId),
 		})
 	}
 
@@ -692,7 +693,9 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 		return err
 	}
 
-	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.User.Email, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR)
+	clientIdString := string(*composeRequest.ClientId)
+
+	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.User.Email, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR, &clientIdString)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return err
