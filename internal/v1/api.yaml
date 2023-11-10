@@ -601,6 +601,8 @@ components:
           type: string
           example: "MyImageDescription"
           maxLength: 250
+        client_id:
+          $ref: '#/components/schemas/ClientId'
         image_requests:
           type: array
           minItems: 1
@@ -767,6 +769,12 @@ components:
           type: string
         image_name:
           type: string
+        client_id:
+          $ref: '#/components/schemas/ClientId'
+    ClientId:
+      type: string
+      enum: ["api", "ui"]
+      default: "api"
     ComposeResponse:
       required:
         - id
