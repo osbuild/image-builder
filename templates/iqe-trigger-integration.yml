@@ -2,12 +2,12 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: image-builder-e2e
+  name: image-builder-tests
 objects:
 - apiVersion: batch/v1
   kind: Job
   metadata:
-    name: image-builder-e2e-${TEST_TYPE}-${IMAGE_TAG}-${UID}
+    name: image-builder-${TEST_TYPE}-tests-${IMAGE_TAG}-${UID}
     annotations:
       "ignore-check.kube-linter.io/no-liveness-probe": "probes not required on Job pods"
       "ignore-check.kube-linter.io/no-readiness-probe": "probes not required on Job pods"
@@ -23,7 +23,7 @@ objects:
           emptyDir:
             medium: Memory
         containers:
-        - name: image-builder-e2e-iqe-${TEST_TYPE}-${IMAGE_TAG}-${UID}
+        - name: image-builder-iqe-${TEST_TYPE}-tests-${IMAGE_TAG}-${UID}
           image: ${IQE_IMAGE}
           imagePullPolicy: Always
           args:
@@ -34,7 +34,7 @@ objects:
           - name: DYNACONF_MAIN__use_beta
             value: ${USE_BETA}
           - name: IQE_IBUTSU_SOURCE
-            value: image-builder-e2e-${IMAGE_TAG}-${UID}-${ENV_FOR_DYNACONF}
+            value: image-builder-${IMAGE_TAG}-tests-${UID}-${ENV_FOR_DYNACONF}
           - name: IQE_BROWSERLOG
             value: ${IQE_BROWSERLOG}
           - name: IQE_NETLOG
@@ -90,11 +90,13 @@ objects:
               memory: ${IQE_MEMORY_REQUEST}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
-        - name: image-builder-e2e-sel-${TEST_TYPE}-${IMAGE_TAG}-${UID}
+        - name: image-builder-sel-${TEST_TYPE}-tests-${IMAGE_TAG}-${UID}
           image: ${IQE_SEL_IMAGE}
           env:
             - name: _JAVA_OPTIONS
               value: ${SELENIUM_JAVA_OPTS}
+            - name: VNC_GEOMETRY
+              value: ${VNC_GEOMETRY}
           resources:
             limits:
               cpu: ${SELENIUM_CPU_LIMIT}
@@ -160,3 +162,5 @@ parameters:
   value: 1Gi
 - name: SELENIUM_JAVA_OPTS
   value: ''
+- name: VNC_GEOMETRY
+  value: '1920x1080'
