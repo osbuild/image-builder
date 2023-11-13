@@ -954,7 +954,7 @@ info:
     description: Provisioning service API
     license:
         name: GPL-3.0
-    version: 1.9.0
+    version: 1.10.0
 paths:
     /availability_status/sources:
         post:
