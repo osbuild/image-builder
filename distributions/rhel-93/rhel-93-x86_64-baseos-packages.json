@@ -1,0 +1,3722 @@
+[
+  {
+    "name": "accel-config",
+    "summary": "Configure accelerator subsystem devices"
+  },
+  {
+    "name": "accel-config-libs",
+    "summary": "Configuration library for accelerator subsystem devices"
+  },
+  {
+    "name": "acl",
+    "summary": "Access control list utilities"
+  },
+  {
+    "name": "acpica-tools",
+    "summary": "ACPICA tools for the development and debug of ACPI tables"
+  },
+  {
+    "name": "adcli",
+    "summary": "Active Directory enrollment"
+  },
+  {
+    "name": "adobe-source-code-pro-fonts",
+    "summary": "A set of mono-spaced OpenType fonts designed for coding environments"
+  },
+  {
+    "name": "alternatives",
+    "summary": "A tool to maintain symbolic links determining default commands"
+  },
+  {
+    "name": "at",
+    "summary": "Job spooling tools"
+  },
+  {
+    "name": "atlas",
+    "summary": "Automatically Tuned Linear Algebra Software"
+  },
+  {
+    "name": "attr",
+    "summary": "Utilities for managing filesystem extended attributes"
+  },
+  {
+    "name": "audispd-plugins",
+    "summary": "Plugins for the audit event dispatcher"
+  },
+  {
+    "name": "audispd-plugins-zos",
+    "summary": "z/OS plugin for the audit event dispatcher"
+  },
+  {
+    "name": "audit",
+    "summary": "User space tools for kernel auditing"
+  },
+  {
+    "name": "audit-libs",
+    "summary": "Dynamic library for libaudit"
+  },
+  {
+    "name": "authselect",
+    "summary": "Configures authentication and identity sources from supported profiles"
+  },
+  {
+    "name": "authselect-libs",
+    "summary": "Utility library used by the authselect tool"
+  },
+  {
+    "name": "autofs",
+    "summary": "A tool for automatically mounting and unmounting filesystems"
+  },
+  {
+    "name": "avahi",
+    "summary": "Local network service discovery"
+  },
+  {
+    "name": "avahi-libs",
+    "summary": "Libraries for avahi run-time use"
+  },
+  {
+    "name": "basesystem",
+    "summary": "The skeleton package which defines a simple Red Hat Enterprise Linux system"
+  },
+  {
+    "name": "bash",
+    "summary": "The GNU Bourne Again shell"
+  },
+  {
+    "name": "bash-completion",
+    "summary": "Programmable completion for Bash"
+  },
+  {
+    "name": "bc",
+    "summary": "GNU's bc (a numeric processing language) and dc (a calculator)"
+  },
+  {
+    "name": "binutils",
+    "summary": "A GNU collection of binary utilities"
+  },
+  {
+    "name": "binutils-gold",
+    "summary": "The GOLD linker, a faster alternative to the BFD linker"
+  },
+  {
+    "name": "biosdevname",
+    "summary": "Udev helper for naming devices per BIOS names"
+  },
+  {
+    "name": "bluez",
+    "summary": "Bluetooth utilities"
+  },
+  {
+    "name": "bluez-libs",
+    "summary": "Libraries for use in Bluetooth applications"
+  },
+  {
+    "name": "bolt",
+    "summary": "Thunderbolt device manager"
+  },
+  {
+    "name": "bpftool",
+    "summary": "Inspection and simple manipulation of eBPF programs and maps"
+  },
+  {
+    "name": "bubblewrap",
+    "summary": "Core execution tool for unprivileged containers"
+  },
+  {
+    "name": "bzip2",
+    "summary": "A file compression utility"
+  },
+  {
+    "name": "bzip2-libs",
+    "summary": "Libraries for applications using bzip2"
+  },
+  {
+    "name": "c-ares",
+    "summary": "A library that performs asynchronous DNS operations"
+  },
+  {
+    "name": "ca-certificates",
+    "summary": "The Mozilla CA root certificate bundle"
+  },
+  {
+    "name": "cachefilesd",
+    "summary": "CacheFiles user-space management daemon"
+  },
+  {
+    "name": "chkconfig",
+    "summary": "A system tool for maintaining the /etc/rc*.d hierarchy"
+  },
+  {
+    "name": "chrony",
+    "summary": "An NTP client/server"
+  },
+  {
+    "name": "chrpath",
+    "summary": "Modify rpath of compiled programs"
+  },
+  {
+    "name": "cifs-utils",
+    "summary": "Utilities for mounting and managing CIFS mounts"
+  },
+  {
+    "name": "cockpit",
+    "summary": "Web Console for Linux servers"
+  },
+  {
+    "name": "cockpit-bridge",
+    "summary": "Cockpit bridge server-side component"
+  },
+  {
+    "name": "cockpit-doc",
+    "summary": "Cockpit deployment and developer guide"
+  },
+  {
+    "name": "cockpit-system",
+    "summary": "Cockpit admin interface package for configuring and troubleshooting a system"
+  },
+  {
+    "name": "cockpit-ws",
+    "summary": "Cockpit Web Service"
+  },
+  {
+    "name": "coreutils",
+    "summary": "A set of basic GNU tools commonly used in shell scripts"
+  },
+  {
+    "name": "coreutils-common",
+    "summary": "coreutils common optional components"
+  },
+  {
+    "name": "coreutils-single",
+    "summary": "coreutils multicall binary"
+  },
+  {
+    "name": "cpio",
+    "summary": "A GNU archiving program"
+  },
+  {
+    "name": "cracklib",
+    "summary": "A password-checking library"
+  },
+  {
+    "name": "cracklib-dicts",
+    "summary": "The standard CrackLib dictionaries"
+  },
+  {
+    "name": "cronie",
+    "summary": "Cron daemon for executing programs at set times"
+  },
+  {
+    "name": "cronie-anacron",
+    "summary": "Utility for running regular jobs"
+  },
+  {
+    "name": "cronie-noanacron",
+    "summary": "Utility for running simple regular jobs in old cron style"
+  },
+  {
+    "name": "crontabs",
+    "summary": "Root crontab files used to schedule the execution of programs"
+  },
+  {
+    "name": "crypto-policies",
+    "summary": "System-wide crypto policies"
+  },
+  {
+    "name": "crypto-policies-scripts",
+    "summary": "Tool to switch between crypto policies"
+  },
+  {
+    "name": "cryptsetup",
+    "summary": "Utility for setting up encrypted disks"
+  },
+  {
+    "name": "cryptsetup-libs",
+    "summary": "Cryptsetup shared library"
+  },
+  {
+    "name": "cups-libs",
+    "summary": "CUPS printing system - libraries"
+  },
+  {
+    "name": "curl",
+    "summary": "A utility for getting files from remote servers (FTP, HTTP, and others)"
+  },
+  {
+    "name": "curl-minimal",
+    "summary": "Conservatively configured build of curl for minimal installations"
+  },
+  {
+    "name": "cyrus-sasl",
+    "summary": "The Cyrus SASL library"
+  },
+  {
+    "name": "cyrus-sasl-gssapi",
+    "summary": "GSSAPI authentication support for Cyrus SASL"
+  },
+  {
+    "name": "cyrus-sasl-lib",
+    "summary": "Shared libraries needed by applications which use Cyrus SASL"
+  },
+  {
+    "name": "cyrus-sasl-plain",
+    "summary": "PLAIN and LOGIN authentication support for Cyrus SASL"
+  },
+  {
+    "name": "cyrus-sasl-scram",
+    "summary": "SCRAM auxprop support for Cyrus SASL"
+  },
+  {
+    "name": "daxctl-libs",
+    "summary": "Management library for \"Device DAX\" devices"
+  },
+  {
+    "name": "dbus",
+    "summary": "D-BUS message bus"
+  },
+  {
+    "name": "dbus-broker",
+    "summary": "Linux D-Bus Message Broker"
+  },
+  {
+    "name": "dbus-common",
+    "summary": "D-BUS message bus configuration"
+  },
+  {
+    "name": "dbus-libs",
+    "summary": "Libraries for accessing D-BUS"
+  },
+  {
+    "name": "dbus-tools",
+    "summary": "D-BUS Tools and Utilities"
+  },
+  {
+    "name": "dejavu-sans-fonts",
+    "summary": "DejaVu Sans, a variable-width sans-serif font family"
+  },
+  {
+    "name": "dejavu-sans-mono-fonts",
+    "summary": "DejaVu Sans Mono, a mono-space sans-serif font family"
+  },
+  {
+    "name": "dejavu-serif-fonts",
+    "summary": "DejaVu Serif, a variable-width serif font family"
+  },
+  {
+    "name": "device-mapper",
+    "summary": "Device mapper utility"
+  },
+  {
+    "name": "device-mapper-event",
+    "summary": "Device-mapper event daemon"
+  },
+  {
+    "name": "device-mapper-event-libs",
+    "summary": "Device-mapper event daemon shared library"
+  },
+  {
+    "name": "device-mapper-libs",
+    "summary": "Device-mapper shared library"
+  },
+  {
+    "name": "device-mapper-multipath",
+    "summary": "Tools to manage multipath devices using device-mapper"
+  },
+  {
+    "name": "device-mapper-multipath-libs",
+    "summary": "The device-mapper-multipath modules and shared library"
+  },
+  {
+    "name": "device-mapper-persistent-data",
+    "summary": "Device-mapper Persistent Data Tools"
+  },
+  {
+    "name": "dhcp-client",
+    "summary": "Provides the ISC DHCP client daemon and dhclient-script"
+  },
+  {
+    "name": "dhcp-common",
+    "summary": "Common files used by ISC dhcp client, server and relay agent"
+  },
+  {
+    "name": "dhcp-relay",
+    "summary": "Provides the ISC DHCP relay agent"
+  },
+  {
+    "name": "dhcp-server",
+    "summary": "Provides the ISC DHCP server"
+  },
+  {
+    "name": "diffutils",
+    "summary": "GNU collection of diff utilities"
+  },
+  {
+    "name": "dmidecode",
+    "summary": "Tool to analyse BIOS DMI data"
+  },
+  {
+    "name": "dnf",
+    "summary": "Package manager"
+  },
+  {
+    "name": "dnf-automatic",
+    "summary": "Package manager - automated upgrades"
+  },
+  {
+    "name": "dnf-data",
+    "summary": "Common data and configuration files for DNF"
+  },
+  {
+    "name": "dnf-plugins-core",
+    "summary": "Core Plugins for DNF"
+  },
+  {
+    "name": "dos2unix",
+    "summary": "Text file format converters"
+  },
+  {
+    "name": "dosfstools",
+    "summary": "Utilities for making and checking MS-DOS FAT filesystems on Linux"
+  },
+  {
+    "name": "dracut",
+    "summary": "Initramfs generator using udev"
+  },
+  {
+    "name": "dracut-config-generic",
+    "summary": "dracut configuration to turn off hostonly image generation"
+  },
+  {
+    "name": "dracut-config-rescue",
+    "summary": "dracut configuration to turn on rescue image generation"
+  },
+  {
+    "name": "dracut-network",
+    "summary": "dracut modules to build a dracut initramfs with network support"
+  },
+  {
+    "name": "dracut-squash",
+    "summary": "dracut module to build an initramfs with most files in a squashfs image"
+  },
+  {
+    "name": "dracut-tools",
+    "summary": "dracut tools to build the local initramfs"
+  },
+  {
+    "name": "e2fsprogs",
+    "summary": "Utilities for managing ext2, ext3, and ext4 file systems"
+  },
+  {
+    "name": "e2fsprogs-libs",
+    "summary": "Ext2/3/4 file system specific shared libraries"
+  },
+  {
+    "name": "ed",
+    "summary": "The GNU line editor"
+  },
+  {
+    "name": "efi-filesystem",
+    "summary": "The basic directory layout for EFI machines"
+  },
+  {
+    "name": "efibootmgr",
+    "summary": "EFI Boot Manager"
+  },
+  {
+    "name": "efivar-libs",
+    "summary": "Library to manage UEFI variables"
+  },
+  {
+    "name": "elfutils",
+    "summary": "A collection of utilities and DSOs to handle ELF files and DWARF data"
+  },
+  {
+    "name": "elfutils-debuginfod-client",
+    "summary": "Library and command line client for build-id HTTP ELF/DWARF server"
+  },
+  {
+    "name": "elfutils-default-yama-scope",
+    "summary": "Default yama attach scope sysctl setting"
+  },
+  {
+    "name": "elfutils-libelf",
+    "summary": "Library to read and write ELF files"
+  },
+  {
+    "name": "elfutils-libs",
+    "summary": "Libraries to handle compiled objects"
+  },
+  {
+    "name": "environment-modules",
+    "summary": "Provides dynamic modification of a user's environment"
+  },
+  {
+    "name": "ethtool",
+    "summary": "Settings tool for Ethernet NICs"
+  },
+  {
+    "name": "exfatprogs",
+    "summary": "Userspace utilities for exFAT filesystems"
+  },
+  {
+    "name": "expat",
+    "summary": "An XML parser library"
+  },
+  {
+    "name": "fcoe-utils",
+    "summary": "Fibre Channel over Ethernet utilities"
+  },
+  {
+    "name": "file",
+    "summary": "Utility for determining file types"
+  },
+  {
+    "name": "file-libs",
+    "summary": "Libraries for applications using libmagic"
+  },
+  {
+    "name": "filesystem",
+    "summary": "The basic directory layout for a Linux system"
+  },
+  {
+    "name": "findutils",
+    "summary": "The GNU versions of find utilities (find and xargs)"
+  },
+  {
+    "name": "firewalld",
+    "summary": "A firewall daemon with D-Bus interface providing a dynamic firewall"
+  },
+  {
+    "name": "firewalld-filesystem",
+    "summary": "Firewalld directory layout and rpm macros"
+  },
+  {
+    "name": "fonts-filesystem",
+    "summary": "Directories used by font packages"
+  },
+  {
+    "name": "freetype",
+    "summary": "A free and portable font rendering engine"
+  },
+  {
+    "name": "fuse",
+    "summary": "File System in Userspace (FUSE) v2 utilities"
+  },
+  {
+    "name": "fuse-common",
+    "summary": "Common files for File System in Userspace (FUSE) v2 and v3"
+  },
+  {
+    "name": "fuse-libs",
+    "summary": "File System in Userspace (FUSE) v2 libraries"
+  },
+  {
+    "name": "fwupd",
+    "summary": "Firmware update daemon"
+  },
+  {
+    "name": "gawk",
+    "summary": "The GNU version of the AWK text processing utility"
+  },
+  {
+    "name": "gdbm-libs",
+    "summary": "Libraries files for gdbm"
+  },
+  {
+    "name": "gettext",
+    "summary": "GNU libraries and utilities for producing multi-lingual messages"
+  },
+  {
+    "name": "gettext-libs",
+    "summary": "Libraries for gettext"
+  },
+  {
+    "name": "glib-networking",
+    "summary": "Networking support for GLib"
+  },
+  {
+    "name": "glib2",
+    "summary": "A library of handy utility functions"
+  },
+  {
+    "name": "glibc",
+    "summary": "The GNU libc libraries"
+  },
+  {
+    "name": "glibc-all-langpacks",
+    "summary": "All language packs for glibc."
+  },
+  {
+    "name": "glibc-common",
+    "summary": "Common binaries and locale data for glibc"
+  },
+  {
+    "name": "glibc-gconv-extra",
+    "summary": "All iconv converter modules for glibc."
+  },
+  {
+    "name": "glibc-langpack-aa",
+    "summary": "Locale data for Afar"
+  },
+  {
+    "name": "glibc-langpack-af",
+    "summary": "Locale data for Afrikaans"
+  },
+  {
+    "name": "glibc-langpack-agr",
+    "summary": "Locale data for Aguaruna"
+  },
+  {
+    "name": "glibc-langpack-ak",
+    "summary": "Locale data for Akan"
+  },
+  {
+    "name": "glibc-langpack-am",
+    "summary": "Locale data for Amharic"
+  },
+  {
+    "name": "glibc-langpack-an",
+    "summary": "Locale data for Aragonese"
+  },
+  {
+    "name": "glibc-langpack-anp",
+    "summary": "Locale data for Angika"
+  },
+  {
+    "name": "glibc-langpack-ar",
+    "summary": "Locale data for Arabic"
+  },
+  {
+    "name": "glibc-langpack-as",
+    "summary": "Locale data for Assamese"
+  },
+  {
+    "name": "glibc-langpack-ast",
+    "summary": "Locale data for Asturian"
+  },
+  {
+    "name": "glibc-langpack-ayc",
+    "summary": "Locale data for Southern Aymara"
+  },
+  {
+    "name": "glibc-langpack-az",
+    "summary": "Locale data for Azerbaijani"
+  },
+  {
+    "name": "glibc-langpack-be",
+    "summary": "Locale data for Belarusian"
+  },
+  {
+    "name": "glibc-langpack-bem",
+    "summary": "Locale data for Bemba"
+  },
+  {
+    "name": "glibc-langpack-ber",
+    "summary": "Locale data for Berber"
+  },
+  {
+    "name": "glibc-langpack-bg",
+    "summary": "Locale data for Bulgarian"
+  },
+  {
+    "name": "glibc-langpack-bhb",
+    "summary": "Locale data for Bhili"
+  },
+  {
+    "name": "glibc-langpack-bho",
+    "summary": "Locale data for Bhojpuri"
+  },
+  {
+    "name": "glibc-langpack-bi",
+    "summary": "Locale data for Bislama"
+  },
+  {
+    "name": "glibc-langpack-bn",
+    "summary": "Locale data for Bangla"
+  },
+  {
+    "name": "glibc-langpack-bo",
+    "summary": "Locale data for Tibetan"
+  },
+  {
+    "name": "glibc-langpack-br",
+    "summary": "Locale data for Breton"
+  },
+  {
+    "name": "glibc-langpack-brx",
+    "summary": "Locale data for Bodo"
+  },
+  {
+    "name": "glibc-langpack-bs",
+    "summary": "Locale data for Bosnian"
+  },
+  {
+    "name": "glibc-langpack-byn",
+    "summary": "Locale data for Blin"
+  },
+  {
+    "name": "glibc-langpack-ca",
+    "summary": "Locale data for Catalan"
+  },
+  {
+    "name": "glibc-langpack-ce",
+    "summary": "Locale data for Chechen"
+  },
+  {
+    "name": "glibc-langpack-chr",
+    "summary": "Locale data for Cherokee"
+  },
+  {
+    "name": "glibc-langpack-ckb",
+    "summary": "Locale data for Central Kurdish"
+  },
+  {
+    "name": "glibc-langpack-cmn",
+    "summary": "Locale data for Mandarin Chinese"
+  },
+  {
+    "name": "glibc-langpack-crh",
+    "summary": "Locale data for Crimean Turkish"
+  },
+  {
+    "name": "glibc-langpack-cs",
+    "summary": "Locale data for Czech"
+  },
+  {
+    "name": "glibc-langpack-csb",
+    "summary": "Locale data for Kashubian"
+  },
+  {
+    "name": "glibc-langpack-cv",
+    "summary": "Locale data for Chuvash"
+  },
+  {
+    "name": "glibc-langpack-cy",
+    "summary": "Locale data for Welsh"
+  },
+  {
+    "name": "glibc-langpack-da",
+    "summary": "Locale data for Danish"
+  },
+  {
+    "name": "glibc-langpack-de",
+    "summary": "Locale data for German"
+  },
+  {
+    "name": "glibc-langpack-doi",
+    "summary": "Locale data for Dogri"
+  },
+  {
+    "name": "glibc-langpack-dsb",
+    "summary": "Locale data for Lower Sorbian"
+  },
+  {
+    "name": "glibc-langpack-dv",
+    "summary": "Locale data for Divehi"
+  },
+  {
+    "name": "glibc-langpack-dz",
+    "summary": "Locale data for Dzongkha"
+  },
+  {
+    "name": "glibc-langpack-el",
+    "summary": "Locale data for Greek"
+  },
+  {
+    "name": "glibc-langpack-en",
+    "summary": "Locale data for English"
+  },
+  {
+    "name": "glibc-langpack-eo",
+    "summary": "Locale data for Esperanto"
+  },
+  {
+    "name": "glibc-langpack-es",
+    "summary": "Locale data for Spanish"
+  },
+  {
+    "name": "glibc-langpack-et",
+    "summary": "Locale data for Estonian"
+  },
+  {
+    "name": "glibc-langpack-eu",
+    "summary": "Locale data for Basque"
+  },
+  {
+    "name": "glibc-langpack-fa",
+    "summary": "Locale data for Persian"
+  },
+  {
+    "name": "glibc-langpack-ff",
+    "summary": "Locale data for Fulah"
+  },
+  {
+    "name": "glibc-langpack-fi",
+    "summary": "Locale data for Finnish"
+  },
+  {
+    "name": "glibc-langpack-fil",
+    "summary": "Locale data for Filipino"
+  },
+  {
+    "name": "glibc-langpack-fo",
+    "summary": "Locale data for Faroese"
+  },
+  {
+    "name": "glibc-langpack-fr",
+    "summary": "Locale data for French"
+  },
+  {
+    "name": "glibc-langpack-fur",
+    "summary": "Locale data for Friulian"
+  },
+  {
+    "name": "glibc-langpack-fy",
+    "summary": "Locale data for Western Frisian"
+  },
+  {
+    "name": "glibc-langpack-ga",
+    "summary": "Locale data for Irish"
+  },
+  {
+    "name": "glibc-langpack-gd",
+    "summary": "Locale data for Scottish Gaelic"
+  },
+  {
+    "name": "glibc-langpack-gez",
+    "summary": "Locale data for Geez"
+  },
+  {
+    "name": "glibc-langpack-gl",
+    "summary": "Locale data for Galician"
+  },
+  {
+    "name": "glibc-langpack-gu",
+    "summary": "Locale data for Gujarati"
+  },
+  {
+    "name": "glibc-langpack-gv",
+    "summary": "Locale data for Manx"
+  },
+  {
+    "name": "glibc-langpack-ha",
+    "summary": "Locale data for Hausa"
+  },
+  {
+    "name": "glibc-langpack-hak",
+    "summary": "Locale data for Hakka Chinese"
+  },
+  {
+    "name": "glibc-langpack-he",
+    "summary": "Locale data for Hebrew"
+  },
+  {
+    "name": "glibc-langpack-hi",
+    "summary": "Locale data for Hindi"
+  },
+  {
+    "name": "glibc-langpack-hif",
+    "summary": "Locale data for Fiji Hindi"
+  },
+  {
+    "name": "glibc-langpack-hne",
+    "summary": "Locale data for Chhattisgarhi"
+  },
+  {
+    "name": "glibc-langpack-hr",
+    "summary": "Locale data for Croatian"
+  },
+  {
+    "name": "glibc-langpack-hsb",
+    "summary": "Locale data for Upper Sorbian"
+  },
+  {
+    "name": "glibc-langpack-ht",
+    "summary": "Locale data for Haitian Creole"
+  },
+  {
+    "name": "glibc-langpack-hu",
+    "summary": "Locale data for Hungarian"
+  },
+  {
+    "name": "glibc-langpack-hy",
+    "summary": "Locale data for Armenian"
+  },
+  {
+    "name": "glibc-langpack-ia",
+    "summary": "Locale data for Interlingua"
+  },
+  {
+    "name": "glibc-langpack-id",
+    "summary": "Locale data for Indonesian"
+  },
+  {
+    "name": "glibc-langpack-ig",
+    "summary": "Locale data for Igbo"
+  },
+  {
+    "name": "glibc-langpack-ik",
+    "summary": "Locale data for Inupiaq"
+  },
+  {
+    "name": "glibc-langpack-is",
+    "summary": "Locale data for Icelandic"
+  },
+  {
+    "name": "glibc-langpack-it",
+    "summary": "Locale data for Italian"
+  },
+  {
+    "name": "glibc-langpack-iu",
+    "summary": "Locale data for Inuktitut"
+  },
+  {
+    "name": "glibc-langpack-ja",
+    "summary": "Locale data for Japanese"
+  },
+  {
+    "name": "glibc-langpack-ka",
+    "summary": "Locale data for Georgian"
+  },
+  {
+    "name": "glibc-langpack-kab",
+    "summary": "Locale data for Kabyle"
+  },
+  {
+    "name": "glibc-langpack-kk",
+    "summary": "Locale data for Kazakh"
+  },
+  {
+    "name": "glibc-langpack-kl",
+    "summary": "Locale data for Kalaallisut"
+  },
+  {
+    "name": "glibc-langpack-km",
+    "summary": "Locale data for Khmer"
+  },
+  {
+    "name": "glibc-langpack-kn",
+    "summary": "Locale data for Kannada"
+  },
+  {
+    "name": "glibc-langpack-ko",
+    "summary": "Locale data for Korean"
+  },
+  {
+    "name": "glibc-langpack-kok",
+    "summary": "Locale data for Konkani"
+  },
+  {
+    "name": "glibc-langpack-ks",
+    "summary": "Locale data for Kashmiri"
+  },
+  {
+    "name": "glibc-langpack-ku",
+    "summary": "Locale data for Kurdish"
+  },
+  {
+    "name": "glibc-langpack-kw",
+    "summary": "Locale data for Cornish"
+  },
+  {
+    "name": "glibc-langpack-ky",
+    "summary": "Locale data for Kyrgyz"
+  },
+  {
+    "name": "glibc-langpack-lb",
+    "summary": "Locale data for Luxembourgish"
+  },
+  {
+    "name": "glibc-langpack-lg",
+    "summary": "Locale data for Ganda"
+  },
+  {
+    "name": "glibc-langpack-li",
+    "summary": "Locale data for Limburgish"
+  },
+  {
+    "name": "glibc-langpack-lij",
+    "summary": "Locale data for Ligurian"
+  },
+  {
+    "name": "glibc-langpack-ln",
+    "summary": "Locale data for Lingala"
+  },
+  {
+    "name": "glibc-langpack-lo",
+    "summary": "Locale data for Lao"
+  },
+  {
+    "name": "glibc-langpack-lt",
+    "summary": "Locale data for Lithuanian"
+  },
+  {
+    "name": "glibc-langpack-lv",
+    "summary": "Locale data for Latvian"
+  },
+  {
+    "name": "glibc-langpack-lzh",
+    "summary": "Locale data for Literary Chinese"
+  },
+  {
+    "name": "glibc-langpack-mag",
+    "summary": "Locale data for Magahi"
+  },
+  {
+    "name": "glibc-langpack-mai",
+    "summary": "Locale data for Maithili"
+  },
+  {
+    "name": "glibc-langpack-mfe",
+    "summary": "Locale data for Morisyen"
+  },
+  {
+    "name": "glibc-langpack-mg",
+    "summary": "Locale data for Malagasy"
+  },
+  {
+    "name": "glibc-langpack-mhr",
+    "summary": "Locale data for Meadow Mari"
+  },
+  {
+    "name": "glibc-langpack-mi",
+    "summary": "Locale data for Maori"
+  },
+  {
+    "name": "glibc-langpack-miq",
+    "summary": "Locale data for Miskito"
+  },
+  {
+    "name": "glibc-langpack-mjw",
+    "summary": "Locale data for Karbi"
+  },
+  {
+    "name": "glibc-langpack-mk",
+    "summary": "Locale data for Macedonian"
+  },
+  {
+    "name": "glibc-langpack-ml",
+    "summary": "Locale data for Malayalam"
+  },
+  {
+    "name": "glibc-langpack-mn",
+    "summary": "Locale data for Mongolian"
+  },
+  {
+    "name": "glibc-langpack-mni",
+    "summary": "Locale data for Manipuri"
+  },
+  {
+    "name": "glibc-langpack-mnw",
+    "summary": "Locale data for Mon"
+  },
+  {
+    "name": "glibc-langpack-mr",
+    "summary": "Locale data for Marathi"
+  },
+  {
+    "name": "glibc-langpack-ms",
+    "summary": "Locale data for Malay"
+  },
+  {
+    "name": "glibc-langpack-mt",
+    "summary": "Locale data for Maltese"
+  },
+  {
+    "name": "glibc-langpack-my",
+    "summary": "Locale data for Burmese"
+  },
+  {
+    "name": "glibc-langpack-nan",
+    "summary": "Locale data for Min Nan Chinese"
+  },
+  {
+    "name": "glibc-langpack-nb",
+    "summary": "Locale data for Norwegian Bokm\u00e5l"
+  },
+  {
+    "name": "glibc-langpack-nds",
+    "summary": "Locale data for Low German"
+  },
+  {
+    "name": "glibc-langpack-ne",
+    "summary": "Locale data for Nepali"
+  },
+  {
+    "name": "glibc-langpack-nhn",
+    "summary": "Locale data for Tlaxcala-Puebla Nahuatl"
+  },
+  {
+    "name": "glibc-langpack-niu",
+    "summary": "Locale data for Niuean"
+  },
+  {
+    "name": "glibc-langpack-nl",
+    "summary": "Locale data for Dutch"
+  },
+  {
+    "name": "glibc-langpack-nn",
+    "summary": "Locale data for Norwegian Nynorsk"
+  },
+  {
+    "name": "glibc-langpack-nr",
+    "summary": "Locale data for South Ndebele"
+  },
+  {
+    "name": "glibc-langpack-nso",
+    "summary": "Locale data for Northern Sotho"
+  },
+  {
+    "name": "glibc-langpack-oc",
+    "summary": "Locale data for Occitan"
+  },
+  {
+    "name": "glibc-langpack-om",
+    "summary": "Locale data for Oromo"
+  },
+  {
+    "name": "glibc-langpack-or",
+    "summary": "Locale data for Odia"
+  },
+  {
+    "name": "glibc-langpack-os",
+    "summary": "Locale data for Ossetic"
+  },
+  {
+    "name": "glibc-langpack-pa",
+    "summary": "Locale data for Punjabi"
+  },
+  {
+    "name": "glibc-langpack-pap",
+    "summary": "Locale data for Papiamento"
+  },
+  {
+    "name": "glibc-langpack-pl",
+    "summary": "Locale data for Polish"
+  },
+  {
+    "name": "glibc-langpack-ps",
+    "summary": "Locale data for Pashto"
+  },
+  {
+    "name": "glibc-langpack-pt",
+    "summary": "Locale data for Portuguese"
+  },
+  {
+    "name": "glibc-langpack-quz",
+    "summary": "Locale data for Cusco Quechua"
+  },
+  {
+    "name": "glibc-langpack-raj",
+    "summary": "Locale data for Rajasthani"
+  },
+  {
+    "name": "glibc-langpack-ro",
+    "summary": "Locale data for Romanian"
+  },
+  {
+    "name": "glibc-langpack-ru",
+    "summary": "Locale data for Russian"
+  },
+  {
+    "name": "glibc-langpack-rw",
+    "summary": "Locale data for Kinyarwanda"
+  },
+  {
+    "name": "glibc-langpack-sa",
+    "summary": "Locale data for Sanskrit"
+  },
+  {
+    "name": "glibc-langpack-sah",
+    "summary": "Locale data for Sakha"
+  },
+  {
+    "name": "glibc-langpack-sat",
+    "summary": "Locale data for Santali"
+  },
+  {
+    "name": "glibc-langpack-sc",
+    "summary": "Locale data for Sardinian"
+  },
+  {
+    "name": "glibc-langpack-sd",
+    "summary": "Locale data for Sindhi"
+  },
+  {
+    "name": "glibc-langpack-se",
+    "summary": "Locale data for Northern Sami"
+  },
+  {
+    "name": "glibc-langpack-sgs",
+    "summary": "Locale data for Samogitian"
+  },
+  {
+    "name": "glibc-langpack-shn",
+    "summary": "Locale data for Shan"
+  },
+  {
+    "name": "glibc-langpack-shs",
+    "summary": "Locale data for Shuswap"
+  },
+  {
+    "name": "glibc-langpack-si",
+    "summary": "Locale data for Sinhala"
+  },
+  {
+    "name": "glibc-langpack-sid",
+    "summary": "Locale data for Sidamo"
+  },
+  {
+    "name": "glibc-langpack-sk",
+    "summary": "Locale data for Slovak"
+  },
+  {
+    "name": "glibc-langpack-sl",
+    "summary": "Locale data for Slovenian"
+  },
+  {
+    "name": "glibc-langpack-sm",
+    "summary": "Locale data for Samoan"
+  },
+  {
+    "name": "glibc-langpack-so",
+    "summary": "Locale data for Somali"
+  },
+  {
+    "name": "glibc-langpack-sq",
+    "summary": "Locale data for Albanian"
+  },
+  {
+    "name": "glibc-langpack-sr",
+    "summary": "Locale data for Serbian"
+  },
+  {
+    "name": "glibc-langpack-ss",
+    "summary": "Locale data for Swati"
+  },
+  {
+    "name": "glibc-langpack-st",
+    "summary": "Locale data for Southern Sotho"
+  },
+  {
+    "name": "glibc-langpack-sv",
+    "summary": "Locale data for Swedish"
+  },
+  {
+    "name": "glibc-langpack-sw",
+    "summary": "Locale data for Swahili"
+  },
+  {
+    "name": "glibc-langpack-szl",
+    "summary": "Locale data for Silesian"
+  },
+  {
+    "name": "glibc-langpack-ta",
+    "summary": "Locale data for Tamil"
+  },
+  {
+    "name": "glibc-langpack-tcy",
+    "summary": "Locale data for Tulu"
+  },
+  {
+    "name": "glibc-langpack-te",
+    "summary": "Locale data for Telugu"
+  },
+  {
+    "name": "glibc-langpack-tg",
+    "summary": "Locale data for Tajik"
+  },
+  {
+    "name": "glibc-langpack-th",
+    "summary": "Locale data for Thai"
+  },
+  {
+    "name": "glibc-langpack-the",
+    "summary": "Locale data for Chitwania Tharu"
+  },
+  {
+    "name": "glibc-langpack-ti",
+    "summary": "Locale data for Tigrinya"
+  },
+  {
+    "name": "glibc-langpack-tig",
+    "summary": "Locale data for Tigre"
+  },
+  {
+    "name": "glibc-langpack-tk",
+    "summary": "Locale data for Turkmen"
+  },
+  {
+    "name": "glibc-langpack-tl",
+    "summary": "Locale data for Tagalog"
+  },
+  {
+    "name": "glibc-langpack-tn",
+    "summary": "Locale data for Tswana"
+  },
+  {
+    "name": "glibc-langpack-to",
+    "summary": "Locale data for Tongan"
+  },
+  {
+    "name": "glibc-langpack-tpi",
+    "summary": "Locale data for Tok Pisin"
+  },
+  {
+    "name": "glibc-langpack-tr",
+    "summary": "Locale data for Turkish"
+  },
+  {
+    "name": "glibc-langpack-ts",
+    "summary": "Locale data for Tsonga"
+  },
+  {
+    "name": "glibc-langpack-tt",
+    "summary": "Locale data for Tatar"
+  },
+  {
+    "name": "glibc-langpack-ug",
+    "summary": "Locale data for Uyghur"
+  },
+  {
+    "name": "glibc-langpack-uk",
+    "summary": "Locale data for Ukrainian"
+  },
+  {
+    "name": "glibc-langpack-unm",
+    "summary": "Locale data for Unami language"
+  },
+  {
+    "name": "glibc-langpack-ur",
+    "summary": "Locale data for Urdu"
+  },
+  {
+    "name": "glibc-langpack-uz",
+    "summary": "Locale data for Uzbek"
+  },
+  {
+    "name": "glibc-langpack-ve",
+    "summary": "Locale data for Venda"
+  },
+  {
+    "name": "glibc-langpack-vi",
+    "summary": "Locale data for Vietnamese"
+  },
+  {
+    "name": "glibc-langpack-wa",
+    "summary": "Locale data for Walloon"
+  },
+  {
+    "name": "glibc-langpack-wae",
+    "summary": "Locale data for Walser"
+  },
+  {
+    "name": "glibc-langpack-wal",
+    "summary": "Locale data for Wolaytta"
+  },
+  {
+    "name": "glibc-langpack-wo",
+    "summary": "Locale data for Wolof"
+  },
+  {
+    "name": "glibc-langpack-xh",
+    "summary": "Locale data for Xhosa"
+  },
+  {
+    "name": "glibc-langpack-yi",
+    "summary": "Locale data for Yiddish"
+  },
+  {
+    "name": "glibc-langpack-yo",
+    "summary": "Locale data for Yoruba"
+  },
+  {
+    "name": "glibc-langpack-yue",
+    "summary": "Locale data for Cantonese"
+  },
+  {
+    "name": "glibc-langpack-yuw",
+    "summary": "Locale data for Yau"
+  },
+  {
+    "name": "glibc-langpack-zh",
+    "summary": "Locale data for Mandarin Chinese"
+  },
+  {
+    "name": "glibc-langpack-zu",
+    "summary": "Locale data for Zulu"
+  },
+  {
+    "name": "glibc-minimal-langpack",
+    "summary": "Minimal language packs for glibc."
+  },
+  {
+    "name": "gmp",
+    "summary": "A GNU arbitrary precision library"
+  },
+  {
+    "name": "gnupg2",
+    "summary": "Utility for secure communication and data storage"
+  },
+  {
+    "name": "gnutls",
+    "summary": "A TLS protocol implementation"
+  },
+  {
+    "name": "gobject-introspection",
+    "summary": "Introspection system for GObject-based libraries"
+  },
+  {
+    "name": "gpgme",
+    "summary": "GnuPG Made Easy - high level crypto API"
+  },
+  {
+    "name": "graphite2",
+    "summary": "Font rendering capabilities for complex non-Roman writing systems"
+  },
+  {
+    "name": "grep",
+    "summary": "Pattern matching utilities"
+  },
+  {
+    "name": "groff-base",
+    "summary": "Parts of the groff formatting system required to display manual pages"
+  },
+  {
+    "name": "grub2-common",
+    "summary": "grub2 common layout"
+  },
+  {
+    "name": "grub2-efi-aa64-modules",
+    "summary": "Modules used to build custom grub.efi images"
+  },
+  {
+    "name": "grub2-efi-x64",
+    "summary": "GRUB for EFI systems."
+  },
+  {
+    "name": "grub2-efi-x64-cdboot",
+    "summary": "Files used to boot removeable media with EFI"
+  },
+  {
+    "name": "grub2-efi-x64-modules",
+    "summary": "Modules used to build custom grub.efi images"
+  },
+  {
+    "name": "grub2-pc",
+    "summary": "Bootloader with support for Linux, Multiboot, and more"
+  },
+  {
+    "name": "grub2-pc-modules",
+    "summary": "Modules used to build custom grub images"
+  },
+  {
+    "name": "grub2-tools",
+    "summary": "Support tools for GRUB."
+  },
+  {
+    "name": "grub2-tools-efi",
+    "summary": "Support tools for GRUB."
+  },
+  {
+    "name": "grub2-tools-extra",
+    "summary": "Support tools for GRUB."
+  },
+  {
+    "name": "grub2-tools-minimal",
+    "summary": "Support tools for GRUB."
+  },
+  {
+    "name": "grubby",
+    "summary": "Command line tool for updating bootloader configs"
+  },
+  {
+    "name": "gsettings-desktop-schemas",
+    "summary": "A collection of GSettings schemas"
+  },
+  {
+    "name": "gssproxy",
+    "summary": "GSSAPI Proxy"
+  },
+  {
+    "name": "gzip",
+    "summary": "The GNU data compression program"
+  },
+  {
+    "name": "harfbuzz",
+    "summary": "Text shaping library"
+  },
+  {
+    "name": "hdparm",
+    "summary": "A utility for displaying and/or setting hard disk parameters"
+  },
+  {
+    "name": "hostname",
+    "summary": "Utility to set/show the host name or domain name"
+  },
+  {
+    "name": "hwdata",
+    "summary": "Hardware identification and configuration data"
+  },
+  {
+    "name": "hwloc",
+    "summary": "Portable Hardware Locality - portable abstraction of hierarchical architectures"
+  },
+  {
+    "name": "hwloc-libs",
+    "summary": "Run time libraries for the hwloc"
+  },
+  {
+    "name": "ibacm",
+    "summary": "InfiniBand Communication Manager Assistant"
+  },
+  {
+    "name": "ima-evm-utils",
+    "summary": "IMA/EVM support utilities"
+  },
+  {
+    "name": "info",
+    "summary": "A stand-alone TTY-based reader for GNU texinfo documentation"
+  },
+  {
+    "name": "inih",
+    "summary": "Simple INI file parser library"
+  },
+  {
+    "name": "initscripts",
+    "summary": "Basic support for legacy System V init scripts"
+  },
+  {
+    "name": "initscripts-rename-device",
+    "summary": "Udev helper utility that provides network interface naming"
+  },
+  {
+    "name": "initscripts-service",
+    "summary": "Support for service command"
+  },
+  {
+    "name": "integritysetup",
+    "summary": "A utility for setting up dm-integrity volumes"
+  },
+  {
+    "name": "intel-cmt-cat",
+    "summary": "Provides command line interface to CMT, MBM, CAT, CDP and MBA technologies"
+  },
+  {
+    "name": "iotop",
+    "summary": "Top like utility for I/O"
+  },
+  {
+    "name": "ipcalc",
+    "summary": "IP network address calculator"
+  },
+  {
+    "name": "iproute",
+    "summary": "Advanced IP routing and network device configuration tools"
+  },
+  {
+    "name": "iproute-tc",
+    "summary": "Linux Traffic Control utility"
+  },
+  {
+    "name": "iprutils",
+    "summary": "Utilities for the IBM Power Linux RAID adapters"
+  },
+  {
+    "name": "ipset",
+    "summary": "Manage Linux IP sets"
+  },
+  {
+    "name": "ipset-libs",
+    "summary": "Shared library providing the IP sets functionality"
+  },
+  {
+    "name": "iptables-libs",
+    "summary": "libxtables and iptables extensions userspace support"
+  },
+  {
+    "name": "iptables-nft",
+    "summary": "nftables compatibility for iptables, arptables and ebtables"
+  },
+  {
+    "name": "iptables-utils",
+    "summary": "iptables and ip6tables misc utilities"
+  },
+  {
+    "name": "iptraf-ng",
+    "summary": "A console-based network monitoring utility"
+  },
+  {
+    "name": "iputils",
+    "summary": "Network monitoring tools including ping"
+  },
+  {
+    "name": "irqbalance",
+    "summary": "IRQ balancing daemon"
+  },
+  {
+    "name": "iscsi-initiator-utils",
+    "summary": "iSCSI daemon and utility programs"
+  },
+  {
+    "name": "iscsi-initiator-utils-iscsiuio",
+    "summary": "Userspace configuration daemon required for some iSCSI hardware"
+  },
+  {
+    "name": "isns-utils",
+    "summary": "The iSNS daemon and utility programs"
+  },
+  {
+    "name": "isns-utils-libs",
+    "summary": "Shared library files for iSNS"
+  },
+  {
+    "name": "iw",
+    "summary": "A nl80211 based wireless configuration tool"
+  },
+  {
+    "name": "iwl100-firmware",
+    "summary": "Firmware for Intel(R) Wireless WiFi Link 100 Series Adapters"
+  },
+  {
+    "name": "iwl1000-firmware",
+    "summary": "Firmware for Intel\u00ae PRO/Wireless 1000 B/G/N network adaptors"
+  },
+  {
+    "name": "iwl105-firmware",
+    "summary": "Firmware for Intel(R) Centrino Wireless-N 105 Series Adapters"
+  },
+  {
+    "name": "iwl135-firmware",
+    "summary": "Firmware for Intel(R) Centrino Wireless-N 135 Series Adapters"
+  },
+  {
+    "name": "iwl2000-firmware",
+    "summary": "Firmware for Intel(R) Centrino Wireless-N 2000 Series Adapters"
+  },
+  {
+    "name": "iwl2030-firmware",
+    "summary": "Firmware for Intel(R) Centrino Wireless-N 2030 Series Adapters"
+  },
+  {
+    "name": "iwl3160-firmware",
+    "summary": "Firmware for Intel(R) Wireless WiFi Link 3160 Series Adapters"
+  },
+  {
+    "name": "iwl5000-firmware",
+    "summary": "Firmware for Intel\u00ae PRO/Wireless 5000 A/G/N network adaptors"
+  },
+  {
+    "name": "iwl5150-firmware",
+    "summary": "Firmware for Intel\u00ae PRO/Wireless 5150 A/G/N network adaptors"
+  },
+  {
+    "name": "iwl6000g2a-firmware",
+    "summary": "Firmware for Intel(R) Wireless WiFi Link 6005 Series Adapters"
+  },
+  {
+    "name": "iwl6000g2b-firmware",
+    "summary": "Firmware for Intel(R) Wireless WiFi Link 6030 Series Adapters"
+  },
+  {
+    "name": "iwl6050-firmware",
+    "summary": "Firmware for Intel(R) Wireless WiFi Link 6050 Series Adapters"
+  },
+  {
+    "name": "iwl7260-firmware",
+    "summary": "Firmware for Intel(R) Wireless WiFi Link 726x/8000/9000/AX200/AX201 Series Adapters"
+  },
+  {
+    "name": "iwpmd",
+    "summary": "iWarp Port Mapper userspace daemon"
+  },
+  {
+    "name": "jansson",
+    "summary": "C library for encoding, decoding and manipulating JSON data"
+  },
+  {
+    "name": "jitterentropy",
+    "summary": "Library implementing the jitter entropy source"
+  },
+  {
+    "name": "json-c",
+    "summary": "JSON implementation in C"
+  },
+  {
+    "name": "json-glib",
+    "summary": "Library for JavaScript Object Notation format"
+  },
+  {
+    "name": "kbd",
+    "summary": "Tools for configuring the console (keyboard, virtual terminals, etc.)"
+  },
+  {
+    "name": "kbd-legacy",
+    "summary": "Legacy data for kbd package"
+  },
+  {
+    "name": "kbd-misc",
+    "summary": "Data for kbd package"
+  },
+  {
+    "name": "kernel",
+    "summary": "The Linux kernel"
+  },
+  {
+    "name": "kernel-abi-stablelists",
+    "summary": "The Red Hat Enterprise Linux kernel ABI symbol stablelists"
+  },
+  {
+    "name": "kernel-core",
+    "summary": "The Linux kernel"
+  },
+  {
+    "name": "kernel-debug",
+    "summary": "kernel meta-package for the debug kernel"
+  },
+  {
+    "name": "kernel-debug-core",
+    "summary": "The Linux kernel compiled with extra debugging enabled"
+  },
+  {
+    "name": "kernel-debug-modules",
+    "summary": "kernel modules to match the core kernel"
+  },
+  {
+    "name": "kernel-debug-modules-core",
+    "summary": "Core kernel modules to match the core kernel"
+  },
+  {
+    "name": "kernel-debug-modules-extra",
+    "summary": "Extra kernel modules to match the kernel"
+  },
+  {
+    "name": "kernel-debug-uki-virt",
+    "summary": "%{variant_summary} unified kernel image for virtual machines"
+  },
+  {
+    "name": "kernel-modules",
+    "summary": "kernel modules to match the core kernel"
+  },
+  {
+    "name": "kernel-modules-core",
+    "summary": "Core kernel modules to match the core kernel"
+  },
+  {
+    "name": "kernel-modules-extra",
+    "summary": "Extra kernel modules to match the kernel"
+  },
+  {
+    "name": "kernel-tools",
+    "summary": "Assortment of tools for the Linux kernel"
+  },
+  {
+    "name": "kernel-tools-libs",
+    "summary": "Libraries for the kernels-tools"
+  },
+  {
+    "name": "kernel-uki-virt",
+    "summary": "The Linux kernel unified kernel image for virtual machines"
+  },
+  {
+    "name": "kexec-tools",
+    "summary": "The kexec/kdump userspace component"
+  },
+  {
+    "name": "keyutils",
+    "summary": "Linux Key Management Utilities"
+  },
+  {
+    "name": "keyutils-libs",
+    "summary": "Key utilities library"
+  },
+  {
+    "name": "kmod",
+    "summary": "Linux kernel module management utilities"
+  },
+  {
+    "name": "kmod-kvdo",
+    "summary": "Kernel Modules for Virtual Data Optimizer"
+  },
+  {
+    "name": "kmod-libs",
+    "summary": "Libraries to handle kernel module loading and unloading"
+  },
+  {
+    "name": "kmod-redhat-arc4",
+    "summary": "arc4 kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-arc4-devel",
+    "summary": "arc4 development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-cfg80211",
+    "summary": "cfg80211 kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-cfg80211-devel",
+    "summary": "cfg80211 development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mac80211",
+    "summary": "mac80211 kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-mac80211-devel",
+    "summary": "mac80211 development files for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-rtw89",
+    "summary": "rtw89 kernel module for Driver Update Program"
+  },
+  {
+    "name": "kmod-redhat-rtw89-devel",
+    "summary": "rtw89 development files for Driver Update Program"
+  },
+  {
+    "name": "kpartx",
+    "summary": "Partition device manager for device-mapper devices"
+  },
+  {
+    "name": "kpatch",
+    "summary": "Dynamic kernel patch manager"
+  },
+  {
+    "name": "kpatch-dnf",
+    "summary": "kpatch-patch manager plugin for DNF"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-162_12_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-162.12.1.el9_1.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-162_18_1",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-162.18.1.el9_1.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-162_22_2",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-162.22.2.el9_1.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-162_23_1",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-162.23.1.el9_1.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-162_6_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-162.6.1.el9_1.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-284_11_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-284.11.1.el9_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-284_18_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-284.18.1.el9_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-284_25_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-284.25.1.el9_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-284_30_1",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-284.30.1.el9_2.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-362_8_1",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-362.8.1.el9_3.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-70_13_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-70.13.1.el9_0.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-70_17_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-70.17.1.el9_0.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-70_22_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-70.22.1.el9_0.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-70_26_1",
+    "summary": "Live kernel patching module for kernel-5.14.0-70.26.1.el9_0.x86_64"
+  },
+  {
+    "name": "kpatch-patch-5_14_0-70_30_1",
+    "summary": "Initial empty kpatch-patch for kernel-5.14.0-70.30.1.el9_0.x86_64"
+  },
+  {
+    "name": "krb5-libs",
+    "summary": "The non-admin shared libraries used by Kerberos 5"
+  },
+  {
+    "name": "krb5-pkinit",
+    "summary": "The PKINIT module for Kerberos 5"
+  },
+  {
+    "name": "krb5-server",
+    "summary": "The KDC and related programs for Kerberos 5"
+  },
+  {
+    "name": "krb5-server-ldap",
+    "summary": "The LDAP storage plugin for the Kerberos 5 KDC"
+  },
+  {
+    "name": "krb5-workstation",
+    "summary": "Kerberos 5 programs for use on workstations"
+  },
+  {
+    "name": "ldb-tools",
+    "summary": "Tools to manage LDB files"
+  },
+  {
+    "name": "ledmon",
+    "summary": "Enclosure LED Utilities"
+  },
+  {
+    "name": "less",
+    "summary": "A text file browser similar to more, but better"
+  },
+  {
+    "name": "libacl",
+    "summary": "Dynamic library for access control list support"
+  },
+  {
+    "name": "libaio",
+    "summary": "Linux-native asynchronous I/O access library"
+  },
+  {
+    "name": "libarchive",
+    "summary": "A library for handling streaming archive formats"
+  },
+  {
+    "name": "libassuan",
+    "summary": "GnuPG IPC library"
+  },
+  {
+    "name": "libatomic",
+    "summary": "The GNU Atomic library"
+  },
+  {
+    "name": "libattr",
+    "summary": "Dynamic library for extended attribute support"
+  },
+  {
+    "name": "libbasicobjects",
+    "summary": "Basic object types for C"
+  },
+  {
+    "name": "libblkid",
+    "summary": "Block device ID library"
+  },
+  {
+    "name": "libbpf",
+    "summary": "Libbpf library"
+  },
+  {
+    "name": "libbrotli",
+    "summary": "Library for brotli lossless compression algorithm"
+  },
+  {
+    "name": "libcap",
+    "summary": "Library for getting and setting POSIX.1e capabilities"
+  },
+  {
+    "name": "libcap-ng",
+    "summary": "Alternate posix capabilities library"
+  },
+  {
+    "name": "libcap-ng-utils",
+    "summary": "Utilities for analyzing and setting file capabilities"
+  },
+  {
+    "name": "libcbor",
+    "summary": "A CBOR parsing library"
+  },
+  {
+    "name": "libcollection",
+    "summary": "Collection data-type for C"
+  },
+  {
+    "name": "libcom_err",
+    "summary": "Common error description library"
+  },
+  {
+    "name": "libcomps",
+    "summary": "Comps XML file manipulation library"
+  },
+  {
+    "name": "libconfig",
+    "summary": "C/C++ configuration file library"
+  },
+  {
+    "name": "libcurl",
+    "summary": "A library for getting files from web servers"
+  },
+  {
+    "name": "libcurl-minimal",
+    "summary": "Conservatively configured build of libcurl for minimal installations"
+  },
+  {
+    "name": "libdaemon",
+    "summary": "Library for writing UNIX daemons"
+  },
+  {
+    "name": "libdb",
+    "summary": "The Berkeley DB database library for C"
+  },
+  {
+    "name": "libdhash",
+    "summary": "Dynamic hash table"
+  },
+  {
+    "name": "libdnf",
+    "summary": "Library providing simplified C and Python API to libsolv"
+  },
+  {
+    "name": "libdnf-plugin-subscription-manager",
+    "summary": "Subscription Manager plugin for libdnf"
+  },
+  {
+    "name": "libeconf",
+    "summary": "Enhanced config file parser library"
+  },
+  {
+    "name": "libedit",
+    "summary": "The NetBSD Editline library"
+  },
+  {
+    "name": "libertas-sd8787-firmware",
+    "summary": "Firmware for Marvell Libertas SD 8787 Network Adapter"
+  },
+  {
+    "name": "libev",
+    "summary": "High-performance event loop/event model with lots of features"
+  },
+  {
+    "name": "libevent",
+    "summary": "Abstract asynchronous event notification library"
+  },
+  {
+    "name": "libfdisk",
+    "summary": "Partitioning library for fdisk-like programs."
+  },
+  {
+    "name": "libffi",
+    "summary": "A portable foreign function interface library"
+  },
+  {
+    "name": "libfido2",
+    "summary": "FIDO2 library"
+  },
+  {
+    "name": "libgcab1",
+    "summary": "Library to create Cabinet archives"
+  },
+  {
+    "name": "libgcc",
+    "summary": "GCC version 11 shared support library"
+  },
+  {
+    "name": "libgcrypt",
+    "summary": "A general-purpose cryptography library"
+  },
+  {
+    "name": "libgfortran",
+    "summary": "Fortran runtime"
+  },
+  {
+    "name": "libgomp",
+    "summary": "GCC OpenMP v4.5 shared support library"
+  },
+  {
+    "name": "libgpg-error",
+    "summary": "Library for error values used by GnuPG components"
+  },
+  {
+    "name": "libgudev",
+    "summary": "GObject-based wrapper library for libudev"
+  },
+  {
+    "name": "libgusb",
+    "summary": "GLib wrapper around libusb1"
+  },
+  {
+    "name": "libibumad",
+    "summary": "OpenFabrics Alliance InfiniBand umad (userspace management datagram) library"
+  },
+  {
+    "name": "libibverbs",
+    "summary": "A library and drivers for direct userspace use of RDMA (InfiniBand/iWARP/RoCE) hardware"
+  },
+  {
+    "name": "libibverbs-utils",
+    "summary": "Examples for the libibverbs library"
+  },
+  {
+    "name": "libicu",
+    "summary": "International Components for Unicode - libraries"
+  },
+  {
+    "name": "libidn2",
+    "summary": "Library to support IDNA2008 internationalized domain names"
+  },
+  {
+    "name": "libini_config",
+    "summary": "INI file parser for C"
+  },
+  {
+    "name": "libipa_hbac",
+    "summary": "FreeIPA HBAC Evaluator library"
+  },
+  {
+    "name": "libjcat",
+    "summary": "Library for reading Jcat files"
+  },
+  {
+    "name": "libkadm5",
+    "summary": "Kerberos 5 Administrative libraries"
+  },
+  {
+    "name": "libkcapi",
+    "summary": "User space interface to the Linux Kernel Crypto API"
+  },
+  {
+    "name": "libkcapi-hmaccalc",
+    "summary": "Drop-in replacements for hmaccalc provided by the libkcapi package"
+  },
+  {
+    "name": "libksba",
+    "summary": "CMS and X.509 library"
+  },
+  {
+    "name": "libldb",
+    "summary": "A schema-less, ldap like, API and database"
+  },
+  {
+    "name": "liblockfile",
+    "summary": "This implements a number of functions found in -lmail on SysV systems"
+  },
+  {
+    "name": "libmbim",
+    "summary": "Support library for the Mobile Broadband Interface Model protocol"
+  },
+  {
+    "name": "libmbim-utils",
+    "summary": "Utilities to use the MBIM protocol from the command line"
+  },
+  {
+    "name": "libmnl",
+    "summary": "A minimalistic Netlink library"
+  },
+  {
+    "name": "libmodulemd",
+    "summary": "Module metadata manipulation library"
+  },
+  {
+    "name": "libmount",
+    "summary": "Device mounting library"
+  },
+  {
+    "name": "libndp",
+    "summary": "Library for Neighbor Discovery Protocol"
+  },
+  {
+    "name": "libnetapi",
+    "summary": "The NETAPI library"
+  },
+  {
+    "name": "libnetfilter_conntrack",
+    "summary": "Netfilter conntrack userspace library"
+  },
+  {
+    "name": "libnfnetlink",
+    "summary": "Netfilter netlink userspace library"
+  },
+  {
+    "name": "libnfsidmap",
+    "summary": "NFSv4 User and Group ID Mapping Library"
+  },
+  {
+    "name": "libnftnl",
+    "summary": "Library for low-level interaction with nftables Netlink's API over libmnl"
+  },
+  {
+    "name": "libnghttp2",
+    "summary": "A library implementing the HTTP/2 protocol"
+  },
+  {
+    "name": "libnl3",
+    "summary": "Convenience library for kernel netlink sockets"
+  },
+  {
+    "name": "libnl3-cli",
+    "summary": "Command line interface utils for libnl3"
+  },
+  {
+    "name": "libnsl",
+    "summary": "Legacy support library for NIS"
+  },
+  {
+    "name": "libnvme",
+    "summary": "Linux-native nvme device management library"
+  },
+  {
+    "name": "libpath_utils",
+    "summary": "Filesystem Path Utilities"
+  },
+  {
+    "name": "libpcap",
+    "summary": "A system-independent interface for user-level packet capture"
+  },
+  {
+    "name": "libpciaccess",
+    "summary": "PCI access library"
+  },
+  {
+    "name": "libpeas",
+    "summary": "Plug-ins implementation convenience library"
+  },
+  {
+    "name": "libpipeline",
+    "summary": "A pipeline manipulation library"
+  },
+  {
+    "name": "libpkgconf",
+    "summary": "Backend library for pkgconf"
+  },
+  {
+    "name": "libpng",
+    "summary": "A library of functions for manipulating PNG image format files"
+  },
+  {
+    "name": "libproxy",
+    "summary": "A library handling all the details of proxy configuration"
+  },
+  {
+    "name": "libpsl",
+    "summary": "C library for the Publix Suffix List"
+  },
+  {
+    "name": "libpwquality",
+    "summary": "A library for password generation and password quality checking"
+  },
+  {
+    "name": "libqmi",
+    "summary": "Support library to use the Qualcomm MSM Interface (QMI) protocol"
+  },
+  {
+    "name": "libqmi-utils",
+    "summary": "Utilities to use the QMI protocol from the command line"
+  },
+  {
+    "name": "libqrtr-glib",
+    "summary": "Support library to use and manage the QRTR (Qualcomm IPC Router) bus."
+  },
+  {
+    "name": "libquadmath",
+    "summary": "GCC __float128 shared support library"
+  },
+  {
+    "name": "librdmacm",
+    "summary": "Userspace RDMA Connection Manager"
+  },
+  {
+    "name": "librdmacm-utils",
+    "summary": "Examples for the librdmacm library"
+  },
+  {
+    "name": "libref_array",
+    "summary": "A refcounted array for C"
+  },
+  {
+    "name": "librepo",
+    "summary": "Repodata downloading library"
+  },
+  {
+    "name": "libreport-filesystem",
+    "summary": "Filesystem layout for libreport"
+  },
+  {
+    "name": "librhsm",
+    "summary": "Red Hat Subscription Manager library"
+  },
+  {
+    "name": "libseccomp",
+    "summary": "Enhanced seccomp library"
+  },
+  {
+    "name": "libselinux",
+    "summary": "SELinux library and simple utilities"
+  },
+  {
+    "name": "libselinux-utils",
+    "summary": "SELinux libselinux utilities"
+  },
+  {
+    "name": "libsemanage",
+    "summary": "SELinux binary policy manipulation library"
+  },
+  {
+    "name": "libsepol",
+    "summary": "SELinux binary policy manipulation library"
+  },
+  {
+    "name": "libsigsegv",
+    "summary": "Library for handling page faults in user mode"
+  },
+  {
+    "name": "libsmartcols",
+    "summary": "Formatting library for ls-like programs."
+  },
+  {
+    "name": "libsmbclient",
+    "summary": "The SMB client library"
+  },
+  {
+    "name": "libsmbios",
+    "summary": "Libsmbios C/C++ shared libraries"
+  },
+  {
+    "name": "libsolv",
+    "summary": "Package dependency solver"
+  },
+  {
+    "name": "libss",
+    "summary": "Command line interface parsing library"
+  },
+  {
+    "name": "libssh",
+    "summary": "A library implementing the SSH protocol"
+  },
+  {
+    "name": "libssh-config",
+    "summary": "Configuration files for libssh"
+  },
+  {
+    "name": "libsss_autofs",
+    "summary": "A library to allow communication between Autofs and SSSD"
+  },
+  {
+    "name": "libsss_certmap",
+    "summary": "SSSD Certificate Mapping Library"
+  },
+  {
+    "name": "libsss_idmap",
+    "summary": "FreeIPA Idmap library"
+  },
+  {
+    "name": "libsss_nss_idmap",
+    "summary": "Library for SID and certificate based lookups"
+  },
+  {
+    "name": "libsss_simpleifp",
+    "summary": "The SSSD D-Bus responder helper library"
+  },
+  {
+    "name": "libsss_sudo",
+    "summary": "A library to allow communication between SUDO and SSSD"
+  },
+  {
+    "name": "libstdc++",
+    "summary": "GNU Standard C++ Library"
+  },
+  {
+    "name": "libsysfs",
+    "summary": "Shared library for interfacing with sysfs"
+  },
+  {
+    "name": "libtalloc",
+    "summary": "The talloc library"
+  },
+  {
+    "name": "libtasn1",
+    "summary": "The ASN.1 library used in GNUTLS"
+  },
+  {
+    "name": "libtdb",
+    "summary": "The tdb library"
+  },
+  {
+    "name": "libteam",
+    "summary": "Library for controlling team network device"
+  },
+  {
+    "name": "libtevent",
+    "summary": "The tevent library"
+  },
+  {
+    "name": "libtirpc",
+    "summary": "Transport Independent RPC Library"
+  },
+  {
+    "name": "libtracecmd",
+    "summary": "Libraries of trace-cmd"
+  },
+  {
+    "name": "libtraceevent",
+    "summary": "Library to parse raw trace event formats"
+  },
+  {
+    "name": "libtracefs",
+    "summary": "Library for access kernel tracefs"
+  },
+  {
+    "name": "libunistring",
+    "summary": "GNU Unicode string library"
+  },
+  {
+    "name": "libusbx",
+    "summary": "Library for accessing USB devices"
+  },
+  {
+    "name": "libuser",
+    "summary": "A user and group account administration library"
+  },
+  {
+    "name": "libutempter",
+    "summary": "A privileged helper for utmp/wtmp updates"
+  },
+  {
+    "name": "libuuid",
+    "summary": "Universally unique ID library"
+  },
+  {
+    "name": "libverto",
+    "summary": "Main loop abstraction library"
+  },
+  {
+    "name": "libverto-libev",
+    "summary": "libev module for libverto"
+  },
+  {
+    "name": "libwbclient",
+    "summary": "The winbind client library"
+  },
+  {
+    "name": "libxcrypt",
+    "summary": "Extended crypt library for descrypt, md5crypt, bcrypt, and others"
+  },
+  {
+    "name": "libxml2",
+    "summary": "Library providing XML and HTML support"
+  },
+  {
+    "name": "libxmlb",
+    "summary": "Library for querying compressed XML metadata"
+  },
+  {
+    "name": "libyaml",
+    "summary": "YAML 1.1 parser and emitter written in C"
+  },
+  {
+    "name": "libzstd",
+    "summary": "Zstd shared library"
+  },
+  {
+    "name": "linux-firmware",
+    "summary": "Firmware files used by the Linux kernel"
+  },
+  {
+    "name": "linux-firmware-whence",
+    "summary": "WHENCE License file"
+  },
+  {
+    "name": "lksctp-tools",
+    "summary": "User-space access to Linux Kernel SCTP"
+  },
+  {
+    "name": "lldpad",
+    "summary": "Intel LLDP Agent"
+  },
+  {
+    "name": "lmdb-libs",
+    "summary": "Shared libraries for lmdb"
+  },
+  {
+    "name": "lockdev",
+    "summary": "A library for locking devices"
+  },
+  {
+    "name": "logrotate",
+    "summary": "Rotates, compresses, removes and mails system log files"
+  },
+  {
+    "name": "lrzsz",
+    "summary": "The lrz and lsz modem communications programs"
+  },
+  {
+    "name": "lshw",
+    "summary": "Hardware lister"
+  },
+  {
+    "name": "lsof",
+    "summary": "A utility which lists open files on a Linux/UNIX system"
+  },
+  {
+    "name": "lsscsi",
+    "summary": "List SCSI devices (or hosts) and associated information"
+  },
+  {
+    "name": "lua-libs",
+    "summary": "Libraries for lua"
+  },
+  {
+    "name": "lvm2",
+    "summary": "Userland logical volume management tools"
+  },
+  {
+    "name": "lvm2-libs",
+    "summary": "Shared libraries for lvm2"
+  },
+  {
+    "name": "lz4",
+    "summary": "Extremely fast compression algorithm"
+  },
+  {
+    "name": "lz4-libs",
+    "summary": "Libaries for lz4"
+  },
+  {
+    "name": "lzo",
+    "summary": "Data compression library with very fast (de)compression"
+  },
+  {
+    "name": "lzop",
+    "summary": "Real-time file compressor"
+  },
+  {
+    "name": "mailcap",
+    "summary": "Helper application and MIME type associations for file types"
+  },
+  {
+    "name": "make",
+    "summary": "A GNU tool which simplifies the build process for users"
+  },
+  {
+    "name": "man-db",
+    "summary": "Tools for searching and reading man pages"
+  },
+  {
+    "name": "man-pages",
+    "summary": "Linux kernel and C library user-space interface documentation"
+  },
+  {
+    "name": "mcelog",
+    "summary": "Tool to translate x86-64 CPU Machine Check Exception data"
+  },
+  {
+    "name": "mcstrans",
+    "summary": "SELinux Translation Daemon"
+  },
+  {
+    "name": "mdadm",
+    "summary": "The mdadm program controls Linux md devices (software RAID arrays)"
+  },
+  {
+    "name": "microcode_ctl",
+    "summary": "CPU microcode updates for Intel x86 processors"
+  },
+  {
+    "name": "microdnf",
+    "summary": "Lightweight implementation of DNF in C"
+  },
+  {
+    "name": "minicom",
+    "summary": "A text-based modem control and terminal emulation program"
+  },
+  {
+    "name": "mksh",
+    "summary": "MirBSD enhanced version of the Korn Shell"
+  },
+  {
+    "name": "mlocate",
+    "summary": "An utility for finding files by name"
+  },
+  {
+    "name": "ModemManager",
+    "summary": "Mobile broadband modem management service"
+  },
+  {
+    "name": "ModemManager-glib",
+    "summary": "Libraries for adding ModemManager support to applications that use glib."
+  },
+  {
+    "name": "mokutil",
+    "summary": "Tool to manage UEFI Secure Boot MoK Keys"
+  },
+  {
+    "name": "mpfr",
+    "summary": "C library for multiple-precision floating-point computations"
+  },
+  {
+    "name": "mtools",
+    "summary": "Programs for accessing MS-DOS disks without mounting the disks"
+  },
+  {
+    "name": "mtr",
+    "summary": "Network diagnostic tool combining 'traceroute' and 'ping'"
+  },
+  {
+    "name": "nano",
+    "summary": "A small text editor"
+  },
+  {
+    "name": "ncurses",
+    "summary": "Ncurses support utilities"
+  },
+  {
+    "name": "ncurses-base",
+    "summary": "Descriptions of common terminals"
+  },
+  {
+    "name": "ncurses-libs",
+    "summary": "Ncurses libraries"
+  },
+  {
+    "name": "ndctl",
+    "summary": "Manage \"libnvdimm\" subsystem devices (Non-volatile Memory)"
+  },
+  {
+    "name": "ndctl-libs",
+    "summary": "Management library for \"libnvdimm\" subsystem devices (Non-volatile Memory)"
+  },
+  {
+    "name": "net-tools",
+    "summary": "Basic networking tools"
+  },
+  {
+    "name": "netconsole-service",
+    "summary": "Service for initializing of network console logging"
+  },
+  {
+    "name": "netlabel_tools",
+    "summary": "Tools to manage the Linux NetLabel subsystem"
+  },
+  {
+    "name": "netronome-firmware",
+    "summary": "Firmware for Netronome Smart NICs"
+  },
+  {
+    "name": "nettle",
+    "summary": "A low-level cryptographic library"
+  },
+  {
+    "name": "NetworkManager",
+    "summary": "Network connection manager and user applications"
+  },
+  {
+    "name": "NetworkManager-adsl",
+    "summary": "ADSL device plugin for NetworkManager"
+  },
+  {
+    "name": "NetworkManager-bluetooth",
+    "summary": "Bluetooth device plugin for NetworkManager"
+  },
+  {
+    "name": "NetworkManager-config-server",
+    "summary": "NetworkManager config file for \"server-like\" defaults"
+  },
+  {
+    "name": "NetworkManager-initscripts-updown",
+    "summary": "Legacy ifup/ifdown scripts for NetworkManager that replace initscripts (network-scripts)"
+  },
+  {
+    "name": "NetworkManager-libnm",
+    "summary": "Libraries for adding NetworkManager support to applications."
+  },
+  {
+    "name": "NetworkManager-team",
+    "summary": "Team device plugin for NetworkManager"
+  },
+  {
+    "name": "NetworkManager-tui",
+    "summary": "NetworkManager curses-based UI"
+  },
+  {
+    "name": "NetworkManager-wifi",
+    "summary": "Wifi plugin for NetworkManager"
+  },
+  {
+    "name": "NetworkManager-wwan",
+    "summary": "Mobile broadband device plugin for NetworkManager"
+  },
+  {
+    "name": "newt",
+    "summary": "A library for text mode user interfaces"
+  },
+  {
+    "name": "nfs-utils",
+    "summary": "NFS utilities and supporting clients and daemons for the kernel NFS server"
+  },
+  {
+    "name": "nfs4-acl-tools",
+    "summary": "The nfs4 ACL tools"
+  },
+  {
+    "name": "nftables",
+    "summary": "Netfilter Tables userspace utillites"
+  },
+  {
+    "name": "npth",
+    "summary": "The New GNU Portable Threads library"
+  },
+  {
+    "name": "nscd",
+    "summary": "A Name Service Caching Daemon (nscd)."
+  },
+  {
+    "name": "numactl",
+    "summary": "Library for tuning for Non Uniform Memory Access machines"
+  },
+  {
+    "name": "numactl-libs",
+    "summary": "libnuma libraries"
+  },
+  {
+    "name": "numad",
+    "summary": "NUMA user daemon"
+  },
+  {
+    "name": "numatop",
+    "summary": "Memory access locality characterization and analysis"
+  },
+  {
+    "name": "nvme-cli",
+    "summary": "NVMe management command line interface"
+  },
+  {
+    "name": "nvmetcli",
+    "summary": "An adminstration shell for NVMe storage targets"
+  },
+  {
+    "name": "opencryptoki",
+    "summary": "Implementation of the PKCS#11 (Cryptoki) specification v3.0"
+  },
+  {
+    "name": "opencryptoki-icsftok",
+    "summary": "ICSF token support for opencryptoki"
+  },
+  {
+    "name": "opencryptoki-libs",
+    "summary": "The run-time libraries for opencryptoki package"
+  },
+  {
+    "name": "opencryptoki-swtok",
+    "summary": "The software token implementation for opencryptoki"
+  },
+  {
+    "name": "openldap",
+    "summary": "LDAP support libraries"
+  },
+  {
+    "name": "openldap-clients",
+    "summary": "LDAP client utilities"
+  },
+  {
+    "name": "openldap-compat",
+    "summary": "Package providing legacy non-threded libldap"
+  },
+  {
+    "name": "opensc",
+    "summary": "Smart card library and applications"
+  },
+  {
+    "name": "opensm",
+    "summary": "OpenIB InfiniBand Subnet Manager and management utilities"
+  },
+  {
+    "name": "opensm-libs",
+    "summary": "Libraries used by opensm and included utilities"
+  },
+  {
+    "name": "openssh",
+    "summary": "An open source implementation of SSH protocol version 2"
+  },
+  {
+    "name": "openssh-clients",
+    "summary": "An open source SSH client applications"
+  },
+  {
+    "name": "openssh-keycat",
+    "summary": "A mls keycat backend for openssh"
+  },
+  {
+    "name": "openssh-server",
+    "summary": "An open source SSH server daemon"
+  },
+  {
+    "name": "openssl",
+    "summary": "Utilities from the general purpose cryptography library with TLS implementation"
+  },
+  {
+    "name": "openssl-libs",
+    "summary": "A general purpose cryptography library with TLS implementation"
+  },
+  {
+    "name": "openssl-pkcs11",
+    "summary": "A PKCS#11 engine for use with OpenSSL"
+  },
+  {
+    "name": "os-prober",
+    "summary": "Probes disks on the system for installed operating systems"
+  },
+  {
+    "name": "p11-kit",
+    "summary": "Library for loading and sharing PKCS#11 modules"
+  },
+  {
+    "name": "p11-kit-trust",
+    "summary": "System trust module from p11-kit"
+  },
+  {
+    "name": "pam",
+    "summary": "An extensible library which provides authentication for applications"
+  },
+  {
+    "name": "parted",
+    "summary": "The GNU disk partition manipulation program"
+  },
+  {
+    "name": "passwd",
+    "summary": "An utility for setting or changing passwords using PAM"
+  },
+  {
+    "name": "pciutils",
+    "summary": "PCI bus related utilities"
+  },
+  {
+    "name": "pciutils-libs",
+    "summary": "Linux PCI library"
+  },
+  {
+    "name": "pcre",
+    "summary": "Perl-compatible regular expression library"
+  },
+  {
+    "name": "pcre2",
+    "summary": "Perl-compatible regular expression library"
+  },
+  {
+    "name": "pcre2-syntax",
+    "summary": "Documentation for PCRE2 regular expressions"
+  },
+  {
+    "name": "pcsc-lite",
+    "summary": "PC/SC Lite smart card framework and applications"
+  },
+  {
+    "name": "pcsc-lite-ccid",
+    "summary": "Generic USB CCID smart card reader driver"
+  },
+  {
+    "name": "pcsc-lite-libs",
+    "summary": "PC/SC Lite libraries"
+  },
+  {
+    "name": "perftest",
+    "summary": "IB Performance Tests"
+  },
+  {
+    "name": "pigz",
+    "summary": "Parallel implementation of gzip"
+  },
+  {
+    "name": "pkgconf",
+    "summary": "Package compiler and linker metadata toolkit"
+  },
+  {
+    "name": "pkgconf-m4",
+    "summary": "m4 macros for pkgconf"
+  },
+  {
+    "name": "pkgconf-pkg-config",
+    "summary": "pkgconf shim to provide /usr/bin/pkg-config"
+  },
+  {
+    "name": "policycoreutils",
+    "summary": "SELinux policy core utilities"
+  },
+  {
+    "name": "policycoreutils-newrole",
+    "summary": "The newrole application for RBAC/MLS"
+  },
+  {
+    "name": "policycoreutils-restorecond",
+    "summary": "SELinux restorecond utilities"
+  },
+  {
+    "name": "polkit",
+    "summary": "An authorization framework"
+  },
+  {
+    "name": "polkit-libs",
+    "summary": "Libraries for polkit"
+  },
+  {
+    "name": "polkit-pkla-compat",
+    "summary": "Rules for polkit to add compatibility with pklocalauthority"
+  },
+  {
+    "name": "popt",
+    "summary": "C library for parsing command line parameters"
+  },
+  {
+    "name": "ppp",
+    "summary": "The Point-to-Point Protocol daemon"
+  },
+  {
+    "name": "prefixdevname",
+    "summary": "Udev helper utility that provides network interface naming using user defined prefix"
+  },
+  {
+    "name": "procps-ng",
+    "summary": "System and process monitoring utilities"
+  },
+  {
+    "name": "procps-ng-i18n",
+    "summary": "Internationalization pack for procps-ng"
+  },
+  {
+    "name": "protobuf-c",
+    "summary": "C bindings for Google's Protocol Buffers"
+  },
+  {
+    "name": "psacct",
+    "summary": "Utilities for monitoring process activities"
+  },
+  {
+    "name": "psmisc",
+    "summary": "Utilities for managing processes on your system"
+  },
+  {
+    "name": "publicsuffix-list-dafsa",
+    "summary": "Cross-vendor public domain suffix database in DAFSA form"
+  },
+  {
+    "name": "python3",
+    "summary": "Python 3.9 interpreter"
+  },
+  {
+    "name": "python3-cffi",
+    "summary": "Foreign Function Interface for Python 3 to call C code"
+  },
+  {
+    "name": "python3-chardet",
+    "summary": "Character encoding auto-detection in Python"
+  },
+  {
+    "name": "python3-cloud-what",
+    "summary": "Python package for detection of public cloud provider"
+  },
+  {
+    "name": "python3-configshell",
+    "summary": "A framework to implement simple but nice CLIs"
+  },
+  {
+    "name": "python3-cryptography",
+    "summary": "PyCA's cryptography library"
+  },
+  {
+    "name": "python3-dateutil",
+    "summary": "Powerful extensions to the standard datetime module"
+  },
+  {
+    "name": "python3-dbus",
+    "summary": "D-Bus bindings for python3"
+  },
+  {
+    "name": "python3-decorator",
+    "summary": "Module to simplify usage of decorators in python3"
+  },
+  {
+    "name": "python3-dmidecode",
+    "summary": "Python 3 module to access DMI data"
+  },
+  {
+    "name": "python3-dnf",
+    "summary": "Python 3 interface to DNF"
+  },
+  {
+    "name": "python3-dnf-plugin-post-transaction-actions",
+    "summary": "Post transaction actions Plugin for DNF"
+  },
+  {
+    "name": "python3-dnf-plugin-versionlock",
+    "summary": "Version Lock Plugin for DNF"
+  },
+  {
+    "name": "python3-dnf-plugins-core",
+    "summary": "Core Plugins for DNF"
+  },
+  {
+    "name": "python3-dns",
+    "summary": "DNS toolkit for Python"
+  },
+  {
+    "name": "python3-ethtool",
+    "summary": "Python module to interface with ethtool"
+  },
+  {
+    "name": "python3-firewall",
+    "summary": "Python3 bindings for firewalld"
+  },
+  {
+    "name": "python3-gobject-base",
+    "summary": "Python 3 bindings for GObject Introspection base package"
+  },
+  {
+    "name": "python3-gobject-base-noarch",
+    "summary": "Python 3 bindings for GObject Introspection base (not architecture dependent)"
+  },
+  {
+    "name": "python3-gpg",
+    "summary": "gpgme bindings for Python 3"
+  },
+  {
+    "name": "python3-hawkey",
+    "summary": "Python 3 bindings for the hawkey library"
+  },
+  {
+    "name": "python3-idna",
+    "summary": "Internationalized Domain Names in Applications (IDNA)"
+  },
+  {
+    "name": "python3-iniparse",
+    "summary": "Python Module for Accessing and Modifying Configuration Data in INI files"
+  },
+  {
+    "name": "python3-inotify",
+    "summary": "Monitor filesystem events with Python under Linux"
+  },
+  {
+    "name": "python3-kmod",
+    "summary": "Python module to work with kernel modules"
+  },
+  {
+    "name": "python3-ldb",
+    "summary": "Python bindings for the LDB library"
+  },
+  {
+    "name": "python3-libcomps",
+    "summary": "Python 3 bindings for libcomps library"
+  },
+  {
+    "name": "python3-libdnf",
+    "summary": "Python 3 bindings for the libdnf library."
+  },
+  {
+    "name": "python3-libipa_hbac",
+    "summary": "Python3 bindings for the FreeIPA HBAC Evaluator library"
+  },
+  {
+    "name": "python3-librepo",
+    "summary": "Python 3 bindings for the librepo library"
+  },
+  {
+    "name": "python3-libs",
+    "summary": "Python runtime libraries"
+  },
+  {
+    "name": "python3-libsss_nss_idmap",
+    "summary": "Python3 bindings for libsss_nss_idmap"
+  },
+  {
+    "name": "python3-libxml2",
+    "summary": "Python 3 bindings for the libxml2 library"
+  },
+  {
+    "name": "python3-linux-procfs",
+    "summary": "Linux /proc abstraction classes"
+  },
+  {
+    "name": "python3-nftables",
+    "summary": "Python module providing an interface to libnftables"
+  },
+  {
+    "name": "python3-perf",
+    "summary": "Python bindings for apps which will manipulate perf events"
+  },
+  {
+    "name": "python3-pexpect",
+    "summary": "Unicode-aware Pure Python Expect-like module"
+  },
+  {
+    "name": "python3-pip-wheel",
+    "summary": "The pip wheel"
+  },
+  {
+    "name": "python3-ply",
+    "summary": "Python Lex-Yacc"
+  },
+  {
+    "name": "python3-ptyprocess",
+    "summary": "Run a subprocess in a pseudo terminal"
+  },
+  {
+    "name": "python3-pycparser",
+    "summary": "C parser and AST generator written in Python"
+  },
+  {
+    "name": "python3-pyparsing",
+    "summary": "Python package with an object-oriented approach to text processing"
+  },
+  {
+    "name": "python3-pysocks",
+    "summary": "A Python SOCKS client module"
+  },
+  {
+    "name": "python3-pyudev",
+    "summary": "A libudev binding"
+  },
+  {
+    "name": "python3-pyyaml",
+    "summary": "YAML parser and emitter for Python"
+  },
+  {
+    "name": "python3-requests",
+    "summary": "HTTP library, written in Python, for human beings"
+  },
+  {
+    "name": "python3-rpm",
+    "summary": "Python 3 bindings for apps which will manipulate RPM packages"
+  },
+  {
+    "name": "python3-samba",
+    "summary": "Samba Python3 libraries"
+  },
+  {
+    "name": "python3-samba-dc",
+    "summary": "Samba Python libraries for Samba AD"
+  },
+  {
+    "name": "python3-setools",
+    "summary": "Policy analysis tools for SELinux"
+  },
+  {
+    "name": "python3-setuptools",
+    "summary": "Easily build and distribute Python 3 packages"
+  },
+  {
+    "name": "python3-setuptools-wheel",
+    "summary": "The setuptools wheel"
+  },
+  {
+    "name": "python3-six",
+    "summary": "Python 2 and 3 compatibility utilities"
+  },
+  {
+    "name": "python3-sss",
+    "summary": "Python3 bindings for sssd"
+  },
+  {
+    "name": "python3-sss-murmur",
+    "summary": "Python3 bindings for murmur hash function"
+  },
+  {
+    "name": "python3-sssdconfig",
+    "summary": "SSSD and IPA configuration file manipulation classes and functions"
+  },
+  {
+    "name": "python3-subscription-manager-rhsm",
+    "summary": "A Python library to communicate with a Red Hat Unified Entitlement Platform"
+  },
+  {
+    "name": "python3-systemd",
+    "summary": "Python module wrapping systemd functionality"
+  },
+  {
+    "name": "python3-talloc",
+    "summary": "Python bindings for the Talloc library"
+  },
+  {
+    "name": "python3-tdb",
+    "summary": "Python3 bindings for the Tdb library"
+  },
+  {
+    "name": "python3-tevent",
+    "summary": "Python 3 bindings for the Tevent library"
+  },
+  {
+    "name": "python3-urllib3",
+    "summary": "Python3 HTTP library with thread-safe connection pooling and file post"
+  },
+  {
+    "name": "python3-urwid",
+    "summary": "Console user interface library"
+  },
+  {
+    "name": "quota",
+    "summary": "System administration tools for monitoring users' disk usage"
+  },
+  {
+    "name": "quota-nls",
+    "summary": "Gettext catalogs for disk quota tools"
+  },
+  {
+    "name": "rdma-core",
+    "summary": "RDMA core userspace libraries and daemons"
+  },
+  {
+    "name": "readline",
+    "summary": "A library for editing typed command lines"
+  },
+  {
+    "name": "readonly-root",
+    "summary": "Service for configuring read-only root support"
+  },
+  {
+    "name": "realmd",
+    "summary": "Kerberos realm enrollment service"
+  },
+  {
+    "name": "redhat-release",
+    "summary": "Red Hat Enterprise Linux release file"
+  },
+  {
+    "name": "redhat-release-eula",
+    "summary": "Red Hat Enterprise Linux EULA file"
+  },
+  {
+    "name": "restore",
+    "summary": "Program for restoring ext2/ext3 filesystems"
+  },
+  {
+    "name": "rhsm-icons",
+    "summary": "Icons for Red Hat Subscription Management client tools"
+  },
+  {
+    "name": "rmt",
+    "summary": "Provides certain programs with access to remote tape devices"
+  },
+  {
+    "name": "rng-tools",
+    "summary": "Random number generator related utilities"
+  },
+  {
+    "name": "rootfiles",
+    "summary": "The basic required files for the root user's directory"
+  },
+  {
+    "name": "rpcbind",
+    "summary": "Universal Addresses to RPC Program Number Mapper"
+  },
+  {
+    "name": "rpm",
+    "summary": "The RPM package management system"
+  },
+  {
+    "name": "rpm-build-libs",
+    "summary": "Libraries for building RPM packages"
+  },
+  {
+    "name": "rpm-libs",
+    "summary": "Libraries for manipulating RPM packages"
+  },
+  {
+    "name": "rpm-plugin-audit",
+    "summary": "Rpm plugin for logging audit events on package operations"
+  },
+  {
+    "name": "rpm-plugin-selinux",
+    "summary": "Rpm plugin for SELinux functionality"
+  },
+  {
+    "name": "rpm-sign",
+    "summary": "Package signing support"
+  },
+  {
+    "name": "rpm-sign-libs",
+    "summary": "Libraries for signing RPM packages"
+  },
+  {
+    "name": "rsync",
+    "summary": "A program for synchronizing files over a network"
+  },
+  {
+    "name": "samba",
+    "summary": "Server and Client software to interoperate with Windows machines"
+  },
+  {
+    "name": "samba-client-libs",
+    "summary": "Samba client libraries"
+  },
+  {
+    "name": "samba-common",
+    "summary": "Files used by both Samba servers and clients"
+  },
+  {
+    "name": "samba-common-libs",
+    "summary": "Libraries used by both Samba servers and clients"
+  },
+  {
+    "name": "samba-common-tools",
+    "summary": "Tools for Samba servers and clients"
+  },
+  {
+    "name": "samba-dc-libs",
+    "summary": "Samba AD Domain Controller Libraries"
+  },
+  {
+    "name": "samba-dcerpc",
+    "summary": "DCE RPC binaries"
+  },
+  {
+    "name": "samba-ldb-ldap-modules",
+    "summary": "Samba ldap modules for ldb"
+  },
+  {
+    "name": "samba-libs",
+    "summary": "Samba libraries"
+  },
+  {
+    "name": "samba-tools",
+    "summary": "Tools for Samba servers"
+  },
+  {
+    "name": "samba-usershares",
+    "summary": "Provides support for non-root user shares"
+  },
+  {
+    "name": "samba-winbind",
+    "summary": "Samba winbind"
+  },
+  {
+    "name": "samba-winbind-modules",
+    "summary": "Samba winbind modules"
+  },
+  {
+    "name": "sed",
+    "summary": "A GNU stream text editor"
+  },
+  {
+    "name": "selinux-policy",
+    "summary": "SELinux policy configuration"
+  },
+  {
+    "name": "selinux-policy-doc",
+    "summary": "SELinux policy documentation"
+  },
+  {
+    "name": "selinux-policy-mls",
+    "summary": "SELinux MLS policy"
+  },
+  {
+    "name": "selinux-policy-sandbox",
+    "summary": "SELinux sandbox policy"
+  },
+  {
+    "name": "selinux-policy-targeted",
+    "summary": "SELinux targeted policy"
+  },
+  {
+    "name": "setools-console",
+    "summary": "Policy analysis command-line tools for SELinux"
+  },
+  {
+    "name": "setserial",
+    "summary": "A utility for configuring serial ports"
+  },
+  {
+    "name": "setup",
+    "summary": "A set of system configuration and setup files"
+  },
+  {
+    "name": "sg3_utils",
+    "summary": "Utilities for devices that use SCSI command sets"
+  },
+  {
+    "name": "sg3_utils-libs",
+    "summary": "Shared library for sg3_utils"
+  },
+  {
+    "name": "shadow-utils",
+    "summary": "Utilities for managing accounts and shadow password files"
+  },
+  {
+    "name": "shadow-utils-subid",
+    "summary": "A library to manage subordinate uid and gid ranges"
+  },
+  {
+    "name": "shared-mime-info",
+    "summary": "Shared MIME information database"
+  },
+  {
+    "name": "shim-x64",
+    "summary": "First-stage UEFI bootloader"
+  },
+  {
+    "name": "slang",
+    "summary": "Shared library for the S-Lang extension language"
+  },
+  {
+    "name": "smartmontools",
+    "summary": "Tools for monitoring SMART capable hard disks"
+  },
+  {
+    "name": "snappy",
+    "summary": "Fast compression and decompression library"
+  },
+  {
+    "name": "sos",
+    "summary": "A set of tools to gather troubleshooting information from a system"
+  },
+  {
+    "name": "sos-audit",
+    "summary": "Audit use of some commands for support purposes"
+  },
+  {
+    "name": "sqlite-libs",
+    "summary": "Shared library for the sqlite3 embeddable SQL database engine."
+  },
+  {
+    "name": "squashfs-tools",
+    "summary": "Utility for the creation of squashfs filesystems"
+  },
+  {
+    "name": "srp_daemon",
+    "summary": "Tools for using the InfiniBand SRP protocol devices"
+  },
+  {
+    "name": "sssd",
+    "summary": "System Security Services Daemon"
+  },
+  {
+    "name": "sssd-ad",
+    "summary": "The AD back end of the SSSD"
+  },
+  {
+    "name": "sssd-client",
+    "summary": "SSSD Client libraries for NSS and PAM"
+  },
+  {
+    "name": "sssd-common",
+    "summary": "Common files for the SSSD"
+  },
+  {
+    "name": "sssd-common-pac",
+    "summary": "Common files needed for supporting PAC processing"
+  },
+  {
+    "name": "sssd-dbus",
+    "summary": "The D-Bus responder of the SSSD"
+  },
+  {
+    "name": "sssd-ipa",
+    "summary": "The IPA back end of the SSSD"
+  },
+  {
+    "name": "sssd-kcm",
+    "summary": "An implementation of a Kerberos KCM server"
+  },
+  {
+    "name": "sssd-krb5",
+    "summary": "The Kerberos authentication back end for the SSSD"
+  },
+  {
+    "name": "sssd-krb5-common",
+    "summary": "SSSD helpers needed for Kerberos and GSSAPI authentication"
+  },
+  {
+    "name": "sssd-ldap",
+    "summary": "The LDAP back end of the SSSD"
+  },
+  {
+    "name": "sssd-nfs-idmap",
+    "summary": "SSSD plug-in for NFSv4 rpc.idmapd"
+  },
+  {
+    "name": "sssd-polkit-rules",
+    "summary": "Rules for polkit integration for SSSD"
+  },
+  {
+    "name": "sssd-proxy",
+    "summary": "The proxy back end of the SSSD"
+  },
+  {
+    "name": "sssd-tools",
+    "summary": "Userspace tools for use with the SSSD"
+  },
+  {
+    "name": "sssd-winbind-idmap",
+    "summary": "SSSD's idmap_sss Backend for Winbind"
+  },
+  {
+    "name": "strace",
+    "summary": "Tracks and displays system calls associated with a running process"
+  },
+  {
+    "name": "stunnel",
+    "summary": "A TLS-encrypting socket wrapper"
+  },
+  {
+    "name": "subscription-manager",
+    "summary": "Tools and libraries for subscription and repository management"
+  },
+  {
+    "name": "subscription-manager-cockpit",
+    "summary": "Subscription Manager Cockpit UI"
+  },
+  {
+    "name": "subscription-manager-plugin-ostree",
+    "summary": "A plugin for handling OSTree content."
+  },
+  {
+    "name": "subscription-manager-rhsm-certificates",
+    "summary": "Certificates required to communicate with a Red Hat Unified Entitlement Platform"
+  },
+  {
+    "name": "sudo",
+    "summary": "Allows restricted root access for specified users"
+  },
+  {
+    "name": "symlinks",
+    "summary": "A utility which maintains a system's symbolic links"
+  },
+  {
+    "name": "syslinux",
+    "summary": "Simple kernel loader which boots from a FAT filesystem"
+  },
+  {
+    "name": "syslinux-extlinux",
+    "summary": "The EXTLINUX bootloader, for booting the local system."
+  },
+  {
+    "name": "syslinux-extlinux-nonlinux",
+    "summary": "The parts of the EXTLINUX bootloader which aren't run from linux."
+  },
+  {
+    "name": "syslinux-nonlinux",
+    "summary": "SYSLINUX modules which aren't run from linux."
+  },
+  {
+    "name": "systemd",
+    "summary": "System and Service Manager"
+  },
+  {
+    "name": "systemd-container",
+    "summary": "Tools for containers and VMs"
+  },
+  {
+    "name": "systemd-libs",
+    "summary": "systemd libraries"
+  },
+  {
+    "name": "systemd-oomd",
+    "summary": "A userspace out-of-memory (OOM) killer"
+  },
+  {
+    "name": "systemd-pam",
+    "summary": "systemd PAM module"
+  },
+  {
+    "name": "systemd-resolved",
+    "summary": "System daemon that provides network name resolution to local applications"
+  },
+  {
+    "name": "systemd-rpm-macros",
+    "summary": "Macros that define paths and scriptlets related to systemd"
+  },
+  {
+    "name": "systemd-udev",
+    "summary": "Rule-based device node and kernel event manager"
+  },
+  {
+    "name": "tar",
+    "summary": "GNU file archiving program"
+  },
+  {
+    "name": "tboot",
+    "summary": "Performs a verified launch using Intel TXT"
+  },
+  {
+    "name": "tcl",
+    "summary": "Tool Command Language, pronounced tickle"
+  },
+  {
+    "name": "tdb-tools",
+    "summary": "Developer tools for the Tdb library"
+  },
+  {
+    "name": "teamd",
+    "summary": "Team network device control daemon"
+  },
+  {
+    "name": "time",
+    "summary": "A GNU utility for monitoring a program's use of system resources"
+  },
+  {
+    "name": "tmux",
+    "summary": "A terminal multiplexer"
+  },
+  {
+    "name": "tpm2-tools",
+    "summary": "A bunch of TPM testing toolS build upon tpm2-tss"
+  },
+  {
+    "name": "tpm2-tss",
+    "summary": "TPM2.0 Software Stack"
+  },
+  {
+    "name": "trace-cmd",
+    "summary": "A user interface to Ftrace"
+  },
+  {
+    "name": "traceroute",
+    "summary": "Traces the route taken by packets over an IPv4/IPv6 network"
+  },
+  {
+    "name": "tree",
+    "summary": "File system tree viewer"
+  },
+  {
+    "name": "tss2",
+    "summary": "IBM's TCG Software Stack (TSS) for TPM 2.0 and related utilities"
+  },
+  {
+    "name": "tuna",
+    "summary": "Application tuning GUI & command line utility"
+  },
+  {
+    "name": "tuned",
+    "summary": "A dynamic adaptive system tuning daemon"
+  },
+  {
+    "name": "tuned-profiles-cpu-partitioning",
+    "summary": "Additional tuned profile(s) optimized for CPU partitioning"
+  },
+  {
+    "name": "tzdata",
+    "summary": "Timezone data"
+  },
+  {
+    "name": "units",
+    "summary": "A utility for converting amounts from one unit to another"
+  },
+  {
+    "name": "unzip",
+    "summary": "A utility for unpacking zip files"
+  },
+  {
+    "name": "usb_modeswitch",
+    "summary": "USB Modeswitch gets mobile broadband cards in operational mode"
+  },
+  {
+    "name": "usb_modeswitch-data",
+    "summary": "USB Modeswitch gets mobile broadband cards in operational mode"
+  },
+  {
+    "name": "usbutils",
+    "summary": "Linux USB utilities"
+  },
+  {
+    "name": "usermode",
+    "summary": "Tools for certain user account management tasks"
+  },
+  {
+    "name": "userspace-rcu",
+    "summary": "RCU (read-copy-update) implementation in user-space"
+  },
+  {
+    "name": "util-linux",
+    "summary": "A collection of basic system utilities"
+  },
+  {
+    "name": "util-linux-core",
+    "summary": "The most essential utilities from the util-linux suite."
+  },
+  {
+    "name": "util-linux-user",
+    "summary": "libuser based util-linux utilities"
+  },
+  {
+    "name": "vdo",
+    "summary": "Management tools for Virtual Data Optimizer"
+  },
+  {
+    "name": "vdo-support",
+    "summary": "Support tools for Virtual Data Optimizer"
+  },
+  {
+    "name": "veritysetup",
+    "summary": "A utility for setting up dm-verity volumes"
+  },
+  {
+    "name": "vim-filesystem",
+    "summary": "VIM filesystem layout"
+  },
+  {
+    "name": "vim-minimal",
+    "summary": "A minimal version of the VIM editor"
+  },
+  {
+    "name": "virt-what",
+    "summary": "Detect if we are running in a virtual machine"
+  },
+  {
+    "name": "which",
+    "summary": "Displays where a particular program in your path is located"
+  },
+  {
+    "name": "wireless-regdb",
+    "summary": "Regulatory database for 802.11 wireless networking"
+  },
+  {
+    "name": "words",
+    "summary": "A dictionary of English words for the /usr/share/dict directory"
+  },
+  {
+    "name": "wpa_supplicant",
+    "summary": "WPA/WPA2/IEEE 802.1X Supplicant"
+  },
+  {
+    "name": "x3270",
+    "summary": "An X Window System based IBM 3278/3279 terminal emulator"
+  },
+  {
+    "name": "x3270-text",
+    "summary": "IBM 3278/3279 terminal emulator for text mode"
+  },
+  {
+    "name": "xfsdump",
+    "summary": "Backup and restore utilities for the XFS filesystem"
+  },
+  {
+    "name": "xfsprogs",
+    "summary": "Utilities for managing the XFS filesystem"
+  },
+  {
+    "name": "xz",
+    "summary": "LZMA compression utilities"
+  },
+  {
+    "name": "xz-libs",
+    "summary": "Libraries for decoding LZMA compression"
+  },
+  {
+    "name": "yum",
+    "summary": "Package manager"
+  },
+  {
+    "name": "yum-utils",
+    "summary": "Yum-utils CLI compatibility layer"
+  },
+  {
+    "name": "zip",
+    "summary": "A file compression and packaging utility compatible with PKZIP"
+  },
+  {
+    "name": "zlib",
+    "summary": "Compression and decompression library"
+  },
+  {
+    "name": "zsh",
+    "summary": "Powerful interactive shell"
+  },
+  {
+    "name": "zstd",
+    "summary": "Zstd compression library"
+  }
+]
