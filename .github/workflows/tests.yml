@@ -123,10 +123,10 @@ jobs:
           --local \
           -o yaml > processed-templates/image-builder.yml
 
-        oc process -f templates/iqe-trigger.yml \
-          -p WEBHOOK_URL=webhook_url \
+        oc process -f templates/iqe-trigger-integration.yml \
+          -p IMAGE_TAG=image_tag \
           --local \
-          -o yaml > processed-templates/iqe-trigger.yml
+          -o yaml > processed-templates/iqe-trigger-integration.yml
 
     - uses: stackrox/kube-linter-action@v1.0.4
       with:
