@@ -684,7 +684,7 @@ func TestGetDistributions(t *testing.T) {
 		for _, distro := range result {
 			distros = append(distros, distro.Name)
 		}
-		require.ElementsMatch(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "centos-8", "centos-9", "fedora-37", "fedora-38", "fedora-39", "fedora-40"}, distros)
+		require.ElementsMatch(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "centos-8", "centos-9", "fedora-37", "fedora-38", "fedora-39", "fedora-40"}, distros)
 	})
 
 	t.Run("No access to restricted distributions", func(t *testing.T) {
@@ -697,7 +697,7 @@ func TestGetDistributions(t *testing.T) {
 		for _, distro := range result {
 			distros = append(distros, distro.Name)
 		}
-		require.ElementsMatch(t, []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-9", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "centos-8", "centos-9"}, distros)
+		require.ElementsMatch(t, []string{"rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-9", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "centos-8", "centos-9"}, distros)
 	})
 }
 
@@ -713,7 +713,7 @@ func TestGetProfiles(t *testing.T) {
 
 	t.Run("Access profiles on all rhel8 variants returns a correct list of profiles", func(t *testing.T) {
 		for _, dist := range []Distributions{
-			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel8Nightly, Centos8,
+			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel89, Rhel8Nightly, Centos8,
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
