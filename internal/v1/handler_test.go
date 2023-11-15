@@ -744,7 +744,7 @@ func TestGetProfiles(t *testing.T) {
 
 	t.Run("Access profiles on all rhel9 variants returns a correct list of profiles", func(t *testing.T) {
 		for _, dist := range []Distributions{
-			Rhel9, Rhel91, Rhel92, Rhel9Nightly, Centos9,
+			Rhel9, Rhel91, Rhel92, Rhel93, Rhel9Nightly, Centos9,
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
