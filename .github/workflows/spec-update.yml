@@ -25,6 +25,6 @@ jobs:
           delete-branch: true
           title: "internal: update api specs"
           commit-message: "internal: update api specs"
-          body: Composer api spec update.
+          body: Client API specs update.
           token: ${{ secrets.UPDATE_API_SPEC_TOKEN }}
           author: schutzbot <schutzbot@gmail.com>
