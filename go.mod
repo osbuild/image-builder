@@ -9,16 +9,16 @@ require (
 	github.com/getkin/kin-openapi v0.112.0
 	github.com/getsentry/sentry-go v0.25.0
 	github.com/google/uuid v1.3.0
-	github.com/hashicorp/go-retryablehttp v0.7.2
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/labstack/gommon v0.4.0
+	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
 	github.com/prometheus/client_golang v1.15.1
 	github.com/redhatinsights/app-common-go v1.6.6
 	github.com/redhatinsights/identity v0.0.0-20220719174832-36a7b1cbeff1
 	github.com/redhatinsights/platform-go-middlewares v0.20.0
-	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.2
+	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
@@ -31,6 +31,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.14.0 // indirect

@@ -1,12 +1,8 @@
 package logger
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -64,33 +60,4 @@ func TestNewLoggerWithInvalidKeyAndSecret(t *testing.T) {
 	err = AddCloudWatchHook(log, "testSecret", "us-east-1", "image-builder", "")
 
 	require.Error(t, err, "The security token included in the request is invalid")
-}
-
-func TestSplunkLogger(t *testing.T) {
-	ch := make(chan bool)
-	time.AfterFunc(time.Second*10, func() {
-		ch <- false
-	})
-	count := 0
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// make sure the logger retries requests
-		if count == 0 {
-			count += 1
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		require.Equal(t, "Splunk", r.Header.Get("Authorization"))
-		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
-		var sp SplunkPayload
-		err := json.NewDecoder(r.Body).Decode(&sp)
-		require.NoError(t, err)
-		require.Equal(t, "test-host", sp.Host)
-		require.Equal(t, "test-host", sp.Event.Host)
-		require.Equal(t, "image-builder", sp.Event.Ident)
-		require.Equal(t, "message", sp.Event.Message)
-		ch <- true
-	}))
-	sl := NewSplunkLogger(srv.URL, "", "image-builder", "test-host")
-	require.NoError(t, sl.LogWithTime(time.Now(), "message"))
-	require.True(t, <-ch)
 }

@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"strings"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch"
 	"github.com/sirupsen/logrus"
 )
@@ -135,7 +137,7 @@ func AddCloudWatchHook(log *logrus.Logger, key, secret, region, group string) er
 }
 
 func AddSplunkHook(log *logrus.Logger, host, port, token string) error {
-	hook, err := NewSplunkHook(host, port, token, "image-builder")
+	hook, err := slogger.NewSplunkHook(context.Background(), host, port, token, "image-builder")
 	if err != nil {
 		return err
 	}
