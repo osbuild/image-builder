@@ -99,7 +99,7 @@ github.com/google/uuid
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-retryablehttp v0.7.2
+# github.com/hashicorp/go-retryablehttp v0.7.5
 ## explicit; go 1.13
 github.com/hashicorp/go-retryablehttp
 # github.com/invopop/yaml v0.1.0
@@ -169,6 +169,9 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 ## explicit
 github.com/mohae/deepcopy
+# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
+## explicit; go 1.19
+github.com/osbuild/osbuild-composer/pkg/splunk_logger
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
@@ -202,11 +205,11 @@ github.com/redhatinsights/identity
 github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch
 # github.com/rogpeppe/go-internal v1.11.0
 ## explicit; go 1.19
-# github.com/sirupsen/logrus v1.9.0
+# github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/stretchr/testify v1.8.2
-## explicit; go 1.13
+# github.com/stretchr/testify v1.8.4
+## explicit; go 1.20
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/valyala/bytebufferpool v1.0.0
