@@ -8,3 +8,4 @@ dnf-json
 /.fleet
 /.idea
 /gen-oscap
+local.env

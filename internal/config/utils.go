@@ -5,10 +5,16 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/joho/godotenv"
 	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 )
 
 func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
+	err := godotenv.Load("local.env")
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to load local.env file: %w", err)
+	}
+
 	t := reflect.TypeOf(conf).Elem()
 	v := reflect.ValueOf(conf).Elem()
 
