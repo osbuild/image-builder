@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -8,6 +9,9 @@ import (
 	"github.com/joho/godotenv"
 	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 )
+
+var ErrMissingEnvTag = errors.New("missing 'env' tag in config field")
+var ErrUnsupportedFieldType = errors.New("unsupported config field type")
 
 func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 	err := godotenv.Load("local.env")
@@ -23,7 +27,7 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 		fieldV := v.Field(i)
 		key, ok := fieldT.Tag.Lookup("env")
 		if !ok {
-			return fmt.Errorf("No env tag in config field")
+			return ErrMissingEnvTag
 		}
 
 		confV, ok := os.LookupEnv(key)
@@ -33,7 +37,7 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 			case reflect.String:
 				fieldV.SetString(confV)
 			default:
-				return fmt.Errorf("Unsupported type")
+				return ErrUnsupportedFieldType
 			}
 		}
 	}
