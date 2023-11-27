@@ -1175,6 +1175,13 @@ components:
         profile_id:
           type: string
           example: "xccdf_org.ssgproject.content_profile_cis"
+          description: "The policy reference ID"
+        profile_name:
+          type: string
+          description: "The policy type"
+        profile_description:
+          type: string
+          description: "The longform policy description"
     ClonesResponse:
       required:
         - meta

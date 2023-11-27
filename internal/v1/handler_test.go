@@ -837,6 +837,12 @@ func TestGetCustomizations(t *testing.T) {
 				} else {
 					require.ElementsMatch(t, *customizations.Filesystem, *result.Filesystem)
 				}
+				if result.Openscap == nil {
+					require.Nil(t, customizations.Openscap)
+				} else {
+					customizations.Openscap.ProfileId = string(profile)
+					require.Equal(t, *customizations.Openscap, *result.Openscap)
+				}
 			}
 		}
 	})
