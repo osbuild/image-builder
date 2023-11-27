@@ -244,6 +244,7 @@ function createReqFileAWS() {
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
+  "client_id": "api",
   "image_requests": [
     {
       "architecture": "$ARCH",
@@ -305,6 +306,7 @@ function createReqFileGCP() {
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
+  "client_id": "api",
   "image_requests": [
     {
       "architecture": "$ARCH",
@@ -378,6 +380,7 @@ function createReqFileAzure() {
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
+  "client_id": "api",
   "image_requests": [
     {
       "architecture": "$ARCH",
