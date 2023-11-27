@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/osbuild/image-builder/internal/distribution"
@@ -28,6 +29,14 @@ type Filesystem struct {
 type Customizations struct {
 	Filesystem []Filesystem `json:"filesystem,omitempty"`
 	Packages   *[]string    `json:"packages,omitempty"`
+	Openscap   *OpenSCAP    `json:"openscap,omitempty"`
+}
+
+type OpenSCAP struct {
+	// add Name & Description to the customizations struct
+	// so that these are saved to the json file
+	Name        string `json:"profile_name,omitempty"`
+	Description string `json:"profile_description,omitempty"`
 }
 
 type Blueprint struct {
@@ -79,7 +88,40 @@ func getToml(dir string, datastreamDistro string, profile string) {
 	fmt.Println("✓")
 }
 
-func generateJson(dir string, datastreamDistro string, profile string) {
+func getDescriptionFromProfileInfo(profileInfo string) string {
+	descriptionBlock := strings.Split(profileInfo, "Description: ")
+	if len(descriptionBlock) <= 1 {
+		return ""
+	}
+	description := strings.Split(descriptionBlock[1], "\n")
+	return description[0] // get rid of new line
+}
+
+func getProfileDescription(datastreamDistro string, profile string) string {
+	fmt.Printf("        get profile description ")
+	cmd := exec.Command("oscap",
+		"info",
+		"--profile",
+		string(profile),
+		fmt.Sprintf(
+			"/usr/share/xml/scap/ssg/content/ssg-%s-ds.xml",
+			datastreamDistro,
+		),
+	) // #nosec G204 This is a utility program that a dev is gonna start by hand, there's no risk here.
+	output, err := cmd.Output()
+	if err != nil {
+		// we don't want to error out here, so just warn
+		// as we still want mountpoint and package info
+		msg := fmt.Sprintf("Warning: error getting description for %s profile", profile)
+		fmt.Println(msg)
+		panic(err)
+	}
+	fmt.Println("✓")
+	description := getDescriptionFromProfileInfo(string(output))
+	return description
+}
+
+func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 	fmt.Printf("        generate customizations.json ")
 	bpFile, err := os.Open(path.Join(dir, "blueprint.toml")) // #nosec G304
 	if err != nil {
@@ -96,6 +138,7 @@ func generateJson(dir string, datastreamDistro string, profile string) {
 	if err != nil {
 		panic(err)
 	}
+
 	// Convert the custom data structure into a `Customizations` object.
 	// This will be easier to handle in IB's API later on
 	customizations := v1.Customizations{}
@@ -113,6 +156,13 @@ func generateJson(dir string, datastreamDistro string, profile string) {
 	if len(packages) > 0 {
 		customizations.Packages = &packages
 	}
+
+	openscap := v1.OpenSCAP{}
+	openscap.ProfileId = profile
+	openscap.ProfileName = &bp.Description // annoyingly the Profile name is saved to the blueprint description
+	openscap.ProfileDescription = &profileDescription
+	customizations.Openscap = &openscap
+
 	// Write it all down on the fileSystem
 	bArray, err := json.Marshal(customizations)
 	if err != nil {
@@ -137,7 +187,7 @@ func main() {
 	}
 
 	for _, distro := range distros.Available(true).List() {
-		oscapName := distro.OscapName
+		oscapDistroName := distro.OscapName
 		profiles, _ := v1.OscapProfiles(
 			v1.Distributions(distro.Distribution.Name),
 		)
@@ -156,11 +206,13 @@ func main() {
 				panic(err)
 			}
 			// toml generation
-			getToml(dir, oscapName, string(profile))
+			getToml(dir, oscapDistroName, string(profile))
+			// get profile description
+			profileDescription := getProfileDescription(oscapDistroName, string(profile))
 			// json generation
-			generateJson(dir, oscapName, string(profile))
+			generateJson(dir, oscapDistroName, profileDescription, string(profile))
 			// toml is not needed in the repo
-			cleanToml(dir, oscapName, string(profile))
+			cleanToml(dir, oscapDistroName, string(profile))
 		}
 	}
 }

@@ -106,5 +106,11 @@ func loadOscapCustomizations(distributionDir string, distribution Distributions,
 	if err != nil {
 		return nil, err
 	}
+
+	if customizations.Openscap == nil {
+		// set the profile id in the customizations object
+		return nil, errors.New("Customizations file is missing OpenSCAP section")
+	}
+
 	return &customizations, nil
 }
