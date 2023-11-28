@@ -2,14 +2,13 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
 	"strconv"
 
 	"github.com/go-openapi/jsonpointer"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
 // Responses is specified by OpenAPI/Swagger 3.0 standard.
@@ -17,6 +16,19 @@ import (
 type Responses map[string]*ResponseRef
 
 var _ jsonpointer.JSONPointable = (*Responses)(nil)
+
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (responses Responses) JSONLookup(token string) (interface{}, error) {
+	ref, ok := responses[token]
+	if !ok {
+		return nil, fmt.Errorf("invalid token reference: %q", token)
+	}
+
+	if ref != nil && ref.Ref != "" {
+		return &Ref{Ref: ref.Ref}, nil
+	}
+	return ref.Value, nil
+}
 
 func NewResponses() Responses {
 	r := make(Responses)
@@ -28,8 +40,30 @@ func (responses Responses) Default() *ResponseRef {
 	return responses["default"]
 }
 
+// Get returns a ResponseRef for the given status
+// If an exact match isn't initially found a patterned field is checked using
+// the first digit to determine the range (eg: 201 to 2XX)
+// See https://spec.openapis.org/oas/v3.0.3#patterned-fields-0
 func (responses Responses) Get(status int) *ResponseRef {
-	return responses[strconv.FormatInt(int64(status), 10)]
+	st := strconv.FormatInt(int64(status), 10)
+	if rref, ok := responses[st]; ok {
+		return rref
+	}
+	st = string(st[0]) + "XX"
+	switch st {
+	case "1XX":
+		return responses["1XX"]
+	case "2XX":
+		return responses["2XX"]
+	case "3XX":
+		return responses["3XX"]
+	case "4XX":
+		return responses["4XX"]
+	case "5XX":
+		return responses["5XX"]
+	default:
+		return nil
+	}
 }
 
 // Validate returns an error if Responses does not comply with the OpenAPI spec.
@@ -54,23 +88,10 @@ func (responses Responses) Validate(ctx context.Context, opts ...ValidationOptio
 	return nil
 }
 
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (responses Responses) JSONLookup(token string) (interface{}, error) {
-	ref, ok := responses[token]
-	if ok == false {
-		return nil, fmt.Errorf("invalid token reference: %q", token)
-	}
-
-	if ref != nil && ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
-
 // Response is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#response-object
 type Response struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
 	Description *string `json:"description,omitempty" yaml:"description,omitempty"`
 	Headers     Headers `json:"headers,omitempty" yaml:"headers,omitempty"`
@@ -103,13 +124,43 @@ func (response *Response) WithJSONSchemaRef(schema *SchemaRef) *Response {
 }
 
 // MarshalJSON returns the JSON encoding of Response.
-func (response *Response) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(response)
+func (response Response) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 4+len(response.Extensions))
+	for k, v := range response.Extensions {
+		m[k] = v
+	}
+	if x := response.Description; x != nil {
+		m["description"] = x
+	}
+	if x := response.Headers; len(x) != 0 {
+		m["headers"] = x
+	}
+	if x := response.Content; len(x) != 0 {
+		m["content"] = x
+	}
+	if x := response.Links; len(x) != 0 {
+		m["links"] = x
+	}
+	return json.Marshal(m)
 }
 
 // UnmarshalJSON sets Response to a copy of data.
 func (response *Response) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, response)
+	type ResponseBis Response
+	var x ResponseBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "description")
+	delete(x.Extensions, "headers")
+	delete(x.Extensions, "content")
+	delete(x.Extensions, "links")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
+	*response = Response(x)
+	return nil
 }
 
 // Validate returns an error if Response does not comply with the OpenAPI spec.
@@ -152,5 +203,6 @@ func (response *Response) Validate(ctx context.Context, opts ...ValidationOption
 			return err
 		}
 	}
-	return nil
+
+	return validateExtensions(ctx, response.Extensions)
 }

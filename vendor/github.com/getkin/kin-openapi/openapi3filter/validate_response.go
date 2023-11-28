@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -39,7 +39,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	route := input.RequestValidationInput.Route
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 
 	// Find input for the current status
@@ -63,12 +63,15 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 		return &ResponseError{Input: input, Reason: "response has not been resolved"}
 	}
 
-	opts := make([]openapi3.SchemaValidationOption, 0, 2)
+	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential options here
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
 	}
 	if options.customSchemaErrorFunc != nil {
 		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
+	}
+	if options.ExcludeWriteOnlyValidations {
+		opts = append(opts, openapi3.DisableWriteOnlyValidation())
 	}
 
 	headers := make([]string, 0, len(response.Headers))
@@ -122,7 +125,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	defer body.Close()
 
 	// Read all
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return &ResponseError{
 			Input:  input,
