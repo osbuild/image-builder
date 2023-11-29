@@ -1171,6 +1171,9 @@ type ServerInterface interface {
 	// create blueprint
 	// (POST /experimental/blueprint)
 	CreateBlueprint(ctx echo.Context) error
+	// create new compose from blueprint
+	// (POST /experimental/blueprint/{id}/compose)
+	ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) error
 	// get the openapi json specification
 	// (GET /openapi.json)
 	GetOpenapiJson(ctx echo.Context) error
@@ -1383,6 +1386,22 @@ func (w *ServerInterfaceWrapper) CreateBlueprint(ctx echo.Context) error {
 	return err
 }
 
+// ComposeBlueprint converts echo context to params.
+func (w *ServerInterfaceWrapper) ComposeBlueprint(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ComposeBlueprint(ctx, id)
+	return err
+}
+
 // GetOpenapiJson converts echo context to params.
 func (w *ServerInterfaceWrapper) GetOpenapiJson(ctx echo.Context) error {
 	var err error
@@ -1535,6 +1554,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/composes/:composeId/metadata", wrapper.GetComposeMetadata)
 	router.GET(baseURL+"/distributions", wrapper.GetDistributions)
 	router.POST(baseURL+"/experimental/blueprint", wrapper.CreateBlueprint)
+	router.POST(baseURL+"/experimental/blueprint/:id/compose", wrapper.ComposeBlueprint)
 	router.GET(baseURL+"/openapi.json", wrapper.GetOpenapiJson)
 	router.GET(baseURL+"/oscap/:distribution/profiles", wrapper.GetOscapProfiles)
 	router.GET(baseURL+"/oscap/:distribution/:profile/customizations", wrapper.GetOscapCustomizations)
@@ -1669,14 +1689,15 @@ var swaggerSpec = []string{
 	"srikdTXj3UWbNOsX5XxZ/oqUATN96m1VAJdMNf7EmWef0sqYfytS26tOakkbEh21K4IBdVGqLWTqTy4E",
 	"h+zygNMhEfqmey5ip/YMyvSEVaQs9XMCTfALIr77K9BzSKT2JCLSp8lOGaawiZKDapBgGppR6M1DDOv7",
 	"8EvR/XRrcknqMrbFTXbLTlXytraflVHKvsBwvXsySiH1F7kmK66vy8B1cT/gTLopcPovSCsl7ij82yWT",
-	"0uKXNkxL4qmEPNj4KYY4rlJGF7rdKQ/2Tv6EKkoXci1NkAVeok6MUcOXa3DFcg7wB3KY6OBeWMEgoMWj",
-	"4rBver7cgF5qE6sUHn9eSwDZ8TJs+Bdp4/QB7rU6OTrEHV3CGG56LGUYV6vHhULceCY8+Asl6iyLQK5H",
-	"GWRzgIipzqECF0GVIwEjqfBdOkUm4JSSYkbY/pft1q0UgT+C6X6Ulu9uXSsSqduAfqaDkromNksWksgH",
-	"f2fQ90y17xflBghCJjIBcpBcWXy1NKTArZIElfAMCPhvKBX5dX8eKpiWLukSDKPpMlmYKq7KQDfo/EMw",
-	"TVymoCU5fuvSKiENC6I/tQEf23aPbugcU7YikvtrmJI4X/g5BFNH2dYELNsfPFxGMEIkRG41QhwFleur",
-	"UflkHiAc/F+dCYiI8P9FLmDpNMHaDY1oOf77FFUon4ghqOOPVTpkUTT/E2m9GCTTJVx8jBsq7SoGVefx",
-	"JqVYTVdmUiU0ceEdC4vjJUvTv4udPPlJkw+HyJSvNIrZtnq5VVQnrPW9LifLPBuiyh/XfC+Wcx/fPv5f",
-	"AAAA//8CTwNQyHkAAA==",
+	"0uKXNkxL4rlGyFUWfIvsqQap/NpANY4ZddctAd0svgbWmqbwInSYgPlpu/L5XPrnLdHnlsVnbtRdrIul",
+	"bM5KEyVXSXCz6d9GQDNFZIWYrpEpJbfBhmUxRH2VEb3Q7U55sOf3J0xougBxad4siG50QpcavlxWK8xQ",
+	"gD+Qw0QHTsPKGwEtHhU1ftPz5Qb0UpuvpfDY/loCyI6XYcO/yItIXzyw1peILh+ILg8NN+uWMuOrzfrC",
+	"kG+8yyD4yzrqDJZArkcZZHOAiKnOTwMXQZXbAyPpqLh0ikzAKSXFjHTTX7bLvFIE/gim+1FavnN4rUik",
+	"brH6mY516nrjLFlIIh/8fUzfM9V+dZTTIgiZyATIQXJl8dXSkAK3ShJUoj4g4L+hVOTX/VmzYFq6FFEw",
+	"jKbLZGGqKDAD3aDzD8E0cQmIluT4bWGrhDQs5P9U4UisXCS6WXZM2YoMxF/DlMS52M8hmDqCuSbQ3v7A",
+	"7DKCESIhcqsR4ig4cbEalU/mr8LB/9UZrIgI/1/ksJZOwazdiIuW479PMZDyiRiCOm5epUMWhz1+Iq0X",
+	"g2S6hIuPcUOlXcXgtES8SSlWi5iZDAxNXHg3yOJY1NL072Inpn7S5MMhMuUrjWK2rV5uFdW3a32vyyAz",
+	"zzSpst0134vl3Me3j/8XAAD//x6xE3CAfAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

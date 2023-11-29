@@ -39,7 +39,7 @@ func TestComposeStatus(t *testing.T) {
 	}
 	crRaw, err := json.Marshal(cr)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId))
+	err = dbase.InsertCompose(composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
 	require.NoError(t, err)
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
 	defer func() {

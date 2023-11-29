@@ -100,9 +100,9 @@ func testInsertCompose(t *testing.T) {
 	migrateTern(t)
 
 	// test
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId)
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), "", "", ORGID1, &imageName, []byte("{}"), &clientId)
+	err = d.InsertCompose(uuid.New(), "", "", ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
 }
 
@@ -113,13 +113,13 @@ func testGetCompose(t *testing.T) {
 	imageName := "MyImageName"
 	clientId := "ui"
 
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId)
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId)
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId)
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId)
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
 
 	// test
@@ -311,7 +311,7 @@ func testClones(t *testing.T) {
       }
     }
   ]
-}`), nil))
+}`), nil, nil))
 
 	require.NoError(t, d.InsertClone(composeId, cloneId, []byte(`
 {
