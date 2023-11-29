@@ -19,7 +19,7 @@ const (
 		VALUES($1, $2, $3, $4)`
 
 	sqlGetBlueprint = `
-		SELECT blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body
+		SELECT blueprints.id, blueprint_versions.id, blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
 		WHERE blueprints.id = $1 AND blueprints.org_id = $2 AND blueprints.account_number = $3    
 		ORDER BY blueprint_versions.created_at DESC LIMIT 1`
@@ -66,7 +66,7 @@ func (db *dB) GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*Blueprin
 
 	var result BlueprintEntry
 	row := conn.QueryRow(ctx, sqlGetBlueprint, id, orgID, accountNumber)
-	err = row.Scan(&result.Name, &result.Description, &result.Version, &result.Body)
+	err = row.Scan(&result.Id, &result.VersionId, &result.Name, &result.Description, &result.Version, &result.Body)
 	if err != nil {
 		return nil, err
 	}

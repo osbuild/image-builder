@@ -414,6 +414,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+  /experimental/blueprint/{id}/compose:
+    post:
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+          description: UUID of a blueprint
+      summary: create new compose from blueprint
+      description: "create new compose from blueprint"
+      operationId: composeBlueprint
+      responses:
+        '201':
+          description: compose was created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ComposeResponse'
+        '403':
+          description: user is not allowed to compose from blueprints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
 
 components:
   schemas:

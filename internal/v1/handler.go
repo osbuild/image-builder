@@ -568,39 +568,32 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	})
 }
 
-func (h *Handlers) ComposeImage(ctx echo.Context) error {
+func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeRequest, blueprintVersionId *uuid.UUID) (ComposeResponse, error) {
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
-
 	quotaOk, err := common.CheckQuota(idHeader.Identity.OrgID, h.server.db, h.server.quotaFile)
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
 	if !quotaOk {
-		return echo.NewHTTPError(http.StatusForbidden, "Quota exceeded for user")
-	}
-
-	var composeRequest ComposeRequest
-	err = ctx.Bind(&composeRequest)
-	if err != nil {
-		return err
+		return ComposeResponse{}, echo.NewHTTPError(http.StatusForbidden, "Quota exceeded for user")
 	}
 
 	if string(composeRequest.ImageRequests[0].UploadRequest.Type) == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
+		return ComposeResponse{}, echo.NewHTTPError(http.StatusBadRequest, "Exactly one upload request should be included")
 	}
 
 	d, err := h.server.getDistro(ctx, composeRequest.Distribution)
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
 
 	var repositories []composer.Repository
 	arch, err := d.Architecture(string(composeRequest.ImageRequests[0].Architecture))
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
 	for _, r := range arch.Repositories {
 		// If no image type tags are defined for the repo, add the repo
@@ -622,12 +615,12 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 
 	uploadOptions, imageType, err := h.buildUploadOptions(ctx, composeRequest.ImageRequests[0].UploadRequest, composeRequest.ImageRequests[0].ImageType)
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
 
 	err = validateComposeRequest(&composeRequest)
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
 
 	distro := d.Distribution.Name
@@ -650,7 +643,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 
 	resp, err := h.server.cClient.Compose(cloudCR)
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
 	defer closeBody(resp.Body)
 	if resp.StatusCode != http.StatusCreated {
@@ -662,7 +655,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 			var serviceStat composer.Error
 			if err := json.Unmarshal(body, &serviceStat); err != nil {
-				return httpError
+				return ComposeResponse{}, httpError
 			}
 			if serviceStat.Id == "10" {
 				httpError.Message = "Error resolving OSTree repo"
@@ -679,33 +672,48 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 				httpError.Code = http.StatusBadRequest
 			}
 		}
-		return httpError
+		return ComposeResponse{}, httpError
 	}
 
 	var composeResult composer.ComposeId
 	err = json.NewDecoder(resp.Body).Decode(&composeResult)
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
 
 	rawCR, err := json.Marshal(composeRequest)
 	if err != nil {
-		return err
+		return ComposeResponse{}, err
 	}
 
 	clientIdString := string(*composeRequest.ClientId)
 
-	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.User.Email, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR, &clientIdString)
+	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.User.Email, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR, &clientIdString, blueprintVersionId)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
-		return err
+		return ComposeResponse{}, err
 	}
 
 	ctx.Logger().Info("Compose result", composeResult)
 
-	return ctx.JSON(http.StatusCreated, ComposeResponse{
+	return ComposeResponse{
 		Id: composeResult.Id,
-	})
+	}, nil
+
+}
+
+func (h *Handlers) ComposeImage(ctx echo.Context) error {
+	var composeRequest ComposeRequest
+	err := ctx.Bind(&composeRequest)
+	if err != nil {
+		return err
+	}
+	composeResponse, err := h.handleCommonCompose(ctx, composeRequest, nil)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusCreated, composeResponse)
 }
 
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {

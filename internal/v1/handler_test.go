@@ -127,7 +127,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	require.NoError(t, err)
 	imageName := "MyImageName"
 	clientId := "ui"
-	err = dbase.InsertCompose(id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId)
+	err = dbase.InsertCompose(id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
@@ -204,11 +204,11 @@ func TestGetComposes(t *testing.T) {
 
 	imageName := "MyImageName"
 	clientId := "ui"
-	err = dbase.InsertCompose(id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId)
+	err = dbase.InsertCompose(id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(id2, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId)
+	err = dbase.InsertCompose(id2, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(id3, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId)
+	err = dbase.InsertCompose(id3, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
 	composeEntry, err := dbase.GetCompose(id, "000000")
@@ -223,11 +223,11 @@ func TestGetComposes(t *testing.T) {
 	require.Equal(t, 3, result.Meta.Count)
 	require.Equal(t, 3, len(result.Data))
 
-	err = dbase.InsertCompose(id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId)
+	err = dbase.InsertCompose(id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, nil)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(id5, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId)
+	err = dbase.InsertCompose(id5, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, nil)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(id6, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-commit"}]}`), &clientId)
+	err = dbase.InsertCompose(id6, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-commit"}]}`), &clientId, nil)
 	require.NoError(t, err)
 
 	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes?ignoreImageTypes=edge-installer&ignoreImageTypes=aws", &tutils.AuthString0)
@@ -375,7 +375,7 @@ func TestGetClones(t *testing.T) {
       "image_type": "aws"
     }
   ]
-}`), nil)
+}`), nil, nil)
 	require.NoError(t, err)
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, provSrv.URL, dbase, "../../distributions", "")
 	defer func() {
@@ -464,7 +464,7 @@ func TestGetCloneStatus(t *testing.T) {
       "image_type": "aws"
     }
   ]
-}`), nil)
+}`), nil, nil)
 	require.NoError(t, err)
 	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
 	defer func() {

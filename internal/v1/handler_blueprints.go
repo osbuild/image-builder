@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/google/uuid"
@@ -70,4 +71,39 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, ComposeResponse{
 		Id: id,
 	})
+}
+
+func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) error {
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	blueprintEntry, err := h.server.db.GetBlueprint(id, idHeader.Identity.OrgID, idHeader.Identity.AccountNumber)
+	if err != nil {
+		return err
+	}
+	blueprint, err := BlueprintFromEntry(blueprintEntry)
+	if err != nil {
+		return err
+	}
+	composeResponses := make([]ComposeResponse, 0, len(blueprint.ImageRequests))
+	clientId := ClientId("api")
+	for _, imageRequest := range blueprint.ImageRequests {
+		composeRequest := ComposeRequest{
+			Customizations:   &blueprint.Customizations,
+			Distribution:     blueprint.Distribution,
+			ImageRequests:    []ImageRequest{imageRequest},
+			ImageName:        &blueprint.Name,
+			ImageDescription: &blueprint.Description,
+			ClientId:         &clientId,
+		}
+		composesResponse, err := h.handleCommonCompose(ctx, composeRequest, &blueprintEntry.VersionId)
+		if err != nil {
+			return err
+		}
+		composeResponses = append(composeResponses, composesResponse)
+	}
+
+	return ctx.JSON(http.StatusCreated, composeResponses)
 }

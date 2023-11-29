@@ -37,6 +37,7 @@ type CloneEntry struct {
 
 type BlueprintEntry struct {
 	Id          uuid.UUID
+	VersionId   uuid.UUID
 	Version     int
 	Body        json.RawMessage
 	Name        string
@@ -44,7 +45,7 @@ type BlueprintEntry struct {
 }
 
 type DB interface {
-	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string) error
+	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string, blueprintVersionId *uuid.UUID) error
 	GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
 	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
 	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
@@ -62,8 +63,8 @@ type DB interface {
 
 const (
 	sqlInsertCompose = `
-		INSERT INTO composes(job_id, request, created_at, account_number, email, org_id, image_name, client_id)
-		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6, $7)`
+		INSERT INTO composes(job_id, request, created_at, account_number, email, org_id, image_name, client_id, blueprint_version_id)
+		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6, $7, $8)`
 
 	sqlGetComposes = `
 	        SELECT job_id, request, created_at, image_name, client_id
@@ -147,7 +148,7 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 	return &dB{pool}, nil
 }
 
-func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string) error {
+func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string, blueprintVersionId *uuid.UUID) error {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -155,7 +156,7 @@ func (db *dB) InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string,
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, sqlInsertCompose, jobId, request, accountNumber, email, orgId, imageName, clientId)
+	_, err = conn.Exec(ctx, sqlInsertCompose, jobId, request, accountNumber, email, orgId, imageName, clientId, blueprintVersionId)
 	return err
 }
 
