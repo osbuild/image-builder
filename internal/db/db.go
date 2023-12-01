@@ -54,7 +54,7 @@ type DB interface {
 	GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
 	GetClone(id uuid.UUID, orgId string) (*CloneEntry, error)
 
-	InsertBlueprint(id uuid.UUID, orgID, accountNumber, name, description string, bodyVersion int, body json.RawMessage) error
+	InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error
 	GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error)
 	DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error
 }

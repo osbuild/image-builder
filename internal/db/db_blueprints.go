@@ -6,21 +6,28 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
 )
 
 const (
 	sqlInsertBlueprint = `
-		INSERT INTO blueprints(id, org_id, account_number, name, description, body_version, body)
-		VALUES($1, $2, $3, $4, $5, $6, $7)`
+		INSERT INTO blueprints(id, org_id, account_number, name, description)
+		VALUES($1, $2, $3, $4, $5)`
+
+	sqlInsertVersion = `
+		INSERT INTO blueprint_versions(id, blueprint_id, version, body)
+		VALUES($1, $2, $3, $4)`
 
 	sqlGetBlueprint = `
-		SELECT name, description, body_version, body
-		FROM blueprints WHERE id = $1 AND org_id = $2 AND account_number = $3`
+		SELECT blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body
+		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
+		WHERE blueprints.id = $1 AND blueprints.org_id = $2 AND blueprints.account_number = $3    
+		ORDER BY blueprint_versions.created_at DESC LIMIT 1`
 
 	sqlDeleteBlueprint = `DELETE FROM blueprints WHERE id = $1 AND org_id = $2 AND account_number = $3`
 )
 
-func (db *dB) InsertBlueprint(id uuid.UUID, orgID, accountNumber, name, description string, bodyVersion int, body json.RawMessage) error {
+func (db *dB) InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
@@ -28,10 +35,24 @@ func (db *dB) InsertBlueprint(id uuid.UUID, orgID, accountNumber, name, descript
 	}
 	defer conn.Release()
 
-	tag, err := conn.Exec(ctx, sqlInsertBlueprint, id, orgID, accountNumber, name, description, bodyVersion, body)
-	if tag.RowsAffected() != 1 {
-		return fmt.Errorf("%w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
-	}
+	err = db.withTransaction(ctx, func(tx pgx.Tx) error {
+		tag, txErr := tx.Exec(ctx, sqlInsertBlueprint, id, orgID, accountNumber, name, description)
+		if tag.RowsAffected() != 1 {
+			return fmt.Errorf("%w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
+		}
+		if txErr != nil {
+			return txErr
+		}
+
+		tag, txErr = tx.Exec(ctx, sqlInsertVersion, versionId, id, 1, body)
+		if tag.RowsAffected() != 1 {
+			return fmt.Errorf("%w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
+		}
+		if txErr != nil {
+			return txErr
+		}
+		return nil
+	})
 	return err
 }
 
