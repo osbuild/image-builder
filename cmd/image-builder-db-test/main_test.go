@@ -366,7 +366,8 @@ func testBlueprints(t *testing.T) {
 	require.NoError(t, err)
 
 	id := uuid.New()
-	err = d.InsertBlueprint(id, ORGID1, ANR1, "name", "desc", 1, body)
+	versionId := uuid.New()
+	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, "name", "desc", body)
 	require.NoError(t, err)
 
 	entry, err := d.GetBlueprint(id, ORGID1, ANR1)

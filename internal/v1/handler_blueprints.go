@@ -60,7 +60,8 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	}
 
 	id := uuid.New()
-	err = h.server.db.InsertBlueprint(id, idHeader.Identity.OrgID, idHeader.Identity.AccountNumber, blueprint.Name, blueprint.Description, blueprint.Version, body)
+	versionId := uuid.New()
+	err = h.server.db.InsertBlueprint(id, versionId, idHeader.Identity.OrgID, idHeader.Identity.AccountNumber, blueprint.Name, blueprint.Description, body)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return err
