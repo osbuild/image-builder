@@ -3,7 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -16,14 +16,14 @@ var PrivateDependencyEndpoints map[string]map[string]PrivateDependencyEndpoint
 var ObjectBuckets map[string]ObjectStoreBucket
 var KafkaServers []string
 
-func loadConfig(filename string) (*AppConfig, error) {
+func LoadConfig(filename string) (*AppConfig, error) {
 	var appConfig AppConfig
 	jsonFile, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer jsonFile.Close()
-	data, err := ioutil.ReadAll(jsonFile)
+	data, err := io.ReadAll(jsonFile)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func init() {
 	if !IsClowderEnabled() {
 		return
 	}
-	loadedConfig, err := loadConfig(os.Getenv("ACG_CONFIG"))
+	loadedConfig, err := LoadConfig(os.Getenv("ACG_CONFIG"))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -116,7 +116,7 @@ func (a AppConfig) KafkaFirstCa() (string, error) {
 
 func writeContent(dir string, file string, contentString *string) (string, error) {
 
-	dir, err := ioutil.TempDir("", dir)
+	dir, err := os.MkdirTemp("", dir)
 	if err != nil {
 		return "", err
 	}
@@ -127,13 +127,13 @@ func writeContent(dir string, file string, contentString *string) (string, error
 
 	content := []byte(*contentString)
 
-	fil, err := ioutil.TempFile(dir, file)
+	fil, err := os.CreateTemp(dir, file)
 
 	if err != nil {
 		return "", err
 	}
 
-	if err := ioutil.WriteFile(fil.Name(), content, 0666); err != nil {
+	if err := os.WriteFile(fil.Name(), content, 0666); err != nil {
 		return "", err
 	}
 
