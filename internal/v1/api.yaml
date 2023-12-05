@@ -1268,6 +1268,8 @@ components:
             Enables gpg verification of the repository metadata
         ignore_ssl:
           type: boolean
+        module_hotfixes:
+          type: boolean
     CustomRepository:
       type: object
       required:
@@ -1313,6 +1315,8 @@ components:
         priority:
           type: integer
         ssl_verify:
+          type: boolean
+        module_hotfixes:
           type: boolean
     OpenSCAP:
       type: object
