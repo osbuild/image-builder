@@ -816,6 +816,24 @@ func TestComposeCustomizations(t *testing.T) {
 		ImageName:     common.ToPtr("azure-image"),
 	}))
 
+	var fileGroup File_Group
+	require.NoError(t, fileGroup.FromFileGroup1(FileGroup1(1000)))
+	var fileUser File_User
+	require.NoError(t, fileUser.FromFileUser1(FileUser1(1000)))
+	var composerFileGroup composer.File_Group
+	require.NoError(t, composerFileGroup.FromFileGroup1(composer.FileGroup1(1000)))
+	var composerFileUser composer.File_User
+	require.NoError(t, composerFileUser.FromFileUser1(composer.FileUser1(1000)))
+
+	var dirGroup Directory_Group
+	require.NoError(t, dirGroup.FromDirectoryGroup1(DirectoryGroup1(1000)))
+	var dirUser Directory_User
+	require.NoError(t, dirUser.FromDirectoryUser1(DirectoryUser1(1000)))
+	var composerDirGroup composer.Directory_Group
+	require.NoError(t, composerDirGroup.FromDirectoryGroup1(DirectoryGroup1(1000)))
+	var composerDirUser composer.Directory_User
+	require.NoError(t, composerDirUser.FromDirectoryUser1(DirectoryUser1(1000)))
+
 	payloads := []struct {
 		imageBuilderRequest ComposeRequest
 		composerRequest     composer.ComposeRequest
@@ -852,7 +870,16 @@ func TestComposeCustomizations(t *testing.T) {
 							Name:   "user",
 							SshKey: "ssh-rsa AAAAB3NzaC1",
 						},
+						{
+							Name:   "user2",
+							SshKey: "ssh-rsa AAAAB3NzaC2",
+						},
 					},
+					Groups: common.ToPtr([]Group{
+						{
+							Name: "group",
+						},
+					}),
 					CustomRepositories: &[]CustomRepository{
 						{
 							Id:       "some-repo-id",
@@ -863,6 +890,9 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Openscap: &OpenSCAP{
 						ProfileId: "test-profile",
+					},
+					Fips: &FIPS{
+						Enabled: common.ToPtr(true),
 					},
 				},
 				Distribution: "centos-8",
@@ -910,7 +940,17 @@ func TestComposeCustomizations(t *testing.T) {
 							Key:    common.ToPtr("ssh-rsa AAAAB3NzaC1"),
 							Groups: &[]string{"wheel"},
 						},
+						{
+							Name:   "user2",
+							Key:    common.ToPtr("ssh-rsa AAAAB3NzaC2"),
+							Groups: &[]string{"wheel"},
+						},
 					},
+					Groups: common.ToPtr([]composer.Group{
+						{
+							Name: "group",
+						},
+					}),
 					CustomRepositories: &[]composer.CustomRepository{
 						{
 							Id:       "some-repo-id",
@@ -921,6 +961,9 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Openscap: &composer.OpenSCAP{
 						ProfileId: "test-profile",
+					},
+					Fips: &composer.FIPS{
+						Enabled: common.ToPtr(true),
 					},
 				},
 				ImageRequest: &composer.ImageRequest{
@@ -1025,12 +1068,21 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		// ostree, ignition, fdo
 		{
 			imageBuilderRequest: ComposeRequest{
 				Customizations: &Customizations{
 					Packages: &[]string{"pkg"},
 					Subscription: &Subscription{
 						Organization: 000,
+					},
+					Fdo: &FDO{
+						DiunPubKeyHash: common.ToPtr("hash"),
+					},
+					Ignition: &Ignition{
+						Embedded: &IgnitionEmbedded{
+							Config: "config",
+						},
 					},
 				},
 				Distribution: "centos-8",
@@ -1065,6 +1117,14 @@ func TestComposeCustomizations(t *testing.T) {
 						Rhc:           common.ToPtr(false),
 						Organization:  "0",
 						ServerUrl:     "",
+					},
+					Fdo: &composer.FDO{
+						DiunPubKeyHash: common.ToPtr("hash"),
+					},
+					Ignition: &composer.Ignition{
+						Embedded: &composer.IgnitionEmbedded{
+							Config: "config",
+						},
 					},
 				},
 				ImageRequest: &composer.ImageRequest{
@@ -1525,6 +1585,156 @@ func TestComposeCustomizations(t *testing.T) {
 						},
 					},
 					PartitioningMode: common.ToPtr(composer.Lvm),
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl: common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/baseos/os"),
+							Rhsm:    common.ToPtr(true),
+						},
+						{
+							Baseurl: common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/appstream/os"),
+							Rhsm:    common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+		},
+		// files & directories customization
+		{
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Files: &[]File{
+						{
+							Data:          common.ToPtr("data"),
+							EnsureParents: common.ToPtr(true),
+							Group:         &fileGroup,
+							Path:          "/etc/custom-file",
+							User:          &fileUser,
+						},
+					},
+					Directories: &[]Directory{
+						{
+							EnsureParents: common.ToPtr(true),
+							Group:         &dirGroup,
+							Path:          "/etc/custom-file",
+							User:          &dirUser,
+							Mode:          common.ToPtr("0755"),
+						},
+					},
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesGuestImage,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-89",
+				Customizations: &composer.Customizations{
+					Files: &[]composer.File{
+						{
+							Data:          common.ToPtr("data"),
+							EnsureParents: common.ToPtr(true),
+							Group:         &composerFileGroup,
+							Path:          "/etc/custom-file",
+							User:          &composerFileUser,
+						},
+					},
+					Directories: &[]composer.Directory{
+						{
+							EnsureParents: common.ToPtr(true),
+							Group:         &composerDirGroup,
+							Path:          "/etc/custom-file",
+							User:          &composerDirUser,
+							Mode:          common.ToPtr("0755"),
+						},
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl: common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/baseos/os"),
+							Rhsm:    common.ToPtr(true),
+						},
+						{
+							Baseurl: common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/appstream/os"),
+							Rhsm:    common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+		},
+		// firewall, services, locale, tz, containers
+		{
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Firewall: &FirewallCustomization{
+						Ports: common.ToPtr([]string{"1"}),
+					},
+					Services: &Services{
+						Disabled: common.ToPtr([]string{"service"}),
+					},
+					Locale: &Locale{
+						Keyboard: common.ToPtr("piano"),
+					},
+					Timezone: &Timezone{
+						Timezone: common.ToPtr("antarctica"),
+					},
+					Containers: &[]Container{
+						{
+							Source: "container.io/test",
+						},
+					},
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesGuestImage,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-89",
+				Customizations: &composer.Customizations{
+					Firewall: &composer.FirewallCustomization{
+						Ports: common.ToPtr([]string{"1"}),
+					},
+					Services: &composer.Services{
+						Disabled: common.ToPtr([]string{"service"}),
+					},
+					Locale: &composer.Locale{
+						Keyboard: common.ToPtr("piano"),
+					},
+					Timezone: &composer.Timezone{
+						Timezone: common.ToPtr("antarctica"),
+					},
+					Containers: &[]composer.Container{
+						{
+							Source: "container.io/test",
+						},
+					},
 				},
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
