@@ -994,6 +994,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			if payloadRepository.Mirrorlist != nil {
 				payloadRepositories[i].Mirrorlist = payloadRepository.Mirrorlist
 			}
+			payloadRepositories[i].ModuleHotfixes = payloadRepository.ModuleHotfixes
 			payloadRepositories[i].Rhsm = common.ToPtr(payloadRepository.Rhsm)
 		}
 		res.PayloadRepositories = &payloadRepositories
@@ -1038,6 +1039,7 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			if customRepository.Enabled != nil {
 				customRepositories[i].Enabled = customRepository.Enabled
 			}
+			customRepositories[i].ModuleHotfixes = customRepository.ModuleHotfixes
 		}
 		res.CustomRepositories = &customRepositories
 	}
