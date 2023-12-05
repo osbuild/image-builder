@@ -91,9 +91,15 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		distro = *d.Distribution.ComposerName
 	}
 
+	customizations, err := buildCustomizations(composeRequest.Customizations)
+	if err != nil {
+		logrus.Errorf("Failed buliding customizations: %v", err)
+		return ComposeResponse{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to build customizations")
+	}
+
 	cloudCR := composer.ComposeRequest{
 		Distribution:   distro,
-		Customizations: buildCustomizations(composeRequest.Customizations),
+		Customizations: customizations,
 		ImageRequest: &composer.ImageRequest{
 			Architecture:  string(composeRequest.ImageRequests[0].Architecture),
 			ImageType:     imageType,
@@ -397,9 +403,9 @@ func validateComposeRequest(cr *ComposeRequest) error {
 	return nil
 }
 
-func buildCustomizations(cust *Customizations) *composer.Customizations {
+func buildCustomizations(cust *Customizations) (*composer.Customizations, error) {
 	if cust == nil {
-		return nil
+		return nil, nil
 	}
 
 	res := &composer.Customizations{}
@@ -515,11 +521,22 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 			groups := &[]string{"wheel"}
 			users = append(users, composer.User{
 				Name:   u.Name,
-				Key:    &u.SshKey,
+				Key:    common.ToPtr(u.SshKey),
 				Groups: groups,
 			})
 		}
 		res.Users = &users
+	}
+
+	if cust.Groups != nil {
+		var groups []composer.Group
+		for _, g := range *cust.Groups {
+			groups = append(groups, composer.Group{
+				Gid:  g.Gid,
+				Name: g.Name,
+			})
+		}
+		res.Groups = &groups
 	}
 
 	if cust.PartitioningMode != nil {
@@ -533,5 +550,189 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		}
 	}
 
-	return res
+	if cust.Containers != nil {
+		var containers []composer.Container
+		for _, c := range *cust.Containers {
+			containers = append(containers, composer.Container{
+				Name:      c.Name,
+				Source:    c.Source,
+				TlsVerify: c.TlsVerify,
+			})
+		}
+		res.Containers = &containers
+	}
+
+	if cust.Directories != nil {
+		var dirs []composer.Directory
+		for _, d := range *cust.Directories {
+			// parse as int (DirectoryGroup1)
+			var group composer.Directory_Group
+			dg0, err := d.Group.AsDirectoryGroup0()
+			if err == nil {
+				err = group.FromDirectoryGroup0(dg0)
+				if err != nil {
+					return nil, err
+				}
+
+			}
+			dg1, err := d.Group.AsDirectoryGroup1()
+			if err == nil {
+				err = group.FromDirectoryGroup1(dg1)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			var user composer.Directory_User
+			du0, err := d.User.AsDirectoryUser0()
+			if err == nil {
+				err = user.FromDirectoryUser0(du0)
+				if err != nil {
+					return nil, err
+				}
+			}
+			du1, err := d.User.AsDirectoryUser1()
+			if err == nil {
+				err = user.FromDirectoryUser1(composer.DirectoryUser1(du1))
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			dirs = append(dirs, composer.Directory{
+				EnsureParents: d.EnsureParents,
+				Group:         &group,
+				Mode:          d.Mode,
+				Path:          d.Path,
+				User:          &user,
+			})
+		}
+		res.Directories = &dirs
+	}
+
+	if cust.Files != nil {
+		var files []composer.File
+		for _, f := range *cust.Files {
+			var group composer.File_Group
+			fg0, err := f.Group.AsFileGroup0()
+			if err == nil {
+				err = group.FromFileGroup0(fg0)
+				if err != nil {
+					return nil, err
+				}
+			}
+			fg1, err := f.Group.AsFileGroup1()
+			if err == nil {
+				err = group.FromFileGroup1(fg1)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			var user composer.File_User
+			fu0, err := f.User.AsFileUser0()
+			if err == nil {
+				err = user.FromFileUser0(fu0)
+				if err != nil {
+					return nil, err
+				}
+			}
+			fu1, err := f.User.AsFileUser1()
+			if err == nil {
+				err = user.FromFileUser1(composer.FileUser1(fu1))
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			files = append(files, composer.File{
+				Data:          f.Data,
+				EnsureParents: f.EnsureParents,
+				Group:         &group,
+				Mode:          f.Mode,
+				Path:          f.Path,
+				User:          &user,
+			})
+		}
+		res.Files = &files
+	}
+
+	if cust.Locale != nil {
+		res.Locale = &composer.Locale{
+			Keyboard:  cust.Locale.Keyboard,
+			Languages: cust.Locale.Languages,
+		}
+	}
+
+	if cust.Kernel != nil {
+		res.Kernel = &composer.Kernel{
+			Append: cust.Kernel.Append,
+			Name:   cust.Kernel.Name,
+		}
+	}
+
+	if cust.Services != nil {
+		res.Services = &composer.Services{
+			Disabled: cust.Services.Disabled,
+			Enabled:  cust.Services.Enabled,
+		}
+	}
+
+	if cust.Firewall != nil {
+		res.Firewall = &composer.FirewallCustomization{
+			Ports: cust.Firewall.Ports,
+		}
+
+		if cust.Firewall.Services != nil {
+			res.Firewall.Services = &struct {
+				Disabled *[]string `json:"disabled,omitempty"`
+				Enabled  *[]string `json:"enabled,omitempty"`
+			}{
+				Disabled: cust.Firewall.Services.Disabled,
+				Enabled:  cust.Firewall.Services.Enabled,
+			}
+		}
+	}
+
+	if cust.Timezone != nil {
+		res.Timezone = &composer.Timezone{
+			Ntpservers: cust.Timezone.Ntpservers,
+			Timezone:   cust.Timezone.Timezone,
+		}
+	}
+
+	if cust.InstallationDevice != nil {
+		res.InstallationDevice = cust.InstallationDevice
+	}
+
+	if cust.Fdo != nil {
+		res.Fdo = &composer.FDO{
+			DiunPubKeyHash:         cust.Fdo.DiunPubKeyHash,
+			DiunPubKeyInsecure:     cust.Fdo.DiunPubKeyInsecure,
+			DiunPubKeyRootCerts:    cust.Fdo.DiunPubKeyRootCerts,
+			ManufacturingServerUrl: cust.Fdo.ManufacturingServerUrl,
+		}
+	}
+
+	if cust.Ignition != nil {
+		res.Ignition = &composer.Ignition{}
+		if cust.Ignition.Embedded != nil {
+			res.Ignition.Embedded = &composer.IgnitionEmbedded{
+				Config: cust.Ignition.Embedded.Config,
+			}
+		}
+		if cust.Ignition.Firstboot != nil {
+			res.Ignition.Firstboot = &composer.IgnitionFirstboot{
+				Url: cust.Ignition.Firstboot.Url,
+			}
+		}
+	}
+
+	if cust.Fips != nil {
+		res.Fips = &composer.FIPS{
+			Enabled: cust.Fips.Enabled,
+		}
+	}
+
+	return res, nil
 }
