@@ -9,7 +9,6 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    build:              Build the project from source code"
-	@echo "    test:               Run tests"
 	@echo "    run:                Run the project on localhost"
 
 .PHONY: build
@@ -17,9 +16,6 @@ build:
 	go build -o image-builder ./cmd/image-builder/
 	go build -o gen-oscap ./cmd/oscap
 	go build -o image-builder-migrate-db-tern ./cmd/image-builder-migrate-db-tern/
-
-.PHONY: test
-test:
 	go test -c -tags=integration -o image-builder-db-test ./cmd/image-builder-db-test/
 
 .PHONY: run
