@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 
@@ -34,7 +33,7 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 	route := input.Route
 	operation := route.Operation
@@ -116,7 +115,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 
 	var value interface{}
@@ -202,13 +201,13 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 
 	if req.Body != http.NoBody && req.Body != nil {
 		defer req.Body.Close()
 		var err error
-		if data, err = ioutil.ReadAll(req.Body); err != nil {
+		if data, err = io.ReadAll(req.Body); err != nil {
 			return &RequestError{
 				Input:       input,
 				RequestBody: requestBody,
@@ -272,7 +271,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 
 	defaultsSet := false
-	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential opts here
+	opts := make([]openapi3.SchemaValidationOption, 0, 4) // 4 potential opts here
 	opts = append(opts, openapi3.VisitAsRequest())
 	if !options.SkipSettingDefaults {
 		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
@@ -282,6 +281,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 	if options.customSchemaErrorFunc != nil {
 		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
+	}
+	if options.ExcludeReadOnlyValidations {
+		opts = append(opts, openapi3.DisableReadOnlyValidation())
 	}
 
 	// Validate JSON with the schema
@@ -346,10 +348,6 @@ func ValidateSecurityRequirements(ctx context.Context, input *RequestValidationI
 
 // validateSecurityRequirement validates a single OpenAPI 3 security requirement
 func validateSecurityRequirement(ctx context.Context, input *RequestValidationInput, securityRequirement openapi3.SecurityRequirement) error {
-	doc := input.Route.Spec
-	securitySchemes := doc.Components.SecuritySchemes
-
-	// Ensure deterministic order
 	names := make([]string, 0, len(securityRequirement))
 	for name := range securityRequirement {
 		names = append(names, name)
@@ -359,11 +357,16 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 	// Get authentication function
 	options := input.Options
 	if options == nil {
-		options = DefaultOptions
+		options = &Options{}
 	}
 	f := options.AuthenticationFunc
 	if f == nil {
 		return ErrAuthenticationServiceMissing
+	}
+
+	var securitySchemes openapi3.SecuritySchemes
+	if components := input.Route.Spec.Components; components != nil {
+		securitySchemes = components.SecuritySchemes
 	}
 
 	// For each scheme for the requirement
