@@ -5,10 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
+
+type BlueprintCompose struct {
+	ComposeEntry
+	BlueprintId      uuid.UUID
+	BlueprintVersion int
+}
 
 const (
 	sqlInsertBlueprint = `
@@ -18,6 +25,28 @@ const (
 	sqlInsertVersion = `
 		INSERT INTO blueprint_versions(id, blueprint_id, version, body)
 		VALUES($1, $2, $3, $4)`
+
+	sqlGetBlueprintComposes = `
+		SELECT blueprint_versions.version, composes.job_id, composes.request, composes.created_at, composes.image_name, composes.client_id
+		FROM composes INNER JOIN blueprint_versions ON composes.blueprint_version_id = blueprint_versions.id
+		WHERE composes.org_id = $1
+			AND blueprint_versions.blueprint_id = $2
+			AND ($3::integer IS NULL OR blueprint_versions.version = $3)
+			AND CURRENT_TIMESTAMP - composes.created_at <= $4
+			AND ($5::text[] is NULL OR composes.request->'image_requests'->0->>'image_type' <> ALL($5))
+			AND composes.deleted = FALSE
+		ORDER BY composes.created_at DESC
+		LIMIT $6 OFFSET $7`
+
+	sqlCountActiveBlueprintComposesSince = `
+		SELECT COUNT(*)
+		FROM composes INNER JOIN blueprint_versions ON composes.blueprint_version_id = blueprint_versions.id
+		WHERE org_id=$1
+			AND blueprint_versions.blueprint_id = $2
+		  	AND ($3::integer IS NULL OR blueprint_versions.version = $3)
+		  	AND CURRENT_TIMESTAMP - composes.created_at <= $4
+		  	AND composes.deleted = FALSE
+		AND ($5::text[] is NULL OR composes.request->'image_requests'->0->>'image_type' <> ALL($5))`
 
 	sqlGetBlueprint = `
 		SELECT blueprints.id, blueprint_versions.id, blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body
@@ -76,6 +105,54 @@ const (
 		FROM blueprints
 		WHERE blueprints.org_id = $1`
 )
+
+func (db *dB) CountBlueprintComposesSince(orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, ignoreImageTypes []string) (int, error) {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Release()
+
+	var count int
+	err = conn.QueryRow(ctx, sqlCountActiveBlueprintComposesSince, orgId, blueprintId, blueprintVersion, since, ignoreImageTypes).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (db *dB) GetBlueprintComposes(orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]BlueprintCompose, error) {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+
+	result, err := conn.Query(ctx, sqlGetBlueprintComposes, orgId, blueprintId, blueprintVersion, since, ignoreImageTypes, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer result.Close()
+
+	var composes []BlueprintCompose
+	for result.Next() {
+		entry := BlueprintCompose{
+			BlueprintId: blueprintId,
+		}
+		err = result.Scan(&entry.BlueprintVersion, &entry.Id, &entry.Request, &entry.CreatedAt, &entry.ImageName, &entry.ClientId)
+		if err != nil {
+			return nil, err
+		}
+		composes = append(composes, entry)
+	}
+	if err = result.Err(); err != nil {
+		return nil, err
+	}
+
+	return composes, nil
+}
 
 func (db *dB) InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error {
 	ctx := context.Background()

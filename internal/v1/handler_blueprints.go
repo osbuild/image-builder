@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
@@ -206,5 +208,69 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 				RoutePrefix(), spec.Info.Version, lastOffset, limit),
 		},
 		Data: data,
+	})
+}
+
+func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_types.UUID, params GetBlueprintComposesParams) error {
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	limit := 100
+	if params.Limit != nil {
+		if *params.Limit > 0 {
+			limit = *params.Limit
+		}
+	}
+
+	offset := 0
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+	ignoreImageTypeStrings := convertIgnoreImageTypeToSlice(params.IgnoreImageTypes)
+
+	since := time.Hour * 24 * 14
+
+	composes, err := h.server.db.GetBlueprintComposes(idHeader.Identity.OrgID, blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
+	if err != nil {
+		return err
+	}
+	count, err := h.server.db.CountBlueprintComposesSince(idHeader.Identity.OrgID, blueprintId, params.BlueprintVersion, since, ignoreImageTypeStrings)
+	if err != nil {
+		return err
+	}
+
+	data := make([]ComposesResponseItem, 0, len(composes))
+	for _, c := range composes {
+		bId := c.BlueprintId
+		version := c.BlueprintVersion
+		var cmpr ComposeRequest
+		err = json.Unmarshal(c.Request, &cmpr)
+		if err != nil {
+			return err
+		}
+		data = append(data, ComposesResponseItem{
+			BlueprintId:      &bId,
+			BlueprintVersion: &version,
+			CreatedAt:        c.CreatedAt.Format(time.RFC3339),
+			Id:               c.Id,
+			ImageName:        c.ImageName,
+			Request:          cmpr,
+			ClientId:         (*ClientId)(c.ClientId),
+		})
+	}
+
+	linkParams := url.Values{}
+	linkParams.Add("blueprint_id", blueprintId.String())
+	if params.BlueprintVersion != nil {
+		linkParams.Add("blueprint_version", strconv.Itoa(*params.BlueprintVersion))
+	}
+	return ctx.JSON(http.StatusOK, ComposesResponse{
+		Data: data,
+		Meta: struct {
+			Count int `json:"count"`
+		}{count},
+		Links: h.newLinksWithExtraParams("composes", count, limit, linkParams),
 	})
 }

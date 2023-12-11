@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,6 +28,30 @@ const (
 	// 64 GiB
 	FSMaxSize = 68719476736
 )
+
+type links struct {
+	First string `json:"first"`
+	Last  string `json:"last"`
+}
+
+func (h *Handlers) newLinksWithExtraParams(path string, count, limit int, params url.Values) links {
+	lastOffset := count - 1
+	if lastOffset < 0 {
+		lastOffset = 0
+	}
+	fullPath := url.URL{Path: fmt.Sprintf("%v/v%v/%s", RoutePrefix(), h.server.spec.Info.Version, path)}
+
+	params.Add("offset", "0")
+	params.Add("limit", strconv.Itoa(limit))
+	fullPath.RawQuery = params.Encode()
+	first := fullPath.String()
+
+	params.Set("offset", strconv.Itoa(lastOffset))
+	fullPath.RawQuery = params.Encode()
+	last := fullPath.String()
+
+	return links{first, last}
+}
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {
 	version := Version{h.server.spec.Info.Version}
@@ -191,10 +217,7 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 		}{
 			len(packages),
 		},
-		Links: struct {
-			First string `json:"first"`
-			Last  string `json:"last"`
-		}{
+		Links: links{
 			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=0&limit=%v",
 				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, limit),
 			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
@@ -499,11 +522,6 @@ func convertIgnoreImageTypeToSlice(ignoreImageTypes *[]ImageTypes) []string {
 }
 
 func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error {
-	spec, err := GetSwagger()
-	if err != nil {
-		return err
-	}
-
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
 		return err
@@ -544,27 +562,12 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 		})
 	}
 
-	lastOffset := count - 1
-	if lastOffset < 0 {
-		lastOffset = 0
-	}
-
 	return ctx.JSON(http.StatusOK, ComposesResponse{
+		Data: data,
 		Meta: struct {
 			Count int `json:"count"`
-		}{
-			count,
-		},
-		Links: struct {
-			First string `json:"first"`
-			Last  string `json:"last"`
-		}{
-			fmt.Sprintf("%v/v%v/composes?offset=0&limit=%v",
-				RoutePrefix(), spec.Info.Version, limit),
-			fmt.Sprintf("%v/v%v/composes?offset=%v&limit=%v",
-				RoutePrefix(), spec.Info.Version, lastOffset, limit),
-		},
-		Data: data,
+		}{count},
+		Links: h.newLinksWithExtraParams("composes", count, limit, url.Values{}),
 	})
 }
 
