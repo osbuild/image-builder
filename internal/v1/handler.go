@@ -27,6 +27,21 @@ const (
 	FSMaxSize = 68719476736
 )
 
+func NewComposeResponseItemFromEntry(c db.ComposeEntry) (ComposesResponseItem, error) {
+	var cmpr ComposeRequest
+	err := json.Unmarshal(c.Request, &cmpr)
+	if err != nil {
+		return ComposesResponseItem{}, err
+	}
+	return ComposesResponseItem{
+		CreatedAt: c.CreatedAt.Format(time.RFC3339),
+		Id:        c.Id,
+		ImageName: c.ImageName,
+		Request:   cmpr,
+		ClientId:  (*ClientId)(c.ClientId),
+	}, nil
+}
+
 func (h *Handlers) GetVersion(ctx echo.Context) error {
 	version := Version{h.server.spec.Info.Version}
 	return ctx.JSON(http.StatusOK, version)
@@ -530,18 +545,11 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 
 	data := []ComposesResponseItem{}
 	for _, c := range composes {
-		var cmpr ComposeRequest
-		err = json.Unmarshal(c.Request, &cmpr)
-		if err != nil {
-			return err
+		r, marshalErr := NewComposeResponseItemFromEntry(c)
+		if marshalErr != nil {
+			return marshalErr
 		}
-		data = append(data, ComposesResponseItem{
-			CreatedAt: c.CreatedAt.Format(time.RFC3339),
-			Id:        c.Id,
-			ImageName: c.ImageName,
-			Request:   cmpr,
-			ClientId:  (*ClientId)(c.ClientId),
-		})
+		data = append(data, r)
 	}
 
 	lastOffset := count - 1
