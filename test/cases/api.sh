@@ -194,9 +194,15 @@ function instanceWaitSSH() {
 function instanceCheck() {
   echo "✔️ Instance checking"
   local _ssh="$1"
+  local _testModuleHotfixes="${2:-0}"
 
   # Check if postgres is installed
   $_ssh rpm -q postgresql ansible-core
+
+  # Check if nginx was installed
+  if [[ "$_testModuleHotfixes" == "1" ]]; then
+      $_ssh rpm -q nginx nginx-module-njs
+  fi
 
   # Verify subscribe status. Loop check since the system may not be registered such early
   set +eu
@@ -258,9 +264,31 @@ function createReqFileAWS() {
     }
   ],
   "customizations": {
+    "custom_repositories": [
+      {
+        "baseurl": [
+          "http://nginx.org/packages/rhel/8/$ARCH/"
+        ],
+        "check_gpg": false,
+        "id": "076119fc-2dbc-49d7-bbd7-b39ca2bc3086",
+        "name": "nginx",
+        "module_hotfixes": true
+      }
+    ],
     "packages": [
       "postgresql",
-      "ansible-core"
+      "ansible-core",
+      "nginx",
+      "nginx-module-njs"
+    ],
+    "payload_repositories": [
+      {
+        "baseurl": "http://nginx.org/packages/rhel/8/$ARCH/",
+        "check_gpg": false,
+        "check_repo_gpg": false,
+        "rhsm": false,
+        "module_hotfixes": true
+      }
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -320,9 +348,31 @@ function createReqFileGCP() {
     }
   ],
   "customizations": {
+    "custom_repositories": [
+      {
+        "baseurl": [
+          "http://nginx.org/packages/rhel/8/x86_64/"
+        ],
+        "check_gpg": false,
+        "id": "076119fc-2dbc-49d7-bbd7-b39ca2bc3086",
+        "name": "nginx",
+        "module_hotfixes": true
+      }
+    ],
     "packages": [
       "postgresql",
-      "ansible-core"
+      "ansible-core",
+      "nginx",
+      "nginx-module-njs"
+    ],
+    "payload_repositories": [
+      {
+        "baseurl": "http://nginx.org/packages/rhel/8/x86_64/",
+        "check_gpg": false,
+        "check_repo_gpg": false,
+        "rhsm": false,
+        "module_hotfixes": true
+      }
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -397,9 +447,31 @@ function createReqFileAzure() {
     }
   ],
   "customizations": {
+    "custom_repositories": [
+      {
+        "baseurl": [
+          "http://nginx.org/packages/rhel/8/x86_64/"
+        ],
+        "check_gpg": false,
+        "id": "076119fc-2dbc-49d7-bbd7-b39ca2bc3086",
+        "name": "nginx",
+        "module_hotfixes": true
+      }
+    ],
     "packages": [
       "postgresql",
-      "ansible-core"
+      "ansible-core",
+      "nginx",
+      "nginx-module-njs"
+    ],
+    "payload_repositories": [
+      {
+        "baseurl": "http://nginx.org/packages/rhel/8/x86_64/",
+        "check_gpg": false,
+        "check_repo_gpg": false,
+        "rhsm": false,
+        "module_hotfixes": true
+      }
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -529,7 +601,7 @@ function Test_verifyComposeResultAWS() {
 
   # Verify image
   _ssh="ssh -oStrictHostKeyChecking=no -i ./keypair.pem $SSH_USER@$HOST"
-  instanceCheck "$_ssh"
+  instanceCheck "$_ssh" "1"
 }
 
 ### Case: verify the result (image) of a finished compose in GCP
