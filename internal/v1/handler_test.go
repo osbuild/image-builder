@@ -220,6 +220,10 @@ func TestGetComposes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, composeEntry.CreatedAt.Format(time.RFC3339), result.Data[2].CreatedAt)
 	require.Equal(t, composeEntry.Id, result.Data[2].Id)
+	require.Nil(t, result.Data[2].BlueprintId)
+	require.Nil(t, result.Data[2].BlueprintVersion)
+	require.Equal(t, "/api/image-builder/v1.0/composes?limit=100&offset=0", result.Links.First)
+	require.Equal(t, "/api/image-builder/v1.0/composes?limit=100&offset=2", result.Links.Last)
 	require.Equal(t, 3, result.Meta.Count)
 	require.Equal(t, 3, len(result.Data))
 

@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	v1 "github.com/osbuild/image-builder/internal/v1"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
+	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
 const (
@@ -449,6 +449,59 @@ func testBlueprints(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func testGetBlueprintComposes(t *testing.T) {
+	d, err := db.InitDBConnectionPool(connStr(t))
+	require.NoError(t, err)
+	conn := connect(t)
+	defer conn.Close(context.Background())
+
+	id := uuid.New()
+	versionId := uuid.New()
+	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, "name", "desc", []byte("{}"))
+	require.NoError(t, err)
+	version2Id := uuid.New()
+	err = d.UpdateBlueprint(version2Id, id, ORGID1, "name", "desc2", []byte("{}"))
+	require.NoError(t, err)
+
+	clientId := "ui"
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image1"), []byte("{}"), &clientId, &versionId)
+	require.NoError(t, err)
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image2"), []byte("{}"), &clientId, &versionId)
+	require.NoError(t, err)
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image3"), []byte("{}"), &clientId, nil)
+	require.NoError(t, err)
+	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image4"), []byte("{}"), &clientId, &version2Id)
+	require.NoError(t, err)
+
+	count, err := d.CountBlueprintComposesSince(ORGID1, id, nil, (time.Hour * 24 * 14), nil)
+	require.NoError(t, err)
+	require.Equal(t, 3, count)
+	entries, err := d.GetBlueprintComposes(ORGID1, id, nil, (time.Hour * 24 * 14), 10, 0, nil)
+	require.NoError(t, err)
+	require.Len(t, entries, 3)
+	// retrieves fresh first
+	require.Equal(t, "image4", *entries[0].ImageName)
+	require.Equal(t, "image2", *entries[1].ImageName)
+	require.Equal(t, "image1", *entries[2].ImageName)
+
+	count, err = d.CountBlueprintComposesSince(ORGID1, id, nil, (time.Hour * 24 * 14), nil)
+	require.NoError(t, err)
+	require.Equal(t, 3, count)
+	entries, err = d.GetBlueprintComposes(ORGID1, id, nil, (time.Hour * 24 * 14), 10, 0, nil)
+	require.NoError(t, err)
+	require.Len(t, entries, 3)
+
+	// get composes for specific version
+	count, err = d.CountBlueprintComposesSince(ORGID1, id, common.ToPtr(2), (time.Hour * 24 * 14), nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+	entries, err = d.GetBlueprintComposes(ORGID1, id, common.ToPtr(2), (time.Hour * 24 * 14), 10, 0, nil)
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	require.Equal(t, "image4", *entries[0].ImageName)
+	require.Equal(t, 2, entries[0].BlueprintVersion)
+}
+
 func runTest(t *testing.T, f func(*testing.T)) {
 	migrateTern(t)
 	defer tearDown(t)
@@ -464,6 +517,7 @@ func TestAll(t *testing.T) {
 		testDeleteCompose,
 		testClones,
 		testBlueprints,
+		testGetBlueprintComposes,
 	}
 
 	for _, f := range fns {

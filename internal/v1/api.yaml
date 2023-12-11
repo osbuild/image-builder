@@ -511,6 +511,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BlueprintsResponse'
+  /experimental/blueprint/{id}/composes:
+    get:
+      summary: get composes associated with a blueprint
+      description: "get a collection of composes associated to a blueprint, allows for filtering by version"
+      operationId: getBlueprintComposes
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+          description: UUID of a blueprint
+        - in: query
+          name: blueprint_version
+          schema:
+            type: integer
+          description: |
+            Filter by a specific version of the Blueprint we want to fetch composes for
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 100
+          description: max amount of composes, default 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: composes page offset, default 0
+        - in: query
+          name: ignoreImageTypes
+          required: false
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ImageTypes'
+              example: ['rhel-edge-installer', 'rhel-edge-commit', ...]
+          description: |
+            Filter the composes on image type. The filter is optional and can be specified multiple times.
+      responses:
+        '200':
+          description: a list of composes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposesResponse'
+        '404':
+          description: blueprint was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
 
 components:
   schemas:
@@ -924,6 +982,13 @@ components:
           type: string
         client_id:
           $ref: '#/components/schemas/ClientId'
+        blueprint_id:
+          type: string
+          format: uuid
+          nullable: true
+        blueprint_version:
+          type: integer
+          nullable: true
     ClientId:
       type: string
       enum: ["api", "ui"]

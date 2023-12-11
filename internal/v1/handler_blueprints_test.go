@@ -97,3 +97,68 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	require.Equal(t, ids[0], result[0].Id)
 	require.Equal(t, ids[1], result[1].Id)
 }
+
+func TestHandlers_GetBlueprintComposes(t *testing.T) {
+	blueprintId := uuid.New()
+	versionId := uuid.New()
+	version2Id := uuid.New()
+	imageName := "MyImageName"
+	clientId := "ui"
+
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+
+	db_srv, tokenSrv := startServerWithCustomDB(t, "", "", dbase, "../../distributions", "")
+	defer func() {
+		err := db_srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	var result ComposesResponse
+
+	err = dbase.InsertBlueprint(blueprintId, versionId, "000000", "500000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
+	require.NoError(t, err)
+	id1 := uuid.New()
+	err = dbase.InsertCompose(id1, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
+	require.NoError(t, err)
+	id2 := uuid.New()
+	err = dbase.InsertCompose(id2, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &versionId)
+	require.NoError(t, err)
+
+	err = dbase.UpdateBlueprint(version2Id, blueprintId, "000000", "blueprint", "desc2", json.RawMessage(`{"image_requests": [{"image_type": "aws"}, {"image_type": "gcp"}]}`))
+	require.NoError(t, err)
+	id3 := uuid.New()
+	err = dbase.InsertCompose(id3, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &version2Id)
+	require.NoError(t, err)
+	id4 := uuid.New()
+	err = dbase.InsertCompose(id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "gcp"}]}`), &clientId, &version2Id)
+	require.NoError(t, err)
+
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprint/%s/composes", blueprintId.String()), &tutils.AuthString0)
+	require.NoError(t, err)
+
+	require.Equal(t, 200, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, blueprintId, *result.Data[0].BlueprintId)
+	require.Equal(t, 2, *result.Data[0].BlueprintVersion)
+	require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/composes?blueprint_id=%s&limit=100&offset=0", blueprintId.String()), result.Links.First)
+	require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/composes?blueprint_id=%s&limit=100&offset=3", blueprintId.String()), result.Links.Last)
+	require.Equal(t, 4, len(result.Data))
+	require.Equal(t, 4, result.Meta.Count)
+
+	// get composes for specific version
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprint/%s/composes?blueprint_version=2", blueprintId.String()), &tutils.AuthString0)
+	require.NoError(t, err)
+
+	require.Equal(t, 200, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, blueprintId, *result.Data[0].BlueprintId)
+	require.Equal(t, 2, *result.Data[0].BlueprintVersion)
+	require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/composes?blueprint_id=%s&blueprint_version=2&limit=100&offset=0", blueprintId.String()), result.Links.First)
+	require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/composes?blueprint_id=%s&blueprint_version=2&limit=100&offset=1", blueprintId.String()), result.Links.Last)
+	require.Equal(t, 2, len(result.Data))
+	require.Equal(t, 2, result.Meta.Count)
+}
