@@ -13,7 +13,7 @@ import (
 	v1 "github.com/osbuild/image-builder/internal/v1"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/config"
