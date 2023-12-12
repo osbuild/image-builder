@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // ComposeNotFoundError occurs when no compose request is found for a user.
@@ -140,7 +140,7 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 		return nil, err
 	}
 
-	pool, err := pgxpool.ConnectConfig(context.Background(), dbConfig)
+	pool, err := pgxpool.NewWithConfig(context.Background(), dbConfig)
 	if err != nil {
 		return nil, err
 	}
