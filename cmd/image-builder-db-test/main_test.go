@@ -96,10 +96,17 @@ func testInsertCompose(t *testing.T) {
 
 	imageName := "MyImageName"
 	clientId := "ui"
+	blueprintId := uuid.New()
+	versionId := uuid.New()
 
 	migrateTern(t)
 
+	err = d.InsertBlueprint(blueprintId, versionId, ORGID1, ANR1, "blueprint", "blueprint desc", []byte("{}"))
+	require.NoError(t, err)
+
 	// test
+	err = d.InsertCompose(uuid.New(), "", "", ORGID1, &imageName, []byte("{}"), &clientId, &versionId)
+	require.NoError(t, err)
 	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
 	err = d.InsertCompose(uuid.New(), "", "", ORGID1, &imageName, []byte("{}"), &clientId, nil)
