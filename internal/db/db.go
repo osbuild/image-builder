@@ -214,10 +214,11 @@ func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int, 
 	}
 	defer conn.Release()
 	result, err := conn.Query(ctx, sqlGetComposes, orgId, since, ignoreImageTypes, limit, offset)
-
 	if err != nil {
 		return nil, 0, err
 	}
+
+	defer result.Close()
 
 	var composes []ComposeEntry
 	for result.Next() {
