@@ -2,7 +2,9 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/osbuild/image-builder/internal/db"
@@ -136,4 +138,64 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 	}
 
 	return ctx.JSON(http.StatusCreated, composeResponses)
+}
+
+func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) error {
+	spec, err := GetSwagger()
+	if err != nil {
+		return err
+	}
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	limit := 100
+	if params.Limit != nil {
+		if *params.Limit > 0 {
+			limit = *params.Limit
+		}
+	}
+
+	offset := 0
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+
+	blueprints, count, err := h.server.db.GetBlueprints(idHeader.Identity.OrgID, idHeader.Identity.AccountNumber, limit, offset)
+	if err != nil {
+		return err
+	}
+
+	data := make([]BlueprintItem, 0, len(blueprints))
+	for _, blueprint := range blueprints {
+		data = append(data, BlueprintItem{
+			Id:             blueprint.Id,
+			Name:           blueprint.Name,
+			Description:    blueprint.Description,
+			Version:        blueprint.Version,
+			LastModifiedAt: blueprint.LastModifiedAt.Format(time.RFC3339),
+		})
+	}
+	lastOffset := count - 1
+	if lastOffset < 0 {
+		lastOffset = 0
+	}
+	return ctx.JSON(http.StatusOK, BlueprintsResponse{
+		Meta: struct {
+			Count int `json:"count"`
+		}{
+			count,
+		},
+		Links: struct {
+			First string `json:"first"`
+			Last  string `json:"last"`
+		}{
+			fmt.Sprintf("%v/v%v/composes?offset=0&limit=%v",
+				RoutePrefix(), spec.Info.Version, limit),
+			fmt.Sprintf("%v/v%v/composes?offset=%v&limit=%v",
+				RoutePrefix(), spec.Info.Version, lastOffset, limit),
+		},
+		Data: data,
+	})
 }

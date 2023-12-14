@@ -49,6 +49,19 @@ const (
         );`
 
 	sqlDeleteBlueprint = `DELETE FROM blueprints WHERE id = $1 AND org_id = $2 AND account_number = $3`
+
+	sqlGetBlueprints = `
+		SELECT blueprints.id, blueprints.name, blueprints.description, MAX(blueprint_versions.version) as version, MAX(blueprint_versions.created_at) as last_modified_at
+		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
+		WHERE blueprints.org_id = $1 AND blueprints.account_number = $2
+		GROUP BY blueprints.id
+		ORDER BY last_modified_at DESC
+		LIMIT $3 OFFSET $4`
+
+	sqlGetBlueprintsCount = `
+		SELECT COUNT(*)
+		FROM blueprints
+		WHERE blueprints.org_id = $1 AND blueprints.account_number = $2`
 )
 
 func (db *dB) InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error {
@@ -144,4 +157,36 @@ func (db *dB) DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error {
 		return fmt.Errorf("%w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 	}
 	return err
+}
+
+func (db *dB) GetBlueprints(orgID, accountNumber string, limit, offset int) ([]BlueprintWithNoBody, int, error) {
+	ctx := context.Background()
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer conn.Release()
+
+	rows, err := conn.Query(ctx, sqlGetBlueprints, orgID, accountNumber, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var blueprints []BlueprintWithNoBody
+	for rows.Next() {
+		var blueprint BlueprintWithNoBody
+		err = rows.Scan(&blueprint.Id, &blueprint.Name, &blueprint.Description, &blueprint.Version, &blueprint.LastModifiedAt)
+		if err != nil {
+			return nil, 0, err
+		}
+		blueprints = append(blueprints, blueprint)
+	}
+	var count int
+	err = conn.QueryRow(ctx, sqlGetBlueprintsCount, orgID, accountNumber).Scan(&count)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return blueprints, count, nil
 }

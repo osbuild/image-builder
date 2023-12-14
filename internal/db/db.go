@@ -45,6 +45,14 @@ type BlueprintEntry struct {
 	Description string
 }
 
+type BlueprintWithNoBody struct {
+	Id             uuid.UUID
+	Version        int
+	Name           string
+	Description    string
+	LastModifiedAt time.Time
+}
+
 type DB interface {
 	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string, blueprintVersionId *uuid.UUID) error
 	GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
@@ -60,6 +68,7 @@ type DB interface {
 	InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error
 	GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error)
 	UpdateBlueprint(id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error
+	GetBlueprints(orgID, accountNumber string, limit, offset int) ([]BlueprintWithNoBody, int, error)
 	DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error
 }
 
