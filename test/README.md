@@ -39,6 +39,7 @@ can be found under schutzbot.
 
 ## Unit tests
 
+Run the following from **the root directory** of the repository:
 ```
 go clean -testcache
 go test -v ./...
