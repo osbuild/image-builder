@@ -73,6 +73,36 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	})
 }
 
+func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) error {
+	idHeader, err := getIdentityHeader(ctx)
+	if err != nil {
+		return err
+	}
+
+	var blueprintRequest CreateBlueprintRequest
+	err = ctx.Bind(&blueprintRequest)
+	if err != nil {
+		return err
+	}
+
+	blueprint := BlueprintFromAPI(blueprintRequest)
+	body, err := json.Marshal(blueprint)
+	if err != nil {
+		return err
+	}
+
+	versionId := uuid.New()
+	err = h.server.db.UpdateBlueprint(versionId, blueprintId, idHeader.Identity.OrgID, blueprint.Name, blueprint.Description, body)
+	if err != nil {
+		ctx.Logger().Errorf("Error updating blueprint in db: %v", err)
+		return err
+	}
+	ctx.Logger().Infof("Updated blueprint %s", blueprintId)
+	return ctx.JSON(http.StatusCreated, ComposeResponse{
+		Id: blueprintId,
+	})
+}
+
 func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) error {
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {

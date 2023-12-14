@@ -14,6 +14,7 @@ import (
 // ComposeNotFoundError occurs when no compose request is found for a user.
 var ComposeNotFoundError = errors.New("Compose not found")
 var CloneNotFoundError = errors.New("Clone not found")
+var BlueprintNotFoundError = errors.New("blueprint not found")
 var AffectedRowsMismatchError = errors.New("Unexpected affected rows")
 
 type dB struct {
@@ -58,6 +59,7 @@ type DB interface {
 
 	InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error
 	GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error)
+	UpdateBlueprint(id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error
 	DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error
 }
 
