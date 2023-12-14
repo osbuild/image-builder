@@ -414,6 +414,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+  /experimental/blueprint/{id}:
+    put:
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+          description: UUID of a blueprint
+      summary: update blueprint
+      description: "update blueprint"
+      operationId: updateBlueprint
+      requestBody:
+        required: true
+        description: details of blueprint
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBlueprintRequest"
+      responses:
+        '200':
+          description: blueprint was update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBlueprintResponse'
+        '404':
+          description: blueprint was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
   /experimental/blueprint/{id}/compose:
     post:
       parameters:

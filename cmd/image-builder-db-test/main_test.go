@@ -383,6 +383,49 @@ func testBlueprints(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, b1, b2)
 
+	updated := v1.BlueprintV1{
+		Version:     2,
+		Name:        "new name",
+		Description: "new desc",
+	}
+	bodyUpdated1, err := json.Marshal(updated)
+	require.NoError(t, err)
+
+	newVersionId := uuid.New()
+	err = d.UpdateBlueprint(newVersionId, entry.Id, ORGID1, "new name", "new desc", bodyUpdated1)
+	require.NoError(t, err)
+	entryUpdated, err := d.GetBlueprint(entry.Id, ORGID1, ANR1)
+	require.NoError(t, err)
+	bodyUpdated2, err := v1.BlueprintFromEntry(entryUpdated)
+	require.NoError(t, err)
+	require.Equal(t, updated, bodyUpdated2)
+	require.Equal(t, updated.Version, entryUpdated.Version)
+	require.Equal(t, "new name", entryUpdated.Name)
+	require.Equal(t, "new desc", entryUpdated.Description)
+
+	require.NotEqual(t, b1, bodyUpdated2)
+
+	newBlueprintVersion := v1.BlueprintV1{
+		Version:     3,
+		Name:        "name should not be changed",
+		Description: "desc should not be changed",
+	}
+	newBlueprintVersionBody, err := json.Marshal(newBlueprintVersion)
+	require.NoError(t, err)
+	newBlueprintId := uuid.New()
+	err = d.UpdateBlueprint(newBlueprintId, entry.Id, ORGID2, "name", "desc", newBlueprintVersionBody)
+	require.Error(t, err)
+	entryAfterInvalidUpdate, err := d.GetBlueprint(entry.Id, ORGID1, ANR1)
+	require.NoError(t, err)
+	bodyNotUpdated, err := v1.BlueprintFromEntry(entryAfterInvalidUpdate)
+	require.NoError(t, err)
+	require.Equal(t, updated, bodyNotUpdated)
+	require.Equal(t, updated.Version, bodyNotUpdated.Version)
+	require.Equal(t, "new name", bodyNotUpdated.Name)
+	require.Equal(t, "new desc", bodyNotUpdated.Description)
+
+	require.NotEqual(t, b1, bodyNotUpdated)
+
 	err = d.DeleteBlueprint(id, ORGID1, ANR1)
 	require.NoError(t, err)
 }
