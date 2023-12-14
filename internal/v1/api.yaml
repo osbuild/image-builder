@@ -477,6 +477,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+  /experimental/blueprints:
+    get:
+      summary: get a collection of blueprints
+      description: "get a collection of blueprints, returns just the latest version of each blueprint"
+      operationId: getBlueprints
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 100
+          description: max amount of blueprints, default 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: blueprint page offset, default 0
+      responses:
+        '200':
+          description: a list of blueprints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintsResponse'
 
 components:
   schemas:
@@ -724,6 +752,52 @@ components:
         id:
           type: string
           format: uuid
+    BlueprintsResponse:
+      required:
+        - meta
+        - links
+        - data
+      properties:
+        meta:
+          type: object
+          required:
+            - count
+          properties:
+            count:
+              type: integer
+        links:
+          type: object
+          required:
+            - first
+            - last
+          properties:
+            first:
+              type: string
+            last:
+              type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlueprintItem'
+    BlueprintItem:
+      required:
+        - id
+        - version
+        - name
+        - description
+        - last_modified_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        last_modified_at:
+          type: string         
     Distributions:
       type: string
       description: |

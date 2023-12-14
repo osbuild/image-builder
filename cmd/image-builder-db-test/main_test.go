@@ -423,8 +423,16 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, updated.Version, bodyNotUpdated.Version)
 	require.Equal(t, "new name", bodyNotUpdated.Name)
 	require.Equal(t, "new desc", bodyNotUpdated.Description)
-
 	require.NotEqual(t, b1, bodyNotUpdated)
+
+	newestBlueprintVersionId := uuid.New()
+	newestBlueprintId := uuid.New()
+	newestBlueprintName := "new name"
+	err = d.InsertBlueprint(newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", body)
+	entries, _, err := d.GetBlueprints(ORGID1, ANR1, 100, 0)
+	require.NoError(t, err)
+	require.Equal(t, entries[0].Name, newestBlueprintName)
+	require.Equal(t, entries[1].Version, updated.Version)
 
 	err = d.DeleteBlueprint(id, ORGID1, ANR1)
 	require.NoError(t, err)
