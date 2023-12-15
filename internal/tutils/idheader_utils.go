@@ -41,7 +41,8 @@ var completeIdHeader string = `{
 		 	"is_internal": true,
 		 	"locale": "en-US"
 		},
-		"internal": {"org_id": "%s"}
+		"internal": {"org_id": "%s"},
+		"account_number": "000000"
 	}
 }`
 
@@ -58,7 +59,8 @@ var idHeaderWithoutEntitlements = `{
 			"is_internal": true,
 			"locale": "en-US"
 		},
-		"internal": {"org_id": "%s"}
+		"internal": {"org_id": "%s"},
+		"account_number": "000000"
 	}
 }`
 
