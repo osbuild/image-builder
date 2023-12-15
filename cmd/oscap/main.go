@@ -26,10 +26,22 @@ type Filesystem struct {
 	Size       uint64 `json:"size,omitempty"`
 }
 
+type Kernel struct {
+	Name   *string `json:"name,omitempty"`
+	Append *string `json:"append"`
+}
+
+type Services struct {
+	Disabled *[]string `json:"disabled,omitempty"`
+	Enabled  *[]string `json:"enabled,omitempty"`
+}
+
 type Customizations struct {
 	Filesystem []Filesystem `json:"filesystem,omitempty"`
 	Packages   *[]string    `json:"packages,omitempty"`
 	Openscap   *OpenSCAP    `json:"openscap,omitempty"`
+	Kernel     *Kernel      `json:"kernel,omitempty"`
+	Services   *Services    `json:"services,omitempty"`
 }
 
 type OpenSCAP struct {
@@ -149,12 +161,41 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 	if len(fs) > 0 {
 		customizations.Filesystem = &fs
 	}
+
 	var packages []string
 	for _, bpPackage := range bp.Packages {
 		packages = append(packages, bpPackage.Name)
 	}
 	if len(packages) > 0 {
 		customizations.Packages = &packages
+	}
+
+	var kernel *v1.Kernel
+	if k := bp.Customizations.Kernel; k != nil {
+		kernel = &v1.Kernel{}
+		if k.Name != nil {
+			kernel.Name = k.Name
+		}
+		if k.Append != nil {
+			kernel.Append = k.Append
+		}
+	}
+	if kernel != nil {
+		customizations.Kernel = kernel
+	}
+
+	var services *v1.Services
+	if s := bp.Customizations.Services; s != nil {
+		services = &v1.Services{}
+		if s.Enabled != nil {
+			services.Enabled = s.Enabled
+		}
+		if s.Disabled != nil {
+			services.Disabled = s.Disabled
+		}
+	}
+	if services != nil {
+		customizations.Services = services
 	}
 
 	openscap := v1.OpenSCAP{}
