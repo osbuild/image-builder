@@ -1740,12 +1740,18 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	return res
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
+var swagger *openapi3.T
+
+func init() {
+	var err error
+	// load OpenAPI spec into memory and error out early
+	swagger, err = getSwagger()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func getSwagger() (swagger *openapi3.T, err error) {
 	var resolvePath = PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
@@ -1770,4 +1776,14 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 		return
 	}
 	return
+}
+
+
+// GetSwagger returns the Swagger specification corresponding to the generated code
+// in this file. The external references of Swagger specification are resolved.
+// The logic of resolving external references is tightly connected to "import-mapping" feature.
+// Externally referenced files must be embedded in the corresponding golang packages.
+// Urls can be supported but this task was out of the scope.
+func GetSwagger() *openapi3.T {
+	return swagger
 }

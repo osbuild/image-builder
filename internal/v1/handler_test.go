@@ -504,9 +504,8 @@ func TestGetCloneStatus(t *testing.T) {
 }
 
 func TestValidateSpec(t *testing.T) {
-	spec, err := GetSwagger()
-	require.NoError(t, err)
-	err = spec.Validate(context.Background())
+	spec := GetSwagger()
+	err := spec.Validate(context.Background())
 	require.NoError(t, err)
 }
 

@@ -499,10 +499,7 @@ func convertIgnoreImageTypeToSlice(ignoreImageTypes *[]ImageTypes) []string {
 }
 
 func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error {
-	spec, err := GetSwagger()
-	if err != nil {
-		return err
-	}
+	spec := GetSwagger()
 
 	idHeader, err := getIdentityHeader(ctx)
 	if err != nil {
@@ -1311,10 +1308,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 		lastOffset = 0
 	}
 
-	spec, err := GetSwagger()
-	if err != nil {
-		return err
-	}
+	spec := GetSwagger()
 
 	return ctx.JSON(http.StatusOK, ClonesResponse{
 		Meta: struct {

@@ -66,11 +66,7 @@ type Handlers struct {
 }
 
 func Attach(conf *ServerConfig) error {
-	spec, err := GetSwagger()
-	if err != nil {
-		return err
-	}
-
+	spec := GetSwagger()
 	spec.AddServer(&openapi3.Server{URL: fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)})
 
 	router, err := legacyrouter.NewRouter(spec)
