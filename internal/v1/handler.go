@@ -186,11 +186,7 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 	}
 
 	return ctx.JSON(http.StatusOK, PackagesResponse{
-		Meta: struct {
-			Count int `json:"count"`
-		}{
-			len(packages),
-		},
+		Meta: Meta{Count: len(packages)},
 		Links: struct {
 			First string `json:"first"`
 			Last  string `json:"last"`
@@ -550,11 +546,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	}
 
 	return ctx.JSON(http.StatusOK, ComposesResponse{
-		Meta: struct {
-			Count int `json:"count"`
-		}{
-			count,
-		},
+		Meta: Meta{Count: count},
 		Links: struct {
 			First string `json:"first"`
 			Last  string `json:"last"`
@@ -1317,11 +1309,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 	}
 
 	return ctx.JSON(http.StatusOK, ClonesResponse{
-		Meta: struct {
-			Count int `json:"count"`
-		}{
-			count,
-		},
+		Meta: Meta{Count: count},
 		Links: struct {
 			First string `json:"first"`
 			Last  string `json:"last"`

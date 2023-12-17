@@ -475,7 +475,7 @@ components:
         - readiness
       properties:
         readiness:
-          type: string
+          type: string 
     DistributionsResponse:
       type: array
       description: |
@@ -771,12 +771,7 @@ components:
         - data
       properties:
         meta:
-          type: object
-          required:
-            - count
-          properties:
-            count:
-              type: integer
+          $ref: '#/components/schemas/Meta'
         links:
           type: object
           required:
@@ -1063,12 +1058,7 @@ components:
         - data
       properties:
         meta:
-          type: object
-          required:
-            - count
-          properties:
-            count:
-              type: integer
+          $ref: '#/components/schemas/Meta'
         links:
           type: object
           required:
@@ -1228,12 +1218,7 @@ components:
         - data
       properties:
         meta:
-          type: object
-          required:
-            - count
-          properties:
-            count:
-              type: integer
+          $ref: '#/components/schemas/Meta'
         links:
           type: object
           required:
@@ -1311,6 +1296,13 @@ components:
         List of profiles for a given distribution
       items:
         $ref: '#/components/schemas/DistributionProfileItem'
+    Meta:
+      type: object
+      required:
+        - count
+      properties:
+        count:
+          type: integer       
     DistributionProfileItem:
       type: string
       enum:
