@@ -82,6 +82,7 @@ const (
 	UploadTypesContainer        UploadTypes = "container"
 	UploadTypesGcp              UploadTypes = "gcp"
 	UploadTypesOciObjectstorage UploadTypes = "oci.objectstorage"
+	UploadTypesPulpOstree       UploadTypes = "pulp.ostree"
 )
 
 // AWSEC2CloneCompose defines model for AWSEC2CloneCompose.
@@ -306,11 +307,14 @@ type Customizations struct {
 	Files      *[]File       `json:"files,omitempty"`
 	Filesystem *[]Filesystem `json:"filesystem,omitempty"`
 
+	// Fips System FIPS mode setup
+	Fips *FIPS `json:"fips,omitempty"`
+
 	// Firewall Firewalld configuration
 	Firewall *FirewallCustomization `json:"firewall,omitempty"`
 
-	// Group List of groups to create
-	Group *[]Group `json:"group,omitempty"`
+	// Groups List of groups to create
+	Groups *[]Group `json:"groups,omitempty"`
 
 	// Hostname Configures the hostname
 	Hostname *string `json:"hostname,omitempty"`
@@ -340,10 +344,7 @@ type Customizations struct {
 	// repositories is ignored.
 	PayloadRepositories *[]Repository `json:"payload_repositories,omitempty"`
 	Services            *Services     `json:"services,omitempty"`
-
-	// Sshkey List of ssh keys
-	Sshkey       *[]SSHKey     `json:"sshkey,omitempty"`
-	Subscription *Subscription `json:"subscription,omitempty"`
+	Subscription        *Subscription `json:"subscription,omitempty"`
 
 	// Timezone Timezone configuration
 	Timezone *Timezone `json:"timezone,omitempty"`
@@ -418,10 +419,17 @@ type ErrorList struct {
 
 // FDO FIDO device onboard configuration
 type FDO struct {
-	DiunPubKeyHash         *string `json:"diun_pub_key_hash,omitempty"`
-	DiunPubKeyInsecure     *string `json:"diun_pub_key_insecure,omitempty"`
-	DiunPubKeyRootCerts    *string `json:"diun_pub_key_root_certs,omitempty"`
-	ManufacturingServerUrl *string `json:"manufacturing_server_url,omitempty"`
+	DiMfgStringTypeMacIface *string `json:"di_mfg_string_type_mac_iface,omitempty"`
+	DiunPubKeyHash          *string `json:"diun_pub_key_hash,omitempty"`
+	DiunPubKeyInsecure      *string `json:"diun_pub_key_insecure,omitempty"`
+	DiunPubKeyRootCerts     *string `json:"diun_pub_key_root_certs,omitempty"`
+	ManufacturingServerUrl  *string `json:"manufacturing_server_url,omitempty"`
+}
+
+// FIPS System FIPS mode setup
+type FIPS struct {
+	// Enabled Enables the system FIPS mode
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 // File A custom file to create in the final artifact.
@@ -564,19 +572,27 @@ type ImageRequest struct {
 	// defined by the image type.
 	Size *uint64 `json:"size,omitempty"`
 
-	// UploadOptions This should really be oneOf but AWSS3UploadOptions is a subset of
+	// UploadOptions Options for a given upload destination.
+	// This should really be oneOf but AWSS3UploadOptions is a subset of
 	// AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
 	// are also valid AWSS3UploadOptionas objects which violates the oneOf
 	// rules. Therefore, we have to use anyOf here but be aware that it isn't
 	// possible to mix and match more schemas together.
 	UploadOptions *UploadOptions `json:"upload_options,omitempty"`
+
+	// UploadTargets The type and options for multiple upload targets. Each item defines
+	// a separate upload destination with its own options. Multiple
+	// different targets as well as multiple targets of the same kind are
+	// supported.
+	UploadTargets *[]UploadTarget `json:"upload_targets,omitempty"`
 }
 
 // ImageStatus defines model for ImageStatus.
 type ImageStatus struct {
-	Error        *ComposeStatusError `json:"error,omitempty"`
-	Status       ImageStatusValue    `json:"status"`
-	UploadStatus *UploadStatus       `json:"upload_status,omitempty"`
+	Error          *ComposeStatusError `json:"error,omitempty"`
+	Status         ImageStatusValue    `json:"status"`
+	UploadStatus   *UploadStatus       `json:"upload_status,omitempty"`
+	UploadStatuses *[]UploadStatus     `json:"upload_statuses,omitempty"`
 }
 
 // ImageStatusValue defines model for ImageStatusValue.
@@ -695,6 +711,21 @@ type PackageMetadata struct {
 	Version   string  `json:"version"`
 }
 
+// PulpOSTreeUploadOptions defines model for PulpOSTreeUploadOptions.
+type PulpOSTreeUploadOptions struct {
+	// Basepath Basepath for distributing the repository
+	Basepath string `json:"basepath"`
+
+	// Repository Repository to import the ostree commit to
+	Repository    *string `json:"repository,omitempty"`
+	ServerAddress *string `json:"server_address,omitempty"`
+}
+
+// PulpOSTreeUploadStatus defines model for PulpOSTreeUploadStatus.
+type PulpOSTreeUploadStatus struct {
+	RepoUrl string `json:"repo_url"`
+}
+
 // Repository Repository configuration.
 // At least one of the 'baseurl', 'mirrorlist', 'metalink' properties must
 // be specified. If more of them are specified, the order of precedence is
@@ -718,15 +749,6 @@ type Repository struct {
 
 	// Rhsm Determines whether a valid subscription is required to access this repository.
 	Rhsm *bool `json:"rhsm,omitempty"`
-}
-
-// SSHKey defines model for SSHKey.
-type SSHKey struct {
-	// Key Adds the key to the user's authorized_keys file
-	Key string `json:"key"`
-
-	// User User to configure the ssh key for
-	User string `json:"user"`
 }
 
 // Services defines model for Services.
@@ -759,7 +781,8 @@ type Timezone struct {
 	Timezone *string `json:"timezone,omitempty"`
 }
 
-// UploadOptions This should really be oneOf but AWSS3UploadOptions is a subset of
+// UploadOptions Options for a given upload destination.
+// This should really be oneOf but AWSS3UploadOptions is a subset of
 // AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
 // are also valid AWSS3UploadOptionas objects which violates the oneOf
 // rules. Therefore, we have to use anyOf here but be aware that it isn't
@@ -782,6 +805,19 @@ type UploadStatus_Options struct {
 
 // UploadStatusValue defines model for UploadStatusValue.
 type UploadStatusValue string
+
+// UploadTarget defines model for UploadTarget.
+type UploadTarget struct {
+	Type UploadTypes `json:"type"`
+
+	// UploadOptions Options for a given upload destination.
+	// This should really be oneOf but AWSS3UploadOptions is a subset of
+	// AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
+	// are also valid AWSS3UploadOptionas objects which violates the oneOf
+	// rules. Therefore, we have to use anyOf here but be aware that it isn't
+	// possible to mix and match more schemas together.
+	UploadOptions UploadOptions `json:"upload_options"`
+}
 
 // UploadTypes defines model for UploadTypes.
 type UploadTypes string
@@ -996,6 +1032,32 @@ func (t *CloneStatus_Options) FromOCIUploadStatus(v OCIUploadStatus) error {
 
 // MergeOCIUploadStatus performs a merge with any union data inside the CloneStatus_Options, using the provided OCIUploadStatus
 func (t *CloneStatus_Options) MergeOCIUploadStatus(v OCIUploadStatus) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
+// AsPulpOSTreeUploadStatus returns the union data inside the CloneStatus_Options as a PulpOSTreeUploadStatus
+func (t CloneStatus_Options) AsPulpOSTreeUploadStatus() (PulpOSTreeUploadStatus, error) {
+	var body PulpOSTreeUploadStatus
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPulpOSTreeUploadStatus overwrites any union data inside the CloneStatus_Options as the provided PulpOSTreeUploadStatus
+func (t *CloneStatus_Options) FromPulpOSTreeUploadStatus(v PulpOSTreeUploadStatus) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePulpOSTreeUploadStatus performs a merge with any union data inside the CloneStatus_Options, using the provided PulpOSTreeUploadStatus
+func (t *CloneStatus_Options) MergePulpOSTreeUploadStatus(v PulpOSTreeUploadStatus) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1446,6 +1508,32 @@ func (t *UploadOptions) MergeOCIUploadOptions(v OCIUploadOptions) error {
 	return err
 }
 
+// AsPulpOSTreeUploadOptions returns the union data inside the UploadOptions as a PulpOSTreeUploadOptions
+func (t UploadOptions) AsPulpOSTreeUploadOptions() (PulpOSTreeUploadOptions, error) {
+	var body PulpOSTreeUploadOptions
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPulpOSTreeUploadOptions overwrites any union data inside the UploadOptions as the provided PulpOSTreeUploadOptions
+func (t *UploadOptions) FromPulpOSTreeUploadOptions(v PulpOSTreeUploadOptions) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePulpOSTreeUploadOptions performs a merge with any union data inside the UploadOptions, using the provided PulpOSTreeUploadOptions
+func (t *UploadOptions) MergePulpOSTreeUploadOptions(v PulpOSTreeUploadOptions) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
 func (t UploadOptions) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
@@ -1602,6 +1690,32 @@ func (t *UploadStatus_Options) FromOCIUploadStatus(v OCIUploadStatus) error {
 
 // MergeOCIUploadStatus performs a merge with any union data inside the UploadStatus_Options, using the provided OCIUploadStatus
 func (t *UploadStatus_Options) MergeOCIUploadStatus(v OCIUploadStatus) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
+// AsPulpOSTreeUploadStatus returns the union data inside the UploadStatus_Options as a PulpOSTreeUploadStatus
+func (t UploadStatus_Options) AsPulpOSTreeUploadStatus() (PulpOSTreeUploadStatus, error) {
+	var body PulpOSTreeUploadStatus
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPulpOSTreeUploadStatus overwrites any union data inside the UploadStatus_Options as the provided PulpOSTreeUploadStatus
+func (t *UploadStatus_Options) FromPulpOSTreeUploadStatus(v PulpOSTreeUploadStatus) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePulpOSTreeUploadStatus performs a merge with any union data inside the UploadStatus_Options, using the provided PulpOSTreeUploadStatus
+func (t *UploadStatus_Options) MergePulpOSTreeUploadStatus(v PulpOSTreeUploadStatus) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
