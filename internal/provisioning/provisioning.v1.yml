@@ -440,8 +440,12 @@ components:
                                 type: string
                             name:
                                 type: string
+                            provider:
+                                type: string
+                                description: One of ('azure', 'aws', 'gcp')
                             source_type_id:
                                 type: string
+                                deprecated: true
                             status:
                                 type: string
                             uid:
@@ -513,8 +517,12 @@ components:
                     type: string
                 name:
                     type: string
+                provider:
+                    type: string
+                    description: One of ('azure', 'aws', 'gcp')
                 source_type_id:
                     type: string
+                    deprecated: true
                 status:
                     type: string
                 uid:
@@ -918,11 +926,13 @@ components:
                 data:
                     - id: "654321"
                       name: My AWS account
+                      provider: aws
                       source_type_id: ""
                       status: available
                       uid: ""
                     - id: "543621"
                       name: My other AWS account
+                      provider: aws
                       source_type_id: ""
                       status: available
                       uid: ""
@@ -954,7 +964,7 @@ info:
     description: Provisioning service API
     license:
         name: GPL-3.0
-    version: 1.10.0
+    version: 1.11.0
 paths:
     /availability_status/sources:
         post:

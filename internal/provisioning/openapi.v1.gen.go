@@ -226,8 +226,11 @@ type V1ListPubkeyResponse struct {
 // V1ListSourceResponse defines model for v1.ListSourceResponse.
 type V1ListSourceResponse struct {
 	Data *[]struct {
-		Id           *string `json:"id,omitempty"`
-		Name         *string `json:"name,omitempty"`
+		Id   *string `json:"id,omitempty"`
+		Name *string `json:"name,omitempty"`
+
+		// Provider One of ('azure', 'aws', 'gcp')
+		Provider     *string `json:"provider,omitempty"`
 		SourceTypeId *string `json:"source_type_id,omitempty"`
 		Status       *string `json:"status,omitempty"`
 		Uid          *string `json:"uid,omitempty"`
