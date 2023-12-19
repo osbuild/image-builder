@@ -9,6 +9,7 @@ on:
       - main
   schedule:
     - cron: '0 5 * * *' # Daily at 05:00 UTC
+  merge_group:
 
 jobs:
   coverity:
