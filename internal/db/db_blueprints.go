@@ -70,11 +70,11 @@ const (
 			blueprint_versions
 		WHERE 
 			blueprint_id = $2
-        AND EXISTS (
-            SELECT 1
-            FROM blueprints
-            WHERE id = $2
-            AND org_id = $4
+		AND EXISTS (
+			SELECT 1
+			FROM blueprints
+			WHERE id = $2
+			AND org_id = $4
         );`
 
 	sqlDeleteBlueprint = `DELETE FROM blueprints WHERE id = $1 AND org_id = $2 AND account_number = $3`
