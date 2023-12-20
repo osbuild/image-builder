@@ -277,18 +277,19 @@ type ContainerUploadStatus struct {
 
 // CustomRepository defines model for CustomRepository.
 type CustomRepository struct {
-	Baseurl      *[]string `json:"baseurl,omitempty"`
-	CheckGpg     *bool     `json:"check_gpg,omitempty"`
-	CheckRepoGpg *bool     `json:"check_repo_gpg,omitempty"`
-	Enabled      *bool     `json:"enabled,omitempty"`
-	Filename     *string   `json:"filename,omitempty"`
-	Gpgkey       *[]string `json:"gpgkey,omitempty"`
-	Id           string    `json:"id"`
-	Metalink     *string   `json:"metalink,omitempty"`
-	Mirrorlist   *string   `json:"mirrorlist,omitempty"`
-	Name         *string   `json:"name,omitempty"`
-	Priority     *int      `json:"priority,omitempty"`
-	SslVerify    *bool     `json:"ssl_verify,omitempty"`
+	Baseurl        *[]string `json:"baseurl,omitempty"`
+	CheckGpg       *bool     `json:"check_gpg,omitempty"`
+	CheckRepoGpg   *bool     `json:"check_repo_gpg,omitempty"`
+	Enabled        *bool     `json:"enabled,omitempty"`
+	Filename       *string   `json:"filename,omitempty"`
+	Gpgkey         *[]string `json:"gpgkey,omitempty"`
+	Id             string    `json:"id"`
+	Metalink       *string   `json:"metalink,omitempty"`
+	Mirrorlist     *string   `json:"mirrorlist,omitempty"`
+	ModuleHotfixes *bool     `json:"module_hotfixes,omitempty"`
+	Name           *string   `json:"name,omitempty"`
+	Priority       *int      `json:"priority,omitempty"`
+	SslVerify      *bool     `json:"ssl_verify,omitempty"`
 }
 
 // Customizations defines model for Customizations.
@@ -742,6 +743,9 @@ type Repository struct {
 	IgnoreSsl  *bool   `json:"ignore_ssl,omitempty"`
 	Metalink   *string `json:"metalink,omitempty"`
 	Mirrorlist *string `json:"mirrorlist,omitempty"`
+
+	// ModuleHotfixes Disables modularity filtering for this repository.
+	ModuleHotfixes *bool `json:"module_hotfixes,omitempty"`
 
 	// PackageSets Naming package sets for a repository assigns it to a specific part
 	// (pipeline) of the build process.
