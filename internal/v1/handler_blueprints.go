@@ -161,10 +161,19 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
+	var blueprints []db.BlueprintWithNoBody
+	var count int
 
-	blueprints, count, err := h.server.db.GetBlueprints(idHeader.Identity.OrgID, idHeader.Identity.AccountNumber, limit, offset)
-	if err != nil {
-		return err
+	if params.Search != nil {
+		blueprints, count, err = h.server.db.FindBlueprints(idHeader.Identity.OrgID, *params.Search, limit, offset)
+		if err != nil {
+			return err
+		}
+	} else {
+		blueprints, count, err = h.server.db.GetBlueprints(idHeader.Identity.OrgID, limit, offset)
+		if err != nil {
+			return err
+		}
 	}
 
 	data := make([]BlueprintItem, 0, len(blueprints))

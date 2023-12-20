@@ -484,6 +484,12 @@ paths:
       operationId: getBlueprints
       parameters:
         - in: query
+          name: search
+          required: false
+          schema:
+            type: string
+          description: search for blueprints by name or description
+        - in: query
           name: limit
           schema:
             type: integer
