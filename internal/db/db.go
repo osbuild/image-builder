@@ -68,7 +68,8 @@ type DB interface {
 	InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error
 	GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error)
 	UpdateBlueprint(id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error
-	GetBlueprints(orgID, accountNumber string, limit, offset int) ([]BlueprintWithNoBody, int, error)
+	GetBlueprints(orgID string, limit, offset int) ([]BlueprintWithNoBody, int, error)
+	FindBlueprints(orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error)
 	DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error
 }
 
