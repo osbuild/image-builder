@@ -379,7 +379,7 @@ func testBlueprints(t *testing.T) {
 	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, name1, description1, bodyJson1)
 	require.NoError(t, err)
 
-	entry, err := d.GetBlueprint(id, ORGID1, ANR1)
+	bp1Entry, err := d.GetBlueprint(id1, ORGID1, ANR1)
 	require.NoError(t, err)
 	fromEntry, err := v1.BlueprintFromEntry(entry)
 	require.NoError(t, err)
@@ -401,7 +401,7 @@ func testBlueprints(t *testing.T) {
 	newVersionId := uuid.New()
 	err = d.UpdateBlueprint(newVersionId, entry.Id, ORGID1, name2, description2, bodyJson2)
 	require.NoError(t, err)
-	entryUpdated, err := d.GetBlueprint(entry.Id, ORGID1, ANR1)
+	bp1v2Entry, err := d.GetBlueprint(bp1Entry.Id, ORGID1, ANR1)
 	require.NoError(t, err)
 	bodyFromEntry2, err := v1.BlueprintFromEntry(entryUpdated)
 	require.NoError(t, err)
@@ -424,7 +424,7 @@ func testBlueprints(t *testing.T) {
 	newBlueprintId := uuid.New()
 	err = d.UpdateBlueprint(newBlueprintId, entry.Id, ORGID2, name3, description3, bodyJson3)
 	require.Error(t, err)
-	entryAfterInvalidUpdate, err := d.GetBlueprint(entry.Id, ORGID1, ANR1)
+	entryAfterInvalidUpdate, err := d.GetBlueprint(bp1Entry.Id, ORGID1, ANR1)
 	require.NoError(t, err)
 	bodyFromEntry3, err := v1.BlueprintFromEntry(entryAfterInvalidUpdate)
 	require.NoError(t, err)
@@ -457,7 +457,7 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, 1, count)
 	require.Equal(t, "unique desc", entries[0].Description)
 
-	err = d.DeleteBlueprint(id, ORGID1, ANR1)
+	err = d.DeleteBlueprint(id1, ORGID1, ANR1)
 	require.NoError(t, err)
 }
 
