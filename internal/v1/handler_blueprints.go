@@ -16,33 +16,27 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type BlueprintV1 struct {
-	Version        int            `json:"version"`
-	Name           string         `json:"name"`
-	Description    string         `json:"description"`
+type BlueprintBody struct {
 	Customizations Customizations `json:"customizations"`
 	Distribution   Distributions  `json:"distribution"`
 	ImageRequests  []ImageRequest `json:"image_requests"`
 }
 
-func BlueprintFromAPI(cbr CreateBlueprintRequest) BlueprintV1 {
-	return BlueprintV1{
-		Version:        1,
-		Name:           cbr.Name,
-		Description:    cbr.Description,
+func BlueprintFromAPI(cbr CreateBlueprintRequest) BlueprintBody {
+	return BlueprintBody{
 		Customizations: cbr.Customizations,
 		Distribution:   cbr.Distribution,
 		ImageRequests:  cbr.ImageRequests,
 	}
 }
 
-func BlueprintFromEntry(be *db.BlueprintEntry) (BlueprintV1, error) {
-	var result BlueprintV1
+func BlueprintFromEntry(be *db.BlueprintEntry) (BlueprintBody, error) {
+	var result BlueprintBody
 	err := json.Unmarshal(be.Body, &result)
 	if err != nil {
-		return BlueprintV1{}, err
+		return BlueprintBody{}, err
 	}
-	result.Version = be.Version
+
 	return result, nil
 }
 
@@ -66,7 +60,7 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 
 	id := uuid.New()
 	versionId := uuid.New()
-	err = h.server.db.InsertBlueprint(id, versionId, idHeader.Identity.OrgID, idHeader.Identity.AccountNumber, blueprint.Name, blueprint.Description, body)
+	err = h.server.db.InsertBlueprint(id, versionId, idHeader.Identity.OrgID, idHeader.Identity.AccountNumber, blueprintRequest.Name, blueprintRequest.Description, body)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return err
@@ -96,7 +90,7 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	}
 
 	versionId := uuid.New()
-	err = h.server.db.UpdateBlueprint(versionId, blueprintId, idHeader.Identity.OrgID, blueprint.Name, blueprint.Description, body)
+	err = h.server.db.UpdateBlueprint(versionId, blueprintId, idHeader.Identity.OrgID, blueprintRequest.Name, blueprintRequest.Description, body)
 	if err != nil {
 		ctx.Logger().Errorf("Error updating blueprint in db: %v", err)
 		return err
@@ -128,8 +122,8 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 			Customizations:   &blueprint.Customizations,
 			Distribution:     blueprint.Distribution,
 			ImageRequests:    []ImageRequest{imageRequest},
-			ImageName:        &blueprint.Name,
-			ImageDescription: &blueprint.Description,
+			ImageName:        &blueprintEntry.Name,
+			ImageDescription: &blueprintEntry.Description,
 			ClientId:         &clientId,
 		}
 		composesResponse, err := h.handleCommonCompose(ctx, composeRequest, &blueprintEntry.VersionId)
