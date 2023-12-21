@@ -53,10 +53,9 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
-	blueprintBody := BlueprintV1{
-		Version:     1,
-		Name:        "blueprint",
-		Description: "desc",
+	name := "blueprint"
+	description := "desc"
+	blueprint := BlueprintBody{
 		Customizations: Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
 		},
@@ -82,9 +81,9 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	}
 
 	var message []byte
-	message, err = json.Marshal(blueprintBody)
+	message, err = json.Marshal(blueprint)
 	require.NoError(t, err)
-	err = dbase.InsertBlueprint(id, versionId, "000000", "000000", "blueprint", "desc", message)
+	err = dbase.InsertBlueprint(id, versionId, "000000", "000000", name, description, message)
 	require.NoError(t, err)
 
 	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprint/%s/compose", id.String()), map[string]string{})

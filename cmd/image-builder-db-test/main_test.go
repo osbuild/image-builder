@@ -364,77 +364,86 @@ func testBlueprints(t *testing.T) {
 	conn := connect(t)
 	defer conn.Close(context.Background())
 
-	b1 := v1.BlueprintV1{
-		Version:     1,
-		Name:        "name",
-		Description: "desc",
+	name1 := "name"
+	description1 := "desc"
+	body1 := v1.BlueprintBody{
+		Customizations: v1.Customizations{},
+		Distribution:   "distribution",
+		ImageRequests:  []v1.ImageRequest{},
 	}
-	body, err := json.Marshal(b1)
+	bodyJson1, err := json.Marshal(body1)
 	require.NoError(t, err)
 
 	id := uuid.New()
 	versionId := uuid.New()
-	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, "name", "desc", body)
+	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, name1, description1, bodyJson1)
 	require.NoError(t, err)
 
 	entry, err := d.GetBlueprint(id, ORGID1, ANR1)
 	require.NoError(t, err)
-	b2, err := v1.BlueprintFromEntry(entry)
+	fromEntry, err := v1.BlueprintFromEntry(entry)
 	require.NoError(t, err)
-	require.Equal(t, b1, b2)
+	require.Equal(t, body1, fromEntry)
+	require.Equal(t, name1, entry.Name)
+	require.Equal(t, description1, entry.Description)
+	require.Equal(t, 1, entry.Version)
 
-	updated := v1.BlueprintV1{
-		Version:     2,
-		Name:        "new name",
-		Description: "new desc",
+	name2 := "new name"
+	description2 := "new desc"
+	body2 := v1.BlueprintBody{
+		Customizations: v1.Customizations{},
+		Distribution:   "distribution of updated body",
+		ImageRequests:  []v1.ImageRequest{},
 	}
-	bodyUpdated1, err := json.Marshal(updated)
+	bodyJson2, err := json.Marshal(body2)
 	require.NoError(t, err)
 
 	newVersionId := uuid.New()
-	err = d.UpdateBlueprint(newVersionId, entry.Id, ORGID1, "new name", "new desc", bodyUpdated1)
+	err = d.UpdateBlueprint(newVersionId, entry.Id, ORGID1, name2, description2, bodyJson2)
 	require.NoError(t, err)
 	entryUpdated, err := d.GetBlueprint(entry.Id, ORGID1, ANR1)
 	require.NoError(t, err)
-	bodyUpdated2, err := v1.BlueprintFromEntry(entryUpdated)
+	bodyFromEntry2, err := v1.BlueprintFromEntry(entryUpdated)
 	require.NoError(t, err)
-	require.Equal(t, updated, bodyUpdated2)
-	require.Equal(t, updated.Version, entryUpdated.Version)
-	require.Equal(t, "new name", entryUpdated.Name)
-	require.Equal(t, "new desc", entryUpdated.Description)
+	require.Equal(t, body2, bodyFromEntry2)
+	require.Equal(t, 2, entryUpdated.Version)
+	require.Equal(t, name2, entryUpdated.Name)
+	require.Equal(t, description2, entryUpdated.Description)
 
-	require.NotEqual(t, b1, bodyUpdated2)
+	require.NotEqual(t, body1, bodyFromEntry2)
 
-	newBlueprintVersion := v1.BlueprintV1{
-		Version:     3,
-		Name:        "name should not be changed",
-		Description: "desc should not be changed",
+	name3 := "name should not be changed"
+	description3 := "desc should not be changed"
+	body3 := v1.BlueprintBody{
+		Customizations: v1.Customizations{},
+		Distribution:   "distribution of third body version",
+		ImageRequests:  []v1.ImageRequest{},
 	}
-	newBlueprintVersionBody, err := json.Marshal(newBlueprintVersion)
+	bodyJson3, err := json.Marshal(body3)
 	require.NoError(t, err)
 	newBlueprintId := uuid.New()
-	err = d.UpdateBlueprint(newBlueprintId, entry.Id, ORGID2, "name", "desc", newBlueprintVersionBody)
+	err = d.UpdateBlueprint(newBlueprintId, entry.Id, ORGID2, name3, description3, bodyJson3)
 	require.Error(t, err)
 	entryAfterInvalidUpdate, err := d.GetBlueprint(entry.Id, ORGID1, ANR1)
 	require.NoError(t, err)
-	bodyNotUpdated, err := v1.BlueprintFromEntry(entryAfterInvalidUpdate)
+	bodyFromEntry3, err := v1.BlueprintFromEntry(entryAfterInvalidUpdate)
 	require.NoError(t, err)
-	require.Equal(t, updated, bodyNotUpdated)
-	require.Equal(t, updated.Version, bodyNotUpdated.Version)
-	require.Equal(t, "new name", bodyNotUpdated.Name)
-	require.Equal(t, "new desc", bodyNotUpdated.Description)
-	require.NotEqual(t, b1, bodyNotUpdated)
+	require.NotEqual(t, body1, bodyFromEntry3)
+	require.Equal(t, body2, bodyFromEntry3)
+	require.Equal(t, 2, entryAfterInvalidUpdate.Version)
+	require.Equal(t, name2, entryAfterInvalidUpdate.Name)
+	require.Equal(t, description2, entryAfterInvalidUpdate.Description)
 
 	newestBlueprintVersionId := uuid.New()
 	newestBlueprintId := uuid.New()
 	newestBlueprintName := "new name"
-	err = d.InsertBlueprint(newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", body)
+	err = d.InsertBlueprint(newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1)
 	entries, _, err := d.GetBlueprints(ORGID1, 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, entries[0].Name, newestBlueprintName)
-	require.Equal(t, entries[1].Version, updated.Version)
+	require.Equal(t, entries[1].Version, 2)
 
-	err = d.InsertBlueprint(uuid.New(), uuid.New(), ORGID1, ANR1, "unique name", "unique desc", body)
+	err = d.InsertBlueprint(uuid.New(), uuid.New(), ORGID1, ANR1, "unique name", "unique desc", bodyJson1)
 	entries, count, err := d.FindBlueprints(ORGID1, "", 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
