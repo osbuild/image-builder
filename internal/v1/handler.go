@@ -1063,9 +1063,10 @@ func buildCustomizations(cust *Customizations) *composer.Customizations {
 		var users []composer.User
 		for _, u := range *cust.Users {
 			groups := &[]string{"wheel"}
+			sshkey := u.SshKey
 			users = append(users, composer.User{
 				Name:   u.Name,
-				Key:    &u.SshKey,
+				Key:    &sshkey,
 				Groups: groups,
 			})
 		}
