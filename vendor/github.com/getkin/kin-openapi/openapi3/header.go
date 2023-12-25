@@ -6,26 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/jsonpointer"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
 )
-
-type Headers map[string]*HeaderRef
-
-var _ jsonpointer.JSONPointable = (*Headers)(nil)
-
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (h Headers) JSONLookup(token string) (interface{}, error) {
-	ref, ok := h[token]
-	if ref == nil || !ok {
-		return nil, fmt.Errorf("object has no field %q", token)
-	}
-
-	if ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
 
 // Header is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#header-object
@@ -35,9 +16,24 @@ type Header struct {
 
 var _ jsonpointer.JSONPointable = (*Header)(nil)
 
+// JSONLookup implements https://pkg.go.dev/github.com/go-openapi/jsonpointer#JSONPointable
+func (header Header) JSONLookup(token string) (interface{}, error) {
+	return header.Parameter.JSONLookup(token)
+}
+
+// MarshalJSON returns the JSON encoding of Header.
+func (header Header) MarshalJSON() ([]byte, error) {
+	return header.Parameter.MarshalJSON()
+}
+
 // UnmarshalJSON sets Header to a copy of data.
 func (header *Header) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, header)
+	return header.Parameter.UnmarshalJSON(data)
+}
+
+// MarshalYAML returns the JSON encoding of Header.
+func (header Header) MarshalYAML() (interface{}, error) {
+	return header.Parameter, nil
 }
 
 // SerializationMethod returns a header's serialization method.
@@ -76,7 +72,7 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 		return fmt.Errorf("header schema is invalid: %w", e)
 	}
 
-	if (header.Schema == nil) == (header.Content == nil) {
+	if (header.Schema == nil) == (len(header.Content) == 0) {
 		e := fmt.Errorf("parameter must contain exactly one of content and schema: %v", header)
 		return fmt.Errorf("header schema is invalid: %w", e)
 	}
@@ -87,49 +83,14 @@ func (header *Header) Validate(ctx context.Context, opts ...ValidationOption) er
 	}
 
 	if content := header.Content; content != nil {
+		e := errors.New("parameter content must only contain one entry")
+		if len(content) > 1 {
+			return fmt.Errorf("header content is invalid: %w", e)
+		}
+
 		if err := content.Validate(ctx); err != nil {
 			return fmt.Errorf("header content is invalid: %w", err)
 		}
 	}
 	return nil
-}
-
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (header Header) JSONLookup(token string) (interface{}, error) {
-	switch token {
-	case "schema":
-		if header.Schema != nil {
-			if header.Schema.Ref != "" {
-				return &Ref{Ref: header.Schema.Ref}, nil
-			}
-			return header.Schema.Value, nil
-		}
-	case "name":
-		return header.Name, nil
-	case "in":
-		return header.In, nil
-	case "description":
-		return header.Description, nil
-	case "style":
-		return header.Style, nil
-	case "explode":
-		return header.Explode, nil
-	case "allowEmptyValue":
-		return header.AllowEmptyValue, nil
-	case "allowReserved":
-		return header.AllowReserved, nil
-	case "deprecated":
-		return header.Deprecated, nil
-	case "required":
-		return header.Required, nil
-	case "example":
-		return header.Example, nil
-	case "examples":
-		return header.Examples, nil
-	case "content":
-		return header.Content, nil
-	}
-
-	v, _, err := jsonpointer.GetForToken(header.ExtensionProps, token)
-	return v, err
 }
