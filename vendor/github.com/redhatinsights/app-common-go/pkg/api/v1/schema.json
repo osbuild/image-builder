@@ -70,6 +70,10 @@
                 "BOPURL": {
                     "description": "Defines the path to the BOPURL.",
                     "type": "string"
+                },
+                "hashCache": {
+                    "description": "A set of configMap/secret hashes",
+                    "type": "string"
                 }
             },
             "required": [
@@ -464,13 +468,17 @@
                 "tlsPort": {
                     "description": "The TLS port of the dependent service.",
                     "type": "integer"
+                },
+                "apiPath": {
+                    "description": "The top level api path that the app should serve from /api/<apiPath>"
                 }
             },
             "required": [
                 "name",
                 "hostname",
                 "port",
-                "app"
+                "app",
+                "apiPath"
             ]
         },
         "PrivateDependencyEndpoint": {
