@@ -18,6 +18,8 @@ paths:
       summary: get the service version
       description: "get the service version"
       operationId: getVersion
+      tags:
+        - meta
       responses:
         '200':
           description: a service version
@@ -29,6 +31,8 @@ paths:
     get:
       summary: return the readiness
       operationId: getReadiness
+      tags:
+        - meta
       responses:
         '200':
           description: readiness
@@ -53,6 +57,8 @@ paths:
     get:
       summary: get the distributions available to this user
       operationId: getDistributions
+      tags:
+        - distribution
       responses:
         '200':
           description: |
@@ -74,6 +80,9 @@ paths:
           description: distribution for which to look up available architectures
           example: 'rhel-84'
       operationId: getArchitectures
+      tags:
+        - distribution
+        - architecture
       responses:
         '200':
           description: a list of available architectures and their associated image types
@@ -90,6 +99,9 @@ paths:
   /composes:
     get:
       summary: get a collection of previous compose requests for the logged in user
+      operationId: getComposes
+      tags:
+        - compose
       parameters:
         - in: query
           name: limit
@@ -137,6 +149,8 @@ paths:
       summary: get status of an image compose
       description: "status of an image compose"
       operationId: getComposeStatus
+      tags:
+        - compose
       responses:
         '200':
           description: compose status
@@ -166,6 +180,8 @@ paths:
           description: Id of compose metadata to get
       description: "metadata for an image compose"
       operationId: getComposeMetadata
+      tags:
+        - compose
       responses:
         '200':
           description: compose metadata
@@ -188,6 +204,8 @@ paths:
           required: true
           description: Id of compose to clone
       operationId: cloneCompose
+      tags:
+        - compose
       requestBody:
         required: true
         description: details of the new clone
@@ -232,6 +250,8 @@ paths:
       description: |
         Returns a list of all the clones which were started for a compose
       operationId: getComposeClones
+      tags:
+        - compose
       responses:
         '200':
           description: compose clones
@@ -253,6 +273,8 @@ paths:
           description: Id of clone status to get
       description: status of a clone
       operationId: getCloneStatus
+      tags:
+        - compose
       responses:
         '200':
           description: clone status
@@ -265,6 +287,8 @@ paths:
       summary: compose image
       description: "compose image"
       operationId: composeImage
+      tags:
+        - compose
       requestBody:
         required: true
         description: details of image to be composed
@@ -328,6 +352,9 @@ paths:
             default: 0
             minimum: 0
           description: packages page offset, default 0
+      operationId: getPackages
+      tags:
+        - package
       responses:
         '200':
           description: a list of packages
@@ -351,6 +378,8 @@ paths:
     get:
       summary: get the available profiles for a given distribution. This is a temporary endpoint meant to be removed soon.
       operationId: getOscapProfiles
+      tags:
+        - oscap
       responses:
         '200':
           description: |
@@ -375,6 +404,8 @@ paths:
     get:
       summary: get the customizations for a given distribution and profile. This is a temporary endpoint meant to be removed soon.
       operationId: getOscapCustomizations
+      tags:
+        - oscap
       responses:
         '200':
           description: |
@@ -388,6 +419,8 @@ paths:
       summary: create blueprint
       description: "create blueprint"
       operationId: createBlueprint
+      tags:
+        - blueprint
       requestBody:
         required: true
         description: details of blueprint
@@ -428,6 +461,8 @@ paths:
       summary: update blueprint
       description: "update blueprint"
       operationId: updateBlueprint
+      tags:
+        - blueprint
       requestBody:
         required: true
         description: details of blueprint
@@ -482,6 +517,8 @@ paths:
       summary: get a collection of blueprints
       description: "get a collection of blueprints, returns just the latest version of each blueprint"
       operationId: getBlueprints
+      tags:
+        - blueprint
       parameters:
         - in: query
           name: search
