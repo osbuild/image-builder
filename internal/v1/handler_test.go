@@ -34,7 +34,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 
 	t.Run("GetVersion", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/version", &tutils.AuthString0)
-		require.Equal(t, 200, respStatusCode)
+		require.Equal(t, http.StatusOK, respStatusCode)
 
 		var result Version
 		err := json.Unmarshal([]byte(body), &result)
@@ -44,13 +44,13 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 
 	t.Run("GetOpenapiJson", func(t *testing.T) {
 		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/openapi.json", &tutils.AuthString0)
-		require.Equal(t, 200, respStatusCode)
+		require.Equal(t, http.StatusOK, respStatusCode)
 		// note: not asserting body b/c response is too big
 	})
 
 	t.Run("StatusCheck", func(t *testing.T) {
 		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/status", nil)
-		require.Equal(t, 200, respStatusCode)
+		require.Equal(t, http.StatusOK, respStatusCode)
 	})
 }
 
@@ -78,7 +78,7 @@ func TestGetComposeStatus404(t *testing.T) {
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		id), &tutils.AuthString0)
-	require.Equal(t, 404, respStatusCode)
+	require.Equal(t, http.StatusNotFound, respStatusCode)
 	require.Contains(t, body, "Compose not found")
 }
 
@@ -142,7 +142,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	// Get API response and compare
 	respStatusCode, body := tutils.GetResponseBody(t,
 		fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata", id), &tutils.AuthString0)
-	require.Equal(t, 200, respStatusCode)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, *result.Packages, testPackages)
@@ -171,7 +171,7 @@ func TestGetComposeMetadata404(t *testing.T) {
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata",
 		id), &tutils.AuthString0)
-	require.Equal(t, 404, respStatusCode)
+	require.Equal(t, http.StatusNotFound, respStatusCode)
 	require.Contains(t, body, "Compose not found")
 }
 
@@ -196,7 +196,7 @@ func TestGetComposes(t *testing.T) {
 	var result ComposesResponse
 	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
 
-	require.Equal(t, 200, respStatusCode)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, 0, result.Meta.Count)
@@ -215,7 +215,7 @@ func TestGetComposes(t *testing.T) {
 	require.NoError(t, err)
 
 	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
-	require.Equal(t, 200, respStatusCode)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, composeEntry.CreatedAt.Format(time.RFC3339), result.Data[2].CreatedAt)
@@ -237,7 +237,7 @@ func TestGetComposes(t *testing.T) {
 	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes?ignoreImageTypes=edge-installer&ignoreImageTypes=aws", &tutils.AuthString0)
 	require.NoError(t, err)
 
-	require.Equal(t, 200, respStatusCode)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(result.Data))
@@ -283,8 +283,8 @@ func TestReadinessProbeNotReady(t *testing.T) {
 	defer tokenSrv.Close()
 
 	respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
-	require.NotEqual(t, 200, respStatusCode)
-	require.NotEqual(t, 404, respStatusCode)
+	require.NotEqual(t, http.StatusOK, respStatusCode)
+	require.NotEqual(t, http.StatusNotFound, respStatusCode)
 }
 
 func TestReadinessProbeReady(t *testing.T) {
@@ -308,7 +308,7 @@ func TestReadinessProbeReady(t *testing.T) {
 	defer tokenSrv.Close()
 
 	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/ready", &tutils.AuthString0)
-	require.Equal(t, 200, respStatusCode)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	require.Contains(t, body, "{\"readiness\":\"ready\"}")
 }
 
@@ -321,7 +321,7 @@ func TestMetrics(t *testing.T) {
 	defer tokenSrv.Close()
 
 	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/metrics", nil)
-	require.Equal(t, 200, respStatusCode)
+	require.Equal(t, http.StatusOK, respStatusCode)
 	require.Contains(t, body, "image_builder_crc_compose_requests_total")
 	require.Contains(t, body, "image_builder_crc_compose_errors")
 }
@@ -526,7 +526,7 @@ func TestGetArchitectures(t *testing.T) {
 
 	t.Run("Basic centos-8", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-8", &tutils.AuthString0)
-		require.Equal(t, 200, respStatusCode)
+		require.Equal(t, http.StatusOK, respStatusCode)
 
 		var result Architectures
 		err := json.Unmarshal([]byte(body), &result)
@@ -568,12 +568,12 @@ func TestGetArchitectures(t *testing.T) {
 
 	t.Run("Restricted distribution", func(t *testing.T) {
 		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/fedora-39", &tutils.AuthString1)
-		require.Equal(t, 403, respStatusCode)
+		require.Equal(t, http.StatusForbidden, respStatusCode)
 	})
 
 	t.Run("Restricted, but allowed distribution", func(t *testing.T) {
 		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/fedora-39", &tutils.AuthString0)
-		require.Equal(t, 200, respStatusCode)
+		require.Equal(t, http.StatusOK, respStatusCode)
 	})
 }
 
@@ -591,7 +591,7 @@ func TestGetPackages(t *testing.T) {
 	t.Run("Simple search", func(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 
 			var result PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
@@ -605,7 +605,7 @@ func TestGetPackages(t *testing.T) {
 	t.Run("Empty search", func(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			var result PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
@@ -613,7 +613,7 @@ func TestGetPackages(t *testing.T) {
 			require.Contains(t, body, "\"data\":[]")
 
 			respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?offset=121039&distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			err = json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Empty(t, result.Data)
@@ -625,7 +625,7 @@ func TestGetPackages(t *testing.T) {
 	t.Run("Search with limit", func(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			var result PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
@@ -636,7 +636,7 @@ func TestGetPackages(t *testing.T) {
 	t.Run("Search with offset", func(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1&offset=1", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			var result PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
@@ -648,25 +648,25 @@ func TestGetPackages(t *testing.T) {
 	t.Run("Search with invalid parameters", func(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=-13", arch), &tutils.AuthString0)
-			require.Equal(t, 400, respStatusCode)
+			require.Equal(t, http.StatusBadRequest, respStatusCode)
 			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=13&offset=-2193", arch), &tutils.AuthString0)
-			require.Equal(t, 400, respStatusCode)
+			require.Equal(t, http.StatusBadRequest, respStatusCode)
 			respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=none&architecture=%s&search=ssh", arch), &tutils.AuthString0)
-			require.Equal(t, 400, respStatusCode)
+			require.Equal(t, http.StatusBadRequest, respStatusCode)
 		}
 	})
 
 	t.Run("Search restricted distribution", func(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=fedora-39&architecture=%s&search=ssh", arch), &tutils.AuthString1)
-			require.Equal(t, 403, respStatusCode)
+			require.Equal(t, http.StatusForbidden, respStatusCode)
 		}
 	})
 
 	t.Run("Search restricted, but allowed distribution", func(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/packages?distribution=fedora-39&architecture=%s&search=ssh", arch), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 		}
 	})
 }
@@ -683,7 +683,7 @@ func TestGetDistributions(t *testing.T) {
 
 	t.Run("Access to restricted distributions", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString0)
-		require.Equal(t, 200, respStatusCode)
+		require.Equal(t, http.StatusOK, respStatusCode)
 		var result DistributionsResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
@@ -696,7 +696,7 @@ func TestGetDistributions(t *testing.T) {
 
 	t.Run("No access to restricted distributions", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/distributions", &tutils.AuthString1)
-		require.Equal(t, 200, respStatusCode)
+		require.Equal(t, http.StatusOK, respStatusCode)
 		var result DistributionsResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
@@ -724,7 +724,7 @@ func TestGetProfiles(t *testing.T) {
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			var result DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
@@ -755,7 +755,7 @@ func TestGetProfiles(t *testing.T) {
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			var result DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
@@ -784,7 +784,7 @@ func TestGetProfiles(t *testing.T) {
 		for _, dist := range []Distributions{Fedora37, Fedora38, Fedora39, Fedora40, Rhel90} {
 			respStatusCode, _ := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
-			require.Equal(t, 400, respStatusCode)
+			require.Equal(t, http.StatusBadRequest, respStatusCode)
 		}
 	})
 }
@@ -803,7 +803,7 @@ func TestGetCustomizations(t *testing.T) {
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			var result DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
@@ -812,7 +812,7 @@ func TestGetCustomizations(t *testing.T) {
 				var result Customizations
 				respStatusCode, body := tutils.GetResponseBody(t,
 					fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/%s/customizations", dist, profile), &tutils.AuthString0)
-				require.Equal(t, 200, respStatusCode)
+				require.Equal(t, http.StatusOK, respStatusCode)
 				err := json.Unmarshal([]byte(body), &result)
 				require.NoError(t, err)
 				// load the corresponding file from the disk
@@ -855,14 +855,14 @@ func TestGetCustomizations(t *testing.T) {
 		for _, dist := range []Distributions{Rhel8} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			var result DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			for _, profile := range result {
 				respStatusCode, _ := tutils.GetResponseBody(t,
 					fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/%s/customizations", Fedora40, profile), &tutils.AuthString0)
-				require.Equal(t, 400, respStatusCode)
+				require.Equal(t, http.StatusBadRequest, respStatusCode)
 			}
 		}
 	})
@@ -870,13 +870,13 @@ func TestGetCustomizations(t *testing.T) {
 		for _, dist := range []Distributions{Rhel8} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
-			require.Equal(t, 200, respStatusCode)
+			require.Equal(t, http.StatusOK, respStatusCode)
 			var result DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			respStatusCode, _ = tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/%s/customizations", dist, "badprofile"), &tutils.AuthString0)
-			require.Equal(t, 400, respStatusCode)
+			require.Equal(t, http.StatusBadRequest, respStatusCode)
 		}
 	})
 }

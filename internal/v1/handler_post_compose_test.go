@@ -35,7 +35,7 @@ func TestValidateComposeRequest(t *testing.T) {
 			ImageRequests:  []ImageRequest{},
 		}
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, respStatusCode)
+		require.Equal(t, http.StatusBadRequest, respStatusCode)
 		require.Contains(t, body, `Error at \"/image_requests\": minimum number of items is 1`)
 	})
 
@@ -67,7 +67,7 @@ func TestValidateComposeRequest(t *testing.T) {
 			},
 		}
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, respStatusCode)
+		require.Equal(t, http.StatusBadRequest, respStatusCode)
 		require.Contains(t, body, `Error at \"/image_requests\": maximum number of items is 1`)
 	})
 
@@ -90,7 +90,7 @@ func TestValidateComposeRequest(t *testing.T) {
 			},
 		}
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, respStatusCode)
+		require.Equal(t, http.StatusBadRequest, respStatusCode)
 		require.Contains(t, body, "Expected at least one source or account to share the image with")
 	})
 
@@ -146,7 +146,7 @@ func TestValidateComposeRequest(t *testing.T) {
 				ImageRequests:  []ImageRequest{tc.request},
 			}
 			respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-			require.Equal(t, 400, respStatusCode)
+			require.Equal(t, http.StatusBadRequest, respStatusCode)
 			require.Contains(t, body, "Request must contain either (1) a source id, and no tenant or subscription ids or (2) tenant and subscription ids, and no source id.")
 		})
 	}
@@ -164,7 +164,7 @@ func TestValidateComposeRequest(t *testing.T) {
 			},
 		}
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, respStatusCode)
+		require.Equal(t, http.StatusBadRequest, respStatusCode)
 		require.Regexp(t, "image_requests/0/upload_request/options|image_requests/0/upload_request/type", body)
 		require.Regexp(t, "Value is not nullable|value is not one of the allowed values", body)
 	})
@@ -192,7 +192,7 @@ func TestValidateComposeRequest(t *testing.T) {
 			},
 		}
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, respStatusCode)
+		require.Equal(t, http.StatusBadRequest, respStatusCode)
 		require.Contains(t, body, "Error at \\\"/image_requests/0/architecture\\\"")
 	})
 
@@ -217,7 +217,7 @@ func TestValidateComposeRequest(t *testing.T) {
 			},
 		}
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-		require.Equal(t, 400, respStatusCode)
+		require.Equal(t, http.StatusBadRequest, respStatusCode)
 		require.Contains(t, body, "Error at \\\"/image_requests/0/upload_request/type\\\"")
 	})
 
@@ -270,7 +270,7 @@ func TestValidateComposeRequest(t *testing.T) {
 			payload.ImageRequests[0].ImageType = it
 			payload.ImageRequests[0].UploadRequest = awsUr
 			respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-			require.Equal(t, 400, respStatusCode)
+			require.Equal(t, http.StatusBadRequest, respStatusCode)
 			require.Contains(t, body, fmt.Sprintf("Total AWS image size cannot exceed %d bytes", FSMaxSize))
 		}
 
@@ -278,7 +278,7 @@ func TestValidateComposeRequest(t *testing.T) {
 			payload.ImageRequests[0].ImageType = it
 			payload.ImageRequests[0].UploadRequest = azureUr
 			respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-			require.Equal(t, 400, respStatusCode)
+			require.Equal(t, http.StatusBadRequest, respStatusCode)
 			require.Contains(t, body, fmt.Sprintf("Total Azure image size cannot exceed %d bytes", FSMaxSize))
 		}
 	})
@@ -409,7 +409,7 @@ func TestComposeStatusError(t *testing.T) {
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		id), &tutils.AuthString1)
-	require.Equal(t, 200, respStatusCode)
+	require.Equal(t, http.StatusOK, respStatusCode)
 
 	var result ComposeStatus
 	err = json.Unmarshal([]byte(body), &result)
@@ -521,7 +521,7 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 		},
 	}
 	respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-	require.Equal(t, 400, respStatusCode)
+	require.Equal(t, http.StatusBadRequest, respStatusCode)
 	require.Contains(t, body, "Error resolving OSTree repo")
 }
 
@@ -566,7 +566,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 		},
 	}
 	respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
-	require.Equal(t, 500, respStatusCode)
+	require.Equal(t, http.StatusInternalServerError, respStatusCode)
 	require.Contains(t, body, "Internal Server Error")
 }
 
