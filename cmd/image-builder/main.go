@@ -53,6 +53,10 @@ func main() {
 		panic(err)
 	}
 
+	if conf.GlitchTipDSN == "" {
+		logrus.Warn("Sentry/Glitchtip was not initialized")
+	}
+
 	if conf.CwAccessKeyID != "" {
 		err = logger.AddCloudWatchHook(logrus.StandardLogger(), conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup)
 		if err != nil {
