@@ -573,6 +573,38 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	require.Contains(t, body, "Internal Server Error")
 }
 
+// This test case queries the image-builder for a non existing type of the os distribution
+// osbuild-composer is not being mock here as the error should be intercepted by image-builder
+func TestComposeImageErrorsWhenDistributionNotExists(t *testing.T) {
+	srv, tokenSrv := startServer(t, "", "", nil)
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	var uo UploadRequest_Options
+	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+		ShareWithAccounts: &[]string{"test-account"},
+	}))
+	payload := ComposeRequest{
+		Customizations: nil,
+		Distribution:   "fedoros",
+		ImageRequests: []ImageRequest{
+			{
+				Architecture: "x86_64",
+				ImageType:    ImageTypesAws,
+				UploadRequest: UploadRequest{
+					Type:    UploadTypesAws,
+					Options: uo,
+				},
+			},
+		},
+	}
+	respStatusCode, _ := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+	require.Equal(t, http.StatusBadRequest, respStatusCode)
+}
+
 func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	id := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
