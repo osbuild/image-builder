@@ -15,6 +15,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
+	sentrylogrus "github.com/getsentry/sentry-go/logrus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -55,6 +56,11 @@ func main() {
 
 	if conf.GlitchTipDSN == "" {
 		logrus.Warn("Sentry/Glitchtip was not initialized")
+	} else {
+		sentryhook := sentrylogrus.NewFromClient([]logrus.Level{logrus.PanicLevel,
+			logrus.FatalLevel, logrus.ErrorLevel},
+			sentry.CurrentHub().Client())
+		logrus.AddHook(sentryhook)
 	}
 
 	if conf.CwAccessKeyID != "" {

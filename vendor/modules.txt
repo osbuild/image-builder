@@ -80,6 +80,7 @@ github.com/getsentry/sentry-go/internal/otel/baggage
 github.com/getsentry/sentry-go/internal/otel/baggage/internal/baggage
 github.com/getsentry/sentry-go/internal/ratelimit
 github.com/getsentry/sentry-go/internal/traceparser
+github.com/getsentry/sentry-go/logrus
 # github.com/go-openapi/jsonpointer v0.19.5
 ## explicit; go 1.13
 github.com/go-openapi/jsonpointer
