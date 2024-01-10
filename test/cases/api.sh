@@ -545,7 +545,8 @@ function Test_waitForCompose() {
         break
         ;;
       "failure")
-        echo "Image compose failed"
+          echo "Image compose failed, compose status response:"
+          echo "$RESULT" | jq -r .
         exit 1
         ;;
       *)
