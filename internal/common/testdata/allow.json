@@ -1,4 +1,4 @@
 {
-  "000000": ["fedora-*", "centos-*", "rhel-*-nightly"],
-    "000001": []
+  "000000": ["fedora-*", "centos-*", "rhel-.*-nightly"],
+  "000001": []
 }

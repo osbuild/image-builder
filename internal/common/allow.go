@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
+	"regexp"
 
 	"github.com/sirupsen/logrus"
 )
@@ -19,9 +19,9 @@ type AllowList map[string][]string
 // The allow file must conform to the following json schema:
 //
 //	{
-//		"000000": ["fedora-*"]
-//	 "000001": ["fedora-34", "fedora-35", "fedora-36"]
-//	 "000002": []
+//	 "000000": ["fedora-*"],
+//	 "000001": ["fedora-34", "fedora-35", "fedora-36"],
+//	 "000002": [],
 //	}
 func LoadAllowList(allowFile string) (AllowList, error) {
 	if allowFile == "" {
@@ -53,9 +53,9 @@ func LoadAllowList(allowFile string) (AllowList, error) {
 }
 
 func (a AllowList) IsAllowed(orgId, distro string) (bool, error) {
+	// check orgid specific allowlist
 	for _, allowedDistro := range a[orgId] {
-		// path.Match() supports matching glob patterns for distros, e.g. fedora-*
-		match, err := path.Match(allowedDistro, distro)
+		match, err := regexp.Match(allowedDistro, []byte(distro))
 		if err != nil {
 			return false, err
 		}
