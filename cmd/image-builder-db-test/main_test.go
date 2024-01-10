@@ -435,7 +435,10 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, entries[1].Version, updated.Version)
 
 	err = d.InsertBlueprint(uuid.New(), uuid.New(), ORGID1, ANR1, "unique name", "unique desc", body)
-	entries, count, err := d.FindBlueprints(ORGID1, "unique", 100, 0)
+	entries, count, err := d.FindBlueprints(ORGID1, "", 100, 0)
+	require.NoError(t, err)
+	require.Equal(t, 3, count)
+	entries, count, err = d.FindBlueprints(ORGID1, "unique", 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 	require.Equal(t, "unique name", entries[0].Name)

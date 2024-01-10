@@ -90,7 +90,7 @@ const (
 	sqlFindBlueprints = `
 		SELECT blueprints.id, blueprints.name, blueprints.description, MAX(blueprint_versions.version) as version, MAX(blueprint_versions.created_at) as last_modified_at
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
-		WHERE blueprints.org_id = $1 AND (blueprints.name ILIKE $4 OR blueprints.description ILIKE $4)
+		WHERE blueprints.org_id = $1 AND ($4::text = '%%' OR blueprints.name ILIKE $4 OR blueprints.description ILIKE $4)
 		GROUP BY blueprints.id
 		ORDER BY last_modified_at DESC
 		LIMIT $2 OFFSET $3`
@@ -98,7 +98,7 @@ const (
 	sqlCountFilteredBlueprints = `
 		SELECT COUNT(*)
 		FROM blueprints
-		WHERE blueprints.org_id = $1 AND (blueprints.name ILIKE $2 OR blueprints.description ILIKE $2)`
+		WHERE blueprints.org_id = $1 AND ($2::text = '%%' OR blueprints.name ILIKE $2 OR blueprints.description ILIKE $2)`
 
 	sqlGetBlueprintsCount = `
 		SELECT COUNT(*)
@@ -256,7 +256,8 @@ func (db *dB) FindBlueprints(orgID, search string, limit, offset int) ([]Bluepri
 		return nil, 0, err
 	}
 	defer conn.Release()
-	searchQuery := fmt.Sprintf("%s%s%s", "%", search, "%")
+
+	searchQuery := "%" + search + "%"
 	rows, err := conn.Query(ctx, sqlFindBlueprints, orgID, limit, offset, searchQuery)
 	if err != nil {
 		return nil, 0, err
@@ -272,6 +273,7 @@ func (db *dB) FindBlueprints(orgID, search string, limit, offset int) ([]Bluepri
 		}
 		blueprints = append(blueprints, blueprint)
 	}
+
 	var count int
 	err = conn.QueryRow(ctx, sqlCountFilteredBlueprints, orgID, searchQuery).Scan(&count)
 	if err != nil {
