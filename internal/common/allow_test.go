@@ -21,7 +21,7 @@ func TestIsAllowed(t *testing.T) {
 		require.Equal(t, expected, actual)
 	})
 
-	t.Run("orgId not in allow list (forbidden)", func(t *testing.T) {
+	t.Run("orgId in global allow list, forbidden", func(t *testing.T) {
 		actual, _ := mockAllowList.IsAllowed("123456", "fedora-36")
 		expected := false
 		require.Equal(t, expected, actual)
@@ -45,7 +45,11 @@ func TestLoadAllowList(t *testing.T) {
 
 	t.Run("valid allowFile exists", func(t *testing.T) {
 		actual, _ := LoadAllowList("testdata/allow.json")
-		expected := AllowList{"000000": {"fedora-*", "centos-*", "rhel-.*-nightly"}, "000001": {}}
+		expected := AllowList{
+			"000000": {"fedora-*", "centos-*", "rhel-.*-nightly"},
+			"000001": {},
+			"*":      {"rhel-[0-9]+-nightly"},
+		}
 		require.Equal(t, expected, actual)
 	})
 }
