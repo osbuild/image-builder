@@ -14,6 +14,7 @@ set -euxo pipefail
 
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+TEST_ID=$(uuidgen)
 
 if which podman 2>/dev/null >&2; then
   CONTAINER_RUNTIME=podman
@@ -414,15 +415,6 @@ function installClientAzure() {
 }
 
 source /etc/os-release
-
-CI="${CI:-false}"
-if [[ "$CI" == true ]]; then
-  DISTRO_CODE="${DISTRO_CODE:-${ID}-${VERSION_ID//./}}"
-  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_JOB_ID"
-else
-  # if not running in Jenkins, generate ID not relying on specific env variables
-  TEST_ID=$(uuidgen);
-fi
 
 function createReqFileAzure() {
   AZURE_IMAGE_NAME="image-$TEST_ID"
