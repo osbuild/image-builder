@@ -94,8 +94,8 @@ objects:
           - name: GLITCHTIP_DSN
             valueFrom:
               secretKeyRef:
-                key: image-builder-stage-dsn
-                name: dsn
+                key: dsn
+                name: image-builder-stage-dsn
                 optional: true
         volumeMounts:
           - name: config-volume
