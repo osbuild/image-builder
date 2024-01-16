@@ -95,7 +95,7 @@ objects:
             valueFrom:
               secretKeyRef:
                 key: dsn
-                name: image-builder-stage-dsn
+                name: "${GLITCHTIP_DSN_NAME}"
                 optional: true
         volumeMounts:
           - name: config-volume
@@ -248,3 +248,6 @@ parameters:
     value: ""
   - name: CLOWDAPP_NAME
     value: image-builder
+  - name: GLITCHTIP_DSN_NAME
+    value: "image-builder-stage-dsn"
+    description: Name of the secret for connecting to sentry/glitchtip
