@@ -7,7 +7,7 @@ objects:
 - apiVersion: cloud.redhat.com/v1alpha1
   kind: ClowdApp
   metadata:
-    name: image-builder
+    name: ${CLOWDAPP_NAME}
   spec:
     envName: ${ENV_NAME}
     testing:
@@ -247,4 +247,6 @@ parameters:
   - name: ALLOW_FILE
     value: ""
   - name: SERVICE_LABEL
+    value: image-builder
+  - name: CLOWDAPP_NAME
     value: image-builder
