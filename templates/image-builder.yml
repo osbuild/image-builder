@@ -162,7 +162,7 @@ objects:
   kind: Service
   metadata:
     labels:
-      service: image-builder
+      service: ${SERVICE_LABEL}
     name: image-builder
     annotations:
       prometheus.io/path: /metrics
@@ -246,3 +246,5 @@ parameters:
     value: ""
   - name: ALLOW_FILE
     value: ""
+  - name: SERVICE_LABEL
+    value: image-builder
