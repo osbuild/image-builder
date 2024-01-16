@@ -162,7 +162,7 @@ objects:
   kind: Service
   metadata:
     labels:
-      service: ${SERVICE_LABEL}
+      service: image-builder
     name: image-builder
     annotations:
       prometheus.io/path: /metrics
@@ -246,7 +246,5 @@ parameters:
     value: ""
   - name: ALLOW_FILE
     value: ""
-  - name: SERVICE_LABEL
-    value: image-builder
   - name: CLOWDAPP_NAME
     value: image-builder
