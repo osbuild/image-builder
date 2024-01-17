@@ -18,6 +18,7 @@ func TestDefault(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, config.ListenAddress, "localhost")
 	require.Equal(t, config.LogLevel, "DEBUG")
+	require.False(t, config.FedoraAuth)
 	require.Empty(t, config.LogGroup)
 	require.Empty(t, config.CwRegion)
 	require.Empty(t, config.CwAccessKeyID)
@@ -28,6 +29,7 @@ func TestEnv(t *testing.T) {
 	os.Clearenv()
 	os.Setenv("LISTEN_ADDRESS", "localhost:8000")
 	os.Setenv("LOG_LEVEL", "INFO")
+	os.Setenv("FEDORA_AUTH", "true")
 
 	config := ImageBuilderConfig{
 		ListenAddress: "localhost",
@@ -37,6 +39,7 @@ func TestEnv(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, config.ListenAddress, "localhost:8000")
 	require.Equal(t, config.LogLevel, "INFO")
+	require.True(t, config.FedoraAuth)
 	require.Empty(t, config.LogGroup)
 	require.Empty(t, config.CwRegion)
 	require.Empty(t, config.CwAccessKeyID)

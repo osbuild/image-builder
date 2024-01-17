@@ -166,6 +166,7 @@ func main() {
 		AllowFile:        conf.AllowFile,
 		AllDistros:       adr,
 		DistributionsDir: conf.DistributionsDir,
+		FedoraAuth:       conf.FedoraAuth,
 	}
 
 	err = v1.Attach(serverConfig)

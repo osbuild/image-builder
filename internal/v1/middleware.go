@@ -35,14 +35,14 @@ func (s *Server) ValidateRequest(nextHandler echo.HandlerFunc) echo.HandlerFunc 
 	}
 }
 
-func noAssociateAccounts(nextHandler echo.HandlerFunc) echo.HandlerFunc {
+func (s *Server) noAssociateAccounts(nextHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		idh, err := getIdentityHeader(ctx)
+		id, err := s.getIdentity(ctx)
 		if err != nil {
 			return err
 		}
 
-		if idh.Identity.Type == "Associate" {
+		if id.Type() == "Associate" {
 			// Associate account types are not guaranteed to have an associated org_id, these accounts
 			// should not be able to access image-builder as long as we don't explicitly enable turnpike
 			// access, or another such service forwards them to us. Explicitly reject such accounts for
