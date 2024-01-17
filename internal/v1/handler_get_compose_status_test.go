@@ -41,7 +41,10 @@ func TestComposeStatus(t *testing.T) {
 	require.NoError(t, err)
 	err = dbase.InsertCompose(composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
 	require.NoError(t, err)
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)

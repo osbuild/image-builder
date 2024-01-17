@@ -13,7 +13,7 @@ import (
 func TestIdentity(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "", "")
+	srv, tokenSrv := startServer(t, "", "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)

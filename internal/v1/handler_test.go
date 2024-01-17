@@ -25,7 +25,7 @@ import (
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "", "")
+	srv, tokenSrv := startServer(t, "", "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -69,7 +69,7 @@ func TestGetComposeStatus404(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -130,7 +130,10 @@ func TestGetComposeMetadata(t *testing.T) {
 	err = dbase.InsertCompose(id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -162,7 +165,7 @@ func TestGetComposeMetadata404(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -186,7 +189,10 @@ func TestGetComposes(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServerWithCustomDB(t, "", "", dbase, "../../distributions", "")
+	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
 	defer func() {
 		err := db_srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -275,7 +281,7 @@ func TestBuildOSTreeOptions(t *testing.T) {
 }
 
 func TestReadinessProbeNotReady(t *testing.T) {
-	srv, tokenSrv := startServer(t, "", "")
+	srv, tokenSrv := startServer(t, "", "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -300,7 +306,7 @@ func TestReadinessProbeReady(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -313,7 +319,7 @@ func TestReadinessProbeReady(t *testing.T) {
 }
 
 func TestMetrics(t *testing.T) {
-	srv, tokenSrv := startServer(t, "", "")
+	srv, tokenSrv := startServer(t, "", "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -381,7 +387,10 @@ func TestGetClones(t *testing.T) {
   ]
 }`), nil, nil)
 	require.NoError(t, err)
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, provSrv.URL, dbase, "../../distributions", "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, provSrv.URL, &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -470,7 +479,10 @@ func TestGetCloneStatus(t *testing.T) {
   ]
 }`), nil, nil)
 	require.NoError(t, err)
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -517,7 +529,10 @@ func TestValidateSpec(t *testing.T) {
 func TestGetArchitectures(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv, tokenSrv := startServerWithAllowFile(t, "", "", "", distsDir, allowFile)
+	srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DistributionsDir: distsDir,
+		AllowFile:        allowFile,
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -580,7 +595,10 @@ func TestGetArchitectures(t *testing.T) {
 func TestGetPackages(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv, tokenSrv := startServerWithAllowFile(t, "", "", "", distsDir, allowFile)
+	srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DistributionsDir: distsDir,
+		AllowFile:        allowFile,
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -674,7 +692,10 @@ func TestGetPackages(t *testing.T) {
 func TestGetDistributions(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv, tokenSrv := startServerWithAllowFile(t, "", "", "", distsDir, allowFile)
+	srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DistributionsDir: distsDir,
+		AllowFile:        allowFile,
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -711,7 +732,10 @@ func TestGetDistributions(t *testing.T) {
 func TestGetProfiles(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv, tokenSrv := startServerWithAllowFile(t, "", "", "", distsDir, allowFile)
+	srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DistributionsDir: distsDir,
+		AllowFile:        allowFile,
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -790,7 +814,7 @@ func TestGetProfiles(t *testing.T) {
 }
 
 func TestGetCustomizations(t *testing.T) {
-	srv, tokenSrv := startServer(t, "", "")
+	srv, tokenSrv := startServer(t, "", "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
