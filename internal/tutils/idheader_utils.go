@@ -64,6 +64,10 @@ var idHeaderWithoutEntitlements = `{
 	}
 }`
 
+var fedoraHeader = `{
+	"user": "%s"
+}`
+
 func getBase64Header(header string, orgId string) string {
 	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf(header, orgId)))
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"testing"
 
+	fedora_identity "github.com/osbuild/community-gateway/oidc-authorizer/pkg/identity"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,6 +17,8 @@ var AuthString0WithoutEntitlements = GetBase64HeaderWithoutEntitlements("000000"
 
 // org_id 000001
 var AuthString1 = GetCompleteBase64Header("000001")
+
+var FedAuth = getBase64Header(fedoraHeader, "User")
 
 func GetResponseError(url string) (*http.Response, error) {
 	client := &http.Client{}
@@ -35,6 +38,7 @@ func GetResponseBody(t *testing.T, url string, auth *string) (int, string) {
 	require.NoError(t, err)
 	if auth != nil {
 		request.Header.Add("x-rh-identity", *auth)
+		request.Header.Add(fedora_identity.FedoraIDHeader, *auth)
 	}
 
 	response, err := client.Do(request)
