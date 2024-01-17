@@ -38,7 +38,10 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
 	defer func() {
 		shutdownErr := srv.Shutdown(context.Background())
 		require.NoError(t, shutdownErr)
@@ -107,7 +110,10 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServerWithCustomDB(t, "", "", dbase, "../../distributions", "")
+	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
 	defer func() {
 		err := db_srv.Shutdown(context.Background())
 		require.NoError(t, err)

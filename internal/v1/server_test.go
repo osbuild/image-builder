@@ -15,7 +15,6 @@ import (
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
-	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/provisioning"
@@ -91,7 +90,7 @@ func makeUploadOptions(t *testing.T, uploadOptions interface{}) *composer.Upload
 	return &result
 }
 
-func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
+func startServer(t *testing.T, composerURL, provURL string, conf *ServerConfig) (*echo.Echo, *httptest.Server) {
 	var log = &logrus.Logger{
 		Out:       os.Stderr,
 		Formatter: new(logrus.TextFormatter),
@@ -117,7 +116,7 @@ func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, dis
 	}))
 
 	compClient, err := composer.NewClient(composer.ComposerClientConfig{
-		ComposerURL:  url,
+		ComposerURL:  composerURL,
 		TokenURL:     tokenServer.URL,
 		ClientId:     "rhsm-api",
 		OfflineToken: "offlinetoken",
@@ -133,20 +132,36 @@ func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, dis
 	quotaFile, err := initQuotaFile(t)
 	require.NoError(t, err)
 
-	adr, err := distribution.LoadDistroRegistry(distsDir)
-	require.NoError(t, err)
-
 	echoServer := echo.New()
 	echoServer.HideBanner = true
-	serverConfig := &ServerConfig{
-		EchoServer:       echoServer,
-		CompClient:       compClient,
-		ProvClient:       provClient,
-		DBase:            dbase,
-		QuotaFile:        quotaFile,
-		AllowFile:        allowFile,
-		AllDistros:       adr,
-		DistributionsDir: distsDir,
+	serverConfig := conf
+	if serverConfig == nil {
+		serverConfig = &ServerConfig{
+			EchoServer: echoServer,
+			CompClient: compClient,
+			ProvClient: provClient,
+			QuotaFile:  quotaFile,
+		}
+	}
+
+	if serverConfig.DBase == nil {
+		dbase, err := dbc.NewDB()
+		require.NoError(t, err)
+		serverConfig.DBase = dbase
+	}
+	serverConfig.EchoServer = echoServer
+	serverConfig.CompClient = compClient
+	serverConfig.ProvClient = provClient
+	if serverConfig.QuotaFile == "" {
+		serverConfig.QuotaFile = quotaFile
+	}
+	if serverConfig.DistributionsDir == "" {
+		serverConfig.DistributionsDir = "../../distributions"
+	}
+	if serverConfig.AllDistros == nil {
+		adr, err := distribution.LoadDistroRegistry(serverConfig.DistributionsDir)
+		require.NoError(t, err)
+		serverConfig.AllDistros = adr
 	}
 
 	err = Attach(serverConfig)
@@ -173,16 +188,4 @@ func startServerWithCustomDB(t *testing.T, url, provURL string, dbase db.DB, dis
 	}
 
 	return echoServer, tokenServer
-}
-
-func startServer(t *testing.T, url, provURL string) (*echo.Echo, *httptest.Server) {
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-	return startServerWithCustomDB(t, url, provURL, dbase, "../../distributions", "")
-}
-
-func startServerWithAllowFile(t *testing.T, url, provURL, string, distsDir string, allowFile string) (*echo.Echo, *httptest.Server) {
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-	return startServerWithCustomDB(t, url, provURL, dbase, distsDir, allowFile)
 }

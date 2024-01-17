@@ -21,7 +21,7 @@ import (
 func TestValidateComposeRequest(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "", "")
+	srv, tokenSrv := startServer(t, "", "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -400,7 +400,10 @@ func TestComposeStatusError(t *testing.T) {
 	err = dbase.InsertCompose(id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServerWithCustomDB(t, apiSrv.URL, "", dbase, "../../distributions", "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -441,7 +444,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -489,7 +492,7 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -540,7 +543,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -588,7 +591,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "")
+	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -669,7 +672,10 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, "", "", distsDir, allowFile)
+		srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+			DistributionsDir: distsDir,
+			AllowFile:        allowFile,
+		})
 		defer func() {
 			err := srv.Shutdown(context.Background())
 			require.NoError(t, err)
@@ -691,7 +697,10 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, "", "", distsDir, allowFile)
+		srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+			DistributionsDir: distsDir,
+			AllowFile:        allowFile,
+		})
 		defer func() {
 			err := srv.Shutdown(context.Background())
 			require.NoError(t, err)
@@ -713,7 +722,10 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServerWithAllowFile(t, apiSrv.URL, "", "", distsDir, "")
+		srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+			DistributionsDir: distsDir,
+			AllowFile:        "",
+		})
 		defer func() {
 			err := srv.Shutdown(context.Background())
 			require.NoError(t, err)
@@ -789,7 +801,7 @@ func TestComposeCustomizations(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, provSrv.URL)
+	srv, tokenSrv := startServer(t, apiSrv.URL, provSrv.URL, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
