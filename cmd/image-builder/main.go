@@ -58,7 +58,7 @@ func main() {
 		logrus.Warn("Sentry/Glitchtip was not initialized")
 	} else {
 		sentryhook := sentrylogrus.NewFromClient([]logrus.Level{logrus.PanicLevel,
-			logrus.FatalLevel, logrus.ErrorLevel, logrus.InfoLevel},
+			logrus.FatalLevel, logrus.ErrorLevel},
 			sentry.CurrentHub().Client())
 		logrus.AddHook(sentryhook)
 	}
