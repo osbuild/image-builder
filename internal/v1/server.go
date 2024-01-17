@@ -15,11 +15,13 @@ import (
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/prometheus"
 	"github.com/osbuild/image-builder/internal/provisioning"
+	"github.com/sirupsen/logrus"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/labstack/echo/v4"
+	fedora_identity "github.com/osbuild/community-gateway/oidc-authorizer/pkg/identity"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redhatinsights/identity"
 )
@@ -37,6 +39,7 @@ type Server struct {
 	allowList        common.AllowList
 	allDistros       *distribution.AllDistroRegistry
 	distributionsDir string
+	fedoraAuth       bool
 }
 
 type ServerConfig struct {
@@ -50,6 +53,7 @@ type ServerConfig struct {
 	AllowFile        string
 	AllDistros       *distribution.AllDistroRegistry
 	DistributionsDir string
+	FedoraAuth       bool
 }
 
 type AWSConfig struct {
@@ -98,6 +102,7 @@ func Attach(conf *ServerConfig) error {
 		allowList,
 		conf.AllDistros,
 		conf.DistributionsDir,
+		conf.FedoraAuth,
 	}
 	var h Handlers
 	h.server = &s
@@ -106,12 +111,15 @@ func Attach(conf *ServerConfig) error {
 
 	middlewares := []echo.MiddlewareFunc{
 		prometheus.StatusMiddleware,
-		echo.WrapMiddleware(identity.Extractor),
-		echo.WrapMiddleware(identity.BasePolicy),
-		noAssociateAccounts,
-		s.ValidateRequest,
-		prometheus.PrometheusMW,
 	}
+
+	if s.fedoraAuth {
+		middlewares = append(middlewares, echo.WrapMiddleware(fedora_identity.Extractor))
+	} else {
+		middlewares = append(middlewares, echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy))
+
+	}
+	middlewares = append(middlewares, s.noAssociateAccounts, s.ValidateRequest, prometheus.PrometheusMW)
 
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), middlewares...), &h)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), middlewares...), &h)
@@ -128,16 +136,6 @@ func Attach(conf *ServerConfig) error {
 
 	h.server.echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 	return nil
-}
-
-// return the Identity Header if there is a valid one in the request
-func getIdentityHeader(ctx echo.Context) (*identity.XRHID, error) {
-	idHeader, ok := identity.Get(ctx.Request().Context())
-	if !ok {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Identity Header missing in request handler")
-	}
-
-	return &idHeader, nil
 }
 
 func RoutePrefix() string {
@@ -219,7 +217,14 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 }
 
 func (s *Server) distroRegistry(ctx echo.Context) *distribution.DistroRegistry {
-	return s.allDistros.Available(s.isEntitled(ctx))
+	entitled := false
+	id, err := s.getIdentity(ctx)
+	if err != nil {
+		logrus.Error("Unable to get entitlement")
+	}
+
+	entitled = id.IsEntitled("rhel")
+	return s.allDistros.Available(entitled)
 }
 
 // wraps DistroRegistry.Get and verifies the user has access
@@ -232,13 +237,13 @@ func (s *Server) getDistro(ctx echo.Context, distro Distributions) (*distributio
 		return nil, err
 	}
 
-	idHeader, err := getIdentityHeader(ctx)
+	id, err := s.getIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	if d.IsRestricted() {
-		allowOk, err := s.allowList.IsAllowed(idHeader.Identity.Internal.OrgID, d.Distribution.Name)
+		allowOk, err := s.allowList.IsAllowed(id.OrgID(), d.Distribution.Name)
 		if err != nil {
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
@@ -248,25 +253,4 @@ func (s *Server) getDistro(ctx echo.Context, distro Distributions) (*distributio
 		}
 	}
 	return d, nil
-}
-
-// return whether or not the calling context is entitled to consume RHEL content
-func (s *Server) isEntitled(ctx echo.Context) bool {
-	idh, err := getIdentityHeader(ctx)
-	if err != nil {
-		return false
-	}
-
-	entitled, ok := idh.Entitlements["rhel"]
-	// The entitlement should really be present in the identity header, just in case use account
-	// number as a fallback
-	if !ok {
-		// the user's org does not have an associated EBS account number, these
-		// are associated when a billing relationship exists, which is a decent
-		// proxy for RHEL entitlements
-		ctx.Logger().Error("RHEL entitlement not present in identity header")
-		return idh.Identity.AccountNumber != ""
-
-	}
-	return entitled.IsEntitled
 }

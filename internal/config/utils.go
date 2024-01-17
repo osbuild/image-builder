@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/joho/godotenv"
 	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
@@ -36,6 +37,13 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 			switch kind {
 			case reflect.String:
 				fieldV.SetString(confV)
+			case reflect.Bool:
+				if strings.ToLower(confV) == "true" || confV == "1" {
+					fieldV.SetBool(true)
+				} else {
+					fieldV.SetBool(false)
+				}
+
 			default:
 				return ErrUnsupportedFieldType
 			}

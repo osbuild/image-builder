@@ -166,6 +166,9 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 ## explicit
 github.com/mohae/deepcopy
+# github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240117171535-401ddadefd40
+## explicit; go 1.19
+github.com/osbuild/community-gateway/oidc-authorizer/pkg/identity
 # github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
 ## explicit; go 1.19
 github.com/osbuild/osbuild-composer/pkg/splunk_logger
@@ -253,7 +256,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.3.0
 ## explicit
 golang.org/x/time/rate
-# google.golang.org/protobuf v1.30.0
+# google.golang.org/protobuf v1.31.0
 ## explicit; go 1.11
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire

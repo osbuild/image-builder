@@ -41,7 +41,7 @@ func BlueprintFromEntry(be *db.BlueprintEntry) (BlueprintBody, error) {
 }
 
 func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 
 	id := uuid.New()
 	versionId := uuid.New()
-	err = h.server.db.InsertBlueprint(id, versionId, idHeader.Identity.OrgID, idHeader.Identity.AccountNumber, blueprintRequest.Name, blueprintRequest.Description, body)
+	err = h.server.db.InsertBlueprint(id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, blueprintRequest.Description, body)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return err
@@ -72,7 +72,7 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 }
 
 func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) error {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	}
 
 	versionId := uuid.New()
-	err = h.server.db.UpdateBlueprint(versionId, blueprintId, idHeader.Identity.OrgID, blueprintRequest.Name, blueprintRequest.Description, body)
+	err = h.server.db.UpdateBlueprint(versionId, blueprintId, userID.OrgID(), blueprintRequest.Name, blueprintRequest.Description, body)
 	if err != nil {
 		ctx.Logger().Errorf("Error updating blueprint in db: %v", err)
 		return err
@@ -102,12 +102,12 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 }
 
 func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) error {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
 
-	blueprintEntry, err := h.server.db.GetBlueprint(id, idHeader.Identity.OrgID, idHeader.Identity.AccountNumber)
+	blueprintEntry, err := h.server.db.GetBlueprint(id, userID.OrgID(), userID.AccountNumber())
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 	if err != nil {
 		return err
 	}
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
@@ -161,12 +161,12 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 	var count int
 
 	if params.Search != nil {
-		blueprints, count, err = h.server.db.FindBlueprints(idHeader.Identity.OrgID, *params.Search, limit, offset)
+		blueprints, count, err = h.server.db.FindBlueprints(userID.OrgID(), *params.Search, limit, offset)
 		if err != nil {
 			return err
 		}
 	} else {
-		blueprints, count, err = h.server.db.GetBlueprints(idHeader.Identity.OrgID, limit, offset)
+		blueprints, count, err = h.server.db.GetBlueprints(userID.OrgID(), limit, offset)
 		if err != nil {
 			return err
 		}
@@ -206,7 +206,7 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 }
 
 func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_types.UUID, params GetBlueprintComposesParams) error {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
@@ -226,11 +226,11 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 
 	since := time.Hour * 24 * 14
 
-	composes, err := h.server.db.GetBlueprintComposes(idHeader.Identity.OrgID, blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
+	composes, err := h.server.db.GetBlueprintComposes(userID.OrgID(), blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
 	if err != nil {
 		return err
 	}
-	count, err := h.server.db.CountBlueprintComposesSince(idHeader.Identity.OrgID, blueprintId, params.BlueprintVersion, since, ignoreImageTypeStrings)
+	count, err := h.server.db.CountBlueprintComposesSince(userID.OrgID(), blueprintId, params.BlueprintVersion, since, ignoreImageTypeStrings)
 	if err != nil {
 		return err
 	}

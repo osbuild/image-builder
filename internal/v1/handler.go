@@ -85,7 +85,7 @@ func (h *Handlers) GetOpenapiJson(ctx echo.Context) error {
 
 func (h *Handlers) GetDistributions(ctx echo.Context) error {
 	dr := h.server.distroRegistry(ctx)
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 	var distributions DistributionsResponse
 	for k, d := range dr.Map() {
 		if d.IsRestricted() {
-			allowOk, err := h.server.allowList.IsAllowed(idHeader.Identity.Internal.OrgID, d.Distribution.Name)
+			allowOk, err := h.server.allowList.IsAllowed(userID.OrgID(), d.Distribution.Name)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 			}
@@ -408,12 +408,12 @@ func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeSt
 }
 
 func (h *Handlers) DeleteCompose(ctx echo.Context, composeId uuid.UUID) error {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = h.server.db.DeleteCompose(composeId, idHeader.Identity.OrgID)
+	err = h.server.db.DeleteCompose(composeId, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.ComposeNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -485,12 +485,12 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) err
 
 // return compose from the database or error when user does not have composeId associated to its OrgId in the DB
 func (h *Handlers) getComposeByIdAndOrgId(ctx echo.Context, composeId uuid.UUID) (*db.ComposeEntry, error) {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	composeEntry, err := h.server.db.GetCompose(composeId, idHeader.Identity.OrgID)
+	composeEntry, err := h.server.db.GetCompose(composeId, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.ComposeNotFoundError) {
 			return nil, echo.NewHTTPError(http.StatusNotFound, err)
@@ -521,7 +521,7 @@ func convertIgnoreImageTypeToSlice(ignoreImageTypes *[]ImageTypes) []string {
 }
 
 func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
@@ -540,7 +540,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	ignoreImageTypeStrings := convertIgnoreImageTypeToSlice(params.IgnoreImageTypes)
 
 	// composes in the last 14 days
-	composes, count, err := h.server.db.GetComposes(idHeader.Identity.OrgID, (time.Hour * 24 * 14), limit, offset, ignoreImageTypeStrings)
+	composes, count, err := h.server.db.GetComposes(userID.OrgID(), (time.Hour * 24 * 14), limit, offset, ignoreImageTypeStrings)
 	if err != nil {
 		return err
 	}
@@ -576,11 +576,11 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 		return err
 	}
 
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
-	imageType, err := h.server.db.GetComposeImageType(composeId, idHeader.Identity.OrgID)
+	imageType, err := h.server.db.GetComposeImageType(composeId, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.ComposeNotFoundError) {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to find compose %v", composeId))
@@ -684,12 +684,12 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 }
 
 func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
 
-	cloneEntry, err := h.server.db.GetClone(id, idHeader.Identity.OrgID)
+	cloneEntry, err := h.server.db.GetClone(id, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.CloneNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -753,7 +753,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 		return err
 	}
 
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
@@ -768,7 +768,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 		offset = *params.Offset
 	}
 
-	cloneEntries, count, err := h.server.db.GetClonesForCompose(composeId, idHeader.Identity.OrgID, limit, offset)
+	cloneEntries, count, err := h.server.db.GetClonesForCompose(composeId, userID.OrgID(), limit, offset)
 	if err != nil {
 		ctx.Logger().Errorf("Error querying clones for compose %v: %v", composeId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying clones for this compose")

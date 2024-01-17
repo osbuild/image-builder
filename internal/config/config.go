@@ -36,6 +36,7 @@ type ImageBuilderConfig struct {
 	SplunkToken          string `env:"SPLUNK_HEC_TOKEN"`
 	ProvisioningURL      string `env:"PROVISIONING_URL"`
 	GlitchTipDSN         string `env:"GLITCHTIP_DSN"`
+	FedoraAuth           bool   `env:"FEDORA_AUTH"`
 }
 
 func (ibc *ImageBuilderConfig) IsDebug() bool {

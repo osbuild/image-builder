@@ -31,12 +31,12 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 }
 
 func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeRequest, blueprintVersionId *uuid.UUID) (ComposeResponse, error) {
-	idHeader, err := getIdentityHeader(ctx)
+	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return ComposeResponse{}, err
 	}
 
-	quotaOk, err := common.CheckQuota(idHeader.Identity.OrgID, h.server.db, h.server.quotaFile)
+	quotaOk, err := common.CheckQuota(userID.OrgID(), h.server.db, h.server.quotaFile)
 	if err != nil {
 		return ComposeResponse{}, err
 	}
@@ -157,7 +157,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 
 	clientIdString := string(*composeRequest.ClientId)
 
-	err = h.server.db.InsertCompose(composeResult.Id, idHeader.Identity.AccountNumber, idHeader.Identity.User.Email, idHeader.Identity.Internal.OrgID, composeRequest.ImageName, rawCR, &clientIdString, blueprintVersionId)
+	err = h.server.db.InsertCompose(composeResult.Id, userID.AccountNumber(), userID.Email(), userID.OrgID(), composeRequest.ImageName, rawCR, &clientIdString, blueprintVersionId)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return ComposeResponse{}, err
