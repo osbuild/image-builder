@@ -149,7 +149,7 @@ objects:
     - prefix: ${FLOORIST_QUERY_PREFIX}/builds
       query: >-
         select
-          job_id,created_at,org_id,account_number,email,request->>'distribution' as distribution,
+          job_id,created_at,client_id,org_id,account_number,email,request->>'distribution' as distribution,
           req->>'architecture' as architecture,req->>'image_type' as image_type,req->'upload_request'->>'type' as upload_request_type,req->'ostree'->>'url' as ostree_url,
           request->'customizations'->'packages' as packages,
           request->'customizations'->'filesystem' as filesystem,
