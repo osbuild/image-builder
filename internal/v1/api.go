@@ -239,14 +239,9 @@ type BlueprintResponse struct {
 
 // BlueprintsResponse defines model for BlueprintsResponse.
 type BlueprintsResponse struct {
-	Data  []BlueprintItem `json:"data"`
-	Links struct {
-		First string `json:"first"`
-		Last  string `json:"last"`
-	} `json:"links"`
-	Meta struct {
-		Count int `json:"count"`
-	} `json:"meta"`
+	Data  []BlueprintItem   `json:"data"`
+	Links ListResponseLinks `json:"links"`
+	Meta  ListResponseMeta  `json:"meta"`
 }
 
 // ClientId defines model for ClientId.
@@ -281,13 +276,8 @@ type CloneStatusResponseStatus string
 // ClonesResponse defines model for ClonesResponse.
 type ClonesResponse struct {
 	Data  []ClonesResponseItem `json:"data"`
-	Links struct {
-		First string `json:"first"`
-		Last  string `json:"last"`
-	} `json:"links"`
-	Meta struct {
-		Count int `json:"count"`
-	} `json:"meta"`
+	Links ListResponseLinks    `json:"links"`
+	Meta  ListResponseMeta     `json:"meta"`
 }
 
 // ClonesResponseItem defines model for ClonesResponseItem.
@@ -346,13 +336,8 @@ type ComposeStatusError struct {
 // ComposesResponse defines model for ComposesResponse.
 type ComposesResponse struct {
 	Data  []ComposesResponseItem `json:"data"`
-	Links struct {
-		First string `json:"first"`
-		Last  string `json:"last"`
-	} `json:"links"`
-	Meta struct {
-		Count int `json:"count"`
-	} `json:"meta"`
+	Links ListResponseLinks      `json:"links"`
+	Meta  ListResponseMeta       `json:"meta"`
 }
 
 // ComposesResponseItem defines model for ComposesResponseItem.
@@ -716,6 +701,17 @@ type Kernel struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// ListResponseLinks defines model for ListResponseLinks.
+type ListResponseLinks struct {
+	First string `json:"first"`
+	Last  string `json:"last"`
+}
+
+// ListResponseMeta defines model for ListResponseMeta.
+type ListResponseMeta struct {
+	Count int `json:"count"`
+}
+
 // Locale Locale configuration
 type Locale struct {
 	// Keyboard Sets the keyboard layout
@@ -782,14 +778,9 @@ type PackageMetadata struct {
 
 // PackagesResponse defines model for PackagesResponse.
 type PackagesResponse struct {
-	Data  []Package `json:"data"`
-	Links struct {
-		First string `json:"first"`
-		Last  string `json:"last"`
-	} `json:"links"`
-	Meta struct {
-		Count int `json:"count"`
-	} `json:"meta"`
+	Data  []Package         `json:"data"`
+	Links ListResponseLinks `json:"links"`
+	Meta  ListResponseMeta  `json:"meta"`
 }
 
 // Readiness defines model for Readiness.
