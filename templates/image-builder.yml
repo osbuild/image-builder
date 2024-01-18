@@ -53,6 +53,8 @@ objects:
             value: "${QUOTA_FILE}"
           - name: ALLOW_FILE
             value: "${ALLOW_FILE}"
+          - name: FEDORA_AUTH
+            value: "$FEDORA_AUTH"
           - name: CLOWDER_ENABLED
             value: ${CLOWDER_ENABLED}
           - name: OSBUILD_AWS_REGION
@@ -251,3 +253,6 @@ parameters:
   - name: GLITCHTIP_DSN_NAME
     value: "image-builder-stage-dsn"
     description: Name of the secret for connecting to sentry/glitchtip
+  - name: FEDORA_AUTH
+    value: "false"
+    description: Look for the fedora auth header instead of the RH one
