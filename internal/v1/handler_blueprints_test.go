@@ -167,3 +167,73 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 2, len(result.Data))
 	require.Equal(t, 2, result.Meta.Count)
 }
+
+func TestHandlers_GetBlueprint(t *testing.T) {
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+
+	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
+	defer func() {
+		err := db_srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	id := uuid.New()
+	versionId := uuid.New()
+
+	uploadOptions := UploadRequest_Options{}
+	err = uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
+	})
+	require.NoError(t, err)
+	name := "blueprint"
+	description := "desc"
+	blueprint := BlueprintBody{
+		Customizations: Customizations{
+			Packages: common.ToPtr([]string{"nginx"}),
+		},
+		Distribution: "centos-8",
+		ImageRequests: []ImageRequest{
+			{
+				Architecture: ImageRequestArchitectureX8664,
+				ImageType:    ImageTypesAws,
+				UploadRequest: UploadRequest{
+					Type:    UploadTypesAws,
+					Options: uploadOptions,
+				},
+			},
+			{
+				Architecture: ImageRequestArchitectureAarch64,
+				ImageType:    ImageTypesAws,
+				UploadRequest: UploadRequest{
+					Type:    UploadTypesAws,
+					Options: uploadOptions,
+				},
+			},
+		},
+	}
+
+	var message []byte
+	message, err = json.Marshal(blueprint)
+	require.NoError(t, err)
+	err = dbase.InsertBlueprint(id, versionId, "000000", "000000", name, description, message)
+	require.NoError(t, err)
+
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s", id.String()), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode)
+
+	var result BlueprintResponse
+	require.Equal(t, 200, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, id, result.Id)
+	require.Equal(t, description, result.Description)
+	require.Equal(t, name, result.Name)
+	require.Equal(t, blueprint.ImageRequests, result.ImageRequests)
+	require.Equal(t, blueprint.Distribution, result.Distribution)
+	require.Equal(t, blueprint.Customizations, result.Customizations)
+}

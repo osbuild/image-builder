@@ -71,6 +71,33 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	})
 }
 
+func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID) error {
+	userID, err := h.server.getIdentity(ctx)
+	if err != nil {
+		return err
+	}
+
+	blueprintEntry, err := h.server.db.GetBlueprint(id, userID.OrgID(), userID.AccountNumber())
+	if err != nil {
+		return err
+	}
+	blueprint, err := BlueprintFromEntry(blueprintEntry)
+	if err != nil {
+		return err
+	}
+
+	blueprintResponse := BlueprintResponse{
+		Id:             id,
+		Name:           blueprintEntry.Name,
+		Description:    blueprintEntry.Description,
+		ImageRequests:  blueprint.ImageRequests,
+		Distribution:   blueprint.Distribution,
+		Customizations: blueprint.Customizations,
+	}
+
+	return ctx.JSON(http.StatusOK, blueprintResponse)
+}
+
 func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) error {
 	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
