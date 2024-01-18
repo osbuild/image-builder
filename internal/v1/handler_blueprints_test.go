@@ -89,7 +89,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	err = dbase.InsertBlueprint(id, versionId, "000000", "000000", name, description, message)
 	require.NoError(t, err)
 
-	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprint/%s/compose", id.String()), map[string]string{})
+	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/compose", id.String()), map[string]string{})
 	require.Equal(t, http.StatusCreated, respStatusCode)
 
 	var result []ComposeResponse
@@ -140,7 +140,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	err = dbase.InsertCompose(id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "gcp"}]}`), &clientId, &version2Id)
 	require.NoError(t, err)
 
-	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprint/%s/composes", blueprintId.String()), &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/composes", blueprintId.String()), &tutils.AuthString0)
 	require.NoError(t, err)
 
 	require.Equal(t, 200, respStatusCode)
@@ -154,7 +154,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 4, result.Meta.Count)
 
 	// get composes for specific version
-	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprint/%s/composes?blueprint_version=2", blueprintId.String()), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/composes?blueprint_version=2", blueprintId.String()), &tutils.AuthString0)
 	require.NoError(t, err)
 
 	require.Equal(t, 200, respStatusCode)
