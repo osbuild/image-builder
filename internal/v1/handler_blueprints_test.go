@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
+	"github.com/osbuild/image-builder/internal/db"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/tutils"
@@ -236,4 +238,62 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.Equal(t, blueprint.ImageRequests, result.ImageRequests)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations, result.Customizations)
+}
+
+func TestHandlers_DeleteBlueprint(t *testing.T) {
+	blueprintId := uuid.New()
+	versionId := uuid.New()
+	version2Id := uuid.New()
+	clientId := "ui"
+	imageName := "MyImageName"
+
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+
+	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
+	defer func() {
+		err := db_srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	err = dbase.InsertBlueprint(blueprintId, versionId, "000000", "000000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
+	require.NoError(t, err)
+	id1 := uuid.New()
+	err = dbase.InsertCompose(id1, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
+	require.NoError(t, err)
+	id2 := uuid.New()
+	err = dbase.InsertCompose(id2, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &versionId)
+	require.NoError(t, err)
+
+	err = dbase.UpdateBlueprint(version2Id, blueprintId, "000000", "blueprint", "desc2", json.RawMessage(`{"image_requests": [{"image_type": "aws"}, {"image_type": "gcp"}]}`))
+	require.NoError(t, err)
+	id3 := uuid.New()
+	err = dbase.InsertCompose(id3, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &version2Id)
+	require.NoError(t, err)
+	id4 := uuid.New()
+	err = dbase.InsertCompose(id4, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "gcp"}]}`), &clientId, &version2Id)
+	require.NoError(t, err)
+
+	respStatusCode, body := tutils.DeleteResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s", blueprintId.String()))
+	require.Equal(t, 204, respStatusCode)
+	require.Equal(t, "", body)
+
+	var errorResponse HTTPErrorList
+	notFoundCode, body := tutils.DeleteResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s", blueprintId.String()))
+	require.Equal(t, 404, notFoundCode)
+	err = json.Unmarshal([]byte(body), &errorResponse)
+	require.NoError(t, err)
+	require.Equal(t, "Not Found", errorResponse.Errors[0].Detail)
+
+	_, err = dbase.GetBlueprint(blueprintId, "000000", "000000")
+	require.ErrorIs(t, err, db.BlueprintNotFoundError)
+
+	// Composes should not be assigned to the blueprint anymore
+	bpComposes, err := dbase.GetBlueprintComposes("000000", blueprintId, nil, (time.Hour * 24 * 14), 10, 0, nil)
+	require.NoError(t, err)
+	require.Len(t, bpComposes, 0)
 }
