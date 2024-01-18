@@ -483,16 +483,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
   /experimental/blueprints/{id}:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        example: '123e4567-e89b-12d3-a456-426655440000'
+        required: true
+        description: UUID of a blueprint
     put:
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: string
-            format: uuid
-          example: '123e4567-e89b-12d3-a456-426655440000'
-          required: true
-          description: UUID of a blueprint
       summary: update blueprint
       description: "update blueprint"
       operationId: updateBlueprint
@@ -512,6 +512,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateBlueprintResponse'
+        '404':
+          description: blueprint was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
+    get:
+      summary: get detail of a blueprint
+      description: "get a blueprint detail"
+      operationId: getBlueprint
+      tags:
+        - blueprint
+      responses:
+        '200':
+          description: detail of a blueprint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintResponse'
         '404':
           description: blueprint was not found
           content:
@@ -901,7 +920,35 @@ components:
         description:
           type: string
         last_modified_at:
-          type: string         
+          type: string
+    BlueprintResponse:
+      required:
+        - id
+        - name
+        - description
+        - distribution
+        - image_requests
+        - customizations
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        distribution:
+          $ref: '#/components/schemas/Distributions'
+        image_requests:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ImageRequest'
+          uniqueItems: true
+          description: |
+            Array of image requests. Having more image requests in a single blueprint is currently not supported.
+        customizations:
+          $ref: '#/components/schemas/Customizations'
     Distributions:
       type: string
       description: |
