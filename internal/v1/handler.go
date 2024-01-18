@@ -28,12 +28,7 @@ const (
 	FSMaxSize = 68719476736
 )
 
-type links struct {
-	First string `json:"first"`
-	Last  string `json:"last"`
-}
-
-func (h *Handlers) newLinksWithExtraParams(path string, count, limit int, params url.Values) links {
+func (h *Handlers) newLinksWithExtraParams(path string, count, limit int, params url.Values) ListResponseLinks {
 	lastOffset := count - 1
 	if lastOffset < 0 {
 		lastOffset = 0
@@ -49,7 +44,7 @@ func (h *Handlers) newLinksWithExtraParams(path string, count, limit int, params
 	fullPath.RawQuery = params.Encode()
 	last := fullPath.String()
 
-	return links{first, last}
+	return ListResponseLinks{first, last}
 }
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {
@@ -211,12 +206,10 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 	}
 
 	return ctx.JSON(http.StatusOK, PackagesResponse{
-		Meta: struct {
-			Count int `json:"count"`
-		}{
+		Meta: ListResponseMeta{
 			len(packages),
 		},
-		Links: links{
+		Links: ListResponseLinks{
 			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=0&limit=%v",
 				RoutePrefix(), h.server.spec.Info.Version, params.Search, params.Distribution, params.Architecture, limit),
 			fmt.Sprintf("%v/v%v/packages?search=%v&distribution=%v&architecture=%v&offset=%v&limit=%v",
@@ -562,10 +555,8 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	}
 
 	return ctx.JSON(http.StatusOK, ComposesResponse{
-		Data: data,
-		Meta: struct {
-			Count int `json:"count"`
-		}{count},
+		Data:  data,
+		Meta:  ListResponseMeta{count},
 		Links: h.newLinksWithExtraParams("composes", count, limit, url.Values{}),
 	})
 }
@@ -801,15 +792,8 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 	}
 
 	return ctx.JSON(http.StatusOK, ClonesResponse{
-		Meta: struct {
-			Count int `json:"count"`
-		}{
-			count,
-		},
-		Links: struct {
-			First string `json:"first"`
-			Last  string `json:"last"`
-		}{
+		Meta: ListResponseMeta{count},
+		Links: ListResponseLinks{
 			fmt.Sprintf("%v/v%v/composes/%v/clones?offset=%v&limit=%v",
 				RoutePrefix(), spec.Info.Version, composeId, 0, limit),
 			fmt.Sprintf("%v/v%v/composes/%v/clones?offset=%v&limit=%v",

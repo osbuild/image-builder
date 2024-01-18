@@ -216,15 +216,8 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 		lastOffset = 0
 	}
 	return ctx.JSON(http.StatusOK, BlueprintsResponse{
-		Meta: struct {
-			Count int `json:"count"`
-		}{
-			count,
-		},
-		Links: struct {
-			First string `json:"first"`
-			Last  string `json:"last"`
-		}{
+		Meta: ListResponseMeta{count},
+		Links: ListResponseLinks{
 			fmt.Sprintf("%v/v%v/composes?offset=0&limit=%v",
 				RoutePrefix(), spec.Info.Version, limit),
 			fmt.Sprintf("%v/v%v/composes?offset=%v&limit=%v",
@@ -297,10 +290,8 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 		linkParams.Add("blueprint_version", strconv.Itoa(*params.BlueprintVersion))
 	}
 	return ctx.JSON(http.StatusOK, ComposesResponse{
-		Data: data,
-		Meta: struct {
-			Count int `json:"count"`
-		}{count},
+		Data:  data,
+		Meta:  ListResponseMeta{count},
 		Links: h.newLinksWithExtraParams("composes", count, limit, linkParams),
 	})
 }

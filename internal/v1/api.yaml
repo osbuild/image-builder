@@ -678,6 +678,23 @@ components:
       properties:
         readiness:
           type: string
+    ListResponseMeta:
+      type: object
+      required:
+        - count
+      properties:
+        count:
+          type: integer
+    ListResponseLinks:
+      type: object
+      required:
+        - first
+        - last
+      properties:
+        first:
+          type: string
+        last:
+          type: string
     DistributionsResponse:
       type: array
       description: |
@@ -899,22 +916,9 @@ components:
         - data
       properties:
         meta:
-          type: object
-          required:
-            - count
-          properties:
-            count:
-              type: integer
+          $ref: '#/components/schemas/ListResponseMeta'
         links:
-          type: object
-          required:
-            - first
-            - last
-          properties:
-            first:
-              type: string
-            last:
-              type: string
+          $ref: '#/components/schemas/ListResponseLinks'
         data:
           type: array
           items:
@@ -1047,24 +1051,9 @@ components:
         - data
       properties:
         meta:
-          type: object
-          required:
-            - count
-          properties:
-            count:
-              type: integer
+          $ref: '#/components/schemas/ListResponseMeta'
         links:
-          type: object
-          required:
-            - first
-            - last
-          properties:
-            first:
-              type: string
-              example: "/api/image-builder/v1/composes?limit=10&offset=0"
-            last:
-              type: string
-              example: "/api/image-builder/v1/composes?limit=10&offset=10"
+          $ref: '#/components/schemas/ListResponseLinks'
         data:
           type: array
           items:
@@ -1247,24 +1236,9 @@ components:
         - data
       properties:
         meta:
-          type: object
-          required:
-            - count
-          properties:
-            count:
-              type: integer
+          $ref: '#/components/schemas/ListResponseMeta'
         links:
-          type: object
-          required:
-            - first
-            - last
-          properties:
-            first:
-              type: string
-              example: "/api/image-builder/v1/packages?limit=10&offset=0&distribution...."
-            last:
-              type: string
-              example: "/api/image-builder/v1/packages?limit=10&offset=10&distribution...."
+          $ref: '#/components/schemas/ListResponseLinks'
         data:
           type: array
           items:
@@ -1321,24 +1295,9 @@ components:
         - data
       properties:
         meta:
-          type: object
-          required:
-            - count
-          properties:
-            count:
-              type: integer
+          $ref: '#/components/schemas/ListResponseMeta'
         links:
-          type: object
-          required:
-            - first
-            - last
-          properties:
-            first:
-              type: string
-              example: "/api/image-builder/v1/composes?limit=10&offset=0"
-            last:
-              type: string
-              example: "/api/image-builder/v1/composes?limit=10&offset=10"
+          $ref: '#/components/schemas/ListResponseLinks'
         data:
           type: array
           items:
