@@ -537,6 +537,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+    delete:
+      summary: delete a blueprint
+      description: |
+        Deletes all versions of Blueprint, the compose will still count towards quota.
+      operationId: deleteBlueprint
+      tags:
+        - blueprint
+      responses:
+        '204':
+          description: Successfully deleted
+        '404':
+          description: Blueprint to delete was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
   /experimental/blueprints/{id}/compose:
     post:
       parameters:

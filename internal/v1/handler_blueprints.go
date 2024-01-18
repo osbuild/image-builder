@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -294,4 +295,20 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 		}{count},
 		Links: h.newLinksWithExtraParams("composes", count, limit, linkParams),
 	})
+}
+
+func (h *Handlers) DeleteBlueprint(ctx echo.Context, blueprintId openapi_types.UUID) error {
+	userID, err := h.server.getIdentity(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = h.server.db.DeleteBlueprint(blueprintId, userID.OrgID(), userID.AccountNumber())
+	if err != nil {
+		if errors.Is(err, db.BlueprintNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
+		return err
+	}
+	return ctx.NoContent(http.StatusNoContent)
 }

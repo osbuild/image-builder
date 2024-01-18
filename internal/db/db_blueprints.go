@@ -243,6 +243,9 @@ func (db *dB) DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error {
 	defer conn.Release()
 
 	tag, err := conn.Exec(ctx, sqlDeleteBlueprint, id, orgID, accountNumber)
+	if tag.RowsAffected() == 0 {
+		return BlueprintNotFoundError
+	}
 	if tag.RowsAffected() != 1 {
 		return fmt.Errorf("%w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 	}
