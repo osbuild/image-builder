@@ -54,7 +54,7 @@ objects:
           - name: ALLOW_FILE
             value: "${ALLOW_FILE}"
           - name: FEDORA_AUTH
-            value: "$FEDORA_AUTH"
+            value: "${FEDORA_AUTH}"
           - name: CLOWDER_ENABLED
             value: ${CLOWDER_ENABLED}
           - name: OSBUILD_AWS_REGION
