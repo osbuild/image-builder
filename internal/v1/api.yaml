@@ -532,6 +532,8 @@ paths:
       summary: create new compose from blueprint
       description: "create new compose from blueprint"
       operationId: composeBlueprint
+      tags:
+        - blueprint
       responses:
         '201':
           description: compose was created
@@ -552,6 +554,8 @@ paths:
       summary: get composes associated with a blueprint
       description: "get a collection of composes associated to a blueprint, allows for filtering by version"
       operationId: getBlueprintComposes
+      tags:
+        - blueprint
       parameters:
         - in: path
           name: id
