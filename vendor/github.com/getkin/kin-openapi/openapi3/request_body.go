@@ -2,35 +2,14 @@ package openapi3
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
-
-	"github.com/go-openapi/jsonpointer"
-
-	"github.com/getkin/kin-openapi/jsoninfo"
 )
-
-type RequestBodies map[string]*RequestBodyRef
-
-var _ jsonpointer.JSONPointable = (*RequestBodyRef)(nil)
-
-// JSONLookup implements github.com/go-openapi/jsonpointer#JSONPointable
-func (r RequestBodies) JSONLookup(token string) (interface{}, error) {
-	ref, ok := r[token]
-	if ok == false {
-		return nil, fmt.Errorf("object has no field %q", token)
-	}
-
-	if ref != nil && ref.Ref != "" {
-		return &Ref{Ref: ref.Ref}, nil
-	}
-	return ref.Value, nil
-}
 
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#request-body-object
 type RequestBody struct {
-	ExtensionProps `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-" yaml:"-"`
 
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
@@ -95,13 +74,39 @@ func (requestBody *RequestBody) GetMediaType(mediaType string) *MediaType {
 }
 
 // MarshalJSON returns the JSON encoding of RequestBody.
-func (requestBody *RequestBody) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalStrictStruct(requestBody)
+func (requestBody RequestBody) MarshalJSON() ([]byte, error) {
+	m := make(map[string]interface{}, 3+len(requestBody.Extensions))
+	for k, v := range requestBody.Extensions {
+		m[k] = v
+	}
+	if x := requestBody.Description; x != "" {
+		m["description"] = requestBody.Description
+	}
+	if x := requestBody.Required; x {
+		m["required"] = x
+	}
+	if x := requestBody.Content; true {
+		m["content"] = x
+	}
+	return json.Marshal(m)
 }
 
 // UnmarshalJSON sets RequestBody to a copy of data.
 func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
-	return jsoninfo.UnmarshalStrictStruct(data, requestBody)
+	type RequestBodyBis RequestBody
+	var x RequestBodyBis
+	if err := json.Unmarshal(data, &x); err != nil {
+		return unmarshalError(err)
+	}
+	_ = json.Unmarshal(data, &x.Extensions)
+	delete(x.Extensions, "description")
+	delete(x.Extensions, "required")
+	delete(x.Extensions, "content")
+	if len(x.Extensions) == 0 {
+		x.Extensions = nil
+	}
+	*requestBody = RequestBody(x)
+	return nil
 }
 
 // Validate returns an error if RequestBody does not comply with the OpenAPI spec.
@@ -116,5 +121,9 @@ func (requestBody *RequestBody) Validate(ctx context.Context, opts ...Validation
 		vo.examplesValidationAsReq, vo.examplesValidationAsRes = true, false
 	}
 
-	return requestBody.Content.Validate(ctx)
+	if err := requestBody.Content.Validate(ctx); err != nil {
+		return err
+	}
+
+	return validateExtensions(ctx, requestBody.Extensions)
 }
