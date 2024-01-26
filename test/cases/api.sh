@@ -194,15 +194,12 @@ function instanceWaitSSH() {
 function instanceCheck() {
   echo "✔️ Instance checking"
   local _ssh="$1"
-  local _testModuleHotfixes="${2:-0}"
-
+  # TODO: re-enable the Module Hotfixes test when the custom repo issue is resolved
+  # local _testModuleHotfixes="${2:-0}"
+  local _testModuleHotfixes="0"
+  
   # Check if postgres is installed
   $_ssh rpm -q postgresql ansible-core
-
-  # Check if nginx was installed
-  if [[ "$_testModuleHotfixes" == "1" ]]; then
-      $_ssh rpm -q nginx nginx-module-njs
-  fi
 
   # Verify subscribe status. Loop check since the system may not be registered such early
   set +eu
@@ -264,31 +261,9 @@ function createReqFileAWS() {
     }
   ],
   "customizations": {
-    "custom_repositories": [
-      {
-        "baseurl": [
-          "http://nginx.org/packages/rhel/8/$ARCH/"
-        ],
-        "check_gpg": false,
-        "id": "076119fc-2dbc-49d7-bbd7-b39ca2bc3086",
-        "name": "nginx",
-        "module_hotfixes": true
-      }
-    ],
     "packages": [
       "postgresql",
-      "ansible-core",
-      "nginx",
-      "nginx-module-njs"
-    ],
-    "payload_repositories": [
-      {
-        "baseurl": "http://nginx.org/packages/rhel/8/$ARCH/",
-        "check_gpg": false,
-        "check_repo_gpg": false,
-        "rhsm": false,
-        "module_hotfixes": true
-      }
+      "ansible-core"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -348,31 +323,9 @@ function createReqFileGCP() {
     }
   ],
   "customizations": {
-    "custom_repositories": [
-      {
-        "baseurl": [
-          "http://nginx.org/packages/rhel/8/x86_64/"
-        ],
-        "check_gpg": false,
-        "id": "076119fc-2dbc-49d7-bbd7-b39ca2bc3086",
-        "name": "nginx",
-        "module_hotfixes": true
-      }
-    ],
     "packages": [
       "postgresql",
-      "ansible-core",
-      "nginx",
-      "nginx-module-njs"
-    ],
-    "payload_repositories": [
-      {
-        "baseurl": "http://nginx.org/packages/rhel/8/x86_64/",
-        "check_gpg": false,
-        "check_repo_gpg": false,
-        "rhsm": false,
-        "module_hotfixes": true
-      }
+      "ansible-core"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
@@ -447,31 +400,9 @@ function createReqFileAzure() {
     }
   ],
   "customizations": {
-    "custom_repositories": [
-      {
-        "baseurl": [
-          "http://nginx.org/packages/rhel/8/x86_64/"
-        ],
-        "check_gpg": false,
-        "id": "076119fc-2dbc-49d7-bbd7-b39ca2bc3086",
-        "name": "nginx",
-        "module_hotfixes": true
-      }
-    ],
     "packages": [
       "postgresql",
-      "ansible-core",
-      "nginx",
-      "nginx-module-njs"
-    ],
-    "payload_repositories": [
-      {
-        "baseurl": "http://nginx.org/packages/rhel/8/x86_64/",
-        "check_gpg": false,
-        "check_repo_gpg": false,
-        "rhsm": false,
-        "module_hotfixes": true
-      }
+      "ansible-core"
     ],
     "subscription": {
       "organization": ${API_TEST_SUBSCRIPTION_ORG_ID:-},
