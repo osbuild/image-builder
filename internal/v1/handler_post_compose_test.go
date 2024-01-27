@@ -1633,6 +1633,11 @@ func TestComposeCustomizations(t *testing.T) {
 							Path:          "/etc/custom-file",
 							User:          &fileUser,
 						},
+						{
+							Data:          common.ToPtr("data"),
+							EnsureParents: common.ToPtr(true),
+							Path:          "/etc/custom-file2",
+						},
 					},
 					Directories: &[]Directory{
 						{
@@ -1666,6 +1671,11 @@ func TestComposeCustomizations(t *testing.T) {
 							Group:         &composerFileGroup,
 							Path:          "/etc/custom-file",
 							User:          &composerFileUser,
+						},
+						{
+							Data:          common.ToPtr("data"),
+							EnsureParents: common.ToPtr(true),
+							Path:          "/etc/custom-file2",
 						},
 					},
 					Directories: &[]composer.Directory{

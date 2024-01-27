@@ -573,45 +573,51 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 		var dirs []composer.Directory
 		for _, d := range *cust.Directories {
 			// parse as int (DirectoryGroup1)
-			var group composer.Directory_Group
-			dg0, err := d.Group.AsDirectoryGroup0()
-			if err == nil {
-				err = group.FromDirectoryGroup0(dg0)
-				if err != nil {
-					return nil, err
-				}
+			var group *composer.Directory_Group
+			if d.Group != nil {
+				group = &composer.Directory_Group{}
+				dg0, err := d.Group.AsDirectoryGroup0()
+				if err == nil {
+					err = group.FromDirectoryGroup0(dg0)
+					if err != nil {
+						return nil, err
+					}
 
-			}
-			dg1, err := d.Group.AsDirectoryGroup1()
-			if err == nil {
-				err = group.FromDirectoryGroup1(dg1)
-				if err != nil {
-					return nil, err
+				}
+				dg1, err := d.Group.AsDirectoryGroup1()
+				if err == nil {
+					err = group.FromDirectoryGroup1(dg1)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 
-			var user composer.Directory_User
-			du0, err := d.User.AsDirectoryUser0()
-			if err == nil {
-				err = user.FromDirectoryUser0(du0)
-				if err != nil {
-					return nil, err
+			var user *composer.Directory_User
+			if d.User != nil {
+				user = &composer.Directory_User{}
+				du0, err := d.User.AsDirectoryUser0()
+				if err == nil {
+					err = user.FromDirectoryUser0(du0)
+					if err != nil {
+						return nil, err
+					}
 				}
-			}
-			du1, err := d.User.AsDirectoryUser1()
-			if err == nil {
-				err = user.FromDirectoryUser1(composer.DirectoryUser1(du1))
-				if err != nil {
-					return nil, err
+				du1, err := d.User.AsDirectoryUser1()
+				if err == nil {
+					err = user.FromDirectoryUser1(composer.DirectoryUser1(du1))
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 
 			dirs = append(dirs, composer.Directory{
 				EnsureParents: d.EnsureParents,
-				Group:         &group,
+				Group:         group,
 				Mode:          d.Mode,
 				Path:          d.Path,
-				User:          &user,
+				User:          user,
 			})
 		}
 		res.Directories = &dirs
@@ -620,45 +626,52 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 	if cust.Files != nil {
 		var files []composer.File
 		for _, f := range *cust.Files {
-			var group composer.File_Group
-			fg0, err := f.Group.AsFileGroup0()
-			if err == nil {
-				err = group.FromFileGroup0(fg0)
-				if err != nil {
-					return nil, err
+			var group *composer.File_Group
+			if f.Group != nil {
+				group = &composer.File_Group{}
+				fg0, err := f.Group.AsFileGroup0()
+				if err == nil {
+					err = group.FromFileGroup0(fg0)
+					if err != nil {
+						return nil, err
+					}
 				}
-			}
-			fg1, err := f.Group.AsFileGroup1()
-			if err == nil {
-				err = group.FromFileGroup1(fg1)
-				if err != nil {
-					return nil, err
+
+				fg1, err := f.Group.AsFileGroup1()
+				if err == nil {
+					err = group.FromFileGroup1(fg1)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 
-			var user composer.File_User
-			fu0, err := f.User.AsFileUser0()
-			if err == nil {
-				err = user.FromFileUser0(fu0)
-				if err != nil {
-					return nil, err
+			var user *composer.File_User
+			if f.User != nil {
+				user = &composer.File_User{}
+				fu0, err := f.User.AsFileUser0()
+				if err == nil {
+					err = user.FromFileUser0(fu0)
+					if err != nil {
+						return nil, err
+					}
 				}
-			}
-			fu1, err := f.User.AsFileUser1()
-			if err == nil {
-				err = user.FromFileUser1(composer.FileUser1(fu1))
-				if err != nil {
-					return nil, err
+				fu1, err := f.User.AsFileUser1()
+				if err == nil {
+					err = user.FromFileUser1(composer.FileUser1(fu1))
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 
 			files = append(files, composer.File{
 				Data:          f.Data,
 				EnsureParents: f.EnsureParents,
-				Group:         &group,
+				Group:         group,
 				Mode:          f.Mode,
 				Path:          f.Path,
-				User:          &user,
+				User:          user,
 			})
 		}
 		res.Files = &files
