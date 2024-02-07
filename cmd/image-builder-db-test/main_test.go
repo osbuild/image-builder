@@ -471,6 +471,12 @@ func testGetBlueprintComposes(t *testing.T) {
 	versionId := uuid.New()
 	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, "name", "desc", []byte("{}"))
 	require.NoError(t, err)
+
+	// get latest version
+	version, err := d.GetLatestBlueprintVersionNumber(ORGID1, id)
+	require.NoError(t, err)
+	require.Equal(t, 1, version)
+
 	version2Id := uuid.New()
 	err = d.UpdateBlueprint(version2Id, id, ORGID1, "name", "desc2", []byte("{}"))
 	require.NoError(t, err)
@@ -512,6 +518,11 @@ func testGetBlueprintComposes(t *testing.T) {
 	require.Len(t, entries, 1)
 	require.Equal(t, "image4", *entries[0].ImageName)
 	require.Equal(t, 2, entries[0].BlueprintVersion)
+
+	// get latest version
+	version, err = d.GetLatestBlueprintVersionNumber(ORGID1, id)
+	require.NoError(t, err)
+	require.Equal(t, 2, version)
 }
 
 func runTest(t *testing.T, f func(*testing.T)) {
