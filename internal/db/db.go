@@ -56,6 +56,7 @@ type BlueprintWithNoBody struct {
 type DB interface {
 	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string, blueprintVersionId *uuid.UUID) error
 	GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
+	GetLatestBlueprintVersionNumber(orgId string, blueprintId uuid.UUID) (int, error)
 	GetBlueprintComposes(orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]BlueprintCompose, error)
 	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
 	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)

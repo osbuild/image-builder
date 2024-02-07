@@ -917,7 +917,8 @@ type GetBlueprintsParams struct {
 
 // GetBlueprintComposesParams defines parameters for GetBlueprintComposes.
 type GetBlueprintComposesParams struct {
-	// BlueprintVersion Filter by a specific version of the Blueprint we want to fetch composes for
+	// BlueprintVersion Filter by a specific version of the Blueprint we want to fetch composes for.
+	// Pass special value -1 to fetch composes for latest version of the Blueprint.
 	BlueprintVersion *int `form:"blueprint_version,omitempty" json:"blueprint_version,omitempty"`
 
 	// Limit max amount of composes, default 100

@@ -254,6 +254,13 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 
 	since := time.Hour * 24 * 14
 
+	if params.BlueprintVersion != nil && *params.BlueprintVersion < 0 {
+		*params.BlueprintVersion, err = h.server.db.GetLatestBlueprintVersionNumber(userID.OrgID(), blueprintId)
+		if err != nil {
+			return err
+		}
+	}
+
 	composes, err := h.server.db.GetBlueprintComposes(userID.OrgID(), blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
 	if err != nil {
 		return err

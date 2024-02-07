@@ -605,7 +605,8 @@ paths:
           schema:
             type: integer
           description: |
-            Filter by a specific version of the Blueprint we want to fetch composes for
+            Filter by a specific version of the Blueprint we want to fetch composes for.
+            Pass special value -1 to fetch composes for latest version of the Blueprint.
         - in: query
           name: limit
           schema:
