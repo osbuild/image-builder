@@ -376,16 +376,9 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 // validateComposeRequest makes sure the image size is not too large for AWS or Azure
 // It takes into account the requested image size, and the total size of requested
 // filesystem customizations.
-// It also temporarily errors on payloadrepositories
 func validateComposeRequest(cr *ComposeRequest) error {
 	var totalSize uint64
 	cust := cr.Customizations
-
-	// XXX temporarily disabled
-	if cust != nil && cust.PayloadRepositories != nil && len(*cust.PayloadRepositories) != 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Custom Content is disabled.")
-	}
-
 	if cust != nil && cust.Filesystem != nil {
 		for _, v := range *cust.Filesystem {
 			totalSize += v.MinSize
