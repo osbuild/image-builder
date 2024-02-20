@@ -1,0 +1,51 @@
+{
+  "module_platform_id": "platform:f41",
+  "oscap_name": "fedora",
+  "distribution": {
+    "name": "fedora-41",
+    "description": "Fedora Linux 41",
+    "no_package_list": true,
+    "restricted_access": true
+  },
+  "x86_64": {
+    "image_types": [
+      "aws",
+      "azure",
+      "guest-image",
+      "oci",
+      "vsphere",
+      "vsphere-ova",
+      "iot-commit"
+    ],
+    "repositories": [
+      {
+        "id": "fedora",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-41&arch=x86_64",
+        "rhsm": false
+      },
+      {
+        "id": "updates",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f41&arch=x86_64",
+        "rhsm": false
+      }
+    ]
+  },
+  "aarch64": {
+    "image_types": [
+      "aws",
+      "guest-image"
+    ],
+    "repositories": [
+      {
+        "id": "fedora",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-41&arch=aarch64",
+        "rhsm": false
+      },
+      {
+        "id": "updates",
+        "metalink": "https://mirrors.fedoraproject.org/metalink?repo=updates-released-f41&arch=aarch64",
+        "rhsm": false
+      }
+    ]
+  }
+}

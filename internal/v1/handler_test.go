@@ -762,7 +762,7 @@ func TestGetDistributions(t *testing.T) {
 		for _, distro := range result {
 			distros = append(distros, distro.Name)
 		}
-		require.ElementsMatch(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "centos-8", "centos-9", "fedora-37", "fedora-38", "fedora-39", "fedora-40"}, distros)
+		require.ElementsMatch(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "centos-8", "centos-9", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}, distros)
 	})
 
 	t.Run("No access to restricted distributions except global filter", func(t *testing.T) {
@@ -855,7 +855,7 @@ func TestGetProfiles(t *testing.T) {
 	})
 
 	t.Run("Access profiles on the other distros returns an error", func(t *testing.T) {
-		for _, dist := range []Distributions{Fedora37, Fedora38, Fedora39, Fedora40, Rhel90} {
+		for _, dist := range []Distributions{Fedora37, Fedora38, Fedora39, Fedora40, Fedora41, Rhel90} {
 			respStatusCode, _ := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
 			require.Equal(t, http.StatusBadRequest, respStatusCode)

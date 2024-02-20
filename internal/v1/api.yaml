@@ -1003,6 +1003,7 @@ components:
         - fedora-38
         - fedora-39
         - fedora-40
+        - fedora-41
     ImageRequest:
       type: object
       additionalProperties: false
