@@ -1582,6 +1582,11 @@ components:
         data:
           type: string
           description: Contents of the file as plain text
+        data_encoding:
+          type: string
+          enum: ['plain', 'base64']
+          description: When data is base64-encoded to prevent Akamai content filter false positives
+          default: 'plain'
         ensure_parents:
           type: boolean
           description: Ensure that the parent directories exist

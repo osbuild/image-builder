@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -656,6 +657,14 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 						return nil, err
 					}
 				}
+			}
+
+			if f.Data != nil && f.DataEncoding != nil && *f.DataEncoding == "base64" {
+				buf, err := base64.StdEncoding.DecodeString(*f.Data)
+				if err != nil {
+					return nil, err
+				}
+				f.Data = common.ToPtr(string(buf))
 			}
 
 			files = append(files, composer.File{

@@ -79,6 +79,12 @@ const (
 	Rhel9Nightly Distributions = "rhel-9-nightly"
 )
 
+// Defines values for FileDataEncoding.
+const (
+	Base64 FileDataEncoding = "base64"
+	Plain  FileDataEncoding = "plain"
+)
+
 // Defines values for ImageRequestArchitecture.
 const (
 	ImageRequestArchitectureAarch64 ImageRequestArchitecture = "aarch64"
@@ -543,6 +549,9 @@ type File struct {
 	// Data Contents of the file as plain text
 	Data *string `json:"data,omitempty"`
 
+	// DataEncoding When data is base64-encoded to prevent Akamai content filter false positives
+	DataEncoding *FileDataEncoding `json:"data_encoding,omitempty"`
+
 	// EnsureParents Ensure that the parent directories exist
 	EnsureParents *bool `json:"ensure_parents,omitempty"`
 
@@ -558,6 +567,9 @@ type File struct {
 	// User Owner of the file as a uid or a user name
 	User *File_User `json:"user,omitempty"`
 }
+
+// FileDataEncoding When data is base64-encoded to prevent Akamai content filter false positives
+type FileDataEncoding string
 
 // FileGroup0 defines model for .
 type FileGroup0 = string
