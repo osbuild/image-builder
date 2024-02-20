@@ -63,6 +63,7 @@ const (
 	Fedora38     Distributions = "fedora-38"
 	Fedora39     Distributions = "fedora-39"
 	Fedora40     Distributions = "fedora-40"
+	Fedora41     Distributions = "fedora-41"
 	Rhel8        Distributions = "rhel-8"
 	Rhel84       Distributions = "rhel-84"
 	Rhel85       Distributions = "rhel-85"
