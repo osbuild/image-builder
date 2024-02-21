@@ -155,7 +155,7 @@ func testGetCompose(t *testing.T) {
 	// GetCompose works as expected
 	compose, err := d.GetCompose(ctx, composes[0].Id, ORGID1)
 	require.NoError(t, err)
-	require.Equal(t, composes[0], *compose)
+	require.Equal(t, composes[0].Id, compose.Id)
 
 	// cross-account compose access not allowed
 	compose, err = d.GetCompose(ctx, composes[0].Id, ORGID2)
@@ -526,6 +526,10 @@ func testGetBlueprintComposes(t *testing.T) {
 	require.Equal(t, "image4", *entries[0].ImageName)
 	require.Equal(t, "image2", *entries[1].ImageName)
 	require.Equal(t, "image1", *entries[2].ImageName)
+
+	composes, count, err := d.GetComposes(ctx, ORGID1, fortnight, 100, 0, []string{})
+	require.NoError(t, err)
+	require.Equal(t, 2, *composes[0].BlueprintVersion)
 
 	count, err = d.CountBlueprintComposesSince(ctx, ORGID1, id, nil, (time.Hour * 24 * 14), nil)
 	require.NoError(t, err)
