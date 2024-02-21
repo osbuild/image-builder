@@ -29,6 +29,11 @@ type ComposeEntry struct {
 	ClientId  *string
 }
 
+type ComposeWithBlueprintVersion struct {
+	*ComposeEntry
+	BlueprintVersion *int
+}
+
 type CloneEntry struct {
 	Id        uuid.UUID
 	ComposeId uuid.UUID
@@ -55,7 +60,7 @@ type BlueprintWithNoBody struct {
 
 type DB interface {
 	InsertCompose(ctx context.Context, jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string, blueprintVersionId *uuid.UUID) error
-	GetComposes(ctx context.Context, orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
+	GetComposes(ctx context.Context, orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeWithBlueprintVersion, int, error)
 	GetLatestBlueprintVersionNumber(ctx context.Context, orgId string, blueprintId uuid.UUID) (int, error)
 	GetBlueprintComposes(ctx context.Context, orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]BlueprintCompose, error)
 	GetCompose(ctx context.Context, jobId uuid.UUID, orgId string) (*ComposeEntry, error)
@@ -82,13 +87,13 @@ const (
 		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6, $7, $8)`
 
 	sqlGetComposes = `
-	        SELECT job_id, request, created_at, image_name, client_id
-	        FROM composes
+	    SELECT composes.job_id, composes.request, composes.created_at, composes.image_name, composes.client_id, blueprint_versions.version
+	    FROM composes LEFT JOIN blueprint_versions ON composes.blueprint_version_id = blueprint_versions.id
 		WHERE org_id = $1
-		AND CURRENT_TIMESTAMP - created_at <= $2
+		AND CURRENT_TIMESTAMP - composes.created_at <= $2
 		AND ($3::text[] is NULL OR request->'image_requests'->0->>'image_type' <> ALL($3))
 		AND deleted = FALSE
-		ORDER BY created_at DESC
+		ORDER BY composes.created_at DESC
 		LIMIT $4 OFFSET $5`
 
 	sqlGetCompose = `
@@ -220,7 +225,7 @@ func (db *dB) GetComposeImageType(ctx context.Context, jobId uuid.UUID, orgId st
 	return imageType, nil
 }
 
-func (db *dB) GetComposes(ctx context.Context, orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error) {
+func (db *dB) GetComposes(ctx context.Context, orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeWithBlueprintVersion, int, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -233,23 +238,27 @@ func (db *dB) GetComposes(ctx context.Context, orgId string, since time.Duration
 
 	defer result.Close()
 
-	var composes []ComposeEntry
+	var composes []ComposeWithBlueprintVersion
 	for result.Next() {
 		var jobId uuid.UUID
 		var request json.RawMessage
 		var createdAt time.Time
 		var imageName *string
 		var clientId *string
-		err = result.Scan(&jobId, &request, &createdAt, &imageName, &clientId)
+		var blueprintVersion *int
+		err = result.Scan(&jobId, &request, &createdAt, &imageName, &clientId, &blueprintVersion)
 		if err != nil {
 			return nil, 0, err
 		}
-		composes = append(composes, ComposeEntry{
-			jobId,
-			request,
-			createdAt,
-			imageName,
-			clientId,
+		composes = append(composes, ComposeWithBlueprintVersion{
+			&ComposeEntry{
+				jobId,
+				request,
+				createdAt,
+				imageName,
+				clientId,
+			},
+			blueprintVersion,
 		})
 	}
 	if err = result.Err(); err != nil {
