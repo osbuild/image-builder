@@ -91,6 +91,7 @@ func tearDown(t *testing.T) {
 }
 
 func testInsertCompose(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
@@ -101,7 +102,7 @@ func testInsertCompose(t *testing.T) {
 
 	migrateTern(t)
 
-	err = d.InsertBlueprint(blueprintId, versionId, ORGID1, ANR1, "blueprint", "blueprint desc", []byte("{}"))
+	err = d.InsertBlueprint(ctx, blueprintId, versionId, ORGID1, ANR1, "blueprint", "blueprint desc", []byte("{}"))
 	require.NoError(t, err)
 
 	// test
@@ -359,10 +360,11 @@ func testClones(t *testing.T) {
 }
 
 func testBlueprints(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
 	name1 := "name"
 	description1 := "desc"
@@ -376,10 +378,10 @@ func testBlueprints(t *testing.T) {
 
 	id := uuid.New()
 	versionId := uuid.New()
-	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, name1, description1, bodyJson1)
+	err = d.InsertBlueprint(ctx, id, versionId, ORGID1, ANR1, name1, description1, bodyJson1)
 	require.NoError(t, err)
 
-	entry, err := d.GetBlueprint(id, ORGID1, ANR1)
+	entry, err := d.GetBlueprint(ctx, id, ORGID1, ANR1)
 	require.NoError(t, err)
 	fromEntry, err := v1.BlueprintFromEntry(entry)
 	require.NoError(t, err)
@@ -399,9 +401,9 @@ func testBlueprints(t *testing.T) {
 	require.NoError(t, err)
 
 	newVersionId := uuid.New()
-	err = d.UpdateBlueprint(newVersionId, entry.Id, ORGID1, name2, description2, bodyJson2)
+	err = d.UpdateBlueprint(ctx, newVersionId, entry.Id, ORGID1, name2, description2, bodyJson2)
 	require.NoError(t, err)
-	entryUpdated, err := d.GetBlueprint(entry.Id, ORGID1, ANR1)
+	entryUpdated, err := d.GetBlueprint(ctx, entry.Id, ORGID1, ANR1)
 	require.NoError(t, err)
 	bodyFromEntry2, err := v1.BlueprintFromEntry(entryUpdated)
 	require.NoError(t, err)
@@ -422,9 +424,9 @@ func testBlueprints(t *testing.T) {
 	bodyJson3, err := json.Marshal(body3)
 	require.NoError(t, err)
 	newBlueprintId := uuid.New()
-	err = d.UpdateBlueprint(newBlueprintId, entry.Id, ORGID2, name3, description3, bodyJson3)
+	err = d.UpdateBlueprint(ctx, newBlueprintId, entry.Id, ORGID2, name3, description3, bodyJson3)
 	require.Error(t, err)
-	entryAfterInvalidUpdate, err := d.GetBlueprint(entry.Id, ORGID1, ANR1)
+	entryAfterInvalidUpdate, err := d.GetBlueprint(ctx, entry.Id, ORGID1, ANR1)
 	require.NoError(t, err)
 	bodyFromEntry3, err := v1.BlueprintFromEntry(entryAfterInvalidUpdate)
 	require.NoError(t, err)
@@ -437,48 +439,49 @@ func testBlueprints(t *testing.T) {
 	newestBlueprintVersionId := uuid.New()
 	newestBlueprintId := uuid.New()
 	newestBlueprintName := "new name"
-	err = d.InsertBlueprint(newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1)
-	entries, _, err := d.GetBlueprints(ORGID1, 100, 0)
+	err = d.InsertBlueprint(ctx, newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1)
+	entries, _, err := d.GetBlueprints(ctx, ORGID1, 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, entries[0].Name, newestBlueprintName)
 	require.Equal(t, entries[1].Version, 2)
 
-	err = d.InsertBlueprint(uuid.New(), uuid.New(), ORGID1, ANR1, "unique name", "unique desc", bodyJson1)
-	entries, count, err := d.FindBlueprints(ORGID1, "", 100, 0)
+	err = d.InsertBlueprint(ctx, uuid.New(), uuid.New(), ORGID1, ANR1, "unique name", "unique desc", bodyJson1)
+	entries, count, err := d.FindBlueprints(ctx, ORGID1, "", 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
-	entries, count, err = d.FindBlueprints(ORGID1, "unique", 100, 0)
+	entries, count, err = d.FindBlueprints(ctx, ORGID1, "unique", 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 	require.Equal(t, "unique name", entries[0].Name)
 
-	entries, count, err = d.FindBlueprints(ORGID1, "unique desc", 100, 0)
+	entries, count, err = d.FindBlueprints(ctx, ORGID1, "unique desc", 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 	require.Equal(t, "unique desc", entries[0].Description)
 
-	err = d.DeleteBlueprint(id, ORGID1, ANR1)
+	err = d.DeleteBlueprint(ctx, id, ORGID1, ANR1)
 	require.NoError(t, err)
 }
 
 func testGetBlueprintComposes(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
 	id := uuid.New()
 	versionId := uuid.New()
-	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, "name", "desc", []byte("{}"))
+	err = d.InsertBlueprint(ctx, id, versionId, ORGID1, ANR1, "name", "desc", []byte("{}"))
 	require.NoError(t, err)
 
 	// get latest version
-	version, err := d.GetLatestBlueprintVersionNumber(ORGID1, id)
+	version, err := d.GetLatestBlueprintVersionNumber(ctx, ORGID1, id)
 	require.NoError(t, err)
 	require.Equal(t, 1, version)
 
 	version2Id := uuid.New()
-	err = d.UpdateBlueprint(version2Id, id, ORGID1, "name", "desc2", []byte("{}"))
+	err = d.UpdateBlueprint(ctx, version2Id, id, ORGID1, "name", "desc2", []byte("{}"))
 	require.NoError(t, err)
 
 	clientId := "ui"
@@ -491,10 +494,10 @@ func testGetBlueprintComposes(t *testing.T) {
 	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image4"), []byte("{}"), &clientId, &version2Id)
 	require.NoError(t, err)
 
-	count, err := d.CountBlueprintComposesSince(ORGID1, id, nil, (time.Hour * 24 * 14), nil)
+	count, err := d.CountBlueprintComposesSince(ctx, ORGID1, id, nil, (time.Hour * 24 * 14), nil)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
-	entries, err := d.GetBlueprintComposes(ORGID1, id, nil, (time.Hour * 24 * 14), 10, 0, nil)
+	entries, err := d.GetBlueprintComposes(ctx, ORGID1, id, nil, (time.Hour * 24 * 14), 10, 0, nil)
 	require.NoError(t, err)
 	require.Len(t, entries, 3)
 	// retrieves fresh first
@@ -502,25 +505,25 @@ func testGetBlueprintComposes(t *testing.T) {
 	require.Equal(t, "image2", *entries[1].ImageName)
 	require.Equal(t, "image1", *entries[2].ImageName)
 
-	count, err = d.CountBlueprintComposesSince(ORGID1, id, nil, (time.Hour * 24 * 14), nil)
+	count, err = d.CountBlueprintComposesSince(ctx, ORGID1, id, nil, (time.Hour * 24 * 14), nil)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
-	entries, err = d.GetBlueprintComposes(ORGID1, id, nil, (time.Hour * 24 * 14), 10, 0, nil)
+	entries, err = d.GetBlueprintComposes(ctx, ORGID1, id, nil, (time.Hour * 24 * 14), 10, 0, nil)
 	require.NoError(t, err)
 	require.Len(t, entries, 3)
 
 	// get composes for specific version
-	count, err = d.CountBlueprintComposesSince(ORGID1, id, common.ToPtr(2), (time.Hour * 24 * 14), nil)
+	count, err = d.CountBlueprintComposesSince(ctx, ORGID1, id, common.ToPtr(2), (time.Hour * 24 * 14), nil)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
-	entries, err = d.GetBlueprintComposes(ORGID1, id, common.ToPtr(2), (time.Hour * 24 * 14), 10, 0, nil)
+	entries, err = d.GetBlueprintComposes(ctx, ORGID1, id, common.ToPtr(2), (time.Hour * 24 * 14), 10, 0, nil)
 	require.NoError(t, err)
 	require.Len(t, entries, 1)
 	require.Equal(t, "image4", *entries[0].ImageName)
 	require.Equal(t, 2, entries[0].BlueprintVersion)
 
 	// get latest version
-	version, err = d.GetLatestBlueprintVersionNumber(ORGID1, id)
+	version, err = d.GetLatestBlueprintVersionNumber(ctx, ORGID1, id)
 	require.NoError(t, err)
 	require.Equal(t, 2, version)
 }

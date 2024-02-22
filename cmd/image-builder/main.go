@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
@@ -19,7 +18,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	"github.com/labstack/gommon/random"
 	"github.com/sirupsen/logrus"
 )
 
@@ -53,6 +51,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	logrus.AddHook(&ctxHook{})
 
 	if conf.GlitchTipDSN == "" {
 		logrus.Warn("Sentry/Glitchtip was not initialized")
@@ -114,6 +113,7 @@ func main() {
 	echoServer := echo.New()
 	echoServer.HideBanner = true
 	echoServer.Logger = common.Logger()
+	echoServer.Use(requestIdExtractMiddleware)
 	echoServer.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:     true,
 		LogStatus:  true,
@@ -125,12 +125,7 @@ func main() {
 				"method":     values.Method,
 				"status":     values.Status,
 				"latency_ms": values.Latency.Milliseconds(),
-			}
-			rid := c.Request().Header.Get("X-Rh-Edge-Request-Id")
-			if rid != "" {
-				fields["request_id"] = strings.Replace(rid, "\n", "", -1)
-			} else {
-				fields["request_id"] = random.String(12)
+				"request_id": c.Request().Context().Value(requestIdCtx),
 			}
 			if values.Error != nil {
 				fields["error"] = values.Error

@@ -112,9 +112,7 @@ const (
 )
 
 // GetLatestBlueprintVersionNumber gets the latest version number of a blueprint.
-func (db *dB) GetLatestBlueprintVersionNumber(orgId string, blueprintId uuid.UUID) (int, error) {
-	ctx := context.Background()
-
+func (db *dB) GetLatestBlueprintVersionNumber(ctx context.Context, orgId string, blueprintId uuid.UUID) (int, error) {
 	var latestVersion int
 
 	conn, err := db.Pool.Acquire(ctx)
@@ -136,8 +134,7 @@ func (db *dB) GetLatestBlueprintVersionNumber(orgId string, blueprintId uuid.UUI
 	return latestVersion, nil
 }
 
-func (db *dB) CountBlueprintComposesSince(orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, ignoreImageTypes []string) (int, error) {
-	ctx := context.Background()
+func (db *dB) CountBlueprintComposesSince(ctx context.Context, orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, ignoreImageTypes []string) (int, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return 0, err
@@ -152,8 +149,7 @@ func (db *dB) CountBlueprintComposesSince(orgId string, blueprintId uuid.UUID, b
 	return count, nil
 }
 
-func (db *dB) GetBlueprintComposes(orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]BlueprintCompose, error) {
-	ctx := context.Background()
+func (db *dB) GetBlueprintComposes(ctx context.Context, orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]BlueprintCompose, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, err
@@ -184,8 +180,7 @@ func (db *dB) GetBlueprintComposes(orgId string, blueprintId uuid.UUID, blueprin
 	return composes, nil
 }
 
-func (db *dB) InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error {
-	ctx := context.Background()
+func (db *dB) InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return err
@@ -213,8 +208,7 @@ func (db *dB) InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountN
 	return err
 }
 
-func (db *dB) GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error) {
-	ctx := context.Background()
+func (db *dB) GetBlueprint(ctx context.Context, id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, err
@@ -234,8 +228,7 @@ func (db *dB) GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*Blueprin
 	return &result, err
 }
 
-func (db *dB) UpdateBlueprint(id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error {
-	ctx := context.Background()
+func (db *dB) UpdateBlueprint(ctx context.Context, id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return err
@@ -264,8 +257,7 @@ func (db *dB) UpdateBlueprint(id uuid.UUID, blueprintId uuid.UUID, orgId string,
 	return err
 }
 
-func (db *dB) DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error {
-	ctx := context.Background()
+func (db *dB) DeleteBlueprint(ctx context.Context, id uuid.UUID, orgID, accountNumber string) error {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return err
@@ -285,8 +277,7 @@ func (db *dB) DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error {
 	return nil
 }
 
-func (db *dB) FindBlueprints(orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error) {
-	ctx := context.Background()
+func (db *dB) FindBlueprints(ctx context.Context, orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -319,8 +310,7 @@ func (db *dB) FindBlueprints(orgID, search string, limit, offset int) ([]Bluepri
 	return blueprints, count, nil
 }
 
-func (db *dB) GetBlueprints(orgID string, limit, offset int) ([]BlueprintWithNoBody, int, error) {
-	ctx := context.Background()
+func (db *dB) GetBlueprints(ctx context.Context, orgID string, limit, offset int) ([]BlueprintWithNoBody, int, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, 0, err
