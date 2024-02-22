@@ -56,24 +56,24 @@ type BlueprintWithNoBody struct {
 type DB interface {
 	InsertCompose(jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string, blueprintVersionId *uuid.UUID) error
 	GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
-	GetLatestBlueprintVersionNumber(orgId string, blueprintId uuid.UUID) (int, error)
-	GetBlueprintComposes(orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]BlueprintCompose, error)
+	GetLatestBlueprintVersionNumber(ctx context.Context, orgId string, blueprintId uuid.UUID) (int, error)
+	GetBlueprintComposes(ctx context.Context, orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]BlueprintCompose, error)
 	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
 	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
 	CountComposesSince(orgId string, duration time.Duration) (int, error)
-	CountBlueprintComposesSince(orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, ignoreImageTypes []string) (int, error)
+	CountBlueprintComposesSince(ctx context.Context, orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, ignoreImageTypes []string) (int, error)
 	DeleteCompose(jobId uuid.UUID, orgId string) error
 
 	InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error
 	GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
 	GetClone(id uuid.UUID, orgId string) (*CloneEntry, error)
 
-	InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error
-	GetBlueprint(id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error)
-	UpdateBlueprint(id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error
-	GetBlueprints(orgID string, limit, offset int) ([]BlueprintWithNoBody, int, error)
-	FindBlueprints(orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error)
-	DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error
+	InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error
+	GetBlueprint(ctx context.Context, id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error)
+	UpdateBlueprint(ctx context.Context, id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error
+	GetBlueprints(ctx context.Context, orgID string, limit, offset int) ([]BlueprintWithNoBody, int, error)
+	FindBlueprints(ctx context.Context, orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error)
+	DeleteBlueprint(ctx context.Context, id uuid.UUID, orgID, accountNumber string) error
 }
 
 const (
@@ -154,6 +154,8 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	dbConfig.ConnConfig.Tracer = &dbTracer{}
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), dbConfig)
 	if err != nil {

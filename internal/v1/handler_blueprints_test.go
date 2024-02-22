@@ -19,6 +19,7 @@ import (
 )
 
 func TestHandlers_ComposeBlueprint(t *testing.T) {
+	ctx := context.Background()
 	ids := []uuid.UUID{uuid.New(), uuid.New()}
 	idx := 0
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +46,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 		DistributionsDir: "../../distributions",
 	})
 	defer func() {
-		shutdownErr := srv.Shutdown(context.Background())
+		shutdownErr := srv.Shutdown(ctx)
 		require.NoError(t, shutdownErr)
 	}()
 	defer tokenSrv.Close()
@@ -88,7 +89,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	var message []byte
 	message, err = json.Marshal(blueprint)
 	require.NoError(t, err)
-	err = dbase.InsertBlueprint(id, versionId, "000000", "000000", name, description, message)
+	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message)
 	require.NoError(t, err)
 
 	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/compose", id.String()), map[string]string{})
@@ -103,6 +104,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 }
 
 func TestHandlers_GetBlueprintComposes(t *testing.T) {
+	ctx := context.Background()
 	blueprintId := uuid.New()
 	versionId := uuid.New()
 	version2Id := uuid.New()
@@ -117,14 +119,14 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 		DistributionsDir: "../../distributions",
 	})
 	defer func() {
-		err := db_srv.Shutdown(context.Background())
+		err := db_srv.Shutdown(ctx)
 		require.NoError(t, err)
 	}()
 	defer tokenSrv.Close()
 
 	var result ComposesResponse
 
-	err = dbase.InsertBlueprint(blueprintId, versionId, "000000", "500000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
+	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "500000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
 	require.NoError(t, err)
 	id1 := uuid.New()
 	err = dbase.InsertCompose(id1, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
@@ -133,7 +135,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	err = dbase.InsertCompose(id2, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &versionId)
 	require.NoError(t, err)
 
-	err = dbase.UpdateBlueprint(version2Id, blueprintId, "000000", "blueprint", "desc2", json.RawMessage(`{"image_requests": [{"image_type": "aws"}, {"image_type": "gcp"}]}`))
+	err = dbase.UpdateBlueprint(ctx, version2Id, blueprintId, "000000", "blueprint", "desc2", json.RawMessage(`{"image_requests": [{"image_type": "aws"}, {"image_type": "gcp"}]}`))
 	require.NoError(t, err)
 	id3 := uuid.New()
 	err = dbase.InsertCompose(id3, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &version2Id)
@@ -181,6 +183,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 }
 
 func TestHandlers_GetBlueprint(t *testing.T) {
+	ctx := context.Background()
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
@@ -189,7 +192,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 		DistributionsDir: "../../distributions",
 	})
 	defer func() {
-		err := db_srv.Shutdown(context.Background())
+		err := db_srv.Shutdown(ctx)
 		require.NoError(t, err)
 	}()
 	defer tokenSrv.Close()
@@ -232,7 +235,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	var message []byte
 	message, err = json.Marshal(blueprint)
 	require.NoError(t, err)
-	err = dbase.InsertBlueprint(id, versionId, "000000", "000000", name, description, message)
+	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message)
 	require.NoError(t, err)
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s", id.String()), &tutils.AuthString0)
@@ -251,6 +254,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 }
 
 func TestHandlers_DeleteBlueprint(t *testing.T) {
+	ctx := context.Background()
 	blueprintId := uuid.New()
 	versionId := uuid.New()
 	version2Id := uuid.New()
@@ -265,12 +269,12 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 		DistributionsDir: "../../distributions",
 	})
 	defer func() {
-		err := db_srv.Shutdown(context.Background())
+		err := db_srv.Shutdown(ctx)
 		require.NoError(t, err)
 	}()
 	defer tokenSrv.Close()
 
-	err = dbase.InsertBlueprint(blueprintId, versionId, "000000", "000000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
+	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
 	require.NoError(t, err)
 	id1 := uuid.New()
 	err = dbase.InsertCompose(id1, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
@@ -279,7 +283,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	err = dbase.InsertCompose(id2, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &versionId)
 	require.NoError(t, err)
 
-	err = dbase.UpdateBlueprint(version2Id, blueprintId, "000000", "blueprint", "desc2", json.RawMessage(`{"image_requests": [{"image_type": "aws"}, {"image_type": "gcp"}]}`))
+	err = dbase.UpdateBlueprint(ctx, version2Id, blueprintId, "000000", "blueprint", "desc2", json.RawMessage(`{"image_requests": [{"image_type": "aws"}, {"image_type": "gcp"}]}`))
 	require.NoError(t, err)
 	id3 := uuid.New()
 	err = dbase.InsertCompose(id3, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &version2Id)
@@ -299,11 +303,11 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Not Found", errorResponse.Errors[0].Detail)
 
-	_, err = dbase.GetBlueprint(blueprintId, "000000", "000000")
+	_, err = dbase.GetBlueprint(ctx, blueprintId, "000000", "000000")
 	require.ErrorIs(t, err, db.BlueprintNotFoundError)
 
 	// Composes should not be assigned to the blueprint anymore
-	bpComposes, err := dbase.GetBlueprintComposes("000000", blueprintId, nil, (time.Hour * 24 * 14), 10, 0, nil)
+	bpComposes, err := dbase.GetBlueprintComposes(ctx, "000000", blueprintId, nil, (time.Hour * 24 * 14), 10, 0, nil)
 	require.NoError(t, err)
 	require.Len(t, bpComposes, 0)
 }

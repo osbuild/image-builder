@@ -62,7 +62,7 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	id := uuid.New()
 	versionId := uuid.New()
 	ctx.Logger().Infof("Inserting blueprint: %s (%s), for orgID: %s and account: %s", blueprintRequest.Name, id, userID.OrgID(), userID.AccountNumber())
-	err = h.server.db.InsertBlueprint(id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, blueprintRequest.Description, body)
+	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, blueprintRequest.Description, body)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
 		return err
@@ -79,7 +79,8 @@ func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID) error {
 		return err
 	}
 
-	blueprintEntry, err := h.server.db.GetBlueprint(id, userID.OrgID(), userID.AccountNumber())
+	ctx.Logger().Infof("Fetching blueprint %s", id)
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), userID.AccountNumber())
 	if err != nil {
 		return err
 	}
@@ -119,7 +120,7 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	}
 
 	versionId := uuid.New()
-	err = h.server.db.UpdateBlueprint(versionId, blueprintId, userID.OrgID(), blueprintRequest.Name, blueprintRequest.Description, body)
+	err = h.server.db.UpdateBlueprint(ctx.Request().Context(), versionId, blueprintId, userID.OrgID(), blueprintRequest.Name, blueprintRequest.Description, body)
 	if err != nil {
 		ctx.Logger().Errorf("Error updating blueprint in db: %v", err)
 		return err
@@ -136,7 +137,7 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 		return err
 	}
 
-	blueprintEntry, err := h.server.db.GetBlueprint(id, userID.OrgID(), userID.AccountNumber())
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), userID.AccountNumber())
 	if err != nil {
 		return err
 	}
@@ -190,16 +191,18 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 	var count int
 
 	if params.Search != nil {
-		blueprints, count, err = h.server.db.FindBlueprints(userID.OrgID(), *params.Search, limit, offset)
+		blueprints, count, err = h.server.db.FindBlueprints(ctx.Request().Context(), userID.OrgID(), *params.Search, limit, offset)
 		if err != nil {
 			return err
 		}
 	} else {
-		blueprints, count, err = h.server.db.GetBlueprints(userID.OrgID(), limit, offset)
+		blueprints, count, err = h.server.db.GetBlueprints(ctx.Request().Context(), userID.OrgID(), limit, offset)
 		if err != nil {
 			return err
 		}
 	}
+
+	ctx.Logger().Debugf("Getting blueprint list of %d items", count)
 
 	data := make([]BlueprintItem, 0, len(blueprints))
 	for _, blueprint := range blueprints {
@@ -249,17 +252,17 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 	since := time.Hour * 24 * 14
 
 	if params.BlueprintVersion != nil && *params.BlueprintVersion < 0 {
-		*params.BlueprintVersion, err = h.server.db.GetLatestBlueprintVersionNumber(userID.OrgID(), blueprintId)
+		*params.BlueprintVersion, err = h.server.db.GetLatestBlueprintVersionNumber(ctx.Request().Context(), userID.OrgID(), blueprintId)
 		if err != nil {
 			return err
 		}
 	}
 
-	composes, err := h.server.db.GetBlueprintComposes(userID.OrgID(), blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
+	composes, err := h.server.db.GetBlueprintComposes(ctx.Request().Context(), userID.OrgID(), blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
 	if err != nil {
 		return err
 	}
-	count, err := h.server.db.CountBlueprintComposesSince(userID.OrgID(), blueprintId, params.BlueprintVersion, since, ignoreImageTypeStrings)
+	count, err := h.server.db.CountBlueprintComposesSince(ctx.Request().Context(), userID.OrgID(), blueprintId, params.BlueprintVersion, since, ignoreImageTypeStrings)
 	if err != nil {
 		return err
 	}
@@ -302,7 +305,7 @@ func (h *Handlers) DeleteBlueprint(ctx echo.Context, blueprintId openapi_types.U
 		return err
 	}
 
-	err = h.server.db.DeleteBlueprint(blueprintId, userID.OrgID(), userID.AccountNumber())
+	err = h.server.db.DeleteBlueprint(ctx.Request().Context(), blueprintId, userID.OrgID(), userID.AccountNumber())
 	if err != nil {
 		if errors.Is(err, db.BlueprintNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound)

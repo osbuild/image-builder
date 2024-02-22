@@ -9,3 +9,4 @@ dnf-json
 /.idea
 /gen-oscap
 local.env
+__debug*
