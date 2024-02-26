@@ -1,0 +1,1 @@
+ALTER TABLE blueprints DROP CONSTRAINT blueprints_account_number_check;
