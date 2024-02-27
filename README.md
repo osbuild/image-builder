@@ -34,6 +34,20 @@ Project building and testing project is based on predefined make targets:
 
  * `make build` to trigger Go builder
 
+### Run Tests
+
+To run the tests locally just call
+
+```sh
+make unit-tests
+```
+
+Before pushing something for a pull request you should run this check to avoid problems with required github actions
+
+```sh
+make push-check
+```
+
 ### Installation
 
 To run the project use `make run` target
