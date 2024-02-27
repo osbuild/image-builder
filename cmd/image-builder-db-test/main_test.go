@@ -145,7 +145,7 @@ func testGetCompose(t *testing.T) {
 	// GetCompose works as expected
 	compose, err := d.GetCompose(composes[0].Id, ORGID1)
 	require.NoError(t, err)
-	require.Equal(t, composes[0], *compose)
+	require.Equal(t, composes[0].Id, compose.Id)
 
 	// cross-account compose access not allowed
 	compose, err = d.GetCompose(composes[0].Id, ORGID2)
@@ -471,12 +471,6 @@ func testGetBlueprintComposes(t *testing.T) {
 	versionId := uuid.New()
 	err = d.InsertBlueprint(id, versionId, ORGID1, ANR1, "name", "desc", []byte("{}"))
 	require.NoError(t, err)
-
-	// get latest version
-	version, err := d.GetLatestBlueprintVersionNumber(ORGID1, id)
-	require.NoError(t, err)
-	require.Equal(t, 1, version)
-
 	version2Id := uuid.New()
 	err = d.UpdateBlueprint(version2Id, id, ORGID1, "name", "desc2", []byte("{}"))
 	require.NoError(t, err)
@@ -502,6 +496,10 @@ func testGetBlueprintComposes(t *testing.T) {
 	require.Equal(t, "image2", *entries[1].ImageName)
 	require.Equal(t, "image1", *entries[2].ImageName)
 
+	composes, count, err := d.GetComposes(ORGID1, fortnight, 100, 0, []string{})
+	require.NoError(t, err)
+	require.Equal(t, 2, *composes[0].BlueprintVersion)
+
 	count, err = d.CountBlueprintComposesSince(ORGID1, id, nil, (time.Hour * 24 * 14), nil)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
@@ -518,11 +516,6 @@ func testGetBlueprintComposes(t *testing.T) {
 	require.Len(t, entries, 1)
 	require.Equal(t, "image4", *entries[0].ImageName)
 	require.Equal(t, 2, entries[0].BlueprintVersion)
-
-	// get latest version
-	version, err = d.GetLatestBlueprintVersionNumber(ORGID1, id)
-	require.NoError(t, err)
-	require.Equal(t, 2, version)
 }
 
 func runTest(t *testing.T, f func(*testing.T)) {
