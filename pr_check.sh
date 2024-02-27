@@ -13,7 +13,7 @@ export IQE_MARKER_EXPRESSION="api" # run only api test
 export IQE_ENV="ephemeral" # run only api test
 export IQE_IMAGE_TAG="image-builder"
 export DOCKERFILE="distribution/Dockerfile-ubi"
-export EXTRA_DEPLOY_ARGS="provisioning sources content-sources"
+export EXTRA_DEPLOY_ARGS="provisioning sources"
 export REF_ENV="insights-stage"
 
 # Install bonfire repo/initialize
