@@ -26,6 +26,11 @@ const (
 		INSERT INTO blueprint_versions(id, blueprint_id, version, body)
 		VALUES($1, $2, $3, $4)`
 
+	sqlLatestBlueprintVersion = `
+		SELECT MAX(blueprint_versions.version)
+		FROM blueprint_versions INNER JOIN blueprints ON blueprint_versions.blueprint_id = blueprints.id
+		WHERE blueprints.org_id = $1 AND blueprints.id = $2`
+
 	sqlGetBlueprintComposes = `
 		SELECT blueprint_versions.version, composes.job_id, composes.request, composes.created_at, composes.image_name, composes.client_id
 		FROM composes INNER JOIN blueprint_versions ON composes.blueprint_version_id = blueprint_versions.id
@@ -106,6 +111,31 @@ const (
 		WHERE blueprints.org_id = $1`
 )
 
+// GetLatestBlueprintVersionNumber gets the latest version number of a blueprint.
+func (db *dB) GetLatestBlueprintVersionNumber(orgId string, blueprintId uuid.UUID) (int, error) {
+	ctx := context.Background()
+
+	var latestVersion int
+
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Release()
+
+	rMaxVersion := conn.QueryRow(ctx, sqlLatestBlueprintVersion, orgId, blueprintId)
+	err = rMaxVersion.Scan(&latestVersion)
+
+	if err != nil {
+		// we don't want to return error in case there is no version yet (should not happen tho)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, nil
+		}
+		return latestVersion, err
+	}
+	return latestVersion, nil
+}
+
 func (db *dB) CountBlueprintComposesSince(orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, ignoreImageTypes []string) (int, error) {
 	ctx := context.Background()
 	conn, err := db.Pool.Acquire(ctx)
@@ -164,19 +194,19 @@ func (db *dB) InsertBlueprint(id uuid.UUID, versionId uuid.UUID, orgID, accountN
 
 	err = db.withTransaction(ctx, func(tx pgx.Tx) error {
 		tag, txErr := tx.Exec(ctx, sqlInsertBlueprint, id, orgID, accountNumber, name, description)
-		if tag.RowsAffected() != 1 {
-			return fmt.Errorf("%w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
-		}
 		if txErr != nil {
 			return txErr
+		}
+		if tag.RowsAffected() != 1 {
+			return fmt.Errorf("failed to insert blueprint: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 		}
 
 		tag, txErr = tx.Exec(ctx, sqlInsertVersion, versionId, id, 1, body)
-		if tag.RowsAffected() != 1 {
-			return fmt.Errorf("%w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
-		}
 		if txErr != nil {
 			return txErr
+		}
+		if tag.RowsAffected() != 1 {
+			return fmt.Errorf("failed to insert version: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 		}
 		return nil
 	})
@@ -214,19 +244,19 @@ func (db *dB) UpdateBlueprint(id uuid.UUID, blueprintId uuid.UUID, orgId string,
 
 	err = db.withTransaction(ctx, func(tx pgx.Tx) error {
 		tag, txErr := tx.Exec(ctx, sqlUpdateBlueprint, blueprintId, orgId, name, description)
-		if tag.RowsAffected() != 1 {
-			return fmt.Errorf("blueprint not found: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
-		}
 		if txErr != nil {
 			return txErr
+		}
+		if tag.RowsAffected() != 1 {
+			return fmt.Errorf("blueprint not updated: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 		}
 
 		tag, txErr = tx.Exec(ctx, sqlUpdateBlueprintVersion, id, blueprintId, body, orgId)
-		if tag.RowsAffected() != 1 {
-			return fmt.Errorf("blueprint version not found: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
-		}
 		if txErr != nil {
 			return txErr
+		}
+		if tag.RowsAffected() != 1 {
+			return fmt.Errorf("new blueprint version not created: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 		}
 		return nil
 	})
@@ -243,13 +273,16 @@ func (db *dB) DeleteBlueprint(id uuid.UUID, orgID, accountNumber string) error {
 	defer conn.Release()
 
 	tag, err := conn.Exec(ctx, sqlDeleteBlueprint, id, orgID, accountNumber)
+	if err != nil {
+		return err
+	}
 	if tag.RowsAffected() == 0 {
 		return BlueprintNotFoundError
 	}
 	if tag.RowsAffected() != 1 {
-		return fmt.Errorf("%w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
+		return fmt.Errorf("delete blueprint with versions: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 	}
-	return err
+	return nil
 }
 
 func (db *dB) FindBlueprints(orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error) {

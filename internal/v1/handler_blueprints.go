@@ -61,6 +61,7 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 
 	id := uuid.New()
 	versionId := uuid.New()
+	ctx.Logger().Infof("Inserting blueprint: %s (%s), for orgID: %s and account: %s", blueprintRequest.Name, id, userID.OrgID(), userID.AccountNumber())
 	err = h.server.db.InsertBlueprint(id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, blueprintRequest.Description, body)
 	if err != nil {
 		logrus.Error("Error inserting id into db", err)
@@ -215,15 +216,8 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 		lastOffset = 0
 	}
 	return ctx.JSON(http.StatusOK, BlueprintsResponse{
-		Meta: struct {
-			Count int `json:"count"`
-		}{
-			count,
-		},
-		Links: struct {
-			First string `json:"first"`
-			Last  string `json:"last"`
-		}{
+		Meta: ListResponseMeta{count},
+		Links: ListResponseLinks{
 			fmt.Sprintf("%v/v%v/composes?offset=0&limit=%v",
 				RoutePrefix(), spec.Info.Version, limit),
 			fmt.Sprintf("%v/v%v/composes?offset=%v&limit=%v",
@@ -253,6 +247,13 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 	ignoreImageTypeStrings := convertIgnoreImageTypeToSlice(params.IgnoreImageTypes)
 
 	since := time.Hour * 24 * 14
+
+	if params.BlueprintVersion != nil && *params.BlueprintVersion < 0 {
+		*params.BlueprintVersion, err = h.server.db.GetLatestBlueprintVersionNumber(userID.OrgID(), blueprintId)
+		if err != nil {
+			return err
+		}
+	}
 
 	composes, err := h.server.db.GetBlueprintComposes(userID.OrgID(), blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
 	if err != nil {
@@ -289,10 +290,8 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 		linkParams.Add("blueprint_version", strconv.Itoa(*params.BlueprintVersion))
 	}
 	return ctx.JSON(http.StatusOK, ComposesResponse{
-		Data: data,
-		Meta: struct {
-			Count int `json:"count"`
-		}{count},
+		Data:  data,
+		Meta:  ListResponseMeta{count},
 		Links: h.newLinksWithExtraParams("composes", count, limit, linkParams),
 	})
 }

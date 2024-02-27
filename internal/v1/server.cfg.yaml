@@ -2,5 +2,5 @@ package: v1
 output: api.go
 generate:
   echo-server: true
-  embedded-spec: true
+  embedded-spec: false
   models: true

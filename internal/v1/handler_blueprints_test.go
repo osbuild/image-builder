@@ -168,6 +168,16 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, fmt.Sprintf("/api/image-builder/v1.0/composes?blueprint_id=%s&blueprint_version=2&limit=100&offset=1", blueprintId.String()), result.Links.Last)
 	require.Equal(t, 2, len(result.Data))
 	require.Equal(t, 2, result.Meta.Count)
+
+	// get composes for latest version
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/composes?blueprint_version=-1", blueprintId.String()), &tutils.AuthString0)
+	require.NoError(t, err)
+
+	require.Equal(t, 200, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, blueprintId, *result.Data[0].BlueprintId)
+	require.Equal(t, 2, *result.Data[0].BlueprintVersion)
 }
 
 func TestHandlers_GetBlueprint(t *testing.T) {

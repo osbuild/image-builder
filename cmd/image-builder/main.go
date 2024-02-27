@@ -139,6 +139,18 @@ func main() {
 
 			return nil
 		},
+		Skipper: func(c echo.Context) bool {
+			switch c.Path() {
+			case "/metrics":
+				return true
+			case "/status":
+				return true
+			case "/ready":
+				return true
+			}
+
+			return false
+		},
 	}))
 	if conf.GlitchTipDSN != "" {
 		echoServer.Use(sentryecho.New(sentryecho.Options{}))
