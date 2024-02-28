@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 )
 
 type BlueprintBody struct {
@@ -64,7 +63,7 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	ctx.Logger().Infof("Inserting blueprint: %s (%s), for orgID: %s and account: %s", blueprintRequest.Name, id, userID.OrgID(), userID.AccountNumber())
 	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, blueprintRequest.Description, body)
 	if err != nil {
-		logrus.Error("Error inserting id into db", err)
+		ctx.Logger().Errorf("Error inserting id into db: %s", err.Error())
 		return err
 	}
 	ctx.Logger().Infof("Inserted blueprint %s", id)

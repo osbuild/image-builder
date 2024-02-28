@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 )
 
 func (h *Handlers) ComposeImage(ctx echo.Context) error {
@@ -25,6 +24,7 @@ func (h *Handlers) ComposeImage(ctx echo.Context) error {
 	}
 	composeResponse, err := h.handleCommonCompose(ctx, composeRequest, nil)
 	if err != nil {
+		ctx.Logger().Errorf("Failed to compose image: %v", err)
 		return err
 	}
 
@@ -94,7 +94,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 
 	customizations, err := buildCustomizations(composeRequest.Customizations)
 	if err != nil {
-		logrus.Errorf("Failed buliding customizations: %v", err)
+		ctx.Logger().Errorf("Failed buliding customizations: %v", err)
 		return ComposeResponse{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to build customizations")
 	}
 
@@ -115,7 +115,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	if err != nil {
 		return ComposeResponse{}, err
 	}
-	defer closeBody(resp.Body)
+	defer closeBody(ctx, resp.Body)
 	if resp.StatusCode != http.StatusCreated {
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed posting compose request to osbuild-composer")
 		body, err := io.ReadAll(resp.Body)
@@ -160,7 +160,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 
 	err = h.server.db.InsertCompose(composeResult.Id, userID.AccountNumber(), userID.Email(), userID.OrgID(), composeRequest.ImageName, rawCR, &clientIdString, blueprintVersionId)
 	if err != nil {
-		logrus.Error("Error inserting id into db", err)
+		ctx.Logger().Error("Error inserting id into db", err)
 		return ComposeResponse{}, err
 	}
 
@@ -202,10 +202,10 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 			for _, source := range *uo.ShareWithSources {
 				resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), source)
 				if err != nil {
-					logrus.Error(err)
+					ctx.Logger().Error(err)
 					return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
 				}
-				defer closeBody(resp.Body)
+				defer closeBody(ctx, resp.Body)
 
 				var uploadInfo provisioning.V1SourceUploadInfoResponse
 				err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
@@ -313,10 +313,10 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 		if uo.SourceId != nil {
 			resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), *uo.SourceId)
 			if err != nil {
-				logrus.Error(err)
+				ctx.Logger().Error(err)
 				return uploadOptions, "", echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", *uo.SourceId))
 			}
-			defer closeBody(resp.Body)
+			defer closeBody(ctx, resp.Body)
 
 			var uploadInfo provisioning.V1SourceUploadInfoResponse
 			err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
