@@ -46,6 +46,7 @@ paths:
       operationId: getOpenapiJson
       tags:
         - meta
+        - noAuth
       responses:
         '200':
           description: returns this document
