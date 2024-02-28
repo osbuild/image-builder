@@ -671,6 +671,10 @@ components:
       properties:
         version:
           type: string
+        build_time:
+          type: string
+        build_commit:
+          type: string
     Readiness:
       type: object
       required:
