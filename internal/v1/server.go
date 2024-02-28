@@ -75,8 +75,6 @@ func Attach(conf *ServerConfig) error {
 		return err
 	}
 
-	spec.AddServer(&openapi3.Server{URL: fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version)})
-
 	router, err := legacyrouter.NewRouter(spec)
 	if err != nil {
 		return err
