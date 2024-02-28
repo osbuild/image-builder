@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -43,9 +45,46 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	})
 
 	t.Run("GetOpenapiJson", func(t *testing.T) {
-		respStatusCode, _ := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/openapi.json", &tutils.AuthString0)
-		require.Equal(t, http.StatusOK, respStatusCode)
-		// note: not asserting body b/c response is too big
+		// should work with AND without authentication
+		url := "http://localhost:8086/api/image-builder/v1/openapi.json"
+
+		testCases := []struct {
+			testCaseName string
+			authString   *string
+		}{
+			{
+				testCaseName: "Test without Authentication",
+				authString:   nil,
+			},
+			{
+				testCaseName: "Test with Authentication",
+				authString:   &tutils.AuthString0,
+			},
+		}
+
+		for _, tc := range testCases {
+			respStatusCode, body := tutils.GetResponseBody(t, url, tc.authString)
+			require.Equal(t, http.StatusOK, respStatusCode, tc.testCaseName)
+
+			var swagger *openapi3.T
+			var specB []byte
+			var err error
+			swagger, err = GetSwagger()
+			require.NoError(t, err)
+
+			specB, err = swagger.MarshalJSON()
+			require.NoError(t, err)
+
+			spec := string(specB) + "\n"
+			// improve readability of the diff - in case of errors
+			spec = strings.ReplaceAll(spec, ",", ",\n")
+			body = strings.ReplaceAll(body, ",", ",\n")
+
+			require.Equal(t, spec, body)
+			require.Equal(t, len(spec), len(body))
+
+		}
+
 	})
 
 	t.Run("StatusCheck", func(t *testing.T) {

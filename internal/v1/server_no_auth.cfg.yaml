@@ -1,9 +1,9 @@
-package: v1
-output: api.go
+package: no_auth
+output: no_auth/api_no_auth.go
 generate:
   echo-server: true
   embedded-spec: false
   models: true
 output-options:
-  exclude-tags:
-    - noAuth
+  include-tags:
+   - noAuth

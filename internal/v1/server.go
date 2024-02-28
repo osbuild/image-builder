@@ -1,4 +1,5 @@
-//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config server.cfg.yaml -o api.go api.yaml
+//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config server.cfg.yaml api.yaml
+//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config server_no_auth.cfg.yaml api.yaml
 package v1
 
 import (
@@ -8,6 +9,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/osbuild/image-builder/internal/v1/no_auth"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
@@ -109,20 +112,26 @@ func Attach(conf *ServerConfig) error {
 	s.echo.Binder = binder{}
 	s.echo.HTTPErrorHandler = s.HTTPErrorHandler
 
-	middlewares := []echo.MiddlewareFunc{
+	middlewaresNoAuth := []echo.MiddlewareFunc{
 		prometheus.StatusMiddleware,
 	}
 
-	if s.fedoraAuth {
-		middlewares = append(middlewares, echo.WrapMiddleware(fedora_identity.Extractor))
-	} else {
-		middlewares = append(middlewares, echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy))
+	var middlewares []echo.MiddlewareFunc
 
+	if s.fedoraAuth {
+		middlewares = append(middlewaresNoAuth, echo.WrapMiddleware(fedora_identity.Extractor))
+	} else {
+		middlewares = append(middlewaresNoAuth, echo.WrapMiddleware(identity.Extractor), echo.WrapMiddleware(identity.BasePolicy))
 	}
+
+	middlewaresNoAuth = append(middlewaresNoAuth, prometheus.PrometheusMW)
 	middlewares = append(middlewares, s.noAssociateAccounts, s.ValidateRequest, prometheus.PrometheusMW)
 
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), middlewares...), &h)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), middlewares...), &h)
+
+	no_auth.RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), middlewaresNoAuth...), &h)
+	no_auth.RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), middlewaresNoAuth...), &h)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {

@@ -1712,9 +1712,6 @@ type ServerInterface interface {
 	// get composes associated with a blueprint
 	// (GET /experimental/blueprints/{id}/composes)
 	GetBlueprintComposes(ctx echo.Context, id openapi_types.UUID, params GetBlueprintComposesParams) error
-	// get the openapi json specification
-	// (GET /openapi.json)
-	GetOpenapiJson(ctx echo.Context) error
 	// get the available profiles for a given distribution. This is a temporary endpoint meant to be removed soon.
 	// (GET /oscap/{distribution}/profiles)
 	GetOscapProfiles(ctx echo.Context, distribution Distributions) error
@@ -2066,15 +2063,6 @@ func (w *ServerInterfaceWrapper) GetBlueprintComposes(ctx echo.Context) error {
 	return err
 }
 
-// GetOpenapiJson converts echo context to params.
-func (w *ServerInterfaceWrapper) GetOpenapiJson(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetOpenapiJson(ctx)
-	return err
-}
-
 // GetOscapProfiles converts echo context to params.
 func (w *ServerInterfaceWrapper) GetOscapProfiles(ctx echo.Context) error {
 	var err error
@@ -2224,7 +2212,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PUT(baseURL+"/experimental/blueprints/:id", wrapper.UpdateBlueprint)
 	router.POST(baseURL+"/experimental/blueprints/:id/compose", wrapper.ComposeBlueprint)
 	router.GET(baseURL+"/experimental/blueprints/:id/composes", wrapper.GetBlueprintComposes)
-	router.GET(baseURL+"/openapi.json", wrapper.GetOpenapiJson)
 	router.GET(baseURL+"/oscap/:distribution/profiles", wrapper.GetOscapProfiles)
 	router.GET(baseURL+"/oscap/:distribution/:profile/customizations", wrapper.GetOscapCustomizations)
 	router.GET(baseURL+"/packages", wrapper.GetPackages)
