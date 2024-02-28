@@ -19,7 +19,6 @@ import (
 	"github.com/osbuild/image-builder/internal/provisioning"
 
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -62,7 +61,7 @@ func (h *Handlers) GetReadiness(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	defer closeBody(resp.Body)
+	defer closeBody(ctx, resp.Body)
 
 	if resp.StatusCode != 200 {
 		body, err := io.ReadAll(resp.Body)
@@ -234,7 +233,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 	if err != nil {
 		return err
 	}
-	defer closeBody(resp.Body)
+	defer closeBody(ctx, resp.Body)
 
 	if resp.StatusCode == http.StatusNotFound {
 		body, err := io.ReadAll(resp.Body)
@@ -279,7 +278,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 	}
 
 	if cloudStat.ImageStatus.Error != nil {
-		status.ImageStatus.Error = parseComposeStatusError(cloudStat.ImageStatus.Error)
+		status.ImageStatus.Error = parseComposeStatusError(ctx, cloudStat.ImageStatus.Error)
 	}
 
 	return ctx.JSON(http.StatusOK, status)
@@ -358,7 +357,7 @@ func parseComposerUploadStatus(us *composer.UploadStatus) (*UploadStatus, error)
 	}, nil
 }
 
-func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeStatusError {
+func parseComposeStatusError(ctx echo.Context, composeErr *composer.ComposeStatusError) *ComposeStatusError {
 	if composeErr == nil {
 		return nil
 	}
@@ -387,17 +386,17 @@ func parseComposeStatusError(composeErr *composer.ComposeStatusError) *ComposeSt
 			// Try to remarshal the details as another composer.ComposeStatusError
 			jsonDetails, err := json.Marshal(intfs[0])
 			if err != nil {
-				logrus.Errorf("Error processing compose status error details: %v", err)
+				ctx.Logger().Errorf("Error processing compose status error details: %v", err)
 				return fbErr
 			}
 			var newErr composer.ComposeStatusError
 			err = json.Unmarshal(jsonDetails, &newErr)
 			if err != nil {
-				logrus.Errorf("Error processing compose status error details: %v", err)
+				ctx.Logger().Errorf("Error processing compose status error details: %v", err)
 				return fbErr
 			}
 
-			return parseComposeStatusError(&newErr)
+			return parseComposeStatusError(ctx, &newErr)
 		}
 		return fbErr
 	default:
@@ -432,7 +431,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) err
 	if err != nil {
 		return err
 	}
-	defer closeBody(resp.Body)
+	defer closeBody(ctx, resp.Body)
 
 	if resp.StatusCode == http.StatusNotFound {
 		body, err := io.ReadAll(resp.Body)
@@ -608,10 +607,10 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 			for _, source := range *awsEC2CloneReq.ShareWithSources {
 				resp, err := h.server.pClient.GetUploadInfo(ctx.Request().Context(), source)
 				if err != nil {
-					logrus.Error(err)
+					ctx.Logger().Error(err)
 					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to request source: %s", source))
 				}
-				defer closeBody(resp.Body)
+				defer closeBody(ctx, resp.Body)
 
 				var uploadInfo provisioning.V1SourceUploadInfoResponse
 				err = json.NewDecoder(resp.Body).Decode(&uploadInfo)
@@ -623,7 +622,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to resolve source %s to an aws account id: %v", source, uploadInfo.Aws.AccountId))
 				}
 
-				logrus.Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *uploadInfo.Aws.AccountId))
+				ctx.Logger().Info(fmt.Sprintf("Resolved source %s, to account id %s", strings.Replace(source, "\n", "", -1), *uploadInfo.Aws.AccountId))
 				shareWithAccounts = append(shareWithAccounts, *uploadInfo.Aws.AccountId)
 			}
 		}
@@ -648,7 +647,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 	if resp == nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong creating the clone")
 	}
-	defer closeBody(resp.Body)
+	defer closeBody(ctx, resp.Body)
 	if resp.StatusCode != http.StatusCreated {
 		var cError composer.Error
 		err = json.NewDecoder(resp.Body).Decode(&cError)
@@ -702,7 +701,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		ctx.Logger().Errorf("Error requesting clone status for clone %v: %v", id, err)
 		return err
 	}
-	defer closeBody(resp.Body)
+	defer closeBody(ctx, resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		var cErr composer.Error
 		err = json.NewDecoder(resp.Body).Decode(&cErr)
@@ -722,7 +721,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 	var options CloneStatusResponse_Options
 	uo, err := cloudStat.Options.AsAWSEC2UploadStatus()
 	if err != nil {
-		logrus.Errorf("Unable to decode clone status: %v", err)
+		ctx.Logger().Errorf("Unable to decode clone status: %v", err)
 		return err
 	}
 
@@ -731,7 +730,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		Region: uo.Region,
 	})
 	if err != nil {
-		logrus.Errorf("Unable to encode clone status: %v", err)
+		ctx.Logger().Errorf("Unable to encode clone status: %v", err)
 		return err
 	}
 
@@ -808,10 +807,10 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 	})
 }
 
-func closeBody(body io.Closer) {
+func closeBody(ctx echo.Context, body io.Closer) {
 	err := body.Close()
 	if err != nil {
-		logrus.Errorf("closing response body failed: %v", err)
+		ctx.Logger().Errorf("closing response body failed: %v", err)
 	}
 }
 
