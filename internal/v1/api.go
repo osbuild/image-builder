@@ -870,7 +870,9 @@ type User struct {
 
 // Version defines model for Version.
 type Version struct {
-	Version string `json:"version"`
+	BuildCommit *string `json:"build_commit,omitempty"`
+	BuildTime   *string `json:"build_time,omitempty"`
+	Version     string  `json:"version"`
 }
 
 // GetComposesParams defines parameters for GetComposes.

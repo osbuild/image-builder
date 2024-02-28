@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/provisioning"
@@ -48,7 +49,11 @@ func (h *Handlers) newLinksWithExtraParams(path string, count, limit int, params
 }
 
 func (h *Handlers) GetVersion(ctx echo.Context) error {
-	version := Version{h.server.spec.Info.Version}
+	version := Version{
+		Version:     h.server.spec.Info.Version,
+		BuildCommit: common.ToPtr(common.BuildCommit),
+		BuildTime:   common.ToPtr(common.BuildTime),
+	}
 	return ctx.JSON(http.StatusOK, version)
 }
 
