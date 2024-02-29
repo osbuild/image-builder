@@ -89,16 +89,6 @@ Test Load Test:
           - aws/rhel-8.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
-SonarQube:
-  stage: test
-  extends: .terraform
-  script:
-    - schutzbot/sonarqube.sh
-  variables:
-    RUNNER: aws/rhel-8.8-ga-x86_64
-    INTERNAL_NETWORK: "true"
-    GIT_DEPTH: 0
-
 Load test Success:
   stage: finish
   rules:
