@@ -762,6 +762,9 @@ type Services struct {
 
 	// Enabled List of services to enable by default
 	Enabled *[]string `json:"enabled,omitempty"`
+
+	// Masked List of services to mask by default
+	Masked *[]string `json:"masked,omitempty"`
 }
 
 // Subscription defines model for Subscription.
