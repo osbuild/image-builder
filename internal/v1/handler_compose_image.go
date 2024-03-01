@@ -699,6 +699,7 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 		res.Services = &composer.Services{
 			Disabled: cust.Services.Disabled,
 			Enabled:  cust.Services.Enabled,
+			Masked:   cust.Services.Masked,
 		}
 	}
 

@@ -1757,6 +1757,7 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Services: &Services{
 						Disabled: common.ToPtr([]string{"service"}),
+						Masked:   common.ToPtr([]string{"service2"}),
 					},
 					Locale: &Locale{
 						Keyboard: common.ToPtr("piano"),
@@ -1790,6 +1791,7 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Services: &composer.Services{
 						Disabled: common.ToPtr([]string{"service"}),
+						Masked:   common.ToPtr([]string{"service2"}),
 					},
 					Locale: &composer.Locale{
 						Keyboard: common.ToPtr("piano"),
