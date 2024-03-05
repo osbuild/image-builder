@@ -34,6 +34,7 @@ type Kernel struct {
 type Services struct {
 	Disabled *[]string `json:"disabled,omitempty"`
 	Enabled  *[]string `json:"enabled,omitempty"`
+	Masked   *[]string `json:"masked,omitempty"`
 }
 
 type Customizations struct {
@@ -190,8 +191,18 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 		if s.Enabled != nil {
 			services.Enabled = s.Enabled
 		}
+		var maskedAndDisabled []string
 		if s.Disabled != nil {
-			services.Disabled = s.Disabled
+			maskedAndDisabled = append(maskedAndDisabled, *s.Disabled...)
+		}
+		if s.Masked != nil {
+			maskedAndDisabled = append(maskedAndDisabled, *s.Masked...)
+		}
+		// we need to collect both disabled and masked services and
+		// assign them to the masked customization, since disabled services
+		// that aren't installed on the image will break the image build.
+		if maskedAndDisabled != nil {
+			services.Masked = &maskedAndDisabled
 		}
 	}
 	if services != nil {
