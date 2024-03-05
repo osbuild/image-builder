@@ -1,4 +1,4 @@
-//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config server.cfg.yaml -o api.go api.yaml
+//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config server.cfg.yaml api.yaml
 package v1
 
 import (
@@ -121,6 +121,8 @@ func Attach(conf *ServerConfig) error {
 
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), majorVersion), middlewares...), &h)
 	RegisterHandlers(s.echo.Group(fmt.Sprintf("%s/v%s", RoutePrefix(), spec.Info.Version), middlewares...), &h)
+
+	s.echo.GET("/openapi.json", h.GetOpenapiJson)
 
 	/* Used for the livenessProbe */
 	s.echo.GET("/status", func(c echo.Context) error {
