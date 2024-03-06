@@ -73,6 +73,8 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 				Baseurl:  r.Baseurl,
 				Metalink: r.Metalink,
 				Rhsm:     common.ToPtr(r.Rhsm),
+				Gpgkey:   r.GpgKey,
+				CheckGpg: r.CheckGpg,
 			})
 		}
 	}

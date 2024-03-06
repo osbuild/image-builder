@@ -48,6 +48,8 @@ type Repository struct {
 	Id            string   `json:"id"`
 	Baseurl       *string  `json:"baseurl"`
 	Metalink      *string  `json:"metalink"`
+	GpgKey        *string  `json:"gpgkey"`
+	CheckGpg      *bool    `json:"check_gpg"`
 	Rhsm          bool     `json:"rhsm"`
 	ImageTypeTags []string `json:"image_type_tags"`
 }
