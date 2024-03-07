@@ -9,11 +9,11 @@ export IMAGE="quay.io/cloudservices/image-builder"  # image location on quay
 
 export IQE_PLUGINS="image-builder"  # name of the IQE plugin for this app.
 export IQE_CJI_TIMEOUT="60m"  # This is the time to wait for smoke test to complete or fail
-export IQE_MARKER_EXPRESSION="api" # run only api test
+export IQE_MARKER_EXPRESSION="be_pr_check" # run only tests marked by be_pr_check
 export IQE_ENV="ephemeral" # run only api test
 export IQE_IMAGE_TAG="image-builder"
 export DOCKERFILE="distribution/Dockerfile-ubi"
-export EXTRA_DEPLOY_ARGS="provisioning sources"
+export EXTRA_DEPLOY_ARGS="sources"
 export REF_ENV="insights-stage"
 
 # Install bonfire repo/initialize
