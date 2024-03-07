@@ -10,6 +10,7 @@ import (
 	"time"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/google/uuid"
@@ -189,7 +190,7 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 	var blueprints []db.BlueprintWithNoBody
 	var count int
 
-	if params.Search != nil {
+	if params.Search != nil && common.FromPtr(params.Search) != "" {
 		blueprints, count, err = h.server.db.FindBlueprints(ctx.Request().Context(), userID.OrgID(), *params.Search, limit, offset)
 		if err != nil {
 			return err
