@@ -148,7 +148,7 @@ jobs:
           --local \
           -o yaml > processed-templates/iqe-trigger-integration.yml
 
-    - uses: stackrox/kube-linter-action@v1.0.4
+    - uses: stackrox/kube-linter-action@v1.0.5
       with:
         directory: processed-templates
         config: templates/.kube-linter-config.yml
