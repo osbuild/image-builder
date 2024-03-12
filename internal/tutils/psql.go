@@ -42,7 +42,6 @@ func NewPSQLContainer() (*PSQLContainer, error) {
 	}
 
 	name := fmt.Sprintf("image_builder_test_%d", time.Now().Unix())
-	rand.Seed(time.Now().Unix())
 	/* #nosec G404 */
 	port := 65535 - rand.Intn(32000)
 	/* #nosec G204 */
