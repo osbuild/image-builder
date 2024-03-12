@@ -171,7 +171,7 @@ func TestValidateComposeRequest(t *testing.T) {
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, http.StatusBadRequest, respStatusCode)
 		require.Regexp(t, "image_requests/0/upload_request/options|image_requests/0/upload_request/type", body)
-		require.Regexp(t, "Value is not nullable|value is not one of the allowed values", body)
+		require.Regexp(t, "Value is not nullable|value is not one of the allowed values|doesn't match any schema from", body)
 	})
 
 	t.Run("ISEWhenRepositoriesNotFound", func(t *testing.T) {

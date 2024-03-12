@@ -1,4 +1,4 @@
-//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config server.cfg.yaml api.yaml
+//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config server.cfg.yaml api.yaml
 package v1
 
 import (

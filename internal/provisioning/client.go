@@ -1,4 +1,4 @@
-//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config client.cfg.yml provisioning.v1.yml
+//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config client.cfg.yml provisioning.v1.yml
 
 package provisioning
 
