@@ -15,12 +15,24 @@ help:
 	@echo "    push-check:         Replicates the github workflow checks as close as possible"
 	@echo "                        (do this before pushing!)"
 
-.PHONY: build
-build:
+.PHONY: image-builder
+image-builder:
 	go build -o image-builder ./cmd/image-builder/
+
+.PHONY: gen-oscap
+gen-oscap:
 	go build -o gen-oscap ./cmd/oscap
-	go build -o image-builder-migrate-db-tern ./cmd/image-builder-migrate-db-tern/
+
+.PHONY: image-builder-migrate-db-tern
+image-builder-migrate-db-tern:
 	go test -c -tags=integration -o image-builder-db-test ./cmd/image-builder-db-test/
+
+.PHONY: image-builder-db-test
+image-builder-db-test:
+	go test -c -tags=integration -o image-builder-db-test ./cmd/image-builder-db-test/
+
+.PHONY: build
+build: image-builder gen-oscap image-builder-migrate-db-tern image-builder-db-test
 
 .PHONY: run
 run:
