@@ -13,7 +13,7 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
       time: "04:00"
     groups:
       go-deps:
