@@ -160,7 +160,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 
 	clientIdString := string(*composeRequest.ClientId)
 
-	err = h.server.db.InsertCompose(composeResult.Id, userID.AccountNumber(), userID.Email(), userID.OrgID(), composeRequest.ImageName, rawCR, &clientIdString, blueprintVersionId)
+	err = h.server.db.InsertCompose(ctx.Request().Context(), composeResult.Id, userID.AccountNumber(), userID.Email(), userID.OrgID(), composeRequest.ImageName, rawCR, &clientIdString, blueprintVersionId)
 	if err != nil {
 		ctx.Logger().Error("Error inserting id into db", err)
 		return ComposeResponse{}, err
