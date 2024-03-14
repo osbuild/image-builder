@@ -354,6 +354,7 @@ func TestValidateComposeRequest(t *testing.T) {
 }
 
 func TestComposeStatusError(t *testing.T) {
+	ctx := context.Background()
 	id := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
@@ -402,7 +403,7 @@ func TestComposeStatusError(t *testing.T) {
 	require.NoError(t, err)
 	imageName := "MyImageName"
 	clientId := "ui"
-	err = dbase.InsertCompose(id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
+	err = dbase.InsertCompose(ctx, id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
 	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{

@@ -106,28 +106,29 @@ func testInsertCompose(t *testing.T) {
 	require.NoError(t, err)
 
 	// test
-	err = d.InsertCompose(uuid.New(), "", "", ORGID1, &imageName, []byte("{}"), &clientId, &versionId)
+	err = d.InsertCompose(ctx, uuid.New(), "", "", ORGID1, &imageName, []byte("{}"), &clientId, &versionId)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), "", "", ORGID1, &imageName, []byte("{}"), &clientId, nil)
+	err = d.InsertCompose(ctx, uuid.New(), "", "", ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
 }
 
 func testGetCompose(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
 	clientId := "ui"
 
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, &imageName, []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
 
 	// test
@@ -287,6 +288,7 @@ func testDeleteCompose(t *testing.T) {
 }
 
 func testClones(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
@@ -303,7 +305,7 @@ func testClones(t *testing.T) {
 }
 `)))
 
-	require.NoError(t, d.InsertCompose(composeId, ANR1, EMAIL1, ORGID1, nil, []byte(`
+	require.NoError(t, d.InsertCompose(ctx, composeId, ANR1, EMAIL1, ORGID1, nil, []byte(`
 {
   "customizations": {
   },
@@ -485,13 +487,13 @@ func testGetBlueprintComposes(t *testing.T) {
 	require.NoError(t, err)
 
 	clientId := "ui"
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image1"), []byte("{}"), &clientId, &versionId)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image1"), []byte("{}"), &clientId, &versionId)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image2"), []byte("{}"), &clientId, &versionId)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image2"), []byte("{}"), &clientId, &versionId)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image3"), []byte("{}"), &clientId, nil)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image3"), []byte("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = d.InsertCompose(uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image4"), []byte("{}"), &clientId, &version2Id)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image4"), []byte("{}"), &clientId, &version2Id)
 	require.NoError(t, err)
 
 	count, err := d.CountBlueprintComposesSince(ctx, ORGID1, id, nil, (time.Hour * 24 * 14), nil)
