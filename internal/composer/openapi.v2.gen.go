@@ -14,6 +14,13 @@ const (
 	BearerScopes = "Bearer.Scopes"
 )
 
+// Defines values for BlueprintCustomizationsPartitioningMode.
+const (
+	BlueprintCustomizationsPartitioningModeAutoLvm BlueprintCustomizationsPartitioningMode = "auto-lvm"
+	BlueprintCustomizationsPartitioningModeLvm     BlueprintCustomizationsPartitioningMode = "lvm"
+	BlueprintCustomizationsPartitioningModeRaw     BlueprintCustomizationsPartitioningMode = "raw"
+)
+
 // Defines values for ComposeStatusValue.
 const (
 	ComposeStatusValueFailure ComposeStatusValue = "failure"
@@ -23,9 +30,9 @@ const (
 
 // Defines values for CustomizationsPartitioningMode.
 const (
-	AutoLvm CustomizationsPartitioningMode = "auto-lvm"
-	Lvm     CustomizationsPartitioningMode = "lvm"
-	Raw     CustomizationsPartitioningMode = "raw"
+	CustomizationsPartitioningModeAutoLvm CustomizationsPartitioningMode = "auto-lvm"
+	CustomizationsPartitioningModeLvm     CustomizationsPartitioningMode = "lvm"
+	CustomizationsPartitioningModeRaw     CustomizationsPartitioningMode = "raw"
 )
 
 // Defines values for ImageStatusValue.
@@ -40,30 +47,33 @@ const (
 
 // Defines values for ImageTypes.
 const (
-	ImageTypesAws            ImageTypes = "aws"
-	ImageTypesAwsHaRhui      ImageTypes = "aws-ha-rhui"
-	ImageTypesAwsRhui        ImageTypes = "aws-rhui"
-	ImageTypesAwsSapRhui     ImageTypes = "aws-sap-rhui"
-	ImageTypesAzure          ImageTypes = "azure"
-	ImageTypesAzureEap7Rhui  ImageTypes = "azure-eap7-rhui"
-	ImageTypesAzureRhui      ImageTypes = "azure-rhui"
-	ImageTypesAzureSapRhui   ImageTypes = "azure-sap-rhui"
-	ImageTypesEdgeCommit     ImageTypes = "edge-commit"
-	ImageTypesEdgeContainer  ImageTypes = "edge-container"
-	ImageTypesEdgeInstaller  ImageTypes = "edge-installer"
-	ImageTypesGcp            ImageTypes = "gcp"
-	ImageTypesGcpRhui        ImageTypes = "gcp-rhui"
-	ImageTypesGuestImage     ImageTypes = "guest-image"
-	ImageTypesImageInstaller ImageTypes = "image-installer"
-	ImageTypesIotCommit      ImageTypes = "iot-commit"
-	ImageTypesIotContainer   ImageTypes = "iot-container"
-	ImageTypesIotInstaller   ImageTypes = "iot-installer"
-	ImageTypesIotRawImage    ImageTypes = "iot-raw-image"
-	ImageTypesLiveInstaller  ImageTypes = "live-installer"
-	ImageTypesOci            ImageTypes = "oci"
-	ImageTypesVsphere        ImageTypes = "vsphere"
-	ImageTypesVsphereOva     ImageTypes = "vsphere-ova"
-	ImageTypesWsl            ImageTypes = "wsl"
+	ImageTypesAws                    ImageTypes = "aws"
+	ImageTypesAwsHaRhui              ImageTypes = "aws-ha-rhui"
+	ImageTypesAwsRhui                ImageTypes = "aws-rhui"
+	ImageTypesAwsSapRhui             ImageTypes = "aws-sap-rhui"
+	ImageTypesAzure                  ImageTypes = "azure"
+	ImageTypesAzureEap7Rhui          ImageTypes = "azure-eap7-rhui"
+	ImageTypesAzureRhui              ImageTypes = "azure-rhui"
+	ImageTypesAzureSapRhui           ImageTypes = "azure-sap-rhui"
+	ImageTypesEdgeCommit             ImageTypes = "edge-commit"
+	ImageTypesEdgeContainer          ImageTypes = "edge-container"
+	ImageTypesEdgeInstaller          ImageTypes = "edge-installer"
+	ImageTypesGcp                    ImageTypes = "gcp"
+	ImageTypesGcpRhui                ImageTypes = "gcp-rhui"
+	ImageTypesGuestImage             ImageTypes = "guest-image"
+	ImageTypesImageInstaller         ImageTypes = "image-installer"
+	ImageTypesIotBootableContainer   ImageTypes = "iot-bootable-container"
+	ImageTypesIotCommit              ImageTypes = "iot-commit"
+	ImageTypesIotContainer           ImageTypes = "iot-container"
+	ImageTypesIotInstaller           ImageTypes = "iot-installer"
+	ImageTypesIotRawImage            ImageTypes = "iot-raw-image"
+	ImageTypesIotSimplifiedInstaller ImageTypes = "iot-simplified-installer"
+	ImageTypesLiveInstaller          ImageTypes = "live-installer"
+	ImageTypesMinimalRaw             ImageTypes = "minimal-raw"
+	ImageTypesOci                    ImageTypes = "oci"
+	ImageTypesVsphere                ImageTypes = "vsphere"
+	ImageTypesVsphereOva             ImageTypes = "vsphere-ova"
+	ImageTypesWsl                    ImageTypes = "wsl"
 )
 
 // Defines values for UploadStatusValue.
@@ -151,6 +161,207 @@ type AzureUploadStatus struct {
 	ImageName string `json:"image_name"`
 }
 
+// Blueprint defines model for Blueprint.
+type Blueprint struct {
+	// Containers Container images to embed into the final artfact
+	Containers     *[]Container             `json:"containers,omitempty"`
+	Customizations *BlueprintCustomizations `json:"customizations,omitempty"`
+	Description    *string                  `json:"description,omitempty"`
+
+	// Distro The distribution to use for the compose. If left empty the host
+	// distro will be used.
+	Distro *string `json:"distro,omitempty"`
+
+	// Groups Package groups to be installed
+	Groups *[]PackageGroup `json:"groups,omitempty"`
+
+	// Modules An alias for packages, retained for backwards compatability
+	Modules *[]Package `json:"modules,omitempty"`
+	Name    string     `json:"name"`
+
+	// Packages Packages to be installed
+	Packages *[]Package `json:"packages,omitempty"`
+
+	// Version A semver version number
+	Version *string `json:"version,omitempty"`
+}
+
+// BlueprintCustomizations defines model for BlueprintCustomizations.
+type BlueprintCustomizations struct {
+	// Directories Directories to create in the final artifact
+	Directories *[]Directory `json:"directories,omitempty"`
+
+	// Fdo FIDO device onboard configuration
+	Fdo *FDO `json:"fdo,omitempty"`
+
+	// Files Files to create in the final artifact
+	Files *[]BlueprintFile `json:"files,omitempty"`
+
+	// Filesystem List of filesystem mountpoints to create
+	Filesystem *[]BlueprintFilesystem `json:"filesystem,omitempty"`
+
+	// Fips Enable FIPS mode
+	Fips *bool `json:"fips,omitempty"`
+
+	// Firewall Firewalld configuration
+	Firewall *BlueprintFirewall `json:"firewall,omitempty"`
+
+	// Group List of groups to create
+	Group *[]Group `json:"group,omitempty"`
+
+	// Hostname Configures the hostname
+	Hostname *string `json:"hostname,omitempty"`
+
+	// Ignition Ignition configuration
+	Ignition *Ignition `json:"ignition,omitempty"`
+
+	// InstallationDevice Name of the installation device, currently only useful for the edge-simplified-installer type
+	InstallationDevice *string `json:"installation_device,omitempty"`
+	Kernel             *Kernel `json:"kernel,omitempty"`
+
+	// Locale Locale configuration
+	Locale   *Locale            `json:"locale,omitempty"`
+	Openscap *BlueprintOpenSCAP `json:"openscap,omitempty"`
+
+	// PartitioningMode Select how the disk image will be partitioned. 'auto-lvm' will use raw unless
+	// there are one or more mountpoints in which case it will use LVM. 'lvm' always
+	// uses LVM, even when there are no extra mountpoints. 'raw' uses raw partitions
+	// even when there are one or more mountpoints.
+	PartitioningMode *BlueprintCustomizationsPartitioningMode `json:"partitioning_mode,omitempty"`
+
+	// Repositories Repositories to write to /etc/yum.repos.d/ in the final image. Note
+	// that these are not used at build time.
+	Repositories *[]BlueprintRepository `json:"repositories,omitempty"`
+	Services     *Services              `json:"services,omitempty"`
+
+	// Sshkey List of ssh keys
+	Sshkey *[]SSHKey `json:"sshkey,omitempty"`
+
+	// Timezone Timezone configuration
+	Timezone *Timezone `json:"timezone,omitempty"`
+
+	// User List of users to create
+	User *[]BlueprintUser `json:"user,omitempty"`
+}
+
+// BlueprintCustomizationsPartitioningMode Select how the disk image will be partitioned. 'auto-lvm' will use raw unless
+// there are one or more mountpoints in which case it will use LVM. 'lvm' always
+// uses LVM, even when there are no extra mountpoints. 'raw' uses raw partitions
+// even when there are one or more mountpoints.
+type BlueprintCustomizationsPartitioningMode string
+
+// BlueprintFile A custom file to create in the final artifact.
+type BlueprintFile struct {
+	// Data Contents of the file as plain text
+	Data *string `json:"data,omitempty"`
+
+	// Group Group of the file as a gid or a group name
+	Group *BlueprintFile_Group `json:"group,omitempty"`
+
+	// Mode Permissions string for the file in octal format
+	Mode *string `json:"mode,omitempty"`
+
+	// Path Path to the file
+	Path string `json:"path"`
+
+	// User Owner of the file as a uid or a user name
+	User *BlueprintFile_User `json:"user,omitempty"`
+}
+
+// BlueprintFileGroup0 defines model for .
+type BlueprintFileGroup0 = string
+
+// BlueprintFileGroup1 defines model for .
+type BlueprintFileGroup1 = int
+
+// BlueprintFile_Group Group of the file as a gid or a group name
+type BlueprintFile_Group struct {
+	union json.RawMessage
+}
+
+// BlueprintFileUser0 defines model for .
+type BlueprintFileUser0 = string
+
+// BlueprintFileUser1 defines model for .
+type BlueprintFileUser1 = int
+
+// BlueprintFile_User Owner of the file as a uid or a user name
+type BlueprintFile_User struct {
+	union json.RawMessage
+}
+
+// BlueprintFilesystem defines model for BlueprintFilesystem.
+type BlueprintFilesystem struct {
+	// Minsize size of the filesystem in bytes
+	Minsize    uint64 `json:"minsize"`
+	Mountpoint string `json:"mountpoint"`
+}
+
+// BlueprintFirewall Firewalld configuration
+type BlueprintFirewall struct {
+	// Ports List of ports (or port ranges) and protocols to open
+	Ports *[]string `json:"ports,omitempty"`
+
+	// Services Firewalld services to enable or disable
+	Services *FirewallServices `json:"services,omitempty"`
+	Zones    *[]FirewallZones  `json:"zones,omitempty"`
+}
+
+// BlueprintOpenSCAP defines model for BlueprintOpenSCAP.
+type BlueprintOpenSCAP struct {
+	Datastream *string            `json:"datastream,omitempty"`
+	ProfileId  string             `json:"profile_id"`
+	Tailoring  *OpenSCAPTailoring `json:"tailoring,omitempty"`
+}
+
+// BlueprintRepository defines model for BlueprintRepository.
+type BlueprintRepository struct {
+	Baseurls   *[]string `json:"baseurls,omitempty"`
+	Enabled    *bool     `json:"enabled,omitempty"`
+	Filename   *string   `json:"filename,omitempty"`
+	Gpgcheck   *bool     `json:"gpgcheck,omitempty"`
+	Gpgkeys    *[]string `json:"gpgkeys,omitempty"`
+	Id         string    `json:"id"`
+	Metalink   *string   `json:"metalink,omitempty"`
+	Mirrorlist *string   `json:"mirrorlist,omitempty"`
+
+	// ModuleHotfixes Disables modularity filtering for this repository.
+	ModuleHotfixes *bool   `json:"module_hotfixes,omitempty"`
+	Name           *string `json:"name,omitempty"`
+	Priority       *int    `json:"priority,omitempty"`
+	RepoGpgcheck   *bool   `json:"repo_gpgcheck,omitempty"`
+	Sslverify      *bool   `json:"sslverify,omitempty"`
+}
+
+// BlueprintUser defines model for BlueprintUser.
+type BlueprintUser struct {
+	Description *string `json:"description,omitempty"`
+
+	// Gid Group id to use instead of the default
+	Gid *int `json:"gid,omitempty"`
+
+	// Groups A list of additional groups to add the user to
+	Groups *[]string `json:"groups,omitempty"`
+
+	// Home The user's home directory
+	Home *string `json:"home,omitempty"`
+
+	// Key ssh public key
+	Key  *string `json:"key,omitempty"`
+	Name string  `json:"name"`
+
+	// Password If the password starts with $6$, $5$, or $2b$ it will be stored as
+	// an encrypted password. Otherwise it will be treated as a plain text
+	// password.
+	Password *string `json:"password,omitempty"`
+
+	// Shell Login shell to use
+	Shell *string `json:"shell,omitempty"`
+
+	// Uid User id to use instead of the default
+	Uid *int `json:"uid,omitempty"`
+}
+
 // CloneComposeBody defines model for CloneComposeBody.
 type CloneComposeBody struct {
 	union json.RawMessage
@@ -217,6 +428,7 @@ type ComposeMetadata struct {
 
 // ComposeRequest defines model for ComposeRequest.
 type ComposeRequest struct {
+	Blueprint      *Blueprint      `json:"blueprint,omitempty"`
 	Customizations *Customizations `json:"customizations,omitempty"`
 	Distribution   string          `json:"distribution"`
 	ImageRequest   *ImageRequest   `json:"image_request,omitempty"`
@@ -489,13 +701,27 @@ type FirewallCustomization struct {
 	Ports *[]string `json:"ports,omitempty"`
 
 	// Services Firewalld services to enable or disable
-	Services *struct {
-		// Disabled List of services to disable
-		Disabled *[]string `json:"disabled,omitempty"`
+	Services *FirewallServices `json:"services,omitempty"`
+}
 
-		// Enabled List of services to enable
-		Enabled *[]string `json:"enabled,omitempty"`
-	} `json:"services,omitempty"`
+// FirewallServices Firewalld services to enable or disable
+type FirewallServices struct {
+	// Disabled List of services to disable
+	Disabled *[]string `json:"disabled,omitempty"`
+
+	// Enabled List of services to enable
+	Enabled *[]string `json:"enabled,omitempty"`
+}
+
+// FirewallZones Bind a list of network sources to a zone to restrict traffic from
+// those sources based on the settings of the zone.
+type FirewallZones struct {
+	// Name name of the zone, if left empty the sources will apply to
+	// the default zone.
+	Name *string `json:"name,omitempty"`
+
+	// Sources List of sources for the zone
+	Sources *[]string `json:"sources,omitempty"`
 }
 
 // GCPUploadOptions defines model for GCPUploadOptions.
@@ -700,6 +926,24 @@ type OpenSCAPTailoring struct {
 	Unselected *[]string `json:"unselected,omitempty"`
 }
 
+// Package defines model for Package.
+type Package struct {
+	// Name Name of the package to install. File globbing is supported,
+	// eg. 'openssh-*'
+	Name string `json:"name"`
+
+	// Version Optional version of the package to install. If left blank the
+	// latest available version will be used. Wildcards are supported
+	// eg. '4.11.*'
+	Version *string `json:"version,omitempty"`
+}
+
+// PackageGroup defines model for PackageGroup.
+type PackageGroup struct {
+	// Name Package group name
+	Name string `json:"name"`
+}
+
 // PackageMetadata defines model for PackageMetadata.
 type PackageMetadata struct {
 	Arch      string  `json:"arch"`
@@ -753,6 +997,15 @@ type Repository struct {
 
 	// Rhsm Determines whether a valid subscription is required to access this repository.
 	Rhsm *bool `json:"rhsm,omitempty"`
+}
+
+// SSHKey defines model for SSHKey.
+type SSHKey struct {
+	// Key Adds the key to the user's authorized_keys file
+	Key string `json:"key"`
+
+	// User User to configure the ssh key for
+	User string `json:"user"`
 }
 
 // Services defines model for Services.
@@ -856,6 +1109,130 @@ type PostComposeJSONRequestBody = ComposeRequest
 
 // PostCloneComposeJSONRequestBody defines body for PostCloneCompose for application/json ContentType.
 type PostCloneComposeJSONRequestBody = CloneComposeBody
+
+// AsBlueprintFileGroup0 returns the union data inside the BlueprintFile_Group as a BlueprintFileGroup0
+func (t BlueprintFile_Group) AsBlueprintFileGroup0() (BlueprintFileGroup0, error) {
+	var body BlueprintFileGroup0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromBlueprintFileGroup0 overwrites any union data inside the BlueprintFile_Group as the provided BlueprintFileGroup0
+func (t *BlueprintFile_Group) FromBlueprintFileGroup0(v BlueprintFileGroup0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeBlueprintFileGroup0 performs a merge with any union data inside the BlueprintFile_Group, using the provided BlueprintFileGroup0
+func (t *BlueprintFile_Group) MergeBlueprintFileGroup0(v BlueprintFileGroup0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsBlueprintFileGroup1 returns the union data inside the BlueprintFile_Group as a BlueprintFileGroup1
+func (t BlueprintFile_Group) AsBlueprintFileGroup1() (BlueprintFileGroup1, error) {
+	var body BlueprintFileGroup1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromBlueprintFileGroup1 overwrites any union data inside the BlueprintFile_Group as the provided BlueprintFileGroup1
+func (t *BlueprintFile_Group) FromBlueprintFileGroup1(v BlueprintFileGroup1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeBlueprintFileGroup1 performs a merge with any union data inside the BlueprintFile_Group, using the provided BlueprintFileGroup1
+func (t *BlueprintFile_Group) MergeBlueprintFileGroup1(v BlueprintFileGroup1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t BlueprintFile_Group) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *BlueprintFile_Group) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsBlueprintFileUser0 returns the union data inside the BlueprintFile_User as a BlueprintFileUser0
+func (t BlueprintFile_User) AsBlueprintFileUser0() (BlueprintFileUser0, error) {
+	var body BlueprintFileUser0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromBlueprintFileUser0 overwrites any union data inside the BlueprintFile_User as the provided BlueprintFileUser0
+func (t *BlueprintFile_User) FromBlueprintFileUser0(v BlueprintFileUser0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeBlueprintFileUser0 performs a merge with any union data inside the BlueprintFile_User, using the provided BlueprintFileUser0
+func (t *BlueprintFile_User) MergeBlueprintFileUser0(v BlueprintFileUser0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsBlueprintFileUser1 returns the union data inside the BlueprintFile_User as a BlueprintFileUser1
+func (t BlueprintFile_User) AsBlueprintFileUser1() (BlueprintFileUser1, error) {
+	var body BlueprintFileUser1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromBlueprintFileUser1 overwrites any union data inside the BlueprintFile_User as the provided BlueprintFileUser1
+func (t *BlueprintFile_User) FromBlueprintFileUser1(v BlueprintFileUser1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeBlueprintFileUser1 performs a merge with any union data inside the BlueprintFile_User, using the provided BlueprintFileUser1
+func (t *BlueprintFile_User) MergeBlueprintFileUser1(v BlueprintFileUser1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t BlueprintFile_User) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *BlueprintFile_User) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // AsAWSEC2CloneCompose returns the union data inside the CloneComposeBody as a AWSEC2CloneCompose
 func (t CloneComposeBody) AsAWSEC2CloneCompose() (AWSEC2CloneCompose, error) {
