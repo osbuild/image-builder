@@ -13,7 +13,8 @@ import (
 type ctxKey int
 
 const (
-	requestIdCtx ctxKey = iota
+	requestIdCtx         ctxKey = iota
+	insightsRequestIdCtx ctxKey = iota
 )
 
 // Use request id from the standard context and add it to the message as a field.
@@ -34,6 +35,7 @@ func (h *ctxHook) Levels() []logrus.Level {
 func (h *ctxHook) Fire(e *logrus.Entry) error {
 	if e.Context != nil {
 		e.Data["request_id"] = e.Context.Value(requestIdCtx)
+		e.Data["insights_id"] = e.Context.Value(insightsRequestIdCtx)
 	}
 
 	return nil
@@ -42,7 +44,7 @@ func (h *ctxHook) Fire(e *logrus.Entry) error {
 // Extract/generate request id and store it in the standard context
 func requestIdExtractMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// extract or generate request id
+		// extract or generate request and insights id
 		rid := c.Request().Header.Get("X-Rh-Edge-Request-Id")
 		if rid != "" {
 			rid = strings.TrimSuffix(rid, "\n")
@@ -50,9 +52,17 @@ func requestIdExtractMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			rid = random.String(12)
 		}
 
+		iid := c.Request().Header.Get("X-Rh-Insights-Request-Id")
+		if iid != "" {
+			iid = strings.TrimSuffix(iid, "\n")
+		} else {
+			iid = random.String(12)
+		}
+
 		// store it in a standard context
 		ctx := c.Request().Context()
 		ctx = context.WithValue(ctx, requestIdCtx, rid)
+		ctx = context.WithValue(ctx, insightsRequestIdCtx, iid)
 		c.SetRequest(c.Request().WithContext(ctx))
 
 		// and set echo logger to be context logger
@@ -60,6 +70,7 @@ func requestIdExtractMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		c.SetLogger(&common.EchoLogrusLogger{
 			Logger: ctxLogger,
 		})
+		ctxLogger.Debugf("Started request %s %s", c.Request().Method, c.Request().RequestURI)
 
 		return next(c)
 	}
