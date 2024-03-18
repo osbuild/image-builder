@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -62,13 +63,18 @@ func migrateTern(t *testing.T) {
 	// run tern migration on top of existing db
 	c := conf(t)
 
-	cmd := exec.Command("tern", "migrate",
-		"-m", c.TernMigrationsDir,
+	a := []string{
+		"migrate",
+		"--migrations", c.TernMigrationsDir,
+		"--database", c.PGDatabase,
 		"--host", c.PGHost, "--port", c.PGPort,
 		"--user", c.PGUser, "--password", c.PGPassword,
-		"--sslmode", c.PGSSLMode)
+		"--sslmode", c.PGSSLMode,
+	}
+	cmd := exec.Command("tern", a...)
+
 	output, err := cmd.CombinedOutput()
-	require.NoErrorf(t, err, "tern command failed with non-zero code, combined output: %s", string(output))
+	require.NoErrorf(t, err, "tern command failed with non-zero code, cmd: tern %s, combined output: %s", strings.Join(a, " "), string(output))
 }
 
 func connect(t *testing.T) *pgx.Conn {

@@ -25,7 +25,7 @@ gen-oscap:
 
 .PHONY: image-builder-migrate-db-tern
 image-builder-migrate-db-tern:
-	go test -c -tags=integration -o image-builder-db-test ./cmd/image-builder-db-test/
+	go build -o image-builder-migrate-db-tern ./cmd/image-builder-migrate-db-tern/
 
 .PHONY: image-builder-db-test
 image-builder-db-test:
