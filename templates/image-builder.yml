@@ -45,6 +45,8 @@ objects:
         env:
           - name: LISTEN_ADDRESS
             value: ${LISTEN_ADDRESS}
+          - name: LOG_LEVEL
+            value: ${LOG_LEVEL}
           - name: COMPOSER_TOKEN_URL
             value: "${COMPOSER_TOKEN_URL}"
           - name: DISTRIBUTIONS_DIR
@@ -256,3 +258,6 @@ parameters:
   - name: FEDORA_AUTH
     value: "false"
     description: Look for the fedora auth header instead of the RH one
+  - name: LOG_LEVEL
+    value: "INFO"
+    description: Main application log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
