@@ -40,12 +40,24 @@ can be found under schutzbot.
 ## Unit tests
 
 Run the following from **the root directory** of the repository:
+
 ```
 go clean -testcache
-go test -v ./...
+go test ./...
 ```
 
-## Integration test
+Some tests do require database and start a postgres container using podman or docker.
+
+
+## Unit integration tests
+
+You can run tests which are executed on CI under name "DB tests" locally, just keep in mind this drops public schema completely.
+
+```
+TERN_MIGRATIONS_DIR=../../internal/db/migrations-tern/ go test -tags integration ./...
+```
+
+## End-to-end tntegration tests
 
 It's recommended to run these inside of a vm as the scripts make extensive
 changes to the host. Running integration test requires specific environment
