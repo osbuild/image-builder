@@ -62,3 +62,6 @@ To run the project use `make run` target
 
  - **Apache-2.0**
  - See LICENSE file for details.
+
+
+DEBUG

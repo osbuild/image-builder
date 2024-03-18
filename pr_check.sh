@@ -7,10 +7,10 @@ export APP_NAME="image-builder-crc"                # name of app-sre "applicatio
 export COMPONENT_NAME="image-builder"              # name of app-sre "resourceTemplate" in deploy.yaml for this component
 export IMAGE="quay.io/cloudservices/image-builder" # image location on quay
 
-export IQE_PLUGINS="image-builder"         # name of the IQE plugin for this app.
-export IQE_CJI_TIMEOUT="60m"               # This is the time to wait for smoke test to complete or fail
-export IQE_MARKER_EXPRESSION="be_pr_check" # run only tests marked by be_pr_check
-export IQE_ENV="ephemeral"                 # run only api test
+export IQE_PLUGINS="image-builder"        # name of the IQE plugin for this app.
+export IQE_CJI_TIMEOUT="60m"              # This is the time to wait for smoke test to complete or fail
+export IQE_MARKER_EXPRESSION="auth_debug" # run only tests marked by be_pr_check
+export IQE_ENV="ephemeral"                # run only api test
 export IQE_IMAGE_TAG="image-builder"
 export DOCKERFILE="distribution/Dockerfile-ubi"
 export EXTRA_DEPLOY_ARGS="sources unleash-proxy"
