@@ -67,6 +67,10 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 		if endpoint, ok := clowder.DependencyEndpoints["provisioning-backend"]["api"]; ok {
 			conf.ProvisioningURL = fmt.Sprintf("http://%s:%d/api/provisioning/v1", endpoint.Hostname, endpoint.Port)
 		}
+
+		if strings.Contains(*clowder.LoadedConfig.Metadata.EnvName, "ephemeral") {
+			conf.LogLevel = "DEBUG"
+		}
 	}
 
 	return nil
