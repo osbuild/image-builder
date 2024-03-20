@@ -78,21 +78,23 @@ func migrateTern(t *testing.T) {
 }
 
 func connect(t *testing.T) *pgx.Conn {
-	conn, err := pgx.Connect(context.Background(), connStr(t))
+	ctx := context.Background()
+	conn, err := pgx.Connect(ctx, connStr(t))
 	require.NoError(t, err)
 	return conn
 }
 
 func tearDown(t *testing.T) {
+	ctx := context.Background()
 	conn := connect(t)
-	defer conn.Close(context.Background())
-	_, err := conn.Exec(context.Background(), "drop schema public cascade")
+	defer conn.Close(ctx)
+	_, err := conn.Exec(ctx, "drop schema public cascade")
 	require.NoError(t, err)
-	_, err = conn.Exec(context.Background(), "create schema public")
+	_, err = conn.Exec(ctx, "create schema public")
 	require.NoError(t, err)
-	_, err = conn.Exec(context.Background(), "grant all on schema public to postgres")
+	_, err = conn.Exec(ctx, "grant all on schema public to postgres")
 	require.NoError(t, err)
-	_, err = conn.Exec(context.Background(), "grant all on schema public to public")
+	_, err = conn.Exec(ctx, "grant all on schema public to public")
 	require.NoError(t, err)
 }
 
@@ -139,104 +141,107 @@ func testGetCompose(t *testing.T) {
 
 	// test
 	// GetComposes works as expected
-	composes, count, err := d.GetComposes(ORGID1, fortnight, 100, 0, []string{})
+	composes, count, err := d.GetComposes(ctx, ORGID1, fortnight, 100, 0, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 4, count)
 	require.Equal(t, 4, len(composes))
 
 	// count returns total in db, ignoring limits
-	composes, count, err = d.GetComposes(ORGID1, fortnight, 1, 2, []string{})
+	composes, count, err = d.GetComposes(ctx, ORGID1, fortnight, 1, 2, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 4, count)
 	require.Equal(t, 1, len(composes))
 
 	// GetCompose works as expected
-	compose, err := d.GetCompose(composes[0].Id, ORGID1)
+	compose, err := d.GetCompose(ctx, composes[0].Id, ORGID1)
 	require.NoError(t, err)
 	require.Equal(t, composes[0], *compose)
 
 	// cross-account compose access not allowed
-	compose, err = d.GetCompose(composes[0].Id, ORGID2)
+	compose, err = d.GetCompose(ctx, composes[0].Id, ORGID2)
 	require.Equal(t, db.ComposeNotFoundError, err)
 	require.Nil(t, compose)
 
 }
 
 func testCountComposesSince(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
 
 	conn := connect(t)
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4, $5)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID3, &imageName)
+	_, err = conn.Exec(ctx, insert, uuid.New().String(), "{}", ANR3, ORGID3, &imageName)
 	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '3 days', $3, $4, $5)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID3, &imageName)
+	_, err = conn.Exec(ctx, insert, uuid.New().String(), "{}", ANR3, ORGID3, &imageName)
 	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '4 days', $3, $4, $5)"
-	_, err = conn.Exec(context.Background(), insert, uuid.New().String(), "{}", ANR3, ORGID3, &imageName)
+	_, err = conn.Exec(ctx, insert, uuid.New().String(), "{}", ANR3, ORGID3, &imageName)
 
 	// Verify quering since an interval
-	count, err := d.CountComposesSince(ORGID3, 24*time.Hour)
+	count, err := d.CountComposesSince(ctx, ORGID3, 24*time.Hour)
 	require.NoError(t, err)
 	require.Equal(t, 0, count)
 
-	count, err = d.CountComposesSince(ORGID3, 48*time.Hour+time.Second)
+	count, err = d.CountComposesSince(ctx, ORGID3, 48*time.Hour+time.Second)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 
-	count, err = d.CountComposesSince(ORGID3, 72*time.Hour+time.Second)
+	count, err = d.CountComposesSince(ctx, ORGID3, 72*time.Hour+time.Second)
 	require.NoError(t, err)
 	require.Equal(t, 2, count)
 
-	count, err = d.CountComposesSince(ORGID3, 96*time.Hour+time.Second)
+	count, err = d.CountComposesSince(ctx, ORGID3, 96*time.Hour+time.Second)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
 }
 
 func testCountGetComposesSince(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 
 	conn := connect(t)
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
 	job1 := uuid.New()
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, job1, "{}", ANR3, ORGID3)
+	_, err = conn.Exec(ctx, insert, job1, "{}", ANR3, ORGID3)
 
-	composes, count, err := d.GetComposes(ORGID3, fortnight, 100, 0, []string{})
+	composes, count, err := d.GetComposes(ctx, ORGID3, fortnight, 100, 0, []string{})
 	require.Equal(t, 1, count)
 	require.NoError(t, err)
 	require.Equal(t, job1, composes[0].Id)
 
 	job2 := uuid.New()
 	insert = "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '20 days', $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, job2, "{}", ANR3, ORGID3)
+	_, err = conn.Exec(ctx, insert, job2, "{}", ANR3, ORGID3)
 
 	// job2 is outside of time range
-	composes, count, err = d.GetComposes(ORGID3, fortnight, 100, 0, []string{})
+	composes, count, err = d.GetComposes(ctx, ORGID3, fortnight, 100, 0, []string{})
 	require.Equal(t, 1, count)
 	require.NoError(t, err)
 	require.Equal(t, job1, composes[0].Id)
 
 	// correct ordering (recent first)
-	composes, count, err = d.GetComposes(ORGID3, fortnight*2, 100, 0, []string{})
+	composes, count, err = d.GetComposes(ctx, ORGID3, fortnight*2, 100, 0, []string{})
 	require.Equal(t, 2, count)
 	require.NoError(t, err)
 	require.Equal(t, job1, composes[0].Id)
 }
 
 func testGetComposeImageType(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
 	composeId := uuid.New()
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, composeId, `
+	_, err = conn.Exec(ctx, insert, composeId, `
 {
   "customizations": {
   },
@@ -256,39 +261,40 @@ func testGetComposeImageType(t *testing.T) {
 `, ANR1, ORGID1)
 	require.NoError(t, err)
 
-	it, err := d.GetComposeImageType(composeId, ORGID1)
+	it, err := d.GetComposeImageType(ctx, composeId, ORGID1)
 	require.NoError(t, err)
 	require.Equal(t, "guest-image", it)
 
-	_, err = d.GetComposeImageType(composeId, ORGID2)
+	_, err = d.GetComposeImageType(ctx, composeId, ORGID2)
 	require.Error(t, err)
 }
 
 func testDeleteCompose(t *testing.T) {
+	ctx := context.Background()
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
 	composeId := uuid.New()
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)"
-	_, err = conn.Exec(context.Background(), insert, composeId, "{}", ANR1, ORGID1)
+	_, err = conn.Exec(ctx, insert, composeId, "{}", ANR1, ORGID1)
 
-	err = d.DeleteCompose(composeId, ORGID2)
+	err = d.DeleteCompose(ctx, composeId, ORGID2)
 	require.Equal(t, db.ComposeNotFoundError, err)
 
-	err = d.DeleteCompose(uuid.New(), ORGID1)
+	err = d.DeleteCompose(ctx, uuid.New(), ORGID1)
 	require.Equal(t, db.ComposeNotFoundError, err)
 
-	err = d.DeleteCompose(composeId, ORGID1)
+	err = d.DeleteCompose(ctx, composeId, ORGID1)
 	require.NoError(t, err)
 
-	_, count, err := d.GetComposes(ORGID1, fortnight, 100, 0, []string{})
+	_, count, err := d.GetComposes(ctx, ORGID1, fortnight, 100, 0, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 0, count)
 
 	// delete composes still counts towards quota
-	count, err = d.CountComposesSince(ORGID1, fortnight)
+	count, err = d.CountComposesSince(ctx, ORGID1, fortnight)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 }
@@ -298,14 +304,14 @@ func testClones(t *testing.T) {
 	d, err := db.InitDBConnectionPool(connStr(t))
 	require.NoError(t, err)
 	conn := connect(t)
-	defer conn.Close(context.Background())
+	defer conn.Close(ctx)
 
 	composeId := uuid.New()
 	cloneId := uuid.New()
 	cloneId2 := uuid.New()
 
 	// fkey constraint on compose id
-	require.Error(t, d.InsertClone(composeId, cloneId, []byte(`
+	require.Error(t, d.InsertClone(ctx, composeId, cloneId, []byte(`
 {
   "region": "us-east-2"
 }
@@ -329,40 +335,40 @@ func testClones(t *testing.T) {
   ]
 }`), nil, nil))
 
-	require.NoError(t, d.InsertClone(composeId, cloneId, []byte(`
+	require.NoError(t, d.InsertClone(ctx, composeId, cloneId, []byte(`
 {
   "region": "us-east-2"
 }
 `)))
-	require.NoError(t, d.InsertClone(composeId, cloneId2, []byte(`
+	require.NoError(t, d.InsertClone(ctx, composeId, cloneId2, []byte(`
 {
   "region": "eu-central-1"
 }
 `)))
 
-	clones, count, err := d.GetClonesForCompose(composeId, ORGID2, 100, 0)
+	clones, count, err := d.GetClonesForCompose(ctx, composeId, ORGID2, 100, 0)
 	require.NoError(t, err)
 	require.Empty(t, clones)
 	require.Equal(t, 0, count)
 
-	clones, count, err = d.GetClonesForCompose(composeId, ORGID1, 1, 0)
+	clones, count, err = d.GetClonesForCompose(ctx, composeId, ORGID1, 1, 0)
 	require.NoError(t, err)
 	require.Len(t, clones, 1)
 	require.Equal(t, 2, count)
 	require.Equal(t, cloneId2, clones[0].Id)
 
-	clones, count, err = d.GetClonesForCompose(composeId, ORGID1, 100, 0)
+	clones, count, err = d.GetClonesForCompose(ctx, composeId, ORGID1, 100, 0)
 	require.NoError(t, err)
 	require.Len(t, clones, 2)
 	require.Equal(t, 2, count)
 	require.Equal(t, cloneId2, clones[0].Id)
 	require.Equal(t, cloneId, clones[1].Id)
 
-	entry, err := d.GetClone(cloneId, ORGID2)
+	entry, err := d.GetClone(ctx, cloneId, ORGID2)
 	require.ErrorIs(t, err, db.CloneNotFoundError)
 	require.Nil(t, entry)
 
-	entry, err = d.GetClone(cloneId, ORGID1)
+	entry, err = d.GetClone(ctx, cloneId, ORGID1)
 	require.NoError(t, err)
 	require.Equal(t, clones[1], *entry)
 }

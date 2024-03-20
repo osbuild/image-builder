@@ -55,18 +55,18 @@ type BlueprintWithNoBody struct {
 
 type DB interface {
 	InsertCompose(ctx context.Context, jobId uuid.UUID, accountNumber, email, orgId string, imageName *string, request json.RawMessage, clientId *string, blueprintVersionId *uuid.UUID) error
-	GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
+	GetComposes(ctx context.Context, orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error)
 	GetLatestBlueprintVersionNumber(ctx context.Context, orgId string, blueprintId uuid.UUID) (int, error)
 	GetBlueprintComposes(ctx context.Context, orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]BlueprintCompose, error)
-	GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error)
-	GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
-	CountComposesSince(orgId string, duration time.Duration) (int, error)
+	GetCompose(ctx context.Context, jobId uuid.UUID, orgId string) (*ComposeEntry, error)
+	GetComposeImageType(ctx context.Context, jobId uuid.UUID, orgId string) (string, error)
+	CountComposesSince(ctx context.Context, orgId string, duration time.Duration) (int, error)
 	CountBlueprintComposesSince(ctx context.Context, orgId string, blueprintId uuid.UUID, blueprintVersion *int, since time.Duration, ignoreImageTypes []string) (int, error)
-	DeleteCompose(jobId uuid.UUID, orgId string) error
+	DeleteCompose(ctx context.Context, jobId uuid.UUID, orgId string) error
 
-	InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error
-	GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
-	GetClone(id uuid.UUID, orgId string) (*CloneEntry, error)
+	InsertClone(ctx context.Context, composeId, cloneId uuid.UUID, request json.RawMessage) error
+	GetClonesForCompose(ctx context.Context, composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
+	GetClone(ctx context.Context, id uuid.UUID, orgId string) (*CloneEntry, error)
 
 	InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error
 	GetBlueprint(ctx context.Context, id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error)
@@ -176,8 +176,7 @@ func (db *dB) InsertCompose(ctx context.Context, jobId uuid.UUID, accountNumber,
 	return err
 }
 
-func (db *dB) GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error) {
-	ctx := context.Background()
+func (db *dB) GetCompose(ctx context.Context, jobId uuid.UUID, orgId string) (*ComposeEntry, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, err
@@ -199,8 +198,7 @@ func (db *dB) GetCompose(jobId uuid.UUID, orgId string) (*ComposeEntry, error) {
 	return &compose, nil
 }
 
-func (db *dB) GetComposeImageType(jobId uuid.UUID, orgId string) (string, error) {
-	ctx := context.Background()
+func (db *dB) GetComposeImageType(ctx context.Context, jobId uuid.UUID, orgId string) (string, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return "", err
@@ -222,8 +220,7 @@ func (db *dB) GetComposeImageType(jobId uuid.UUID, orgId string) (string, error)
 	return imageType, nil
 }
 
-func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error) {
-	ctx := context.Background()
+func (db *dB) GetComposes(ctx context.Context, orgId string, since time.Duration, limit, offset int, ignoreImageTypes []string) ([]ComposeEntry, int, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -268,8 +265,7 @@ func (db *dB) GetComposes(orgId string, since time.Duration, limit, offset int, 
 	return composes, count, nil
 }
 
-func (db *dB) CountComposesSince(orgId string, duration time.Duration) (int, error) {
-	ctx := context.Background()
+func (db *dB) CountComposesSince(ctx context.Context, orgId string, duration time.Duration) (int, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return 0, err
@@ -287,8 +283,7 @@ func (db *dB) CountComposesSince(orgId string, duration time.Duration) (int, err
 	return count, nil
 }
 
-func (db *dB) DeleteCompose(jobId uuid.UUID, orgId string) error {
-	ctx := context.Background()
+func (db *dB) DeleteCompose(ctx context.Context, jobId uuid.UUID, orgId string) error {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return err
@@ -303,8 +298,7 @@ func (db *dB) DeleteCompose(jobId uuid.UUID, orgId string) error {
 	return err
 }
 
-func (db *dB) InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage) error {
-	ctx := context.Background()
+func (db *dB) InsertClone(ctx context.Context, composeId, cloneId uuid.UUID, request json.RawMessage) error {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return err
@@ -315,8 +309,7 @@ func (db *dB) InsertClone(composeId, cloneId uuid.UUID, request json.RawMessage)
 	return err
 }
 
-func (db *dB) GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error) {
-	ctx := context.Background()
+func (db *dB) GetClonesForCompose(ctx context.Context, composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -360,8 +353,7 @@ func (db *dB) GetClonesForCompose(composeId uuid.UUID, orgId string, limit, offs
 
 }
 
-func (db *dB) GetClone(id uuid.UUID, orgId string) (*CloneEntry, error) {
-	ctx := context.Background()
+func (db *dB) GetClone(ctx context.Context, id uuid.UUID, orgId string) (*CloneEntry, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, err

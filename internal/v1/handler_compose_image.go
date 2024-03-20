@@ -37,7 +37,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		return ComposeResponse{}, err
 	}
 
-	quotaOk, err := common.CheckQuota(userID.OrgID(), h.server.db, h.server.quotaFile)
+	quotaOk, err := common.CheckQuota(ctx.Request().Context(), userID.OrgID(), h.server.db, h.server.quotaFile)
 	if err != nil {
 		return ComposeResponse{}, err
 	}
