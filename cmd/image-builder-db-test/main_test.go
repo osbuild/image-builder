@@ -453,9 +453,17 @@ func testBlueprints(t *testing.T) {
 	newestBlueprintVersionId := uuid.New()
 	newestBlueprintId := uuid.New()
 	newestBlueprintName := "new name"
+
+	// Fail to insert blueprint with the same name
 	err = d.InsertBlueprint(ctx, newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1)
-	entries, _, err := d.GetBlueprints(ctx, ORGID1, 100, 0)
+	require.Error(t, err)
+
+	newestBlueprintName = "New name 2"
+	err = d.InsertBlueprint(ctx, newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1)
 	require.NoError(t, err)
+	entries, bpCount, err := d.GetBlueprints(ctx, ORGID1, 100, 0)
+	require.NoError(t, err)
+	require.Equal(t, 2, bpCount)
 	require.Equal(t, entries[0].Name, newestBlueprintName)
 	require.Equal(t, entries[1].Version, 2)
 
