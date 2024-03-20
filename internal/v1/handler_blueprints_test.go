@@ -18,6 +18,99 @@ import (
 	"github.com/osbuild/image-builder/internal/tutils"
 )
 
+func TestHandlers_CreateBlueprint(t *testing.T) {
+	var jsonResp HTTPErrorList
+	ctx := context.Background()
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+
+	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
+	defer func() {
+		err := db_srv.Shutdown(ctx)
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	body := map[string]interface{}{
+		"name":           "Blueprint",
+		"description":    "desc",
+		"customizations": map[string]interface{}{"packages": []string{"nginx"}},
+		"distribution":   "centos-8",
+		"image_requests": []map[string]interface{}{
+			{
+				"architecture":   "x86_64",
+				"image_type":     "aws",
+				"upload_request": map[string]interface{}{"type": "aws", "options": map[string]interface{}{"share_with_accounts": []string{"test-account"}}},
+			},
+		},
+	}
+	statusCode, _ := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/experimental/blueprints", body)
+	require.Equal(t, http.StatusCreated, statusCode)
+
+	// Test unique name constraint
+	statusCode, resp := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/experimental/blueprints", body)
+	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
+	err = json.Unmarshal([]byte(resp), &jsonResp)
+	require.NoError(t, err)
+	require.Equal(t, "Name not unique", jsonResp.Errors[0].Title)
+
+	// Test non empty name constraint
+	body["name"] = ""
+	statusCode, resp = tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/experimental/blueprints", body)
+	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
+	err = json.Unmarshal([]byte(resp), &jsonResp)
+	require.NoError(t, err)
+	require.Equal(t, "Invalid blueprint name", jsonResp.Errors[0].Title)
+}
+
+func TestHandlers_UpdateBlueprint(t *testing.T) {
+	var jsonResp HTTPErrorList
+	ctx := context.Background()
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+
+	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
+	defer func() {
+		err := db_srv.Shutdown(ctx)
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	body := map[string]interface{}{
+		"name":           "Blueprint",
+		"description":    "desc",
+		"customizations": map[string]interface{}{"packages": []string{"nginx"}},
+		"distribution":   "centos-8",
+		"image_requests": []map[string]interface{}{
+			{
+				"architecture":   "x86_64",
+				"image_type":     "aws",
+				"upload_request": map[string]interface{}{"type": "aws", "options": map[string]interface{}{"share_with_accounts": []string{"test-account"}}},
+			},
+		},
+	}
+	statusCode, resp := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/experimental/blueprints", body)
+	require.Equal(t, http.StatusCreated, statusCode)
+	var result ComposeResponse
+	err = json.Unmarshal([]byte(resp), &result)
+	require.NoError(t, err)
+
+	// Test non empty name constraint
+	body["name"] = ""
+	statusCode, resp = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s", result.Id), body)
+	t.Log(resp)
+	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
+	err = json.Unmarshal([]byte(resp), &jsonResp)
+	require.NoError(t, err)
+	require.Equal(t, "Invalid blueprint name", jsonResp.Errors[0].Title)
+}
+
 func TestHandlers_ComposeBlueprint(t *testing.T) {
 	ctx := context.Background()
 	ids := []uuid.UUID{uuid.New(), uuid.New()}
@@ -59,7 +152,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
-	name := "blueprint"
+	name := "Blueprint Human Name"
 	description := "desc"
 	blueprint := BlueprintBody{
 		Customizations: Customizations{
