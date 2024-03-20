@@ -471,7 +471,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateBlueprintResponse'
-        '400':
+        '422':
           description: blueprint is malformed
           content:
             application/json:
