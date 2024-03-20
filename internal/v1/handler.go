@@ -410,7 +410,7 @@ func (h *Handlers) DeleteCompose(ctx echo.Context, composeId uuid.UUID) error {
 		return err
 	}
 
-	err = h.server.db.DeleteCompose(composeId, userID.OrgID())
+	err = h.server.db.DeleteCompose(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.ComposeNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -487,7 +487,7 @@ func (h *Handlers) getComposeByIdAndOrgId(ctx echo.Context, composeId uuid.UUID)
 		return nil, err
 	}
 
-	composeEntry, err := h.server.db.GetCompose(composeId, userID.OrgID())
+	composeEntry, err := h.server.db.GetCompose(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.ComposeNotFoundError) {
 			return nil, echo.NewHTTPError(http.StatusNotFound, err)
@@ -537,7 +537,7 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	ignoreImageTypeStrings := convertIgnoreImageTypeToSlice(params.IgnoreImageTypes)
 
 	// composes in the last 14 days
-	composes, count, err := h.server.db.GetComposes(userID.OrgID(), (time.Hour * 24 * 14), limit, offset, ignoreImageTypeStrings)
+	composes, count, err := h.server.db.GetComposes(ctx.Request().Context(), userID.OrgID(), (time.Hour * 24 * 14), limit, offset, ignoreImageTypeStrings)
 	if err != nil {
 		return err
 	}
@@ -575,7 +575,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	imageType, err := h.server.db.GetComposeImageType(composeId, userID.OrgID())
+	imageType, err := h.server.db.GetComposeImageType(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.ComposeNotFoundError) {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to find compose %v", composeId))
@@ -667,7 +667,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 		return err
 	}
 
-	err = h.server.db.InsertClone(composeId, cloneResponse.Id, rawCR)
+	err = h.server.db.InsertClone(ctx.Request().Context(), composeId, cloneResponse.Id, rawCR)
 	if err != nil {
 		ctx.Logger().Errorf("Error inserting clone into db for compose %v: %v", err, composeId)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong saving the clone")
@@ -684,7 +684,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		return err
 	}
 
-	cloneEntry, err := h.server.db.GetClone(id, userID.OrgID())
+	cloneEntry, err := h.server.db.GetClone(ctx.Request().Context(), id, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.CloneNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -763,7 +763,7 @@ func (h *Handlers) GetComposeClones(ctx echo.Context, composeId uuid.UUID, param
 		offset = *params.Offset
 	}
 
-	cloneEntries, count, err := h.server.db.GetClonesForCompose(composeId, userID.OrgID(), limit, offset)
+	cloneEntries, count, err := h.server.db.GetClonesForCompose(ctx.Request().Context(), composeId, userID.OrgID(), limit, offset)
 	if err != nil {
 		ctx.Logger().Errorf("Error querying clones for compose %v: %v", composeId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Something went wrong querying clones for this compose")

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -45,7 +46,7 @@ type Quota struct {
 // The duration of the sliding window and the value of the threshold must be set in a file pointed by the QUOTA_FILE
 // environment variable.
 // If the variable is unset (or an empty string), the check is disabled and always returns true.
-func CheckQuota(orgID string, dB db.DB, quotaFile string) (bool, error) {
+func CheckQuota(ctx context.Context, orgID string, dB db.DB, quotaFile string) (bool, error) {
 	if quotaFile == "" {
 		return true, nil
 	}
@@ -78,7 +79,7 @@ func CheckQuota(orgID string, dB db.DB, quotaFile string) (bool, error) {
 	}
 
 	// read user created requests
-	count, err := dB.CountComposesSince(orgID, slidingWindow)
+	count, err := dB.CountComposesSince(ctx, orgID, slidingWindow)
 	if err != nil {
 		return false, err
 	}

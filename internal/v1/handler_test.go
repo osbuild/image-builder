@@ -269,7 +269,7 @@ func TestGetComposes(t *testing.T) {
 	err = dbase.InsertCompose(ctx, id3, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
-	composeEntry, err := dbase.GetCompose(id, "000000")
+	composeEntry, err := dbase.GetCompose(ctx, id, "000000")
 	require.NoError(t, err)
 
 	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes", &tutils.AuthString0)
