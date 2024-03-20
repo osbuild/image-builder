@@ -6,15 +6,23 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/db"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+)
+
+var (
+	blueprintNameRegex         = regexp.MustCompile(`\S+`)
+	blueprintInvalidNameDetail = "The blueprint name must contain at least two characters."
 )
 
 type BlueprintBody struct {
@@ -59,6 +67,15 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 		return err
 	}
 
+	if !blueprintNameRegex.MatchString(blueprintRequest.Name) {
+		return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
+			Errors: []HTTPError{{
+				Title:  "Invalid blueprint name",
+				Detail: blueprintInvalidNameDetail,
+			}},
+		})
+	}
+
 	id := uuid.New()
 	versionId := uuid.New()
 	ctx.Logger().Infof("Inserting blueprint: %s (%s), for orgID: %s and account: %s", blueprintRequest.Name, id, userID.OrgID(), userID.AccountNumber())
@@ -69,6 +86,16 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, desc, body)
 	if err != nil {
 		ctx.Logger().Errorf("Error inserting id into db: %s", err.Error())
+
+		var e *pgconn.PgError
+		if errors.As(err, &e) && e.Code == pgerrcode.UniqueViolation {
+			return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
+				Errors: []HTTPError{{
+					Title:  "Name not unique",
+					Detail: "A blueprint with the same name already exists.",
+				}},
+			})
+		}
 		return err
 	}
 	ctx.Logger().Infof("Inserted blueprint %s", id)
@@ -121,6 +148,15 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	body, err := json.Marshal(blueprint)
 	if err != nil {
 		return err
+	}
+
+	if !blueprintNameRegex.MatchString(blueprintRequest.Name) {
+		return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
+			Errors: []HTTPError{{
+				Title:  "Invalid blueprint name",
+				Detail: blueprintInvalidNameDetail,
+			}},
+		})
 	}
 
 	versionId := uuid.New()
