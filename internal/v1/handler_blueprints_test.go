@@ -152,7 +152,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
-	name := "Blueprint Human Name"
+	name := "Blueprint Human Name🤣"
 	description := "desc"
 	blueprint := BlueprintBody{
 		Customizations: Customizations{
@@ -194,6 +194,10 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	require.Len(t, result, 2)
 	require.Equal(t, ids[0], result[0].Id)
 	require.Equal(t, ids[1], result[1].Id)
+
+	compose, err := dbase.GetCompose(ctx, result[0].Id, "000000")
+	require.NoError(t, err)
+	require.Equal(t, "blueprint-human-name_", *compose.ImageName)
 }
 
 func TestHandlers_GetBlueprintComposes(t *testing.T) {
