@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgerrcode"
@@ -22,12 +23,17 @@ import (
 
 var (
 	blueprintNameRegex = regexp.MustCompile(`\w+`)
+	specialChars       = regexp.MustCompile(`[^a-zA-Z0-9 _-]`)
 )
 
 type BlueprintBody struct {
 	Customizations Customizations `json:"customizations"`
 	Distribution   Distributions  `json:"distribution"`
 	ImageRequests  []ImageRequest `json:"image_requests"`
+}
+
+func blueprintToImageName(name string) string {
+	return strings.ToLower(strings.Replace(specialChars.ReplaceAllString(name, "_"), " ", "-", -1))
 }
 
 func BlueprintFromAPI(cbr CreateBlueprintRequest) BlueprintBody {
@@ -187,7 +193,7 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 			Customizations:   &blueprint.Customizations,
 			Distribution:     blueprint.Distribution,
 			ImageRequests:    []ImageRequest{imageRequest},
-			ImageName:        &blueprintEntry.Name,
+			ImageName:        common.ToPtr(blueprintToImageName(blueprintEntry.Name)),
 			ImageDescription: &blueprintEntry.Description,
 			ClientId:         &clientId,
 		}
