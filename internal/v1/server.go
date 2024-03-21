@@ -201,6 +201,8 @@ func (s *Server) HTTPErrorHandler(err error, c echo.Context) {
 		if strings.HasSuffix(c.Path(), "/compose") {
 			prometheus.ComposeErrors.Inc()
 		}
+	} else if err != nil {
+		c.Logger().Warnf("HTTP error: %s", err)
 	}
 
 	errors = append(errors, HTTPError{

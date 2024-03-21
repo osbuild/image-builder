@@ -70,8 +70,24 @@ func requestIdExtractMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		c.SetLogger(&common.EchoLogrusLogger{
 			Logger: ctxLogger,
 		})
-		ctxLogger.Debugf("Started request %s %s", c.Request().Method, c.Request().RequestURI)
+
+		if !SkipPath(c.Path()) {
+			ctxLogger.Debugf("Started request %s %s", c.Request().Method, c.Request().RequestURI)
+		}
 
 		return next(c)
 	}
+}
+
+func SkipPath(path string) bool {
+	switch path {
+	case "/metrics":
+		return true
+	case "/status":
+		return true
+	case "/ready":
+		return true
+	}
+
+	return false
 }
