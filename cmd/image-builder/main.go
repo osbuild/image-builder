@@ -135,16 +135,7 @@ func main() {
 			return nil
 		},
 		Skipper: func(c echo.Context) bool {
-			switch c.Path() {
-			case "/metrics":
-				return true
-			case "/status":
-				return true
-			case "/ready":
-				return true
-			}
-
-			return false
+			return SkipPath(c.Path())
 		},
 	}))
 	if conf.GlitchTipDSN != "" {
