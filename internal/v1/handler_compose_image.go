@@ -543,14 +543,16 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 	}
 
 	if cust.PartitioningMode != nil {
+		var mode composer.BlueprintCustomizationsPartitioningMode
 		switch *cust.PartitioningMode {
 		case AutoLvm:
-			res.PartitioningMode = common.ToPtr(composer.AutoLvm)
+			mode = composer.BlueprintCustomizationsPartitioningModeAutoLvm
 		case Lvm:
-			res.PartitioningMode = common.ToPtr(composer.Lvm)
+			mode = composer.BlueprintCustomizationsPartitioningModeLvm
 		case Raw:
-			res.PartitioningMode = common.ToPtr(composer.Raw)
+			mode = composer.BlueprintCustomizationsPartitioningModeRaw
 		}
+		res.PartitioningMode = common.ToPtr(composer.CustomizationsPartitioningMode(mode))
 	}
 
 	if cust.Containers != nil {
@@ -709,10 +711,7 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 		}
 
 		if cust.Firewall.Services != nil {
-			res.Firewall.Services = &struct {
-				Disabled *[]string `json:"disabled,omitempty"`
-				Enabled  *[]string `json:"enabled,omitempty"`
-			}{
+			res.Firewall.Services = &composer.FirewallServices{
 				Disabled: cust.Firewall.Services.Disabled,
 				Enabled:  cust.Firewall.Services.Enabled,
 			}

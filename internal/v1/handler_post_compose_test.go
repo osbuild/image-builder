@@ -1634,7 +1634,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Mountpoint: "/",
 						},
 					},
-					PartitioningMode: common.ToPtr(composer.Lvm),
+					PartitioningMode: common.ToPtr(composer.CustomizationsPartitioningModeLvm),
 				},
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
