@@ -1479,6 +1479,8 @@ components:
             even when there are one or more mountpoints.
         fips:
           $ref: '#/components/schemas/FIPS'
+        installer:
+          $ref: '#/components/schemas/Installer'
     Container:
       type: object
       required:
@@ -1684,6 +1686,21 @@ components:
           type: boolean
           description: Enables the system FIPS mode
           default: false
+    Installer:
+      type: object
+      additionalProperties: false
+      description: Anaconda installer configuration
+      properties:
+        unattended:
+          type: boolean
+          description: |
+            Create a kickstart file for a fully automated installation
+        sudo-nopasswd:
+          type: array
+          items:
+            type: string
+            description: |
+              Enable passwordless sudo for users or groups (groups must be prefixed by @)
     Ignition:
       type: object
       additionalProperties: false

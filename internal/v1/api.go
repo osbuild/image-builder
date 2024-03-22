@@ -441,7 +441,10 @@ type Customizations struct {
 
 	// InstallationDevice Name of the installation device, currently only useful for the edge-simplified-installer type
 	InstallationDevice *string `json:"installation_device,omitempty"`
-	Kernel             *Kernel `json:"kernel,omitempty"`
+
+	// Installer Anaconda installer configuration
+	Installer *Installer `json:"installer,omitempty"`
+	Kernel    *Kernel    `json:"kernel,omitempty"`
 
 	// Locale Locale configuration
 	Locale   *Locale   `json:"locale,omitempty"`
@@ -704,6 +707,14 @@ type ImageStatusStatus string
 
 // ImageTypes defines model for ImageTypes.
 type ImageTypes string
+
+// Installer Anaconda installer configuration
+type Installer struct {
+	SudoNopasswd *[]string `json:"sudo-nopasswd,omitempty"`
+
+	// Unattended Create a kickstart file for a fully automated installation
+	Unattended *bool `json:"unattended,omitempty"`
+}
 
 // Kernel defines model for Kernel.
 type Kernel struct {
