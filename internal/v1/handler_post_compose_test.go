@@ -944,6 +944,10 @@ func TestComposeCustomizations(t *testing.T) {
 					Fips: &FIPS{
 						Enabled: common.ToPtr(true),
 					},
+					Installer: &Installer{
+						Unattended:   common.ToPtr(true),
+						SudoNopasswd: &[]string{"admin", "@wheel"},
+					},
 				},
 				Distribution: "centos-8",
 				ImageRequests: []ImageRequest{
@@ -1014,6 +1018,10 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Fips: &composer.FIPS{
 						Enabled: common.ToPtr(true),
+					},
+					Installer: &composer.Installer{
+						Unattended:   common.ToPtr(true),
+						SudoNopasswd: &[]string{"admin", "@wheel"},
 					},
 				},
 				ImageRequest: &composer.ImageRequest{
