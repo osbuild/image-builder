@@ -758,5 +758,12 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 		}
 	}
 
+	if cust.Installer != nil {
+		res.Installer = &composer.Installer{
+			SudoNopasswd: cust.Installer.SudoNopasswd,
+			Unattended:   cust.Installer.Unattended,
+		}
+	}
+
 	return res, nil
 }
