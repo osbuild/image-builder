@@ -13,3 +13,6 @@ dnf-json
 local.env
 __debug*
 coverage*
+container_built.info
+go.local.mod
+go.local.sum

@@ -147,3 +147,52 @@ db-tests: dev-prerequisites
 
 .PHONY: test
 test: unit-tests db-tests
+
+# source where the other repos are locally
+# has to end with a trailing slash
+SRC_DEPS_EXTERNAL_CHECKOUT_DIR ?= ../
+
+DOCKER_IMAGE := image-builder_dev
+DOCKERFILE := distribution/Dockerfile-ubi.dev
+
+SRC_DEPS_EXTERNAL_NAMES := community-gateway osbuild-composer
+SRC_DEPS_EXTERNAL_DIRS := $(addprefix $(SRC_DEPS_EXTERNAL_CHECKOUT_DIR),$(SRC_DEPS_EXTERNAL_NAMES))
+
+SRC_DEPS_DIRS := internal cmd
+
+# All files to check for rebuild!
+SRC_DEPS := $(shell find $(SRC_DEPS_DIRS) -name *.go -or -name *.sql)
+SRC_DEPS_EXTERNAL := $(shell find $(SRC_DEPS_EXTERNAL_DIRS) -name *.go)
+
+CONTAINER_DEPS := ./distribution/openshift-startup.sh
+
+$(SRC_DEPS_EXTERNAL_DIRS):
+	@for DIR in $@; do if ! [ -d $$DIR ]; then echo "Please checkout $$DIR so it is available at $$DIR"; exit 1; fi; done
+
+GOPROXY ?= https://proxy.golang.org,direct
+
+GOMODARGS ?= -modfile=go.local.mod
+# gcflags "-N -l" for golang to allow debugging
+GCFLAGS ?= -gcflags=all=-N -gcflags=all=-l
+GOPATH ?= $(shell go env GOPATH)
+
+go.local.mod go.local.sum: $(SRC_DEPS_EXTERNAL_DIRS) go.mod $(SRC_DEPS_EXTERNAL) $(SRC_DEPS)
+	cp go.mod go.local.mod
+	cp go.sum go.local.sum
+	go mod edit $(GOMODARGS) -replace github.com/osbuild/osbuild-composer/pkg/splunk_logger=$(SRC_DEPS_EXTERNAL_CHECKOUT_DIR)osbuild-composer/pkg/splunk_logger
+	go mod edit $(GOMODARGS) -replace github.com/osbuild/community-gateway=$(SRC_DEPS_EXTERNAL_CHECKOUT_DIR)community-gateway
+	env GOPROXY=$(GOPROXY) go mod vendor $(GOMODARGS)
+
+container_built.info: go.local.mod $(DOCKERFILE) $(CONTAINER_DEPS) $(SRC_DEPS)
+	$(CONTAINER_EXECUTABLE) build -t $(DOCKER_IMAGE) -f $(DOCKERFILE) --build-arg GOMODARGS="$(GOMODARGS)" --build-arg GCFLAGS="$(GCFLAGS)" .
+	echo "Container last built on" > $@
+	date >> $@
+
+.PHONY: container.dev
+container.dev: container_built.info
+
+.PHONY: clean
+clean:
+	rm -f container_built.info
+	rm -f go.local.*
+
