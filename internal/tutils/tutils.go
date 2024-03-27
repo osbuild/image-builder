@@ -77,6 +77,29 @@ func PostResponseBody(t *testing.T, url string, compose interface{}) (int, strin
 	return response.StatusCode, string(body)
 }
 
+func PutResponseBody(t *testing.T, url string, compose interface{}) (int, string) {
+	buf, err := json.Marshal(compose)
+	require.NoError(t, err)
+
+	client := &http.Client{}
+	request, err := http.NewRequest("PUT", url, bytes.NewReader(buf))
+	require.NoError(t, err)
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("x-rh-identity", AuthString0)
+
+	response, err := client.Do(request)
+	require.NoError(t, err)
+	if err != nil {
+		/* #nosec G307 */
+		defer response.Body.Close()
+	}
+
+	body, err := io.ReadAll(response.Body)
+	require.NoError(t, err)
+
+	return response.StatusCode, string(body)
+}
+
 func DeleteResponseBody(t *testing.T, url string) (int, string) {
 	client := &http.Client{}
 	request, err := http.NewRequest("DELETE", url, nil)
