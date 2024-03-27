@@ -62,7 +62,11 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	id := uuid.New()
 	versionId := uuid.New()
 	ctx.Logger().Infof("Inserting blueprint: %s (%s), for orgID: %s and account: %s", blueprintRequest.Name, id, userID.OrgID(), userID.AccountNumber())
-	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, blueprintRequest.Description, body)
+	desc := ""
+	if blueprintRequest.Description != nil {
+		desc = *blueprintRequest.Description
+	}
+	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, desc, body)
 	if err != nil {
 		ctx.Logger().Errorf("Error inserting id into db: %s", err.Error())
 		return err
@@ -120,7 +124,11 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	}
 
 	versionId := uuid.New()
-	err = h.server.db.UpdateBlueprint(ctx.Request().Context(), versionId, blueprintId, userID.OrgID(), blueprintRequest.Name, blueprintRequest.Description, body)
+	desc := ""
+	if blueprintRequest.Description != nil {
+		desc = *blueprintRequest.Description
+	}
+	err = h.server.db.UpdateBlueprint(ctx.Request().Context(), versionId, blueprintId, userID.OrgID(), blueprintRequest.Name, desc, body)
 	if err != nil {
 		ctx.Logger().Errorf("Error updating blueprint in db: %v", err)
 		return err
