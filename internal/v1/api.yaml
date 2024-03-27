@@ -882,7 +882,6 @@ components:
       additionalProperties: false
       required:
         - name
-        - description
         - distribution
         - image_requests
         - customizations

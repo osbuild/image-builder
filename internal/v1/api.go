@@ -373,7 +373,7 @@ type Container struct {
 // CreateBlueprintRequest defines model for CreateBlueprintRequest.
 type CreateBlueprintRequest struct {
 	Customizations Customizations `json:"customizations"`
-	Description    string         `json:"description"`
+	Description    *string        `json:"description,omitempty"`
 
 	// Distribution List of all distributions that image builder supports. A user might not have access to
 	// restricted distributions.
