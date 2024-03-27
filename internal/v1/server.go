@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/osbuild/image-builder/internal/clients/recommendations"
+
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
@@ -33,6 +35,7 @@ type Server struct {
 	pClient          *provisioning.ProvisioningClient
 	csClient         *content_sources.ContentSourcesClient
 	csReposURL       *url.URL
+	rClient          *recommendations.RecommendationsClient
 	spec             *openapi3.T
 	router           routers.Router
 	db               db.DB
@@ -51,6 +54,7 @@ type ServerConfig struct {
 	ProvClient       *provisioning.ProvisioningClient
 	CSClient         *content_sources.ContentSourcesClient
 	CSReposURL       string
+	RecommendClient  *recommendations.RecommendationsClient
 	DBase            db.DB
 	AwsConfig        AWSConfig
 	GcpConfig        GCPConfig
@@ -103,6 +107,7 @@ func Attach(conf *ServerConfig) error {
 		conf.ProvClient,
 		conf.CSClient,
 		csReposURL,
+		conf.RecommendClient,
 		spec,
 		router,
 		conf.DBase,

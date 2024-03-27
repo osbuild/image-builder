@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/osbuild/image-builder/internal/clients/recommendations"
+
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -92,9 +94,10 @@ func makeUploadOptions(t *testing.T, uploadOptions interface{}) *composer.Upload
 }
 
 type testServerClientsConf struct {
-	ComposerURL string
-	ProvURL     string
-	CSURL       string
+	ComposerURL  string
+	ProvURL      string
+	CSURL        string
+	RecommendURL string
 }
 
 func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) (*echo.Echo, *httptest.Server) {
@@ -108,7 +111,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	err := logger.ConfigLogger(log, "DEBUG")
 	require.NoError(t, err)
 
-	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	tokenServer1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, "rhsm-api", r.FormValue("client_id"))
 		require.Equal(t, "offlinetoken", r.FormValue("refresh_token"))
 		require.Equal(t, "refresh_token", r.FormValue("grant_type"))
@@ -122,9 +125,22 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 		require.NoError(t, err)
 	}))
 
+	tokenServer2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "rhsm-api", r.FormValue("client_id"))
+		require.Equal(t, "client_credentials", r.FormValue("grant_type"))
+
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(struct {
+			AccessToken string `json:"access_token"`
+		}{
+			AccessToken: "accesstoken",
+		})
+		require.NoError(t, err)
+	}))
+
 	compClient, err := composer.NewClient(composer.ComposerClientConfig{
 		ComposerURL:  tscc.ComposerURL,
-		TokenURL:     tokenServer.URL,
+		TokenURL:     tokenServer1.URL,
 		ClientId:     "rhsm-api",
 		OfflineToken: "offlinetoken",
 	})
@@ -139,6 +155,24 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 		URL: tscc.CSURL,
 	})
 	require.NoError(t, err)
+
+	recommendClient, err := recommendations.NewClient(recommendations.RecommendationsClientConfig{
+		URL:          tscc.RecommendURL,
+		TokenURL:     tokenServer2.URL,
+		ClientId:     "rhsm-api",
+		ClientSecret: "grant_type",
+	})
+	require.NoError(t, err)
+
+	var tokenServer *httptest.Server
+	if compClient != nil {
+		tokenServer = tokenServer1
+	} else if recommendClient != nil {
+		tokenServer = tokenServer2
+	} else {
+		// Handle case when neither compClient nor recommendClient is initialized
+		log.Fatalf("Neither compClient nor recommendClient is initialized")
+	}
 
 	//store the quotas in a temporary file
 	quotaFile, err := initQuotaFile(t)
@@ -160,6 +194,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	serverConfig.CompClient = compClient
 	serverConfig.ProvClient = provClient
 	serverConfig.CSClient = csClient
+	serverConfig.RecommendClient = recommendClient
 	if serverConfig.QuotaFile == "" {
 		serverConfig.QuotaFile = quotaFile
 	}

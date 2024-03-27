@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/osbuild/image-builder/internal/clients/recommendations"
+
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
@@ -91,6 +93,14 @@ func main() {
 		OfflineToken: conf.ComposerOfflineToken,
 		ClientSecret: conf.ComposerClientSecret,
 	}
+
+	recommendationConf := recommendations.RecommendationsClientConfig{
+		URL:          conf.RecommendURL,
+		CA:           conf.RecommendCA,
+		TokenURL:     conf.RecommendTokenURL,
+		ClientId:     conf.RecommendClientId,
+		ClientSecret: conf.RecommendSecret,
+	}
 	compClient, err := composer.NewClient(composerConf)
 	if err != nil {
 		panic(err)
@@ -101,9 +111,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	csClient, err := content_sources.NewClient(content_sources.ContentSourcesClientConfig{
 		URL: conf.ContentSourcesURL,
 	})
+	if err != nil {
+		panic(err)
+	}
+
+	recommendClient, err := recommendations.NewClient(recommendationConf)
 	if err != nil {
 		panic(err)
 	}
@@ -157,12 +173,14 @@ func main() {
 		echoServer.Debug = true
 	}
 	serverConfig := &v1.ServerConfig{
-		EchoServer: echoServer,
-		CompClient: compClient,
-		ProvClient: provClient,
-		CSClient:   csClient,
-		CSReposURL: conf.ContentSourcesRepoURL,
-		DBase:      dbase,
+		EchoServer:      echoServer,
+		CompClient:      compClient,
+		ProvClient:      provClient,
+		RecommendClient: recommendClient,
+		CSClient:        csClient,
+		CSReposURL:      conf.ContentSourcesRepoURL,
+		DBase:           dbase,
+
 		AwsConfig: v1.AWSConfig{
 			Region: conf.OsbuildRegion,
 		},
