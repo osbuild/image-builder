@@ -819,6 +819,17 @@ type Readiness struct {
 	Readiness string `json:"readiness"`
 }
 
+// RecommendPackageRequest defines model for RecommendPackageRequest.
+type RecommendPackageRequest struct {
+	Packages            []string `json:"packages"`
+	RecommendedPackages int32    `json:"recommendedPackages"`
+}
+
+// RecommendationsResponse defines model for RecommendationsResponse.
+type RecommendationsResponse struct {
+	Packages []string `json:"packages"`
+}
+
 // Repository defines model for Repository.
 type Repository struct {
 	Baseurl  *string `json:"baseurl,omitempty"`
@@ -993,6 +1004,9 @@ type CreateBlueprintJSONRequestBody = CreateBlueprintRequest
 
 // UpdateBlueprintJSONRequestBody defines body for UpdateBlueprint for application/json ContentType.
 type UpdateBlueprintJSONRequestBody = CreateBlueprintRequest
+
+// RecommendPackageJSONRequestBody defines body for RecommendPackage for application/json ContentType.
+type RecommendPackageJSONRequestBody = RecommendPackageRequest
 
 // AsAWSEC2Clone returns the union data inside the CloneRequest as a AWSEC2Clone
 func (t CloneRequest) AsAWSEC2Clone() (AWSEC2Clone, error) {
@@ -1751,6 +1765,9 @@ type ServerInterface interface {
 	// get composes associated with a blueprint
 	// (GET /experimental/blueprints/{id}/composes)
 	GetBlueprintComposes(ctx echo.Context, id openapi_types.UUID, params GetBlueprintComposesParams) error
+	// List recommended packages.
+	// (POST /experimental/recommendations)
+	RecommendPackage(ctx echo.Context) error
 	// get the available profiles for a given distribution. This is a temporary endpoint meant to be removed soon.
 	// (GET /oscap/{distribution}/profiles)
 	GetOscapProfiles(ctx echo.Context, distribution Distributions) error
@@ -2109,6 +2126,15 @@ func (w *ServerInterfaceWrapper) GetBlueprintComposes(ctx echo.Context) error {
 	return err
 }
 
+// RecommendPackage converts echo context to params.
+func (w *ServerInterfaceWrapper) RecommendPackage(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RecommendPackage(ctx)
+	return err
+}
+
 // GetOscapProfiles converts echo context to params.
 func (w *ServerInterfaceWrapper) GetOscapProfiles(ctx echo.Context) error {
 	var err error
@@ -2258,6 +2284,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PUT(baseURL+"/experimental/blueprints/:id", wrapper.UpdateBlueprint)
 	router.POST(baseURL+"/experimental/blueprints/:id/compose", wrapper.ComposeBlueprint)
 	router.GET(baseURL+"/experimental/blueprints/:id/composes", wrapper.GetBlueprintComposes)
+	router.POST(baseURL+"/experimental/recommendations", wrapper.RecommendPackage)
 	router.GET(baseURL+"/oscap/:distribution/profiles", wrapper.GetOscapProfiles)
 	router.GET(baseURL+"/oscap/:distribution/:profile/customizations", wrapper.GetOscapCustomizations)
 	router.GET(baseURL+"/packages", wrapper.GetPackages)

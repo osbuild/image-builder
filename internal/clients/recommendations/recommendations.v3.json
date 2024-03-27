@@ -1,0 +1,144 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "tags": [
+    {
+      "name": "recommendations",
+      "description": "the recommendations API"
+    }
+  ],
+  "paths": {
+    "/api/packages/recommendations": {
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "List recommended packages.",
+        "description": "Returns a list of recommended packages for a given list of packages.",
+        "operationId": "getRecommendedPackages",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendPackageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Return the recommended packages.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/refresh": {
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Refreshing the model",
+        "description": "Refreshing the model",
+        "operationId": "refreshModel",
+        "responses": {
+          "200": {
+            "description": "Model has been updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshModel200Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/model/version": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Get model version",
+        "description": "Retrieves the model version details.",
+        "operationId": "getModelVersion",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetModelVersion200Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RecommendationsResponse": {
+        "required": [
+          "packages"
+        ],
+        "type": "object",
+        "properties": {
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RecommendPackageRequest": {
+        "required": [
+          "packages",
+          "recommendedPackages"
+        ],
+        "type": "object",
+        "properties": {
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recommendedPackages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RefreshModel200Response": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "GetModelVersion200Response": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

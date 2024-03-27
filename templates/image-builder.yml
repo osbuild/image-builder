@@ -103,6 +103,27 @@ objects:
                 key: dsn
                 name: "${GLITCHTIP_DSN_NAME}"
                 optional: true
+          - name: RECOMMENDATIONS_URL
+            value: "${RECOMMENDATIONS_URL}"
+            optional: true
+          - name: RECOMMENDATIONS_TOKEN_URL
+            value: "${RECOMMENDATIONS_TOKEN_URL}"
+            optional: true
+          - name: RECOMMENDATIONS_CA_PATH
+            value: "${RECOMMENDATIONS_CA_PATH}"
+            optional: true
+          - name: RECOMMENDATIONS_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: client_id
+                name: recommendations-secrets
+                optional: true
+          - name: RECOMMENDATIONS_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: client_secret
+                name: recommendations-secrets
+                optional: true
         volumeMounts:
           - name: config-volume
             mountPath: /app/config
@@ -267,3 +288,9 @@ parameters:
   - name: CONTENT_SOURCES_REPO_URL
     value: ""
     description: URL where content sources hosts its repositories
+  - name: RECOMMENDATIONS_URL
+    value: "https://rhel-image-builder-api/rhel-image-builder"
+  - name: RECOMMENDATIONS_TOKEN_URL
+    value: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+  - name: RECOMMENDATIONS_CA_PATH
+    value: ""

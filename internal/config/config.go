@@ -37,6 +37,11 @@ type ImageBuilderConfig struct {
 	ProvisioningURL       string `env:"PROVISIONING_URL"`
 	ContentSourcesURL     string `env:"CONTENT_SOURCES_URL"`
 	ContentSourcesRepoURL string `env:"CONTENT_SOURCES_REPO_URL"`
+	RecommendURL          string `env:"RECOMMENDATIONS_URL"`
+	RecommendTokenURL     string `env:"RECOMMENDATIONS_TOKEN_URL"`
+	RecommendClientId     string `env:"RECOMMENDATIONS_CLIENT_ID"`
+	RecommendSecret       string `env:"RECOMMENDATIONS_CLIENT_SECRET"`
+	RecommendCA           string `env:"RECOMMENDATIONS_CA_PATH"`
 	GlitchTipDSN          string `env:"GLITCHTIP_DSN"`
 	FedoraAuth            bool   `env:"FEDORA_AUTH"`
 }
