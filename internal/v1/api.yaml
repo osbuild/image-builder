@@ -646,7 +646,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
-
+  /experimental/recommendations:
+    post:
+      summary: List recommended packages.
+      description: "Returns a list of recommended packages for given list of packages."
+      operationId: recommendPackage
+      tags:
+        - recommendations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UploadPackageRequest"
+        required: true
+      responses:
+        '200':
+          description: Return the recommended packages.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecommendationsResponse"
 components:
   schemas:
     HTTPError:
@@ -1294,6 +1315,21 @@ components:
           type: string
         signature:
           type: string
+    UploadPackageRequest:
+      type: object
+      properties:
+        packages:
+          type: array
+          items:
+            type: string
+        recommendedPackages:
+          type: integer
+          format: int32
+    RecommendationsResponse:
+      type: object
+      properties:
+          message:
+            type: string
     ClonesResponse:
       required:
         - meta
