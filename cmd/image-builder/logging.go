@@ -69,10 +69,11 @@ func requestIdExtractMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		ctxLogger := logrus.StandardLogger().WithContext(ctx).Logger
 		c.SetLogger(&common.EchoLogrusLogger{
 			Logger: ctxLogger,
+			Ctx:    ctx,
 		})
 
 		if !SkipPath(c.Path()) {
-			ctxLogger.Debugf("Started request %s %s", c.Request().Method, c.Request().RequestURI)
+			ctxLogger.WithContext(ctx).Debugf("Started request %s %s", c.Request().Method, c.Request().RequestURI)
 		}
 
 		return next(c)

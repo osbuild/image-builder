@@ -121,11 +121,12 @@ func main() {
 		LogMethod:  true,
 		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
 			fields := logrus.Fields{
-				"uri":        values.URI,
-				"method":     values.Method,
-				"status":     values.Status,
-				"latency_ms": values.Latency.Milliseconds(),
-				"request_id": c.Request().Context().Value(requestIdCtx),
+				"uri":         values.URI,
+				"method":      values.Method,
+				"status":      values.Status,
+				"latency_ms":  values.Latency.Milliseconds(),
+				"request_id":  c.Request().Context().Value(requestIdCtx),
+				"insights_id": c.Request().Context().Value(insightsRequestIdCtx),
 			}
 			if values.Error != nil {
 				fields["error"] = values.Error

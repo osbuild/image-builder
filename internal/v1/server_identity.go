@@ -6,7 +6,6 @@ import (
 	"github.com/labstack/echo/v4"
 	fedora_identity "github.com/osbuild/community-gateway/oidc-authorizer/pkg/identity"
 	rh_identity "github.com/redhatinsights/identity"
-	"github.com/sirupsen/logrus"
 )
 
 type Identity struct {
@@ -67,14 +66,14 @@ func (i *Identity) Type() string {
 	return ""
 }
 
-func (i *Identity) IsEntitled(ask string) bool {
+func (i *Identity) IsEntitled(ctx echo.Context, ask string) bool {
 	if i.rhid != nil {
 		entitled, ok := i.rhid.Entitlements[ask]
 		if !ok {
 			// the user's org does not have an associated EBS account number, these
 			// are associated when a billing relationship exists, which is a decent
 			// proxy for RHEL entitlements
-			logrus.Error("RHEL entitlement not present in identity header")
+			ctx.Logger().Error("RHEL entitlement not present in identity header")
 			return i.AccountNumber() != ""
 		}
 		return entitled.IsEntitled

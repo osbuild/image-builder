@@ -15,7 +15,6 @@ import (
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/prometheus"
 	"github.com/osbuild/image-builder/internal/provisioning"
-	"github.com/sirupsen/logrus"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
@@ -229,10 +228,10 @@ func (s *Server) distroRegistry(ctx echo.Context) *distribution.DistroRegistry {
 	entitled := false
 	id, err := s.getIdentity(ctx)
 	if err != nil {
-		logrus.Error("Unable to get entitlement")
+		ctx.Logger().Error("Unable to get entitlement")
 	}
 
-	entitled = id.IsEntitled("rhel")
+	entitled = id.IsEntitled(ctx, "rhel")
 	return s.allDistros.Available(entitled)
 }
 
