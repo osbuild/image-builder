@@ -1,0 +1,4 @@
+package: recommendations
+output: openapi.v3.gen.go
+generate:
+  models: true
