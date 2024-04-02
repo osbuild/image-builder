@@ -59,6 +59,16 @@ type Blueprint struct {
 	Name           string
 }
 
+// TODO: we can get rid of this with golang 1.21
+func contains(needle string, haystack []string) bool {
+	for _, item := range haystack {
+		if needle == item {
+			return true
+		}
+	}
+	return false
+}
+
 func cleanToml(dir string, datastreamDistro string, profile string) {
 	fmt.Printf("        clean blueprint.toml ")
 	// delete toml file, there's no need to keep It
