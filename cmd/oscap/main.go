@@ -177,9 +177,6 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 	for _, bpPackage := range bp.Packages {
 		packages = append(packages, bpPackage.Name)
 	}
-	if len(packages) > 0 {
-		customizations.Packages = &packages
-	}
 
 	var kernel *v1.Kernel
 	if k := bp.Customizations.Kernel; k != nil {
@@ -199,6 +196,10 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 	if s := bp.Customizations.Services; s != nil {
 		services = &v1.Services{}
 		if s.Enabled != nil {
+			firewalldPkg := "firewalld"
+			if contains(firewalldPkg, *s.Enabled) && !contains(firewalldPkg, packages) {
+				packages = append(packages, firewalldPkg)
+			}
 			services.Enabled = s.Enabled
 		}
 		var maskedAndDisabled []string
@@ -217,6 +218,10 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 	}
 	if services != nil {
 		customizations.Services = services
+	}
+
+	if len(packages) > 0 {
+		customizations.Packages = &packages
 	}
 
 	openscap := v1.OpenSCAP{}
