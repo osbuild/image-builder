@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/composer"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/prometheus"
-	"github.com/osbuild/image-builder/internal/provisioning"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
