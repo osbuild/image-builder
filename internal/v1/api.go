@@ -688,7 +688,14 @@ type ImageRequest struct {
 
 	// Size Size of image, in bytes. When set to 0 the image size is a minimum
 	// defined by the image type.
-	Size          *uint64       `json:"size,omitempty"`
+	Size *uint64 `json:"size,omitempty"`
+
+	// SnapshotDate Snapshotted content will be used instead of the official repositories of the
+	// distribution. The snapshot that was made closest to, but before the specified date will
+	// be used. If no snapshots made before the specified date can be found, the snapshot
+	// closest to, but after the specified date will be used. If no snapshots can be found at
+	// all, the request will fail.
+	SnapshotDate  *string       `json:"snapshot_date,omitempty"`
 	UploadRequest UploadRequest `json:"upload_request"`
 }
 
