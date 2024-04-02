@@ -7,8 +7,10 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/distribution"
@@ -55,12 +57,20 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		return ComposeResponse{}, err
 	}
 
-	var repositories []composer.Repository
 	arch, err := d.Architecture(string(composeRequest.ImageRequests[0].Architecture))
 	if err != nil {
 		return ComposeResponse{}, err
 	}
-	repositories = buildRepositories(arch, composeRequest.ImageRequests[0].ImageType)
+
+	var repositories []composer.Repository
+	if composeRequest.ImageRequests[0].SnapshotDate != nil {
+		repositories, err = h.buildRepositorySnapshots(ctx, arch, composeRequest.ImageRequests[0].ImageType, *composeRequest.ImageRequests[0].SnapshotDate)
+		if err != nil {
+			return ComposeResponse{}, err
+		}
+	} else {
+		repositories = buildRepositories(arch, composeRequest.ImageRequests[0].ImageType)
+	}
 
 	uploadOptions, imageType, err := h.buildUploadOptions(ctx, composeRequest.ImageRequests[0].UploadRequest, composeRequest.ImageRequests[0].ImageType)
 	if err != nil {
@@ -178,6 +188,92 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 		}
 	}
 	return repositories
+}
+
+func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, arch *distribution.Architecture, imageType ImageTypes, snapshotDate string) ([]composer.Repository, error) {
+	date, err := time.Parse(time.RFC3339, snapshotDate)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in RFC3339 format", snapshotDate))
+	}
+
+	repoURLs := []string{}
+	for _, r := range arch.Repositories {
+		contains := len(r.ImageTypeTags) == 0
+		for _, it := range r.ImageTypeTags {
+			if it == string(imageType) {
+				contains = true
+				break
+			}
+		}
+		if contains {
+			repoURLs = append(repoURLs, *r.Baseurl)
+		}
+	}
+
+	repoUUIDs := []string{}
+	repoMap := map[string]content_sources.ApiRepositoryResponse{}
+	resp, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, false)
+	if err != nil {
+		return nil, err
+	}
+	defer closeBody(ctx, resp.Body)
+
+	var csRepos content_sources.ApiRepositoryCollectionResponse
+	err = json.NewDecoder(resp.Body).Decode(&csRepos)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, repo := range *csRepos.Data {
+		repoUUIDs = append(repoUUIDs, *repo.Uuid)
+		repoMap[*repo.Uuid] = repo
+	}
+
+	snapResp, err := h.server.csClient.GetSnapshotsForDate(ctx.Request().Context(), content_sources.ApiListSnapshotByDateRequest{
+		Date:            common.ToPtr(date.UTC().Format(time.DateOnly)),
+		RepositoryUuids: common.ToPtr(repoUUIDs),
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer closeBody(ctx, snapResp.Body)
+
+	var csSnapshots content_sources.ApiListSnapshotByDateResponse
+	err = json.NewDecoder(snapResp.Body).Decode(&csSnapshots)
+	if err != nil {
+		return nil, err
+	}
+
+	var repositories []composer.Repository
+	for _, snap := range *csSnapshots.Data {
+		repo, ok := repoMap[*snap.RepositoryUuid]
+		if !ok {
+			return repositories, fmt.Errorf("Returned snapshot %v unexpected repository id %v", *snap.Match.Uuid, *snap.RepositoryUuid)
+		}
+
+		composerRepo := composer.Repository{
+			Baseurl: common.ToPtr(h.server.csReposURL.JoinPath(*snap.Match.RepositoryPath).String()),
+			Rhsm:    common.ToPtr(false),
+		}
+
+		composerRepo.Gpgkey = repo.GpgKey
+		if composerRepo.Gpgkey != nil && *composerRepo.Gpgkey != "" {
+			composerRepo.CheckGpg = common.ToPtr(true)
+		}
+		composerRepo.ModuleHotfixes = repo.ModuleHotfixes
+		composerRepo.CheckRepoGpg = repo.MetadataVerification
+
+		repositories = append(repositories, composerRepo)
+	}
+
+	ctx.Logger().Debugf("Resolved snapshots: %v", repositories)
+
+	// A sanity check to make sure there's a snapshot for each repo
+	expected := len(buildRepositories(arch, imageType))
+	if len(repositories) != expected {
+		return repositories, fmt.Errorf("No snapshots found for all repositories (found %d, expected %d)", len(repositories), expected)
+	}
+	return repositories, nil
 }
 
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
