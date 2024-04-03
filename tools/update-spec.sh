@@ -9,4 +9,7 @@ curl https://raw.githubusercontent.com/osbuild/osbuild-composer/main/internal/cl
 curl https://raw.githubusercontent.com/RHEnVision/provisioning-backend/main/api/openapi.gen.yaml \
      -o internal/clients/provisioning/provisioning.v1.yml
 
+curl https://raw.githubusercontent.com/content-services/content-sources-backend/main/api/openapi.json \
+     -o internal/clients/content_sources/content-sources.v1.json
+
 tools/prepare-source.sh
