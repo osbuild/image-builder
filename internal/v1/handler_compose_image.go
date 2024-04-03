@@ -156,7 +156,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	}, nil
 }
 
-func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []composer.Repository{
+func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []composer.Repository {
 	var repositories []composer.Repository
 	for _, r := range arch.Repositories {
 		// If no image type tags are defined for the repo, add the repo

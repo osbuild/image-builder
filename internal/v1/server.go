@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/db"
@@ -29,6 +31,8 @@ type Server struct {
 	echo             *echo.Echo
 	cClient          *composer.ComposerClient
 	pClient          *provisioning.ProvisioningClient
+	csClient         *content_sources.ContentSourcesClient
+	csReposURL       *url.URL
 	spec             *openapi3.T
 	router           routers.Router
 	db               db.DB
@@ -45,6 +49,8 @@ type ServerConfig struct {
 	EchoServer       *echo.Echo
 	CompClient       *composer.ComposerClient
 	ProvClient       *provisioning.ProvisioningClient
+	CSClient         *content_sources.ContentSourcesClient
+	CSReposURL       string
 	DBase            db.DB
 	AwsConfig        AWSConfig
 	GcpConfig        GCPConfig
@@ -86,10 +92,17 @@ func Attach(conf *ServerConfig) error {
 		return err
 	}
 
+	csReposURL, err := url.Parse(conf.CSReposURL)
+	if err != nil {
+		return err
+	}
+
 	s := Server{
 		conf.EchoServer,
 		conf.CompClient,
 		conf.ProvClient,
+		conf.CSClient,
+		csReposURL,
 		spec,
 		router,
 		conf.DBase,
