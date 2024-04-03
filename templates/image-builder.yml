@@ -67,6 +67,8 @@ objects:
             value: "${OSBUILD_GCP_BUCKET}"
           - name: PGSSLMODE
             value: "${PGSSLMODE}"
+          - name: CONTENT_SOURCES_REPO_URL
+            value: "${CONTENT_SOURCES_REPO_URL}"
           # Configuration for the osbuild client within image-builder
           - name: COMPOSER_URL
             value: "${COMPOSER_URL}"
@@ -136,6 +138,7 @@ objects:
 
     optionalDependencies:
     - provisioning-backend
+    - content-sources-backend
 
 - apiVersion: metrics.console.redhat.com/v1alpha1
   kind: FloorPlan
@@ -261,3 +264,6 @@ parameters:
   - name: LOG_LEVEL
     value: "INFO"
     description: Main application log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  - name: CONTENT_SOURCES_REPO_URL
+    value: ""
+    description: URL where content sources hosts its repositories
