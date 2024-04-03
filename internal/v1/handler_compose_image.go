@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/distribution"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -59,25 +60,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	if err != nil {
 		return ComposeResponse{}, err
 	}
-	for _, r := range arch.Repositories {
-		// If no image type tags are defined for the repo, add the repo
-		contains := len(r.ImageTypeTags) == 0
-		for _, it := range r.ImageTypeTags {
-			if it == string(composeRequest.ImageRequests[0].ImageType) {
-				contains = true
-				break
-			}
-		}
-		if contains {
-			repositories = append(repositories, composer.Repository{
-				Baseurl:  r.Baseurl,
-				Metalink: r.Metalink,
-				Rhsm:     common.ToPtr(r.Rhsm),
-				Gpgkey:   r.GpgKey,
-				CheckGpg: r.CheckGpg,
-			})
-		}
-	}
+	repositories = buildRepositories(arch, composeRequest.ImageRequests[0].ImageType)
 
 	uploadOptions, imageType, err := h.buildUploadOptions(ctx, composeRequest.ImageRequests[0].UploadRequest, composeRequest.ImageRequests[0].ImageType)
 	if err != nil {
@@ -171,6 +154,30 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	return ComposeResponse{
 		Id: composeResult.Id,
 	}, nil
+}
+
+func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []composer.Repository{
+	var repositories []composer.Repository
+	for _, r := range arch.Repositories {
+		// If no image type tags are defined for the repo, add the repo
+		contains := len(r.ImageTypeTags) == 0
+		for _, it := range r.ImageTypeTags {
+			if it == string(imageType) {
+				contains = true
+				break
+			}
+		}
+		if contains {
+			repositories = append(repositories, composer.Repository{
+				Baseurl:  r.Baseurl,
+				Metalink: r.Metalink,
+				Rhsm:     common.ToPtr(r.Rhsm),
+				Gpgkey:   r.GpgKey,
+				CheckGpg: r.CheckGpg,
+			})
+		}
+	}
+	return repositories
 }
 
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
