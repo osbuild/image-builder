@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/config"
@@ -100,6 +101,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	csClient, err := content_sources.NewClient(content_sources.ContentSourcesClientConfig{
+		URL: conf.ContentSourcesURL,
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	adr, err := distribution.LoadDistroRegistry(conf.DistributionsDir)
 	if err != nil {
@@ -153,6 +160,8 @@ func main() {
 		EchoServer: echoServer,
 		CompClient: compClient,
 		ProvClient: provClient,
+		CSClient:   csClient,
+		CSReposURL: conf.ContentSourcesRepoURL,
 		DBase:      dbase,
 		AwsConfig: v1.AWSConfig{
 			Region: conf.OsbuildRegion,
