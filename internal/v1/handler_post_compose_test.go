@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/tutils"
@@ -780,6 +782,162 @@ func TestComposeImageAllowList(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, uuid.Nil, result.Id)
 	})
+}
+
+func TestComposeWithSnapshots(t *testing.T) {
+	composeId := uuid.New()
+	repoBaseId := uuid.New()
+	repoAppstrId := uuid.New()
+	var composerCR composer.ComposeRequest
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+		err := json.NewDecoder(r.Body).Decode(&composerCR)
+		require.NoError(t, err)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		result := composer.ComposeId{
+			Id: composeId,
+		}
+		err = json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	}))
+	defer apiSrv.Close()
+	csSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, tutils.AuthString0, r.Header.Get("x-rh-identity"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if r.URL.Path == "/repositories/" {
+			require.Equal(t, "red_hat", r.URL.Query().Get("origin"))
+			urlForm := r.URL.Query().Get("url")
+			urls := strings.Split(urlForm, ",")
+			require.ElementsMatch(t, []string{
+				"https://cdn.redhat.com/content/dist/rhel9/9.3/x86_64/baseos/os",
+				"https://cdn.redhat.com/content/dist/rhel9/9.3/x86_64/appstream/os",
+			}, urls)
+
+			result := content_sources.ApiRepositoryCollectionResponse{
+				Data: &[]content_sources.ApiRepositoryResponse{
+					{
+						GpgKey: common.ToPtr(rhelGpg),
+						Uuid:   common.ToPtr(repoBaseId.String()),
+					},
+					{
+						GpgKey: common.ToPtr(rhelGpg),
+						Uuid:   common.ToPtr(repoAppstrId.String()),
+					},
+				},
+			}
+
+			err := json.NewEncoder(w).Encode(result)
+			require.NoError(t, err)
+		}
+
+		if r.URL.Path == "/snapshots/for_date/" {
+			var body content_sources.ApiListSnapshotByDateRequest
+			err := json.NewDecoder(r.Body).Decode(&body)
+			require.NoError(t, err)
+			require.Equal(t, "1999-01-01", *body.Date)
+			require.ElementsMatch(t, []string{
+				repoBaseId.String(),
+				repoAppstrId.String(),
+			}, *body.RepositoryUuids)
+
+			result := content_sources.ApiListSnapshotByDateResponse{
+				Data: &[]content_sources.ApiSnapshotForDate{
+					{
+						IsAfter: common.ToPtr(false),
+						Match: &content_sources.ApiSnapshotResponse{
+							CreatedAt:      common.ToPtr("1998-01-01"),
+							RepositoryPath: common.ToPtr("/snappy/baseos"),
+						},
+						RepositoryUuid: common.ToPtr(repoBaseId.String()),
+					},
+					{
+						IsAfter: common.ToPtr(false),
+						Match: &content_sources.ApiSnapshotResponse{
+							CreatedAt:      common.ToPtr("1998-01-01"),
+							RepositoryPath: common.ToPtr("/snappy/appstream"),
+						},
+						RepositoryUuid: common.ToPtr(repoAppstrId.String()),
+					},
+				},
+			}
+
+			err = json.NewEncoder(w).Encode(result)
+			require.NoError(t, err)
+		}
+	}))
+	defer apiSrv.Close()
+
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, CSURL: csSrv.URL}, &ServerConfig{
+		CSReposURL: "https://content-sources.org",
+	})
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	var uo UploadRequest_Options
+	require.NoError(t, uo.FromAWSS3UploadRequestOptions(AWSS3UploadRequestOptions{}))
+	payload := ComposeRequest{
+		Distribution: "rhel-93",
+		ImageRequests: []ImageRequest{
+			{
+				Architecture: "x86_64",
+				ImageType:    ImageTypesGuestImage,
+				SnapshotDate: common.ToPtr("1999-01-01T00:00:00.000Z"),
+				UploadRequest: UploadRequest{
+					Type:    UploadTypesAwsS3,
+					Options: uo,
+				},
+			},
+		},
+	}
+	respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
+	require.Equal(t, http.StatusCreated, respStatusCode)
+	var result ComposeResponse
+	err := json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, composeId, result.Id)
+
+	require.Equal(t, composer.ComposeRequest{
+		Distribution: "rhel-93",
+		ImageRequest: &composer.ImageRequest{
+			Architecture: "x86_64",
+			ImageType:    composer.ImageTypesGuestImage,
+			Repositories: []composer.Repository{
+				{
+					Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+					Rhsm:        common.ToPtr(false),
+					Gpgkey:      common.ToPtr(rhelGpg),
+					CheckGpg:    common.ToPtr(true),
+					IgnoreSsl:   nil,
+					Metalink:    nil,
+					Mirrorlist:  nil,
+					PackageSets: nil,
+				},
+				{
+					Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+					Rhsm:        common.ToPtr(false),
+					Gpgkey:      common.ToPtr(rhelGpg),
+					CheckGpg:    common.ToPtr(true),
+					IgnoreSsl:   nil,
+					Metalink:    nil,
+					Mirrorlist:  nil,
+					PackageSets: nil,
+				},
+			},
+			UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+				Region: "",
+			}),
+		},
+	}, composerCR)
 }
 
 func TestComposeCustomizations(t *testing.T) {
