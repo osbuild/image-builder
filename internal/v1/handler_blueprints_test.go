@@ -24,7 +24,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -72,7 +72,7 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -134,7 +134,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
-	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -207,7 +207,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -280,7 +280,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -357,7 +357,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})

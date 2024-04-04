@@ -26,7 +26,7 @@ const (
 func TestValidateComposeRequest(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "", "", nil)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -406,7 +406,7 @@ func TestComposeStatusError(t *testing.T) {
 	err = dbase.InsertCompose(ctx, id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -450,7 +450,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -498,7 +498,7 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -549,7 +549,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -582,7 +582,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 // This test case queries the image-builder for a non existing type of the os distribution
 // osbuild-composer is not being mock here as the error should be intercepted by image-builder
 func TestComposeImageErrorsWhenDistributionNotExists(t *testing.T) {
-	srv, tokenSrv := startServer(t, "", "", nil)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -629,7 +629,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, "", nil)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -710,7 +710,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+		srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 			DistributionsDir: distsDir,
 			AllowFile:        allowFile,
 		})
@@ -735,7 +735,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+		srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 			DistributionsDir: distsDir,
 			AllowFile:        allowFile,
 		})
@@ -760,7 +760,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+		srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 			DistributionsDir: distsDir,
 			AllowFile:        "",
 		})
@@ -839,7 +839,7 @@ func TestComposeCustomizations(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	srv, tokenSrv := startServer(t, apiSrv.URL, provSrv.URL, nil)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, ProvURL: provSrv.URL}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)

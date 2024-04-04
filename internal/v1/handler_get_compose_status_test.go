@@ -42,7 +42,7 @@ func TestComposeStatus(t *testing.T) {
 	require.NoError(t, err)
 	err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
 	require.NoError(t, err)
-	srv, tokenSrv := startServer(t, apiSrv.URL, "", &ServerConfig{
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})

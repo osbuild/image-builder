@@ -13,7 +13,7 @@ import (
 func TestRedHatIdentity(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "", "", nil)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -69,7 +69,7 @@ func TestRedHatIdentity(t *testing.T) {
 func TestFedoraIdentity(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, "", "", &ServerConfig{
+	srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		FedoraAuth: true,
 	})
 	defer func() {

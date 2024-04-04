@@ -90,7 +90,12 @@ func makeUploadOptions(t *testing.T, uploadOptions interface{}) *composer.Upload
 	return &result
 }
 
-func startServer(t *testing.T, composerURL, provURL string, conf *ServerConfig) (*echo.Echo, *httptest.Server) {
+type testServerClientsConf struct {
+	ComposerURL string
+	ProvURL     string
+}
+
+func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) (*echo.Echo, *httptest.Server) {
 	var log = &logrus.Logger{
 		Out:       os.Stderr,
 		Formatter: new(logrus.TextFormatter),
@@ -116,7 +121,7 @@ func startServer(t *testing.T, composerURL, provURL string, conf *ServerConfig) 
 	}))
 
 	compClient, err := composer.NewClient(composer.ComposerClientConfig{
-		ComposerURL:  composerURL,
+		ComposerURL:  tscc.ComposerURL,
 		TokenURL:     tokenServer.URL,
 		ClientId:     "rhsm-api",
 		OfflineToken: "offlinetoken",
@@ -124,7 +129,7 @@ func startServer(t *testing.T, composerURL, provURL string, conf *ServerConfig) 
 	require.NoError(t, err)
 
 	provClient, err := provisioning.NewClient(provisioning.ProvisioningClientConfig{
-		URL: provURL,
+		URL: tscc.ProvURL,
 	})
 	require.NoError(t, err)
 
@@ -136,12 +141,7 @@ func startServer(t *testing.T, composerURL, provURL string, conf *ServerConfig) 
 	echoServer.HideBanner = true
 	serverConfig := conf
 	if serverConfig == nil {
-		serverConfig = &ServerConfig{
-			EchoServer: echoServer,
-			CompClient: compClient,
-			ProvClient: provClient,
-			QuotaFile:  quotaFile,
-		}
+		serverConfig = &ServerConfig{}
 	}
 
 	if serverConfig.DBase == nil {
