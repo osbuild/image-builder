@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/distribution"
@@ -93,6 +94,7 @@ func makeUploadOptions(t *testing.T, uploadOptions interface{}) *composer.Upload
 type testServerClientsConf struct {
 	ComposerURL string
 	ProvURL     string
+	CSURL       string
 }
 
 func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) (*echo.Echo, *httptest.Server) {
@@ -133,6 +135,11 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	})
 	require.NoError(t, err)
 
+	csClient, err := content_sources.NewClient(content_sources.ContentSourcesClientConfig{
+		URL: tscc.CSURL,
+	})
+	require.NoError(t, err)
+
 	//store the quotas in a temporary file
 	quotaFile, err := initQuotaFile(t)
 	require.NoError(t, err)
@@ -152,6 +159,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	serverConfig.EchoServer = echoServer
 	serverConfig.CompClient = compClient
 	serverConfig.ProvClient = provClient
+	serverConfig.CSClient = csClient
 	if serverConfig.QuotaFile == "" {
 		serverConfig.QuotaFile = quotaFile
 	}
