@@ -15,8 +15,7 @@ objects:
     backoffLimit: 0
     template:
       spec:
-        imagePullSecrets:
-        - name: quay-cloudservices-pull
+        serviceAccountName: iqe-image-builder
         restartPolicy: Never
         volumes:
         - name: sel-shm
@@ -107,6 +106,14 @@ objects:
           volumeMounts:
             - name: sel-shm
               mountPath: /dev/shm
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: iqe-image-builder
+  imagePullSecrets:
+  - name: quay-cloudservices-pull
+
 parameters:
 - name: IMAGE_TAG
   value: ''
