@@ -946,7 +946,7 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Installer: &Installer{
 						Unattended:   common.ToPtr(true),
-						SudoNopasswd: &[]string{"admin", "@wheel"},
+						SudoNopasswd: &[]string{"admin", "%wheel"},
 					},
 				},
 				Distribution: "centos-8",
@@ -1021,7 +1021,7 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Installer: &composer.Installer{
 						Unattended:   common.ToPtr(true),
-						SudoNopasswd: &[]string{"admin", "@wheel"},
+						SudoNopasswd: &[]string{"admin", "%wheel"},
 					},
 				},
 				ImageRequest: &composer.ImageRequest{
