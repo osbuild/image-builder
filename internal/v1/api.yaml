@@ -1699,7 +1699,7 @@ components:
           items:
             type: string
             description: |
-              Enable passwordless sudo for users or groups (groups must be prefixed by @)
+              Enable passwordless sudo for users or groups (groups must be prefixed by %)
     Ignition:
       type: object
       additionalProperties: false
