@@ -99,7 +99,7 @@ func createClient(composerURL string, ca string) (*http.Client, error) {
 	return &http.Client{Transport: transport}, nil
 }
 
-func (cc *ComposerClient) request(method, url string, headers map[string]string, body io.Reader) (*http.Response, error) {
+func (cc *ComposerClient) request(method, url string, headers map[string]string, body io.ReadSeeker) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
@@ -123,6 +123,11 @@ func (cc *ComposerClient) request(method, url string, headers map[string]string,
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		err = cc.refreshToken()
+		if err != nil {
+			return nil, err
+		}
+
+		_, err := body.Seek(0, io.SeekStart)
 		if err != nil {
 			return nil, err
 		}
