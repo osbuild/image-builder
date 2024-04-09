@@ -218,6 +218,17 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, arch *distribution
 	}
 	defer closeBody(ctx, resp.Body)
 
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusUnauthorized {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			ctx.Logger().Warnf("Unable to get repositories for base urls: %v, got %s", repoURLs, body)
+		}
+		return nil, fmt.Errorf("Unable to fetch repositories, got %v response.", resp.StatusCode)
+	}
+
 	var csRepos content_sources.ApiRepositoryCollectionResponse
 	err = json.NewDecoder(resp.Body).Decode(&csRepos)
 	if err != nil {
@@ -237,6 +248,17 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, arch *distribution
 		return nil, err
 	}
 	defer closeBody(ctx, snapResp.Body)
+
+	if snapResp.StatusCode != http.StatusOK {
+		if snapResp.StatusCode != http.StatusUnauthorized {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			ctx.Logger().Warnf("Unable to resolve snapshots: %s", body)
+		}
+		return nil, fmt.Errorf("Unable to fetch snapshots for date, got %v response", snapResp.StatusCode)
+	}
 
 	var csSnapshots content_sources.ApiListSnapshotByDateResponse
 	err = json.NewDecoder(snapResp.Body).Decode(&csSnapshots)
