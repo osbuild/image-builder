@@ -86,5 +86,6 @@ func (csc *ContentSourcesClient) GetSnapshotsForDate(ctx context.Context, body A
 
 	return csc.request("POST", csc.url.JoinPath("snapshots", "for_date/").String(), map[string]string{
 		"x-rh-identity": id,
+		"content-type":  "application/json",
 	}, bytes.NewReader(buf))
 }
