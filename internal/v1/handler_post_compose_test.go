@@ -838,6 +838,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 		}
 
 		if r.URL.Path == "/snapshots/for_date/" {
+			require.Equal(t, "application/json", r.Header.Get("content-type"))
 			var body content_sources.ApiListSnapshotByDateRequest
 			err := json.NewDecoder(r.Body).Decode(&body)
 			require.NoError(t, err)
