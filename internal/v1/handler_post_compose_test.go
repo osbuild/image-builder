@@ -816,8 +816,8 @@ func TestComposeWithSnapshots(t *testing.T) {
 			urlForm := r.URL.Query().Get("url")
 			urls := strings.Split(urlForm, ",")
 			require.ElementsMatch(t, []string{
-				"https://cdn.redhat.com/content/dist/rhel9/9.3/x86_64/baseos/os",
-				"https://cdn.redhat.com/content/dist/rhel9/9.3/x86_64/appstream/os",
+				"https://cdn.redhat.com/content/dist/rhel9/9/x86_64/baseos/os",
+				"https://cdn.redhat.com/content/dist/rhel9/9/x86_64/appstream/os",
 			}, urls)
 
 			result := content_sources.ApiRepositoryCollectionResponse{
@@ -1258,7 +1258,7 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/baseos/os"),
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1268,7 +1268,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Gpgkey:      common.ToPtr(rhelGpg),
 						},
 						{
-							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/appstream/os"),
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1696,7 +1696,7 @@ func TestComposeCustomizations(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/baseos/os"),
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1706,7 +1706,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Gpgkey:      common.ToPtr(rhelGpg),
 						},
 						{
-							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/appstream/os"),
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1743,7 +1743,7 @@ func TestComposeCustomizations(t *testing.T) {
 					ImageType:    composer.ImageTypesOci,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/baseos/os"),
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1753,7 +1753,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Gpgkey:      common.ToPtr(rhelGpg),
 						},
 						{
-							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/appstream/os"),
+							Baseurl:     common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1807,13 +1807,13 @@ func TestComposeCustomizations(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/baseos/os"),
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
 							Rhsm:     common.ToPtr(true),
 							Gpgkey:   common.ToPtr(rhelGpg),
 							CheckGpg: common.ToPtr(true),
 						},
 						{
-							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/appstream/os"),
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
 							Rhsm:     common.ToPtr(true),
 							Gpgkey:   common.ToPtr(rhelGpg),
 							CheckGpg: common.ToPtr(true),
@@ -1897,13 +1897,13 @@ func TestComposeCustomizations(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/baseos/os"),
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
 							Rhsm:     common.ToPtr(true),
 							Gpgkey:   common.ToPtr(rhelGpg),
 							CheckGpg: common.ToPtr(true),
 						},
 						{
-							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/appstream/os"),
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
 							Rhsm:     common.ToPtr(true),
 							Gpgkey:   common.ToPtr(rhelGpg),
 							CheckGpg: common.ToPtr(true),
@@ -1977,13 +1977,13 @@ func TestComposeCustomizations(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/baseos/os"),
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
 							Rhsm:     common.ToPtr(true),
 							Gpgkey:   common.ToPtr(rhelGpg),
 							CheckGpg: common.ToPtr(true),
 						},
 						{
-							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.9/x86_64/appstream/os"),
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
 							Rhsm:     common.ToPtr(true),
 							Gpgkey:   common.ToPtr(rhelGpg),
 							CheckGpg: common.ToPtr(true),
