@@ -1,5 +1,3 @@
-//go:generate go run -mod=mod github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config client.cfg.yaml openapi.v2.yml
-
 package composer
 
 import (
