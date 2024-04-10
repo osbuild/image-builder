@@ -56,7 +56,7 @@ const (
 	sqlGetBlueprint = `
 		SELECT blueprints.id, blueprint_versions.id, blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
-		WHERE blueprints.id = $1 AND blueprints.org_id = $2 AND blueprints.account_number = $3    
+		WHERE blueprints.id = $1 AND blueprints.org_id = $2    
 		ORDER BY blueprint_versions.created_at DESC LIMIT 1`
 
 	sqlUpdateBlueprint = `
@@ -208,7 +208,7 @@ func (db *dB) InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.
 	return err
 }
 
-func (db *dB) GetBlueprint(ctx context.Context, id uuid.UUID, orgID, accountNumber string) (*BlueprintEntry, error) {
+func (db *dB) GetBlueprint(ctx context.Context, id uuid.UUID, orgID string) (*BlueprintEntry, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, err
@@ -216,7 +216,7 @@ func (db *dB) GetBlueprint(ctx context.Context, id uuid.UUID, orgID, accountNumb
 	defer conn.Release()
 
 	var result BlueprintEntry
-	row := conn.QueryRow(ctx, sqlGetBlueprint, id, orgID, accountNumber)
+	row := conn.QueryRow(ctx, sqlGetBlueprint, id, orgID)
 	err = row.Scan(&result.Id, &result.VersionId, &result.Name, &result.Description, &result.Version, &result.Body)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
