@@ -486,8 +486,23 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, 1, count)
 	require.Equal(t, "unique desc", entries[0].Description)
 
+	// Insert composes for a blueprint
+	clientId := "ui"
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image1"), []byte("{}"), &clientId, &versionId)
+	require.NoError(t, err)
+	err = d.InsertCompose(ctx, uuid.New(), ANR1, EMAIL1, ORGID1, common.ToPtr("image2"), []byte("{}"), &clientId, &versionId)
+	require.NoError(t, err)
+
+	count, err = d.CountBlueprintComposesSince(ctx, ORGID1, id, nil, (time.Hour * 24 * 14), nil)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+
 	err = d.DeleteBlueprint(ctx, id, ORGID1, ANR1)
 	require.NoError(t, err)
+
+	_, count, err = d.GetComposes(ctx, ORGID1, (time.Hour * 24 * 14), 100, 0, nil)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
 }
 
 func testGetBlueprintComposes(t *testing.T) {

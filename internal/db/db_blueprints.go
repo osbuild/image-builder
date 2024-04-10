@@ -82,6 +82,13 @@ const (
 			AND org_id = $4
         );`
 
+	sqlDeleteBlueprintComposes = `
+		UPDATE composes
+		SET deleted = TRUE
+		FROM blueprint_versions
+		WHERE composes.blueprint_version_id = blueprint_versions.id
+		AND composes.org_id=$1 AND blueprint_versions.blueprint_id=$2`
+
 	sqlDeleteBlueprint = `DELETE FROM blueprints WHERE id = $1 AND org_id = $2 AND account_number = $3`
 
 	sqlGetBlueprints = `
@@ -271,6 +278,11 @@ func (db *dB) DeleteBlueprint(ctx context.Context, id uuid.UUID, orgID, accountN
 		return err
 	}
 	defer conn.Release()
+
+	_, err = conn.Exec(ctx, sqlDeleteBlueprintComposes, orgID, id)
+	if err != nil {
+		return fmt.Errorf("marking blueprint(%s) composes as deleted failed: %w", id, err)
+	}
 
 	tag, err := conn.Exec(ctx, sqlDeleteBlueprint, id, orgID, accountNumber)
 	if err != nil {
