@@ -396,7 +396,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Not Found", errorResponse.Errors[0].Detail)
 
-	_, err = dbase.GetBlueprint(ctx, blueprintId, "000000", "000000")
+	_, err = dbase.GetBlueprint(ctx, blueprintId, "000000")
 	require.ErrorIs(t, err, db.BlueprintNotFoundError)
 
 	// Composes should not be assigned to the blueprint anymore

@@ -111,7 +111,7 @@ func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID) error {
 	}
 
 	ctx.Logger().Infof("Fetching blueprint %s", id)
-	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), userID.AccountNumber())
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID())
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 		return err
 	}
 
-	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), userID.AccountNumber())
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID())
 	if err != nil {
 		return err
 	}
