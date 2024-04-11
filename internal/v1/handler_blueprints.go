@@ -234,7 +234,17 @@ func (h *Handlers) GetBlueprints(ctx echo.Context, params GetBlueprintsParams) e
 	var blueprints []db.BlueprintWithNoBody
 	var count int
 
-	if params.Search != nil && common.FromPtr(params.Search) != "" {
+	if params.Name != nil && common.FromPtr(params.Name) != "" {
+		blueprint, err := h.server.db.FindBlueprintByName(ctx.Request().Context(), userID.OrgID(), *params.Name)
+		if err != nil {
+			return err
+		}
+		if blueprint != nil {
+			blueprints = []db.BlueprintWithNoBody{*blueprint}
+			count = 1
+		}
+		// Else no blueprint found - return empty list and count = 0
+	} else if params.Search != nil && common.FromPtr(params.Search) != "" {
 		blueprints, count, err = h.server.db.FindBlueprints(ctx.Request().Context(), userID.OrgID(), *params.Search, limit, offset)
 		if err != nil {
 			return err

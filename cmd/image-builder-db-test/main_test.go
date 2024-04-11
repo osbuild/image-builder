@@ -404,6 +404,11 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, description1, entry.Description)
 	require.Equal(t, 1, entry.Version)
 
+	entryByName, err := d.FindBlueprintByName(ctx, ORGID1, name1)
+	require.NoError(t, err)
+	require.NotNil(t, entryByName)
+	require.Equal(t, id, entryByName.Id)
+
 	name2 := "new name"
 	description2 := "new desc"
 	body2 := v1.BlueprintBody{
