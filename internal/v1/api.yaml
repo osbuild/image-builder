@@ -424,6 +424,12 @@ paths:
         - blueprint
       parameters:
         - in: query
+          name: name
+          required: false
+          schema:
+            type: string
+          description: fetch blueprint with specific name
+        - in: query
           name: search
           required: false
           schema:

@@ -100,6 +100,14 @@ const (
 		ORDER BY last_modified_at DESC
 		LIMIT $2 OFFSET $3`
 
+	sqlFindBlueprintByName = `
+		SELECT blueprints.id, blueprints.name, blueprints.description, MAX(blueprint_versions.version) as version, MAX(blueprint_versions.created_at) as last_modified_at
+		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
+		WHERE blueprints.name = $1 AND blueprints.org_id = $2
+		GROUP BY blueprints.id
+		ORDER BY last_modified_at DESC
+		LIMIT 1`
+
 	sqlCountFilteredBlueprints = `
 		SELECT COUNT(*)
 		FROM blueprints
@@ -275,6 +283,26 @@ func (db *dB) DeleteBlueprint(ctx context.Context, id uuid.UUID, orgID, accountN
 		return fmt.Errorf("delete blueprint with versions: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 	}
 	return nil
+}
+
+func (db *dB) FindBlueprintByName(ctx context.Context, orgID, nameQuery string) (*BlueprintWithNoBody, error) {
+	conn, err := db.Pool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+
+	var result BlueprintWithNoBody
+
+	row := conn.QueryRow(ctx, sqlFindBlueprintByName, nameQuery, orgID)
+	err = row.Scan(&result.Id, &result.Name, &result.Description, &result.Version, &result.LastModifiedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (db *dB) FindBlueprints(ctx context.Context, orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error) {

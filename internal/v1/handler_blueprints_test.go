@@ -346,6 +346,45 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.Equal(t, blueprint.Customizations, result.Customizations)
 }
 
+func TestHandlers_GetBlueprints(t *testing.T) {
+	ctx := context.Background()
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+
+	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
+	defer func() {
+		err := db_srv.Shutdown(ctx)
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	blueprintId := uuid.New()
+	versionId := uuid.New()
+	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", "blueprint", "blueprint desc", json.RawMessage(`{}`))
+	require.NoError(t, err)
+	blueprintId2 := uuid.New()
+	versionId2 := uuid.New()
+	err = dbase.InsertBlueprint(ctx, blueprintId2, versionId2, "000000", "000000", "Blueprint2", "blueprint desc", json.RawMessage(`{}`))
+	require.NoError(t, err)
+
+	var result BlueprintsResponse
+	respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/experimental/blueprints?name=blueprint", &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Len(t, result.Data, 1)
+	require.Equal(t, blueprintId, result.Data[0].Id)
+
+	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/experimental/blueprints?name=Blueprint", &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Len(t, result.Data, 0)
+}
+
 func TestHandlers_DeleteBlueprint(t *testing.T) {
 	ctx := context.Background()
 	blueprintId := uuid.New()

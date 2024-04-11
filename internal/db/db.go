@@ -78,6 +78,7 @@ type DB interface {
 	UpdateBlueprint(ctx context.Context, id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error
 	GetBlueprints(ctx context.Context, orgID string, limit, offset int) ([]BlueprintWithNoBody, int, error)
 	FindBlueprints(ctx context.Context, orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error)
+	FindBlueprintByName(ctx context.Context, orgID, nameQuery string) (*BlueprintWithNoBody, error)
 	DeleteBlueprint(ctx context.Context, id uuid.UUID, orgID, accountNumber string) error
 }
 

@@ -932,6 +932,9 @@ type GetComposeClonesParams struct {
 
 // GetBlueprintsParams defines parameters for GetBlueprints.
 type GetBlueprintsParams struct {
+	// Name fetch blueprint with specific name
+	Name *string `form:"name,omitempty" json:"name,omitempty"`
+
 	// Search search for blueprints by name or description
 	Search *string `form:"search,omitempty" json:"search,omitempty"`
 
@@ -1954,6 +1957,13 @@ func (w *ServerInterfaceWrapper) GetBlueprints(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetBlueprintsParams
+	// ------------- Optional query parameter "name" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "name", ctx.QueryParams(), &params.Name)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
 	// ------------- Optional query parameter "search" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "search", ctx.QueryParams(), &params.Search)
