@@ -83,7 +83,7 @@ SRC_DEPS_EXTERNAL_CHECKOUT_DIR ?= ../
 # podman needs to build as root as it also needs to run as root afterwards
 CONTAINER_EXECUTABLE ?= sudo podman
 DOCKER_IMAGE := image-builder_devel
-DOCKERFILE := distribution/Dockerfile-ubi
+DOCKERFILE := distribution/Dockerfile-ubi_srcinstall
 
 SRC_DEPS_EXTERNAL_NAMES := community-gateway osbuild-composer
 SRC_DEPS_EXTERNAL_DIRS := $(addprefix $(SRC_DEPS_EXTERNAL_CHECKOUT_DIR),$(SRC_DEPS_EXTERNAL_NAMES))
@@ -91,8 +91,10 @@ SRC_DEPS_EXTERNAL_DIRS := $(addprefix $(SRC_DEPS_EXTERNAL_CHECKOUT_DIR),$(SRC_DE
 SRC_DEPS_DIRS := internal cmd
 
 # All files to check for rebuild!
-SRC_DEPS := $(shell find $(SRC_DEPS_DIRS) -name *.go)
+SRC_DEPS := $(shell find $(SRC_DEPS_DIRS) -name *.go -or -name *.sql)
 SRC_DEPS_EXTERNAL := $(shell find $(SRC_DEPS_EXTERNAL_DIRS) -name *.go)
+
+CONTAINER_DEPS := ./distribution/openshift-startup.sh
 
 $(SRC_DEPS_EXTERNAL_DIRS):
 	@for DIR in $@; do if ! [ -d $$DIR ]; then echo "Please checkout $$DIR so it is available at $$DIR"; exit 1; fi; done
@@ -100,6 +102,8 @@ $(SRC_DEPS_EXTERNAL_DIRS):
 GOPROXY ?= https://proxy.golang.org,direct
 
 GOMODARGS ?= -modfile=go.local.mod
+# gcflags "-N -l" for golang to allow debugging
+GCFLAGS ?= -gcflags=all=-N -gcflags=all=-l
 
 go.local.mod go.local.sum: $(SRC_DEPS_EXTERNAL_DIRS) go.mod $(SRC_DEPS_EXTERNAL) $(SRC_DEPS)
 	cp go.mod go.local.mod
@@ -108,8 +112,8 @@ go.local.mod go.local.sum: $(SRC_DEPS_EXTERNAL_DIRS) go.mod $(SRC_DEPS_EXTERNAL)
 	go mod edit $(GOMODARGS) -replace github.com/osbuild/community-gateway=$(SRC_DEPS_EXTERNAL_CHECKOUT_DIR)community-gateway
 	env GOPROXY=$(GOPROXY) go mod vendor $(GOMODARGS)
 
-container_built.info: go.local.mod $(DOCKERFILE) $(SRC_DEPS)
-	$(CONTAINER_EXECUTABLE) build -t $(DOCKER_IMAGE) -f $(DOCKERFILE) --build-arg GOMODARGS=$(GOMODARGS) .
+container_built.info: go.local.mod $(DOCKERFILE) $(CONTAINER_DEPS) $(SRC_DEPS)
+	$(CONTAINER_EXECUTABLE) build -t $(DOCKER_IMAGE) -f $(DOCKERFILE) --build-arg GOMODARGS="$(GOMODARGS)" --build-arg GCFLAGS="$(GCFLAGS)" .
 	echo "Container last built on" > $@
 	date >> $@
 

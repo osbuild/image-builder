@@ -173,7 +173,7 @@ func main() {
 		panic(err)
 	}
 
-	logrus.Infof("🚀 Starting image-builder built %s sha %s server on %v ...\n", common.BuildTime, common.BuildCommit, conf.ListenAddress)
+	logrus.Infof("🚀 Starting image-builder built %s sha %s server on %v ...", common.BuildTime, common.BuildCommit, conf.ListenAddress)
 	err = echoServer.Start(conf.ListenAddress)
 	if err != nil {
 		panic(err)
