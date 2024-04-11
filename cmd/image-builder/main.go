@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 
-	"github.com/osbuild/image-builder/internal/clients/recommendations"
+	"github.com/osbuild/image-builder/internal/oauth2"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
+	"github.com/osbuild/image-builder/internal/clients/recommendations"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
@@ -95,11 +96,13 @@ func main() {
 	}
 
 	recommendationConf := recommendations.RecommendationsClientConfig{
-		URL:          conf.RecommendURL,
-		CA:           conf.RecommendCA,
-		TokenURL:     conf.RecommendTokenURL,
-		ClientId:     conf.RecommendClientId,
-		ClientSecret: conf.RecommendSecret,
+		URL: conf.RecommendURL,
+		CA:  conf.RecommendCA,
+		Tokener: &oauth2.LazyToken{
+			Url:          conf.RecommendTokenURL,
+			ClientId:     conf.RecommendClientId,
+			ClientSecret: conf.RecommendSecret,
+		},
 	}
 	compClient, err := composer.NewClient(composerConf)
 	if err != nil {
