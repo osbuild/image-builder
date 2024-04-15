@@ -15,7 +15,7 @@ objects:
     backoffLimit: 0
     template:
       spec:
-        serviceAccountName: iqe-image-builder
+        serviceAccountName: ${SERVICE_ACCOUNT}
         restartPolicy: Never
         volumes:
         - name: sel-shm
@@ -110,7 +110,7 @@ objects:
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
-    name: iqe-image-builder
+    name: ${SERVICE_ACCOUNT}
   imagePullSecrets:
   - name: quay-cloudservices-pull
 
@@ -171,3 +171,5 @@ parameters:
   value: ''
 - name: VNC_GEOMETRY
   value: '1920x1080'
+- name: SERVICE_ACCOUNT
+  value: 'iqe-image-builder'
