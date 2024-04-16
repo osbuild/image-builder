@@ -3,24 +3,24 @@
 # --------------------------------------------
 # Options that must be configured by app owner
 # --------------------------------------------
-export APP_NAME="image-builder-crc"  # name of app-sre "application" folder this component lives in
-export COMPONENT_NAME="image-builder"  # name of app-sre "resourceTemplate" in deploy.yaml for this component
-export IMAGE="quay.io/cloudservices/image-builder"  # image location on quay
+export APP_NAME="image-builder-crc"                # name of app-sre "application" folder this component lives in
+export COMPONENT_NAME="image-builder"              # name of app-sre "resourceTemplate" in deploy.yaml for this component
+export IMAGE="quay.io/cloudservices/image-builder" # image location on quay
 
-export IQE_PLUGINS="image-builder"  # name of the IQE plugin for this app.
-export IQE_CJI_TIMEOUT="60m"  # This is the time to wait for smoke test to complete or fail
+export IQE_PLUGINS="image-builder"         # name of the IQE plugin for this app.
+export IQE_CJI_TIMEOUT="60m"               # This is the time to wait for smoke test to complete or fail
 export IQE_MARKER_EXPRESSION="be_pr_check" # run only tests marked by be_pr_check
-export IQE_ENV="ephemeral" # run only api test
+export IQE_ENV="ephemeral"                 # run only api test
 export IQE_IMAGE_TAG="image-builder"
 export DOCKERFILE="distribution/Dockerfile-ubi"
-export EXTRA_DEPLOY_ARGS="sources"
+export EXTRA_DEPLOY_ARGS="sources unleash-proxy"
 export REF_ENV="insights-stage"
 
 # Install bonfire repo/initialize
 # https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd/bootstrap.sh
 # This script automates the install / config of bonfire
 CICD_URL=https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd
-curl -s "$CICD_URL"/bootstrap.sh > .cicd_bootstrap.sh && source .cicd_bootstrap.sh
+curl -s "$CICD_URL"/bootstrap.sh >.cicd_bootstrap.sh && source .cicd_bootstrap.sh
 
 # The contents of build.sh can be found at:
 # https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd/build.sh
