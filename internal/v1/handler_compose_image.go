@@ -840,7 +840,18 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 		if res.Services.Enabled == nil {
 			res.Services.Enabled = &[]string{}
 		}
-		*res.Services.Enabled = append(*res.Services.Enabled, "rhcd")
+		// TODO: switch to `slice.Contains` when moving to go 1.21
+		containsService := func(services []string, service string) bool {
+			for _, s := range services {
+				if s == service {
+					return true
+				}
+			}
+			return false
+		}
+		if !containsService(*res.Services.Enabled, "rhcd") {
+			*res.Services.Enabled = append(*res.Services.Enabled, "rhcd")
+		}
 	}
 
 	if cust.Firewall != nil {
