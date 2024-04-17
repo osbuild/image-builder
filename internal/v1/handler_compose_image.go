@@ -830,6 +830,19 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 		}
 	}
 
+	// we need to explicitly add 'rhcd' to the enabled services
+	// if openscap and subscription customizations are set, otherwise
+	// the insights-client doesn't register properly
+	if cust.Subscription != nil && cust.Subscription.Insights && cust.Openscap != nil {
+		if res.Services == nil {
+			res.Services = &composer.Services{}
+		}
+		if res.Services.Enabled == nil {
+			res.Services.Enabled = &[]string{}
+		}
+		*res.Services.Enabled = append(*res.Services.Enabled, "rhcd")
+	}
+
 	if cust.Firewall != nil {
 		res.Firewall = &composer.FirewallCustomization{
 			Ports: cust.Firewall.Ports,
