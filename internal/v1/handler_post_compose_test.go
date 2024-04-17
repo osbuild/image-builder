@@ -1996,6 +1996,139 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		// subscriptions, openscap with services customizations
+		{
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Subscription: &Subscription{
+						Insights: true,
+					},
+					Openscap: &OpenSCAP{
+						ProfileId: "test",
+					},
+					Services: &Services{
+						Enabled: &[]string{"test_service"},
+						Masked:  &[]string{"test_service2"},
+					},
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesGuestImage,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-89",
+				Customizations: &composer.Customizations{
+					Subscription: &composer.Subscription{
+						ActivationKey: "",
+						BaseUrl:       "",
+						Insights:      true,
+						Rhc:           common.ToPtr(false),
+						Organization:  "0",
+						ServerUrl:     "",
+					},
+					Openscap: &composer.OpenSCAP{
+						ProfileId: "test",
+					},
+					Services: &composer.Services{
+						Enabled: &[]string{"test_service", "rhcd"},
+						Masked:  &[]string{"test_service2"},
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
+							Rhsm:     common.ToPtr(true),
+							Gpgkey:   common.ToPtr(rhelGpg),
+							CheckGpg: common.ToPtr(true),
+						},
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
+							Rhsm:     common.ToPtr(true),
+							Gpgkey:   common.ToPtr(rhelGpg),
+							CheckGpg: common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+		},
+		// subscriptions, openscap with no services customizations
+		{
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Subscription: &Subscription{
+						Insights: true,
+					},
+					Openscap: &OpenSCAP{
+						ProfileId: "test",
+					},
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesGuestImage,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-89",
+				Customizations: &composer.Customizations{
+					Subscription: &composer.Subscription{
+						ActivationKey: "",
+						BaseUrl:       "",
+						Insights:      true,
+						Rhc:           common.ToPtr(false),
+						Organization:  "0",
+						ServerUrl:     "",
+					},
+					Openscap: &composer.OpenSCAP{
+						ProfileId: "test",
+					},
+					Services: &composer.Services{
+						Enabled: &[]string{"rhcd"},
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
+							Rhsm:     common.ToPtr(true),
+							Gpgkey:   common.ToPtr(rhelGpg),
+							CheckGpg: common.ToPtr(true),
+						},
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
+							Rhsm:     common.ToPtr(true),
+							Gpgkey:   common.ToPtr(rhelGpg),
+							CheckGpg: common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {
