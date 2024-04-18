@@ -842,7 +842,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 			var body content_sources.ApiListSnapshotByDateRequest
 			err := json.NewDecoder(r.Body).Decode(&body)
 			require.NoError(t, err)
-			require.Equal(t, "1999-01-01", *body.Date)
+			require.Equal(t, "1999-01-30", *body.Date)
 			require.ElementsMatch(t, []string{
 				repoBaseId.String(),
 				repoAppstrId.String(),
@@ -853,7 +853,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					{
 						IsAfter: common.ToPtr(false),
 						Match: &content_sources.ApiSnapshotResponse{
-							CreatedAt:      common.ToPtr("1998-01-01"),
+							CreatedAt:      common.ToPtr("1998-01-30"),
 							RepositoryPath: common.ToPtr("/snappy/baseos"),
 						},
 						RepositoryUuid: common.ToPtr(repoBaseId.String()),
@@ -861,7 +861,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					{
 						IsAfter: common.ToPtr(false),
 						Match: &content_sources.ApiSnapshotResponse{
-							CreatedAt:      common.ToPtr("1998-01-01"),
+							CreatedAt:      common.ToPtr("1998-01-30"),
 							RepositoryPath: common.ToPtr("/snappy/appstream"),
 						},
 						RepositoryUuid: common.ToPtr(repoAppstrId.String()),
@@ -892,7 +892,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 			{
 				Architecture: "x86_64",
 				ImageType:    ImageTypesGuestImage,
-				SnapshotDate: common.ToPtr("1999-01-01T00:00:00.000Z"),
+				SnapshotDate: common.ToPtr("1999-01-30"),
 				UploadRequest: UploadRequest{
 					Type:    UploadTypesAwsS3,
 					Options: uo,

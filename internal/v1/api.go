@@ -694,7 +694,7 @@ type ImageRequest struct {
 	// distribution. The snapshot that was made closest to, but before the specified date will
 	// be used. If no snapshots made before the specified date can be found, the snapshot
 	// closest to, but after the specified date will be used. If no snapshots can be found at
-	// all, the request will fail.
+	// all, the request will fail. The format must be YYYY-MM-DD (ISO 8601 extended).
 	SnapshotDate  *string       `json:"snapshot_date,omitempty"`
 	UploadRequest UploadRequest `json:"upload_request"`
 }
