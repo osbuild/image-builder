@@ -549,6 +549,7 @@ func testGetBlueprintComposes(t *testing.T) {
 
 	composes, count, err := d.GetComposes(ctx, ORGID1, fortnight, 100, 0, []string{})
 	require.NoError(t, err)
+	require.Equal(t, id, *composes[0].BlueprintId)
 	require.Equal(t, 2, *composes[0].BlueprintVersion)
 
 	count, err = d.CountBlueprintComposesSince(ctx, ORGID1, id, nil, (time.Hour * 24 * 14), nil)

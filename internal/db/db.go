@@ -31,6 +31,7 @@ type ComposeEntry struct {
 
 type ComposeWithBlueprintVersion struct {
 	*ComposeEntry
+	BlueprintId      *uuid.UUID
 	BlueprintVersion *int
 }
 
@@ -88,7 +89,7 @@ const (
 		VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4, $5, $6, $7, $8)`
 
 	sqlGetComposes = `
-	    SELECT composes.job_id, composes.request, composes.created_at, composes.image_name, composes.client_id, blueprint_versions.version
+	    SELECT composes.job_id, composes.request, composes.created_at, composes.image_name, composes.client_id, blueprint_versions.blueprint_id, blueprint_versions.version
 	    FROM composes LEFT JOIN blueprint_versions ON composes.blueprint_version_id = blueprint_versions.id
 		WHERE org_id = $1
 		AND CURRENT_TIMESTAMP - composes.created_at <= $2
@@ -246,8 +247,9 @@ func (db *dB) GetComposes(ctx context.Context, orgId string, since time.Duration
 		var createdAt time.Time
 		var imageName *string
 		var clientId *string
+		var blueprintId *uuid.UUID
 		var blueprintVersion *int
-		err = result.Scan(&jobId, &request, &createdAt, &imageName, &clientId, &blueprintVersion)
+		err = result.Scan(&jobId, &request, &createdAt, &imageName, &clientId, &blueprintId, &blueprintVersion)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -259,6 +261,7 @@ func (db *dB) GetComposes(ctx context.Context, orgId string, since time.Duration
 				imageName,
 				clientId,
 			},
+			blueprintId,
 			blueprintVersion,
 		})
 	}

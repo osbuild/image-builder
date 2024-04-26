@@ -550,11 +550,13 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 			return err
 		}
 		data = append(data, ComposesResponseItem{
-			CreatedAt: c.CreatedAt.Format(time.RFC3339),
-			Id:        c.Id,
-			ImageName: c.ImageName,
-			Request:   cmpr,
-			ClientId:  (*ClientId)(c.ClientId),
+			CreatedAt:        c.CreatedAt.Format(time.RFC3339),
+			Id:               c.Id,
+			ImageName:        c.ImageName,
+			BlueprintId:      c.BlueprintId,
+			BlueprintVersion: c.BlueprintVersion,
+			Request:          cmpr,
+			ClientId:         (*ClientId)(c.ClientId),
 		})
 	}
 

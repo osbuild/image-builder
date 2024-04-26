@@ -285,11 +285,16 @@ func TestGetComposes(t *testing.T) {
 	require.Equal(t, 3, result.Meta.Count)
 	require.Equal(t, 3, len(result.Data))
 
-	err = dbase.InsertCompose(ctx, id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, nil)
+	bpId := uuid.New()
+	versionId := uuid.New()
+	err = dbase.InsertBlueprint(ctx, bpId, versionId, "000000", "500000", "bpName", "desc", json.RawMessage("{}"))
 	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, id5, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, nil)
+
+	err = dbase.InsertCompose(ctx, id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, id6, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-commit"}]}`), &clientId, nil)
+	err = dbase.InsertCompose(ctx, id5, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &versionId)
+	require.NoError(t, err)
+	err = dbase.InsertCompose(ctx, id6, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-commit"}]}`), &clientId, &versionId)
 	require.NoError(t, err)
 
 	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/composes?ignoreImageTypes=edge-installer&ignoreImageTypes=aws", &tutils.AuthString0)
@@ -300,6 +305,8 @@ func TestGetComposes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(result.Data))
 	require.Equal(t, 1, result.Meta.Count)
+	require.Equal(t, bpId, *result.Data[0].BlueprintId)
+	require.Equal(t, 1, *result.Data[0].BlueprintVersion)
 }
 
 // TestBuildOSTreeOptions checks if the buildOSTreeOptions utility function
