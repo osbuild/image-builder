@@ -764,6 +764,68 @@
                 },
                 "type": "object"
             },
+            "api.SnapshotErrata": {
+                "properties": {
+                    "description": {
+                        "description": "Description of the errata",
+                        "type": "string"
+                    },
+                    "errata_id": {
+                        "description": "ID of the errata",
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "issued_date": {
+                        "description": "IssuedDate of the errata",
+                        "type": "string"
+                    },
+                    "reboot_suggested": {
+                        "description": "Whether a reboot is suggested",
+                        "type": "boolean"
+                    },
+                    "severity": {
+                        "description": "Severity of the errata",
+                        "type": "string"
+                    },
+                    "summary": {
+                        "description": "Summary of the errata",
+                        "type": "string"
+                    },
+                    "title": {
+                        "description": "Title of the errata",
+                        "type": "string"
+                    },
+                    "type": {
+                        "description": "Type of the errata",
+                        "type": "string"
+                    },
+                    "updated_date": {
+                        "description": "UpdateDate of the errata",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "api.SnapshotErrataCollectionResponse": {
+                "properties": {
+                    "data": {
+                        "description": "List of errata",
+                        "items": {
+                            "$ref": "#/components/schemas/api.SnapshotErrata"
+                        },
+                        "type": "array"
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/api.Links"
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/api.ResponseMetadata"
+                    }
+                },
+                "type": "object"
+            },
             "api.SnapshotForDate": {
                 "properties": {
                     "is_after": {
@@ -3683,6 +3745,119 @@
                 "summary": "Get configuration file of a repository",
                 "tags": [
                     "repositories"
+                ]
+            }
+        },
+        "/snapshots/{uuid}/errata": {
+            "get": {
+                "description": "List errata in a repository snapshot.",
+                "operationId": "listSnapshotErrata",
+                "parameters": [
+                    {
+                        "description": "Snapshot ID.",
+                        "in": "path",
+                        "name": "uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.",
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Term to filter and retrieve items that match the specified search criteria. Search term can include name.",
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "A comma separated list of types to control api response. Type can include `security`, `enhancement`, `bugfix`, and `other`.",
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "A comma separated list of severities to control api response. Severity can include `Important`, `Critical`, `Moderate`, `Low`, and `Unknown`.",
+                        "in": "query",
+                        "name": "severity",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/api.SnapshotErrataCollectionResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "List Snapshot Errata",
+                "tags": [
+                    "snapshots"
                 ]
             }
         },

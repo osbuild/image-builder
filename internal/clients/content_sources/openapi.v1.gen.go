@@ -462,6 +462,45 @@ type ApiSnapshotCollectionResponse struct {
 	Meta  *ApiResponseMetadata   `json:"meta,omitempty"`
 }
 
+// ApiSnapshotErrata defines model for api.SnapshotErrata.
+type ApiSnapshotErrata struct {
+	// Description Description of the errata
+	Description *string `json:"description,omitempty"`
+
+	// ErrataId ID of the errata
+	ErrataId *string `json:"errata_id,omitempty"`
+	Id       *string `json:"id,omitempty"`
+
+	// IssuedDate IssuedDate of the errata
+	IssuedDate *string `json:"issued_date,omitempty"`
+
+	// RebootSuggested Whether a reboot is suggested
+	RebootSuggested *bool `json:"reboot_suggested,omitempty"`
+
+	// Severity Severity of the errata
+	Severity *string `json:"severity,omitempty"`
+
+	// Summary Summary of the errata
+	Summary *string `json:"summary,omitempty"`
+
+	// Title Title of the errata
+	Title *string `json:"title,omitempty"`
+
+	// Type Type of the errata
+	Type *string `json:"type,omitempty"`
+
+	// UpdatedDate UpdateDate of the errata
+	UpdatedDate *string `json:"updated_date,omitempty"`
+}
+
+// ApiSnapshotErrataCollectionResponse defines model for api.SnapshotErrataCollectionResponse.
+type ApiSnapshotErrataCollectionResponse struct {
+	// Data List of errata
+	Data  *[]ApiSnapshotErrata `json:"data,omitempty"`
+	Links *ApiLinks            `json:"links,omitempty"`
+	Meta  *ApiResponseMetadata `json:"meta,omitempty"`
+}
+
 // ApiSnapshotForDate defines model for api.SnapshotForDate.
 type ApiSnapshotForDate struct {
 	// IsAfter Is the snapshot after the specified date
@@ -816,6 +855,24 @@ type ListRepositoriesRpmsParams struct {
 
 // ValidateRepositoryParametersJSONBody defines parameters for ValidateRepositoryParameters.
 type ValidateRepositoryParametersJSONBody = []ApiRepositoryValidationRequest
+
+// ListSnapshotErrataParams defines parameters for ListSnapshotErrata.
+type ListSnapshotErrataParams struct {
+	// Limit Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Search Term to filter and retrieve items that match the specified search criteria. Search term can include name.
+	Search *string `form:"search,omitempty" json:"search,omitempty"`
+
+	// Type A comma separated list of types to control api response. Type can include `security`, `enhancement`, `bugfix`, and `other`.
+	Type *string `form:"type,omitempty" json:"type,omitempty"`
+
+	// Severity A comma separated list of severities to control api response. Severity can include `Important`, `Critical`, `Moderate`, `Low`, and `Unknown`.
+	Severity *string `form:"severity,omitempty" json:"severity,omitempty"`
+}
 
 // ListSnapshotRpmsParams defines parameters for ListSnapshotRpms.
 type ListSnapshotRpmsParams struct {
