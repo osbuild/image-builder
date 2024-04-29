@@ -63,7 +63,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	}
 
 	var repositories []composer.Repository
-	if composeRequest.ImageRequests[0].SnapshotDate != nil {
+	if composeRequest.ImageRequests[0].SnapshotDate != nil && len(*composeRequest.ImageRequests[0].SnapshotDate) > 0 {
 		repositories, err = h.buildRepositorySnapshots(ctx, arch, composeRequest.ImageRequests[0].ImageType, *composeRequest.ImageRequests[0].SnapshotDate)
 		if err != nil {
 			return ComposeResponse{}, err
