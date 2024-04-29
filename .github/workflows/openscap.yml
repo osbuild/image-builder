@@ -1,0 +1,51 @@
+# This action checks OpenSCAP configs every Monday at 5:00 UTC.
+name: openscap
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * 1"
+
+jobs:
+  update-openscap:
+    name: "Update OpenSCAP configs"
+    if: github.repository == 'osbuild/image-builder'
+    runs-on: ubuntu-latest
+    container:
+      image: registry.fedoraproject.org/fedora:39
+
+    steps:
+      - name: Set up bootstrap Go 1.20
+        uses: actions/setup-go@v5.0.0
+        with:
+          go-version: '1.20'
+          cache: false
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+
+      - name: Install OpenSCAP and scap-security-guides
+        run: dnf install -y openscap scap-security-guide
+
+      - name: Run OpenSCAP config generation
+        run: go run ./cmd/oscap ./distributions
+
+      - name: Check if there are any changes
+        run: |
+          if [ "$(git status --porcelain)" ]; then
+            echo
+            echo "OpenSCAP configs are up-to-date"
+            exit "0"
+          fi
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: update-openscap
+          delete-branch: true
+          title: "distributions: regenerate OpenSCAP configs"
+          commit-message: "distributions: regenerate OpenSCAP configs"
+          body: Update OpenSCAP configs
+          token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+          author: schutzbot <schutzbot@gmail.com>
