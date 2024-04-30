@@ -161,5 +161,5 @@ func (rc *RecommendationsClient) RecommendationsPackages(recommendationsPackages
 	if err != nil {
 		return nil, err
 	}
-	return rc.request("POST", fmt.Sprintf("%s/api/packages/recommendations", rc.URL), contentHeaders, bytes.NewReader(buf))
+	return rc.request("POST", fmt.Sprintf("%s/packages/recommendations", rc.URL), contentHeaders, bytes.NewReader(buf))
 }
