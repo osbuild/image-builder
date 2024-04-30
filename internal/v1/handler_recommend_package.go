@@ -39,16 +39,17 @@ func (h *Handlers) handleRecommendationsResponse(ctx echo.Context, uploadPackage
 
 	ctx.Logger().Debugf("Getting Response list of items %v", resp)
 	defer closeBody(ctx, resp.Body)
-	var packages []string
-	err = json.NewDecoder(resp.Body).Decode(&packages)
+
+	var responsePackages RecommendationsResponse
+	err = json.NewDecoder(resp.Body).Decode(&responsePackages)
 	if err != nil {
 		return RecommendationsResponse{}, err
 	}
 
-	if len(packages) == 0 {
+	if len(responsePackages.Packages) == 0 {
 		ctx.Logger().Errorf("User should define packages")
 		return RecommendationsResponse{}, nil
 	}
 
-	return RecommendationsResponse{Packages: packages}, nil
+	return responsePackages, nil
 }
