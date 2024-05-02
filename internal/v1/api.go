@@ -77,6 +77,7 @@ const (
 	Rhel91       Distributions = "rhel-91"
 	Rhel92       Distributions = "rhel-92"
 	Rhel93       Distributions = "rhel-93"
+	Rhel94       Distributions = "rhel-94"
 	Rhel9Nightly Distributions = "rhel-9-nightly"
 )
 

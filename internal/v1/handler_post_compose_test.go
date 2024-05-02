@@ -887,7 +887,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 	var uo UploadRequest_Options
 	require.NoError(t, uo.FromAWSS3UploadRequestOptions(AWSS3UploadRequestOptions{}))
 	payload := ComposeRequest{
-		Distribution: "rhel-93",
+		Distribution: "rhel-94",
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: "x86_64",
@@ -908,7 +908,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 	require.Equal(t, composeId, result.Id)
 
 	require.Equal(t, composer.ComposeRequest{
-		Distribution: "rhel-93",
+		Distribution: "rhel-94",
 		ImageRequest: &composer.ImageRequest{
 			Architecture: "x86_64",
 			ImageType:    composer.ImageTypesGuestImage,
