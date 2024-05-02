@@ -671,8 +671,7 @@ paths:
           content:
             application/json:
               schema:
-                items:
-                  $ref: "#/components/schemas/RecommendationsResponse"
+                $ref: "#/components/schemas/RecommendationsResponse"
 components:
   schemas:
     HTTPError:
