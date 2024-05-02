@@ -1,0 +1,286 @@
+[
+  {
+    "name": "google-cloud-cli",
+    "summary": "Google Cloud CLI"
+  },
+  {
+    "name": "google-cloud-cli-anthos-auth",
+    "summary": "Google Cloud CLI Anthos Auth"
+  },
+  {
+    "name": "google-cloud-cli-anthoscli",
+    "summary": "Google Cloud CLI Anthos Auth"
+  },
+  {
+    "name": "google-cloud-cli-app-engine-go",
+    "summary": "Google Cloud CLI App Engine Go"
+  },
+  {
+    "name": "google-cloud-cli-app-engine-grpc",
+    "summary": "Google Cloud CLI App Engine gRPC"
+  },
+  {
+    "name": "google-cloud-cli-app-engine-java",
+    "summary": "Google Cloud CLI App Engine Java"
+  },
+  {
+    "name": "google-cloud-cli-app-engine-python",
+    "summary": "Google Cloud CLI App Engine Python"
+  },
+  {
+    "name": "google-cloud-cli-app-engine-python-extras",
+    "summary": "Google Cloud CLI App Engine Python extra libraries"
+  },
+  {
+    "name": "google-cloud-cli-bigtable-emulator",
+    "summary": "Google Cloud CLI Bigtable Emulator"
+  },
+  {
+    "name": "google-cloud-cli-cbt",
+    "summary": "Google Cloud CLI Cloud Bigtable"
+  },
+  {
+    "name": "google-cloud-cli-cloud-build-local",
+    "summary": "Google Cloud CLI Cloud Build Local Builder"
+  },
+  {
+    "name": "google-cloud-cli-cloud-run-proxy",
+    "summary": "Google Cloud CLI Cloud Run Proxy"
+  },
+  {
+    "name": "google-cloud-cli-config-connector",
+    "summary": "Google Cloud CLI Config Connector"
+  },
+  {
+    "name": "google-cloud-cli-datalab",
+    "summary": "Google Cloud CLI Datalab"
+  },
+  {
+    "name": "google-cloud-cli-datastore-emulator",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-cli-docker-credential-gcr",
+    "summary": "Google Cloud CLI Docker Credential GCR"
+  },
+  {
+    "name": "google-cloud-cli-enterprise-certificate-proxy",
+    "summary": "Google Cloud CLI enterprise-certificate-proxy"
+  },
+  {
+    "name": "google-cloud-cli-firestore-emulator",
+    "summary": "Google Cloud CLI Firestore Emulator"
+  },
+  {
+    "name": "google-cloud-cli-gke-gcloud-auth-plugin",
+    "summary": "Google Cloud CLI GKE Auth Plugin"
+  },
+  {
+    "name": "google-cloud-cli-harbourbridge",
+    "summary": "Google Cloud CLI Harbourbridge"
+  },
+  {
+    "name": "google-cloud-cli-istioctl",
+    "summary": "Google Cloud CLI istioctl"
+  },
+  {
+    "name": "google-cloud-cli-kpt",
+    "summary": "Google Cloud CLI kpt"
+  },
+  {
+    "name": "google-cloud-cli-kubectl-oidc",
+    "summary": "Google Cloud CLI Kubectl OIDC"
+  },
+  {
+    "name": "google-cloud-cli-local-extract",
+    "summary": "Google Cloud CLI Local Extract"
+  },
+  {
+    "name": "google-cloud-cli-log-streaming",
+    "summary": "Google Cloud CLI Cloud Run Proxy"
+  },
+  {
+    "name": "google-cloud-cli-minikube",
+    "summary": "Google Cloud CLI Minikube"
+  },
+  {
+    "name": "google-cloud-cli-nomos",
+    "summary": "Google Cloud CLI Nomos"
+  },
+  {
+    "name": "google-cloud-cli-package-go-module",
+    "summary": "Google Cloud CLI Package Go Module"
+  },
+  {
+    "name": "google-cloud-cli-pubsub-emulator",
+    "summary": "Google Cloud CLI PubSub Emulator"
+  },
+  {
+    "name": "google-cloud-cli-skaffold",
+    "summary": "Google Cloud CLI Skaffold"
+  },
+  {
+    "name": "google-cloud-cli-spanner-emulator",
+    "summary": "Google Cloud CLI Spanner Emulator"
+  },
+  {
+    "name": "google-cloud-cli-spanner-migration-tool",
+    "summary": "Google Cloud CLI Spanner migration tool"
+  },
+  {
+    "name": "google-cloud-cli-terraform-tools",
+    "summary": "Google Cloud CLI Terraform Tools"
+  },
+  {
+    "name": "google-cloud-cli-terraform-validator",
+    "summary": "Google Cloud CLI Terraform Validator"
+  },
+  {
+    "name": "google-cloud-cli-tests",
+    "summary": "Google Cloud CLI Tests"
+  },
+  {
+    "name": "google-cloud-sdk",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-anthos-auth",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-app-engine-go",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-app-engine-grpc",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-app-engine-java",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-app-engine-python",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-app-engine-python-extras",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-bigtable-emulator",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-bundled-python3",
+    "summary": "Python3 interpreter for Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-cbt",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-cloud-build-local",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-cloud-run-proxy",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-config-connector",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-datalab",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-datastore-emulator",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-docker-credential-gcr",
+    "summary": "Google Cloud CLI Docker Credential GCR"
+  },
+  {
+    "name": "google-cloud-sdk-enterprise-certificate-proxy",
+    "summary": "Google Cloud CLI enterprise-certificate-proxy"
+  },
+  {
+    "name": "google-cloud-sdk-firestore-emulator",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-gke-gcloud-auth-plugin",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-harbourbridge",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-istioctl",
+    "summary": "Google Cloud CLI istioctl"
+  },
+  {
+    "name": "google-cloud-sdk-kpt",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-kubectl-oidc",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-local-extract",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-log-streaming",
+    "summary": "Google Cloud CLI Cloud Run Proxy"
+  },
+  {
+    "name": "google-cloud-sdk-minikube",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-nomos",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-package-go-module",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-pubsub-emulator",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-skaffold",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-spanner-emulator",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-spanner-migration-tool",
+    "summary": "Google Cloud CLI Spanner migration tool"
+  },
+  {
+    "name": "google-cloud-sdk-terraform-tools",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-terraform-validator",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "google-cloud-sdk-tests",
+    "summary": "Google Cloud SDK"
+  },
+  {
+    "name": "kubectl",
+    "summary": "Command-line utility for interacting with a Kubernetes cluster"
+  }
+]
