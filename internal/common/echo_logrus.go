@@ -12,12 +12,14 @@ import (
 // EchoLogrusLogger extend logrus.Logger
 type EchoLogrusLogger struct {
 	*logrus.Logger
-	Ctx context.Context
+	Ctx    context.Context
+	Fields logrus.Fields
 }
 
 var commonLogger = &EchoLogrusLogger{
 	Logger: logrus.StandardLogger(),
 	Ctx:    context.Background(),
+	Fields: logrus.Fields{},
 }
 
 func Logger() *EchoLogrusLogger {
@@ -66,11 +68,11 @@ func (l *EchoLogrusLogger) SetPrefix(p string) {
 }
 
 func (l *EchoLogrusLogger) Print(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Print(i...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Print(i...)
 }
 
 func (l *EchoLogrusLogger) Printf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Printf(format, args...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Printf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Printj(j log.JSON) {
@@ -78,15 +80,15 @@ func (l *EchoLogrusLogger) Printj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Println(string(b))
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Println(string(b))
 }
 
 func (l *EchoLogrusLogger) Debug(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Debug(i...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Debug(i...)
 }
 
 func (l *EchoLogrusLogger) Debugf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Debugf(format, args...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Debugf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Debugj(j log.JSON) {
@@ -94,15 +96,15 @@ func (l *EchoLogrusLogger) Debugj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Debugln(string(b))
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Debugln(string(b))
 }
 
 func (l *EchoLogrusLogger) Info(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Info(i...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Info(i...)
 }
 
 func (l *EchoLogrusLogger) Infof(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Infof(format, args...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Infof(format, args...)
 }
 
 func (l *EchoLogrusLogger) Infoj(j log.JSON) {
@@ -110,15 +112,15 @@ func (l *EchoLogrusLogger) Infoj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Infoln(string(b))
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Infoln(string(b))
 }
 
 func (l *EchoLogrusLogger) Warn(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Warn(i...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Warn(i...)
 }
 
 func (l *EchoLogrusLogger) Warnf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Warnf(format, args...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Warnf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Warnj(j log.JSON) {
@@ -126,15 +128,15 @@ func (l *EchoLogrusLogger) Warnj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Warnln(string(b))
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Warnln(string(b))
 }
 
 func (l *EchoLogrusLogger) Error(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Error(i...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Error(i...)
 }
 
 func (l *EchoLogrusLogger) Errorf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Errorf(format, args...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Errorf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Errorj(j log.JSON) {
@@ -142,15 +144,15 @@ func (l *EchoLogrusLogger) Errorj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Errorln(string(b))
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Errorln(string(b))
 }
 
 func (l *EchoLogrusLogger) Fatal(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Fatal(i...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Fatal(i...)
 }
 
 func (l *EchoLogrusLogger) Fatalf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Fatalf(format, args...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Fatalf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Fatalj(j log.JSON) {
@@ -158,15 +160,15 @@ func (l *EchoLogrusLogger) Fatalj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Fatalln(string(b))
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Fatalln(string(b))
 }
 
 func (l *EchoLogrusLogger) Panic(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Panic(i...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Panic(i...)
 }
 
 func (l *EchoLogrusLogger) Panicf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Panicf(format, args...)
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Panicf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Panicj(j log.JSON) {
@@ -174,5 +176,5 @@ func (l *EchoLogrusLogger) Panicj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Panicln(string(b))
+	l.Logger.WithContext(l.Ctx).WithFields(l.Fields).Panicln(string(b))
 }
