@@ -65,15 +65,21 @@ func requestIdExtractMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		ctx = context.WithValue(ctx, insightsRequestIdCtx, iid)
 		c.SetRequest(c.Request().WithContext(ctx))
 
+		f := logrus.Fields{"method": c.Request().Method, "path": c.Path()}
+		for _, key := range c.ParamNames() {
+			f[key] = c.Param(key)
+		}
+
 		// and set echo logger to be context logger
-		ctxLogger := logrus.StandardLogger().WithContext(ctx).Logger
+		ctxLogger := logrus.StandardLogger()
 		c.SetLogger(&common.EchoLogrusLogger{
 			Logger: ctxLogger,
 			Ctx:    ctx,
+			Fields: f,
 		})
 
 		if !SkipPath(c.Path()) {
-			ctxLogger.WithContext(ctx).Debugf("Started request %s %s", c.Request().Method, c.Request().RequestURI)
+			c.Logger().Debugf("Started request")
 		}
 
 		return next(c)
