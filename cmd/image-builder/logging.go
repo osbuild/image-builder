@@ -15,6 +15,7 @@ type ctxKey int
 const (
 	requestIdCtx         ctxKey = iota
 	insightsRequestIdCtx ctxKey = iota
+	requestDataCtx       ctxKey = iota
 )
 
 // Use request id from the standard context and add it to the message as a field.
@@ -36,6 +37,10 @@ func (h *ctxHook) Fire(e *logrus.Entry) error {
 	if e.Context != nil {
 		e.Data["request_id"] = e.Context.Value(requestIdCtx)
 		e.Data["insights_id"] = e.Context.Value(insightsRequestIdCtx)
+		rd := e.Context.Value(requestDataCtx).(logrus.Fields)
+		for k, v := range rd {
+			e.Data[k] = v
+		}
 	}
 
 	return nil
@@ -59,27 +64,35 @@ func requestIdExtractMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			iid = random.String(12)
 		}
 
+		// create fields stored with every log statement
+		rd := logrus.Fields{
+			"method": c.Request().Method,
+			"path":   c.Path(),
+		}
+		for _, key := range c.ParamNames() {
+			// protect existing and the most important fields
+			if _, ok := rd[key]; !(ok || key == "msg" || key == "level") {
+				rd[key] = c.Param(key)
+			}
+		}
+
 		// store it in a standard context
 		ctx := c.Request().Context()
 		ctx = context.WithValue(ctx, requestIdCtx, rid)
 		ctx = context.WithValue(ctx, insightsRequestIdCtx, iid)
+		ctx = context.WithValue(ctx, requestDataCtx, rd)
 		c.SetRequest(c.Request().WithContext(ctx))
-
-		f := logrus.Fields{"method": c.Request().Method, "path": c.Path()}
-		for _, key := range c.ParamNames() {
-			f[key] = c.Param(key)
-		}
 
 		// and set echo logger to be context logger
 		ctxLogger := logrus.StandardLogger()
-		c.SetLogger(&common.EchoLogrusLogger{
+		newLogger := &common.EchoLogrusLogger{
 			Logger: ctxLogger,
 			Ctx:    ctx,
-			Fields: f,
-		})
+		}
+		c.SetLogger(newLogger)
 
 		if !SkipPath(c.Path()) {
-			c.Logger().Debugf("Started request")
+			newLogger.Debugf("Started request")
 		}
 
 		return next(c)
