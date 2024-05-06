@@ -154,7 +154,8 @@ func main() {
 			if values.Error != nil {
 				fields["error"] = values.Error
 			}
-			logrus.WithFields(fields).Infof("Processed request %s %s", values.Method, values.URI)
+			logrus.WithContext(c.Request().Context()).
+				WithFields(fields).Infof("Processed request %s %s", values.Method, values.URI)
 
 			return nil
 		},
