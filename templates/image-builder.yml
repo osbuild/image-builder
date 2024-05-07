@@ -179,9 +179,11 @@ objects:
         select
           job_id,created_at,client_id,org_id,account_number,email,request->>'distribution' as distribution,
           req->>'architecture' as architecture,req->>'image_type' as image_type,req->'upload_request'->>'type' as upload_request_type,req->'ostree'->>'url' as ostree_url,
+          req->>'snapshot_date' as snapshot_date,
           request->'customizations'->'packages' as packages,
           request->'customizations'->'filesystem' as filesystem,
           request->'customizations'->'payload_repositories' as payload_repositories,
+          request->'customizations'->'openscap' as openscap,
           jsonb_array_length(request->'customizations'->'users') as num_users
         from
           composes,jsonb_array_elements(composes.request->'image_requests') as req;
