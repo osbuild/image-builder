@@ -132,6 +132,31 @@ func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID) error {
 	return ctx.JSON(http.StatusOK, blueprintResponse)
 }
 
+func (h *Handlers) GetImageTypesFromBlueprint(ctx echo.Context, id openapi_types.UUID) error {
+	userID, err := h.server.getIdentity(ctx)
+	if err != nil {
+		return err
+	}
+
+	ctx.Logger().Infof("Fetching blueprint %s", id)
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID())
+	if err != nil {
+		return err
+	}
+
+	blueprint, err := BlueprintFromEntry(blueprintEntry)
+	if err != nil {
+		return err
+	}
+
+	var imageTypes []ImageTypes
+	for _, req := range blueprint.ImageRequests {
+		imageTypes = append(imageTypes, req.ImageType)
+	}
+
+	return ctx.JSON(http.StatusOK, imageTypes)
+}
+
 func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) error {
 	userID, err := h.server.getIdentity(ctx)
 	if err != nil {

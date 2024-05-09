@@ -1766,6 +1766,9 @@ type ServerInterface interface {
 	// get composes associated with a blueprint
 	// (GET /experimental/blueprints/{id}/composes)
 	GetBlueprintComposes(ctx echo.Context, id openapi_types.UUID, params GetBlueprintComposesParams) error
+	// Get image types from a blueprint
+	// (GET /experimental/blueprints/{id}/image_types)
+	GetImageTypesFromBlueprint(ctx echo.Context, id openapi_types.UUID) error
 	// List recommended packages.
 	// (POST /experimental/recommendations)
 	RecommendPackage(ctx echo.Context) error
@@ -2127,6 +2130,22 @@ func (w *ServerInterfaceWrapper) GetBlueprintComposes(ctx echo.Context) error {
 	return err
 }
 
+// GetImageTypesFromBlueprint converts echo context to params.
+func (w *ServerInterfaceWrapper) GetImageTypesFromBlueprint(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetImageTypesFromBlueprint(ctx, id)
+	return err
+}
+
 // RecommendPackage converts echo context to params.
 func (w *ServerInterfaceWrapper) RecommendPackage(ctx echo.Context) error {
 	var err error
@@ -2285,6 +2304,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PUT(baseURL+"/experimental/blueprints/:id", wrapper.UpdateBlueprint)
 	router.POST(baseURL+"/experimental/blueprints/:id/compose", wrapper.ComposeBlueprint)
 	router.GET(baseURL+"/experimental/blueprints/:id/composes", wrapper.GetBlueprintComposes)
+	router.GET(baseURL+"/experimental/blueprints/:id/image_types", wrapper.GetImageTypesFromBlueprint)
 	router.POST(baseURL+"/experimental/recommendations", wrapper.RecommendPackage)
 	router.GET(baseURL+"/oscap/:distribution/profiles", wrapper.GetOscapProfiles)
 	router.GET(baseURL+"/oscap/:distribution/:profile/customizations", wrapper.GetOscapCustomizations)

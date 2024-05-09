@@ -591,6 +591,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+  /experimental/blueprints/{id}/image_types:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        example: '123e4567-e89b-12d3-a456-426655440000'
+        required: true
+        description: UUID of a blueprint
+    get:
+      summary: Get image types from a blueprint
+      description: "get image types from a blueprint"
+      operationId: getImageTypesFromBlueprint
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ImageTypes'
   /experimental/blueprints/{id}/composes:
     get:
       summary: get composes associated with a blueprint
