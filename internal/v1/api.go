@@ -958,6 +958,11 @@ type GetBlueprintsParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// ComposeBlueprintJSONBody defines parameters for ComposeBlueprint.
+type ComposeBlueprintJSONBody struct {
+	ImageTypes *[]ImageTypes `json:"image_types,omitempty"`
+}
+
 // GetBlueprintComposesParams defines parameters for GetBlueprintComposes.
 type GetBlueprintComposesParams struct {
 	// BlueprintVersion Filter by a specific version of the Blueprint we want to fetch composes for.
@@ -1006,6 +1011,9 @@ type CreateBlueprintJSONRequestBody = CreateBlueprintRequest
 
 // UpdateBlueprintJSONRequestBody defines body for UpdateBlueprint for application/json ContentType.
 type UpdateBlueprintJSONRequestBody = CreateBlueprintRequest
+
+// ComposeBlueprintJSONRequestBody defines body for ComposeBlueprint for application/json ContentType.
+type ComposeBlueprintJSONRequestBody ComposeBlueprintJSONBody
 
 // RecommendPackageJSONRequestBody defines body for RecommendPackage for application/json ContentType.
 type RecommendPackageJSONRequestBody = RecommendPackageRequest

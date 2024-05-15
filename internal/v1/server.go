@@ -181,6 +181,9 @@ type binder struct{}
 
 func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	request := ctx.Request()
+	if request.ContentLength == 0 {
+		return nil
+	}
 
 	contentType := request.Header["Content-Type"]
 	if len(contentType) != 1 || contentType[0] != "application/json" {

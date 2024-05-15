@@ -16,6 +16,8 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/db"
 
+	"slices"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -176,6 +178,12 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 }
 
 func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) error {
+	var requestBody ComposeBlueprintJSONBody
+	err := ctx.Bind(&requestBody)
+	if err != nil {
+		return err
+	}
+
 	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
@@ -192,6 +200,9 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 	composeResponses := make([]ComposeResponse, 0, len(blueprint.ImageRequests))
 	clientId := ClientId("api")
 	for _, imageRequest := range blueprint.ImageRequests {
+		if requestBody.ImageTypes != nil && !slices.Contains(*requestBody.ImageTypes, imageRequest.ImageType) {
+			continue
+		}
 		composeRequest := ComposeRequest{
 			Customizations:   &blueprint.Customizations,
 			Distribution:     blueprint.Distribution,
