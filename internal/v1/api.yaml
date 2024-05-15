@@ -572,10 +572,23 @@ paths:
           required: true
           description: UUID of a blueprint
       summary: create new compose from blueprint
-      description: "create new compose from blueprint"
+      description: "create new compose from blueprint, optionally specifying the target image types to build"
       operationId: composeBlueprint
       tags:
         - blueprint
+      requestBody:
+          required: false
+          description: "list of target image types that the user wants to build for this compose"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image_types:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ImageTypes"
+                    example: ["azure", "aws"]
       responses:
         '201':
           description: compose was created
