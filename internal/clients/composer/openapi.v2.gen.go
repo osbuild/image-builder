@@ -91,6 +91,7 @@ const (
 	UploadTypesAzure            UploadTypes = "azure"
 	UploadTypesContainer        UploadTypes = "container"
 	UploadTypesGcp              UploadTypes = "gcp"
+	UploadTypesLocal            UploadTypes = "local"
 	UploadTypesOciObjectstorage UploadTypes = "oci.objectstorage"
 	UploadTypesPulpOstree       UploadTypes = "pulp.ostree"
 )
