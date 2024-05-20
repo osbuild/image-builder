@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set up bootstrap Go 1.20
+      - name: Set up bootstrap Go 1.21
         uses: actions/setup-go@v5.0.1
         with:
-          go-version: '1.20'
+          go-version: '1.21'
           cache: false
         id: go
 
@@ -74,27 +74,27 @@ jobs:
     name: "📋 openapi spec check"
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3.0.2
-    - name: Install openapi-spec-validator
-      run: pip install openapi-spec-validator
-    - name: Check v1 spec
-      run: make check-api-spec
+      - name: Checkout
+        uses: actions/checkout@v3.0.2
+      - name: Install openapi-spec-validator
+        run: pip install openapi-spec-validator
+      - name: Check v1 spec
+        run: make check-api-spec
 
   shellcheck:
     name: "🐚 Shellcheck"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3.0.2
-    - name: Run ShellCheck
-      uses: ludeeus/action-shellcheck@2.0.0
-      with:
-        ignore: vendor # We don't want to fix the code in vendored dependencies
-      env:
+      - uses: actions/checkout@v3.0.2
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          ignore: vendor # We don't want to fix the code in vendored dependencies
+        env:
         # don't check /etc/os-release sourcing and allow useless cats to live inside our codebase
         # allow seemingly unreachable commands
-        SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317
-  
+          SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317
+
   db-test:
     name: "🗄 DB check"
     runs-on: ubuntu-latest
@@ -113,44 +113,44 @@ jobs:
         ports:
           - 5432:5432
     steps:
-    - uses: actions/checkout@v3.0.2
-    - uses: actions/setup-go@v5.0.1
-      with:
-        go-version: '1.20'
-    - env:
-        MIGRATIONS_DIR: internal/db/migrations
-        TERN_MIGRATIONS_DIR: internal/db/migrations-tern
-        PGUSER: postgres
-        PGPASSWORD: foobar
-        PGDATABASE: imagebuilder
-        PGHOST: localhost
-        PGPORT: 5432
-      run: |
-        go install github.com/jackc/tern@latest
-        tern migrate -m "$TERN_MIGRATIONS_DIR"
-        make image-builder-db-test
-        ./image-builder-db-test
+      - uses: actions/checkout@v3.0.2
+      - uses: actions/setup-go@v5.0.1
+        with:
+          go-version: '1.21'
+      - env:
+          MIGRATIONS_DIR: internal/db/migrations
+          TERN_MIGRATIONS_DIR: internal/db/migrations-tern
+          PGUSER: postgres
+          PGPASSWORD: foobar
+          PGDATABASE: imagebuilder
+          PGHOST: localhost
+          PGPORT: 5432
+        run: |
+          go install github.com/jackc/tern@latest
+          tern migrate -m "$TERN_MIGRATIONS_DIR"
+          make image-builder-db-test
+          ./image-builder-db-test
 
   kube-linter:
     name: "🎀 kube-linter"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3.0.2
-    - uses: redhat-actions/oc-installer@v1
-    - name: Process template
-      run: |
-        mkdir processed-templates
-        oc process -f templates/image-builder.yml \
-          -p IMAGE_TAG=image_tag \
-          --local \
-          -o yaml > processed-templates/image-builder.yml
+      - uses: actions/checkout@v3.0.2
+      - uses: redhat-actions/oc-installer@v1
+      - name: Process template
+        run: |
+          mkdir processed-templates
+          oc process -f templates/image-builder.yml \
+            -p IMAGE_TAG=image_tag \
+            --local \
+            -o yaml > processed-templates/image-builder.yml
 
-        oc process -f templates/iqe-trigger-integration.yml \
-          -p IMAGE_TAG=image_tag \
-          --local \
-          -o yaml > processed-templates/iqe-trigger-integration.yml
+          oc process -f templates/iqe-trigger-integration.yml \
+            -p IMAGE_TAG=image_tag \
+            --local \
+            -o yaml > processed-templates/iqe-trigger-integration.yml
 
-    - uses: stackrox/kube-linter-action@v1.0.5
-      with:
-        directory: processed-templates
-        config: templates/.kube-linter-config.yml
+      - uses: stackrox/kube-linter-action@v1.0.5
+        with:
+          directory: processed-templates
+          config: templates/.kube-linter-config.yml
