@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/BurntSushi/toml v1.3.2
-	github.com/aws/aws-sdk-go v1.53.5
+	github.com/aws/aws-sdk-go v1.53.6
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/google/uuid v1.6.0
