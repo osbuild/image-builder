@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -57,16 +58,6 @@ type Blueprint struct {
 	Packages       []Packages
 	Description    string // get the description from the blueprint.toml
 	Name           string
-}
-
-// TODO: we can get rid of this with golang 1.21
-func contains(needle string, haystack []string) bool {
-	for _, item := range haystack {
-		if needle == item {
-			return true
-		}
-	}
-	return false
 }
 
 func cleanToml(dir string, datastreamDistro string, profile string) {
@@ -197,7 +188,7 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 		services = &v1.Services{}
 		if s.Enabled != nil {
 			firewalldPkg := "firewalld"
-			if contains(firewalldPkg, *s.Enabled) && !contains(firewalldPkg, packages) {
+			if slices.Contains(*s.Enabled, firewalldPkg) && !slices.Contains(packages, firewalldPkg) {
 				packages = append(packages, firewalldPkg)
 			}
 			services.Enabled = s.Enabled
