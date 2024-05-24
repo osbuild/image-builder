@@ -3,8 +3,8 @@ module github.com/osbuild/image-builder
 go 1.21
 
 require (
-	github.com/BurntSushi/toml v1.3.2
-	github.com/aws/aws-sdk-go v1.53.8
+	github.com/BurntSushi/toml v1.4.0
+	github.com/aws/aws-sdk-go v1.53.9
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/google/uuid v1.6.0
