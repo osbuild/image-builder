@@ -1247,7 +1247,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-89",
+				Distribution: "rhel-8.10",
 				Customizations: &composer.Customizations{
 					Packages: nil,
 				},
@@ -1683,7 +1683,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-89",
+				Distribution: "rhel-8.10",
 				Customizations: &composer.Customizations{
 					Filesystem: &[]composer.Filesystem{
 						{
@@ -1738,7 +1738,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-89",
+				Distribution: "rhel-8.10",
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
 					ImageType:    composer.ImageTypesOci,
@@ -1793,7 +1793,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-89",
+				Distribution: "rhel-8.10",
 				Customizations: &composer.Customizations{
 					Filesystem: &[]composer.Filesystem{
 						{
@@ -1867,7 +1867,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-89",
+				Distribution: "rhel-8.10",
 				Customizations: &composer.Customizations{
 					Files: &[]composer.File{
 						{
@@ -1952,7 +1952,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-89",
+				Distribution: "rhel-8.10",
 				Customizations: &composer.Customizations{
 					Firewall: &composer.FirewallCustomization{
 						Ports: common.ToPtr([]string{"1"}),
@@ -2024,7 +2024,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-89",
+				Distribution: "rhel-8.10",
 				Customizations: &composer.Customizations{
 					Subscription: &composer.Subscription{
 						ActivationKey: "",
@@ -2089,7 +2089,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-89",
+				Distribution: "rhel-8.10",
 				Customizations: &composer.Customizations{
 					Subscription: &composer.Subscription{
 						ActivationKey: "",

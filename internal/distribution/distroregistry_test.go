@@ -9,7 +9,7 @@ import (
 )
 
 func TestDistroRegistry_List(t *testing.T) {
-	allDistros := []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "rhel-94", "centos-8", "centos-9", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}
+	allDistros := []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-8.10", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "rhel-94", "centos-8", "centos-9", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}
 	notEntitledDistros := []string{"rhel-8-nightly", "rhel-9-nightly", "centos-8", "centos-9", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}
 
 	dr, err := LoadDistroRegistry("../../distributions")
