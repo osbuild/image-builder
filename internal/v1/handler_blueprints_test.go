@@ -112,7 +112,7 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	require.Equal(t, "Invalid blueprint name", jsonResp.Errors[0].Title)
 
 	body["name"] = "Changing to correct body"
-	respStatusCodeNotFound, _ := tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s", uuid.New()), body)
+	respStatusCodeNotFound, _ := tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", uuid.New()), body)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
 }
 
@@ -301,7 +301,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 2, *result.Data[0].BlueprintVersion)
 
 	// get composes for non-existing blueprint
-	respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/composes?blueprint_version=1", uuid.New().String()), &tutils.AuthString0)
+	respStatusCode, _ = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s/composes?blueprint_version=1", uuid.New().String()), &tutils.AuthString0)
 	require.Equal(t, 404, respStatusCode)
 
 	// get composes for a blueprint that does not have any composes
@@ -309,7 +309,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	versionId2 := uuid.New()
 	err = dbase.InsertBlueprint(ctx, id5, versionId2, "000000", "500000", "newBlueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), json.RawMessage(`{}`))
 	require.NoError(t, err)
-	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/composes?blueprint_version=1", id5), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s/composes?blueprint_version=1", id5), &tutils.AuthString0)
 	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -387,7 +387,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations, result.Customizations)
 
-	respStatusCodeNotFound, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s", uuid.New()), &tutils.AuthString0)
+	respStatusCodeNotFound, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", uuid.New()), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
 }
 
@@ -573,7 +573,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 
 	// We should not be able to list deleted blueprint
 	var result BlueprintsResponse
-	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/experimental/blueprints?name=blueprint", &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/blueprints?name=blueprint", &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
