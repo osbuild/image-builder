@@ -925,6 +925,18 @@ type ListTemplatesParams struct {
 	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
 }
 
+// ListTemplateRpmsParams defines parameters for ListTemplateRpms.
+type ListTemplateRpmsParams struct {
+	// Limit Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Search Term to filter and retrieve items that match the specified search criteria. Search term can include name.
+	Search *string `form:"search,omitempty" json:"search,omitempty"`
+}
+
 // SearchEnvironmentsJSONRequestBody defines body for SearchEnvironments for application/json ContentType.
 type SearchEnvironmentsJSONRequestBody = ApiContentUnitSearchRequest
 
