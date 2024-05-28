@@ -57,6 +57,7 @@ const (
 
 // Defines values for Distributions.
 const (
+	Centos10     Distributions = "centos-10"
 	Centos8      Distributions = "centos-8"
 	Centos9      Distributions = "centos-9"
 	Fedora37     Distributions = "fedora-37"
