@@ -112,11 +112,12 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	require.Equal(t, "Invalid blueprint name", jsonResp.Errors[0].Title)
 }
 
-func TestHandlers_ComposeBlueprint_without_Targets(t *testing.T) {
+func TestHandlers_ComposeBlueprint(t *testing.T) {
 	ctx := context.Background()
-	ids := []uuid.UUID{uuid.New(), uuid.New()}
-	idx := 0
+
+	ids := []uuid.UUID{}
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		newId := uuid.New()
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -125,9 +126,9 @@ func TestHandlers_ComposeBlueprint_without_Targets(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		result := composer.ComposeId{
-			Id: ids[idx],
+			Id: newId,
 		}
-		idx += 1
+		ids = append(ids, newId)
 		encodeErr := json.NewEncoder(w).Encode(result)
 		require.NoError(t, encodeErr)
 	}))
@@ -171,83 +172,6 @@ func TestHandlers_ComposeBlueprint_without_Targets(t *testing.T) {
 			},
 			{
 				Architecture: ImageRequestArchitectureAarch64,
-				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAws,
-					Options: uploadOptions,
-				},
-			},
-		},
-	}
-
-	var message []byte
-	message, err = json.Marshal(blueprint)
-	require.NoError(t, err)
-	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message)
-	require.NoError(t, err)
-
-	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/compose", id.String()), strings.NewReader(""))
-	require.Equal(t, http.StatusCreated, respStatusCode)
-
-	var result []ComposeResponse
-	err = json.Unmarshal([]byte(body), &result)
-	require.NoError(t, err)
-	require.Len(t, result, 2)
-	require.Equal(t, ids[0], result[0].Id)
-	require.Equal(t, ids[1], result[1].Id)
-}
-
-func TestHandlers_ComposeBlueprint_with_Targets(t *testing.T) {
-	ctx := context.Background()
-	ids := []uuid.UUID{uuid.New(), uuid.New()}
-	idx := 0
-	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		result := composer.ComposeId{
-			Id: ids[idx],
-		}
-		idx += 1
-		encodeErr := json.NewEncoder(w).Encode(result)
-		require.NoError(t, encodeErr)
-	}))
-	defer apiSrv.Close()
-
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		shutdownErr := srv.Shutdown(ctx)
-		require.NoError(t, shutdownErr)
-	}()
-	defer tokenSrv.Close()
-
-	id := uuid.New()
-	versionId := uuid.New()
-
-	uploadOptions := UploadRequest_Options{}
-	err = uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
-		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
-	})
-	require.NoError(t, err)
-	name := "Blueprint Human Name"
-	description := "desc"
-	blueprint := BlueprintBody{
-		Customizations: Customizations{
-			Packages: common.ToPtr([]string{"nginx"}),
-		},
-		Distribution: "centos-8",
-		ImageRequests: []ImageRequest{
-			{
-				Architecture: ImageRequestArchitectureX8664,
 				ImageType:    ImageTypesAws,
 				UploadRequest: UploadRequest{
 					Type:    UploadTypesAws,
@@ -264,110 +188,34 @@ func TestHandlers_ComposeBlueprint_with_Targets(t *testing.T) {
 			},
 		},
 	}
-	payload := ComposeBlueprintJSONBody{
-		ImageTypes: &[]ImageTypes{"aws", "guest-image", "gcp"},
-	}
 	var message []byte
 	message, err = json.Marshal(blueprint)
 	require.NoError(t, err)
 	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message)
 	require.NoError(t, err)
 
-	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/compose", id.String()), payload)
-	require.Equal(t, http.StatusCreated, respStatusCode)
-
-	var result []ComposeResponse
-	err = json.Unmarshal([]byte(body), &result)
-	require.NoError(t, err)
-	require.Len(t, result, 2)
-	require.Equal(t, ids[0], result[0].Id)
-	require.Equal(t, ids[1], result[1].Id)
-}
-
-func TestHandlers_ComposeBlueprint_with_One_Target(t *testing.T) {
-	ctx := context.Background()
-	ids := []uuid.UUID{uuid.New(), uuid.New()}
-	idx := 0
-	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		result := composer.ComposeId{
-			Id: ids[idx],
-		}
-		idx += 1
-		encodeErr := json.NewEncoder(w).Encode(result)
-		require.NoError(t, encodeErr)
-	}))
-	defer apiSrv.Close()
-
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		shutdownErr := srv.Shutdown(ctx)
-		require.NoError(t, shutdownErr)
-	}()
-	defer tokenSrv.Close()
-
-	id := uuid.New()
-	versionId := uuid.New()
-
-	uploadOptions := UploadRequest_Options{}
-	err = uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
-		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
-	})
-	require.NoError(t, err)
-	name := "Blueprint Human Name"
-	description := "desc"
-	blueprint := BlueprintBody{
-		Customizations: Customizations{
-			Packages: common.ToPtr([]string{"nginx"}),
-		},
-		Distribution: "centos-8",
-		ImageRequests: []ImageRequest{
-			{
-				Architecture: ImageRequestArchitectureX8664,
-				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAws,
-					Options: uploadOptions,
-				},
-			},
-			{
-				Architecture: ImageRequestArchitectureAarch64,
-				ImageType:    ImageTypesGuestImage,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAwsS3,
-					Options: uploadOptions,
-				},
-			},
-		},
+	tests := map[string]struct {
+		payload any
+		expect  int
+	}{
+		"empty targets":    {payload: strings.NewReader(""), expect: 3},
+		"multiple targets": {payload: ComposeBlueprintJSONBody{ImageTypes: &[]ImageTypes{"aws", "guest-image", "gcp"}}, expect: 3},
+		"one target":       {payload: ComposeBlueprintJSONBody{ImageTypes: &[]ImageTypes{"aws"}}, expect: 2},
 	}
-	payload := ComposeBlueprintJSONBody{
-		ImageTypes: &[]ImageTypes{"aws"},
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/compose", id.String()), tc.payload)
+			require.Equal(t, http.StatusCreated, respStatusCode)
+
+			var result []ComposeResponse
+			err = json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			require.Len(t, result, tc.expect)
+			for i := 0; i < tc.expect; i++ {
+				require.Equal(t, ids[len(ids)-tc.expect+i], result[i].Id)
+			}
+		})
 	}
-	var message []byte
-	message, err = json.Marshal(blueprint)
-	require.NoError(t, err)
-	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message)
-	require.NoError(t, err)
-
-	respStatusCode, body := tutils.PostResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/experimental/blueprints/%s/compose", id.String()), payload)
-	require.Equal(t, http.StatusCreated, respStatusCode)
-
-	var result []ComposeResponse
-	err = json.Unmarshal([]byte(body), &result)
-	require.NoError(t, err)
-	require.Len(t, result, 1)
-	require.Equal(t, ids[0], result[0].Id)
 }
 
 func TestHandlers_GetBlueprintComposes(t *testing.T) {
