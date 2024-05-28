@@ -872,6 +872,9 @@ type ListSnapshotErrataParams struct {
 
 	// Severity A comma separated list of severities to control api response. Severity can include `Important`, `Critical`, `Moderate`, `Low`, and `Unknown`.
 	Severity *string `form:"severity,omitempty" json:"severity,omitempty"`
+
+	// SortBy Sort the response based on specific parameters. Sort criteria can include `issued_date`, `updated_date`, `type`, and `severity`.
+	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
 }
 
 // ListSnapshotRpmsParams defines parameters for ListSnapshotRpms.
