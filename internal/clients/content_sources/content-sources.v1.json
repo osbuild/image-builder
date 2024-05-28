@@ -3801,6 +3801,14 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "description": "Sort the response based on specific parameters. Sort criteria can include `issued_date`, `updated_date`, `type`, and `severity`.",
+                        "in": "query",
+                        "name": "sort_by",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
