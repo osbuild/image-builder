@@ -6,7 +6,7 @@
     "description": "Red Hat Enterprise Linux (RHEL) 9"
   },
   "x86_64": {
-    "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "oci", "vsphere", "vsphere-ova" ],
+    "image_types": [ "aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "oci", "vsphere", "vsphere-ova", "wsl" ],
     "repositories": [{
       "id": "baseos",
       "baseurl": "https://cdn.redhat.com/content/dist/rhel9/9/x86_64/baseos/os",
