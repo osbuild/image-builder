@@ -180,7 +180,7 @@ objects:
           c.job_id,c.created_at,c.client_id,c.org_id,c.account_number,c.email,c.request->>'distribution' as distribution,
           req->>'architecture' as architecture,req->>'image_type' as image_type,req->'upload_request'->>'type' as upload_request_type,req->'ostree'->>'url' as ostree_url,
           req->>'snapshot_date' as snapshot_date,
-          v.blueprint_id as blueprint_id,
+          v.blueprint_id::text as blueprint_id,
           v.version as blueprint_version,
           c.request->'customizations'->'packages' as packages,
           c.request->'customizations'->'filesystem' as filesystem,
