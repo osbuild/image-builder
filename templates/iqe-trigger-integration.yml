@@ -135,13 +135,16 @@ parameters:
   from: "[a-z0-9]{6}"
 - name: IQE_IMAGE
   description: "container image path for the iqe plugin"
-  value: quay.io/cloudservices/iqe-tests:hms-integration
+  value: quay.io/cloudservices/iqe-tests
+- name: IQE_IMAGE_TAG
+  description: "container image tag for iqe plugin"
+  value: 'insights-experiences'
 - name: ENV_FOR_DYNACONF
   value: stage_proxy
 - name: USE_BETA
   value: "true"
 - name: IQE_PLUGINS
-  value: hms_integration
+  value: insights_experiences
 - name: IQE_MARKER_EXPRESSION
   value: 'image_builder'
 - name: IQE_FILTER_EXPRESSION
