@@ -660,7 +660,10 @@ type ApiTemplateResponse struct {
 
 	// RepositoryUuids Repositories added to the template
 	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
-	Uuid            *string   `json:"uuid,omitempty"`
+
+	// RhsmEnvironmentId Environment ID used by subscription-manager and candlepin
+	RhsmEnvironmentId *string `json:"rhsm_environment_id,omitempty"`
+	Uuid              *string `json:"uuid,omitempty"`
 
 	// Version Version of the template
 	Version *string `json:"version,omitempty"`

@@ -1088,6 +1088,10 @@
                         },
                         "type": "array"
                     },
+                    "rhsm_environment_id": {
+                        "description": "Environment ID used by subscription-manager and candlepin",
+                        "type": "string"
+                    },
                     "uuid": {
                         "readOnly": true,
                         "type": "string"
