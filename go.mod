@@ -3,13 +3,13 @@ module github.com/osbuild/image-builder
 go 1.21
 
 require (
-	github.com/BurntSushi/toml v1.3.2
-	github.com/aws/aws-sdk-go v1.53.8
+	github.com/BurntSushi/toml v1.4.0
+	github.com/aws/aws-sdk-go v1.53.14
 	github.com/getkin/kin-openapi v0.123.0
-	github.com/getsentry/sentry-go v0.27.0
+	github.com/getsentry/sentry-go v0.28.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
-	github.com/jackc/pgx/v5 v5.5.5
+	github.com/jackc/pgx/v5 v5.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2
