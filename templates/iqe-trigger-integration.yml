@@ -135,10 +135,7 @@ parameters:
   from: "[a-z0-9]{6}"
 - name: IQE_IMAGE
   description: "container image path for the iqe plugin"
-  value: quay.io/cloudservices/iqe-tests
-- name: IQE_IMAGE_TAG
-  description: "container image tag for iqe plugin"
-  value: 'insights-experiences'
+  value: quay.io/cloudservices/iqe-tests:insights-experiences
 - name: ENV_FOR_DYNACONF
   value: stage_proxy
 - name: USE_BETA
