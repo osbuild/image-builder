@@ -15,6 +15,8 @@ export IQE_IMAGE_TAG="image-builder"
 export DOCKERFILE="distribution/Dockerfile-ubi"
 export EXTRA_DEPLOY_ARGS="sources unleash-proxy"
 export REF_ENV="insights-production"
+export RESERVE_DURATION="2h"
+export DEPLOY_TIMEOUT="1200"
 
 # Install bonfire repo/initialize
 # https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd/bootstrap.sh
