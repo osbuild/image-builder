@@ -199,6 +199,9 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 	}
 	composeResponses := make([]ComposeResponse, 0, len(blueprint.ImageRequests))
 	clientId := ClientId("api")
+	if ctx.Request().Header.Get("X-ImageBuilder-ui") != "" {
+		clientId = "ui"
+	}
 	for _, imageRequest := range blueprint.ImageRequests {
 		if requestBody.ImageTypes != nil && !slices.Contains(*requestBody.ImageTypes, imageRequest.ImageType) {
 			continue
