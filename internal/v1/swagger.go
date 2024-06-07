@@ -4,7 +4,7 @@ package v1
 // way of doing it in an more efficient way. This simplified version does not support external
 // references.
 //
-// https://github.com/deepmap/oapi-codegen/blob/master/pkg/codegen/templates/inline.tmpl
+// https://github.com/oapi-codegen/oapi-codegen/blob/master/pkg/codegen/templates/inline.tmpl
 
 import (
 	_ "embed"
