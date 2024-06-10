@@ -71,8 +71,8 @@
                     "description": "Defines the path to the BOPURL.",
                     "type": "string"
                 },
-                "hashCache": {
-                    "description": "A set of configMap/secret hashes",
+                "hostname": {
+                    "description": "The external hostname of the deployment, where applicable",
                     "type": "string"
                 }
             },
@@ -201,16 +201,19 @@
             "description": "SASL Configuration for Kafka",
             "properties": {
                 "username": {
+                    "description": "Broker SASL username",
                     "type": "string"
                 },
                 "password": {
+                    "description": "Broker SASL password",
                     "type": "string"
                 },
                 "securityProtocol": {
-                    "description": "Deprecated: Use the top level securityProtocol field instead",
+                    "description": "Broker security protocol, expect one of either: SASL_SSL, SSL. DEPRECATED, use the top level securityProtocol field instead",
                     "type": "string"
                 },
                 "saslMechanism": {
+                    "description": "Broker SASL mechanism, expect: SCRAM-SHA-512",
                     "type": "string"
                 }
             },
@@ -222,22 +225,26 @@
             "description": "Broker Configuration",
             "properties": {
                 "hostname": {
+                    "description": "Hostname of kafka broker",
                     "type": "string"
                 },
                 "port": {
+                    "description": "Port of kafka broker",
                     "type": "integer"
                 },
                 "cacert": {
+                    "description": "CA certificate trust list for broker in PEM format. If absent, client should use OS default trust list",
                     "type": "string"
                 },
                 "authtype": {
                     "type": "string",
-                    "enum": ["mtls", "sasl"]
+                    "enum": ["sasl"]
                 },
                 "sasl": {
                     "$ref": "#/definitions/KafkaSASLConfig"
                 },
                 "securityProtocol": {
+                    "description": "Broker security procotol, expect one of either: SASL_SSL, SSL",
                     "type": "string"
                 }
             },
@@ -342,6 +349,14 @@
                 "name": {
                     "description": "The actual name of the bucket being accessed.",
                     "type": "string"
+                },
+                "tls": {
+                    "description": "Details if the Object Server uses TLS.",
+                    "type": "boolean"
+                },
+                "endpoint": {
+                    "description": "Defines the endpoint for the Object Storage server configuration.",
+                    "type": "string"
                 }
             },
             "required": [
@@ -436,6 +451,10 @@
                 "password": {
                     "description": "Defines the password for the In Memory DB server configuration.",
                     "type": "string"
+                },
+                "sslMode": {
+                    "description": "Defines the sslMode used by the In Memory DB server coniguration",
+                    "type": "boolean"
                 }
             },
             "required": [
@@ -470,7 +489,15 @@
                     "type": "integer"
                 },
                 "apiPath": {
-                    "description": "The top level api path that the app should serve from /api/<apiPath>"
+                    "description": "The top level api path that the app should serve from /api/<apiPath> (deprecated, use apiPaths)",
+                    "type": "string"
+                },
+                "apiPaths": {
+                    "description": "The list of API paths (each matching format: '/api/some-path/') that this app will serve requests from",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             },
             "required": [
