@@ -600,8 +600,8 @@ func TestGetArchitectures(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	t.Run("Basic centos-8", func(t *testing.T) {
-		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-8", &tutils.AuthString0)
+	t.Run("Basic centos-9", func(t *testing.T) {
+		respStatusCode, body := tutils.GetResponseBody(t, "http://localhost:8086/api/image-builder/v1/architectures/centos-9", &tutils.AuthString0)
 		require.Equal(t, http.StatusOK, respStatusCode)
 
 		var result Architectures
@@ -613,13 +613,13 @@ func TestGetArchitectures(t *testing.T) {
 				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd", "guest-image", "image-installer", "oci", "vsphere", "vsphere-ova", "wsl"},
 				Repositories: []Repository{
 					{
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
 						Rhsm:    false,
 					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
 						Rhsm:    false,
 					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
 						Rhsm:    false,
 					},
 				},
@@ -629,13 +629,13 @@ func TestGetArchitectures(t *testing.T) {
 				ImageTypes: []string{"aws", "guest-image", "image-installer"},
 				Repositories: []Repository{
 					{
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/aarch64/os/"),
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/aarch64/os/"),
 						Rhsm:    false,
 					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/aarch64/os/"),
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/aarch64/os/"),
 						Rhsm:    false,
 					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/aarch64/os/"),
+						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/aarch64/os/"),
 						Rhsm:    false,
 					},
 				},
@@ -773,7 +773,7 @@ func TestGetDistributions(t *testing.T) {
 		for _, distro := range result {
 			distros = append(distros, distro.Name)
 		}
-		require.ElementsMatch(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-8.10", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "rhel-94", "centos-8", "centos-9", "centos-10", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}, distros)
+		require.ElementsMatch(t, []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-8.10", "rhel-9", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "rhel-94", "centos-9", "centos-10", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}, distros)
 	})
 
 	t.Run("No access to restricted distributions except global filter", func(t *testing.T) {
@@ -786,7 +786,7 @@ func TestGetDistributions(t *testing.T) {
 		for _, distro := range result {
 			distros = append(distros, distro.Name)
 		}
-		require.ElementsMatch(t, []string{"rhel-8-nightly", "rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-8.10", "rhel-9-nightly", "rhel-9", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "rhel-94", "centos-8", "centos-9"}, distros)
+		require.ElementsMatch(t, []string{"rhel-8-nightly", "rhel-8", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-8.10", "rhel-9-nightly", "rhel-9", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "rhel-94", "centos-9"}, distros)
 	})
 }
 
@@ -805,7 +805,7 @@ func TestGetProfiles(t *testing.T) {
 
 	t.Run("Access profiles on all rhel8 variants returns a correct list of profiles", func(t *testing.T) {
 		for _, dist := range []Distributions{
-			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel89, Rhel8Nightly, Centos8,
+			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel89, Rhel8Nightly,
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
@@ -884,7 +884,7 @@ func TestGetCustomizations(t *testing.T) {
 
 	t.Run("Access all customizations and check that they match", func(t *testing.T) {
 		for _, dist := range []Distributions{
-			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel8Nightly, Rhel9, Rhel91, Rhel92, Rhel9Nightly, Centos8, Centos9,
+			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel8Nightly, Rhel9, Rhel91, Rhel92, Rhel9Nightly, Centos9,
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				fmt.Sprintf("http://localhost:8086/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)

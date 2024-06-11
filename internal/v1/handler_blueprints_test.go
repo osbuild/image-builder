@@ -39,7 +39,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 		"name":           "Blueprint",
 		"description":    "desc",
 		"customizations": map[string]interface{}{"packages": []string{"nginx"}},
-		"distribution":   "centos-8",
+		"distribution":   "centos-9",
 		"image_requests": []map[string]interface{}{
 			{
 				"architecture":   "x86_64",
@@ -87,7 +87,7 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 		"name":           "Blueprint",
 		"description":    "desc",
 		"customizations": map[string]interface{}{"packages": []string{"nginx"}},
-		"distribution":   "centos-8",
+		"distribution":   "centos-9",
 		"image_requests": []map[string]interface{}{
 			{
 				"architecture":   "x86_64",
@@ -160,7 +160,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 		Customizations: Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
 		},
-		Distribution: "centos-8",
+		Distribution: "centos-9",
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: ImageRequestArchitectureX8664,
@@ -326,7 +326,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 		Customizations: Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
 		},
-		Distribution: "centos-8",
+		Distribution: "centos-9",
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: ImageRequestArchitectureX8664,

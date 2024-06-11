@@ -13,7 +13,7 @@ PERCENTILE_95_RESPONSE_TIME = int(os.getenv("LT_PERCENTILE_95_RESPONSE_TIME",
     "500"))
 
 INPUT_JSON={
-    "distribution": "centos-8",
+    "distribution": "centos-9",
     "image_requests": [
         {
             "architecture": "x86_64",
