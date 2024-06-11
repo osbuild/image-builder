@@ -17,7 +17,7 @@ const (
 func TestDistributionFile_Architecture(t *testing.T) {
 	adr, err := LoadDistroRegistry("../../distributions")
 	require.NoError(t, err)
-	d, err := adr.Available(false).Get("centos-8")
+	d, err := adr.Available(false).Get("centos-9")
 	require.NoError(t, err)
 
 	arch, err := d.Architecture("x86_64")
@@ -31,21 +31,21 @@ func TestDistributionFile_Architecture(t *testing.T) {
 		Repositories: []Repository{
 			{
 				Id:       "baseos",
-				Baseurl:  common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+				Baseurl:  common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
 				Rhsm:     false,
 				CheckGpg: common.ToPtr(true),
 				GpgKey:   common.ToPtr(centosGpg),
 			},
 			{
 				Id:       "appstream",
-				Baseurl:  common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+				Baseurl:  common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
 				Rhsm:     false,
 				CheckGpg: common.ToPtr(true),
 				GpgKey:   common.ToPtr(centosGpg),
 			},
 			{
 				Id:       "extras",
-				Baseurl:  common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+				Baseurl:  common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
 				Rhsm:     false,
 				CheckGpg: common.ToPtr(true),
 				GpgKey:   common.ToPtr(centosGpg),
@@ -78,7 +78,7 @@ func TestDistributionFile_Architecture(t *testing.T) {
 func TestArchitecture_FindPackages(t *testing.T) {
 	adr, err := LoadDistroRegistry("../../distributions")
 	require.NoError(t, err)
-	d, err := adr.Available(false).Get("centos-8")
+	d, err := adr.Available(false).Get("centos-9")
 	require.NoError(t, err)
 
 	arch, err := d.Architecture("x86_64")
@@ -178,7 +178,7 @@ func TestDistributionFileIsRestricted(t *testing.T) {
 	})
 
 	t.Run("distro is restricted, restricted_access field is true", func(t *testing.T) {
-		d, err := readDistribution(distsDir, "centos-8")
+		d, err := readDistribution(distsDir, "centos-9")
 		require.NoError(t, err)
 		actual := d.IsRestricted()
 		expected := true

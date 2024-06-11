@@ -11,8 +11,6 @@ import (
 
 func OscapProfiles(distribution Distributions) (DistributionProfileResponse, error) {
 	switch distribution {
-	case Centos8:
-		fallthrough
 	case Rhel8:
 		fallthrough
 	case Rhel84:

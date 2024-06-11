@@ -38,7 +38,7 @@ func TestValidateComposeRequest(t *testing.T) {
 	t.Run("ErrorsForZeroImageRequests", func(t *testing.T) {
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "centos-8",
+			Distribution:   "centos-9",
 			ImageRequests:  []ImageRequest{},
 		}
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
@@ -53,7 +53,7 @@ func TestValidateComposeRequest(t *testing.T) {
 		}))
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "centos-8",
+			Distribution:   "centos-9",
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
@@ -84,7 +84,7 @@ func TestValidateComposeRequest(t *testing.T) {
 
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "centos-8",
+			Distribution:   "centos-9",
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
@@ -149,7 +149,7 @@ func TestValidateComposeRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			payload := ComposeRequest{
 				Customizations: nil,
-				Distribution:   "centos-8",
+				Distribution:   "centos-9",
 				ImageRequests:  []ImageRequest{tc.request},
 			}
 			respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
@@ -161,7 +161,7 @@ func TestValidateComposeRequest(t *testing.T) {
 	t.Run("ErrorsForZeroUploadRequests", func(t *testing.T) {
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "centos-8",
+			Distribution:   "centos-9",
 			ImageRequests: []ImageRequest{
 				{
 					Architecture:  "x86_64",
@@ -186,7 +186,7 @@ func TestValidateComposeRequest(t *testing.T) {
 		// for repositories
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "centos-8",
+			Distribution:   "centos-9",
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "unsupported-arch",
@@ -211,7 +211,7 @@ func TestValidateComposeRequest(t *testing.T) {
 		// UploadRequest Type isn't supported
 		payload := ComposeRequest{
 			Customizations: nil,
-			Distribution:   "centos-8",
+			Distribution:   "centos-9",
 			ImageRequests: []ImageRequest{
 				{
 					Architecture: "x86_64",
@@ -243,7 +243,7 @@ func TestValidateComposeRequest(t *testing.T) {
 					},
 				},
 			},
-			Distribution: "centos-8",
+			Distribution: "centos-9",
 			ImageRequests: []ImageRequest{
 				{
 					Architecture:  "x86_64",
@@ -293,7 +293,7 @@ func TestValidateComposeRequest(t *testing.T) {
 	t.Run("ValidateFSSizes", func(t *testing.T) {
 		buildComposeRequest := func(fsSize *uint64, imgSize *uint64, imgType ImageTypes) *ComposeRequest {
 			cr := &ComposeRequest{
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture:  "x86_64",
@@ -465,7 +465,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	payload := ComposeRequest{
 		Customizations: nil,
-		Distribution:   "centos-8",
+		Distribution:   "centos-9",
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: "x86_64",
@@ -516,7 +516,7 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 		Customizations: &Customizations{
 			Packages: nil,
 		},
-		Distribution: "centos-8",
+		Distribution: "centos-9",
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: "x86_64",
@@ -564,7 +564,7 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}))
 	payload := ComposeRequest{
 		Customizations: nil,
-		Distribution:   "centos-8",
+		Distribution:   "centos-9",
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: "x86_64",
@@ -644,7 +644,7 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	payload := ComposeRequest{
 		Customizations: nil,
-		Distribution:   "centos-8",
+		Distribution:   "centos-9",
 		ImageRequests: []ImageRequest{
 			{
 				Architecture: "x86_64",
@@ -722,7 +722,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		}()
 		defer tokenSrv.Close()
 
-		payload := createPayload("centos-8")
+		payload := createPayload("centos-9")
 
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, http.StatusCreated, respStatusCode)
@@ -772,7 +772,7 @@ func TestComposeImageAllowList(t *testing.T) {
 		}()
 		defer tokenSrv.Close()
 
-		payload := createPayload("centos-8")
+		payload := createPayload("centos-9")
 
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload)
 		require.Equal(t, http.StatusForbidden, respStatusCode)
@@ -1108,7 +1108,7 @@ func TestComposeCustomizations(t *testing.T) {
 						SudoNopasswd: &[]string{"admin", "%wheel"},
 					},
 				},
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1121,7 +1121,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				Customizations: &composer.Customizations{
 					Packages: &[]string{
 						"some",
@@ -1190,7 +1190,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Repositories: []composer.Repository{
 
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1200,7 +1200,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1210,7 +1210,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1302,7 +1302,7 @@ func TestComposeCustomizations(t *testing.T) {
 						},
 					},
 				},
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1322,7 +1322,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				Customizations: &composer.Customizations{
 					Packages: &[]string{
 						"pkg",
@@ -1357,7 +1357,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Repositories: []composer.Repository{
 
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1367,7 +1367,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1377,7 +1377,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1396,7 +1396,7 @@ func TestComposeCustomizations(t *testing.T) {
 		// Test Azure with SubscriptionId and TenantId
 		{
 			imageBuilderRequest: ComposeRequest{
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1414,7 +1414,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution:   "centos-8",
+				Distribution:   "centos-9",
 				Customizations: nil,
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
@@ -1427,7 +1427,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Repositories: []composer.Repository{
 
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1437,7 +1437,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1447,7 +1447,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1469,7 +1469,7 @@ func TestComposeCustomizations(t *testing.T) {
 		// Test Azure with SourceId
 		{
 			imageBuilderRequest: ComposeRequest{
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1487,7 +1487,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution:   "centos-8",
+				Distribution:   "centos-9",
 				Customizations: nil,
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
@@ -1500,7 +1500,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Repositories: []composer.Repository{
 
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1510,7 +1510,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1520,7 +1520,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1541,7 +1541,7 @@ func TestComposeCustomizations(t *testing.T) {
 		},
 		{
 			imageBuilderRequest: ComposeRequest{
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1554,7 +1554,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution:   "centos-8",
+				Distribution:   "centos-9",
 				Customizations: nil,
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
@@ -1562,7 +1562,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Repositories: []composer.Repository{
 
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1572,7 +1572,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1582,7 +1582,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1600,7 +1600,7 @@ func TestComposeCustomizations(t *testing.T) {
 		},
 		{
 			imageBuilderRequest: ComposeRequest{
-				Distribution: "centos-8",
+				Distribution: "centos-9",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1614,7 +1614,7 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution:   "centos-8",
+				Distribution:   "centos-9",
 				Customizations: nil,
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
@@ -1623,7 +1623,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Repositories: []composer.Repository{
 
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1633,7 +1633,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
@@ -1643,7 +1643,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg:    common.ToPtr(true),
 						},
 						{
-							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/8-stream/extras/x86_64/os/"),
+							Baseurl:     common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
 							IgnoreSsl:   nil,
 							Metalink:    nil,
 							Mirrorlist:  nil,
