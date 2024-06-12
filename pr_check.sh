@@ -14,7 +14,7 @@ export IQE_ENV="ephemeral"                 # run only api test
 export IQE_IMAGE_TAG="image-builder"
 export DOCKERFILE="distribution/Dockerfile-ubi"
 export EXTRA_DEPLOY_ARGS="sources unleash-proxy"
-export REF_ENV="insights-production"
+export REF_ENV="insights-stage"
 export RESERVE_DURATION="2h"
 export DEPLOY_TIMEOUT="1200"
 
