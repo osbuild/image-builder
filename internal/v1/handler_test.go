@@ -610,16 +610,13 @@ func TestGetArchitectures(t *testing.T) {
 		require.Equal(t, Architectures{
 			ArchitectureItem{
 				Arch:       "x86_64",
-				ImageTypes: []string{"aws", "gcp", "azure", "ami", "vhd", "guest-image", "image-installer", "oci", "vsphere", "vsphere-ova", "wsl"},
+				ImageTypes: []string{"ami", "vhd", "aws", "gcp", "azure", "edge-commit", "edge-installer", "rhel-edge-commit", "rhel-edge-installer", "guest-image", "image-installer", "oci", "vsphere", "vsphere-ova", "wsl"},
 				Repositories: []Repository{
 					{
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/x86_64/os/"),
+						Baseurl: common.ToPtr("http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/"),
 						Rhsm:    false,
 					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/x86_64/os/"),
-						Rhsm:    false,
-					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/x86_64/os/"),
+						Baseurl: common.ToPtr("http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/"),
 						Rhsm:    false,
 					},
 				},
@@ -629,13 +626,10 @@ func TestGetArchitectures(t *testing.T) {
 				ImageTypes: []string{"aws", "guest-image", "image-installer"},
 				Repositories: []Repository{
 					{
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/BaseOS/aarch64/os/"),
+						Baseurl: common.ToPtr("http://mirror.stream.centos.org/9-stream/BaseOS/aarch64/os/"),
 						Rhsm:    false,
 					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/AppStream/aarch64/os/"),
-						Rhsm:    false,
-					}, {
-						Baseurl: common.ToPtr("http://mirror.centos.org/centos/9-stream/extras/aarch64/os/"),
+						Baseurl: common.ToPtr("http://mirror.stream.centos.org/9-stream/AppStream/aarch64/os/"),
 						Rhsm:    false,
 					},
 				},

@@ -32,8 +32,8 @@ func TestDistroRegistry_Get(t *testing.T) {
 	dr, err := LoadDistroRegistry("../../distributions")
 	require.NoError(t, err)
 
-	result, err := dr.Available(true).Get("rhel-86")
-	require.Equal(t, "rhel-86", result.Distribution.Name)
+	result, err := dr.Available(true).Get("rhel-9")
+	require.Equal(t, "rhel-94", result.Distribution.Name)
 	require.Nil(t, err)
 
 	// don't test packages, they are huge
@@ -41,19 +41,19 @@ func TestDistroRegistry_Get(t *testing.T) {
 	result.Aarch64.Packages = nil
 
 	require.Equal(t, &DistributionFile{
-		ModulePlatformID: "platform:el8",
-		OscapName:        "rhel8",
+		ModulePlatformID: "platform:el9",
+		OscapName:        "rhel9",
 		Distribution: DistributionItem{
-			Description:      "Red Hat Enterprise Linux (RHEL) 8",
-			Name:             "rhel-86",
+			Description:      "Red Hat Enterprise Linux (RHEL) 9",
+			Name:             "rhel-94",
 			RestrictedAccess: false,
 		},
 		ArchX86: &Architecture{
-			ImageTypes: []string{"aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "vsphere"},
+			ImageTypes: []string{"aws", "gcp", "azure", "rhel-edge-commit", "rhel-edge-installer", "edge-commit", "edge-installer", "guest-image", "image-installer", "oci", "vsphere", "vsphere-ova", "wsl"},
 			Repositories: []Repository{
 				{
 					Id:            "baseos",
-					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/baseos/os"),
+					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel9/9/x86_64/baseos/os"),
 					Rhsm:          true,
 					CheckGpg:      common.ToPtr(true),
 					GpgKey:        common.ToPtr(rhelGpg),
@@ -61,7 +61,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 				},
 				{
 					Id:            "appstream",
-					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/x86_64/appstream/os"),
+					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel9/9/x86_64/appstream/os"),
 					Rhsm:          true,
 					CheckGpg:      common.ToPtr(true),
 					GpgKey:        common.ToPtr(rhelGpg),
@@ -69,7 +69,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 				},
 				{
 					Id:            "google-compute-engine",
-					Baseurl:       common.ToPtr("https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"),
+					Baseurl:       common.ToPtr("https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable"),
 					Rhsm:          false,
 					CheckGpg:      common.ToPtr(true),
 					GpgKey:        common.ToPtr(googleSdkGpg),
@@ -77,7 +77,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 				},
 				{
 					Id:            "google-cloud-sdk",
-					Baseurl:       common.ToPtr("https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"),
+					Baseurl:       common.ToPtr("https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64"),
 					Rhsm:          false,
 					CheckGpg:      common.ToPtr(true),
 					GpgKey:        common.ToPtr(googleSdkGpg),
@@ -90,7 +90,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 			Repositories: []Repository{
 				{
 					Id:            "baseos",
-					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/aarch64/baseos/os"),
+					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel9/9/aarch64/baseos/os"),
 					Rhsm:          true,
 					CheckGpg:      common.ToPtr(true),
 					GpgKey:        common.ToPtr(rhelGpg),
@@ -98,7 +98,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 				},
 				{
 					Id:            "appstream",
-					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8.6/aarch64/appstream/os"),
+					Baseurl:       common.ToPtr("https://cdn.redhat.com/content/dist/rhel9/9/aarch64/appstream/os"),
 					Rhsm:          true,
 					CheckGpg:      common.ToPtr(true),
 					GpgKey:        common.ToPtr(rhelGpg),
