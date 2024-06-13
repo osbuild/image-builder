@@ -52,6 +52,8 @@ objects:
             value: ${IQE_LOG_LEVEL}
           - name: IQE_REQUIREMENTS
             value: ${IQE_REQUIREMENTS}
+          - name: IQE_PARALLEL_ENABLED
+            value: ${IQE_PARALLEL_ENABLED}
           - name: IQE_REQUIREMENTS_PRIORITY
             value: ${IQE_REQUIREMENTS_PRIORITY}
           - name: IQE_TEST_IMPORTANCE
@@ -182,3 +184,5 @@ parameters:
   value: '1920x1080'
 - name: SERVICE_ACCOUNT
   value: 'iqe-image-builder'
+- name: IQE_PARALLEL_ENABLED
+  value: "false"
