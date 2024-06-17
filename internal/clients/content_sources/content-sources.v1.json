@@ -766,6 +766,13 @@
             },
             "api.SnapshotErrata": {
                 "properties": {
+                    "cves": {
+                        "description": "List of CVEs",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "description": {
                         "description": "Description of the errata",
                         "type": "string"
@@ -1065,12 +1072,24 @@
                         "description": "Architecture of the template",
                         "type": "string"
                     },
+                    "created_at": {
+                        "description": "Datetime template was created",
+                        "type": "string"
+                    },
+                    "created_by": {
+                        "description": "User that created the template",
+                        "type": "string"
+                    },
                     "date": {
                         "description": "Latest date to include snapshots for",
                         "type": "string"
                     },
                     "description": {
                         "description": "Description of the template",
+                        "type": "string"
+                    },
+                    "last_updated_by": {
+                        "description": "User that most recently updated the template",
                         "type": "string"
                     },
                     "name": {
@@ -1092,6 +1111,10 @@
                         "description": "Environment ID used by subscription-manager and candlepin",
                         "type": "string"
                     },
+                    "updated_at": {
+                        "description": "Datetime template was last updated",
+                        "type": "string"
+                    },
                     "uuid": {
                         "readOnly": true,
                         "type": "string"
@@ -1111,6 +1134,10 @@
                     },
                     "description": {
                         "description": "Description of the template",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Name of the template",
                         "type": "string"
                     },
                     "repository_uuids": {
@@ -1321,7 +1348,6 @@
                 },
                 "summary": "Search environments",
                 "tags": [
-                    "repositories",
                     "environments"
                 ]
             }
@@ -1431,7 +1457,6 @@
                 },
                 "summary": "Search package groups",
                 "tags": [
-                    "repositories",
                     "packagegroups"
                 ]
             }
@@ -2469,7 +2494,6 @@
                 },
                 "summary": "List Repositories Environments",
                 "tags": [
-                    "repositories",
                     "environments"
                 ]
             }
@@ -2642,7 +2666,6 @@
                 },
                 "summary": "List Repositories Package Groups",
                 "tags": [
-                    "repositories",
                     "packagegroups"
                 ]
             }
@@ -2748,7 +2771,6 @@
                 },
                 "summary": "List Repositories RPMs",
                 "tags": [
-                    "repositories",
                     "rpms"
                 ]
             }
@@ -2878,7 +2900,7 @@
                 },
                 "summary": "List snapshots of a repository",
                 "tags": [
-                    "repositories"
+                    "snapshots"
                 ]
             }
         },
@@ -3252,7 +3274,6 @@
                 },
                 "summary": "Search RPMs",
                 "tags": [
-                    "repositories",
                     "rpms"
                 ]
             }
@@ -3337,7 +3358,6 @@
                 },
                 "summary": "Detect RPMs presence",
                 "tags": [
-                    "repositories",
                     "rpms"
                 ]
             }
@@ -3425,7 +3445,6 @@
                 },
                 "summary": "Search environments within snapshots",
                 "tags": [
-                    "snapshots",
                     "environments"
                 ]
             }
@@ -3587,8 +3606,7 @@
                 },
                 "summary": "Search package groups within snapshots",
                 "tags": [
-                    "snapshots",
-                    "environments"
+                    "packagegroups"
                 ]
             }
         },
@@ -3675,7 +3693,6 @@
                 },
                 "summary": "Search RPMs within snapshots",
                 "tags": [
-                    "snapshots",
                     "rpms"
                 ]
             }
@@ -3869,7 +3886,7 @@
                 },
                 "summary": "List Snapshot Errata",
                 "tags": [
-                    "snapshots"
+                    "rpms"
                 ]
             }
         },
@@ -3966,7 +3983,7 @@
                 },
                 "summary": "List Snapshot RPMs",
                 "tags": [
-                    "snapshots"
+                    "rpms"
                 ]
             }
         },
@@ -4188,6 +4205,14 @@
                         "description": "Filter templates by name.",
                         "in": "query",
                         "name": "name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Filter templates by associated repositories using a comma separated list of repository UUIDs",
+                        "in": "query",
+                        "name": "repository_uuids",
                         "schema": {
                             "type": "string"
                         }
@@ -4688,6 +4713,127 @@
                 ]
             }
         },
+        "/templates/{uuid}/errata": {
+            "get": {
+                "description": "List errata in a content template.",
+                "operationId": "listTemplateErrata",
+                "parameters": [
+                    {
+                        "description": "Template ID.",
+                        "in": "path",
+                        "name": "uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.",
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Term to filter and retrieve items that match the specified search criteria. Search term can include name.",
+                        "in": "query",
+                        "name": "search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "A comma separated list of types to control api response. Type can include `security`, `enhancement`, `bugfix`, and `other`.",
+                        "in": "query",
+                        "name": "type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "A comma separated list of severities to control api response. Severity can include `Important`, `Critical`, `Moderate`, `Low`, and `Unknown`.",
+                        "in": "query",
+                        "name": "severity",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Sort the response based on specific parameters. Sort criteria can include `issued_date`, `updated_date`, `type`, and `severity`.",
+                        "in": "query",
+                        "name": "sort_by",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/api.SnapshotErrataCollectionResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "List Template Errata",
+                "tags": [
+                    "templates"
+                ]
+            }
+        },
         "/templates/{uuid}/rpms": {
             "get": {
                 "description": "List RPMs in a content template.",
@@ -4781,7 +4927,7 @@
                 },
                 "summary": "List Template RPMs",
                 "tags": [
-                    "templates"
+                    "rpms"
                 ]
             }
         }
