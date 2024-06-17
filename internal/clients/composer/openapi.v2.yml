@@ -855,7 +855,7 @@ components:
         mirrorlist:
           type: string
           format: uri
-          example: 'http://mirrorlist.centos.org/?release=9-stream&arch=aarch64&repo=BaseOS'
+          example: 'http://mirrorlist.centos.org/?release=8-stream&arch=aarch64&repo=BaseOS'
         metalink:
           type: string
           format: uri
@@ -906,7 +906,7 @@ components:
         mirrorlist:
           type: string
           format: uri
-          example: 'http://mirrorlist.centos.org/?release=9-stream&arch=aarch64&repo=BaseOS'
+          example: 'http://mirrorlist.centos.org/?release=8-stream&arch=aarch64&repo=BaseOS'
         metalink:
           type: string
           format: uri
@@ -951,7 +951,7 @@ components:
         mirrorlist:
           type: string
           format: uri
-          example: 'http://mirrorlist.centos.org/?release=9-stream&arch=aarch64&repo=BaseOS'
+          example: 'http://mirrorlist.centos.org/?release=8-stream&arch=aarch64&repo=BaseOS'
         name:
           type: string
         priority:

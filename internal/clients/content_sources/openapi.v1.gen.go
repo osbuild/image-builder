@@ -464,6 +464,9 @@ type ApiSnapshotCollectionResponse struct {
 
 // ApiSnapshotErrata defines model for api.SnapshotErrata.
 type ApiSnapshotErrata struct {
+	// Cves List of CVEs
+	Cves *[]string `json:"cves,omitempty"`
+
 	// Description Description of the errata
 	Description *string `json:"description,omitempty"`
 
@@ -646,11 +649,20 @@ type ApiTemplateResponse struct {
 	// Arch Architecture of the template
 	Arch *string `json:"arch,omitempty"`
 
+	// CreatedAt Datetime template was created
+	CreatedAt *string `json:"created_at,omitempty"`
+
+	// CreatedBy User that created the template
+	CreatedBy *string `json:"created_by,omitempty"`
+
 	// Date Latest date to include snapshots for
 	Date *string `json:"date,omitempty"`
 
 	// Description Description of the template
 	Description *string `json:"description,omitempty"`
+
+	// LastUpdatedBy User that most recently updated the template
+	LastUpdatedBy *string `json:"last_updated_by,omitempty"`
 
 	// Name Name of the template
 	Name *string `json:"name,omitempty"`
@@ -663,7 +675,10 @@ type ApiTemplateResponse struct {
 
 	// RhsmEnvironmentId Environment ID used by subscription-manager and candlepin
 	RhsmEnvironmentId *string `json:"rhsm_environment_id,omitempty"`
-	Uuid              *string `json:"uuid,omitempty"`
+
+	// UpdatedAt Datetime template was last updated
+	UpdatedAt *string `json:"updated_at,omitempty"`
+	Uuid      *string `json:"uuid,omitempty"`
 
 	// Version Version of the template
 	Version *string `json:"version,omitempty"`
@@ -676,6 +691,9 @@ type ApiTemplateUpdateRequest struct {
 
 	// Description Description of the template
 	Description *string `json:"description,omitempty"`
+
+	// Name Name of the template
+	Name *string `json:"name,omitempty"`
 
 	// RepositoryUuids Repositories to add to the template
 	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
@@ -927,7 +945,31 @@ type ListTemplatesParams struct {
 	// Name Filter templates by name.
 	Name *string `form:"name,omitempty" json:"name,omitempty"`
 
+	// RepositoryUuids Filter templates by associated repositories using a comma separated list of repository UUIDs
+	RepositoryUuids *string `form:"repository_uuids,omitempty" json:"repository_uuids,omitempty"`
+
 	// SortBy Sort the response data based on specific parameters. Sort criteria can include `name`, `arch`, and `version`.
+	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+}
+
+// ListTemplateErrataParams defines parameters for ListTemplateErrata.
+type ListTemplateErrataParams struct {
+	// Limit Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Search Term to filter and retrieve items that match the specified search criteria. Search term can include name.
+	Search *string `form:"search,omitempty" json:"search,omitempty"`
+
+	// Type A comma separated list of types to control api response. Type can include `security`, `enhancement`, `bugfix`, and `other`.
+	Type *string `form:"type,omitempty" json:"type,omitempty"`
+
+	// Severity A comma separated list of severities to control api response. Severity can include `Important`, `Critical`, `Moderate`, `Low`, and `Unknown`.
+	Severity *string `form:"severity,omitempty" json:"severity,omitempty"`
+
+	// SortBy Sort the response based on specific parameters. Sort criteria can include `issued_date`, `updated_date`, `type`, and `severity`.
 	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
 }
 
