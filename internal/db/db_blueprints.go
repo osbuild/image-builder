@@ -255,6 +255,11 @@ func (db *dB) UpdateBlueprint(ctx context.Context, id uuid.UUID, blueprintId uui
 		if txErr != nil {
 			return txErr
 		}
+
+		if tag.RowsAffected() == 0 {
+			return BlueprintNotFoundError
+		}
+
 		if tag.RowsAffected() != 1 {
 			return fmt.Errorf("blueprint not updated: %w, expected 1, returned %d", AffectedRowsMismatchError, tag.RowsAffected())
 		}
