@@ -115,6 +115,9 @@ func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID) error {
 	ctx.Logger().Infof("Fetching blueprint %s", id)
 	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID())
 	if err != nil {
+		if errors.Is(err, db.BlueprintNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
 		return err
 	}
 	blueprint, err := BlueprintFromEntry(blueprintEntry)
@@ -169,6 +172,9 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	err = h.server.db.UpdateBlueprint(ctx.Request().Context(), versionId, blueprintId, userID.OrgID(), blueprintRequest.Name, desc, body)
 	if err != nil {
 		ctx.Logger().Errorf("Error updating blueprint in db: %v", err)
+		if errors.Is(err, db.BlueprintNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
 		return err
 	}
 	ctx.Logger().Infof("Updated blueprint %s", blueprintId)
