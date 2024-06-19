@@ -171,6 +171,17 @@ func (db *dB) GetBlueprintComposes(ctx context.Context, orgId string, blueprintI
 	}
 	defer conn.Release()
 
+	var resultBlueprint BlueprintEntry
+	row := conn.QueryRow(ctx, sqlGetBlueprint, blueprintId, orgId)
+	err = row.Scan(&resultBlueprint.Id, &resultBlueprint.VersionId, &resultBlueprint.Name, &resultBlueprint.Description,
+		&resultBlueprint.Version, &resultBlueprint.Body)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, BlueprintNotFoundError
+		}
+		return nil, err
+	}
+
 	result, err := conn.Query(ctx, sqlGetBlueprintComposes, orgId, blueprintId, blueprintVersion, since, ignoreImageTypes, limit, offset)
 	if err != nil {
 		return nil, err

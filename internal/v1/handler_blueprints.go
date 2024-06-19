@@ -334,6 +334,9 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 
 	composes, err := h.server.db.GetBlueprintComposes(ctx.Request().Context(), userID.OrgID(), blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
 	if err != nil {
+		if errors.Is(err, db.BlueprintNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
 		return err
 	}
 	count, err := h.server.db.CountBlueprintComposesSince(ctx.Request().Context(), userID.OrgID(), blueprintId, params.BlueprintVersion, since, ignoreImageTypeStrings)
