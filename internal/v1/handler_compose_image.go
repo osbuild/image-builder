@@ -79,10 +79,17 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 			}
 		}
 
-		repositories, err = h.buildRepositorySnapshots(ctx, repoURLs, arch, composeRequest.ImageRequests[0].ImageType, *composeRequest.ImageRequests[0].SnapshotDate)
+		repositories, err = h.buildRepositorySnapshots(ctx, repoURLs, *composeRequest.ImageRequests[0].SnapshotDate)
 		if err != nil {
 			return ComposeResponse{}, err
 		}
+
+		// A sanity check to make sure there's a snapshot for each repo
+		expected := len(buildRepositories(arch, composeRequest.ImageRequests[0].ImageType))
+		if len(repositories) != expected {
+			return ComposeResponse{}, fmt.Errorf("No snapshots found for all repositories (found %d, expected %d)", len(repositories), expected)
+		}
+
 	} else {
 		repositories = buildRepositories(arch, composeRequest.ImageRequests[0].ImageType)
 	}
@@ -205,7 +212,7 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 	return repositories
 }
 
-func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, arch *distribution.Architecture, imageType ImageTypes, snapshotDate string) ([]composer.Repository, error) {
+func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, snapshotDate string) ([]composer.Repository, error) {
 	date, err := time.Parse(time.DateOnly, snapshotDate)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in DateOnly (yyyy-mm-dd) format", snapshotDate))
@@ -290,12 +297,6 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 	}
 
 	ctx.Logger().Debugf("Resolved snapshots: %v", repositories)
-
-	// A sanity check to make sure there's a snapshot for each repo
-	expected := len(buildRepositories(arch, imageType))
-	if len(repositories) != expected {
-		return repositories, fmt.Errorf("No snapshots found for all repositories (found %d, expected %d)", len(repositories), expected)
-	}
 	return repositories, nil
 }
 
