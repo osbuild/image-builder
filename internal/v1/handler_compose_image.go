@@ -79,7 +79,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 			}
 		}
 
-		repositories, err = h.buildRepositorySnapshots(ctx, repoURLs, *composeRequest.ImageRequests[0].SnapshotDate)
+		repositories, err = h.buildRepositorySnapshots(ctx, repoURLs, false, *composeRequest.ImageRequests[0].SnapshotDate)
 		if err != nil {
 			return ComposeResponse{}, err
 		}
@@ -109,7 +109,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		distro = *d.Distribution.ComposerName
 	}
 
-	customizations, err := buildCustomizations(composeRequest.Customizations)
+	customizations, err := h.buildCustomizations(ctx, composeRequest.Customizations, composeRequest.ImageRequests[0].SnapshotDate)
 	if err != nil {
 		ctx.Logger().Errorf("Failed buliding customizations: %v", err)
 		return ComposeResponse{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to build customizations")
@@ -212,7 +212,7 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 	return repositories
 }
 
-func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, snapshotDate string) ([]composer.Repository, error) {
+func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, external bool, snapshotDate string) ([]composer.Repository, error) {
 	date, err := time.Parse(time.DateOnly, snapshotDate)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in DateOnly (yyyy-mm-dd) format", snapshotDate))
@@ -220,7 +220,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 
 	repoUUIDs := []string{}
 	repoMap := map[string]content_sources.ApiRepositoryResponse{}
-	resp, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, false)
+	resp, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, external)
 	if err != nil {
 		return nil, err
 	}
@@ -533,7 +533,7 @@ func validateComposeRequest(cr *ComposeRequest) error {
 	return nil
 }
 
-func buildCustomizations(cust *Customizations) (*composer.Customizations, error) {
+func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, snapshotDate *string) (*composer.Customizations, error) {
 	if cust == nil {
 		return nil, nil
 	}
@@ -554,7 +554,19 @@ func buildCustomizations(cust *Customizations) (*composer.Customizations, error)
 		res.Packages = cust.Packages
 	}
 
-	if cust.PayloadRepositories != nil {
+	if cust.PayloadRepositories != nil && snapshotDate != nil {
+		var repoURLs []string
+		for _, payloadRepository := range *cust.PayloadRepositories {
+			if payloadRepository.Baseurl != nil {
+				repoURLs = append(repoURLs, *payloadRepository.Baseurl)
+			}
+		}
+		payloadRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, true, *snapshotDate)
+		if err != nil {
+			return nil, err
+		}
+		res.PayloadRepositories = &payloadRepositories
+	} else if cust.PayloadRepositories != nil {
 		payloadRepositories := make([]composer.Repository, len(*cust.PayloadRepositories))
 		for i, payloadRepository := range *cust.PayloadRepositories {
 			if payloadRepository.Baseurl != nil {
