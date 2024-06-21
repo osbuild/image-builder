@@ -65,7 +65,21 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 
 	var repositories []composer.Repository
 	if composeRequest.ImageRequests[0].SnapshotDate != nil {
-		repositories, err = h.buildRepositorySnapshots(ctx, arch, composeRequest.ImageRequests[0].ImageType, *composeRequest.ImageRequests[0].SnapshotDate)
+		repoURLs := []string{}
+		for _, r := range arch.Repositories {
+			contains := len(r.ImageTypeTags) == 0
+			for _, it := range r.ImageTypeTags {
+				if it == string(composeRequest.ImageRequests[0].ImageType) {
+					contains = true
+					break
+				}
+			}
+			if contains {
+				repoURLs = append(repoURLs, *r.Baseurl)
+			}
+		}
+
+		repositories, err = h.buildRepositorySnapshots(ctx, repoURLs, arch, composeRequest.ImageRequests[0].ImageType, *composeRequest.ImageRequests[0].SnapshotDate)
 		if err != nil {
 			return ComposeResponse{}, err
 		}
@@ -191,24 +205,10 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 	return repositories
 }
 
-func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, arch *distribution.Architecture, imageType ImageTypes, snapshotDate string) ([]composer.Repository, error) {
+func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, arch *distribution.Architecture, imageType ImageTypes, snapshotDate string) ([]composer.Repository, error) {
 	date, err := time.Parse(time.DateOnly, snapshotDate)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in DateOnly (yyyy-mm-dd) format", snapshotDate))
-	}
-
-	repoURLs := []string{}
-	for _, r := range arch.Repositories {
-		contains := len(r.ImageTypeTags) == 0
-		for _, it := range r.ImageTypeTags {
-			if it == string(imageType) {
-				contains = true
-				break
-			}
-		}
-		if contains {
-			repoURLs = append(repoURLs, *r.Baseurl)
-		}
 	}
 
 	repoUUIDs := []string{}
