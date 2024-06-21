@@ -63,6 +63,13 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		return ComposeResponse{}, err
 	}
 
+	var customizations *composer.Customizations
+	customizations, err = h.buildCustomizations(ctx, composeRequest.Customizations, composeRequest.ImageRequests[0].SnapshotDate)
+	if err != nil {
+		ctx.Logger().Errorf("Failed building customizations: %v", err)
+		return ComposeResponse{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to build customizations")
+	}
+
 	var repositories []composer.Repository
 	if composeRequest.ImageRequests[0].SnapshotDate != nil {
 		repoURLs := []string{}
@@ -79,7 +86,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 			}
 		}
 
-		repositories, err = h.buildRepositorySnapshots(ctx, repoURLs, false, *composeRequest.ImageRequests[0].SnapshotDate)
+		repositories, _, err = h.buildRepositorySnapshots(ctx, repoURLs, false, *composeRequest.ImageRequests[0].SnapshotDate)
 		if err != nil {
 			return ComposeResponse{}, err
 		}
@@ -107,12 +114,6 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	distro := d.Distribution.Name
 	if d.Distribution.ComposerName != nil {
 		distro = *d.Distribution.ComposerName
-	}
-
-	customizations, err := h.buildCustomizations(ctx, composeRequest.Customizations, composeRequest.ImageRequests[0].SnapshotDate)
-	if err != nil {
-		ctx.Logger().Errorf("Failed buliding customizations: %v", err)
-		return ComposeResponse{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to build customizations")
 	}
 
 	cloudCR := composer.ComposeRequest{
@@ -212,17 +213,17 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 	return repositories
 }
 
-func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, external bool, snapshotDate string) ([]composer.Repository, error) {
+func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, external bool, snapshotDate string) ([]composer.Repository, []composer.CustomRepository, error) {
 	date, err := time.Parse(time.DateOnly, snapshotDate)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in DateOnly (yyyy-mm-dd) format", snapshotDate))
+		return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in DateOnly (yyyy-mm-dd) format", snapshotDate))
 	}
 
 	repoUUIDs := []string{}
 	repoMap := map[string]content_sources.ApiRepositoryResponse{}
 	resp, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, external)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("Unable to retrieve repositories: %v", err)
 	}
 	defer closeBody(ctx, resp.Body)
 
@@ -230,17 +231,17 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 		if resp.StatusCode != http.StatusUnauthorized {
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			ctx.Logger().Warnf("Unable to get repositories for base urls: %v, got %s", repoURLs, body)
 		}
-		return nil, fmt.Errorf("Unable to fetch repositories, got %v response.", resp.StatusCode)
+		return nil, nil, fmt.Errorf("Unable to fetch repositories, got %v response.", resp.StatusCode)
 	}
 
 	var csRepos content_sources.ApiRepositoryCollectionResponse
 	err = json.NewDecoder(resp.Body).Decode(&csRepos)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("Unable to parse repositories: %v", err)
 	}
 
 	for _, repo := range *csRepos.Data {
@@ -253,7 +254,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 		RepositoryUuids: common.ToPtr(repoUUIDs),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer closeBody(ctx, snapResp.Body)
 
@@ -261,24 +262,25 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 		if snapResp.StatusCode != http.StatusUnauthorized {
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			ctx.Logger().Warnf("Unable to resolve snapshots: %s", body)
 		}
-		return nil, fmt.Errorf("Unable to fetch snapshots for date, got %v response", snapResp.StatusCode)
+		return nil, nil, fmt.Errorf("Unable to fetch snapshots for date, got %v response", snapResp.StatusCode)
 	}
 
 	var csSnapshots content_sources.ApiListSnapshotByDateResponse
 	err = json.NewDecoder(snapResp.Body).Decode(&csSnapshots)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var repositories []composer.Repository
+	var customRepositories []composer.CustomRepository
 	for _, snap := range *csSnapshots.Data {
 		repo, ok := repoMap[*snap.RepositoryUuid]
 		if !ok {
-			return repositories, fmt.Errorf("Returned snapshot %v unexpected repository id %v", *snap.Match.Uuid, *snap.RepositoryUuid)
+			return repositories, customRepositories, fmt.Errorf("Returned snapshot %v unexpected repository id %v", *snap.Match.Uuid, *snap.RepositoryUuid)
 		}
 
 		composerRepo := composer.Repository{
@@ -292,12 +294,24 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 		}
 		composerRepo.ModuleHotfixes = repo.ModuleHotfixes
 		composerRepo.CheckRepoGpg = repo.MetadataVerification
-
 		repositories = append(repositories, composerRepo)
+
+		customRepo := composer.CustomRepository{
+			Id:      *snap.RepositoryUuid,
+			Baseurl: &[]string{h.server.csReposURL.JoinPath(*snap.Match.RepositoryPath).String()},
+			Enabled: common.ToPtr(true),
+		}
+		if repo.GpgKey != nil && *repo.GpgKey != "" {
+			customRepo.Gpgkey = &[]string{*repo.GpgKey}
+			customRepo.CheckGpg = common.ToPtr(true)
+		}
+		customRepo.ModuleHotfixes = repo.ModuleHotfixes
+		customRepo.CheckRepoGpg = repo.MetadataVerification
+		customRepositories = append(customRepositories, customRepo)
 	}
 
 	ctx.Logger().Debugf("Resolved snapshots: %v", repositories)
-	return repositories, nil
+	return repositories, customRepositories, nil
 }
 
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
@@ -561,7 +575,7 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, s
 				repoURLs = append(repoURLs, *payloadRepository.Baseurl)
 			}
 		}
-		payloadRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, true, *snapshotDate)
+		payloadRepositories, _, err := h.buildRepositorySnapshots(ctx, repoURLs, true, *snapshotDate)
 		if err != nil {
 			return nil, err
 		}
@@ -596,7 +610,19 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, s
 		res.PayloadRepositories = &payloadRepositories
 	}
 
-	if cust.CustomRepositories != nil {
+	if cust.CustomRepositories != nil && snapshotDate != nil {
+		var repoURLs []string
+		for _, repo := range *cust.CustomRepositories {
+			if repo.Baseurl != nil && len(*repo.Baseurl) > 0 {
+				repoURLs = append(repoURLs, (*repo.Baseurl)[0])
+			}
+		}
+		_, customRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, true, *snapshotDate)
+		if err != nil {
+			return nil, err
+		}
+		res.CustomRepositories = &customRepositories
+	} else if cust.CustomRepositories != nil {
 		customRepositories := make([]composer.CustomRepository, len(*cust.CustomRepositories))
 		for i, customRepository := range *cust.CustomRepositories {
 			if customRepository.Id != "" {
