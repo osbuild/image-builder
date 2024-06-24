@@ -74,14 +74,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	if composeRequest.ImageRequests[0].SnapshotDate != nil {
 		repoURLs := []string{}
 		for _, r := range arch.Repositories {
-			contains := len(r.ImageTypeTags) == 0
-			for _, it := range r.ImageTypeTags {
-				if it == string(composeRequest.ImageRequests[0].ImageType) {
-					contains = true
-					break
-				}
-			}
-			if contains {
+			if len(r.ImageTypeTags) == 0 || slices.Contains(r.ImageTypeTags, string(composeRequest.ImageRequests[0].ImageType)) {
 				repoURLs = append(repoURLs, *r.Baseurl)
 			}
 		}
@@ -193,14 +186,7 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 	var repositories []composer.Repository
 	for _, r := range arch.Repositories {
 		// If no image type tags are defined for the repo, add the repo
-		contains := len(r.ImageTypeTags) == 0
-		for _, it := range r.ImageTypeTags {
-			if it == string(imageType) {
-				contains = true
-				break
-			}
-		}
-		if contains {
+		if len(r.ImageTypeTags) == 0 || slices.Contains(r.ImageTypeTags, string(imageType)) {
 			repositories = append(repositories, composer.Repository{
 				Baseurl:  r.Baseurl,
 				Metalink: r.Metalink,
