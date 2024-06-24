@@ -29,40 +29,44 @@ const (
 	sqlLatestBlueprintVersion = `
 		SELECT MAX(blueprint_versions.version)
 		FROM blueprint_versions INNER JOIN blueprints ON blueprint_versions.blueprint_id = blueprints.id
-		WHERE blueprints.org_id = $1 AND blueprints.id = $2`
+		WHERE blueprints.deleted = FALSE AND blueprints.org_id = $1 AND blueprints.id = $2`
 
 	sqlGetBlueprintComposes = `
 		SELECT blueprint_versions.version, composes.job_id, composes.request, composes.created_at, composes.image_name, composes.client_id
 		FROM composes INNER JOIN blueprint_versions ON composes.blueprint_version_id = blueprint_versions.id
-		WHERE composes.org_id = $1
+		INNER JOIN blueprints ON blueprint_versions.blueprint_id = blueprints.id
+		WHERE composes.org_id = $1 AND blueprints.org_id = $1
 			AND blueprint_versions.blueprint_id = $2
 			AND ($3::integer IS NULL OR blueprint_versions.version = $3)
 			AND CURRENT_TIMESTAMP - composes.created_at <= $4
 			AND ($5::text[] is NULL OR composes.request->'image_requests'->0->>'image_type' <> ALL($5))
 			AND composes.deleted = FALSE
+		    AND blueprints.deleted = FALSE
 		ORDER BY composes.created_at DESC
 		LIMIT $6 OFFSET $7`
 
 	sqlCountActiveBlueprintComposesSince = `
 		SELECT COUNT(*)
 		FROM composes INNER JOIN blueprint_versions ON composes.blueprint_version_id = blueprint_versions.id
-		WHERE org_id=$1
+		INNER JOIN blueprints ON blueprint_versions.blueprint_id = blueprints.id
+		WHERE composes.org_id = $1 AND blueprints.org_id = $1
 			AND blueprint_versions.blueprint_id = $2
 		  	AND ($3::integer IS NULL OR blueprint_versions.version = $3)
 		  	AND CURRENT_TIMESTAMP - composes.created_at <= $4
 		  	AND composes.deleted = FALSE
+		    AND blueprints.deleted = FALSE
 		AND ($5::text[] is NULL OR composes.request->'image_requests'->0->>'image_type' <> ALL($5))`
 
 	sqlGetBlueprint = `
 		SELECT blueprints.id, blueprint_versions.id, blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
-		WHERE blueprints.id = $1 AND blueprints.org_id = $2    
+		WHERE blueprints.deleted = FALSE AND blueprints.id = $1 AND blueprints.org_id = $2
 		ORDER BY blueprint_versions.created_at DESC LIMIT 1`
 
 	sqlUpdateBlueprint = `
 		UPDATE blueprints
 		SET name = $3, description = $4
-		WHERE id = $1 AND org_id = $2`
+		WHERE deleted = FALSE AND id = $1 AND org_id = $2`
 
 	sqlUpdateBlueprintVersion = `
 		INSERT INTO blueprint_versions (id, blueprint_id, version, body)
@@ -78,7 +82,8 @@ const (
 		AND EXISTS (
 			SELECT 1
 			FROM blueprints
-			WHERE id = $2
+			WHERE deleted = FALSE
+			AND id = $2
 			AND org_id = $4
         );`
 
@@ -89,12 +94,12 @@ const (
 		WHERE composes.blueprint_version_id = blueprint_versions.id
 		AND composes.org_id=$1 AND blueprint_versions.blueprint_id=$2`
 
-	sqlDeleteBlueprint = `DELETE FROM blueprints WHERE id = $1 AND org_id = $2 AND account_number = $3`
+	sqlDeleteBlueprint = `UPDATE blueprints SET deleted = TRUE, name = id WHERE deleted = FALSE AND id = $1 AND org_id = $2 AND account_number = $3`
 
 	sqlGetBlueprints = `
 		SELECT blueprints.id, blueprints.name, blueprints.description, MAX(blueprint_versions.version) as version, MAX(blueprint_versions.created_at) as last_modified_at
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
-		WHERE blueprints.org_id = $1
+		WHERE blueprints.deleted = FALSE AND blueprints.org_id = $1
 		GROUP BY blueprints.id
 		ORDER BY last_modified_at DESC
 		LIMIT $2 OFFSET $3`
@@ -102,7 +107,7 @@ const (
 	sqlFindBlueprints = `
 		SELECT blueprints.id, blueprints.name, blueprints.description, MAX(blueprint_versions.version) as version, MAX(blueprint_versions.created_at) as last_modified_at
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
-		WHERE blueprints.org_id = $1 AND ($4::text = '%%' OR blueprints.name ILIKE $4 OR blueprints.description ILIKE $4)
+		WHERE blueprints.deleted = FALSE AND blueprints.org_id = $1 AND ($4::text = '%%' OR blueprints.name ILIKE $4 OR blueprints.description ILIKE $4)
 		GROUP BY blueprints.id
 		ORDER BY last_modified_at DESC
 		LIMIT $2 OFFSET $3`
@@ -110,7 +115,7 @@ const (
 	sqlFindBlueprintByName = `
 		SELECT blueprints.id, blueprints.name, blueprints.description, MAX(blueprint_versions.version) as version, MAX(blueprint_versions.created_at) as last_modified_at
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
-		WHERE blueprints.name = $1 AND blueprints.org_id = $2
+		WHERE blueprints.deleted = FALSE AND blueprints.name = $1 AND blueprints.org_id = $2
 		GROUP BY blueprints.id
 		ORDER BY last_modified_at DESC
 		LIMIT 1`
@@ -118,12 +123,12 @@ const (
 	sqlCountFilteredBlueprints = `
 		SELECT COUNT(*)
 		FROM blueprints
-		WHERE blueprints.org_id = $1 AND ($2::text = '%%' OR blueprints.name ILIKE $2 OR blueprints.description ILIKE $2)`
+		WHERE blueprints.deleted = FALSE AND blueprints.org_id = $1 AND ($2::text = '%%' OR blueprints.name ILIKE $2 OR blueprints.description ILIKE $2)`
 
 	sqlGetBlueprintsCount = `
 		SELECT COUNT(*)
 		FROM blueprints
-		WHERE blueprints.org_id = $1`
+		WHERE blueprints.deleted = FALSE AND blueprints.org_id = $1`
 )
 
 // GetLatestBlueprintVersionNumber gets the latest version number of a blueprint.
