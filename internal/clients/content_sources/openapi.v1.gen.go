@@ -54,6 +54,12 @@ type ApiFeature struct {
 // ApiFeatureSet defines model for api.FeatureSet.
 type ApiFeatureSet map[string]ApiFeature
 
+// ApiFetchGPGKeyRequest defines model for api.FetchGPGKeyRequest.
+type ApiFetchGPGKeyRequest struct {
+	// Url The url from which to download the GPG Key.
+	Url *string `json:"url,omitempty"`
+}
+
 // ApiFetchGPGKeyResponse defines model for api.FetchGPGKeyResponse.
 type ApiFetchGPGKeyResponse struct {
 	// GpgKey The downloaded GPG Keys from the provided url.
@@ -926,6 +932,9 @@ type ListTasksParams struct {
 
 	// RepositoryUuid A unique identifier of a repository to filter the results.
 	RepositoryUuid *string `form:"repository_uuid,omitempty" json:"repository_uuid,omitempty"`
+
+	// ExcludeRedHatOrg A flag to exclude tasks for the red hat org from the query.
+	ExcludeRedHatOrg *bool `form:"exclude_red_hat_org,omitempty" json:"exclude_red_hat_org,omitempty"`
 }
 
 // ListTemplatesParams defines parameters for ListTemplates.
@@ -1005,6 +1014,9 @@ type PartialUpdateRepositoryJSONRequestBody = ApiRepositoryRequest
 
 // FullUpdateRepositoryJSONRequestBody defines body for FullUpdateRepository for application/json ContentType.
 type FullUpdateRepositoryJSONRequestBody = ApiRepositoryRequest
+
+// FetchGpgKeyJSONRequestBody defines body for FetchGpgKey for application/json ContentType.
+type FetchGpgKeyJSONRequestBody = ApiFetchGPGKeyRequest
 
 // ValidateRepositoryParametersJSONRequestBody defines body for ValidateRepositoryParameters for application/json ContentType.
 type ValidateRepositoryParametersJSONRequestBody = ValidateRepositoryParametersJSONBody
