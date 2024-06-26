@@ -236,7 +236,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 	}
 
 	snapResp, err := h.server.csClient.GetSnapshotsForDate(ctx.Request().Context(), content_sources.ApiListSnapshotByDateRequest{
-		Date:            common.ToPtr(date.UTC().Format(time.DateOnly)),
+		Date:            common.ToPtr(date.UTC().Format(time.RFC3339)),
 		RepositoryUuids: common.ToPtr(repoUUIDs),
 	})
 	if err != nil {
