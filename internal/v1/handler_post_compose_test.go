@@ -875,7 +875,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 			var body content_sources.ApiListSnapshotByDateRequest
 			err := json.NewDecoder(r.Body).Decode(&body)
 			require.NoError(t, err)
-			require.Equal(t, "1999-01-30", *body.Date)
+			require.Equal(t, "1999-01-30T00:00:00Z", *body.Date)
 
 			if slices.Equal(*body.RepositoryUuids, []string{
 				repoBaseId.String(),
@@ -886,7 +886,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 						{
 							IsAfter: common.ToPtr(false),
 							Match: &content_sources.ApiSnapshotResponse{
-								CreatedAt:      common.ToPtr("1998-01-30"),
+								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/baseos"),
 							},
 							RepositoryUuid: common.ToPtr(repoBaseId.String()),
@@ -894,7 +894,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 						{
 							IsAfter: common.ToPtr(false),
 							Match: &content_sources.ApiSnapshotResponse{
-								CreatedAt:      common.ToPtr("1998-01-30"),
+								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/appstream"),
 							},
 							RepositoryUuid: common.ToPtr(repoAppstrId.String()),
@@ -909,7 +909,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 						{
 							IsAfter: common.ToPtr(false),
 							Match: &content_sources.ApiSnapshotResponse{
-								CreatedAt:      common.ToPtr("1998-01-30"),
+								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/payload"),
 							},
 							RepositoryUuid: common.ToPtr(repoPayloadId.String()),
@@ -927,7 +927,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 						{
 							IsAfter: common.ToPtr(false),
 							Match: &content_sources.ApiSnapshotResponse{
-								CreatedAt:      common.ToPtr("1998-01-30"),
+								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/payload"),
 							},
 							RepositoryUuid: common.ToPtr(repoPayloadId.String()),
@@ -935,7 +935,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 						{
 							IsAfter: common.ToPtr(false),
 							Match: &content_sources.ApiSnapshotResponse{
-								CreatedAt:      common.ToPtr("1998-01-30"),
+								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/payload2"),
 							},
 							RepositoryUuid: common.ToPtr(repoPayloadId2.String()),
