@@ -34,10 +34,14 @@ func (h *ctxHook) Levels() []logrus.Level {
 }
 
 func (h *ctxHook) Fire(e *logrus.Entry) error {
-	if e.Context != nil {
-		e.Data["request_id"] = e.Context.Value(requestIdCtx)
-		e.Data["insights_id"] = e.Context.Value(insightsRequestIdCtx)
-		rd := e.Context.Value(requestDataCtx).(logrus.Fields)
+	if e.Context == nil || e.Data == nil {
+		return nil
+	}
+
+	e.Data["request_id"] = e.Context.Value(requestIdCtx)
+	e.Data["insights_id"] = e.Context.Value(insightsRequestIdCtx)
+
+	if rd, ok := e.Context.Value(requestDataCtx).(logrus.Fields); ok {
 		for k, v := range rd {
 			e.Data[k] = v
 		}
