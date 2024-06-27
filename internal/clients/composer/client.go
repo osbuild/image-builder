@@ -6,13 +6,12 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"github.com/osbuild/image-builder/internal/oauth2"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -20,24 +19,14 @@ import (
 
 type ComposerClient struct {
 	composerURL string
-
-	tokenURL     string
-	offlineToken string
-	accessToken  string
-	clientId     string
-	clientSecret string
-	tokenMu      sync.RWMutex
-
-	client *http.Client
+	tokener     oauth2.Tokener
+	client      *http.Client
 }
 
 type ComposerClientConfig struct {
-	ComposerURL  string
-	CA           string
-	TokenURL     string
-	ClientId     string
-	OfflineToken string
-	ClientSecret string
+	URL     string
+	CA      string
+	Tokener oauth2.Tokener
 }
 
 type tokenResponse struct {
@@ -47,28 +36,18 @@ type tokenResponse struct {
 var contentHeaders = map[string]string{"Content-Type": "application/json"}
 
 func NewClient(conf ComposerClientConfig) (*ComposerClient, error) {
-	if conf.TokenURL == "" {
-		return nil, fmt.Errorf("Client needs token endpoint")
+	if conf.URL == "" {
+		logrus.Warn("Composer URL not set, client will fail")
 	}
-	if conf.ClientId == "" {
-		return nil, fmt.Errorf("Client needs clientId")
-	}
-	if conf.OfflineToken == "" && conf.ClientSecret == "" {
-		return nil, fmt.Errorf("Client needs offline token, or client secret")
-	}
-
-	client, err := createClient(conf.ComposerURL, conf.CA)
+	client, err := createClient(conf.URL, conf.CA)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating compose http client")
 	}
 
 	cc := ComposerClient{
-		composerURL:  fmt.Sprintf("%s/api/image-builder-composer/v2", conf.ComposerURL),
-		tokenURL:     conf.TokenURL,
-		clientId:     conf.ClientId,
-		offlineToken: conf.OfflineToken,
-		clientSecret: conf.ClientSecret,
-		client:       client,
+		composerURL: fmt.Sprintf("%s/api/image-builder-composer/v2", conf.URL),
+		tokener:     conf.Tokener,
+		client:      client,
 	}
 
 	return &cc, nil
@@ -97,7 +76,7 @@ func createClient(composerURL string, ca string) (*http.Client, error) {
 	return &http.Client{Transport: transport}, nil
 }
 
-func (cc *ComposerClient) request(method, url string, headers map[string]string, body io.Reader) (*http.Response, error) {
+func (cc *ComposerClient) request(method, url string, headers map[string]string, body io.ReadSeeker) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
@@ -107,65 +86,30 @@ func (cc *ComposerClient) request(method, url string, headers map[string]string,
 		req.Header.Add(k, v)
 	}
 
-	token := func() string {
-		cc.tokenMu.RLock()
-		defer cc.tokenMu.RUnlock()
-		return cc.accessToken
+	token, err := cc.tokener.Token(req.Context())
+	if err != nil {
+		return nil, err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token()))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
 	resp, err := cc.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode == http.StatusUnauthorized {
-		err = cc.refreshToken()
+	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusUnauthorized {
+		token, err = cc.tokener.ForceRefresh(req.Context())
 		if err != nil {
 			return nil, err
 		}
-
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token()))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+		_, err = body.Seek(0, io.SeekStart)
+		if err != nil {
+			return nil, err
+		}
 		resp, err = cc.client.Do(req)
 	}
-
 	return resp, err
-}
-
-func (cc *ComposerClient) refreshToken() error {
-	cc.tokenMu.Lock()
-	defer cc.tokenMu.Unlock()
-
-	data := url.Values{}
-	if cc.offlineToken != "" {
-		data.Set("grant_type", "refresh_token")
-		data.Set("client_id", cc.clientId)
-		data.Set("refresh_token", cc.offlineToken)
-	}
-	if cc.clientSecret != "" {
-		data.Set("grant_type", "client_credentials")
-		data.Set("client_id", cc.clientId)
-		data.Set("client_secret", cc.clientSecret)
-	}
-
-	resp, err := http.PostForm(cc.tokenURL, data)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logrus.Errorf("Error closing body after refreshing composer client token: %v", err)
-		}
-	}()
-
-	var tr tokenResponse
-	err = json.NewDecoder(resp.Body).Decode(&tr)
-	if err != nil {
-		return err
-	}
-
-	cc.accessToken = tr.AccessToken
-	return nil
 }
 
 func (cc *ComposerClient) ComposeStatus(id uuid.UUID) (*http.Response, error) {
