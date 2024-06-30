@@ -5,10 +5,10 @@ import "context"
 // DummyToken is a dummy implementation of the Tokener interface.
 type DummyToken struct{}
 
-// NextToken returns a static "testtoken" string.
-func (dt *DummyToken) NextToken(ctx context.Context) (string, error) {
+// Token returns a static "testtoken" string.
+func (dt *DummyToken) Token(ctx context.Context) (string, error) {
 
-	return "testtoken", nil
+	return "accesstoken", nil
 }
 
 func (dt *DummyToken) ForceRefresh(ctx context.Context) (string, error) {
