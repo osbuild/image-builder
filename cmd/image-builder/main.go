@@ -87,12 +87,13 @@ func main() {
 	}
 
 	composerConf := composer.ComposerClientConfig{
-		ComposerURL:  conf.ComposerURL,
-		CA:           conf.ComposerCA,
-		TokenURL:     conf.ComposerTokenURL,
-		ClientId:     conf.ComposerClientId,
-		OfflineToken: conf.ComposerOfflineToken,
-		ClientSecret: conf.ComposerClientSecret,
+		URL: conf.ComposerURL,
+		CA:  conf.ComposerCA,
+		Tokener: &oauth2.LazyToken{
+			Url:          conf.ComposerTokenURL,
+			ClientId:     conf.ComposerClientId,
+			ClientSecret: conf.ComposerClientSecret,
+		},
 	}
 
 	recommendationConf := recommendations.RecommendationsClientConfig{
