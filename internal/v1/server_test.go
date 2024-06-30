@@ -124,11 +124,10 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 		require.NoError(t, err)
 	}))
 
+	dummyTokener := &oauth2.DummyToken{}
 	compClient, err := composer.NewClient(composer.ComposerClientConfig{
-		ComposerURL:  tscc.ComposerURL,
-		TokenURL:     tokenServer.URL,
-		ClientId:     "rhsm-api",
-		OfflineToken: "offlinetoken",
+		URL:     tscc.ComposerURL,
+		Tokener: dummyTokener,
 	})
 	require.NoError(t, err)
 
