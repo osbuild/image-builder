@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,11 +21,13 @@ type RecommendationsClient struct {
 	URL     string
 	tokener oauth2.Tokener
 	client  *http.Client
+	Proxy   string
 }
 
 type RecommendationsClientConfig struct {
 	URL     string
 	CA      string
+	Proxy   string
 	Tokener oauth2.Tokener
 }
 
@@ -34,13 +37,14 @@ func NewClient(conf RecommendationsClientConfig) (*RecommendationsClient, error)
 	if conf.URL == "" {
 		logrus.Warn("Recommendation URL not set, client will fail")
 	}
-	client, err := createClient(conf.URL, conf.CA)
+	client, err := createClient(conf.URL, conf.CA, conf.Proxy)
 	if err != nil {
 		return nil, fmt.Errorf("error creating recommend http client")
 	}
 
 	rc := RecommendationsClient{
 		URL:     conf.URL,
+		Proxy:   conf.Proxy,
 		tokener: conf.Tokener,
 		client:  client,
 	}
@@ -48,26 +52,37 @@ func NewClient(conf RecommendationsClientConfig) (*RecommendationsClient, error)
 	return &rc, nil
 }
 
-func createClient(recommendationsURL string, ca string) (*http.Client, error) {
-	if !strings.HasPrefix(recommendationsURL, "https") || ca == "" {
-		return &http.Client{}, nil
+func createClient(recommendationsURL string, ca string, proxyURL string) (*http.Client, error) {
+	var transport *http.Transport
+
+	if strings.HasPrefix(recommendationsURL, "https") && ca != "" {
+		caCert, err := os.ReadFile(filepath.Clean(ca))
+		if err != nil {
+			return nil, err
+		}
+
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		tlsConfig := &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			RootCAs:    caCertPool,
+		}
+
+		transport = &http.Transport{
+			TLSClientConfig: tlsConfig,
+		}
+	} else {
+		transport = &http.Transport{}
 	}
 
-	var tlsConfig *tls.Config
-	caCert, err := os.ReadFile(filepath.Clean(ca))
-	if err != nil {
-		return nil, err
+	if proxyURL != "" {
+		proxyURLParsed, err := url.Parse(proxyURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid proxy URL: %v", err)
+		}
+		transport.Proxy = http.ProxyURL(proxyURLParsed)
 	}
-
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
-	tlsConfig = &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		RootCAs:    caCertPool,
-	}
-
-	transport := &http.Transport{TLSClientConfig: tlsConfig}
 	return &http.Client{Transport: transport}, nil
 }
 
