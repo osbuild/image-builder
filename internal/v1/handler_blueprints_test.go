@@ -503,10 +503,12 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	require.Equal(t, 404, respStatusCode)
 
 	// We should be able to create a Blueprint with same name
-	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
+	blueprintId2 := uuid.New()
+	versionId2 := uuid.New()
+	err = dbase.InsertBlueprint(ctx, blueprintId2, versionId2, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`))
 	require.NoError(t, err)
 
-	bpComposes, err := dbase.GetBlueprintComposes(ctx, "000000", blueprintId, nil, (time.Hour * 24 * 14), 10, 0, nil)
+	bpComposes, err := dbase.GetBlueprintComposes(ctx, "000000", blueprintId2, nil, (time.Hour * 24 * 14), 10, 0, nil)
 	require.Len(t, bpComposes, 0)
 	require.NoError(t, err)
 }
