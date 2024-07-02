@@ -979,42 +979,6 @@ type GetComposeClonesParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// GetBlueprintsExperimentalParams defines parameters for GetBlueprintsExperimental.
-type GetBlueprintsExperimentalParams struct {
-	// Name fetch blueprint with specific name
-	Name *string `form:"name,omitempty" json:"name,omitempty"`
-
-	// Search search for blueprints by name or description
-	Search *string `form:"search,omitempty" json:"search,omitempty"`
-
-	// Limit max amount of blueprints, default 100
-	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// Offset blueprint page offset, default 0
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-}
-
-// ComposeBlueprintExperimentalJSONBody defines parameters for ComposeBlueprintExperimental.
-type ComposeBlueprintExperimentalJSONBody struct {
-	ImageTypes *[]ImageTypes `json:"image_types,omitempty"`
-}
-
-// GetBlueprintComposesExperimentalParams defines parameters for GetBlueprintComposesExperimental.
-type GetBlueprintComposesExperimentalParams struct {
-	// BlueprintVersion Filter by a specific version of the Blueprint we want to fetch composes for.
-	// Pass special value -1 to fetch composes for latest version of the Blueprint.
-	BlueprintVersion *int `form:"blueprint_version,omitempty" json:"blueprint_version,omitempty"`
-
-	// Limit max amount of composes, default 100
-	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
-
-	// Offset composes page offset, default 0
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// IgnoreImageTypes Filter the composes on image type. The filter is optional and can be specified multiple times.
-	IgnoreImageTypes *[]ImageTypes `form:"ignoreImageTypes,omitempty" json:"ignoreImageTypes,omitempty"`
-}
-
 // GetPackagesParams defines parameters for GetPackages.
 type GetPackagesParams struct {
 	// Distribution distribution to look up packages for
@@ -1050,15 +1014,6 @@ type ComposeImageJSONRequestBody = ComposeRequest
 
 // CloneComposeJSONRequestBody defines body for CloneCompose for application/json ContentType.
 type CloneComposeJSONRequestBody = CloneRequest
-
-// CreateBlueprintExperimentalJSONRequestBody defines body for CreateBlueprintExperimental for application/json ContentType.
-type CreateBlueprintExperimentalJSONRequestBody = CreateBlueprintRequest
-
-// UpdateBlueprintExperimentalJSONRequestBody defines body for UpdateBlueprintExperimental for application/json ContentType.
-type UpdateBlueprintExperimentalJSONRequestBody = CreateBlueprintRequest
-
-// ComposeBlueprintExperimentalJSONRequestBody defines body for ComposeBlueprintExperimental for application/json ContentType.
-type ComposeBlueprintExperimentalJSONRequestBody ComposeBlueprintExperimentalJSONBody
 
 // RecommendPackageJSONRequestBody defines body for RecommendPackage for application/json ContentType.
 type RecommendPackageJSONRequestBody = RecommendPackageRequest
@@ -1820,27 +1775,6 @@ type ServerInterface interface {
 	// get the distributions available to this user
 	// (GET /distributions)
 	GetDistributions(ctx echo.Context) error
-	// get a collection of blueprints
-	// (GET /experimental/blueprints)
-	GetBlueprintsExperimental(ctx echo.Context, params GetBlueprintsExperimentalParams) error
-	// create blueprint
-	// (POST /experimental/blueprints)
-	CreateBlueprintExperimental(ctx echo.Context) error
-	// delete a blueprint
-	// (DELETE /experimental/blueprints/{id})
-	DeleteBlueprintExperimental(ctx echo.Context, id openapi_types.UUID) error
-	// get detail of a blueprint
-	// (GET /experimental/blueprints/{id})
-	GetBlueprintExperimental(ctx echo.Context, id openapi_types.UUID) error
-	// update blueprint
-	// (PUT /experimental/blueprints/{id})
-	UpdateBlueprintExperimental(ctx echo.Context, id openapi_types.UUID) error
-	// create new compose from blueprint
-	// (POST /experimental/blueprints/{id}/compose)
-	ComposeBlueprintExperimental(ctx echo.Context, id openapi_types.UUID) error
-	// get composes associated with a blueprint
-	// (GET /experimental/blueprints/{id}/composes)
-	GetBlueprintComposesExperimental(ctx echo.Context, id openapi_types.UUID, params GetBlueprintComposesExperimentalParams) error
 	// List recommended packages.
 	// (POST /experimental/recommendations)
 	RecommendPackage(ctx echo.Context) error
@@ -2202,164 +2136,6 @@ func (w *ServerInterfaceWrapper) GetDistributions(ctx echo.Context) error {
 	return err
 }
 
-// GetBlueprintsExperimental converts echo context to params.
-func (w *ServerInterfaceWrapper) GetBlueprintsExperimental(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetBlueprintsExperimentalParams
-	// ------------- Optional query parameter "name" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "name", ctx.QueryParams(), &params.Name)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
-	}
-
-	// ------------- Optional query parameter "search" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "search", ctx.QueryParams(), &params.Search)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter search: %s", err))
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", ctx.QueryParams(), &params.Offset)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetBlueprintsExperimental(ctx, params)
-	return err
-}
-
-// CreateBlueprintExperimental converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateBlueprintExperimental(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateBlueprintExperimental(ctx)
-	return err
-}
-
-// DeleteBlueprintExperimental converts echo context to params.
-func (w *ServerInterfaceWrapper) DeleteBlueprintExperimental(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.DeleteBlueprintExperimental(ctx, id)
-	return err
-}
-
-// GetBlueprintExperimental converts echo context to params.
-func (w *ServerInterfaceWrapper) GetBlueprintExperimental(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetBlueprintExperimental(ctx, id)
-	return err
-}
-
-// UpdateBlueprintExperimental converts echo context to params.
-func (w *ServerInterfaceWrapper) UpdateBlueprintExperimental(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UpdateBlueprintExperimental(ctx, id)
-	return err
-}
-
-// ComposeBlueprintExperimental converts echo context to params.
-func (w *ServerInterfaceWrapper) ComposeBlueprintExperimental(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ComposeBlueprintExperimental(ctx, id)
-	return err
-}
-
-// GetBlueprintComposesExperimental converts echo context to params.
-func (w *ServerInterfaceWrapper) GetBlueprintComposesExperimental(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "id" -------------
-	var id openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
-	}
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetBlueprintComposesExperimentalParams
-	// ------------- Optional query parameter "blueprint_version" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "blueprint_version", ctx.QueryParams(), &params.BlueprintVersion)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter blueprint_version: %s", err))
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
-	}
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", ctx.QueryParams(), &params.Offset)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
-	}
-
-	// ------------- Optional query parameter "ignoreImageTypes" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "ignoreImageTypes", ctx.QueryParams(), &params.IgnoreImageTypes)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ignoreImageTypes: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetBlueprintComposesExperimental(ctx, id, params)
-	return err
-}
-
 // RecommendPackage converts echo context to params.
 func (w *ServerInterfaceWrapper) RecommendPackage(ctx echo.Context) error {
 	var err error
@@ -2518,13 +2294,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/composes/:composeId/clones", wrapper.GetComposeClones)
 	router.GET(baseURL+"/composes/:composeId/metadata", wrapper.GetComposeMetadata)
 	router.GET(baseURL+"/distributions", wrapper.GetDistributions)
-	router.GET(baseURL+"/experimental/blueprints", wrapper.GetBlueprintsExperimental)
-	router.POST(baseURL+"/experimental/blueprints", wrapper.CreateBlueprintExperimental)
-	router.DELETE(baseURL+"/experimental/blueprints/:id", wrapper.DeleteBlueprintExperimental)
-	router.GET(baseURL+"/experimental/blueprints/:id", wrapper.GetBlueprintExperimental)
-	router.PUT(baseURL+"/experimental/blueprints/:id", wrapper.UpdateBlueprintExperimental)
-	router.POST(baseURL+"/experimental/blueprints/:id/compose", wrapper.ComposeBlueprintExperimental)
-	router.GET(baseURL+"/experimental/blueprints/:id/composes", wrapper.GetBlueprintComposesExperimental)
 	router.POST(baseURL+"/experimental/recommendations", wrapper.RecommendPackage)
 	router.GET(baseURL+"/oscap/:distribution/profiles", wrapper.GetOscapProfiles)
 	router.GET(baseURL+"/oscap/:distribution/:profile/customizations", wrapper.GetOscapCustomizations)
