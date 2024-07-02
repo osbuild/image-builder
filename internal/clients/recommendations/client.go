@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,11 +21,13 @@ type RecommendationsClient struct {
 	URL     string
 	tokener oauth2.Tokener
 	client  *http.Client
+	PROXY   string
 }
 
 type RecommendationsClientConfig struct {
 	URL     string
 	CA      string
+	PROXY   string
 	Tokener oauth2.Tokener
 }
 
@@ -34,13 +37,14 @@ func NewClient(conf RecommendationsClientConfig) (*RecommendationsClient, error)
 	if conf.URL == "" {
 		logrus.Warn("Recommendation URL not set, client will fail")
 	}
-	client, err := createClient(conf.URL, conf.CA)
+	client, err := createClient(conf.URL, conf.CA, conf.PROXY)
 	if err != nil {
 		return nil, fmt.Errorf("error creating recommend http client")
 	}
 
 	rc := RecommendationsClient{
 		URL:     conf.URL,
+		PROXY:   conf.PROXY,
 		tokener: conf.Tokener,
 		client:  client,
 	}
@@ -48,7 +52,21 @@ func NewClient(conf RecommendationsClientConfig) (*RecommendationsClient, error)
 	return &rc, nil
 }
 
-func createClient(recommendationsURL string, ca string) (*http.Client, error) {
+func createClient(recommendationsURL string, ca string, proxy string) (*http.Client, error) {
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		},
+	}
+
+	if proxy != "" {
+		proxyURL, err := url.Parse(proxy)
+		if err != nil {
+			return nil, fmt.Errorf("invalid proxy URL: %v", err)
+		}
+		transport.Proxy = http.ProxyURL(proxyURL)
+	}
+
 	if !strings.HasPrefix(recommendationsURL, "https") || ca == "" {
 		return &http.Client{}, nil
 	}
@@ -67,7 +85,7 @@ func createClient(recommendationsURL string, ca string) (*http.Client, error) {
 		RootCAs:    caCertPool,
 	}
 
-	transport := &http.Transport{TLSClientConfig: tlsConfig}
+	transport = &http.Transport{TLSClientConfig: tlsConfig}
 	return &http.Client{Transport: transport}, nil
 }
 
