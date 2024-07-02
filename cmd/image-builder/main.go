@@ -96,8 +96,9 @@ func main() {
 	}
 
 	recommendationConf := recommendations.RecommendationsClientConfig{
-		URL: conf.RecommendURL,
-		CA:  conf.RecommendCA,
+		URL:   conf.RecommendURL,
+		CA:    conf.RecommendCA,
+		Proxy: conf.RecommendProxy,
 		Tokener: &oauth2.LazyToken{
 			Url:          conf.RecommendTokenURL,
 			ClientId:     conf.RecommendClientId,

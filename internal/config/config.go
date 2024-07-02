@@ -41,6 +41,7 @@ type ImageBuilderConfig struct {
 	RecommendTokenURL     string `env:"RECOMMENDATIONS_TOKEN_URL"`
 	RecommendClientId     string `env:"RECOMMENDATIONS_CLIENT_ID"`
 	RecommendSecret       string `env:"RECOMMENDATIONS_CLIENT_SECRET"`
+	RecommendProxy        string `env:"RECOMMENDATIONS_PROXY"`
 	RecommendCA           string `env:"RECOMMENDATIONS_CA_PATH"`
 	GlitchTipDSN          string `env:"GLITCHTIP_DSN"`
 	FedoraAuth            bool   `env:"FEDORA_AUTH"`

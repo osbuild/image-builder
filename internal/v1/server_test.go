@@ -100,6 +100,7 @@ type testServerClientsConf struct {
 	CSURL        string
 	RecommendURL string
 	OAuthURL     string
+	Proxy        string
 }
 
 func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) (*echo.Echo, *httptest.Server) {
@@ -149,6 +150,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	}
 	recommendClient, err := recommendations.NewClient(recommendations.RecommendationsClientConfig{
 		URL:     tscc.RecommendURL,
+		Proxy:   tscc.Proxy,
 		Tokener: recommendToken,
 	})
 	require.NoError(t, err)
