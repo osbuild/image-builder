@@ -124,6 +124,12 @@ objects:
                 key: client_secret
                 name: recommendations-secrets
                 optional: true
+          - name: RECOMMENDATIONS_PROXY
+            valueFrom:
+              secretKeyRef:
+                key: proxy
+                name: recommendations-secrets
+                optional: true
         volumeMounts:
           - name: config-volume
             mountPath: /app/config
