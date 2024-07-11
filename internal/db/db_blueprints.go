@@ -19,8 +19,8 @@ type BlueprintCompose struct {
 
 const (
 	sqlInsertBlueprint = `
-		INSERT INTO blueprints(id, org_id, account_number, name, description)
-		VALUES($1, $2, $3, $4, $5)`
+		INSERT INTO blueprints(id, org_id, account_number, name, description, metadata)
+		VALUES($1, $2, $3, $4, $5, $6)`
 
 	sqlInsertVersion = `
 		INSERT INTO blueprint_versions(id, blueprint_id, version, body)
@@ -211,7 +211,7 @@ func (db *dB) GetBlueprintComposes(ctx context.Context, orgId string, blueprintI
 	return composes, nil
 }
 
-func (db *dB) InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error {
+func (db *dB) InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage, metadata json.RawMessage) error {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return err
@@ -219,7 +219,7 @@ func (db *dB) InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.
 	defer conn.Release()
 
 	err = db.withTransaction(ctx, func(tx pgx.Tx) error {
-		tag, txErr := tx.Exec(ctx, sqlInsertBlueprint, id, orgID, accountNumber, name, description)
+		tag, txErr := tx.Exec(ctx, sqlInsertBlueprint, id, orgID, accountNumber, name, description, metadata)
 		if txErr != nil {
 			return txErr
 		}

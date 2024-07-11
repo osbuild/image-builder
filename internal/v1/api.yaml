@@ -242,6 +242,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPErrorList'
+  /blueprints/{id}/export:
+    parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        example: '123e4567-e89b-12d3-a456-426655440000'
+        required: true
+        description: UUID of a blueprint
+    get:
+      summary: export a blueprint
+      description: "export a blueprint"
+      operationId: exportBlueprint
+      tags:
+        - blueprint
+      responses:
+        '200':
+          description: detail of a blueprint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlueprintExportResponse'
+        '404':
+          description: blueprint was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPErrorList'
   /blueprints/{id}/compose:
     post:
       parameters:
@@ -1194,6 +1223,8 @@ components:
             Array of image requests. Having more image requests in a single blueprint is currently not supported.
         customizations:
           $ref: '#/components/schemas/Customizations'
+        metadata:
+          $ref: '#/components/schemas/BlueprintMetadata'
     CreateBlueprintResponse:
       required:
         - id
@@ -1262,6 +1293,35 @@ components:
             Array of image requests. Having more image requests in a single blueprint is currently not supported.
         customizations:
           $ref: '#/components/schemas/Customizations'
+    BlueprintExportResponse:
+      required:
+        - name
+        - description
+        - distribution
+        - customizations
+        - metadata
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        distribution:
+          $ref: '#/components/schemas/Distributions'
+        customizations:
+          $ref: '#/components/schemas/Customizations'
+        metadata:
+          $ref: '#/components/schemas/BlueprintMetadata'
+    BlueprintMetadata:
+      required:
+        - parent_id
+        - exported_at
+      properties:
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+        exported_at:
+          type: string
     Distributions:
       type: string
       description: |
