@@ -221,6 +221,20 @@ type AzureUploadStatus struct {
 	ImageName string `json:"image_name"`
 }
 
+// BlueprintExportResponse defines model for BlueprintExportResponse.
+type BlueprintExportResponse struct {
+	Customizations Customizations `json:"customizations"`
+	Description    string         `json:"description"`
+
+	// Distribution List of all distributions that image builder supports. A user might not have access to
+	// restricted distributions.
+	//
+	// Restricted distributions include the RHEL nightlies and the Fedora distributions.
+	Distribution Distributions     `json:"distribution"`
+	Metadata     BlueprintMetadata `json:"metadata"`
+	Name         string            `json:"name"`
+}
+
 // BlueprintItem defines model for BlueprintItem.
 type BlueprintItem struct {
 	Description    string             `json:"description"`
@@ -228,6 +242,12 @@ type BlueprintItem struct {
 	LastModifiedAt string             `json:"last_modified_at"`
 	Name           string             `json:"name"`
 	Version        int                `json:"version"`
+}
+
+// BlueprintMetadata defines model for BlueprintMetadata.
+type BlueprintMetadata struct {
+	ExportedAt string              `json:"exported_at"`
+	ParentId   *openapi_types.UUID `json:"parent_id"`
 }
 
 // BlueprintResponse defines model for BlueprintResponse.
@@ -385,8 +405,9 @@ type CreateBlueprintRequest struct {
 	Distribution Distributions `json:"distribution"`
 
 	// ImageRequests Array of image requests. Having more image requests in a single blueprint is currently not supported.
-	ImageRequests []ImageRequest `json:"image_requests"`
-	Name          string         `json:"name"`
+	ImageRequests []ImageRequest     `json:"image_requests"`
+	Metadata      *BlueprintMetadata `json:"metadata,omitempty"`
+	Name          string             `json:"name"`
 }
 
 // CreateBlueprintResponse defines model for CreateBlueprintResponse.
@@ -1794,6 +1815,9 @@ type ServerInterface interface {
 	// get composes associated with a blueprint
 	// (GET /blueprints/{id}/composes)
 	GetBlueprintComposes(ctx echo.Context, id openapi_types.UUID, params GetBlueprintComposesParams) error
+	// export a blueprint
+	// (GET /blueprints/{id}/export)
+	ExportBlueprint(ctx echo.Context, id openapi_types.UUID) error
 	// get status of a compose clone
 	// (GET /clones/{id})
 	GetCloneStatus(ctx echo.Context, id openapi_types.UUID) error
@@ -2038,6 +2062,22 @@ func (w *ServerInterfaceWrapper) GetBlueprintComposes(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetBlueprintComposes(ctx, id, params)
+	return err
+}
+
+// ExportBlueprint converts echo context to params.
+func (w *ServerInterfaceWrapper) ExportBlueprint(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ExportBlueprint(ctx, id)
 	return err
 }
 
@@ -2510,6 +2550,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PUT(baseURL+"/blueprints/:id", wrapper.UpdateBlueprint)
 	router.POST(baseURL+"/blueprints/:id/compose", wrapper.ComposeBlueprint)
 	router.GET(baseURL+"/blueprints/:id/composes", wrapper.GetBlueprintComposes)
+	router.GET(baseURL+"/blueprints/:id/export", wrapper.ExportBlueprint)
 	router.GET(baseURL+"/clones/:id", wrapper.GetCloneStatus)
 	router.POST(baseURL+"/compose", wrapper.ComposeImage)
 	router.GET(baseURL+"/composes", wrapper.GetComposes)

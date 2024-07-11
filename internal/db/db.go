@@ -49,6 +49,7 @@ type BlueprintEntry struct {
 	Body        json.RawMessage
 	Name        string
 	Description string
+	Metadata    json.RawMessage
 }
 
 type BlueprintWithNoBody struct {
@@ -74,7 +75,7 @@ type DB interface {
 	GetClonesForCompose(ctx context.Context, composeId uuid.UUID, orgId string, limit, offset int) ([]CloneEntry, int, error)
 	GetClone(ctx context.Context, id uuid.UUID, orgId string) (*CloneEntry, error)
 
-	InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage) error
+	InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage, metadata json.RawMessage) error
 	GetBlueprint(ctx context.Context, id uuid.UUID, orgID string) (*BlueprintEntry, error)
 	UpdateBlueprint(ctx context.Context, id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error
 	GetBlueprints(ctx context.Context, orgID string, limit, offset int) ([]BlueprintWithNoBody, int, error)

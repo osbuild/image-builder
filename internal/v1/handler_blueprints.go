@@ -69,6 +69,11 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 		return err
 	}
 
+	metadata, err := json.Marshal(blueprintRequest.Metadata)
+	if err != nil {
+		return err
+	}
+
 	if !blueprintNameRegex.MatchString(blueprintRequest.Name) {
 		return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
 			Errors: []HTTPError{{
@@ -85,7 +90,7 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	if blueprintRequest.Description != nil {
 		desc = *blueprintRequest.Description
 	}
-	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, desc, body)
+	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, desc, body, metadata)
 	if err != nil {
 		ctx.Logger().Errorf("Error inserting id into db: %s", err.Error())
 
@@ -120,6 +125,7 @@ func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID) error {
 		}
 		return err
 	}
+
 	blueprint, err := BlueprintFromEntry(blueprintEntry)
 	if err != nil {
 		return err
@@ -135,6 +141,40 @@ func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID) error {
 	}
 
 	return ctx.JSON(http.StatusOK, blueprintResponse)
+}
+
+func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) error {
+	userID, err := h.server.getIdentity(ctx)
+	if err != nil {
+		return err
+	}
+
+	ctx.Logger().Infof("Fetching blueprint %s", id)
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID())
+	if err != nil {
+		if errors.Is(err, db.BlueprintNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
+		return err
+	}
+
+	blueprint, err := BlueprintFromEntry(blueprintEntry)
+	if err != nil {
+		return err
+	}
+
+	blueprint.Customizations.Subscription = &Subscription{}
+	blueprintExportResponse := BlueprintExportResponse{
+		Name:           blueprintEntry.Name,
+		Description:    blueprintEntry.Description,
+		Distribution:   blueprint.Distribution,
+		Customizations: blueprint.Customizations,
+		Metadata: BlueprintMetadata{
+			ExportedAt: time.Now().UTC().String(),
+			ParentId:   &id,
+		},
+	}
+	return ctx.JSON(http.StatusOK, blueprintExportResponse)
 }
 
 func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) error {

@@ -287,7 +287,7 @@ func TestGetComposes(t *testing.T) {
 
 	bpId := uuid.New()
 	versionId := uuid.New()
-	err = dbase.InsertBlueprint(ctx, bpId, versionId, "000000", "500000", "bpName", "desc", json.RawMessage("{}"))
+	err = dbase.InsertBlueprint(ctx, bpId, versionId, "000000", "500000", "bpName", "desc", json.RawMessage("{}"), json.RawMessage("{}"))
 	require.NoError(t, err)
 
 	err = dbase.InsertCompose(ctx, id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)

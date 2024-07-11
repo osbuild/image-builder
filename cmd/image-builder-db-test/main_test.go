@@ -110,7 +110,7 @@ func testInsertCompose(t *testing.T) {
 
 	migrateTern(t)
 
-	err = d.InsertBlueprint(ctx, blueprintId, versionId, ORGID1, ANR1, "blueprint", "blueprint desc", []byte("{}"))
+	err = d.InsertBlueprint(ctx, blueprintId, versionId, ORGID1, ANR1, "blueprint", "blueprint desc", []byte("{}"), []byte("{}"))
 	require.NoError(t, err)
 
 	// test
@@ -392,7 +392,7 @@ func testBlueprints(t *testing.T) {
 
 	id := uuid.New()
 	versionId := uuid.New()
-	err = d.InsertBlueprint(ctx, id, versionId, ORGID1, ANR1, name1, description1, bodyJson1)
+	err = d.InsertBlueprint(ctx, id, versionId, ORGID1, ANR1, name1, description1, bodyJson1, []byte("{}"))
 	require.NoError(t, err)
 
 	entry, err := d.GetBlueprint(ctx, id, ORGID1)
@@ -460,11 +460,11 @@ func testBlueprints(t *testing.T) {
 	newestBlueprintName := "new name"
 
 	// Fail to insert blueprint with the same name
-	err = d.InsertBlueprint(ctx, newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1)
+	err = d.InsertBlueprint(ctx, newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1, []byte("{}"))
 	require.Error(t, err)
 
 	newestBlueprintName = "New name 2"
-	err = d.InsertBlueprint(ctx, newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1)
+	err = d.InsertBlueprint(ctx, newestBlueprintId, newestBlueprintVersionId, ORGID1, ANR1, newestBlueprintName, "desc", bodyJson1, []byte("{}"))
 	require.NoError(t, err)
 	entries, bpCount, err := d.GetBlueprints(ctx, ORGID1, 100, 0)
 	require.NoError(t, err)
@@ -472,7 +472,7 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, entries[0].Name, newestBlueprintName)
 	require.Equal(t, entries[1].Version, 2)
 
-	err = d.InsertBlueprint(ctx, uuid.New(), uuid.New(), ORGID1, ANR1, "unique name", "unique desc", bodyJson1)
+	err = d.InsertBlueprint(ctx, uuid.New(), uuid.New(), ORGID1, ANR1, "unique name", "unique desc", bodyJson1, []byte("{}"))
 	entries, count, err := d.FindBlueprints(ctx, ORGID1, "", 100, 0)
 	require.NoError(t, err)
 	require.Equal(t, 3, count)
@@ -514,7 +514,7 @@ func testGetBlueprintComposes(t *testing.T) {
 
 	id := uuid.New()
 	versionId := uuid.New()
-	err = d.InsertBlueprint(ctx, id, versionId, ORGID1, ANR1, "name", "desc", []byte("{}"))
+	err = d.InsertBlueprint(ctx, id, versionId, ORGID1, ANR1, "name", "desc", []byte("{}"), []byte("{}"))
 	require.NoError(t, err)
 
 	// get latest version
