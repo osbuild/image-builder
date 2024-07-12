@@ -238,6 +238,12 @@ func shouldRetry(err error) bool {
 	return false
 }
 
+// getBodyWithRetry will run the given function and return the reponse
+// body. On error the function is retried when:
+// - the error is a timeout
+// - the error is a retryable http code (e.g. 503)
+// Note that even on error the body can be non-nil, in this case it will
+// contain the body of the errored http response.
 func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, error), info string) ([]byte, error) {
 	// The list of http errors we want to retry on. be convervative here
 	// at first to avoid unneccessary retries for unrecoverable err and
@@ -270,7 +276,7 @@ func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, 
 				return body, nil
 			case http.StatusNotFound:
 				// Composes can get deleted in composer, usually when the image is expired
-				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusNotFound, string(body)))
+				return body, retry.Unrecoverable(echo.NewHTTPError(http.StatusNotFound, string(body)))
 			default:
 				errmsg := fmt.Sprintf("Failed %s (got status %v)", info, resp.StatusCode)
 				httpError := echo.NewHTTPError(http.StatusInternalServerError, errmsg)
@@ -278,9 +284,9 @@ func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, 
 				// be conversative with retries, the risk is
 				// to create a thundering herd problem
 				if !slices.Contains(retryableHttpCodes, resp.StatusCode) {
-					return nil, retry.Unrecoverable(httpError)
+					return body, retry.Unrecoverable(httpError)
 				}
-				return nil, httpError
+				return body, httpError
 			}
 		},
 		retry.Attempts(3),
@@ -741,23 +747,22 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Requested clone cannot be found")
 	}
 
-	resp, err := h.server.cClient.CloneStatus(id)
+	data, err := h.getBodyWithRetry(ctx, func() (*http.Response, error) {
+		return h.server.cClient.CloneStatus(id)
+	}, fmt.Sprintf("querying clone status %v", id))
 	if err != nil {
 		ctx.Logger().Errorf("Error requesting clone status for clone %v: %v", id, err)
-		return err
-	}
-	defer closeBody(ctx, resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		var cErr composer.Error
-		err = json.NewDecoder(resp.Body).Decode(&cErr)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to parse composer error")
+		if data != nil {
+			var cErr composer.Error
+			if err = json.Unmarshal(data, &cErr); err == nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to create clone job: %v", cErr.Reason))
+			}
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to create clone job: %v", cErr.Reason))
+		return err
 	}
 
 	var cloudStat composer.CloneStatus
-	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
+	err = json.Unmarshal(data, &cloudStat)
 	if err != nil {
 		ctx.Logger().Errorf("Unable to decode clone status: %v", err)
 		return err
