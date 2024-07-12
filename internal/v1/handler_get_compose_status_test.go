@@ -260,7 +260,6 @@ func TestGetComposeStatusBodyWithRetryNotRetrying(t *testing.T) {
 		// status code 400 is not retried
 		w.WriteHeader(400)
 		w.Write([]byte("error body"))
-		return
 	}))
 	defer fakeComposerSrv.Close()
 
@@ -270,6 +269,89 @@ func TestGetComposeStatusBodyWithRetryNotRetrying(t *testing.T) {
 	// this error is not retried
 	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
 	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 400), internal=error body")
-	require.Nil(t, body)
 	require.Equal(t, nRetries, 1)
+	require.Equal(t, "", string(body))
+}
+
+func TestGetComposeStatusBodyWithRetry404returnedAs404(t *testing.T) {
+	fakeComposeId := uuid.New()
+
+	// XXX: extract as helper
+	nRetries := 0
+	fakeComposerSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nRetries++
+		// status code 404 is not retried
+		w.WriteHeader(404)
+		w.Write([]byte("404 error body"))
+	}))
+	defer fakeComposerSrv.Close()
+
+	h := makeFakeHandlerFor(t, fakeComposerSrv.URL)
+	c := makeFakeEchoContext()
+
+	// this error is not retried
+	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	require.ErrorContains(t, err, "code=404, message=404 error body")
+	require.Equal(t, nRetries, 1)
+	require.Equal(t, "", string(body))
+}
+
+func TestGetComposeStatusBodyWithRetryDoRetry(t *testing.T) {
+	composerStatus := composer.ComposeStatus{
+		ImageStatus: composer.ImageStatus{
+			Status: composer.ImageStatusValueSuccess,
+		},
+	}
+	expectedBody, err := json.Marshal(&composerStatus)
+	require.NoError(t, err)
+	fakeComposeId := uuid.New()
+
+	// XXX: extract as helper
+	nRetries := 0
+	fakeComposerSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nRetries++
+		if nRetries < 2 {
+			// this error is retried
+			w.WriteHeader(503)
+			w.Write([]byte("error body"))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		err := json.NewEncoder(w).Encode(composerStatus)
+		require.NoError(t, err)
+	}))
+	defer fakeComposerSrv.Close()
+
+	h := makeFakeHandlerFor(t, fakeComposerSrv.URL)
+	c := makeFakeEchoContext()
+
+	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	require.Equal(t, nRetries, 2)
+	require.NoError(t, err)
+	require.Equal(t, string(expectedBody)+"\n", string(body))
+}
+
+func TestGetComposeStatusBodyWithRetryDoRetryGivesUpEventually(t *testing.T) {
+	fakeComposeId := uuid.New()
+
+	// XXX: extract as helper
+	nRetries := 0
+	fakeComposerSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nRetries++
+		// this error is retried
+		w.WriteHeader(503)
+		w.Write([]byte("error body"))
+	}))
+	defer fakeComposerSrv.Close()
+
+	h := makeFakeHandlerFor(t, fakeComposerSrv.URL)
+	c := makeFakeEchoContext()
+
+	// TODO: we probably want to tweak the retry delay to avoid tht
+	// this test takes the full 3sec
+	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	require.Equal(t, nRetries, 3)
+	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 503), internal=error body")
+	require.Equal(t, "", string(body))
 }

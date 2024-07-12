@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -226,20 +227,41 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 }
 
 func (h *Handlers) getComposeStatusBodyWithRetry(ctx echo.Context, composeId uuid.UUID) ([]byte, error) {
-	var resp *http.Response
-	var body []byte
+	// The list of http errors we want to retry on. be convervative here
+	// at first to avoid unneccessary retries for unrecoverable err and
+	// also the thundering herd problem
+	retryableHttpCodes := []int{http.StatusServiceUnavailable}
 
-	err := retry.Do(
-		func() error {
-			var err error
-			resp, err = h.server.cClient.ComposeStatus(composeId)
+	body, err := retry.DoWithData(
+		func() ([]byte, error) {
+			resp, err := h.server.cClient.ComposeStatus(composeId)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			defer closeBody(ctx, resp.Body)
 
-			body, err = io.ReadAll(resp.Body)
-			return err
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to read body: %v", err))
+			}
+
+			switch resp.StatusCode {
+			case http.StatusOK:
+				return body, nil
+			case http.StatusNotFound:
+				// Composes can get deleted in composer, usually when the image is expired
+				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusNotFound, string(body)))
+			default:
+				errmsg := fmt.Sprintf("Failed querying compose status (got status %v)", resp.StatusCode)
+				httpError := echo.NewHTTPError(http.StatusInternalServerError, errmsg)
+				_ = httpError.SetInternal(fmt.Errorf("%s", body))
+				// be conversative with retries, the risk is
+				// to create a thundering herd problem
+				if !slices.Contains(retryableHttpCodes, resp.StatusCode) {
+					return nil, retry.Unrecoverable(httpError)
+				}
+				return nil, httpError
+			}
 		},
 		retry.Attempts(3),
 		retry.Delay(time.Second),
@@ -249,21 +271,12 @@ func (h *Handlers) getComposeStatusBodyWithRetry(ctx echo.Context, composeId uui
 		}),
 	)
 
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status after multiple attempts")
+	// we need to remove the retry.Error to keep compatibility with the
+	// expected errors from this func
+	if e, ok := err.(retry.Error); ok {
+		return nil, e.Unwrap()
 	}
-	switch resp.StatusCode {
-	case http.StatusNotFound:
-		// Composes can get deleted in composer, usually when the image is expired
-		return nil, echo.NewHTTPError(http.StatusNotFound, string(body))
-	case http.StatusOK:
-		return body, nil
-	default:
-		errmsg := fmt.Sprintf("Failed querying compose status (got status %v)", resp.StatusCode)
-		httpError := echo.NewHTTPError(http.StatusInternalServerError, errmsg)
-		_ = httpError.SetInternal(fmt.Errorf("%s", body))
-		return nil, httpError
-	}
+	return body, err
 }
 
 func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error {
