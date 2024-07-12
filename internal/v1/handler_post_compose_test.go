@@ -478,7 +478,7 @@ func TestComposeStatus500Error(t *testing.T) {
 		id), &tutils.AuthString1)
 	require.Equal(t, http.StatusInternalServerError, respStatusCode)
 
-	expectedJSON := `{"errors":[{"detail":"Failed querying compose status (got status 500)","title":"500"}]}`
+	expectedJSON := fmt.Sprintf(`{"errors":[{"detail":"Failed querying compose status %v (got status 500)","title":"500"}]}`, id)
 	actualJSON := strings.TrimSpace(string(body))
 	require.Equal(t, expectedJSON, actualJSON)
 	require.NoError(t, err)

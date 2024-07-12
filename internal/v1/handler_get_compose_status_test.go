@@ -269,7 +269,7 @@ func TestGetComposeStatusBodyWithRetryNotRetrying(t *testing.T) {
 	// this error is not retried
 	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
 		return h.server.cClient.ComposeStatus(fakeComposeId)
-	}, "ComposeStatus")
+	}, "querying compose status")
 	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 400), internal=error body")
 	require.Equal(t, nRetries, 1)
 	require.Equal(t, "", string(body))
@@ -294,7 +294,7 @@ func TestGetComposeStatusBodyWithRetry404returnedAs404(t *testing.T) {
 	// this error is not retried
 	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
 		return h.server.cClient.ComposeStatus(fakeComposeId)
-	}, "ComposeStatus")
+	}, "querying compose status")
 	require.ErrorContains(t, err, "code=404, message=404 error body")
 	require.Equal(t, nRetries, 1)
 	require.Equal(t, "", string(body))
@@ -332,7 +332,7 @@ func TestGetComposeStatusBodyWithRetryDoRetry(t *testing.T) {
 
 	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
 		return h.server.cClient.ComposeStatus(fakeComposeId)
-	}, "ComposeStatus")
+	}, "querying compose status")
 	require.Equal(t, nRetries, 2)
 	require.NoError(t, err)
 	require.Equal(t, string(expectedBody)+"\n", string(body))
@@ -358,7 +358,7 @@ func TestGetComposeStatusBodyWithRetryDoRetryGivesUpEventually(t *testing.T) {
 	// this test takes the full 3sec
 	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
 		return h.server.cClient.ComposeStatus(fakeComposeId)
-	}, "ComposeStatus")
+	}, "querying compose status")
 	require.Equal(t, nRetries, 3)
 	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 503), internal=error body")
 	require.Equal(t, "", string(body))
@@ -375,8 +375,8 @@ func TestGetComposeStatusBodyNoRetryOnPermanentNetError(t *testing.T) {
 	// this test takes the full 3sec
 	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
 		return h.server.cClient.ComposeStatus(fakeComposeId)
-	}, "ComposeStatus")
-	require.ErrorContains(t, err, "code=500, message=Failed to get compose status: ")
+	}, "querying compose status")
+	require.ErrorContains(t, err, "code=500, message=Failed querying compose status: ")
 	require.ErrorContains(t, err, "attempts: 1")
 	require.Equal(t, "", string(body))
 }

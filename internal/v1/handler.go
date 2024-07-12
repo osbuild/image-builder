@@ -253,7 +253,7 @@ func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, 
 				if shouldRetry(err) {
 					return nil, err
 				}
-				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get compose status: %v (attempts: %v)", err, nRetries)))
+				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed %v: %v (attempts: %v)", info, err, nRetries)))
 			}
 			defer closeBody(ctx, resp.Body)
 
@@ -262,7 +262,7 @@ func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, 
 				if shouldRetry(err) {
 					return nil, err
 				}
-				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to read body: %v (attempts: %v)", err, nRetries)))
+				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to read body when %s: %v (attempts: %v)", info, err, nRetries)))
 			}
 
 			switch resp.StatusCode {
@@ -272,7 +272,7 @@ func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, 
 				// Composes can get deleted in composer, usually when the image is expired
 				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusNotFound, string(body)))
 			default:
-				errmsg := fmt.Sprintf("Failed querying compose status (got status %v)", resp.StatusCode)
+				errmsg := fmt.Sprintf("Failed %s (got status %v)", info, resp.StatusCode)
 				httpError := echo.NewHTTPError(http.StatusInternalServerError, errmsg)
 				_ = httpError.SetInternal(fmt.Errorf("%s", body))
 				// be conversative with retries, the risk is
@@ -307,7 +307,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 
 	data, err := h.getBodyWithRetry(ctx, func() (*http.Response, error) {
 		return h.server.cClient.ComposeStatus(composeId)
-	}, fmt.Sprintf("GetComposeStatus: %v", composeId))
+	}, fmt.Sprintf("querying compose status %v", composeId))
 	if err != nil {
 		return err
 	}
@@ -488,7 +488,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) err
 
 	data, err := h.getBodyWithRetry(ctx, func() (*http.Response, error) {
 		return h.server.cClient.ComposeMetadata(composeId)
-	}, fmt.Sprintf("querrying compose metadata %v", composeId))
+	}, fmt.Sprintf("querying compose metadata %v", composeId))
 	if err != nil {
 		return err
 	}
