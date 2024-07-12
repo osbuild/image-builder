@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/BurntSushi/toml v1.4.0
+	github.com/avast/retry-go/v4 v4.6.0
 	github.com/aws/aws-sdk-go v1.54.18
 	github.com/getkin/kin-openapi v0.124.0
 	github.com/getsentry/sentry-go v0.28.1
