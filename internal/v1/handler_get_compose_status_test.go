@@ -9,9 +9,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/oauth2"
 	"github.com/osbuild/image-builder/internal/tutils"
 )
 
@@ -224,4 +226,50 @@ func TestComposeStatus(t *testing.T) {
 		require.Equal(t, payload.imageStatus, result.ImageStatus)
 		require.Equal(t, cr, result.Request)
 	}
+}
+
+func makeFakeHandlerFor(t *testing.T, url string) *Handlers {
+	cClient, err := composer.NewClient(composer.ComposerClientConfig{
+		URL:     url,
+		Tokener: &oauth2.DummyToken{},
+	})
+	require.NoError(t, err)
+
+	return &Handlers{
+		server: &Server{
+			cClient: cClient,
+		},
+	}
+}
+
+func makeFakeEchoContext() echo.Context {
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	// in out test the actual path here does not matter
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	return e.NewContext(req, rec)
+}
+
+func TestGetComposeStatusBodyWithRetryNotRetrying(t *testing.T) {
+	fakeComposeId := uuid.New()
+
+	// XXX: extract as helper
+	nRetries := 0
+	fakeComposerSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		nRetries++
+		// status code 400 is not retried
+		w.WriteHeader(400)
+		w.Write([]byte("error body"))
+		return
+	}))
+	defer fakeComposerSrv.Close()
+
+	h := makeFakeHandlerFor(t, fakeComposerSrv.URL)
+	c := makeFakeEchoContext()
+
+	// this error is not retried
+	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 400), internal=error body")
+	require.Nil(t, body)
+	require.Equal(t, nRetries, 1)
 }

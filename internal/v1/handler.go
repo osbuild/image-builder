@@ -259,7 +259,8 @@ func (h *Handlers) getComposeStatusBodyWithRetry(ctx echo.Context, composeId uui
 	case http.StatusOK:
 		return body, nil
 	default:
-		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
+		errmsg := fmt.Sprintf("Failed querying compose status (got status %v)", resp.StatusCode)
+		httpError := echo.NewHTTPError(http.StatusInternalServerError, errmsg)
 		_ = httpError.SetInternal(fmt.Errorf("%s", body))
 		return nil, httpError
 	}
