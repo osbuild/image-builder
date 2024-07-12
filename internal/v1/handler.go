@@ -305,9 +305,9 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 		return err
 	}
 
-	body, err := h.getBodyWithRetry(ctx, func() (*http.Response, error) {
+	data, err := h.getBodyWithRetry(ctx, func() (*http.Response, error) {
 		return h.server.cClient.ComposeStatus(composeId)
-	}, fmt.Sprintf("composeId: %v", composeId))
+	}, fmt.Sprintf("GetComposeStatus: %v", composeId))
 	if err != nil {
 		return err
 	}
@@ -319,7 +319,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 	}
 
 	var cloudStat composer.ComposeStatus
-	err = json.Unmarshal(body, &cloudStat)
+	err = json.Unmarshal(data, &cloudStat)
 	if err != nil {
 		return err
 	}
@@ -486,31 +486,15 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) err
 		return err
 	}
 
-	resp, err := h.server.cClient.ComposeMetadata(composeId)
+	data, err := h.getBodyWithRetry(ctx, func() (*http.Response, error) {
+		return h.server.cClient.ComposeMetadata(composeId)
+	}, fmt.Sprintf("querrying compose metadata %v", composeId))
 	if err != nil {
 		return err
 	}
-	defer closeBody(ctx, resp.Body)
-
-	if resp.StatusCode == http.StatusNotFound {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		return echo.NewHTTPError(http.StatusNotFound, string(body))
-	} else if resp.StatusCode != http.StatusOK {
-		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
-		} else {
-			_ = httpError.SetInternal(fmt.Errorf("%s", body))
-		}
-		return httpError
-	}
 
 	var cloudStat composer.ComposeMetadata
-	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
+	err = json.Unmarshal(data, &cloudStat)
 	if err != nil {
 		return err
 	}
