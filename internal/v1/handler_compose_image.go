@@ -122,42 +122,34 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		},
 	}
 
-	resp, err := h.server.cClient.Compose(cloudCR)
+	data, err := h.postBodyWithRetry(ctx, func() (*http.Response, error) {
+		return h.server.cClient.Compose(cloudCR)
+	}, "posting compose request to osbuild-composer")
 	if err != nil {
-		return ComposeResponse{}, err
-	}
-	defer closeBody(ctx, resp.Body)
-	if resp.StatusCode != http.StatusCreated {
-		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed posting compose request to osbuild-composer")
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
-		} else {
-			_ = httpError.SetInternal(fmt.Errorf("%s", body))
+		if httpError, ok := err.(*echo.HTTPError); ok && data != nil {
 			var serviceStat composer.Error
-			if err := json.Unmarshal(body, &serviceStat); err != nil {
-				return ComposeResponse{}, httpError
-			}
-			if serviceStat.Id == "10" {
-				httpError.Message = "Error resolving OSTree repo"
-				httpError.Code = http.StatusBadRequest
-			}
-			// missing baseurl in payload repository
-			if serviceStat.Id == "24" {
-				httpError.Message = serviceStat.Reason
-				httpError.Code = http.StatusBadRequest
-			}
-			// gpg key not set when check_gpg is true
-			if serviceStat.Id == "29" {
-				httpError.Message = serviceStat.Reason
-				httpError.Code = http.StatusBadRequest
+			if err := json.Unmarshal(data, &serviceStat); err == nil {
+				if serviceStat.Id == "10" {
+					httpError.Message = "Error resolving OSTree repo"
+					httpError.Code = http.StatusBadRequest
+				}
+				// missing baseurl in payload repository
+				if serviceStat.Id == "24" {
+					httpError.Message = serviceStat.Reason
+					httpError.Code = http.StatusBadRequest
+				}
+				// gpg key not set when check_gpg is true
+				if serviceStat.Id == "29" {
+					httpError.Message = serviceStat.Reason
+					httpError.Code = http.StatusBadRequest
+				}
 			}
 		}
-		return ComposeResponse{}, httpError
+		return ComposeResponse{}, err
 	}
 
 	var composeResult composer.ComposeId
-	err = json.NewDecoder(resp.Body).Decode(&composeResult)
+	err = json.Unmarshal(data, &composeResult)
 	if err != nil {
 		return ComposeResponse{}, err
 	}

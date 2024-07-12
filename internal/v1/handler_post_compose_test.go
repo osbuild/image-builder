@@ -537,6 +537,7 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 		}
 		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
+		// XXX: really? 200 Ok but actually "10" "not ok"?
 		w.WriteHeader(http.StatusOK)
 		serviceStat := &composer.Error{
 			Id:     "10",

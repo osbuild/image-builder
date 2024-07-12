@@ -245,38 +245,56 @@ func shouldRetry(err error) bool {
 // Note that even on error the body can be non-nil, in this case it will
 // contain the body of the errored http response.
 func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, error), info string) ([]byte, error) {
+	expectedHttpStatus := http.StatusOK
+	return h.getBodyWithRetryInternal(ctx, expectedHttpStatus, f, info)
+}
+
+// postBodyWithRetry is similar to getBodyWithRetry() but it expects a
+// http.StatusCreated. Any other return code is an error.
+func (h *Handlers) postBodyWithRetry(ctx echo.Context, f func() (*http.Response, error), info string) ([]byte, error) {
+	expectedHttpStatus := http.StatusCreated
+	return h.getBodyWithRetryInternal(ctx, expectedHttpStatus, f, info)
+}
+
+func (h *Handlers) getBodyWithRetryInternal(ctx echo.Context, expectedHttpStatus int, f func() (*http.Response, error), info string) ([]byte, error) {
 	// The list of http errors we want to retry on. be convervative here
 	// at first to avoid unneccessary retries for unrecoverable err and
 	// also the thundering herd problem
 	retryableHttpCodes := []int{http.StatusServiceUnavailable}
 
+	// XXX: some tests make decisions based on the http reponse body so
+	// we include it here even though it's a weird interface to return
+	// both data and an error - we should rethink this but it needs more
+	// refactoring
+	var body []byte
 	nRetries := 0
-	body, err := retry.DoWithData(
-		func() ([]byte, error) {
+	err := retry.Do(
+		func() error {
 			nRetries++
 			resp, err := f()
 			if err != nil {
 				if shouldRetry(err) {
-					return nil, err
+					return err
 				}
-				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed %v: %v (attempts: %v)", info, err, nRetries)))
+				return retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed %v: %v (attempts: %v)", info, err, nRetries)))
 			}
 			defer closeBody(ctx, resp.Body)
 
-			body, err := io.ReadAll(resp.Body)
+			body, err = io.ReadAll(resp.Body)
 			if err != nil {
 				if shouldRetry(err) {
-					return nil, err
+					return err
 				}
-				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to read body when %s: %v (attempts: %v)", info, err, nRetries)))
+				return retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to read body when %s: %v (attempts: %v)", info, err, nRetries)))
 			}
 
 			switch resp.StatusCode {
-			case http.StatusOK:
-				return body, nil
+			case expectedHttpStatus:
+				return nil
 			case http.StatusNotFound:
+				// XXX: this means for all composer 404 we now return a 404 from image-builder, this could be an API break
 				// Composes can get deleted in composer, usually when the image is expired
-				return body, retry.Unrecoverable(echo.NewHTTPError(http.StatusNotFound, string(body)))
+				return retry.Unrecoverable(echo.NewHTTPError(http.StatusNotFound, string(body)))
 			default:
 				errmsg := fmt.Sprintf("Failed %s (got status %v)", info, resp.StatusCode)
 				httpError := echo.NewHTTPError(http.StatusInternalServerError, errmsg)
@@ -284,9 +302,9 @@ func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, 
 				// be conversative with retries, the risk is
 				// to create a thundering herd problem
 				if !slices.Contains(retryableHttpCodes, resp.StatusCode) {
-					return body, retry.Unrecoverable(httpError)
+					return retry.Unrecoverable(httpError)
 				}
-				return body, httpError
+				return httpError
 			}
 		},
 		retry.Attempts(3),
@@ -300,7 +318,7 @@ func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, 
 	// we need to remove the retry.Error to keep compatibility with the
 	// expected errors from this func
 	if e, ok := err.(retry.Error); ok {
-		return nil, e.Unwrap()
+		return body, e.Unwrap()
 	}
 	return body, err
 }

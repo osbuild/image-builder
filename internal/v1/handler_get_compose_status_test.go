@@ -272,7 +272,7 @@ func TestGetComposeStatusBodyWithRetryNotRetrying(t *testing.T) {
 	}, "querying compose status")
 	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 400), internal=error body")
 	require.Equal(t, nRetries, 1)
-	require.Equal(t, "", string(body))
+	require.Equal(t, "error body", string(body))
 }
 
 func TestGetComposeStatusBodyWithRetry404returnedAs404(t *testing.T) {
@@ -297,7 +297,7 @@ func TestGetComposeStatusBodyWithRetry404returnedAs404(t *testing.T) {
 	}, "querying compose status")
 	require.ErrorContains(t, err, "code=404, message=404 error body")
 	require.Equal(t, nRetries, 1)
-	require.Equal(t, "", string(body))
+	require.Equal(t, "404 error body", string(body))
 }
 
 func TestGetComposeStatusBodyWithRetryDoRetry(t *testing.T) {
@@ -361,7 +361,7 @@ func TestGetComposeStatusBodyWithRetryDoRetryGivesUpEventually(t *testing.T) {
 	}, "querying compose status")
 	require.Equal(t, nRetries, 3)
 	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 503), internal=error body")
-	require.Equal(t, "", string(body))
+	require.Equal(t, "error body", string(body))
 }
 
 func TestGetComposeStatusBodyNoRetryOnPermanentNetError(t *testing.T) {
