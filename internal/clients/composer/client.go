@@ -7,15 +7,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
+	"time"
 
-	"github.com/osbuild/image-builder/internal/oauth2"
-
+	"github.com/avast/retry-go/v4"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+
+	"github.com/osbuild/image-builder/internal/oauth2"
 )
 
 type ComposerClient struct {
@@ -73,7 +77,76 @@ func createClient(composerURL string, ca string) (*http.Client, error) {
 	return &http.Client{Transport: transport}, nil
 }
 
+func shouldRetry(err error) bool {
+	if e, ok := err.(net.Error); ok {
+		// "e.Temporary" is deprecated so let's use e.Timeout
+		// as an approximation. We may need to handle ECONNRESET
+		// or similar but let's do as we go
+		// https://github.com/golang/go/issues/45729
+		return e.Timeout()
+	}
+	return false
+}
+
+var errRetryFromStatusCode = fmt.Errorf("retry based on http status code")
+
 func (cc *ComposerClient) request(method, url string, headers map[string]string, body io.ReadSeeker) (*http.Response, error) {
+	retryableHttpCodes := []int{http.StatusServiceUnavailable}
+
+	var resp *http.Response
+	err := retry.Do(
+		func() (err error) {
+			resp, err = cc.requestOnce(method, url, headers, body)
+			if err != nil {
+				if shouldRetry(err) {
+					return err
+				}
+				return retry.Unrecoverable(err)
+			}
+
+			// XXX: this is slightly convoluted to keep
+			// compatiblity with the uppper layers, this layer
+			// does not really care about StatusCodes
+			// It would be cleaner to move all the http status
+			// error handling in here. This current mix of some
+			// here and some by the caller feels not ideal
+			if !slices.Contains(retryableHttpCodes, resp.StatusCode) {
+				return nil
+			}
+			// XXX2: this function should also handle retries when reading
+			// the resp.Body fails. we could get the body here,
+			// retry on errors and then assign back to resp.Body?
+			// 1. read the body with retry
+			// 2. on success assign via "resp.Body = ioutil.NopCloser(bytes.NewBufer(data))
+			// but that also feels slightly messy, maybe the
+			// signature of request() should be changed to return
+			// []byte instead of a *http.Reponse?
+
+			return errRetryFromStatusCode
+		},
+		retry.Attempts(3),
+		retry.Delay(time.Second),
+		retry.DelayType(retry.BackOffDelay),
+		retry.OnRetry(func(n uint, err error) {
+			logrus.Warnf("Attempt %d failed for %s:%s %v. Retrying...", n+1, method, url, err)
+		}),
+	)
+
+	// we need to remove the retry.Error to keep compatibility with the
+	// expected errors from this func
+	if e, ok := err.(retry.Error); ok {
+		return nil, e.Unwrap()
+	}
+	// compatibility with the upper layers, they do not expect errors
+	// for http error codes, return the resp here
+	if err == errRetryFromStatusCode {
+		return resp, nil
+	}
+
+	return resp, err
+}
+
+func (cc *ComposerClient) requestOnce(method, url string, headers map[string]string, body io.ReadSeeker) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
