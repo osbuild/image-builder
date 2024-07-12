@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/avast/retry-go/v4"
+
 	"github.com/google/uuid"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
@@ -223,34 +225,55 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 	})
 }
 
+func (h *Handlers) getComposeStatusBodyWithRetry(ctx echo.Context, composeId uuid.UUID) ([]byte, error) {
+	var resp *http.Response
+	var body []byte
+
+	err := retry.Do(
+		func() error {
+			var err error
+			resp, err = h.server.cClient.ComposeStatus(composeId)
+			if err != nil {
+				return err
+			}
+			defer closeBody(ctx, resp.Body)
+
+			body, err = io.ReadAll(resp.Body)
+			return err
+		},
+		retry.Attempts(3),
+		retry.Delay(time.Second),
+		retry.DelayType(retry.BackOffDelay),
+		retry.OnRetry(func(n uint, err error) {
+			ctx.Logger().Warnf("Attempt %d failed for %s: %v. Retrying...", n+1, composeId, err)
+		}),
+	)
+
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status after multiple attempts")
+	}
+	switch resp.StatusCode {
+	case http.StatusNotFound:
+		// Composes can get deleted in composer, usually when the image is expired
+		return nil, echo.NewHTTPError(http.StatusNotFound, string(body))
+	case http.StatusOK:
+		return body, nil
+	default:
+		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
+		_ = httpError.SetInternal(fmt.Errorf("%s", body))
+		return nil, httpError
+	}
+}
+
 func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error {
 	composeEntry, err := h.getComposeByIdAndOrgId(ctx, composeId)
 	if err != nil {
 		return err
 	}
 
-	resp, err := h.server.cClient.ComposeStatus(composeId)
+	body, err := h.getComposeStatusBodyWithRetry(ctx, composeId)
 	if err != nil {
 		return err
-	}
-	defer closeBody(ctx, resp.Body)
-
-	if resp.StatusCode == http.StatusNotFound {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		// Composes can get deleted in composer, usually when the image is expired
-		return echo.NewHTTPError(http.StatusNotFound, string(body))
-	} else if resp.StatusCode != http.StatusOK {
-		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
-		} else {
-			_ = httpError.SetInternal(fmt.Errorf("%s", body))
-		}
-		return httpError
 	}
 
 	var composeRequest ComposeRequest
@@ -260,7 +283,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 	}
 
 	var cloudStat composer.ComposeStatus
-	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
+	err = json.Unmarshal(body, &cloudStat)
 	if err != nil {
 		return err
 	}
