@@ -438,6 +438,52 @@ func TestComposeStatusError(t *testing.T) {
 	}, result)
 }
 
+func TestComposeStatus500Error(t *testing.T) {
+	ctx := context.Background()
+	id := uuid.New()
+	attempts := 0
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		attempts++
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"errors":[{"detail":"Failed querying compose status","title":"500"}]}`))
+	}))
+	defer apiSrv.Close()
+
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+	imageName := "MyImageName"
+	clientId := "ui"
+	err = dbase.InsertCompose(ctx, id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
+	require.NoError(t, err)
+
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+		id), &tutils.AuthString1)
+	require.Equal(t, http.StatusInternalServerError, respStatusCode)
+
+	expectedJSON := `{"errors":[{"detail":"Failed querying compose status","title":"500"}]}`
+	actualJSON := strings.TrimSpace(string(body))
+	require.Equal(t, expectedJSON, actualJSON)
+	require.NoError(t, err)
+}
+
 func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
