@@ -355,3 +355,18 @@ func TestGetComposeStatusBodyWithRetryDoRetryGivesUpEventually(t *testing.T) {
 	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 503), internal=error body")
 	require.Equal(t, "", string(body))
 }
+
+func TestGetComposeStatusBodyNoRetryOnPermanentNetError(t *testing.T) {
+	fakeComposeId := uuid.New()
+
+	// this will not resolve so we get a permanent DNS error
+	h := makeFakeHandlerFor(t, "http://fdkaflksdjflsdjlf.com/ranfsdfsdf")
+	c := makeFakeEchoContext()
+
+	// TODO: we probably want to tweak the retry delay to avoid tht
+	// this test takes the full 3sec
+	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	require.ErrorContains(t, err, "code=500, message=Failed to get compose status: ")
+	require.ErrorContains(t, err, "attempts: 1")
+	require.Equal(t, "", string(body))
+}

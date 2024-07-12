@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"slices"
@@ -226,23 +227,42 @@ func (h *Handlers) GetPackages(ctx echo.Context, params GetPackagesParams) error
 	})
 }
 
+func shouldRetry(err error) bool {
+	if e, ok := err.(net.Error); ok {
+		// "e.Temporary" is deprecated so let's use e.Timeout
+		// as an approximation. We may need to handle ECONNRESET
+		// or similar but let's do as we go
+		// https://github.com/golang/go/issues/45729
+		return e.Timeout()
+	}
+	return false
+}
+
 func (h *Handlers) getComposeStatusBodyWithRetry(ctx echo.Context, composeId uuid.UUID) ([]byte, error) {
 	// The list of http errors we want to retry on. be convervative here
 	// at first to avoid unneccessary retries for unrecoverable err and
 	// also the thundering herd problem
 	retryableHttpCodes := []int{http.StatusServiceUnavailable}
 
+	nRetries := 0
 	body, err := retry.DoWithData(
 		func() ([]byte, error) {
+			nRetries++
 			resp, err := h.server.cClient.ComposeStatus(composeId)
 			if err != nil {
-				return nil, err
+				if shouldRetry(err) {
+					return nil, err
+				}
+				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get compose status: %v (attempts: %v)", err, nRetries)))
 			}
 			defer closeBody(ctx, resp.Body)
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to read body: %v", err))
+				if shouldRetry(err) {
+					return nil, err
+				}
+				return nil, retry.Unrecoverable(echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to read body: %v (attempts: %v)", err, nRetries)))
 			}
 
 			switch resp.StatusCode {
