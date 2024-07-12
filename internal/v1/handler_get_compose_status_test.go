@@ -267,7 +267,9 @@ func TestGetComposeStatusBodyWithRetryNotRetrying(t *testing.T) {
 	c := makeFakeEchoContext()
 
 	// this error is not retried
-	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
+		return h.server.cClient.ComposeStatus(fakeComposeId)
+	}, "ComposeStatus")
 	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 400), internal=error body")
 	require.Equal(t, nRetries, 1)
 	require.Equal(t, "", string(body))
@@ -290,7 +292,9 @@ func TestGetComposeStatusBodyWithRetry404returnedAs404(t *testing.T) {
 	c := makeFakeEchoContext()
 
 	// this error is not retried
-	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
+		return h.server.cClient.ComposeStatus(fakeComposeId)
+	}, "ComposeStatus")
 	require.ErrorContains(t, err, "code=404, message=404 error body")
 	require.Equal(t, nRetries, 1)
 	require.Equal(t, "", string(body))
@@ -326,7 +330,9 @@ func TestGetComposeStatusBodyWithRetryDoRetry(t *testing.T) {
 	h := makeFakeHandlerFor(t, fakeComposerSrv.URL)
 	c := makeFakeEchoContext()
 
-	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
+		return h.server.cClient.ComposeStatus(fakeComposeId)
+	}, "ComposeStatus")
 	require.Equal(t, nRetries, 2)
 	require.NoError(t, err)
 	require.Equal(t, string(expectedBody)+"\n", string(body))
@@ -350,7 +356,9 @@ func TestGetComposeStatusBodyWithRetryDoRetryGivesUpEventually(t *testing.T) {
 
 	// TODO: we probably want to tweak the retry delay to avoid tht
 	// this test takes the full 3sec
-	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
+		return h.server.cClient.ComposeStatus(fakeComposeId)
+	}, "ComposeStatus")
 	require.Equal(t, nRetries, 3)
 	require.ErrorContains(t, err, "code=500, message=Failed querying compose status (got status 503), internal=error body")
 	require.Equal(t, "", string(body))
@@ -365,7 +373,9 @@ func TestGetComposeStatusBodyNoRetryOnPermanentNetError(t *testing.T) {
 
 	// TODO: we probably want to tweak the retry delay to avoid tht
 	// this test takes the full 3sec
-	body, err := h.getComposeStatusBodyWithRetry(c, fakeComposeId)
+	body, err := h.getBodyWithRetry(c, func() (*http.Response, error) {
+		return h.server.cClient.ComposeStatus(fakeComposeId)
+	}, "ComposeStatus")
 	require.ErrorContains(t, err, "code=500, message=Failed to get compose status: ")
 	require.ErrorContains(t, err, "attempts: 1")
 	require.Equal(t, "", string(body))

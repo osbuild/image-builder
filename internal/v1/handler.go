@@ -238,7 +238,7 @@ func shouldRetry(err error) bool {
 	return false
 }
 
-func (h *Handlers) getComposeStatusBodyWithRetry(ctx echo.Context, composeId uuid.UUID) ([]byte, error) {
+func (h *Handlers) getBodyWithRetry(ctx echo.Context, f func() (*http.Response, error), info string) ([]byte, error) {
 	// The list of http errors we want to retry on. be convervative here
 	// at first to avoid unneccessary retries for unrecoverable err and
 	// also the thundering herd problem
@@ -248,7 +248,7 @@ func (h *Handlers) getComposeStatusBodyWithRetry(ctx echo.Context, composeId uui
 	body, err := retry.DoWithData(
 		func() ([]byte, error) {
 			nRetries++
-			resp, err := h.server.cClient.ComposeStatus(composeId)
+			resp, err := f()
 			if err != nil {
 				if shouldRetry(err) {
 					return nil, err
@@ -287,7 +287,7 @@ func (h *Handlers) getComposeStatusBodyWithRetry(ctx echo.Context, composeId uui
 		retry.Delay(time.Second),
 		retry.DelayType(retry.BackOffDelay),
 		retry.OnRetry(func(n uint, err error) {
-			ctx.Logger().Warnf("Attempt %d failed for %s: %v. Retrying...", n+1, composeId, err)
+			ctx.Logger().Warnf("Attempt %d failed for %s: %v. Retrying...", n+1, info, err)
 		}),
 	)
 
@@ -305,7 +305,9 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 		return err
 	}
 
-	body, err := h.getComposeStatusBodyWithRetry(ctx, composeId)
+	body, err := h.getBodyWithRetry(ctx, func() (*http.Response, error) {
+		return h.server.cClient.ComposeStatus(composeId)
+	}, fmt.Sprintf("composeId: %v", composeId))
 	if err != nil {
 		return err
 	}
