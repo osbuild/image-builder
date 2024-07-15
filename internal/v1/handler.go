@@ -68,7 +68,7 @@ func (h *Handlers) GetReadiness(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to contact osbuild-composer: %s", body))
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("error %d, failed to contact osbuild-composer: %s", resp.StatusCode, body))
 	}
 
 	ready := map[string]string{
@@ -248,7 +248,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 		if err != nil {
 			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
 		} else {
-			_ = httpError.SetInternal(fmt.Errorf("%s", body))
+			_ = httpError.SetInternal(fmt.Errorf("error %d, %s", resp.StatusCode, body))
 		}
 		return httpError
 	}
@@ -445,7 +445,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) err
 		if err != nil {
 			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
 		} else {
-			_ = httpError.SetInternal(fmt.Errorf("%s", body))
+			_ = httpError.SetInternal(fmt.Errorf("error %d, %s", resp.StatusCode, body))
 		}
 		return httpError
 	}
@@ -710,7 +710,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to parse composer error")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to create clone job: %v", cErr.Reason))
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("error %d, unable to create clone job: %v", resp.StatusCode, cErr.Reason))
 	}
 
 	var cloudStat composer.CloneStatus
