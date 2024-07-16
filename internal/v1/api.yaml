@@ -1286,6 +1286,7 @@ components:
         - rhel-92
         - rhel-93
         - rhel-94
+        - rhel-10-nightly
         - centos-9
         - centos-10
         - fedora-37
