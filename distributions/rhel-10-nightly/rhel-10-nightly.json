@@ -1,0 +1,35 @@
+{
+  "module_platform_id": "platform:el10",
+  "oscap_name": "rhel10",
+  "distribution": {
+    "name": "rhel-10-nightly",
+    "composer_name": "rhel-10",
+    "description": "Red Hat Enterprise Linux (RHEL) 10 Nightly",
+    "no_package_list": true,
+    "restricted_access": true
+  },
+  "x86_64": {
+    "image_types": ["aws", "azure", "guest-image", "openstack", "vsphere", "vsphere-ova"],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "https://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/BaseOS/x86_64/os/",
+      "rhsm": false
+    }, {
+      "id": "appstream",
+      "baseurl": "https://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/AppStream/x86_64/os/",
+      "rhsm": false
+    }]
+  },
+  "aarch64": {
+    "image_types": [ "aws", "azure", "guest-image", "openstack"],
+    "repositories": [{
+      "id": "baseos",
+      "baseurl": "https://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/BaseOS/aarch64/os/",
+      "rhsm": false
+    }, {
+      "id": "appstream",
+      "baseurl": "https://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/AppStream/aarch64/os/",
+      "rhsm": false
+    }]
+  }
+}
