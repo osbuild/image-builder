@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +29,7 @@ func TestFire(t *testing.T) {
 
 		// Data should be added
 		{&logrus.Entry{
-			Context: context.WithValue(context.Background(), requestIdCtx, "Test"),
+			Context: common.WithRequestId(context.Background(), "Test"),
 			Data:    make(logrus.Fields)},
 			map[string]string{},
 			map[string]string{"request_id": "Test"},
@@ -36,8 +37,7 @@ func TestFire(t *testing.T) {
 
 		// valid DataCtx
 		{&logrus.Entry{
-			Context: context.WithValue(context.Background(),
-				requestDataCtx,
+			Context: common.WithRequestData(context.Background(),
 				logrus.Fields{
 					"method": "GET",
 					"path":   "/"}),
@@ -48,15 +48,7 @@ func TestFire(t *testing.T) {
 
 		// invalid DataCtx
 		{&logrus.Entry{
-			Context: context.WithValue(context.Background(), requestDataCtx, nil),
-			Data:    make(logrus.Fields)},
-			map[string]string{},
-			map[string]string{},
-		},
-
-		// invalid DataCtx 2
-		{&logrus.Entry{
-			Context: context.WithValue(context.Background(), requestDataCtx, "Hello"),
+			Context: common.WithRequestData(context.Background(), nil),
 			Data:    make(logrus.Fields)},
 			map[string]string{},
 			map[string]string{},

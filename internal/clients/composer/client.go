@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/oauth2"
 
 	"github.com/google/uuid"
@@ -82,6 +83,7 @@ func (cc *ComposerClient) request(method, url string, headers map[string]string,
 	for k, v := range headers {
 		req.Header.Add(k, v)
 	}
+	req.Header.Add("X-External-Id", common.RequestId(req.Context()))
 
 	token, err := cc.tokener.Token(req.Context())
 	if err != nil {

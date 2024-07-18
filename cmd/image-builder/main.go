@@ -153,8 +153,8 @@ func main() {
 				"method":      values.Method,
 				"status":      values.Status,
 				"latency_ms":  values.Latency.Milliseconds(),
-				"request_id":  c.Request().Context().Value(requestIdCtx),
-				"insights_id": c.Request().Context().Value(insightsRequestIdCtx),
+				"request_id":  common.RequestId(c.Request().Context()),
+				"insights_id": common.InsightsRequestId(c.Request().Context()),
 			}
 			if values.Error != nil {
 				fields["error"] = values.Error
