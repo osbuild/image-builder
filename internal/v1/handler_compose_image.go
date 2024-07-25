@@ -67,7 +67,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	customizations, err = h.buildCustomizations(ctx, composeRequest.Customizations, composeRequest.ImageRequests[0].SnapshotDate)
 	if err != nil {
 		ctx.Logger().Errorf("Failed building customizations: %v", err)
-		return ComposeResponse{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to build customizations")
+		return ComposeResponse{}, err
 	}
 
 	var repositories []composer.Repository
@@ -231,6 +231,9 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 	}
 
 	for _, repo := range *csRepos.Data {
+		if !*repo.Snapshot {
+			return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Repository %s (url: %s) does not have snapshotting enabled", *repo.Name, *repo.Url))
+		}
 		repoUUIDs = append(repoUUIDs, *repo.Uuid)
 		repoMap[*repo.Uuid] = repo
 	}

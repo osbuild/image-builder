@@ -826,12 +826,14 @@ func TestComposeWithSnapshots(t *testing.T) {
 				result := content_sources.ApiRepositoryCollectionResponse{
 					Data: &[]content_sources.ApiRepositoryResponse{
 						{
-							GpgKey: common.ToPtr(rhelGpg),
-							Uuid:   common.ToPtr(repoBaseId.String()),
+							GpgKey:   common.ToPtr(rhelGpg),
+							Uuid:     common.ToPtr(repoBaseId.String()),
+							Snapshot: common.ToPtr(true),
 						},
 						{
-							GpgKey: common.ToPtr(rhelGpg),
-							Uuid:   common.ToPtr(repoAppstrId.String()),
+							GpgKey:   common.ToPtr(rhelGpg),
+							Uuid:     common.ToPtr(repoAppstrId.String()),
+							Snapshot: common.ToPtr(true),
 						},
 					},
 				}
@@ -842,8 +844,9 @@ func TestComposeWithSnapshots(t *testing.T) {
 				result := content_sources.ApiRepositoryCollectionResponse{
 					Data: &[]content_sources.ApiRepositoryResponse{
 						{
-							GpgKey: common.ToPtr("some-gpg-key"),
-							Uuid:   common.ToPtr(repoPayloadId.String()),
+							GpgKey:   common.ToPtr("some-gpg-key"),
+							Uuid:     common.ToPtr(repoPayloadId.String()),
+							Snapshot: common.ToPtr(true),
 						},
 					},
 				}
@@ -857,11 +860,30 @@ func TestComposeWithSnapshots(t *testing.T) {
 				result := content_sources.ApiRepositoryCollectionResponse{
 					Data: &[]content_sources.ApiRepositoryResponse{
 						{
-							GpgKey: common.ToPtr("some-gpg-key"),
-							Uuid:   common.ToPtr(repoPayloadId.String()),
+							GpgKey:   common.ToPtr("some-gpg-key"),
+							Uuid:     common.ToPtr(repoPayloadId.String()),
+							Snapshot: common.ToPtr(true),
 						},
 						{
-							Uuid: common.ToPtr(repoPayloadId2.String()),
+							Uuid:     common.ToPtr(repoPayloadId2.String()),
+							Snapshot: common.ToPtr(true),
+						},
+					},
+				}
+				err := json.NewEncoder(w).Encode(result)
+				require.NoError(t, err)
+			} else if slices.Equal(urls, []string{
+				"https://no-snapshots.org",
+			}) {
+				require.Equal(t, "external", r.URL.Query().Get("origin"))
+				result := content_sources.ApiRepositoryCollectionResponse{
+					Data: &[]content_sources.ApiRepositoryResponse{
+						{
+							Url:      common.ToPtr("https://no-snapshots.org"),
+							Name:     common.ToPtr("no-snapshot"),
+							GpgKey:   common.ToPtr("some-gpg-key"),
+							Uuid:     common.ToPtr(uuid.New().String()),
+							Snapshot: common.ToPtr(false),
 						},
 					},
 				}
@@ -963,6 +985,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 	payloads := []struct {
 		imageBuilderRequest ComposeRequest
 		composerRequest     composer.ComposeRequest
+		expectedErrorCode   *int
 	}{
 		// basic without payload or custom repositories
 		{
@@ -1205,11 +1228,47 @@ func TestComposeWithSnapshots(t *testing.T) {
 				},
 			},
 		},
+		// 1 payload repo without snapshotting enabled
+		{
+			imageBuilderRequest: ComposeRequest{
+				Distribution: "rhel-94",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesGuestImage,
+						SnapshotDate: common.ToPtr("1999-01-30"),
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+				Customizations: &Customizations{
+					PayloadRepositories: &[]Repository{
+						{
+							Baseurl:      common.ToPtr("https://no-snapshots.org"),
+							CheckGpg:     common.ToPtr(true),
+							CheckRepoGpg: common.ToPtr(true),
+							Gpgkey:       common.ToPtr("some-gpg-key"),
+							IgnoreSsl:    common.ToPtr(false),
+							Rhsm:         false,
+						},
+					},
+				},
+			},
+			expectedErrorCode: common.ToPtr(400),
+		},
 	}
 
 	for idx, payload := range payloads {
 		fmt.Printf("TT payload %d\n", idx)
 		respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/compose", payload.imageBuilderRequest)
+		if payload.expectedErrorCode != nil {
+			fmt.Println("BODY", string(body))
+			require.Equal(t, *payload.expectedErrorCode, respStatusCode)
+			require.Contains(t, body, "Repository no-snapshot (url: https://no-snapshots.org) does not have snapshotting enabled")
+			continue
+		}
 		require.Equal(t, http.StatusCreated, respStatusCode)
 		var result ComposeResponse
 		err := json.Unmarshal([]byte(body), &result)
