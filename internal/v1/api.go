@@ -487,7 +487,8 @@ type Customizations struct {
 	// Timezone Timezone configuration
 	Timezone *Timezone `json:"timezone,omitempty"`
 
-	// Users list of users that a customer can add, also specifying their respective groups and SSH keys
+	// Users List of users that a customer can add,
+	// also specifying their respective groups and SSH keys and/or password
 	Users *[]User `json:"users,omitempty"`
 }
 
@@ -933,8 +934,11 @@ type UploadTypes string
 
 // User defines model for User.
 type User struct {
-	Name   string `json:"name"`
-	SshKey string `json:"ssh_key"`
+	Name string `json:"name"`
+
+	// Password Plaintext passwords are also supported, they will be hashed and stored using the SHA-512 algorithm.
+	Password *string `json:"password,omitempty"`
+	SshKey   *string `json:"ssh_key,omitempty"`
 }
 
 // Version defines model for Version.
