@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/tutils"
 )
 
@@ -37,7 +38,19 @@ func TestComposeStatus(t *testing.T) {
 	require.NoError(t, err)
 	cr := ComposeRequest{
 		Distribution: "rhel-9",
-	}
+		Customizations: &Customizations{
+			// Since we are not calling handleCommonCompose but inserting directly to DB
+			// there is no point in using plaintext passwords
+			// If there is plaintext password in DB there is problem elsewhere (eg. CreateBlueprint)
+			Users: &[]User{
+				{
+					Name:     "user",
+					SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
+					Password: common.ToPtr("$6$password123"),
+				},
+			},
+		}}
+
 	crRaw, err := json.Marshal(cr)
 	require.NoError(t, err)
 	err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
