@@ -36,10 +36,16 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	defer tokenSrv.Close()
 
 	body := map[string]interface{}{
-		"name":           "Blueprint",
-		"description":    "desc",
-		"customizations": map[string]interface{}{"packages": []string{"nginx"}},
-		"distribution":   "centos-9",
+		"name":        "Blueprint",
+		"description": "desc",
+		"customizations": map[string]interface{}{
+			"packages": []string{"nginx"},
+			"users": []map[string]interface{}{
+				{"name": "user", "password": "test"},
+				{"name": "user2", "ssh_key": "ssh-rsa AAAAB3NzaC1"},
+			},
+		},
+		"distribution": "centos-9",
 		"image_requests": []map[string]interface{}{
 			{
 				"architecture":   "x86_64",
@@ -73,6 +79,15 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	err = json.Unmarshal([]byte(resp), &jsonResp)
 	require.NoError(t, err)
 	require.Equal(t, "Invalid blueprint name", jsonResp.Errors[0].Title)
+
+	// Test customization users, user without password and key is invalid
+	body["name"] = "Blueprint with invalid user"
+	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test"}}}
+	statusCode, resp = tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/blueprints", body)
+	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
+	err = json.Unmarshal([]byte(resp), &jsonResp)
+	require.NoError(t, err)
+	require.Equal(t, "Invalid user", jsonResp.Errors[0].Title)
 }
 
 func TestHandlers_UpdateBlueprint(t *testing.T) {
@@ -113,7 +128,6 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	// Test non empty name constraint
 	body["name"] = ""
 	statusCode, resp = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
-	t.Log(resp)
 	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
 	err = json.Unmarshal([]byte(resp), &jsonResp)
 	require.NoError(t, err)
@@ -122,6 +136,11 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	body["name"] = "Changing to correct body"
 	respStatusCodeNotFound, _ := tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", uuid.New()), body)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
+
+	// Test update customization users
+	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "test"}}}
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	require.Equal(t, http.StatusCreated, statusCode)
 }
 
 func TestHandlers_ComposeBlueprint(t *testing.T) {
@@ -171,6 +190,16 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	blueprint := BlueprintBody{
 		Customizations: Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
+			Users: common.ToPtr([]User{
+				{
+					Name:     "user1",
+					Password: common.ToPtr("$6$password123"), // Already hashed to test for equality
+				},
+				{
+					Name:   "user2",
+					SshKey: common.ToPtr("ssh-rsa AAAAB3NzaC1"),
+				},
+			}),
 		},
 		Distribution: "centos-9",
 		ImageRequests: []ImageRequest{
@@ -325,6 +354,38 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 0, result.Meta.Count)
 }
 
+func TestHandlers_BlueprintFromEntry(t *testing.T) {
+	t.Run("plain password", func(t *testing.T) {
+		body := []byte(`{"name": "Blueprint", "description": "desc", "customizations": {"users": [{"name": "user", "password": "foo"}]}, "distribution": "centos-9"}`)
+		be := &db.BlueprintEntry{
+			Body: body,
+		}
+		result, err := BlueprintFromEntry(be)
+		require.NoError(t, err)
+		require.NotEqual(t, common.ToPtr("foo"), (*result.Customizations.Users)[0].Password)
+	})
+	t.Run("already hashed password", func(t *testing.T) {
+		body := []byte(`{"name": "Blueprint", "description": "desc", "customizations": {"users": [{"name": "user", "password": "$6$foo"}]}, "distribution": "centos-9"}`)
+		be := &db.BlueprintEntry{
+			Body: body,
+		}
+		result, err := BlueprintFromEntry(be)
+		require.NoError(t, err)
+
+		expected := BlueprintBody{
+			Customizations: Customizations{
+				Users: common.ToPtr([]User{
+					{
+						Name:     "user",
+						Password: common.ToPtr("$6$foo"),
+					},
+				})},
+			Distribution: "centos-9",
+		}
+		require.Equal(t, expected, result)
+	})
+}
+
 func TestHandlers_GetBlueprint(t *testing.T) {
 	ctx := context.Background()
 	dbase, err := dbc.NewDB()
@@ -353,6 +414,12 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	blueprint := BlueprintBody{
 		Customizations: Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
+			Users: common.ToPtr([]User{
+				{
+					Name:     "user",
+					Password: common.ToPtr("password123"),
+				},
+			}),
 		},
 		Distribution: "centos-9",
 		ImageRequests: []ImageRequest{
@@ -397,7 +464,9 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.Equal(t, name, result.Name)
 	require.Equal(t, blueprint.ImageRequests, result.ImageRequests)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
-	require.Equal(t, blueprint.Customizations, result.Customizations)
+	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
+	// Check that the password returned is hashed
+	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
 
 	respStatusCodeNotFound, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", uuid.New()), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
@@ -418,19 +487,22 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, version2Body.Customizations, result.Customizations)
+	require.Equal(t, version2Body.Customizations.Packages, result.Customizations.Packages)
+	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
 
 	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 2), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, version2Body.Customizations, result.Customizations)
+	require.Equal(t, version2Body.Customizations.Packages, result.Customizations.Packages)
+	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
 
 	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 1), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
-	require.Equal(t, blueprint.Customizations, result.Customizations)
+	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
+	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
 }
 
 func TestHandlers_ExportBlueprint(t *testing.T) {
@@ -464,6 +536,12 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 			Subscription: &Subscription{
 				ActivationKey: "aaa",
 			},
+			Users: common.ToPtr([]User{
+				{
+					Name:     "user",
+					Password: common.ToPtr("password123"),
+				},
+			}),
 		},
 		Distribution: "centos-9",
 		ImageRequests: []ImageRequest{
@@ -514,6 +592,8 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.Equal(t, name, result.Name)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
+	// Check that the password returned is hashed
+	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
 	require.Nil(t, result.Customizations.Subscription)
 	require.Equal(t, &id, result.Metadata.ParentId)
 	require.NotEqual(t, metadata.ExportedAt, result.Metadata.ExportedAt)

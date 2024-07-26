@@ -1326,6 +1326,7 @@ func TestComposeCustomizations(t *testing.T) {
 		imageBuilderRequest ComposeRequest
 		composerRequest     composer.ComposeRequest
 	}{
+		// Customizations
 		{
 			imageBuilderRequest: ComposeRequest{
 				Customizations: &Customizations{
@@ -1355,12 +1356,17 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Users: &[]User{
 						{
-							Name:   "user",
-							SshKey: "ssh-rsa AAAAB3NzaC1",
+							Name:   "user1",
+							SshKey: common.ToPtr("ssh-rsa AAAAB3NzaC1"),
 						},
 						{
-							Name:   "user2",
-							SshKey: "ssh-rsa AAAAB3NzaC2",
+							Name:     "user2",
+							SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
+							Password: common.ToPtr("$6$password123"),
+						},
+						{
+							Name:     "user3",
+							Password: common.ToPtr("$6$password123"),
 						},
 					},
 					Groups: common.ToPtr([]Group{
@@ -1428,14 +1434,20 @@ func TestComposeCustomizations(t *testing.T) {
 					},
 					Users: &[]composer.User{
 						{
-							Name:   "user",
+							Name:   "user1",
 							Key:    common.ToPtr("ssh-rsa AAAAB3NzaC1"),
 							Groups: &[]string{"wheel"},
 						},
 						{
-							Name:   "user2",
-							Key:    common.ToPtr("ssh-rsa AAAAB3NzaC2"),
-							Groups: &[]string{"wheel"},
+							Name:     "user2",
+							Key:      common.ToPtr("ssh-rsa AAAAB3NzaC2"),
+							Password: common.ToPtr("$6$password123"),
+							Groups:   &[]string{"wheel"},
+						},
+						{
+							Name:     "user3",
+							Password: common.ToPtr("$6$password123"),
+							Groups:   &[]string{"wheel"},
 						},
 					},
 					Groups: common.ToPtr([]composer.Group{

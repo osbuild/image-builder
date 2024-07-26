@@ -15,6 +15,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/images/pkg/crypt"
 
 	"slices"
 
@@ -33,12 +34,42 @@ type BlueprintBody struct {
 	ImageRequests  []ImageRequest `json:"image_requests"`
 }
 
-func BlueprintFromAPI(cbr CreateBlueprintRequest) BlueprintBody {
-	return BlueprintBody{
+func (u *User) CryptPassword() error {
+	// Prevent empty and already hashed password  from being hashed
+	if u.Password == nil || (len(*u.Password) == 0 || crypt.PasswordIsCrypted(*u.Password)) {
+		return nil
+	}
+	pw, err := crypt.CryptSHA512(*u.Password)
+	if err != nil {
+		return err
+	}
+	*u.Password = pw
+	return nil
+}
+
+func (bb *BlueprintBody) CryptPasswords() error {
+	if bb.Customizations.Users != nil {
+		for i := range *bb.Customizations.Users {
+			err := (*bb.Customizations.Users)[i].CryptPassword()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func BlueprintFromAPI(cbr CreateBlueprintRequest) (BlueprintBody, error) {
+	bb := BlueprintBody{
 		Customizations: cbr.Customizations,
 		Distribution:   cbr.Distribution,
 		ImageRequests:  cbr.ImageRequests,
 	}
+	err := bb.CryptPasswords()
+	if err != nil {
+		return BlueprintBody{}, err
+	}
+	return bb, nil
 }
 
 func BlueprintFromEntry(be *db.BlueprintEntry) (BlueprintBody, error) {
@@ -48,6 +79,10 @@ func BlueprintFromEntry(be *db.BlueprintEntry) (BlueprintBody, error) {
 		return BlueprintBody{}, err
 	}
 
+	err = result.CryptPasswords()
+	if err != nil {
+		return BlueprintBody{}, err
+	}
 	return result, nil
 }
 
@@ -63,7 +98,11 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 		return err
 	}
 
-	blueprint := BlueprintFromAPI(blueprintRequest)
+	blueprint, err := BlueprintFromAPI(blueprintRequest)
+	if err != nil {
+		return err
+	}
+
 	body, err := json.Marshal(blueprint)
 	if err != nil {
 		return err
@@ -92,6 +131,20 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	desc := ""
 	if blueprintRequest.Description != nil {
 		desc = *blueprintRequest.Description
+	}
+
+	if blueprintRequest.Customizations.Users != nil {
+		for _, user := range *blueprintRequest.Customizations.Users {
+			// Make sure every user has either ssh key or password set
+			if user.Password == nil && user.SshKey == nil {
+				return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
+					Errors: []HTTPError{{
+						Title:  "Invalid user",
+						Detail: "User must have either a password or an SSH key set.",
+					}},
+				})
+			}
+		}
 	}
 
 	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, desc, body, metadata)
@@ -200,7 +253,10 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 		return err
 	}
 
-	blueprint := BlueprintFromAPI(blueprintRequest)
+	blueprint, err := BlueprintFromAPI(blueprintRequest)
+	if err != nil {
+		return err
+	}
 	body, err := json.Marshal(blueprint)
 	if err != nil {
 		return err
