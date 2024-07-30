@@ -69,9 +69,12 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 		return err
 	}
 
-	metadata, err := json.Marshal(blueprintRequest.Metadata)
-	if err != nil {
-		return err
+	var metadata []byte
+	if blueprintRequest.Metadata != nil {
+		metadata, err = json.Marshal(blueprintRequest.Metadata)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !blueprintNameRegex.MatchString(blueprintRequest.Name) {
@@ -90,6 +93,7 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	if blueprintRequest.Description != nil {
 		desc = *blueprintRequest.Description
 	}
+
 	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, desc, body, metadata)
 	if err != nil {
 		ctx.Logger().Errorf("Error inserting id into db: %s", err.Error())
@@ -163,7 +167,7 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 		return err
 	}
 
-	blueprint.Customizations.Subscription = &Subscription{}
+	blueprint.Customizations.Subscription = nil
 	blueprintExportResponse := BlueprintExportResponse{
 		Name:           blueprintEntry.Name,
 		Description:    blueprintEntry.Description,
