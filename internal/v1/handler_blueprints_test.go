@@ -195,7 +195,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	var message []byte
 	message, err = json.Marshal(blueprint)
 	require.NoError(t, err)
-	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, json.RawMessage(`{}`))
+	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, nil)
 	require.NoError(t, err)
 
 	tests := map[string]struct {
@@ -245,7 +245,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 
 	var result ComposesResponse
 
-	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "500000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), json.RawMessage(`{}`))
+	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "500000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
 	require.NoError(t, err)
 	id1 := uuid.New()
 	err = dbase.InsertCompose(ctx, id1, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
@@ -307,7 +307,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	// get composes for a blueprint that does not have any composes
 	id5 := uuid.New()
 	versionId2 := uuid.New()
-	err = dbase.InsertBlueprint(ctx, id5, versionId2, "000000", "500000", "newBlueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), json.RawMessage(`{}`))
+	err = dbase.InsertBlueprint(ctx, id5, versionId2, "000000", "500000", "newBlueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
 	require.NoError(t, err)
 	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s/composes?blueprint_version=1", id5), &tutils.AuthString0)
 	require.Equal(t, 200, respStatusCode)
@@ -370,7 +370,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	var message []byte
 	message, err = json.Marshal(blueprint)
 	require.NoError(t, err)
-	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, json.RawMessage(`{}`))
+	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, nil)
 	require.NoError(t, err)
 
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", id.String()), &tutils.AuthString0)
@@ -472,7 +472,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.Equal(t, name, result.Name)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
-	require.Equal(t, &Subscription{}, result.Customizations.Subscription)
+	require.Nil(t, result.Customizations.Subscription)
 	require.Equal(t, &id, result.Metadata.ParentId)
 	require.NotEqual(t, metadata.ExportedAt, result.Metadata.ExportedAt)
 }
@@ -494,11 +494,11 @@ func TestHandlers_GetBlueprints(t *testing.T) {
 
 	blueprintId := uuid.New()
 	versionId := uuid.New()
-	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", "blueprint", "blueprint desc", json.RawMessage(`{}`), json.RawMessage(`{}`))
+	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", "blueprint", "blueprint desc", json.RawMessage(`{}`), nil)
 	require.NoError(t, err)
 	blueprintId2 := uuid.New()
 	versionId2 := uuid.New()
-	err = dbase.InsertBlueprint(ctx, blueprintId2, versionId2, "000000", "000000", "Blueprint2", "blueprint desc", json.RawMessage(`{}`), json.RawMessage(`{}`))
+	err = dbase.InsertBlueprint(ctx, blueprintId2, versionId2, "000000", "000000", "Blueprint2", "blueprint desc", json.RawMessage(`{}`), nil)
 	require.NoError(t, err)
 
 	var result BlueprintsResponse
@@ -538,7 +538,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	defer tokenSrv.Close()
 
 	blueprintName := "blueprint"
-	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), json.RawMessage(`{}`))
+	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
 	require.NoError(t, err)
 	id1 := uuid.New()
 	err = dbase.InsertCompose(ctx, id1, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
@@ -591,7 +591,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	// We should be able to create a Blueprint with same name
 	blueprintId2 := uuid.New()
 	versionId2 := uuid.New()
-	err = dbase.InsertBlueprint(ctx, blueprintId2, versionId2, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), json.RawMessage(`{}`))
+	err = dbase.InsertBlueprint(ctx, blueprintId2, versionId2, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
 	require.NoError(t, err)
 
 	bpComposes, err := dbase.GetBlueprintComposes(ctx, "000000", blueprintId2, nil, (time.Hour * 24 * 14), 10, 0, nil)
