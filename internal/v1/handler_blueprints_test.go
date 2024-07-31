@@ -48,8 +48,16 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 			},
 		},
 	}
-	statusCode, _ := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/blueprints", body)
-	require.Equal(t, http.StatusCreated, statusCode)
+	statusCodePost, respPost := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/blueprints", body)
+	require.Equal(t, http.StatusCreated, statusCodePost)
+
+	var result CreateBlueprintResponse
+	err = json.Unmarshal([]byte(respPost), &result)
+	require.NoError(t, err)
+
+	be, err := dbase.GetBlueprint(ctx, result.Id, "000000", nil)
+	require.NoError(t, err)
+	require.Nil(t, be.Metadata)
 
 	// Test unique name constraint
 	statusCode, resp := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/blueprints", body)
@@ -373,6 +381,10 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, nil)
 	require.NoError(t, err)
 
+	be, err := dbase.GetBlueprint(ctx, id, "000000", nil)
+	require.NoError(t, err)
+	require.Nil(t, be.Metadata)
+
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", id.String()), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 
@@ -505,6 +517,44 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.Nil(t, result.Customizations.Subscription)
 	require.Equal(t, &id, result.Metadata.ParentId)
 	require.NotEqual(t, metadata.ExportedAt, result.Metadata.ExportedAt)
+
+	nameMeta := "blueprint with metadata"
+	parentIdMeta := "be75e486-7f2b-4b0d-a0f2-de152dcd344a"
+	bodyToImport := map[string]interface{}{
+		"name":           nameMeta,
+		"description":    "desc",
+		"customizations": map[string]interface{}{"packages": []string{"nginx"}},
+		"distribution":   "centos-9",
+		"image_requests": []map[string]interface{}{
+			{
+				"architecture":   "x86_64",
+				"image_type":     "aws",
+				"upload_request": map[string]interface{}{"type": "aws", "options": map[string]interface{}{"share_with_accounts": []string{"test-account"}}},
+			},
+		},
+		"metadata": map[string]interface{}{
+			"parent_id":   parentIdMeta,
+			"exported_at": exportedAt,
+		},
+	}
+
+	statusPost, respPost := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/blueprints", bodyToImport)
+	require.Equal(t, http.StatusCreated, statusPost)
+
+	var resultPost CreateBlueprintResponse
+	err = json.Unmarshal([]byte(respPost), &resultPost)
+	require.NoError(t, err)
+
+	be, err := dbase.GetBlueprint(ctx, resultPost.Id, "000000", nil)
+	require.NoError(t, err)
+
+	var resultMeta BlueprintMetadata
+	require.NotNil(t, be.Metadata)
+	err = json.Unmarshal(be.Metadata, &resultMeta)
+	require.NoError(t, err)
+
+	require.Equal(t, parentIdMeta, resultMeta.ParentId.String())
+	require.Equal(t, exportedAt, resultMeta.ExportedAt)
 }
 
 func TestHandlers_GetBlueprints(t *testing.T) {
