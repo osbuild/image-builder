@@ -213,6 +213,14 @@ paths:
       operationId: getBlueprint
       tags:
         - blueprint
+      parameters:
+        - in: query
+          name: version
+          schema:
+            type: integer
+          description: |
+            Filter by a specific version of the Blueprint we want to fetch.
+            Omit or pass -1 to fetch latest version.
       responses:
         '200':
           description: detail of a blueprint

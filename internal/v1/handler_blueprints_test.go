@@ -389,6 +389,36 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 
 	respStatusCodeNotFound, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", uuid.New()), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
+
+	// fetch specific version
+	version2Id := uuid.New()
+	version2Body := BlueprintBody{}
+	err = json.Unmarshal(message, &version2Body)
+	require.NoError(t, err)
+	version2Body.Customizations.Packages = common.ToPtr([]string{"nginx", "httpd"})
+	var message2 []byte
+	message2, err = json.Marshal(version2Body)
+	require.NoError(t, err)
+	err = dbase.UpdateBlueprint(ctx, version2Id, id, "000000", name, description, message2)
+	require.NoError(t, err)
+
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s?version=%d", id.String(), -1), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, version2Body.Customizations, result.Customizations)
+
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 2), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, version2Body.Customizations, result.Customizations)
+
+	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 1), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode)
+	err = json.Unmarshal([]byte(body), &result)
+	require.NoError(t, err)
+	require.Equal(t, blueprint.Customizations, result.Customizations)
 }
 
 func TestHandlers_ExportBlueprint(t *testing.T) {
@@ -568,7 +598,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Not Found", errorResponse.Errors[0].Detail)
 
-	_, err = dbase.GetBlueprint(ctx, blueprintId, "000000")
+	_, err = dbase.GetBlueprint(ctx, blueprintId, "000000", nil)
 	require.ErrorIs(t, err, db.BlueprintNotFoundError)
 
 	// We should not be able to list deleted blueprint

@@ -395,7 +395,7 @@ func testBlueprints(t *testing.T) {
 	err = d.InsertBlueprint(ctx, id, versionId, ORGID1, ANR1, name1, description1, bodyJson1, []byte("{}"))
 	require.NoError(t, err)
 
-	entry, err := d.GetBlueprint(ctx, id, ORGID1)
+	entry, err := d.GetBlueprint(ctx, id, ORGID1, nil)
 	require.NoError(t, err)
 	fromEntry, err := v1.BlueprintFromEntry(entry)
 	require.NoError(t, err)
@@ -403,6 +403,12 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, name1, entry.Name)
 	require.Equal(t, description1, entry.Description)
 	require.Equal(t, 1, entry.Version)
+
+	entry, err = d.GetBlueprint(ctx, id, ORGID1, common.ToPtr(1))
+	require.NoError(t, err)
+	fromEntry, err = v1.BlueprintFromEntry(entry)
+	require.NoError(t, err)
+	require.Equal(t, body1, fromEntry)
 
 	entryByName, err := d.FindBlueprintByName(ctx, ORGID1, name1)
 	require.NoError(t, err)
@@ -420,9 +426,9 @@ func testBlueprints(t *testing.T) {
 	require.NoError(t, err)
 
 	newVersionId := uuid.New()
-	err = d.UpdateBlueprint(ctx, newVersionId, entry.Id, ORGID1, name2, description2, bodyJson2)
+	err = d.UpdateBlueprint(ctx, newVersionId, id, ORGID1, name2, description2, bodyJson2)
 	require.NoError(t, err)
-	entryUpdated, err := d.GetBlueprint(ctx, entry.Id, ORGID1)
+	entryUpdated, err := d.GetBlueprint(ctx, id, ORGID1, nil)
 	require.NoError(t, err)
 	bodyFromEntry2, err := v1.BlueprintFromEntry(entryUpdated)
 	require.NoError(t, err)
@@ -432,6 +438,21 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, description2, entryUpdated.Description)
 
 	require.NotEqual(t, body1, bodyFromEntry2)
+
+	// Fetch by version = 1
+	entryByVersion, err := d.GetBlueprint(ctx, id, ORGID1, common.ToPtr(1))
+	require.NoError(t, err)
+	bodyFromVersionEntry, err := v1.BlueprintFromEntry(entryByVersion)
+	require.NoError(t, err)
+	require.Equal(t, body1, bodyFromVersionEntry)
+	require.Equal(t, 1, entryByVersion.Version)
+	// Fetch by version = 2 (latest)
+	entryByVersion, err = d.GetBlueprint(ctx, id, ORGID1, common.ToPtr(2))
+	require.NoError(t, err)
+	bodyFromVersionEntry, err = v1.BlueprintFromEntry(entryByVersion)
+	require.NoError(t, err)
+	require.Equal(t, body2, bodyFromVersionEntry)
+	require.Equal(t, 2, entryByVersion.Version)
 
 	name3 := "name should not be changed"
 	description3 := "desc should not be changed"
@@ -443,9 +464,9 @@ func testBlueprints(t *testing.T) {
 	bodyJson3, err := json.Marshal(body3)
 	require.NoError(t, err)
 	newBlueprintId := uuid.New()
-	err = d.UpdateBlueprint(ctx, newBlueprintId, entry.Id, ORGID2, name3, description3, bodyJson3)
+	err = d.UpdateBlueprint(ctx, newBlueprintId, id, ORGID2, name3, description3, bodyJson3)
 	require.Error(t, err)
-	entryAfterInvalidUpdate, err := d.GetBlueprint(ctx, entry.Id, ORGID1)
+	entryAfterInvalidUpdate, err := d.GetBlueprint(ctx, id, ORGID1, nil)
 	require.NoError(t, err)
 	bodyFromEntry3, err := v1.BlueprintFromEntry(entryAfterInvalidUpdate)
 	require.NoError(t, err)

@@ -76,7 +76,7 @@ type DB interface {
 	GetClone(ctx context.Context, id uuid.UUID, orgId string) (*CloneEntry, error)
 
 	InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.UUID, orgID, accountNumber, name, description string, body json.RawMessage, metadata json.RawMessage) error
-	GetBlueprint(ctx context.Context, id uuid.UUID, orgID string) (*BlueprintEntry, error)
+	GetBlueprint(ctx context.Context, id uuid.UUID, orgID string, version *int) (*BlueprintEntry, error)
 	UpdateBlueprint(ctx context.Context, id uuid.UUID, blueprintId uuid.UUID, orgId string, name string, description string, body json.RawMessage) error
 	GetBlueprints(ctx context.Context, orgID string, limit, offset int) ([]BlueprintWithNoBody, int, error)
 	FindBlueprints(ctx context.Context, orgID, search string, limit, offset int) ([]BlueprintWithNoBody, int, error)

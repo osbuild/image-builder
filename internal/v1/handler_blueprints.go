@@ -115,14 +115,21 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 	})
 }
 
-func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID) error {
+func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID, params GetBlueprintParams) error {
 	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
 		return err
 	}
 
 	ctx.Logger().Infof("Fetching blueprint %s", id)
-	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID())
+	if params.Version != nil && *params.Version <= 0 {
+		if *params.Version != -1 {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid version number")
+		}
+		params.Version = nil
+	}
+
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), params.Version)
 	if err != nil {
 		if errors.Is(err, db.BlueprintNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -154,7 +161,7 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 	}
 
 	ctx.Logger().Infof("Fetching blueprint %s", id)
-	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID())
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), nil)
 	if err != nil {
 		if errors.Is(err, db.BlueprintNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
@@ -239,7 +246,7 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 		return err
 	}
 
-	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID())
+	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), nil)
 	if err != nil {
 		return err
 	}

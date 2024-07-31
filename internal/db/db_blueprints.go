@@ -61,6 +61,7 @@ const (
 		SELECT blueprints.id, blueprint_versions.id, blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
 		WHERE blueprints.deleted = FALSE AND blueprints.id = $1 AND blueprints.org_id = $2
+			AND ($3::int is NULL OR blueprint_versions.version = $3)
 		ORDER BY blueprint_versions.created_at DESC LIMIT 1`
 
 	sqlUpdateBlueprint = `
@@ -177,7 +178,7 @@ func (db *dB) GetBlueprintComposes(ctx context.Context, orgId string, blueprintI
 	defer conn.Release()
 
 	var resultBlueprint BlueprintEntry
-	row := conn.QueryRow(ctx, sqlGetBlueprint, blueprintId, orgId)
+	row := conn.QueryRow(ctx, sqlGetBlueprint, blueprintId, orgId, nil)
 	err = row.Scan(&resultBlueprint.Id, &resultBlueprint.VersionId, &resultBlueprint.Name, &resultBlueprint.Description,
 		&resultBlueprint.Version, &resultBlueprint.Body)
 	if err != nil {
@@ -239,7 +240,7 @@ func (db *dB) InsertBlueprint(ctx context.Context, id uuid.UUID, versionId uuid.
 	return err
 }
 
-func (db *dB) GetBlueprint(ctx context.Context, id uuid.UUID, orgID string) (*BlueprintEntry, error) {
+func (db *dB) GetBlueprint(ctx context.Context, id uuid.UUID, orgID string, version *int) (*BlueprintEntry, error) {
 	conn, err := db.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, err
@@ -247,7 +248,7 @@ func (db *dB) GetBlueprint(ctx context.Context, id uuid.UUID, orgID string) (*Bl
 	defer conn.Release()
 
 	var result BlueprintEntry
-	row := conn.QueryRow(ctx, sqlGetBlueprint, id, orgID)
+	row := conn.QueryRow(ctx, sqlGetBlueprint, id, orgID, version)
 	err = row.Scan(&result.Id, &result.VersionId, &result.Name, &result.Description, &result.Version, &result.Body)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
