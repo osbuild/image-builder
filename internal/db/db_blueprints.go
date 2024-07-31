@@ -58,7 +58,7 @@ const (
 		AND ($5::text[] is NULL OR composes.request->'image_requests'->0->>'image_type' <> ALL($5))`
 
 	sqlGetBlueprint = `
-		SELECT blueprints.id, blueprint_versions.id, blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body
+		SELECT blueprints.id, blueprint_versions.id, blueprints.name, blueprints.description, blueprint_versions.version, blueprint_versions.body, blueprints.metadata
 		FROM blueprints INNER JOIN blueprint_versions ON blueprint_versions.blueprint_id = blueprints.id
 		WHERE blueprints.deleted = FALSE AND blueprints.id = $1 AND blueprints.org_id = $2
 			AND ($3::int is NULL OR blueprint_versions.version = $3)
@@ -180,7 +180,7 @@ func (db *dB) GetBlueprintComposes(ctx context.Context, orgId string, blueprintI
 	var resultBlueprint BlueprintEntry
 	row := conn.QueryRow(ctx, sqlGetBlueprint, blueprintId, orgId, nil)
 	err = row.Scan(&resultBlueprint.Id, &resultBlueprint.VersionId, &resultBlueprint.Name, &resultBlueprint.Description,
-		&resultBlueprint.Version, &resultBlueprint.Body)
+		&resultBlueprint.Version, &resultBlueprint.Body, &resultBlueprint.Metadata)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, BlueprintNotFoundError
@@ -249,7 +249,7 @@ func (db *dB) GetBlueprint(ctx context.Context, id uuid.UUID, orgID string, vers
 
 	var result BlueprintEntry
 	row := conn.QueryRow(ctx, sqlGetBlueprint, id, orgID, version)
-	err = row.Scan(&result.Id, &result.VersionId, &result.Name, &result.Description, &result.Version, &result.Body)
+	err = row.Scan(&result.Id, &result.VersionId, &result.Name, &result.Description, &result.Version, &result.Body, &result.Metadata)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, BlueprintNotFoundError
