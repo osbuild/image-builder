@@ -959,6 +959,13 @@ type GetBlueprintsParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// GetBlueprintParams defines parameters for GetBlueprint.
+type GetBlueprintParams struct {
+	// Version Filter by a specific version of the Blueprint we want to fetch.
+	// Omit or pass -1 to fetch latest version.
+	Version *int `form:"version,omitempty" json:"version,omitempty"`
+}
+
 // ComposeBlueprintJSONBody defines parameters for ComposeBlueprint.
 type ComposeBlueprintJSONBody struct {
 	ImageTypes *[]ImageTypes `json:"image_types,omitempty"`
@@ -1760,7 +1767,7 @@ type ServerInterface interface {
 	DeleteBlueprint(ctx echo.Context, id openapi_types.UUID) error
 	// get detail of a blueprint
 	// (GET /blueprints/{id})
-	GetBlueprint(ctx echo.Context, id openapi_types.UUID) error
+	GetBlueprint(ctx echo.Context, id openapi_types.UUID, params GetBlueprintParams) error
 	// update blueprint
 	// (PUT /blueprints/{id})
 	UpdateBlueprint(ctx echo.Context, id openapi_types.UUID) error
@@ -1916,8 +1923,17 @@ func (w *ServerInterfaceWrapper) GetBlueprint(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetBlueprintParams
+	// ------------- Optional query parameter "version" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "version", ctx.QueryParams(), &params.Version)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter version: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetBlueprint(ctx, id)
+	err = w.Handler.GetBlueprint(ctx, id, params)
 	return err
 }
 
