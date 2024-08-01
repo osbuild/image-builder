@@ -199,6 +199,15 @@ objects:
           left outer join blueprint_versions v on c.blueprint_version_id = v.id
           left outer join blueprints b ON v.blueprint_id = b.id
           cross join lateral jsonb_array_elements(c.request->'image_requests') as req;
+    - prefix: ${FLOORIST_QUERY_PREFIX}/blueprints
+      query: >-
+        select
+          v.blueprint_id::text as blueprint_id, v.version, b.deleted,
+          b.metadata->>'exported_at' as exported_at,
+          b.metadata->>'parent_id' as parent_id
+        from
+          blueprint_versions v
+          left outer join blueprints b ON v.blueprint_id = b.id
 
 - apiVersion: v1
   kind: Service
