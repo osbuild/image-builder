@@ -1096,6 +1096,11 @@ type User struct {
 	Groups *[]string `json:"groups,omitempty"`
 	Key    *string   `json:"key,omitempty"`
 	Name   string    `json:"name"`
+
+	// Password If the password starts with $6$, $5$, or $2b$ it will be stored as
+	// an encrypted password. Otherwise it will be treated as a plain text
+	// password.
+	Password *string `json:"password,omitempty"`
 }
 
 // Page defines model for page.

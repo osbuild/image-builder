@@ -45,7 +45,7 @@ type V1AWSReservationResponse struct {
 	LaunchTemplateId *string `json:"launch_template_id,omitempty"`
 	Name             *string `json:"name,omitempty"`
 	Poweroff         *bool   `json:"poweroff,omitempty"`
-	PubkeyId         *int64  `json:"pubkey_id,omitempty"`
+	PubkeyId         *int64  `json:"pubkey_id"`
 	Region           *string `json:"region,omitempty"`
 	ReservationId    *int64  `json:"reservation_id,omitempty"`
 	SourceId         *string `json:"source_id,omitempty"`
@@ -92,7 +92,7 @@ type V1AzureReservationResponse struct {
 	Location      *string `json:"location,omitempty"`
 	Name          *string `json:"name,omitempty"`
 	Poweroff      *bool   `json:"poweroff,omitempty"`
-	PubkeyId      *int64  `json:"pubkey_id,omitempty"`
+	PubkeyId      *int64  `json:"pubkey_id"`
 	ReservationId *int64  `json:"reservation_id,omitempty"`
 	ResourceGroup *string `json:"resource_group,omitempty"`
 	SourceId      *string `json:"source_id,omitempty"`
@@ -129,7 +129,7 @@ type V1GCPReservationResponse struct {
 	MachineType      *string `json:"machine_type,omitempty"`
 	NamePattern      *string `json:"name_pattern,omitempty"`
 	Poweroff         *bool   `json:"poweroff,omitempty"`
-	PubkeyId         *int64  `json:"pubkey_id,omitempty"`
+	PubkeyId         *int64  `json:"pubkey_id"`
 	ReservationId    *int64  `json:"reservation_id,omitempty"`
 	SourceId         *string `json:"source_id,omitempty"`
 	Zone             *string `json:"zone,omitempty"`
@@ -179,7 +179,7 @@ type V1ListInstaceTypeResponse struct {
 		Azure        *struct {
 			GenV1 *bool `json:"gen_v1,omitempty"`
 			GenV2 *bool `json:"gen_v2,omitempty"`
-		} `json:"azure,omitempty"`
+		} `json:"azure"`
 		Cores     *int32  `json:"cores,omitempty"`
 		MemoryMib *int64  `json:"memory_mib,omitempty"`
 		Name      *string `json:"name,omitempty"`

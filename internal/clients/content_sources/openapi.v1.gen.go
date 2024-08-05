@@ -268,6 +268,9 @@ type ApiRepositoryRequest struct {
 	// Name Name of the remote yum repository
 	Name *string `json:"name,omitempty"`
 
+	// Origin Origin of the repository
+	Origin *string `json:"origin,omitempty"`
+
 	// Snapshot Enable snapshotting and hosting of this repository
 	Snapshot *bool `json:"snapshot,omitempty"`
 
@@ -385,6 +388,33 @@ type ApiRepositoryRpmCollectionResponse struct {
 	Data  *[]ApiRepositoryRpm  `json:"data,omitempty"`
 	Links *ApiLinks            `json:"links,omitempty"`
 	Meta  *ApiResponseMetadata `json:"meta,omitempty"`
+}
+
+// ApiRepositoryUpdateRequest defines model for api.RepositoryUpdateRequest.
+type ApiRepositoryUpdateRequest struct {
+	// DistributionArch Architecture to restrict client usage to
+	DistributionArch *string `json:"distribution_arch,omitempty"`
+
+	// DistributionVersions Versions to restrict client usage to
+	DistributionVersions *[]string `json:"distribution_versions,omitempty"`
+
+	// GpgKey GPG key for repository
+	GpgKey *string `json:"gpg_key,omitempty"`
+
+	// MetadataVerification Verify packages
+	MetadataVerification *bool `json:"metadata_verification,omitempty"`
+
+	// ModuleHotfixes Disable modularity filtering on this repository
+	ModuleHotfixes *bool `json:"module_hotfixes,omitempty"`
+
+	// Name Name of the remote yum repository
+	Name *string `json:"name,omitempty"`
+
+	// Snapshot Enable snapshotting and hosting of this repository
+	Snapshot *bool `json:"snapshot,omitempty"`
+
+	// Url URL of the remote yum repository
+	Url *string `json:"url,omitempty"`
 }
 
 // ApiRepositoryValidationRequest defines model for api.RepositoryValidationRequest.
@@ -646,6 +676,9 @@ type ApiTemplateRequest struct {
 	// RepositoryUuids Repositories to add to the template
 	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
 
+	// UseLatest Use latest snapshot for all repositories in the template
+	UseLatest *bool `json:"use_latest,omitempty"`
+
 	// Version Version of the template
 	Version *string `json:"version,omitempty"`
 }
@@ -684,6 +717,9 @@ type ApiTemplateResponse struct {
 
 	// UpdatedAt Datetime template was last updated
 	UpdatedAt *string `json:"updated_at,omitempty"`
+
+	// UseLatest Use latest snapshot for all repositories in the template
+	UseLatest *bool   `json:"use_latest,omitempty"`
 	Uuid      *string `json:"uuid,omitempty"`
 
 	// Version Version of the template
@@ -703,6 +739,9 @@ type ApiTemplateUpdateRequest struct {
 
 	// RepositoryUuids Repositories to add to the template
 	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
+
+	// UseLatest Use latest snapshot for all repositories in the template
+	UseLatest *bool `json:"use_latest,omitempty"`
 }
 
 // ApiUUIDListRequest defines model for api.UUIDListRequest.
@@ -822,7 +861,7 @@ type ListRepositoriesParams struct {
 	// SortBy Sort the response data based on specific repository parameters. Sort criteria can include `name`, `url`, `status`, and `package_count`.
 	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
 
-	// Status A comma separated list of statuses to control api response. Statuses can include `pending`, `valid`, `invalid`, `unavailable`.
+	// Status A comma separated list of statuses to control api response. Statuses can include `Pending`, `Valid`, `Invalid`, `Unavailable`.
 	Status *string `form:"status,omitempty" json:"status,omitempty"`
 
 	// Origin A comma separated list of origins to filter api response. Origins can include `red_hat` and `external`.
@@ -1010,7 +1049,7 @@ type BulkCreateRepositoriesJSONRequestBody = BulkCreateRepositoriesJSONBody
 type BulkDeleteRepositoriesJSONRequestBody = ApiUUIDListRequest
 
 // PartialUpdateRepositoryJSONRequestBody defines body for PartialUpdateRepository for application/json ContentType.
-type PartialUpdateRepositoryJSONRequestBody = ApiRepositoryRequest
+type PartialUpdateRepositoryJSONRequestBody = ApiRepositoryUpdateRequest
 
 // FullUpdateRepositoryJSONRequestBody defines body for FullUpdateRepository for application/json ContentType.
 type FullUpdateRepositoryJSONRequestBody = ApiRepositoryRequest

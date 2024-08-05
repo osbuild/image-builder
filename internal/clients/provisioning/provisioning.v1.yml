@@ -1,625 +1,4 @@
-openapi: 3.0.0
 components:
-    schemas:
-        v1.AWSReservationRequest:
-            type: object
-            properties:
-                amount:
-                    type: integer
-                    format: int32
-                image_id:
-                    type: string
-                instance_type:
-                    type: string
-                launch_template_id:
-                    type: string
-                name:
-                    type: string
-                poweroff:
-                    type: boolean
-                pubkey_id:
-                    type: integer
-                    format: int64
-                region:
-                    type: string
-                source_id:
-                    type: string
-        v1.AWSReservationResponse:
-            type: object
-            properties:
-                amount:
-                    type: integer
-                    format: int32
-                aws_reservation_id:
-                    type: string
-                image_id:
-                    type: string
-                instance_type:
-                    type: string
-                instances:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            detail:
-                                type: object
-                                properties:
-                                    private_ipv4:
-                                        type: string
-                                    private_ipv6:
-                                        type: string
-                                    public_dns:
-                                        type: string
-                                    public_ipv4:
-                                        type: string
-                            instance_id:
-                                type: string
-                launch_template_id:
-                    type: string
-                name:
-                    type: string
-                poweroff:
-                    type: boolean
-                pubkey_id:
-                    type: integer
-                    format: int64
-                region:
-                    type: string
-                reservation_id:
-                    type: integer
-                    format: int64
-                source_id:
-                    type: string
-        v1.AccountIDTypeResponse:
-            type: object
-            properties:
-                aws:
-                    type: object
-                    properties:
-                        account_id:
-                            type: string
-        v1.AvailabilityStatusRequest:
-            type: object
-            properties:
-                source_id:
-                    type: string
-        v1.AzureReservationRequest:
-            type: object
-            properties:
-                amount:
-                    type: integer
-                    format: int64
-                image_id:
-                    type: string
-                instance_size:
-                    type: string
-                location:
-                    type: string
-                    description: Location (also known as region) to deploy the VM into, be aware it needs to be the same as the image location. Defaults to the Resource Group location, or 'eastus' when also creating the resource group.
-                name:
-                    type: string
-                    description: Name of the instance, to keep names unique, it will be suffixed with UUID. Optional, defaults to 'redhat-vm''
-                poweroff:
-                    type: boolean
-                pubkey_id:
-                    type: integer
-                    format: int64
-                resource_group:
-                    type: string
-                    description: Azure resource group name to deploy the VM resources into. Optional, defaults to images resource group and when not found to 'redhat-deployed'.
-                source_id:
-                    type: string
-        v1.AzureReservationResponse:
-            type: object
-            properties:
-                amount:
-                    type: integer
-                    format: int64
-                image_id:
-                    type: string
-                instance_size:
-                    type: string
-                instances:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            detail:
-                                type: object
-                                properties:
-                                    private_ipv4:
-                                        type: string
-                                    private_ipv6:
-                                        type: string
-                                    public_dns:
-                                        type: string
-                                    public_ipv4:
-                                        type: string
-                            instance_id:
-                                type: string
-                location:
-                    type: string
-                name:
-                    type: string
-                poweroff:
-                    type: boolean
-                pubkey_id:
-                    type: integer
-                    format: int64
-                reservation_id:
-                    type: integer
-                    format: int64
-                resource_group:
-                    type: string
-                source_id:
-                    type: string
-        v1.GCPReservationRequest:
-            type: object
-            properties:
-                amount:
-                    type: integer
-                    format: int64
-                image_id:
-                    type: string
-                launch_template_id:
-                    type: string
-                machine_type:
-                    type: string
-                name_pattern:
-                    type: string
-                poweroff:
-                    type: boolean
-                pubkey_id:
-                    type: integer
-                    format: int64
-                source_id:
-                    type: string
-                zone:
-                    type: string
-        v1.GCPReservationResponse:
-            type: object
-            properties:
-                amount:
-                    type: integer
-                    format: int64
-                gcp_operation_name:
-                    type: string
-                image_id:
-                    type: string
-                instances:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            detail:
-                                type: object
-                                properties:
-                                    private_ipv4:
-                                        type: string
-                                    private_ipv6:
-                                        type: string
-                                    public_dns:
-                                        type: string
-                                    public_ipv4:
-                                        type: string
-                            instance_id:
-                                type: string
-                launch_template_id:
-                    type: string
-                machine_type:
-                    type: string
-                name_pattern:
-                    type: string
-                poweroff:
-                    type: boolean
-                pubkey_id:
-                    type: integer
-                    format: int64
-                reservation_id:
-                    type: integer
-                    format: int64
-                source_id:
-                    type: string
-                zone:
-                    type: string
-        v1.GenericReservationResponse:
-            type: object
-            properties:
-                created_at:
-                    type: string
-                    format: date-time
-                error:
-                    type: string
-                finished_at:
-                    type: string
-                    format: date-time
-                    nullable: true
-                id:
-                    type: integer
-                    format: int64
-                provider:
-                    type: integer
-                status:
-                    type: string
-                step:
-                    type: integer
-                    format: int32
-                step_titles:
-                    type: array
-                    items:
-                        type: string
-                steps:
-                    type: integer
-                    format: int32
-                success:
-                    type: boolean
-                    nullable: true
-        v1.InstanceTypeResponse:
-            type: object
-            properties:
-                architecture:
-                    type: string
-                azure:
-                    type: object
-                    properties:
-                        gen_v1:
-                            type: boolean
-                        gen_v2:
-                            type: boolean
-                cores:
-                    type: integer
-                    format: int32
-                memory_mib:
-                    type: integer
-                    format: int64
-                name:
-                    type: string
-                storage_gb:
-                    type: integer
-                    format: int64
-                supported:
-                    type: boolean
-                vcpus:
-                    type: integer
-                    format: int32
-        v1.LaunchTemplatesResponse:
-            type: object
-            properties:
-                id:
-                    type: string
-                name:
-                    type: string
-        v1.ListGenericReservationResponse:
-            type: object
-            properties:
-                data:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            created_at:
-                                type: string
-                                format: date-time
-                            error:
-                                type: string
-                            finished_at:
-                                type: string
-                                format: date-time
-                                nullable: true
-                            id:
-                                type: integer
-                                format: int64
-                            provider:
-                                type: integer
-                            status:
-                                type: string
-                            step:
-                                type: integer
-                                format: int32
-                            step_titles:
-                                type: array
-                                items:
-                                    type: string
-                            steps:
-                                type: integer
-                                format: int32
-                            success:
-                                type: boolean
-                                nullable: true
-                metadata:
-                    type: object
-                    properties:
-                        links:
-                            type: object
-                            properties:
-                                next:
-                                    type: string
-                                previous:
-                                    type: string
-                        total:
-                            type: integer
-        v1.ListInstaceTypeResponse:
-            type: object
-            properties:
-                data:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            architecture:
-                                type: string
-                            azure:
-                                type: object
-                                properties:
-                                    gen_v1:
-                                        type: boolean
-                                    gen_v2:
-                                        type: boolean
-                            cores:
-                                type: integer
-                                format: int32
-                            memory_mib:
-                                type: integer
-                                format: int64
-                            name:
-                                type: string
-                            storage_gb:
-                                type: integer
-                                format: int64
-                            supported:
-                                type: boolean
-                            vcpus:
-                                type: integer
-                                format: int32
-        v1.ListLaunchTemplateResponse:
-            type: object
-            properties:
-                data:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            id:
-                                type: string
-                            name:
-                                type: string
-                metadata:
-                    type: object
-                    properties:
-                        links:
-                            type: object
-                            properties:
-                                next:
-                                    type: string
-                                previous:
-                                    type: string
-                        total:
-                            type: integer
-        v1.ListPubkeyResponse:
-            type: object
-            properties:
-                data:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            body:
-                                type: string
-                            fingerprint:
-                                type: string
-                            fingerprint_legacy:
-                                type: string
-                            id:
-                                type: integer
-                                format: int64
-                            name:
-                                type: string
-                            type:
-                                type: string
-                metadata:
-                    type: object
-                    properties:
-                        links:
-                            type: object
-                            properties:
-                                next:
-                                    type: string
-                                previous:
-                                    type: string
-                        total:
-                            type: integer
-        v1.ListSourceResponse:
-            type: object
-            properties:
-                data:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            id:
-                                type: string
-                            name:
-                                type: string
-                            provider:
-                                type: string
-                                description: One of ('azure', 'aws', 'gcp')
-                            source_type_id:
-                                type: string
-                                deprecated: true
-                            status:
-                                type: string
-                            uid:
-                                type: string
-                metadata:
-                    type: object
-                    properties:
-                        links:
-                            type: object
-                            properties:
-                                next:
-                                    type: string
-                                previous:
-                                    type: string
-                        total:
-                            type: integer
-        v1.NoopReservationResponse:
-            type: object
-            properties:
-                reservation_id:
-                    type: integer
-                    format: int64
-        v1.PubkeyRequest:
-            type: object
-            properties:
-                body:
-                    type: string
-                    description: Add a public part of a SSH key pair.
-                name:
-                    type: string
-                    description: Enter the name of the newly created pubkey.
-        v1.PubkeyResponse:
-            type: object
-            properties:
-                body:
-                    type: string
-                fingerprint:
-                    type: string
-                fingerprint_legacy:
-                    type: string
-                id:
-                    type: integer
-                    format: int64
-                name:
-                    type: string
-                type:
-                    type: string
-        v1.ResponseError:
-            type: object
-            properties:
-                build_time:
-                    type: string
-                edge_id:
-                    type: string
-                environment:
-                    type: string
-                error:
-                    type: string
-                msg:
-                    type: string
-                trace_id:
-                    type: string
-                version:
-                    type: string
-        v1.SourceResponse:
-            type: object
-            properties:
-                id:
-                    type: string
-                name:
-                    type: string
-                provider:
-                    type: string
-                    description: One of ('azure', 'aws', 'gcp')
-                source_type_id:
-                    type: string
-                    deprecated: true
-                status:
-                    type: string
-                uid:
-                    type: string
-        v1.SourceUploadInfoResponse:
-            type: object
-            properties:
-                aws:
-                    type: object
-                    nullable: true
-                    properties:
-                        account_id:
-                            type: string
-                azure:
-                    type: object
-                    nullable: true
-                    properties:
-                        resource_groups:
-                            type: array
-                            items:
-                                type: string
-                        subscription_id:
-                            type: string
-                        tenant_id:
-                            type: string
-                gcp:
-                    nullable: true
-                provider:
-                    type: string
-    parameters:
-        Limit:
-            name: limit
-            in: query
-            description: The number of items to return.
-            schema:
-                type: integer
-                default: 100
-        Offset:
-            name: offset
-            in: query
-            description: The number of items to skip before starting to collect the result set.
-            schema:
-                type: integer
-                default: 0
-        Token:
-            name: token
-            in: query
-            description: The token used for requesting the next page of results; empty token for the first page
-            schema:
-                type: string
-                default: ""
-    responses:
-        BadRequest:
-            description: The request's parameters are not valid
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/v1.ResponseError'
-                    examples:
-                        error:
-                            value:
-                                build_time: 2023-04-14_17:15:02
-                                edge_id: ""
-                                environment: ""
-                                error: 'error: bad request: details can be long'
-                                trace_id: b57f7b78c
-                                version: df8a489
-        InternalError:
-            description: The server encountered an internal error
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/v1.ResponseError'
-                    examples:
-                        error:
-                            value:
-                                build_time: 2023-04-14_17:15:02
-                                edge_id: ""
-                                environment: ""
-                                error: 'error: this can be pretty long string'
-                                trace_id: b57f7b78c
-                                version: df8a489
-        NotFound:
-            description: The requested resource was not found
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/v1.ResponseError'
-                    examples:
-                        error:
-                            value:
-                                build_time: 2023-04-14_17:15:02
-                                edge_id: ""
-                                environment: ""
-                                error: 'error: resource not found: details can be long'
-                                trace_id: b57f7b78c
-                                version: df8a489
     examples:
         v1.AvailabilityStatusRequest:
             value:
@@ -959,81 +338,711 @@ components:
                     tenantid: 617807e1-e4e0-481c-983c-be3ce1e49253
                 gcp: null
                 provider: azure
+    parameters:
+        Limit:
+            description: The number of items to return.
+            in: query
+            name: limit
+            schema:
+                default: 100
+                type: integer
+        Offset:
+            description: The number of items to skip before starting to collect the result set.
+            in: query
+            name: offset
+            schema:
+                default: 0
+                type: integer
+        Token:
+            description: The token used for requesting the next page of results; empty token for the first page
+            in: query
+            name: token
+            schema:
+                default: ""
+                type: string
+    responses:
+        BadRequest:
+            content:
+                application/json:
+                    examples:
+                        error:
+                            value:
+                                build_time: 2023-04-14_17:15:02
+                                edge_id: ""
+                                environment: ""
+                                error: 'error: bad request: details can be long'
+                                trace_id: b57f7b78c
+                                version: df8a489
+                    schema:
+                        $ref: '#/components/schemas/v1.ResponseError'
+            description: The request's parameters are not valid
+        InternalError:
+            content:
+                application/json:
+                    examples:
+                        error:
+                            value:
+                                build_time: 2023-04-14_17:15:02
+                                edge_id: ""
+                                environment: ""
+                                error: 'error: this can be pretty long string'
+                                trace_id: b57f7b78c
+                                version: df8a489
+                    schema:
+                        $ref: '#/components/schemas/v1.ResponseError'
+            description: The server encountered an internal error
+        NotFound:
+            content:
+                application/json:
+                    examples:
+                        error:
+                            value:
+                                build_time: 2023-04-14_17:15:02
+                                edge_id: ""
+                                environment: ""
+                                error: 'error: resource not found: details can be long'
+                                trace_id: b57f7b78c
+                                version: df8a489
+                    schema:
+                        $ref: '#/components/schemas/v1.ResponseError'
+            description: The requested resource was not found
+    schemas:
+        v1.AWSReservationRequest:
+            properties:
+                amount:
+                    format: int32
+                    type: integer
+                image_id:
+                    type: string
+                instance_type:
+                    type: string
+                launch_template_id:
+                    type: string
+                name:
+                    type: string
+                poweroff:
+                    type: boolean
+                pubkey_id:
+                    format: int64
+                    type: integer
+                region:
+                    type: string
+                source_id:
+                    type: string
+            type: object
+        v1.AWSReservationResponse:
+            properties:
+                amount:
+                    format: int32
+                    type: integer
+                aws_reservation_id:
+                    type: string
+                image_id:
+                    type: string
+                instance_type:
+                    type: string
+                instances:
+                    items:
+                        properties:
+                            detail:
+                                properties:
+                                    private_ipv4:
+                                        type: string
+                                    private_ipv6:
+                                        type: string
+                                    public_dns:
+                                        type: string
+                                    public_ipv4:
+                                        type: string
+                                type: object
+                            instance_id:
+                                type: string
+                        type: object
+                    type: array
+                launch_template_id:
+                    type: string
+                name:
+                    type: string
+                poweroff:
+                    type: boolean
+                pubkey_id:
+                    format: int64
+                    nullable: true
+                    type: integer
+                region:
+                    type: string
+                reservation_id:
+                    format: int64
+                    type: integer
+                source_id:
+                    type: string
+            type: object
+        v1.AccountIDTypeResponse:
+            properties:
+                aws:
+                    nullable: true
+                    properties:
+                        account_id:
+                            type: string
+                    type: object
+            type: object
+        v1.AvailabilityStatusRequest:
+            properties:
+                source_id:
+                    type: string
+            type: object
+        v1.AzureReservationRequest:
+            properties:
+                amount:
+                    format: int64
+                    type: integer
+                image_id:
+                    type: string
+                instance_size:
+                    type: string
+                location:
+                    description: Location (also known as region) to deploy the VM into, be aware it needs to be the same as the image location. Defaults to the Resource Group location, or 'eastus' when also creating the resource group.
+                    type: string
+                name:
+                    description: Name of the instance, to keep names unique, it will be suffixed with UUID. Optional, defaults to 'redhat-vm''
+                    type: string
+                poweroff:
+                    type: boolean
+                pubkey_id:
+                    format: int64
+                    type: integer
+                resource_group:
+                    description: Azure resource group name to deploy the VM resources into. Optional, defaults to images resource group and when not found to 'redhat-deployed'.
+                    type: string
+                source_id:
+                    type: string
+            type: object
+        v1.AzureReservationResponse:
+            properties:
+                amount:
+                    format: int64
+                    type: integer
+                image_id:
+                    type: string
+                instance_size:
+                    type: string
+                instances:
+                    items:
+                        properties:
+                            detail:
+                                properties:
+                                    private_ipv4:
+                                        type: string
+                                    private_ipv6:
+                                        type: string
+                                    public_dns:
+                                        type: string
+                                    public_ipv4:
+                                        type: string
+                                type: object
+                            instance_id:
+                                type: string
+                        type: object
+                    type: array
+                location:
+                    type: string
+                name:
+                    type: string
+                poweroff:
+                    type: boolean
+                pubkey_id:
+                    format: int64
+                    nullable: true
+                    type: integer
+                reservation_id:
+                    format: int64
+                    type: integer
+                resource_group:
+                    type: string
+                source_id:
+                    type: string
+            type: object
+        v1.GCPReservationRequest:
+            properties:
+                amount:
+                    format: int64
+                    type: integer
+                image_id:
+                    type: string
+                launch_template_id:
+                    type: string
+                machine_type:
+                    type: string
+                name_pattern:
+                    type: string
+                poweroff:
+                    type: boolean
+                pubkey_id:
+                    format: int64
+                    type: integer
+                source_id:
+                    type: string
+                zone:
+                    type: string
+            type: object
+        v1.GCPReservationResponse:
+            properties:
+                amount:
+                    format: int64
+                    type: integer
+                gcp_operation_name:
+                    type: string
+                image_id:
+                    type: string
+                instances:
+                    items:
+                        properties:
+                            detail:
+                                properties:
+                                    private_ipv4:
+                                        type: string
+                                    private_ipv6:
+                                        type: string
+                                    public_dns:
+                                        type: string
+                                    public_ipv4:
+                                        type: string
+                                type: object
+                            instance_id:
+                                type: string
+                        type: object
+                    type: array
+                launch_template_id:
+                    type: string
+                machine_type:
+                    type: string
+                name_pattern:
+                    type: string
+                poweroff:
+                    type: boolean
+                pubkey_id:
+                    format: int64
+                    nullable: true
+                    type: integer
+                reservation_id:
+                    format: int64
+                    type: integer
+                source_id:
+                    type: string
+                zone:
+                    type: string
+            type: object
+        v1.GenericReservationResponse:
+            properties:
+                created_at:
+                    format: date-time
+                    type: string
+                error:
+                    type: string
+                finished_at:
+                    format: date-time
+                    nullable: true
+                    type: string
+                id:
+                    format: int64
+                    type: integer
+                provider:
+                    type: integer
+                status:
+                    type: string
+                step:
+                    format: int32
+                    type: integer
+                step_titles:
+                    items:
+                        type: string
+                    type: array
+                steps:
+                    format: int32
+                    type: integer
+                success:
+                    nullable: true
+                    type: boolean
+            type: object
+        v1.InstanceTypeResponse:
+            properties:
+                architecture:
+                    type: string
+                azure:
+                    nullable: true
+                    properties:
+                        gen_v1:
+                            type: boolean
+                        gen_v2:
+                            type: boolean
+                    type: object
+                cores:
+                    format: int32
+                    type: integer
+                memory_mib:
+                    format: int64
+                    type: integer
+                name:
+                    type: string
+                storage_gb:
+                    format: int64
+                    type: integer
+                supported:
+                    type: boolean
+                vcpus:
+                    format: int32
+                    type: integer
+            type: object
+        v1.LaunchTemplatesResponse:
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+            type: object
+        v1.ListGenericReservationResponse:
+            properties:
+                data:
+                    items:
+                        nullable: true
+                        properties:
+                            created_at:
+                                format: date-time
+                                type: string
+                            error:
+                                type: string
+                            finished_at:
+                                format: date-time
+                                nullable: true
+                                type: string
+                            id:
+                                format: int64
+                                type: integer
+                            provider:
+                                type: integer
+                            status:
+                                type: string
+                            step:
+                                format: int32
+                                type: integer
+                            step_titles:
+                                items:
+                                    type: string
+                                type: array
+                            steps:
+                                format: int32
+                                type: integer
+                            success:
+                                nullable: true
+                                type: boolean
+                        type: object
+                    type: array
+                metadata:
+                    properties:
+                        links:
+                            properties:
+                                next:
+                                    type: string
+                                previous:
+                                    type: string
+                            type: object
+                        total:
+                            type: integer
+                    type: object
+            type: object
+        v1.ListInstaceTypeResponse:
+            properties:
+                data:
+                    items:
+                        nullable: true
+                        properties:
+                            architecture:
+                                type: string
+                            azure:
+                                nullable: true
+                                properties:
+                                    gen_v1:
+                                        type: boolean
+                                    gen_v2:
+                                        type: boolean
+                                type: object
+                            cores:
+                                format: int32
+                                type: integer
+                            memory_mib:
+                                format: int64
+                                type: integer
+                            name:
+                                type: string
+                            storage_gb:
+                                format: int64
+                                type: integer
+                            supported:
+                                type: boolean
+                            vcpus:
+                                format: int32
+                                type: integer
+                        type: object
+                    type: array
+            type: object
+        v1.ListLaunchTemplateResponse:
+            properties:
+                data:
+                    items:
+                        nullable: true
+                        properties:
+                            id:
+                                type: string
+                            name:
+                                type: string
+                        type: object
+                    type: array
+                metadata:
+                    properties:
+                        links:
+                            properties:
+                                next:
+                                    type: string
+                                previous:
+                                    type: string
+                            type: object
+                        total:
+                            type: integer
+                    type: object
+            type: object
+        v1.ListPubkeyResponse:
+            properties:
+                data:
+                    items:
+                        nullable: true
+                        properties:
+                            body:
+                                type: string
+                            fingerprint:
+                                type: string
+                            fingerprint_legacy:
+                                type: string
+                            id:
+                                format: int64
+                                type: integer
+                            name:
+                                type: string
+                            type:
+                                type: string
+                        type: object
+                    type: array
+                metadata:
+                    properties:
+                        links:
+                            properties:
+                                next:
+                                    type: string
+                                previous:
+                                    type: string
+                            type: object
+                        total:
+                            type: integer
+                    type: object
+            type: object
+        v1.ListSourceResponse:
+            properties:
+                data:
+                    items:
+                        nullable: true
+                        properties:
+                            id:
+                                type: string
+                            name:
+                                type: string
+                            provider:
+                                description: One of ('azure', 'aws', 'gcp')
+                                type: string
+                            source_type_id:
+                                deprecated: true
+                                type: string
+                            status:
+                                type: string
+                            uid:
+                                type: string
+                        type: object
+                    type: array
+                metadata:
+                    properties:
+                        links:
+                            properties:
+                                next:
+                                    type: string
+                                previous:
+                                    type: string
+                            type: object
+                        total:
+                            type: integer
+                    type: object
+            type: object
+        v1.NoopReservationResponse:
+            properties:
+                reservation_id:
+                    format: int64
+                    type: integer
+            type: object
+        v1.PubkeyRequest:
+            properties:
+                body:
+                    description: Add a public part of a SSH key pair.
+                    type: string
+                name:
+                    description: Enter the name of the newly created pubkey.
+                    type: string
+            type: object
+        v1.PubkeyResponse:
+            properties:
+                body:
+                    type: string
+                fingerprint:
+                    type: string
+                fingerprint_legacy:
+                    type: string
+                id:
+                    format: int64
+                    type: integer
+                name:
+                    type: string
+                type:
+                    type: string
+            type: object
+        v1.ResponseError:
+            properties:
+                build_time:
+                    type: string
+                edge_id:
+                    type: string
+                environment:
+                    type: string
+                error:
+                    type: string
+                msg:
+                    type: string
+                trace_id:
+                    type: string
+                version:
+                    type: string
+            type: object
+        v1.SourceResponse:
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                provider:
+                    description: One of ('azure', 'aws', 'gcp')
+                    type: string
+                source_type_id:
+                    deprecated: true
+                    type: string
+                status:
+                    type: string
+                uid:
+                    type: string
+            type: object
+        v1.SourceUploadInfoResponse:
+            properties:
+                aws:
+                    nullable: true
+                    properties:
+                        account_id:
+                            type: string
+                    type: object
+                azure:
+                    nullable: true
+                    properties:
+                        resource_groups:
+                            items:
+                                type: string
+                            type: array
+                        subscription_id:
+                            type: string
+                        tenant_id:
+                            type: string
+                    type: object
+                gcp:
+                    nullable: true
+                provider:
+                    type: string
+            type: object
 info:
-    title: provisioning-api
     description: Provisioning service API
     license:
         name: GPL-3.0
+    title: provisioning-api
     version: 1.13.0
+openapi: 3.0.0
 paths:
     /availability_status/sources:
         post:
-            tags:
-                - Source
             description: |
                 Schedules a background operation of Sources availability check. These checks are are performed in separate process at it's own pace. Results are sent via Kafka to Sources. There is no output from this REST operation available, no tracking of jobs is possible.
             operationId: availabilityStatus
             requestBody:
-                description: availability status request with source id
-                required: true
                 content:
                     application/json:
-                        schema:
-                            $ref: '#/components/schemas/v1.AvailabilityStatusRequest'
                         examples:
                             example:
                                 $ref: '#/components/examples/v1.AvailabilityStatusRequest'
+                        schema:
+                            $ref: '#/components/schemas/v1.AvailabilityStatusRequest'
+                description: availability status request with source id
+                required: true
             responses:
                 "200":
                     description: Returned on success, empty response.
                 "500":
                     $ref: '#/components/responses/InternalError'
+            tags:
+                - Source
     /instance_types/{PROVIDER}:
         get:
-            tags:
-                - InstanceType
             description: |
                 Return a list of instance types for particular provider. A region must be provided. A zone must be provided for Azure.
             operationId: getInstanceTypeListAll
             parameters:
-                - name: PROVIDER
+                - description: 'Cloud provider: aws, azure'
                   in: path
-                  description: 'Cloud provider: aws, azure'
+                  name: PROVIDER
                   required: true
                   schema:
                     type: string
-                - name: region
+                - description: Region to list instance types within. This is required.
                   in: query
-                  description: Region to list instance types within. This is required.
+                  name: region
                   required: true
                   schema:
                     type: string
-                - name: zone
+                - description: Availability zone (or location) to list instance types within. Not applicable for AWS EC2 as all zones within a region are the same (will lead to an error when used). Required for Azure.
                   in: query
-                  description: Availability zone (or location) to list instance types within. Not applicable for AWS EC2 as all zones within a region are the same (will lead to an error when used). Required for Azure.
+                  name: zone
                   schema:
                     type: string
             responses:
                 "200":
-                    description: |
-                        Return on success. Instance types have a field "supported" that indicates whether that particular type is supported by Red Hat. Typically, instances with less than 1.5 GiB RAM are not supported, but other rules may apply.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.ListInstaceTypeResponse'
                             examples:
                                 aws:
                                     $ref: '#/components/examples/v1.InstanceTypesAWSResponse'
                                 azure:
                                     $ref: '#/components/examples/v1.InstanceTypesAzureResponse'
+                            schema:
+                                $ref: '#/components/schemas/v1.ListInstaceTypeResponse'
+                    description: |
+                        Return on success. Instance types have a field "supported" that indicates whether that particular type is supported by Red Hat. Typically, instances with less than 1.5 GiB RAM are not supported, but other rules may apply.
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
+            tags:
+                - InstanceType
     /pubkeys:
         get:
-            tags:
-                - Pubkey
             description: |
                 Returns a list of all public keys available in a particular account.
             operationId: getPubkeyList
@@ -1042,59 +1051,59 @@ paths:
                 - $ref: '#/components/parameters/Offset'
             responses:
                 "200":
-                    description: OK. Returned on success.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.ListPubkeyResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.PubkeyListResponseExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.ListPubkeyResponse'
+                    description: OK. Returned on success.
                 "500":
                     $ref: '#/components/responses/InternalError'
-        post:
             tags:
                 - Pubkey
+        post:
             description: |
                 Creates a new public key and stores it in the provisioning database. Public keys are uploaded to clouds at the time of launching an instance. Some fields such as type or fingerprint are read-only.
             operationId: createPubkey
             requestBody:
-                description: request body
-                required: true
                 content:
                     application/json:
-                        schema:
-                            $ref: '#/components/schemas/v1.PubkeyRequest'
                         examples:
                             example:
                                 $ref: '#/components/examples/v1.PubkeyRequestExample'
+                        schema:
+                            $ref: '#/components/schemas/v1.PubkeyRequest'
+                description: request body
+                required: true
             responses:
                 "200":
-                    description: OK. Returned on success.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.PubkeyResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.PubkeyRequestExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.PubkeyResponse'
+                    description: OK. Returned on success.
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /pubkeys/{ID}:
-        delete:
             tags:
                 - Pubkey
+    /pubkeys/{ID}:
+        delete:
             description: |
                 Deletes SSH keys that were uploaded with the specified public key from all the clouds. If a public key (pubkey) has been uploaded to one or more cloud providers, the deletion request attempts to remove those SSH keys from all associated clouds. Therefore, to delete a public key, the account must possess valid credentials for all cloud accounts to which the pubkey was uploaded. Otherwise, the delete operation fails, and the public key is not removed from the Provisioning database. This operation does not return a response body.
             operationId: removePubkeyById
             parameters:
-                - name: ID
+                - description: Enter the database ID of resource.
                   in: path
-                  description: Enter the database ID of resource.
+                  name: ID
                   required: true
                   schema:
-                    type: integer
                     format: int64
+                    type: integer
             responses:
                 "204":
                     description: The Pubkey was deleted successfully.
@@ -1102,37 +1111,37 @@ paths:
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
-        get:
             tags:
                 - Pubkey
+        get:
             description: Gets details of the specified public key.
             operationId: getPubkeyById
             parameters:
-                - name: ID
+                - description: Database ID to search for
                   in: path
-                  description: Database ID to search for
+                  name: ID
                   required: true
                   schema:
-                    type: integer
                     format: int64
+                    type: integer
             responses:
                 "200":
-                    description: OK. Returned on success
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.PubkeyResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.PubkeyResponseExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.PubkeyResponse'
+                    description: OK. Returned on success
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
+            tags:
+                - Pubkey
     /reservations:
         get:
-            tags:
-                - Reservation
             description: |
                 A reservation is a way to activate a job, keeps all data needed for a job to start. This operation returns list of all reservations for particular account. To get a reservation with common fields, use /reservations/ID. To get a detailed reservation with all fields which are different per provider, use /reservations/aws/ID. Reservation can be in three states: pending, success, failed. This can be recognized by the success field (null for pending, true for success, false for failure). See the examples.
             operationId: getReservationsList
@@ -1141,37 +1150,34 @@ paths:
                 - $ref: '#/components/parameters/Offset'
             responses:
                 "200":
-                    description: Returned on success.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.ListGenericReservationResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.GenericReservationResponsePayloadListExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.ListGenericReservationResponse'
+                    description: Returned on success.
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /reservations/{ID}:
-        get:
             tags:
                 - Reservation
+    /reservations/{ID}:
+        get:
             description: Return a generic reservation by id
             operationId: getReservationByID
             parameters:
-                - name: ID
+                - description: Reservation ID
                   in: path
-                  description: Reservation ID
+                  name: ID
                   required: true
                   schema:
-                    type: integer
                     format: int64
+                    type: integer
             responses:
                 "200":
-                    description: Returns generic reservation information like status or creation time.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.GenericReservationResponse'
                             examples:
                                 failure:
                                     $ref: '#/components/examples/v1.GenericReservationResponsePayloadFailureExample'
@@ -1179,239 +1185,242 @@ paths:
                                     $ref: '#/components/examples/v1.GenericReservationResponsePayloadPendingExample'
                                 success:
                                     $ref: '#/components/examples/v1.GenericReservationResponsePayloadSuccessExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.GenericReservationResponse'
+                    description: Returns generic reservation information like status or creation time.
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /reservations/aws:
-        post:
             tags:
                 - Reservation
+    /reservations/aws:
+        post:
             description: |
                 A reservation is a way to activate a job, keeps all data needed for a job to start. An AWS reservation is a reservation created for an AWS job. Image Builder UUID image is required, the service will also launch any AMI image prefixed with "ami-". Optionally, AWS EC2 launch template ID can be provided. All flags set through this endpoint override template values. Public key must exist prior calling this endpoint and ID must be provided, even when AWS EC2 launch template provides ssh-keys. Public key will be always be overwritten. A single account can create maximum of 2 reservations per second.
             operationId: createAwsReservation
             requestBody:
-                description: aws request body
-                required: true
                 content:
                     application/json:
-                        schema:
-                            $ref: '#/components/schemas/v1.AWSReservationRequest'
                         examples:
                             example:
                                 $ref: '#/components/examples/v1.AwsReservationRequestPayloadExample'
+                        schema:
+                            $ref: '#/components/schemas/v1.AWSReservationRequest'
+                description: aws request body
+                required: true
             responses:
                 "200":
-                    description: Returned on success.
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/v1.AWSReservationResponse'
+                    description: Returned on success.
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /reservations/aws/{ID}:
-        get:
             tags:
                 - Reservation
+    /reservations/aws/{ID}:
+        get:
             description: Return an AWS reservation with details by id
             operationId: getAWSReservationByID
             parameters:
-                - name: ID
+                - description: Reservation ID, must be an AWS reservation otherwise 404 is returned
                   in: path
-                  description: Reservation ID, must be an AWS reservation otherwise 404 is returned
+                  name: ID
                   required: true
                   schema:
-                    type: integer
                     format: int64
+                    type: integer
             responses:
                 "200":
-                    description: Returns detailed reservation information for an AWS reservation.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.AWSReservationResponse'
                             examples:
                                 done:
                                     $ref: '#/components/examples/v1.AwsReservationResponsePayloadDoneExample'
                                 pending:
                                     $ref: '#/components/examples/v1.AwsReservationResponsePayloadPendingExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.AWSReservationResponse'
+                    description: Returns detailed reservation information for an AWS reservation.
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /reservations/azure:
-        post:
             tags:
                 - Reservation
+    /reservations/azure:
+        post:
             description: |
                 A reservation is a way to activate a job, keeps all data needed for a job to start. An Azure reservation is a reservation created for an Azure job. Image Builder UUID image is required and needs to be stored under same account as provided by SourceID. A single account can create maximum of 2 reservations per second.
             operationId: createAzureReservation
             requestBody:
-                description: azure request body
-                required: true
                 content:
                     application/json:
-                        schema:
-                            $ref: '#/components/schemas/v1.AzureReservationRequest'
                         examples:
                             example:
                                 $ref: '#/components/examples/v1.AzureReservationRequestPayloadExample'
+                        schema:
+                            $ref: '#/components/schemas/v1.AzureReservationRequest'
+                description: azure request body
+                required: true
             responses:
                 "200":
-                    description: Returned on success.
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/v1.AzureReservationResponse'
+                    description: Returned on success.
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /reservations/azure/{ID}:
-        get:
             tags:
                 - Reservation
+    /reservations/azure/{ID}:
+        get:
             description: Return an Azure reservation with details by id
             operationId: getAzureReservationByID
             parameters:
-                - name: ID
+                - description: Reservation ID, must be an Azure reservation otherwise 404 is returned
                   in: path
-                  description: Reservation ID, must be an Azure reservation otherwise 404 is returned
+                  name: ID
                   required: true
                   schema:
-                    type: integer
                     format: int64
+                    type: integer
             responses:
                 "200":
-                    description: Returns detailed reservation information for an Azure reservation.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.AzureReservationResponse'
                             examples:
                                 done:
                                     $ref: '#/components/examples/v1.AzureReservationResponsePayloadDoneExample'
                                 pending:
                                     $ref: '#/components/examples/v1.AzureReservationResponsePayloadPendingExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.AzureReservationResponse'
+                    description: Returns detailed reservation information for an Azure reservation.
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /reservations/gcp:
-        post:
             tags:
                 - Reservation
+    /reservations/gcp:
+        post:
             description: |
                 A reservation is a way to activate a job, keeps all data needed for a job to start. A GCP reservation is a reservation created for a GCP job. Image Builder UUID image is required and needs to be shared with the service account. Furthermore, by specifying the RFC-1035 compatible name pattern for example as "instance", instances names will be created in the format: "instance-#####". A single account can create maximum of 2 reservations per second.
             operationId: createGCPReservation
             requestBody:
-                description: gcp request body
-                required: true
                 content:
                     application/json:
                         schema:
                             $ref: '#/components/schemas/v1.GCPReservationRequest'
+                description: gcp request body
+                required: true
             responses:
                 "200":
-                    description: Returned on success.
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/v1.GCPReservationResponse'
+                    description: Returned on success.
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /reservations/gcp/{ID}:
-        get:
             tags:
                 - Reservation
+    /reservations/gcp/{ID}:
+        get:
             description: Return an GCP reservation with details by id
             operationId: getGCPReservationByID
             parameters:
-                - name: ID
+                - description: Reservation ID, must be an GCP reservation otherwise 404 is returned
                   in: path
-                  description: Reservation ID, must be an GCP reservation otherwise 404 is returned
+                  name: ID
                   required: true
                   schema:
-                    type: integer
                     format: int64
+                    type: integer
             responses:
                 "200":
-                    description: Returns detailed reservation information for an GCP reservation.
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/v1.GCPReservationResponse'
+                    description: Returns detailed reservation information for an GCP reservation.
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /reservations/noop:
-        post:
             tags:
                 - Reservation
+    /reservations/noop:
+        post:
             description: |
                 A reservation is a way to activate a job, keeps all data needed for a job to start. A Noop reservation actually does nothing and immediately finish background job. This reservation has no input payload
             operationId: createNoopReservation
             responses:
                 "200":
-                    description: Returned on success.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.NoopReservationResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.NoopReservationResponsePayloadExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.NoopReservationResponse'
+                    description: Returned on success.
                 "500":
                     $ref: '#/components/responses/InternalError'
+            tags:
+                - Reservation
     /sources:
         get:
-            tags:
-                - Source
             description: |
                 Cloud credentials are kept in the sources application. This endpoint lists available sources for the particular account per individual type (AWS, Azure, ...). All the fields in the response are optional and can be omitted if Sources application also omits them.
             operationId: getSourceList
             parameters:
-                - name: provider
-                  in: query
+                - in: query
+                  name: provider
                   schema:
-                    type: string
                     enum:
                         - aws
                         - azure
                         - gcp
+                    type: string
                 - $ref: '#/components/parameters/Limit'
                 - $ref: '#/components/parameters/Offset'
             responses:
                 "200":
-                    description: Returned on success.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.ListSourceResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.SourceListResponseExample'
+                            schema:
+                                $ref: '#/components/schemas/v1.ListSourceResponse'
+                    description: Returned on success.
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /sources/{ID}/launch_templates:
-        get:
             tags:
                 - Source
+    /sources/{ID}/launch_templates:
+        get:
             description: |
                 Return a list of launch templates.
                 A launch template is a configuration set with a name that is available through hyperscaler API. When creating reservations, launch template can be provided in order to set additional configuration for instances. In GCP, when using templates, propagated user attributes are not overridden or updated. Only new attributes are added to the instance.
                 Currently AWS and GCP Launch Templates are supported.
             operationId: getLaunchTemplatesList
             parameters:
-                - name: ID
+                - description: Source ID from Sources Database
                   in: path
-                  description: Source ID from Sources Database
+                  name: ID
                   required: true
                   schema:
-                    type: integer
                     format: int64
-                - name: region
+                    type: integer
+                - description: Hyperscaler region
                   in: query
-                  description: Hyperscaler region
+                  name: region
                   required: true
                   schema:
                     type: string
@@ -1419,66 +1428,68 @@ paths:
                 - $ref: '#/components/parameters/Limit'
             responses:
                 "200":
-                    description: Return on success.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.ListLaunchTemplateResponse'
                             examples:
                                 example:
                                     $ref: '#/components/examples/v1.LaunchTemplateListResponse'
+                            schema:
+                                $ref: '#/components/schemas/v1.ListLaunchTemplateResponse'
+                    description: Return on success.
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
-    /sources/{ID}/upload_info:
-        get:
             tags:
                 - Source
+    /sources/{ID}/upload_info:
+        get:
             description: |
                 Provides all necessary information to upload an image for given Source. Typically, this is account number, subscription ID but some hyperscaler types also provide additional data.
                 The response contains "provider" field which can be one of aws, azure or gcp and then exactly one field named "aws", "azure" or "gcp". Enum is not used due to limitation of the language (Go).
                 Some types may perform more than one calls (e.g. Azure) so latency might be increased. Caching of static information is performed to improve latency of consequent calls.
             operationId: getSourceUploadInfo
             parameters:
-                - name: ID
+                - description: Source ID from Sources Database
                   in: path
-                  description: Source ID from Sources Database
+                  name: ID
                   required: true
                   schema:
-                    type: integer
                     format: int64
+                    type: integer
             responses:
                 "200":
-                    description: Return on success.
                     content:
                         application/json:
-                            schema:
-                                $ref: '#/components/schemas/v1.SourceUploadInfoResponse'
                             examples:
                                 aws:
                                     $ref: '#/components/examples/v1.SourceUploadInfoAWSResponse'
                                 azure:
                                     $ref: '#/components/examples/v1.SourceUploadInfoAzureResponse'
+                            schema:
+                                $ref: '#/components/schemas/v1.SourceUploadInfoResponse'
+                    description: Return on success.
                 "404":
                     $ref: '#/components/responses/NotFound'
                 "500":
                     $ref: '#/components/responses/InternalError'
+            tags:
+                - Source
 servers:
-    - url: http://0.0.0.0:{port}/api/{applicationName}
-      description: Local development
+    - description: Local development
+      url: http://0.0.0.0:{port}/api/{applicationName}
       variables:
         applicationName:
             default: provisioning
         port:
             default: "8000"
 tags:
-    - name: Pubkey
-      description: |
+    - description: |
         A pubkey represents the SSH public portion of a key pair with a name and body. Public key types and fingerprints are detected during their creation process. Two types are supported: RSA and ssh-ed25519. Fingerprints are calculated in two ways: using the standard SHA method and the legacy MD5 method, which is available under the fingerprint_legacy field. Each public key has a unique name and body and helps in verifying the uniqueness of the keys. Using this API, you can perform the following operations.
-    - name: Reservation
-      description: |
+      name: Pubkey
+    - description: |
         A reservation represents a request for launching one or more instances from a single image. This reservation triggers a background job, that will Launch set amount of instances with the same configuration. The configuration decides target provider, instance size and ssh pubkey to use for the default user.
-    - name: Source
-      description: |
+      name: Reservation
+    - description: |
         A Source represents a connection with public cloud account. These endpoints serve as convenient way to read information about available Sources to deploy instances into. The source of through is different application called Sources.
+      name: Source
