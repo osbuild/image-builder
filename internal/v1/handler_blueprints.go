@@ -39,12 +39,29 @@ func (u *User) CryptPassword() error {
 	if u.Password == nil || (len(*u.Password) == 0 || crypt.PasswordIsCrypted(*u.Password)) {
 		return nil
 	}
+
+	if u.IsRedacted() {
+		return errors.New(
+			"password is redacted and thus can't be hashed and stored in database, use plaintext password or already hashed password",
+		)
+	}
 	pw, err := crypt.CryptSHA512(*u.Password)
 	if err != nil {
 		return err
 	}
 	*u.Password = pw
 	return nil
+}
+
+func (u *User) RedactPassword() {
+	redactedPassword := "<REDACTED>"
+	if u.Password != nil {
+		*u.Password = redactedPassword
+	}
+}
+
+func (u *User) IsRedacted() bool {
+	return u.Password == nil || *u.Password == "<REDACTED>"
 }
 
 func (bb *BlueprintBody) CryptPasswords() error {
@@ -59,6 +76,15 @@ func (bb *BlueprintBody) CryptPasswords() error {
 	return nil
 }
 
+func (bb *BlueprintBody) RedactPasswords() {
+	if bb.Customizations.Users != nil {
+		for i := range *bb.Customizations.Users {
+			(*bb.Customizations.Users)[i].RedactPassword()
+		}
+	}
+}
+
+// Util function used to create and update Blueprint from API request (WRITE)
 func BlueprintFromAPI(cbr CreateBlueprintRequest) (BlueprintBody, error) {
 	bb := BlueprintBody{
 		Customizations: cbr.Customizations,
@@ -72,6 +98,7 @@ func BlueprintFromAPI(cbr CreateBlueprintRequest) (BlueprintBody, error) {
 	return bb, nil
 }
 
+// Util function used to create Blueprint sctruct from DB entry (READ)
 func BlueprintFromEntry(be *db.BlueprintEntry) (BlueprintBody, error) {
 	var result BlueprintBody
 	err := json.Unmarshal(be.Body, &result)
@@ -79,10 +106,7 @@ func BlueprintFromEntry(be *db.BlueprintEntry) (BlueprintBody, error) {
 		return BlueprintBody{}, err
 	}
 
-	err = result.CryptPasswords()
-	if err != nil {
-		return BlueprintBody{}, err
-	}
+	result.RedactPasswords()
 	return result, nil
 }
 
@@ -255,7 +279,12 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 
 	blueprint, err := BlueprintFromAPI(blueprintRequest)
 	if err != nil {
-		return err
+		return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
+			Errors: []HTTPError{{
+				Title:  "Invalid blueprint",
+				Detail: err.Error(),
+			}},
+		})
 	}
 	body, err := json.Marshal(blueprint)
 	if err != nil {
