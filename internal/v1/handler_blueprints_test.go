@@ -137,7 +137,12 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	respStatusCodeNotFound, _ := tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", uuid.New()), body)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
 
-	// Test update customization users
+	// Test update customization users - invalid redacted password
+	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "<REDACTED>"}}}
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
+
+	// Test customization users, user  - valid password
 	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "test"}}}
 	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
 	require.Equal(t, http.StatusCreated, statusCode)
@@ -193,7 +198,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 			Users: common.ToPtr([]User{
 				{
 					Name:     "user1",
-					Password: common.ToPtr("$6$password123"), // Already hashed to test for equality
+					Password: common.ToPtr("$6$password123"),
 				},
 				{
 					Name:   "user2",
@@ -372,17 +377,7 @@ func TestHandlers_BlueprintFromEntry(t *testing.T) {
 		result, err := BlueprintFromEntry(be)
 		require.NoError(t, err)
 
-		expected := BlueprintBody{
-			Customizations: Customizations{
-				Users: common.ToPtr([]User{
-					{
-						Name:     "user",
-						Password: common.ToPtr("$6$foo"),
-					},
-				})},
-			Distribution: "centos-9",
-		}
-		require.Equal(t, expected, result)
+		require.True(t, (*result.Customizations.Users)[0].IsRedacted())
 	})
 }
 
@@ -465,8 +460,10 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.Equal(t, blueprint.ImageRequests, result.ImageRequests)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
-	// Check that the password returned is hashed
-	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
+	// Check that the password returned is redacted
+	for _, u := range *result.Customizations.Users {
+		require.True(t, u.IsRedacted())
+	}
 
 	respStatusCodeNotFound, _ := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", uuid.New()), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
@@ -488,21 +485,27 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, version2Body.Customizations.Packages, result.Customizations.Packages)
-	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
+	for _, u := range *result.Customizations.Users {
+		require.True(t, u.IsRedacted())
+	}
 
 	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 2), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, version2Body.Customizations.Packages, result.Customizations.Packages)
-	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
+	for _, u := range *result.Customizations.Users {
+		require.True(t, u.IsRedacted())
+	}
 
 	respStatusCode, body = tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 1), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
-	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
+	for _, u := range *result.Customizations.Users {
+		require.True(t, u.IsRedacted())
+	}
 }
 
 func TestHandlers_ExportBlueprint(t *testing.T) {
@@ -592,8 +595,10 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.Equal(t, name, result.Name)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
-	// Check that the password returned is hashed
-	require.NotEqual(t, blueprint.Customizations.Users, result.Customizations.Users)
+	// Check that the password returned is redacted
+	for _, u := range *result.Customizations.Users {
+		require.True(t, u.IsRedacted())
+	}
 	require.Nil(t, result.Customizations.Subscription)
 	require.Equal(t, &id, result.Metadata.ParentId)
 	require.NotEqual(t, metadata.ExportedAt, result.Metadata.ExportedAt)
@@ -757,4 +762,55 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	bpComposes, err := dbase.GetBlueprintComposes(ctx, "000000", blueprintId2, nil, (time.Hour * 24 * 14), 10, 0, nil)
 	require.Len(t, bpComposes, 0)
 	require.NoError(t, err)
+}
+
+func TestBlueprintBody_CryptPasswords(t *testing.T) {
+	// Create a sample blueprint body with users
+	passwordToHash := "password123"
+	blueprint := &BlueprintBody{
+		Customizations: Customizations{
+			Users: &[]User{
+				{
+					Name:     "user1",
+					Password: common.ToPtr(passwordToHash),
+				},
+				{
+					Name:   "user2",
+					SshKey: common.ToPtr("ssh-key-string"),
+				},
+			},
+		},
+	}
+
+	err := blueprint.CryptPasswords()
+	require.NoError(t, err)
+
+	// Password hashed
+	require.NotEqual(t, (*blueprint.Customizations.Users)[0].Password, passwordToHash)
+	// No change with no password
+	require.Nil(t, (*blueprint.Customizations.Users)[1].Password)
+}
+
+func TestUser_IsRedacted(t *testing.T) {
+	u := &User{Password: nil}
+	isRedacted := u.IsRedacted()
+	require.True(t, isRedacted)
+
+	u = &User{Password: common.ToPtr("<REDACTED>")}
+	isRedacted = u.IsRedacted()
+	require.True(t, isRedacted)
+
+	u = &User{Password: common.ToPtr("test123")}
+	isRedacted = u.IsRedacted()
+	require.False(t, isRedacted)
+}
+
+func TestUser_RedactPassword(t *testing.T) {
+	user := &User{
+		Name:     "test",
+		Password: common.ToPtr("password123"),
+	}
+
+	user.RedactPassword()
+	require.Equal(t, "<REDACTED>", *user.Password)
 }
