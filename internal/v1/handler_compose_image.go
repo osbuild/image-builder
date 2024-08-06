@@ -673,10 +673,7 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, s
 		var users []composer.User
 		for _, u := range *cust.Users {
 			groups := &[]string{"wheel"}
-			err := u.CryptPassword()
-			if err != nil {
-				return nil, err
-			}
+			u.RedactPassword()
 			users = append(users, composer.User{
 				Name:     u.Name,
 				Key:      u.SshKey,

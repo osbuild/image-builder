@@ -1323,10 +1323,98 @@ func TestComposeCustomizations(t *testing.T) {
 	require.NoError(t, composerDirUser.FromDirectoryUser1(DirectoryUser1(1000)))
 
 	payloads := []struct {
-		imageBuilderRequest ComposeRequest
-		composerRequest     composer.ComposeRequest
+		imageBuilderRequest         ComposeRequest
+		composerRequest             composer.ComposeRequest
+		passwordsPresentAndRedacted bool // if False then passwords are redacted thus can't compare for equality
 	}{
 		// Customizations
+		{
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Users: &[]User{
+						{
+							Name:   "user1",
+							SshKey: common.ToPtr("ssh-rsa AAAAB3NzaC1"),
+						},
+						{
+							Name:     "user2",
+							SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
+							Password: common.ToPtr("$6$password123"),
+						},
+						{
+							Name:     "user3",
+							Password: common.ToPtr("$6$password123"),
+						},
+					},
+				},
+				Distribution: "centos-9",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesRhelEdgeInstaller,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "centos-9",
+				Customizations: &composer.Customizations{
+					Users: &[]composer.User{
+						{
+							Name:   "user1",
+							Key:    common.ToPtr("ssh-rsa AAAAB3NzaC1"),
+							Groups: &[]string{"wheel"},
+						},
+						{
+							Name:     "user2",
+							Key:      common.ToPtr("ssh-rsa AAAAB3NzaC2"),
+							Password: common.ToPtr("$6$password123"),
+							Groups:   &[]string{"wheel"},
+						},
+						{
+							Name:     "user3",
+							Password: common.ToPtr("$6$password123"),
+							Groups:   &[]string{"wheel"},
+						},
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesEdgeInstaller,
+					Ostree:       nil,
+					Repositories: []composer.Repository{
+
+						{
+							Baseurl:     common.ToPtr("http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/"),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(centosGpg),
+							CheckGpg:    common.ToPtr(true),
+						},
+						{
+							Baseurl:     common.ToPtr("http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/"),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(centosGpg),
+							CheckGpg:    common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+			passwordsPresentAndRedacted: true,
+		},
 		{
 			imageBuilderRequest: ComposeRequest{
 				Customizations: &Customizations{
@@ -1352,21 +1440,6 @@ func TestComposeCustomizations(t *testing.T) {
 						{
 							Mountpoint: "/var",
 							MinSize:    1073741824,
-						},
-					},
-					Users: &[]User{
-						{
-							Name:   "user1",
-							SshKey: common.ToPtr("ssh-rsa AAAAB3NzaC1"),
-						},
-						{
-							Name:     "user2",
-							SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
-							Password: common.ToPtr("$6$password123"),
-						},
-						{
-							Name:     "user3",
-							Password: common.ToPtr("$6$password123"),
 						},
 					},
 					Groups: common.ToPtr([]Group{
@@ -1432,24 +1505,6 @@ func TestComposeCustomizations(t *testing.T) {
 							MinSize:    1073741824,
 						},
 					},
-					Users: &[]composer.User{
-						{
-							Name:   "user1",
-							Key:    common.ToPtr("ssh-rsa AAAAB3NzaC1"),
-							Groups: &[]string{"wheel"},
-						},
-						{
-							Name:     "user2",
-							Key:      common.ToPtr("ssh-rsa AAAAB3NzaC2"),
-							Password: common.ToPtr("$6$password123"),
-							Groups:   &[]string{"wheel"},
-						},
-						{
-							Name:     "user3",
-							Password: common.ToPtr("$6$password123"),
-							Groups:   &[]string{"wheel"},
-						},
-					},
 					Groups: common.ToPtr([]composer.Group{
 						{
 							Name: "group",
@@ -1506,6 +1561,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		{
 			imageBuilderRequest: ComposeRequest{
@@ -1565,6 +1621,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// ostree, ignition, fdo
 		{
@@ -1663,6 +1720,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// Test Azure with SubscriptionId and TenantId
 		{
@@ -1726,6 +1784,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// Test Azure with SourceId
 		{
@@ -1789,6 +1848,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		{
 			imageBuilderRequest: ComposeRequest{
@@ -1838,6 +1898,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		{
 			imageBuilderRequest: ComposeRequest{
@@ -1889,6 +1950,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// just one partition
 		{
@@ -1953,6 +2015,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		{
 			imageBuilderRequest: ComposeRequest{
@@ -1998,6 +2061,7 @@ func TestComposeCustomizations(t *testing.T) {
 					UploadOptions: makeUploadOptions(t, composer.OCIUploadOptions{}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// One partition + partition_mode lvm
 		{
@@ -2056,6 +2120,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// files & directories customization
 		{
@@ -2146,6 +2211,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// firewall, services, locale, tz, containers
 		{
@@ -2226,6 +2292,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// subscriptions, openscap with services customizations
 		{
@@ -2295,6 +2362,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 		// subscriptions, openscap with no services customizations
 		{
@@ -2359,6 +2427,7 @@ func TestComposeCustomizations(t *testing.T) {
 					}),
 				},
 			},
+			passwordsPresentAndRedacted: false,
 		},
 	}
 
@@ -2372,8 +2441,18 @@ func TestComposeCustomizations(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, id, result.Id)
 
-		//compare expected compose request with actual receieved compose request
-		require.Equal(t, payload.composerRequest, composerRequest)
+		if !payload.passwordsPresentAndRedacted {
+			//compare expected compose request with actual receieved compose request
+			require.Equal(t, payload.composerRequest, composerRequest)
+		} else {
+			require.Equal(t, payload.composerRequest.Distribution, composerRequest.Distribution)
+			require.Equal(t, payload.composerRequest.ImageRequest, composerRequest.ImageRequest)
+
+			// Check that the password returned is redacted
+			for _, u := range *composerRequest.Customizations.Users {
+				require.True(t, u.IsRedacted())
+			}
+		}
 		composerRequest = composer.ComposeRequest{}
 	}
 }

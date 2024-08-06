@@ -260,10 +260,7 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 	}
 	if composeRequest.Customizations != nil && composeRequest.Customizations.Users != nil {
 		for _, u := range *composeRequest.Customizations.Users {
-			err := u.CryptPassword()
-			if err != nil {
-				return err
-			}
+			u.RedactPassword()
 		}
 	}
 

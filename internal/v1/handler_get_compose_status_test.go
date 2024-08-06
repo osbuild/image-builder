@@ -235,6 +235,8 @@ func TestComposeStatus(t *testing.T) {
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Equal(t, payload.imageStatus, result.ImageStatus)
-		require.Equal(t, cr, result.Request)
+		require.Equal(t, cr.Distribution, result.Request.Distribution)
+		require.Equal(t, cr.Distribution, result.Request.Distribution)
+		require.True(t, (*result.Request.Customizations.Users)[0].IsRedacted())
 	}
 }
