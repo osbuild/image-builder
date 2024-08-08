@@ -133,7 +133,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		if err != nil {
 			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
 		} else {
-			_ = httpError.SetInternal(fmt.Errorf("%s", body))
+			_ = httpError.SetInternal(fmt.Errorf("error %d, %s", resp.StatusCode, body))
 			var serviceStat composer.Error
 			if err := json.Unmarshal(body, &serviceStat); err != nil {
 				return ComposeResponse{}, httpError
