@@ -1575,8 +1575,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-          description:
-            "list of users that a customer can add, also specifying their respective groups and SSH keys"
+          description: |
+            List of users that a customer can add,
+            also specifying their respective groups and SSH keys and/or password
         services:
             $ref: '#/components/schemas/Services'
         hostname:
@@ -1882,7 +1883,7 @@ components:
       type: object
       required:
         - name
-        - ssh_key
+        # One of (password, ssh_key) must be set, validator takes care of it
       properties:
         name:
           type: string
@@ -1890,6 +1891,12 @@ components:
         ssh_key:
           type: string
           example: "ssh-rsa AAAAB3NzaC1"
+        password:
+          type: string
+          format: password
+          example: "$6$G91SvTj7uVp3xhqj$zVa8nqnJTlewniDII5dmvsBJnj3kloL3CXWdPDu9.e677VoRQd5zB6GKwkDvfGLoRR7NTl5nXLnJywk6IPIvS."
+          description: |
+            Plaintext passwords are also supported, they will be hashed and stored using the SHA-512 algorithm.
     Filesystem:
       type: object
       required:
