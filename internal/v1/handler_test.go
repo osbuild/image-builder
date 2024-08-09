@@ -1037,7 +1037,6 @@ func TestGetCustomizations(t *testing.T) {
 				if result.Openscap == nil {
 					require.Nil(t, customizations.Openscap)
 				} else {
-					customizations.Openscap.ProfileId = string(profile)
 					require.Equal(t, *customizations.Openscap, *result.Openscap)
 				}
 			}

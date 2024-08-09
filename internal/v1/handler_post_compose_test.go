@@ -1304,6 +1304,11 @@ func TestComposeCustomizations(t *testing.T) {
 		ImageName:     common.ToPtr("azure-image"),
 	}))
 
+	var openscap OpenSCAP
+	require.NoError(t, openscap.FromOpenSCAPProfile(OpenSCAPProfile{
+		ProfileId: "test-profile",
+	}))
+
 	var fileGroup File_Group
 	require.NoError(t, fileGroup.FromFileGroup1(FileGroup1(1000)))
 	var fileUser File_User
@@ -1455,9 +1460,7 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckGpg: common.ToPtr(true),
 						},
 					},
-					Openscap: &OpenSCAP{
-						ProfileId: "test-profile",
-					},
+					Openscap: &openscap,
 					Fips: &FIPS{
 						Enabled: common.ToPtr(true),
 					},
@@ -2301,9 +2304,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Subscription: &Subscription{
 						Insights: true,
 					},
-					Openscap: &OpenSCAP{
-						ProfileId: "test",
-					},
+					Openscap: &openscap,
 					Services: &Services{
 						Enabled: &[]string{"test_service"},
 						Masked:  &[]string{"test_service2"},
@@ -2333,7 +2334,7 @@ func TestComposeCustomizations(t *testing.T) {
 						ServerUrl:     "",
 					},
 					Openscap: &composer.OpenSCAP{
-						ProfileId: "test",
+						ProfileId: "test-profile",
 					},
 					Services: &composer.Services{
 						Enabled: &[]string{"test_service", "rhcd"},
@@ -2371,9 +2372,7 @@ func TestComposeCustomizations(t *testing.T) {
 					Subscription: &Subscription{
 						Insights: true,
 					},
-					Openscap: &OpenSCAP{
-						ProfileId: "test",
-					},
+					Openscap: &openscap,
 				},
 				Distribution: "rhel-8",
 				ImageRequests: []ImageRequest{
@@ -2399,7 +2398,7 @@ func TestComposeCustomizations(t *testing.T) {
 						ServerUrl:     "",
 					},
 					Openscap: &composer.OpenSCAP{
-						ProfileId: "test",
+						ProfileId: "test-profile",
 					},
 					Services: &composer.Services{
 						Enabled: &[]string{"rhcd"},

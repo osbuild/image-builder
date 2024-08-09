@@ -804,13 +804,26 @@ type OSTree struct {
 
 // OpenSCAP defines model for OpenSCAP.
 type OpenSCAP struct {
-	// ProfileDescription The longform policy description
+	union json.RawMessage
+}
+
+// OpenSCAPCompliance defines model for OpenSCAPCompliance.
+type OpenSCAPCompliance struct {
+	// PolicyId Apply a compliance policy which is defined in the Red Hat Insights Compliance
+	// service. This policy can include tailorings. This only works for RHEL images, and the
+	// policy needs to be available for the specific RHEL version.
+	PolicyId openapi_types.UUID `json:"policy_id"`
+}
+
+// OpenSCAPProfile defines model for OpenSCAPProfile.
+type OpenSCAPProfile struct {
+	// ProfileDescription The longform profile description
 	ProfileDescription *string `json:"profile_description,omitempty"`
 
-	// ProfileId The policy reference ID
+	// ProfileId Uses the OpenSCAP tooling directly to apply a pre-defined profile without tailorings.
 	ProfileId string `json:"profile_id"`
 
-	// ProfileName The policy type
+	// ProfileName The profile type
 	ProfileName *string `json:"profile_name,omitempty"`
 }
 
@@ -1471,6 +1484,68 @@ func (t File_User) MarshalJSON() ([]byte, error) {
 }
 
 func (t *File_User) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsOpenSCAPProfile returns the union data inside the OpenSCAP as a OpenSCAPProfile
+func (t OpenSCAP) AsOpenSCAPProfile() (OpenSCAPProfile, error) {
+	var body OpenSCAPProfile
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOpenSCAPProfile overwrites any union data inside the OpenSCAP as the provided OpenSCAPProfile
+func (t *OpenSCAP) FromOpenSCAPProfile(v OpenSCAPProfile) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOpenSCAPProfile performs a merge with any union data inside the OpenSCAP, using the provided OpenSCAPProfile
+func (t *OpenSCAP) MergeOpenSCAPProfile(v OpenSCAPProfile) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOpenSCAPCompliance returns the union data inside the OpenSCAP as a OpenSCAPCompliance
+func (t OpenSCAP) AsOpenSCAPCompliance() (OpenSCAPCompliance, error) {
+	var body OpenSCAPCompliance
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOpenSCAPCompliance overwrites any union data inside the OpenSCAP as the provided OpenSCAPCompliance
+func (t *OpenSCAP) FromOpenSCAPCompliance(v OpenSCAPCompliance) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOpenSCAPCompliance performs a merge with any union data inside the OpenSCAP, using the provided OpenSCAPCompliance
+func (t *OpenSCAP) MergeOpenSCAPCompliance(v OpenSCAPCompliance) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OpenSCAP) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OpenSCAP) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
