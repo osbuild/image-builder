@@ -1942,6 +1942,23 @@ components:
           description: |
             Optional flag to use rhc to register the system, which also always enables Insights.
     OpenSCAP:
+      oneOf:
+        - $ref: '#/components/schemas/OpenSCAPProfile'
+        - $ref: '#/components/schemas/OpenSCAPCompliance'
+    OpenSCAPCompliance:
+      type: object
+      required:
+        - policy_id
+      properties:
+        policy_id:
+          type: string
+          format: uuid
+          example: 'fef25b3c-b970-46da-a4e1-cc4d855b98dc'
+          description: |
+            Apply a compliance policy which is defined in the Red Hat Insights Compliance
+            service. This policy can include tailorings. This only works for RHEL images, and the
+            policy needs to be available for the specific RHEL version.
+    OpenSCAPProfile:
       type: object
       required:
         - profile_id
@@ -1949,13 +1966,14 @@ components:
         profile_id:
           type: string
           example: "xccdf_org.ssgproject.content_profile_cis"
-          description: "The policy reference ID"
+          description: |
+            Uses the OpenSCAP tooling directly to apply a pre-defined profile without tailorings.
         profile_name:
           type: string
-          description: "The policy type"
+          description: "The profile type"
         profile_description:
           type: string
-          description: "The longform policy description"
+          description: "The longform profile description"
     CustomRepository:
       type: object
       required:

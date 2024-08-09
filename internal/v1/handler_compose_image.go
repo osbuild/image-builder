@@ -654,8 +654,13 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, s
 	}
 
 	if cust.Openscap != nil {
+		profile, err := cust.Openscap.AsOpenSCAPProfile()
+		if err != nil {
+			return nil, err
+		}
+
 		res.Openscap = &composer.OpenSCAP{
-			ProfileId: cust.Openscap.ProfileId,
+			ProfileId: profile.ProfileId,
 		}
 	}
 
