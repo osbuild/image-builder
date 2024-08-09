@@ -690,8 +690,6 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 				return nil, echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("User is not authorized to get compliance data for given policy ID (%s)", policy.PolicyId.String()))
 			} else if errors.Is(compliance.ErrorMajorVersion, err) {
 				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Compliance policy (%s) does not support requested major version %d", policy.PolicyId.String(), major))
-			} else if errors.Is(compliance.ErrorMinorVersion, err) {
-				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Compliance policy (%s) does not support requested minor version %d", policy.PolicyId.String(), minor))
 			} else if errors.Is(compliance.ErrorNotFound, err) {
 				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Compliance policy (%s) or its tailorings weren't found", policy.PolicyId.String()))
 			} else if err != nil {

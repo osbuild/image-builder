@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"slices"
 
 	"github.com/redhatinsights/identity"
 )
@@ -15,7 +14,6 @@ import (
 var (
 	ErrorAuth         = errors.New("User is not authorized")
 	ErrorMajorVersion = errors.New("Major version of policy doesn't match requested major version")
-	ErrorMinorVersion = errors.New("No minor version of tailoring found in the requested policy")
 	ErrorNotFound     = errors.New("Policy or its tailorings are missing")
 	ErrorNotOk        = errors.New("Unexpected http status")
 )
@@ -32,7 +30,6 @@ type ComplianceClientConfig struct {
 type PolicyData struct {
 	PolicyID      string
 	ProfileID     string
-	TailoringID   string
 	TailoringData json.RawMessage
 }
 
@@ -69,16 +66,6 @@ type v2PolicyData struct {
 	OSMajorVersion int    `json:"os_major_version"`
 }
 
-type v2TailoringsResponse struct {
-	Data []v2TailoringItem `json:"data"`
-}
-
-type v2TailoringItem struct {
-	ID             string `json:"id"`
-	OSMajorVersion int    `json:"os_major_version"`
-	OSMinorVersion int    `json:"os_minor_version"`
-}
-
 func (cc *ComplianceClient) PolicyDataForMinorVersion(ctx context.Context, majorVersion, minorVersion int, policyID string) (*PolicyData, error) {
 	policiesResp, err := cc.request(ctx, "GET", fmt.Sprintf("%s/policies/%s", cc.url, policyID))
 	if err != nil {
@@ -104,34 +91,7 @@ func (cc *ComplianceClient) PolicyDataForMinorVersion(ctx context.Context, major
 		return nil, ErrorMajorVersion
 	}
 
-	tailoringsResp, err := cc.request(ctx, "GET", fmt.Sprintf("%s/policies/%s/tailorings", cc.url, policyID))
-	if err != nil {
-		return nil, err
-	}
-	defer tailoringsResp.Body.Close()
-
-	if tailoringsResp.StatusCode == http.StatusUnauthorized || tailoringsResp.StatusCode == http.StatusForbidden {
-		return nil, ErrorAuth
-	} else if tailoringsResp.StatusCode == http.StatusNotFound {
-		return nil, ErrorNotFound
-	} else if tailoringsResp.StatusCode != http.StatusOK {
-		return nil, ErrorNotOk
-	}
-
-	var v2tr v2TailoringsResponse
-	err = json.NewDecoder(tailoringsResp.Body).Decode(&v2tr)
-	if err != nil {
-		return nil, err
-	}
-
-	tailoringIdx := slices.IndexFunc(v2tr.Data, func(item v2TailoringItem) bool {
-		return item.OSMinorVersion == minorVersion
-	})
-	if tailoringIdx == -1 {
-		return nil, ErrorMinorVersion
-	}
-
-	tailoringFileResp, err := cc.request(ctx, "GET", fmt.Sprintf("%s/policies/%s/tailorings/%s/tailoring_file.json", cc.url, policyID, "tailoring-id"))
+	tailoringFileResp, err := cc.request(ctx, "GET", fmt.Sprintf("%s/policies/%s/tailorings/%d/tailoring_file.json", cc.url, policyID, minorVersion))
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +117,6 @@ func (cc *ComplianceClient) PolicyDataForMinorVersion(ctx context.Context, major
 	return &PolicyData{
 		PolicyID:      v2pr.Data.ID,
 		ProfileID:     v2pr.Data.RefID,
-		TailoringID:   v2tr.Data[tailoringIdx].ID,
 		TailoringData: tailoringData,
 	}, nil
 }

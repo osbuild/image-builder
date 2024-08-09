@@ -1302,31 +1302,7 @@ func TestComposeCustomizations(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			err := json.NewEncoder(w).Encode(policyData)
 			require.NoError(t, err)
-		case fmt.Sprintf("/policies/%s/tailorings", policyID):
-			tailoring := struct {
-				Data []struct {
-					ID             string `json:"id"`
-					OSMajorVersion int    `json:"os_major_version"`
-					OSMinorVersion int    `json:"os_minor_version"`
-				} `json:"data"`
-			}{
-				Data: []struct {
-					ID             string `json:"id"`
-					OSMajorVersion int    `json:"os_major_version"`
-					OSMinorVersion int    `json:"os_minor_version"`
-				}{
-					{
-						ID:             "tailoring-id",
-						OSMajorVersion: 8,
-						OSMinorVersion: 10,
-					},
-				},
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			err := json.NewEncoder(w).Encode(tailoring)
-			require.NoError(t, err)
-		case fmt.Sprintf("/policies/%s/tailorings/tailoring-id/tailoring_file.json", policyID):
+		case fmt.Sprintf("/policies/%s/tailorings/10/tailoring_file.json", policyID):
 			tailoringData := "{ \"data\": \"some-tailoring-data\"}"
 			w.WriteHeader(http.StatusOK)
 			_, err := w.Write([]byte(tailoringData))
