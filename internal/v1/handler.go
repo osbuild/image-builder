@@ -525,14 +525,12 @@ func convertIgnoreImageTypeToSlice(ignoreImageTypes *[]ImageTypes) []string {
 func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error {
 	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get identity: %w", err)
 	}
 
 	limit := 100
-	if params.Limit != nil {
-		if *params.Limit > 0 {
-			limit = *params.Limit
-		}
+	if params.Limit != nil && *params.Limit > 0 {
+		limit = *params.Limit
 	}
 
 	offset := 0
@@ -542,17 +540,22 @@ func (h *Handlers) GetComposes(ctx echo.Context, params GetComposesParams) error
 	ignoreImageTypeStrings := convertIgnoreImageTypeToSlice(params.IgnoreImageTypes)
 
 	// composes in the last 14 days
-	composes, count, err := h.server.db.GetComposes(ctx.Request().Context(), userID.OrgID(), (time.Hour * 24 * 14), limit, offset, ignoreImageTypeStrings)
+	composes, count, err := h.server.db.GetComposes(
+		ctx.Request().Context(),
+		userID.OrgID(),
+		time.Hour*24*14,
+		limit,
+		offset,
+		ignoreImageTypeStrings)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to fetch image details from DB: %w", err)
 	}
 
-	data := []ComposesResponseItem{}
+	data := make([]ComposesResponseItem, 0, len(composes))
 	for _, c := range composes {
 		var cmpr ComposeRequest
-		err = json.Unmarshal(c.Request, &cmpr)
-		if err != nil {
-			return err
+		if err = json.Unmarshal(c.Request, &cmpr); err != nil {
+			return fmt.Errorf("failed to parse compose request: %w", err)
 		}
 		data = append(data, ComposesResponseItem{
 			CreatedAt:        c.CreatedAt.Format(time.RFC3339),
