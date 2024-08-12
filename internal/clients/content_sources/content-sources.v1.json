@@ -1,6 +1,38 @@
 {
     "components": {
         "schemas": {
+            "api.AddUploadsRequest": {
+                "properties": {
+                    "artifacts": {
+                        "description": "List of created artifacts",
+                        "items": {
+                            "$ref": "#/components/schemas/api.Artifact"
+                        },
+                        "type": "array"
+                    },
+                    "uploads": {
+                        "description": "List of unfinished uploads",
+                        "items": {
+                            "$ref": "#/components/schemas/api.Upload"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "api.Artifact": {
+                "properties": {
+                    "href": {
+                        "description": "HREF to the  completed artifact",
+                        "type": "string"
+                    },
+                    "sha256": {
+                        "description": "SHA256 sum of the completed artifact",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "api.ContentUnitSearchRequest": {
                 "properties": {
                     "limit": {
@@ -1232,6 +1264,19 @@
                 },
                 "type": "object"
             },
+            "api.Upload": {
+                "properties": {
+                    "href": {
+                        "description": "HREF to the unfinished upload",
+                        "type": "string"
+                    },
+                    "sha256": {
+                        "description": "SHA256 sum of the uploaded file",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "api.UrlValidationResponse": {
                 "properties": {
                     "error": {
@@ -2459,6 +2504,80 @@
                     }
                 },
                 "summary": "Update Repository",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/repositories/{uuid}/add_uploads/": {
+            "post": {
+                "description": "Check for repository updates.",
+                "operationId": "add_upload",
+                "parameters": [
+                    {
+                        "description": "Repository ID.",
+                        "in": "path",
+                        "name": "uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/api.AddUploadsRequest"
+                            }
+                        }
+                    },
+                    "description": "request body",
+                    "x-originalParamName": "body"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/api.TaskInfoResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "add uploads to a repository",
                 "tags": [
                     "repositories"
                 ]
