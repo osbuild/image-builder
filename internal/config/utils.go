@@ -72,6 +72,10 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 			conf.ContentSourcesURL = fmt.Sprintf("http://%s:%d/api/content-sources/v1", endpoint.Hostname, endpoint.Port)
 		}
 
+		if endpoint, ok := clowder.DependencyEndpoints["compliance"]["service"]; ok {
+			conf.ComplianceURL = fmt.Sprintf("http://%s:%d/api/compliance/v2", endpoint.Hostname, endpoint.Port)
+		}
+
 		if strings.Contains(*clowder.LoadedConfig.Metadata.EnvName, "ephemeral") {
 			conf.LogLevel = "DEBUG"
 		}
