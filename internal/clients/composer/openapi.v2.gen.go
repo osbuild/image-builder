@@ -311,9 +311,10 @@ type BlueprintFirewall struct {
 
 // BlueprintOpenSCAP defines model for BlueprintOpenSCAP.
 type BlueprintOpenSCAP struct {
-	Datastream *string            `json:"datastream,omitempty"`
-	ProfileId  string             `json:"profile_id"`
-	Tailoring  *OpenSCAPTailoring `json:"tailoring,omitempty"`
+	Datastream    *string                `json:"datastream,omitempty"`
+	JsonTailoring *OpenSCAPJSONTailoring `json:"json_tailoring,omitempty"`
+	ProfileId     string                 `json:"profile_id"`
+	Tailoring     *OpenSCAPTailoring     `json:"tailoring,omitempty"`
 }
 
 // BlueprintRepository defines model for BlueprintRepository.
@@ -925,8 +926,15 @@ type ObjectReference struct {
 
 // OpenSCAP defines model for OpenSCAP.
 type OpenSCAP struct {
-	ProfileId string             `json:"profile_id"`
-	Tailoring *OpenSCAPTailoring `json:"tailoring,omitempty"`
+	JsonTailoring *OpenSCAPJSONTailoring `json:"json_tailoring,omitempty"`
+	ProfileId     string                 `json:"profile_id"`
+	Tailoring     *OpenSCAPTailoring     `json:"tailoring,omitempty"`
+}
+
+// OpenSCAPJSONTailoring defines model for OpenSCAPJSONTailoring.
+type OpenSCAPJSONTailoring struct {
+	Filepath  string `json:"filepath"`
+	ProfileId string `json:"profile_id"`
 }
 
 // OpenSCAPTailoring defines model for OpenSCAPTailoring.
