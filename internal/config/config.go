@@ -46,6 +46,8 @@ type ImageBuilderConfig struct {
 	GlitchTipDSN          string `env:"GLITCHTIP_DSN"`
 	FedoraAuth            bool   `env:"FEDORA_AUTH"`
 	DeploymentChannel     string `env:"CHANNEL"`
+	UnleashURL            string `env:"UNLEASH_URL"`
+	UnleashToken          string `env:"UNLEASH_TOKEN"`
 }
 
 func (ibc *ImageBuilderConfig) IsDebug() bool {

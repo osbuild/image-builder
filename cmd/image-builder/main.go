@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/osbuild/image-builder/internal/unleash"
 	v1 "github.com/osbuild/image-builder/internal/v1"
 
 	"github.com/getsentry/sentry-go"
@@ -146,6 +147,16 @@ func main() {
 
 	if len(adr.Available(true).List()) == 0 {
 		panic("no distributions defined")
+	}
+
+	if conf.UnleashURL != "" {
+		err = unleash.Initialize(unleash.Config{
+			URL:   conf.UnleashURL,
+			Token: conf.UnleashToken,
+		})
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	echoServer := echo.New()

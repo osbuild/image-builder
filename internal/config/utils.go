@@ -79,6 +79,18 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 		if strings.Contains(*clowder.LoadedConfig.Metadata.EnvName, "ephemeral") {
 			conf.LogLevel = "DEBUG"
 		}
+
+		// feature flags
+		conf.UnleashURL = fmt.Sprintf(
+			"%s://%s:%d/api",
+			clowder.LoadedConfig.FeatureFlags.Scheme,
+			clowder.LoadedConfig.FeatureFlags.Hostname,
+			clowder.LoadedConfig.FeatureFlags.Port,
+		)
+		if clowder.LoadedConfig.FeatureFlags.ClientAccessToken != nil {
+			conf.UnleashToken = *clowder.LoadedConfig.FeatureFlags.ClientAccessToken
+		}
+
 	}
 
 	return nil
