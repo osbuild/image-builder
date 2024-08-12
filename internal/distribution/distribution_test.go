@@ -68,6 +68,30 @@ func TestDistributionFile_Architecture(t *testing.T) {
 	require.Error(t, err, "Architecture not supported")
 }
 
+func TestRHELMajorMinor(t *testing.T) {
+	adr, err := LoadDistroRegistry("../../distributions")
+	require.NoError(t, err)
+
+	d, err := adr.Available(true).Get("rhel-8")
+	require.NoError(t, err)
+	major, minor, err := d.RHELMajorMinor()
+	require.NoError(t, err)
+	require.Equal(t, 8, major)
+	require.Equal(t, 10, minor)
+
+	d, err = adr.Available(true).Get("rhel-90")
+	require.NoError(t, err)
+	major, minor, err = d.RHELMajorMinor()
+	require.NoError(t, err)
+	require.Equal(t, 9, major)
+	require.Equal(t, 0, minor)
+
+	d, err = adr.Available(true).Get("centos-9")
+	require.NoError(t, err)
+	_, _, err = d.RHELMajorMinor()
+	require.Error(t, err, MajorMinorError)
+}
+
 func TestArchitecture_FindPackages(t *testing.T) {
 	adr, err := LoadDistroRegistry("../../distributions")
 	require.NoError(t, err)
