@@ -1097,13 +1097,13 @@ func TestComposeWithSnapshots(t *testing.T) {
 						{
 							Baseurl:  &[]string{"https://content-sources.org/snappy/payload"},
 							CheckGpg: common.ToPtr(true),
-							Enabled:  common.ToPtr(true),
+							Enabled:  common.ToPtr(false),
 							Gpgkey:   &[]string{"some-gpg-key"},
 							Id:       repoPayloadId.String(),
 						},
 						{
 							Baseurl: &[]string{"https://content-sources.org/snappy/payload2"},
-							Enabled: common.ToPtr(true),
+							Enabled: common.ToPtr(false),
 							Id:      repoPayloadId2.String(),
 						},
 					},
@@ -1197,7 +1197,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 						{
 							Baseurl:  &[]string{"https://content-sources.org/snappy/payload"},
 							CheckGpg: common.ToPtr(true),
-							Enabled:  common.ToPtr(true),
+							Enabled:  common.ToPtr(false),
 							Gpgkey:   &[]string{"some-gpg-key"},
 							Id:       repoPayloadId.String(),
 						},

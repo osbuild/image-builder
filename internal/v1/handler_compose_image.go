@@ -282,10 +282,11 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 		composerRepo.CheckRepoGpg = repo.MetadataVerification
 		repositories = append(repositories, composerRepo)
 
+		// Don't enable custom repositories, as they require further setup to be useable.
 		customRepo := composer.CustomRepository{
 			Id:      *snap.RepositoryUuid,
 			Baseurl: &[]string{h.server.csReposURL.JoinPath(*snap.Match.RepositoryPath).String()},
-			Enabled: common.ToPtr(true),
+			Enabled: common.ToPtr(false),
 		}
 		if repo.GpgKey != nil && *repo.GpgKey != "" {
 			customRepo.Gpgkey = &[]string{*repo.GpgKey}
