@@ -5,6 +5,7 @@ import (
 
 	"github.com/osbuild/image-builder/internal/oauth2"
 
+	"github.com/osbuild/image-builder/internal/clients/compliance"
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
@@ -134,6 +135,10 @@ func main() {
 		panic(err)
 	}
 
+	complianceClient := compliance.NewClient(compliance.ComplianceClientConfig{
+		URL: conf.ComplianceURL,
+	})
+
 	adr, err := distribution.LoadDistroRegistry(conf.DistributionsDir)
 	if err != nil {
 		panic(err)
@@ -184,13 +189,14 @@ func main() {
 		echoServer.Debug = true
 	}
 	serverConfig := &v1.ServerConfig{
-		EchoServer:      echoServer,
-		CompClient:      compClient,
-		ProvClient:      provClient,
-		RecommendClient: recommendClient,
-		CSClient:        csClient,
-		CSReposURL:      conf.ContentSourcesRepoURL,
-		DBase:           dbase,
+		EchoServer:       echoServer,
+		CompClient:       compClient,
+		ProvClient:       provClient,
+		RecommendClient:  recommendClient,
+		ComplianceClient: complianceClient,
+		CSClient:         csClient,
+		CSReposURL:       conf.ContentSourcesRepoURL,
+		DBase:            dbase,
 
 		AwsConfig: v1.AWSConfig{
 			Region: conf.OsbuildRegion,
