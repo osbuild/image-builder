@@ -215,10 +215,15 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 		customizations.Packages = &packages
 	}
 
-	openscap := v1.OpenSCAP{}
-	openscap.ProfileId = profile
-	openscap.ProfileName = &bp.Description // annoyingly the Profile name is saved to the blueprint description
-	openscap.ProfileDescription = &profileDescription
+	var openscap v1.OpenSCAP
+	err = openscap.FromOpenSCAPProfile(v1.OpenSCAPProfile{
+		ProfileId:          profile,
+		ProfileName:        &bp.Description, // annoyingly the Profile name is saved to the blueprint description
+		ProfileDescription: &profileDescription,
+	})
+	if err != nil {
+		panic(err)
+	}
 	customizations.Openscap = &openscap
 
 	// Write it all down on the fileSystem
