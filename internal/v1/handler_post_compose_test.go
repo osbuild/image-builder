@@ -1277,7 +1277,68 @@ func TestComposeCustomizations(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, ProvURL: provSrv.URL}, nil)
+	policyID := uuid.New()
+	complSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case fmt.Sprintf("/policies/%s", policyID):
+			policyData := struct {
+				Data struct {
+					ID             string `json:"id"`
+					RefID          string `json:"ref_id"`
+					OSMajorVersion int    `json:"os_major_version"`
+				} `json:"data"`
+			}{
+				Data: struct {
+					ID             string `json:"id"`
+					RefID          string `json:"ref_id"`
+					OSMajorVersion int    `json:"os_major_version"`
+				}{
+					ID:             policyID.String(),
+					RefID:          "openscap-ref-id",
+					OSMajorVersion: 8,
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			err := json.NewEncoder(w).Encode(policyData)
+			require.NoError(t, err)
+		case fmt.Sprintf("/policies/%s/tailorings", policyID):
+			tailoring := struct {
+				Data []struct {
+					ID             string `json:"id"`
+					OSMajorVersion int    `json:"os_major_version"`
+					OSMinorVersion int    `json:"os_minor_version"`
+				} `json:"data"`
+			}{
+				Data: []struct {
+					ID             string `json:"id"`
+					OSMajorVersion int    `json:"os_major_version"`
+					OSMinorVersion int    `json:"os_minor_version"`
+				}{
+					{
+						ID:             "tailoring-id",
+						OSMajorVersion: 8,
+						OSMinorVersion: 10,
+					},
+				},
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			err := json.NewEncoder(w).Encode(tailoring)
+			require.NoError(t, err)
+		case fmt.Sprintf("/policies/%s/tailorings/tailoring-id/tailoring_file.json", policyID):
+			tailoringData := "{ \"data\": \"some-tailoring-data\"}"
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(tailoringData))
+			require.NoError(t, err)
+		}
+	}))
+
+	srv, tokenSrv := startServer(t, &testServerClientsConf{
+		ComposerURL:   apiSrv.URL,
+		ProvURL:       provSrv.URL,
+		ComplianceURL: complSrv.URL,
+	}, nil)
 	defer func() {
 		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
@@ -1307,6 +1368,10 @@ func TestComposeCustomizations(t *testing.T) {
 	var openscap OpenSCAP
 	require.NoError(t, openscap.FromOpenSCAPProfile(OpenSCAPProfile{
 		ProfileId: "test-profile",
+	}))
+	var openscapTailoring OpenSCAP
+	require.NoError(t, openscapTailoring.FromOpenSCAPCompliance(OpenSCAPCompliance{
+		PolicyId: policyID,
 	}))
 
 	var fileGroup File_Group
@@ -2427,6 +2492,65 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 			passwordsPresentAndRedacted: false,
+		},
+		// openscap with tailoring
+		{
+			imageBuilderRequest: ComposeRequest{
+				Customizations: &Customizations{
+					Openscap: &openscapTailoring,
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    ImageTypesGuestImage,
+						UploadRequest: UploadRequest{
+							Type:    UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-8.10",
+				Customizations: &composer.Customizations{
+					Openscap: &composer.OpenSCAP{
+						ProfileId: "openscap-ref-id",
+						JsonTailoring: &composer.OpenSCAPJSONTailoring{
+							ProfileId: "openscap-ref-id",
+							Filepath:  "/etc/osbuild/openscap-tailoring.json",
+						},
+					},
+					Files: &[]composer.File{
+						{
+							Path:          "/etc/osbuild/openscap-tailoring.json",
+							EnsureParents: common.ToPtr(true),
+							Data:          common.ToPtr("{ \"data\": \"some-tailoring-data\"}"),
+						},
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
+							Rhsm:     common.ToPtr(true),
+							Gpgkey:   common.ToPtr(rhelGpg),
+							CheckGpg: common.ToPtr(true),
+						},
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
+							Rhsm:     common.ToPtr(true),
+							Gpgkey:   common.ToPtr(rhelGpg),
+							CheckGpg: common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
 		},
 	}
 

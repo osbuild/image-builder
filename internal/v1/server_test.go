@@ -16,6 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/image-builder/internal/clients/compliance"
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
@@ -95,12 +96,13 @@ func makeUploadOptions(t *testing.T, uploadOptions interface{}) *composer.Upload
 }
 
 type testServerClientsConf struct {
-	ComposerURL  string
-	ProvURL      string
-	CSURL        string
-	RecommendURL string
-	OAuthURL     string
-	Proxy        string
+	ComposerURL   string
+	ProvURL       string
+	CSURL         string
+	RecommendURL  string
+	ComplianceURL string
+	OAuthURL      string
+	Proxy         string
 }
 
 type testServer struct {
@@ -160,6 +162,10 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	})
 	require.NoError(t, err)
 
+	complianceClient := compliance.NewClient(compliance.ComplianceClientConfig{
+		URL: tscc.ComplianceURL,
+	})
+
 	//store the quotas in a temporary file
 	quotaFile, err := initQuotaFile(t)
 	require.NoError(t, err)
@@ -181,6 +187,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	serverConfig.ProvClient = provClient
 	serverConfig.CSClient = csClient
 	serverConfig.RecommendClient = recommendClient
+	serverConfig.ComplianceClient = complianceClient
 	if serverConfig.QuotaFile == "" {
 		serverConfig.QuotaFile = quotaFile
 	}
