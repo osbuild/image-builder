@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -14,6 +15,7 @@ import (
 
 var DistributionNotFound = errors.New("Distribution not available")
 var RepoSourceError = errors.New("Repository must always have one of these properties: baseurl, metalink")
+var MajorMinorError = errors.New("Unable to get major and minor version for distribution")
 
 type DistributionItem struct {
 	Description      string  `json:"description"`
@@ -82,6 +84,41 @@ func (dist DistributionFile) NeedsEntitlement() bool {
 
 func (dist DistributionFile) IsRestricted() bool {
 	return dist.Distribution.RestrictedAccess
+}
+
+func (dist DistributionFile) RHELMajorMinor() (int, int, error) {
+	splitHyphen := strings.Split(dist.Distribution.Name, "-")
+	if len(splitHyphen) != 2 || splitHyphen[0] != "rhel" {
+		return 0, 0, MajorMinorError
+	}
+
+	version := splitHyphen[1]
+	if len(version) < 2 || len(version) > 4 {
+		return 0, 0, MajorMinorError
+	}
+
+	if strings.Contains(version, ".") {
+		splitDot := strings.Split(version, ".")
+		major, err := strconv.Atoi(splitDot[0])
+		if err != nil {
+			return 0, 0, fmt.Errorf("%w: %w", MajorMinorError, err)
+		}
+		minor, err := strconv.Atoi(splitDot[1])
+		if err != nil {
+			return major, 0, fmt.Errorf("%w: %w", MajorMinorError, err)
+		}
+		return major, minor, nil
+	}
+
+	major, err := strconv.Atoi(version[:1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("%w: %w", MajorMinorError, err)
+	}
+	minor, err := strconv.Atoi(version[1:])
+	if err != nil {
+		return major, 0, fmt.Errorf("%w: %w", MajorMinorError, err)
+	}
+	return major, minor, nil
 }
 
 func (dist DistributionFile) Architecture(arch string) (*Architecture, error) {
