@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/osbuild/image-builder/internal/clients/compliance"
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
@@ -64,10 +66,10 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	}
 
 	var customizations *composer.Customizations
-	customizations, err = h.buildCustomizations(ctx, composeRequest.Customizations, composeRequest.ImageRequests[0].SnapshotDate)
+	customizations, err = h.buildCustomizations(ctx, &composeRequest, d)
 	if err != nil {
 		ctx.Logger().Errorf("Failed building customizations: %v", err)
-		return ComposeResponse{}, echo.NewHTTPError(http.StatusInternalServerError, "Unable to build customizations")
+		return ComposeResponse{}, echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Unable to build customizations: %v", err))
 	}
 
 	var repositories []composer.Repository
@@ -534,7 +536,8 @@ func validateComposeRequest(cr *ComposeRequest) error {
 	return nil
 }
 
-func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, snapshotDate *string) (*composer.Customizations, error) {
+func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *distribution.DistributionFile) (*composer.Customizations, error) {
+	cust := cr.Customizations
 	if cust == nil {
 		return nil, nil
 	}
@@ -555,6 +558,7 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, s
 		res.Packages = cust.Packages
 	}
 
+	snapshotDate := cr.ImageRequests[0].SnapshotDate
 	if cust.PayloadRepositories != nil && snapshotDate != nil {
 		var repoURLs []string
 		for _, payloadRepository := range *cust.PayloadRepositories {
@@ -659,8 +663,50 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, s
 			return nil, err
 		}
 
-		res.Openscap = &composer.OpenSCAP{
-			ProfileId: profile.ProfileId,
+		if profile.ProfileId != "" {
+			res.Openscap = &composer.OpenSCAP{
+				ProfileId: profile.ProfileId,
+			}
+		}
+		policy, err := cust.Openscap.AsOpenSCAPCompliance()
+		if err != nil {
+			ctx.Logger().Error(err.Error())
+			return nil, err
+		}
+
+		if policy.PolicyId != uuid.Nil {
+			major, minor, err := d.RHELMajorMinor()
+			if err != nil {
+				return nil, err
+			}
+
+			pdata, err := h.server.complianceClient.PolicyDataForMinorVersion(ctx.Request().Context(), major, minor, policy.PolicyId.String())
+			if errors.Is(compliance.ErrorAuth, err) {
+				return nil, echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("User is not authorized to get compliance data for given policy ID (%s)", policy.PolicyId.String()))
+			} else if errors.Is(compliance.ErrorMajorVersion, err) {
+				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Compliance policy (%s) does not support requested major version %d", policy.PolicyId.String(), major))
+			} else if errors.Is(compliance.ErrorMinorVersion, err) {
+				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Compliance policy (%s) does not support requested minor version %d", policy.PolicyId.String(), minor))
+			} else if errors.Is(compliance.ErrorNotFound, err) {
+				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Compliance policy (%s) or its tailorings weren't found", policy.PolicyId.String()))
+			} else if err != nil {
+				return nil, err
+			}
+
+			res.Openscap = &composer.OpenSCAP{
+				ProfileId: pdata.ProfileID,
+				JsonTailoring: &composer.OpenSCAPJSONTailoring{
+					ProfileId: pdata.ProfileID,
+					Filepath:  "/etc/osbuild/openscap-tailoring.json",
+				},
+			}
+			res.Files = &[]composer.File{
+				{
+					Path:          "/etc/osbuild/openscap-tailoring.json",
+					EnsureParents: common.ToPtr(true),
+					Data:          common.ToPtr(string(pdata.TailoringData)),
+				},
+			}
 		}
 	}
 
@@ -839,7 +885,12 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cust *Customizations, s
 				User:          user,
 			})
 		}
-		res.Files = &files
+		// OpenSCAP tailoring creates a file
+		if res.Files != nil && len(*res.Files) > 0 {
+			res.Files = common.ToPtr(append(*res.Files, files...))
+		} else {
+			res.Files = &files
+		}
 	}
 
 	if cust.Locale != nil {
