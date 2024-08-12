@@ -6,6 +6,7 @@ toolchain go1.21.9
 
 require (
 	github.com/BurntSushi/toml v1.4.0
+	github.com/Unleash/unleash-client-go/v4 v4.1.2
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/getkin/kin-openapi v0.124.0
 	github.com/getsentry/sentry-go v0.28.1
@@ -28,6 +29,7 @@ require (
 )
 
 require (
+	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -55,6 +57,8 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/twmb/murmur3 v1.1.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.26.0 // indirect

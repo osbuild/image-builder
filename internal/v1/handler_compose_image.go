@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/distribution"
+	"github.com/osbuild/image-builder/internal/unleash"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -675,6 +676,10 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 		}
 
 		if policy.PolicyId != uuid.Nil {
+			if !unleash.Enabled(unleash.CompliancePolicies) {
+				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Feature %s not enabled", string(unleash.CompliancePolicies)))
+			}
+
 			major, minor, err := d.RHELMajorMinor()
 			if err != nil {
 				return nil, err

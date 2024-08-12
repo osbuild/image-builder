@@ -2,6 +2,18 @@
 ## explicit; go 1.18
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
+# github.com/Masterminds/semver/v3 v3.1.1
+## explicit; go 1.12
+github.com/Masterminds/semver/v3
+# github.com/Unleash/unleash-client-go/v4 v4.1.2
+## explicit; go 1.13
+github.com/Unleash/unleash-client-go/v4
+github.com/Unleash/unleash-client-go/v4/api
+github.com/Unleash/unleash-client-go/v4/context
+github.com/Unleash/unleash-client-go/v4/internal/api
+github.com/Unleash/unleash-client-go/v4/internal/constraints
+github.com/Unleash/unleash-client-go/v4/internal/strategies
+github.com/Unleash/unleash-client-go/v4/strategy
 # github.com/apapsch/go-jsonmerge/v2 v2.0.0
 ## explicit; go 1.12
 github.com/apapsch/go-jsonmerge/v2
@@ -223,10 +235,17 @@ github.com/redhatinsights/platform-go-middlewares/logging/cloudwatch
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
+# github.com/stretchr/objx v0.5.2
+## explicit; go 1.20
+github.com/stretchr/objx
 # github.com/stretchr/testify v1.9.0
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
+github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
+# github.com/twmb/murmur3 v1.1.8
+## explicit; go 1.11
+github.com/twmb/murmur3
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
