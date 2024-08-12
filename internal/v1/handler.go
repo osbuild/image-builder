@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/osbuild/image-builder/internal/distribution"
+
 	"github.com/google/uuid"
 
 	"github.com/osbuild/image-builder/internal/clients/composer"
@@ -86,17 +88,25 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 	dr := h.server.distroRegistry(ctx)
 	userID, err := h.server.getIdentity(ctx)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get user identity: %v", err))
 	}
 
+	distributions, err := h.filterDistributions(userID.OrgID(), dr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to filter available distributions").SetInternal(err)
+	}
+	return ctx.JSON(http.StatusOK, distributions)
+}
+
+func (h *Handlers) filterDistributions(orgID string, distroMap *distribution.DistroRegistry) (DistributionsResponse, error) {
 	var distributions DistributionsResponse
-	for k, d := range dr.Map() {
+	for k, d := range distroMap.Map() {
 		if d.IsRestricted() {
-			allowOk, err := h.server.allowList.IsAllowed(userID.OrgID(), d.Distribution.Name)
+			allowed, err := h.server.allowList.IsAllowed(orgID, d.Distribution.Name)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+				return nil, err
 			}
-			if !allowOk {
+			if !allowed {
 				continue
 			}
 		}
@@ -105,8 +115,7 @@ func (h *Handlers) GetDistributions(ctx echo.Context) error {
 			Name:        k,
 		})
 	}
-
-	return ctx.JSON(http.StatusOK, distributions)
+	return distributions, nil
 }
 
 func (h *Handlers) GetArchitectures(ctx echo.Context, distro Distributions) error {
