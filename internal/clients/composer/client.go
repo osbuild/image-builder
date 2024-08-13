@@ -146,7 +146,3 @@ func (cc *ComposerClient) CloneCompose(id uuid.UUID, clone CloneComposeBody) (*h
 func (cc *ComposerClient) CloneStatus(id uuid.UUID) (*http.Response, error) {
 	return cc.request("GET", fmt.Sprintf("%s/clones/%s", cc.composerURL, id), nil, nil)
 }
-
-func (cu *User) IsRedacted() bool {
-	return cu.Password == nil || *cu.Password == "<REDACTED>"
-}

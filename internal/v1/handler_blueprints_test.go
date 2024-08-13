@@ -95,6 +95,363 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	require.Equal(t, "Invalid user", jsonResp.Errors[0].Title)
 }
 
+func TestUser_MergeForUpdate(t *testing.T) {
+	tests := []struct {
+		name          string
+		newUser       User
+		existingUsers []User
+		wantPass      *string
+		wantSsh       *string
+		wantErr       bool
+	}{
+		{
+			name: "Both password and ssh_key are provided, no need to fetch user from DB",
+			newUser: User{
+				Name:     "test",
+				Password: common.ToPtr("password"),
+				SshKey:   common.ToPtr("ssh key"),
+			},
+			existingUsers: []User{},
+			wantPass:      common.ToPtr("password"),
+			wantSsh:       common.ToPtr("ssh key"),
+			wantErr:       false,
+		},
+		{
+			name: "User found in DB, merge should keep new values",
+			newUser: User{
+				Name:     "test",
+				Password: common.ToPtr("password"),
+				SshKey:   common.ToPtr("ssh key"),
+			},
+			existingUsers: []User{
+				{
+					Name:     "test",
+					Password: common.ToPtr("old password"),
+					SshKey:   common.ToPtr("old ssh key"),
+				},
+			},
+			wantPass: common.ToPtr("password"),
+			wantSsh:  common.ToPtr("ssh key"),
+			wantErr:  false,
+		},
+		{
+			name: "New user, empty password set to nil",
+			newUser: User{
+				Name:     "test",
+				Password: common.ToPtr(""),
+				SshKey:   common.ToPtr("ssh key"),
+			},
+			existingUsers: []User{},
+			wantPass:      nil,
+			wantSsh:       common.ToPtr("ssh key"),
+			wantErr:       false,
+		},
+		{
+			name: "Existing user, empty password set to nil = change to only 'ssh key' user",
+			newUser: User{
+				Name:     "test",
+				Password: common.ToPtr(""),
+				SshKey:   common.ToPtr("ssh key"),
+			},
+			existingUsers: []User{
+				{
+					Name:     "test",
+					Password: common.ToPtr("old password"),
+					SshKey:   nil,
+				},
+			},
+			wantPass: nil,
+			wantSsh:  common.ToPtr("ssh key"),
+			wantErr:  false,
+		},
+		{
+			name: "New user, empty ssh_key set to nil",
+			newUser: User{
+				Name:     "test",
+				Password: common.ToPtr("password"),
+				SshKey:   common.ToPtr(""),
+			},
+			existingUsers: []User{},
+			wantPass:      common.ToPtr("password"),
+			wantSsh:       nil,
+			wantErr:       false,
+		},
+		{
+			name: "Existing user, empty ssh key set to nil = change to 'password' user",
+			newUser: User{
+				Name:     "test",
+				Password: common.ToPtr("password"),
+				SshKey:   common.ToPtr(""),
+			},
+			existingUsers: []User{
+				{
+					Name:     "test",
+					Password: nil,
+					SshKey:   common.ToPtr("old ssh key"),
+				},
+			},
+			wantPass: common.ToPtr("password"),
+			wantSsh:  nil,
+			wantErr:  false,
+		},
+		{
+			name: "Both password and ssh_key are empty, invalid",
+			newUser: User{
+				Name:     "test",
+				Password: common.ToPtr(""),
+				SshKey:   common.ToPtr(""),
+			},
+			existingUsers: []User{},
+			wantPass:      nil,
+			wantSsh:       nil,
+			wantErr:       true,
+		},
+		{
+			name: "Both password and ssh_key are nil, no existing user, invalid",
+			newUser: User{
+				Name: "test",
+			},
+			existingUsers: []User{},
+			wantPass:      nil,
+			wantSsh:       nil,
+			wantErr:       true,
+		},
+		{
+			name: "Both password and ssh_key are nil, existing user, keep old values",
+			newUser: User{
+				Name: "test",
+			},
+			existingUsers: []User{
+				{
+					Name:     "test",
+					Password: common.ToPtr("old password"),
+					SshKey:   common.ToPtr("old ssh key"),
+				},
+			},
+			wantPass: common.ToPtr("old password"),
+			wantSsh:  common.ToPtr("old ssh key"),
+			wantErr:  false,
+		},
+		{
+			name: "Empty password, existing user only with password, fail",
+			newUser: User{
+				Name:     "test",
+				Password: common.ToPtr(""),
+				SshKey:   nil,
+			},
+			existingUsers: []User{
+				{
+					Name:     "test",
+					Password: common.ToPtr("old password"),
+					SshKey:   nil,
+				},
+			},
+			wantPass: nil,
+			wantSsh:  nil,
+			wantErr:  true,
+		},
+		{
+			name: "Empty ssh key, existing user only with ssh key, fail",
+			newUser: User{
+				Name:     "test",
+				SshKey:   common.ToPtr(""),
+				Password: nil,
+			},
+			existingUsers: []User{
+				{
+					Name:     "test",
+					Password: nil,
+					SshKey:   common.ToPtr("old ssh key"),
+				},
+			},
+			wantPass: nil,
+			wantSsh:  nil,
+			wantErr:  true,
+		},
+		{
+			name: "Add new user to one already existing user, fail no password or ssh key",
+			newUser: User{
+				Name:     "test2",
+				SshKey:   nil,
+				Password: nil,
+			},
+			existingUsers: []User{
+				{
+					Name:     "test",
+					SshKey:   common.ToPtr("old password"),
+					Password: nil,
+				},
+			},
+			wantPass: nil,
+			wantSsh:  nil,
+			wantErr:  true,
+		},
+		{
+			name: "Add new user to one already existing user",
+			newUser: User{
+				Name:     "test2",
+				SshKey:   common.ToPtr("ssh key"),
+				Password: nil,
+			},
+			existingUsers: []User{
+				{
+					Name:     "test",
+					SshKey:   common.ToPtr("old password"),
+					Password: nil,
+				},
+			},
+			wantPass: nil,
+			wantSsh:  common.ToPtr("ssh key"),
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.newUser.MergeForUpdate(tt.existingUsers)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.wantPass, tt.newUser.Password)
+				require.Equal(t, tt.wantSsh, tt.newUser.SshKey)
+			}
+		})
+	}
+}
+
+func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
+	var jsonResp HTTPErrorList
+	ctx := context.Background()
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+
+	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
+	defer func() {
+		err := db_srv.Shutdown(ctx)
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	body := map[string]interface{}{
+		"name":        "Blueprint",
+		"description": "desc",
+		"customizations": map[string]interface{}{
+			"users": []map[string]interface{}{},
+		},
+		"distribution": "centos-9",
+		"image_requests": []map[string]interface{}{
+			{
+				"architecture":   "x86_64",
+				"image_type":     "aws",
+				"upload_request": map[string]interface{}{"type": "aws", "options": map[string]interface{}{"share_with_accounts": []string{"test-account"}}},
+			},
+		},
+	}
+
+	var result ComposeResponse
+
+	// No users in the blueprint = SUCCESS
+	statusCode, responseBody := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/blueprints", body)
+	require.Equal(t, http.StatusCreated, statusCode)
+	err = json.Unmarshal([]byte(responseBody), &result)
+	require.NoError(t, err)
+
+	// Add new user with password = SUCCESS
+	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "test"}}}
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	require.Equal(t, http.StatusCreated, statusCode)
+
+	blueprintEntry, err := dbase.GetBlueprint(ctx, result.Id, "000000", nil)
+	require.NoError(t, err)
+	updatedBlueprint, err := BlueprintFromEntry(blueprintEntry)
+	require.NoError(t, err)
+	require.NotEmpty(t, (*updatedBlueprint.Customizations.Users)[0].Password) // hashed, can't compare with plaintext value
+	require.Nil(t, (*updatedBlueprint.Customizations.Users)[0].SshKey)
+
+	// Update with hashed password = SUCCESS
+	userHashedPassword := "$6$foo"
+	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": userHashedPassword}}}
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	require.Equal(t, http.StatusCreated, statusCode)
+
+	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
+	require.NoError(t, err)
+	updatedBlueprint, err = BlueprintFromEntry(blueprintEntry)
+	require.NoError(t, err)
+
+	existingPassword := (*updatedBlueprint.Customizations.Users)[0].Password
+	require.NotNil(t, existingPassword)
+	require.Equal(t, userHashedPassword, *existingPassword)
+	require.Nil(t, (*updatedBlueprint.Customizations.Users)[0].SshKey)
+
+	// keep ssh key and remove password = FAIL (previous ssh key still empty)
+	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": ""}}}
+	statusCode, responseBody = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
+	err = json.Unmarshal([]byte(responseBody), &jsonResp)
+	require.NoError(t, err)
+	require.Equal(t, "Invalid user", jsonResp.Errors[0].Title)
+
+	// add ssh key and remove password = SUCCESS
+	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "", "ssh_key": "ssh key"}}}
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	require.Equal(t, http.StatusCreated, statusCode)
+
+	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
+	require.NoError(t, err)
+
+	updatedBlueprint, err = BlueprintFromEntryWithRedactedPasswords(blueprintEntry)
+	require.NoError(t, err)
+	require.Nil(t, (*updatedBlueprint.Customizations.Users)[0].Password)
+
+	updatedBlueprint, err = BlueprintFromEntry(blueprintEntry)
+	require.NoError(t, err)
+	sshKey := (*updatedBlueprint.Customizations.Users)[0].SshKey
+	require.NotNil(t, sshKey)
+	require.Equal(t, "ssh key", *sshKey)
+	require.Nil(t, (*updatedBlueprint.Customizations.Users)[0].Password)
+
+	// add new user without password or ssh_key = FAIL
+	users := []map[string]interface{}{
+		{"name": "test"},  // keep old values
+		{"name": "test2"}, // FAIL
+	}
+	body["customizations"] = map[string]interface{}{"users": users}
+	statusCode, responseBody = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
+	err = json.Unmarshal([]byte(responseBody), &jsonResp)
+	require.NoError(t, err)
+	require.Equal(t, "Invalid user", jsonResp.Errors[0].Title)
+
+	// add new user with password and ssh_key = SUCCESS
+	users = []map[string]interface{}{
+		{"name": "test"}, // keep old values
+		{"name": "test2", "password": "test", "ssh_key": "ssh key"},
+	}
+	body["customizations"] = map[string]interface{}{"users": users}
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	require.Equal(t, http.StatusCreated, statusCode)
+
+	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
+	require.NoError(t, err)
+	updatedBlueprint, err = BlueprintFromEntry(blueprintEntry)
+	require.NoError(t, err)
+	require.Len(t, *updatedBlueprint.Customizations.Users, 2)
+	user1 := (*updatedBlueprint.Customizations.Users)[0]
+	require.NotNil(t, user1.SshKey)
+	require.Equal(t, "ssh key", *user1.SshKey)
+	require.Nil(t, user1.Password)
+
+	user2 := (*updatedBlueprint.Customizations.Users)[1]
+	require.Equal(t, "test2", user2.Name)
+	require.NotNil(t, user2.Password)
+	require.NotNil(t, user2.SshKey)
+}
+
 func TestHandlers_UpdateBlueprint(t *testing.T) {
 	if runtime.GOOS == "darwin" {
 		t.Skip("crypt() not supported on darwin")
@@ -145,16 +502,6 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	body["name"] = "Changing to correct body"
 	respStatusCodeNotFound, _ := tutils.PutResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), body)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
-
-	// Test update customization users - invalid redacted password
-	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "<REDACTED>"}}}
-	statusCode, _ = tutils.PutResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", result.Id), body)
-	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
-
-	// Test customization users, user  - valid password
-	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "test"}}}
-	statusCode, _ = tutils.PutResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", result.Id), body)
-	require.Equal(t, http.StatusCreated, statusCode)
 }
 
 func TestHandlers_ComposeBlueprint(t *testing.T) {
@@ -368,13 +715,13 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 0, result.Meta.Count)
 }
 
-func TestHandlers_BlueprintFromEntry(t *testing.T) {
+func TestHandlers_BlueprintFromEntryWithRedactedPasswords(t *testing.T) {
 	t.Run("plain password", func(t *testing.T) {
 		body := []byte(`{"name": "Blueprint", "description": "desc", "customizations": {"users": [{"name": "user", "password": "foo"}]}, "distribution": "centos-9"}`)
 		be := &db.BlueprintEntry{
 			Body: body,
 		}
-		result, err := BlueprintFromEntry(be)
+		result, err := BlueprintFromEntryWithRedactedPasswords(be)
 		require.NoError(t, err)
 		require.NotEqual(t, common.ToPtr("foo"), (*result.Customizations.Users)[0].Password)
 	})
@@ -383,10 +730,10 @@ func TestHandlers_BlueprintFromEntry(t *testing.T) {
 		be := &db.BlueprintEntry{
 			Body: body,
 		}
-		result, err := BlueprintFromEntry(be)
+		result, err := BlueprintFromEntryWithRedactedPasswords(be)
 		require.NoError(t, err)
 
-		require.True(t, (*result.Customizations.Users)[0].IsRedacted())
+		require.Nil(t, (*result.Customizations.Users)[0].Password)
 	})
 }
 
@@ -471,7 +818,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
 	// Check that the password returned is redacted
 	for _, u := range *result.Customizations.Users {
-		require.True(t, u.IsRedacted())
+		require.Nil(t, u.Password)
 	}
 
 	respStatusCodeNotFound, _ := tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), &tutils.AuthString0)
@@ -495,7 +842,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, version2Body.Customizations.Packages, result.Customizations.Packages)
 	for _, u := range *result.Customizations.Users {
-		require.True(t, u.IsRedacted())
+		require.Nil(t, u.Password)
 	}
 
 	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 2), &tutils.AuthString0)
@@ -504,7 +851,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, version2Body.Customizations.Packages, result.Customizations.Packages)
 	for _, u := range *result.Customizations.Users {
-		require.True(t, u.IsRedacted())
+		require.Nil(t, u.Password)
 	}
 
 	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 1), &tutils.AuthString0)
@@ -513,7 +860,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
 	for _, u := range *result.Customizations.Users {
-		require.True(t, u.IsRedacted())
+		require.Nil(t, u.Password)
 	}
 }
 
@@ -606,7 +953,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
 	// Check that the password returned is redacted
 	for _, u := range *result.Customizations.Users {
-		require.True(t, u.IsRedacted())
+		require.Nil(t, u.Password)
 	}
 	require.Nil(t, result.Customizations.Subscription)
 	require.Equal(t, &id, result.Metadata.ParentId)
@@ -804,20 +1151,6 @@ func TestBlueprintBody_CryptPasswords(t *testing.T) {
 	require.Nil(t, (*blueprint.Customizations.Users)[1].Password)
 }
 
-func TestUser_IsRedacted(t *testing.T) {
-	u := &User{Password: nil}
-	isRedacted := u.IsRedacted()
-	require.True(t, isRedacted)
-
-	u = &User{Password: common.ToPtr("<REDACTED>")}
-	isRedacted = u.IsRedacted()
-	require.True(t, isRedacted)
-
-	u = &User{Password: common.ToPtr("test123")}
-	isRedacted = u.IsRedacted()
-	require.False(t, isRedacted)
-}
-
 func TestUser_RedactPassword(t *testing.T) {
 	user := &User{
 		Name:     "test",
@@ -825,5 +1158,5 @@ func TestUser_RedactPassword(t *testing.T) {
 	}
 
 	user.RedactPassword()
-	require.Equal(t, "<REDACTED>", *user.Password)
+	require.Nil(t, user.Password)
 }
