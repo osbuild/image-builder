@@ -1883,7 +1883,10 @@ components:
       type: object
       required:
         - name
-        # One of (password, ssh_key) must be set, validator takes care of it
+      description: |
+        At least one of password, ssh_key must be set, validator takes care of it.
+        On update empty string can be used to remove password or ssh_key,
+        but at least one of them still must be present.
       properties:
         name:
           type: string
@@ -1897,6 +1900,8 @@ components:
           example: "$6$G91SvTj7uVp3xhqj$zVa8nqnJTlewniDII5dmvsBJnj3kloL3CXWdPDu9.e677VoRQd5zB6GKwkDvfGLoRR7NTl5nXLnJywk6IPIvS."
           description: |
             Plaintext passwords are also supported, they will be hashed and stored using the SHA-512 algorithm.
+            The password is never returned in the response.
+            Empty string can be used to remove the password during update but only with ssh_key set.
     Filesystem:
       type: object
       required:

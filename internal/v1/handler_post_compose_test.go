@@ -2553,7 +2553,7 @@ func TestComposeCustomizations(t *testing.T) {
 
 			// Check that the password returned is redacted
 			for _, u := range *composerRequest.Customizations.Users {
-				require.True(t, u.IsRedacted())
+				require.True(t, u.Password == nil)
 			}
 		}
 		composerRequest = composer.ComposeRequest{}

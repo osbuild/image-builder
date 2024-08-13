@@ -25,6 +25,7 @@ import (
 
 var (
 	blueprintNameRegex         = regexp.MustCompile(`\S+`)
+	customizationUserNameRegex = regexp.MustCompile(`\S+`)
 	blueprintInvalidNameDetail = "The blueprint name must contain at least two characters."
 )
 
@@ -36,15 +37,10 @@ type BlueprintBody struct {
 
 func (u *User) CryptPassword() error {
 	// Prevent empty and already hashed password  from being hashed
-	if u.Password == nil || (len(*u.Password) == 0 || crypt.PasswordIsCrypted(*u.Password)) {
+	if u.Password == nil || len(*u.Password) == 0 || crypt.PasswordIsCrypted(*u.Password) {
 		return nil
 	}
 
-	if u.IsRedacted() {
-		return errors.New(
-			"password is redacted and thus can't be hashed and stored in database, use plaintext password or already hashed password",
-		)
-	}
 	pw, err := crypt.CryptSHA512(*u.Password)
 	if err != nil {
 		return err
@@ -53,15 +49,9 @@ func (u *User) CryptPassword() error {
 	return nil
 }
 
+// Set password to nil if it is not nil
 func (u *User) RedactPassword() {
-	redactedPassword := "<REDACTED>"
-	if u.Password != nil {
-		*u.Password = redactedPassword
-	}
-}
-
-func (u *User) IsRedacted() bool {
-	return u.Password == nil || *u.Password == "<REDACTED>"
+	u.Password = nil
 }
 
 func (bb *BlueprintBody) CryptPasswords() error {
@@ -82,6 +72,58 @@ func (bb *BlueprintBody) RedactPasswords() {
 			(*bb.Customizations.Users)[i].RedactPassword()
 		}
 	}
+}
+
+// Merges Password or SshKey from other User struct to this User struct if it is not set
+func (u *User) MergeExisting(other User) {
+	if u.Password == nil {
+		u.Password = other.Password
+	}
+	if u.SshKey == nil {
+		u.SshKey = other.SshKey
+	}
+}
+
+// User must have name and non-empty password or ssh key
+func (u *User) Valid() error {
+	validName := customizationUserNameRegex.MatchString(u.Name)
+	validPassword := u.Password != nil && len(*u.Password) > 0
+	validSshKey := u.SshKey != nil && len(*u.SshKey) > 0
+	if !validName || !(validPassword || validSshKey) {
+		return fmt.Errorf("User ('%s') must have a name and either a password or an SSH key set.", u.Name)
+	}
+	return nil
+}
+
+func (u *User) MergeForUpdate(userData []User) error {
+	// If both password and ssh_key in request user we don't need to fetch user from DB
+	if !(u.Password != nil && len(*u.Password) > 0 && u.SshKey != nil && len(*u.SshKey) > 0) {
+		eui := slices.IndexFunc(userData, func(eu User) bool {
+			return eu.Name == u.Name
+		})
+
+		if eui == -1 { // User not found in DB
+			err := u.Valid()
+			if err != nil {
+				return err
+			}
+		} else {
+			u.MergeExisting(userData[eui])
+		}
+	}
+
+	// If there is empty string in password or ssh_key, it means that we should remove it (set to nil)
+	if u.Password != nil && *u.Password == "" {
+		u.Password = nil
+	}
+	if u.SshKey != nil && *u.SshKey == "" {
+		u.SshKey = nil
+	}
+
+	if err := u.Valid(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Util function used to create and update Blueprint from API request (WRITE)
@@ -105,7 +147,14 @@ func BlueprintFromEntry(be *db.BlueprintEntry) (BlueprintBody, error) {
 	if err != nil {
 		return BlueprintBody{}, err
 	}
+	return result, nil
+}
 
+func BlueprintFromEntryWithRedactedPasswords(be *db.BlueprintEntry) (BlueprintBody, error) {
+	result, err := BlueprintFromEntry(be)
+	if err != nil {
+		return BlueprintBody{}, err
+	}
 	result.RedactPasswords()
 	return result, nil
 }
@@ -118,16 +167,6 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 
 	var blueprintRequest CreateBlueprintRequest
 	err = ctx.Bind(&blueprintRequest)
-	if err != nil {
-		return err
-	}
-
-	blueprint, err := BlueprintFromAPI(blueprintRequest)
-	if err != nil {
-		return err
-	}
-
-	body, err := json.Marshal(blueprint)
 	if err != nil {
 		return err
 	}
@@ -157,18 +196,29 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 		desc = *blueprintRequest.Description
 	}
 
-	if blueprintRequest.Customizations.Users != nil {
-		for _, user := range *blueprintRequest.Customizations.Users {
+	users := blueprintRequest.Customizations.Users
+	if users != nil {
+		for _, user := range *users {
 			// Make sure every user has either ssh key or password set
-			if user.Password == nil && user.SshKey == nil {
+			if err := user.Valid(); err != nil {
 				return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
 					Errors: []HTTPError{{
 						Title:  "Invalid user",
-						Detail: "User must have either a password or an SSH key set.",
+						Detail: err.Error(),
 					}},
 				})
 			}
 		}
+	}
+
+	blueprint, err := BlueprintFromAPI(blueprintRequest)
+	if err != nil {
+		return err
+	}
+
+	body, err := json.Marshal(blueprint)
+	if err != nil {
+		return err
 	}
 
 	err = h.server.db.InsertBlueprint(ctx.Request().Context(), id, versionId, userID.OrgID(), userID.AccountNumber(), blueprintRequest.Name, desc, body, metadata)
@@ -214,7 +264,7 @@ func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID, params 
 		return err
 	}
 
-	blueprint, err := BlueprintFromEntry(blueprintEntry)
+	blueprint, err := BlueprintFromEntryWithRedactedPasswords(blueprintEntry)
 	if err != nil {
 		return err
 	}
@@ -246,7 +296,7 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 		return err
 	}
 
-	blueprint, err := BlueprintFromEntry(blueprintEntry)
+	blueprint, err := BlueprintFromEntryWithRedactedPasswords(blueprintEntry)
 	if err != nil {
 		return err
 	}
@@ -277,6 +327,37 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 		return err
 	}
 
+	if !blueprintNameRegex.MatchString(blueprintRequest.Name) {
+		return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
+			Errors: []HTTPError{{
+				Title:  "Invalid blueprint name",
+				Detail: blueprintInvalidNameDetail,
+			}},
+		})
+	}
+
+	if blueprintRequest.Customizations.Users != nil {
+		be, err := h.server.db.GetBlueprint(ctx.Request().Context(), blueprintId, userID.OrgID(), nil)
+		if err != nil {
+			return err
+		}
+		eb, err := BlueprintFromEntry(be)
+		if err != nil {
+			return err
+		}
+		for i := range *blueprintRequest.Customizations.Users {
+			err := (*blueprintRequest.Customizations.Users)[i].MergeForUpdate(*eb.Customizations.Users)
+			if err != nil {
+				return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
+					Errors: []HTTPError{{
+						Title:  "Invalid user",
+						Detail: err.Error(),
+					}},
+				})
+			}
+		}
+	}
+
 	blueprint, err := BlueprintFromAPI(blueprintRequest)
 	if err != nil {
 		return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
@@ -286,18 +367,10 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 			}},
 		})
 	}
+
 	body, err := json.Marshal(blueprint)
 	if err != nil {
 		return err
-	}
-
-	if !blueprintNameRegex.MatchString(blueprintRequest.Name) {
-		return ctx.JSON(http.StatusUnprocessableEntity, HTTPErrorList{
-			Errors: []HTTPError{{
-				Title:  "Invalid blueprint name",
-				Detail: blueprintInvalidNameDetail,
-			}},
-		})
 	}
 
 	versionId := uuid.New()
@@ -335,7 +408,7 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 	if err != nil {
 		return err
 	}
-	blueprint, err := BlueprintFromEntry(blueprintEntry)
+	blueprint, err := BlueprintFromEntryWithRedactedPasswords(blueprintEntry)
 	if err != nil {
 		return err
 	}

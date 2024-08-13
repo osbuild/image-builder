@@ -945,11 +945,15 @@ type UploadStatusStatus string
 // UploadTypes defines model for UploadTypes.
 type UploadTypes string
 
-// User defines model for User.
+// User At least one of password, ssh_key must be set, validator takes care of it.
+// On update empty string can be used to remove password or ssh_key,
+// but at least one of them still must be present.
 type User struct {
 	Name string `json:"name"`
 
 	// Password Plaintext passwords are also supported, they will be hashed and stored using the SHA-512 algorithm.
+	// The password is never returned in the response.
+	// Empty string can be used to remove the password during update but only with ssh_key set.
 	Password *string `json:"password,omitempty"`
 	SshKey   *string `json:"ssh_key,omitempty"`
 }
