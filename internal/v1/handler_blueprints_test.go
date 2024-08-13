@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -20,6 +21,10 @@ import (
 )
 
 func TestHandlers_CreateBlueprint(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.Skip("crypt() not supported on darwin")
+	}
+
 	var jsonResp HTTPErrorList
 	ctx := context.Background()
 	dbase, err := dbc.NewDB()
@@ -91,6 +96,10 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 }
 
 func TestHandlers_UpdateBlueprint(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.Skip("crypt() not supported on darwin")
+	}
+
 	var jsonResp HTTPErrorList
 	ctx := context.Background()
 	dbase, err := dbc.NewDB()
@@ -765,6 +774,10 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 }
 
 func TestBlueprintBody_CryptPasswords(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.Skip("crypt() not supported on darwin")
+	}
+
 	// Create a sample blueprint body with users
 	passwordToHash := "password123"
 	blueprint := &BlueprintBody{
