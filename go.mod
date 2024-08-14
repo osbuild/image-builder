@@ -16,7 +16,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240117171535-401ddadefd40
 	github.com/osbuild/images v0.73.0
-	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240311100454-57ebfb401131
+	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.19.1
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/identity v0.0.0-20220719174832-36a7b1cbeff1
