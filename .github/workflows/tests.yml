@@ -59,11 +59,8 @@ jobs:
           version: v1.56.2
           skip-cache: true
 
-      - name: install tern
-        run: go install github.com/jackc/tern@latest
-
       - name: Run unit tests
-        run: go test -v -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...
+        run: make unit-tests
 
       # disabled as 'pinging codecov' hangs
       # see https://github.com/codecov/feedback/issues/354
