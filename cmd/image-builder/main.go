@@ -22,6 +22,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"github.com/sirupsen/logrus"
 )
 
@@ -71,6 +72,10 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if conf.DeploymentChannel != "" {
+		logrus.AddHook(&slogger.EnvironmentHook{Channel: conf.DeploymentChannel})
 	}
 
 	if conf.SplunkHost != "" {

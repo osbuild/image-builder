@@ -44,6 +44,7 @@ type ImageBuilderConfig struct {
 	RecommendCA           string `env:"RECOMMENDATIONS_CA_PATH"`
 	GlitchTipDSN          string `env:"GLITCHTIP_DSN"`
 	FedoraAuth            bool   `env:"FEDORA_AUTH"`
+	DeploymentChannel     string `env:"CHANNEL"`
 }
 
 func (ibc *ImageBuilderConfig) IsDebug() bool {

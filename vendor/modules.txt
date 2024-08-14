@@ -170,8 +170,8 @@ github.com/osbuild/community-gateway/oidc-authorizer/pkg/identity
 # github.com/osbuild/images v0.73.0
 ## explicit; go 1.21
 github.com/osbuild/images/pkg/crypt
-# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240311100454-57ebfb401131
-## explicit; go 1.19
+# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
+## explicit; go 1.21
 github.com/osbuild/osbuild-composer/pkg/splunk_logger
 # github.com/perimeterx/marshmallow v1.1.5
 ## explicit; go 1.17

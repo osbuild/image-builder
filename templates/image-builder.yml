@@ -130,6 +130,8 @@ objects:
                 key: proxy
                 name: recommendations-secrets
                 optional: true
+          - name: CHANNEL
+            value: ${CHANNEL}
         volumeMounts:
           - name: config-volume
             mountPath: /app/config
