@@ -105,7 +105,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 }
 
 // note: this scenario needs to talk to a simulated osbuild-composer API
-func TestGetComposeStatus404(t *testing.T) {
+func TestGetComposeEntryNotFoundResponse(t *testing.T) {
 	id := uuid.New().String()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
@@ -129,7 +129,78 @@ func TestGetComposeStatus404(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
 		id), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCode)
-	require.Contains(t, body, "Compose not found")
+	require.Contains(t, body, "Compose entry not found")
+}
+
+func TestGetComposeStatusNotFoundResponse(t *testing.T) {
+	ctx := context.Background()
+	composeId := uuid.New()
+	var composerStatus composer.ComposeStatus
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		err := json.NewEncoder(w).Encode(composerStatus)
+		require.NoError(t, err)
+	}))
+	defer apiSrv.Close()
+
+	dbase, err := dbc.NewDB()
+	require.NoError(t, err)
+	cr := ComposeRequest{
+		Distribution: "rhel-9",
+		Customizations: &Customizations{
+			// Since we are not calling handleCommonCompose but inserting directly to DB
+			// there is no point in using plaintext passwords
+			// If there is plaintext password in DB there is problem elsewhere (eg. CreateBlueprint)
+			Users: &[]User{
+				{
+					Name:     "user",
+					SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
+					Password: common.ToPtr("$6$password123"),
+				},
+			},
+		}}
+
+	crRaw, err := json.Marshal(cr)
+	require.NoError(t, err)
+	err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
+	require.NoError(t, err)
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+		DBase:            dbase,
+		DistributionsDir: "../../distributions",
+	})
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+	payloads := []struct {
+		composerStatus composer.ComposeStatus
+		imageStatus    ImageStatus
+	}{
+		{
+			composerStatus: composer.ComposeStatus{
+				ImageStatus: composer.ImageStatus{},
+			},
+		},
+	}
+	for idx, payload := range payloads {
+		fmt.Printf("TT payload %d\n", idx)
+		composerStatus = payload.composerStatus
+
+		respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s",
+			composeId), &tutils.AuthString0)
+		require.Equal(t, http.StatusNotFound, respStatusCode)
+		var result ComposeStatus
+		err := json.Unmarshal([]byte(body), &result)
+		require.NoError(t, err)
+		require.Equal(t, payload.imageStatus, result.ImageStatus)
+	}
 }
 
 func TestGetComposeMetadata(t *testing.T) {
@@ -226,7 +297,7 @@ func TestGetComposeMetadata404(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s/metadata",
 		id), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCode)
-	require.Contains(t, body, "Compose not found")
+	require.Contains(t, body, "Compose entry not found")
 }
 
 func TestGetComposes(t *testing.T) {

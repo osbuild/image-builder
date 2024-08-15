@@ -426,7 +426,7 @@ func (h *Handlers) DeleteCompose(ctx echo.Context, composeId uuid.UUID) error {
 
 	err = h.server.db.DeleteCompose(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
-		if errors.Is(err, db.ComposeNotFoundError) {
+		if errors.Is(err, db.ComposeEntryNotFoundError) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -503,7 +503,7 @@ func (h *Handlers) getComposeByIdAndOrgId(ctx echo.Context, composeId uuid.UUID)
 
 	composeEntry, err := h.server.db.GetCompose(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
-		if errors.Is(err, db.ComposeNotFoundError) {
+		if errors.Is(err, db.ComposeEntryNotFoundError) {
 			return nil, echo.NewHTTPError(http.StatusNotFound, err)
 		} else {
 			return nil, err
@@ -596,7 +596,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 	}
 	imageType, err := h.server.db.GetComposeImageType(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
-		if errors.Is(err, db.ComposeNotFoundError) {
+		if errors.Is(err, db.ComposeEntryNotFoundError) {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to find compose %v", composeId))
 		}
 		ctx.Logger().Errorf("Error querying image type for compose %v: %v", composeId, err)
