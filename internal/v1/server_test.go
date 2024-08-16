@@ -192,9 +192,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	// execute in parallel b/c .Run() will block execution
 	go func() {
 		err = echoServer.Start("localhost:8086")
-		if err.Error() != "http: Server closed" {
-			require.NoError(t, err)
-		}
+		require.Equal(t, err, http.ErrServerClosed)
 	}()
 
 	// wait until server is ready
