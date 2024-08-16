@@ -45,7 +45,7 @@ func TestRecommendPackage_Success_with_StatusForbidden(t *testing.T) {
 			return recommendedPackages
 		}(),
 	}
-	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL, payload)
+	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL+"/", payload)
 	require.Equal(t, http.StatusCreated, respStatusCode)
 	var result RecommendationsResponse
 	expectedResult := RecommendationsResponse{
@@ -90,7 +90,7 @@ func TestRecommendPackage_Success_with_StatusUnauthorized(t *testing.T) {
 		}(),
 	}
 
-	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL, payload)
+	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL+"/", payload)
 	require.Equal(t, http.StatusCreated, respStatusCode)
 	var result RecommendationsResponse
 	expectedResult := RecommendationsResponse{
@@ -133,7 +133,7 @@ func TestRecommendPackage_Success_with_no_packages(t *testing.T) {
 			return recommendedPackages
 		}(),
 	}
-	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL, payload)
+	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL+"/", payload)
 	require.Equal(t, http.StatusCreated, respStatusCode)
 	var result RecommendationsResponse
 	expectedResult := RecommendationsResponse{
@@ -178,7 +178,7 @@ func TestRecommendPackage_Success_with_packages(t *testing.T) {
 			return recommendedPackages
 		}(),
 	}
-	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL, payload)
+	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL+"/", payload)
 	require.Equal(t, http.StatusCreated, respStatusCode)
 	var result RecommendationsResponse
 	expectedResult := RecommendationsResponse{
@@ -234,7 +234,7 @@ func TestRecommendPackage_with_authenticationServer(t *testing.T) {
 			return recommendedPackages
 		}(),
 	}
-	respStatusCode, body := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/experimental/recommendations", payload)
+	respStatusCode, body := tutils.PostResponseBody(t, srv.URL+"/api/image-builder/v1/experimental/recommendations", payload)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	var result RecommendationsResponse
 	expectedResult := RecommendationsResponse{

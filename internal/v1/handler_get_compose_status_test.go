@@ -228,7 +228,7 @@ func TestComposeStatus(t *testing.T) {
 	for idx, payload := range payloads {
 		fmt.Printf("TT payload %d\n", idx)
 		composerStatus = payload.composerStatus
-		respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/composes/%s", composeId), &tutils.AuthString0)
+		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s", composeId), &tutils.AuthString0)
 		require.Equal(t, http.StatusOK, respStatusCode)
 
 		var result ComposeStatus
