@@ -103,7 +103,13 @@ type testServerClientsConf struct {
 	Proxy        string
 }
 
-func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) (*echo.Echo, *httptest.Server) {
+type testServer struct {
+	*echo.Echo
+
+	URL string
+}
+
+func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) (*testServer, *httptest.Server) {
 	var log = &logrus.Logger{
 		Out:       os.Stderr,
 		Formatter: new(logrus.TextFormatter),
@@ -190,15 +196,17 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	err = Attach(serverConfig)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
+	addr := "localhost:8086"
+	URL := "http://" + addr
 	go func() {
-		err = echoServer.Start("localhost:8086")
+		err = echoServer.Start(addr)
 		require.Equal(t, err, http.ErrServerClosed)
 	}()
 
 	// wait until server is ready
 	tries := 0
 	for tries < 5 {
-		resp, err := tutils.GetResponseError("http://localhost:8086/status")
+		resp, err := tutils.GetResponseError(URL + "/status")
 		if err == nil {
 			defer resp.Body.Close()
 		}
@@ -211,5 +219,5 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 		tries += 1
 	}
 
-	return echoServer, tokenServer
+	return &testServer{echoServer, URL}, tokenServer
 }
