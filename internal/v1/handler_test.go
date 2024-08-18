@@ -132,74 +132,96 @@ func TestGetComposeEntryNotFoundResponse(t *testing.T) {
 	require.Contains(t, body, "Compose entry not found")
 }
 
-func TestGetComposeStatusNotFoundResponse(t *testing.T) {
-	ctx := context.Background()
-	composeId := uuid.New()
-	var composerStatus composer.ComposeStatus
-	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		err := json.NewEncoder(w).Encode(composerStatus)
-		require.NoError(t, err)
-	}))
-	defer apiSrv.Close()
-
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-	cr := ComposeRequest{
-		Distribution: "rhel-9",
-		Customizations: &Customizations{
-			// Since we are not calling handleCommonCompose but inserting directly to DB
-			// there is no point in using plaintext passwords
-			// If there is plaintext password in DB there is problem elsewhere (eg. CreateBlueprint)
-			Users: &[]User{
-				{
-					Name:     "user",
-					SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
-					Password: common.ToPtr("$6$password123"),
-				},
-			},
-		}}
-
-	crRaw, err := json.Marshal(cr)
-	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
-	require.NoError(t, err)
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
-	payloads := []struct {
-		composerStatus composer.ComposeStatus
-		imageStatus    ImageStatus
+func TestGetComposeStatusErrorResponse(t *testing.T) {
+	testCases := []struct {
+		statusCode       int
+		checkImageStatus bool
+		expectedBody     string
 	}{
-		{
-			composerStatus: composer.ComposeStatus{
-				ImageStatus: composer.ImageStatus{},
-			},
+		{http.StatusNotFound,
+			true,
+			"",
+		},
+		{http.StatusInternalServerError,
+			false,
+			"Failed querying compose status",
 		},
 	}
-	for idx, payload := range payloads {
-		fmt.Printf("TT payload %d\n", idx)
-		composerStatus = payload.composerStatus
 
-		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s",
-			composeId), &tutils.AuthString0)
-		require.Equal(t, http.StatusNotFound, respStatusCode)
-		var result ComposeStatus
-		err := json.Unmarshal([]byte(body), &result)
+	for _, tc := range testCases {
+		ctx := context.Background()
+		composeId := uuid.New()
+
+		var composerStatus composer.ComposeStatus
+		apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if "Bearer" == r.Header.Get("Authorization") {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(tc.statusCode)
+			err := json.NewEncoder(w).Encode(composerStatus)
+			require.NoError(t, err)
+		}))
+
+		dbase, err := dbc.NewDB()
 		require.NoError(t, err)
-		require.Equal(t, payload.imageStatus, result.ImageStatus)
+		cr := ComposeRequest{
+			Distribution: "rhel-9",
+			Customizations: &Customizations{
+				// Since we are not calling handleCommonCompose but inserting directly to DB
+				// there is no point in using plaintext passwords
+				// If there is plaintext password in DB there is problem elsewhere (eg. CreateBlueprint)
+				Users: &[]User{
+					{
+						Name:     "user",
+						SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
+						Password: common.ToPtr("$6$password123"),
+					},
+				},
+			}}
+
+		crRaw, err := json.Marshal(cr)
+		require.NoError(t, err)
+		err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
+		require.NoError(t, err)
+		srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+			DBase:            dbase,
+			DistributionsDir: "../../distributions",
+		})
+		payloads := []struct {
+			composerStatus composer.ComposeStatus
+			imageStatus    ImageStatus
+		}{
+			{
+				composerStatus: composer.ComposeStatus{
+					ImageStatus: composer.ImageStatus{},
+				},
+			},
+		}
+		for idx, payload := range payloads {
+			fmt.Printf("TT payload %d\n", idx)
+			composerStatus = payload.composerStatus
+
+			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf(srv.URL+"/api/image-builder/v1/composes/%s",
+				composeId), &tutils.AuthString0)
+			require.Equal(t, tc.statusCode, respStatusCode)
+			var result ComposeStatus
+			err := json.Unmarshal([]byte(body), &result)
+			require.NoError(t, err)
+			if tc.checkImageStatus {
+				require.Equal(t, payload.imageStatus, result.ImageStatus)
+			}
+			if tc.expectedBody != "" {
+				require.Contains(t, body, tc.expectedBody)
+			}
+		}
+		tokenSrv.Close()
+
+		err = srv.Shutdown(context.Background())
+		require.NoError(t, err)
+
+		apiSrv.Close()
 	}
 }
 
