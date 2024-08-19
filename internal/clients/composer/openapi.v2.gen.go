@@ -234,6 +234,8 @@ type BlueprintCustomizations struct {
 	// Repositories Repositories to write to /etc/yum.repos.d/ in the final image. Note
 	// that these are not used at build time.
 	Repositories *[]BlueprintRepository `json:"repositories,omitempty"`
+	Rhsm         *RHSMCustomization     `json:"rhsm,omitempty"`
+	Rpm          *RPMCustomization      `json:"rpm,omitempty"`
 	Services     *Services              `json:"services,omitempty"`
 
 	// Sshkey List of ssh keys
@@ -559,9 +561,11 @@ type Customizations struct {
 	// for the OS itself (they will not be available for the build root or
 	// any other part of the build process). The package_sets field for these
 	// repositories is ignored.
-	PayloadRepositories *[]Repository `json:"payload_repositories,omitempty"`
-	Services            *Services     `json:"services,omitempty"`
-	Subscription        *Subscription `json:"subscription,omitempty"`
+	PayloadRepositories *[]Repository      `json:"payload_repositories,omitempty"`
+	Rhsm                *RHSMCustomization `json:"rhsm,omitempty"`
+	Rpm                 *RPMCustomization  `json:"rpm,omitempty"`
+	Services            *Services          `json:"services,omitempty"`
+	Subscription        *Subscription      `json:"subscription,omitempty"`
 
 	// Timezone Timezone configuration
 	Timezone *Timezone `json:"timezone,omitempty"`
@@ -573,6 +577,11 @@ type Customizations struct {
 // uses LVM, even when there are no extra mountpoints. 'raw' uses raw partitions
 // even when there are one or more mountpoints.
 type CustomizationsPartitioningMode string
+
+// DNFPluginConfig defines model for DNFPluginConfig.
+type DNFPluginConfig struct {
+	Enabled *bool `json:"enabled,omitempty"`
+}
 
 // Directory A custom directory to create in the final artifact.
 type Directory struct {
@@ -832,6 +841,11 @@ type ImageStatusValue string
 // ImageTypes defines model for ImageTypes.
 type ImageTypes string
 
+// ImportKeys defines model for ImportKeys.
+type ImportKeys struct {
+	Files *[]string `json:"files,omitempty"`
+}
+
 // Installer defines model for Installer.
 type Installer struct {
 	SudoNopasswd *[]string `json:"sudo-nopasswd,omitempty"`
@@ -988,6 +1002,22 @@ type PulpOSTreeUploadStatus struct {
 	RepoUrl string `json:"repo_url"`
 }
 
+// RHSMConfig defines model for RHSMConfig.
+type RHSMConfig struct {
+	DnfPlugins          *SubManDNFPluginsConfig `json:"dnf_plugins,omitempty"`
+	SubscriptionManager *SubManConfig           `json:"subscription_manager,omitempty"`
+}
+
+// RHSMCustomization defines model for RHSMCustomization.
+type RHSMCustomization struct {
+	Config *RHSMConfig `json:"config,omitempty"`
+}
+
+// RPMCustomization defines model for RPMCustomization.
+type RPMCustomization struct {
+	ImportKeys *ImportKeys `json:"import_keys,omitempty"`
+}
+
 // Repository Repository configuration.
 // At least one of the 'baseurl', 'mirrorlist', 'metalink' properties must
 // be specified. If more of them are specified, the order of precedence is
@@ -1035,6 +1065,28 @@ type Services struct {
 
 	// Masked List of services to mask by default
 	Masked *[]string `json:"masked,omitempty"`
+}
+
+// SubManConfig defines model for SubManConfig.
+type SubManConfig struct {
+	Rhsm      *SubManRHSMConfig      `json:"rhsm,omitempty"`
+	Rhsmcertd *SubManRHSMCertdConfig `json:"rhsmcertd,omitempty"`
+}
+
+// SubManDNFPluginsConfig defines model for SubManDNFPluginsConfig.
+type SubManDNFPluginsConfig struct {
+	ProductId           *DNFPluginConfig `json:"product_id,omitempty"`
+	SubscriptionManager *DNFPluginConfig `json:"subscription_manager,omitempty"`
+}
+
+// SubManRHSMCertdConfig defines model for SubManRHSMCertdConfig.
+type SubManRHSMCertdConfig struct {
+	AutoRegistration *bool `json:"auto_registration,omitempty"`
+}
+
+// SubManRHSMConfig defines model for SubManRHSMConfig.
+type SubManRHSMConfig struct {
+	ManageRepos *bool `json:"manage_repos,omitempty"`
 }
 
 // Subscription defines model for Subscription.
