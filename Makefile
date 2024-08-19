@@ -56,7 +56,6 @@ dev-prerequisites:
 	go install github.com/jackc/tern@latest
 
 .PHONY: unit-tests
-# re-implementing .github/workflows/tests.yml as close as possible
 unit-tests: dev-prerequisites
 	go test -v -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...
 
