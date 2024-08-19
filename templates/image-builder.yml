@@ -319,3 +319,10 @@ parameters:
     value: "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
   - name: RECOMMENDATIONS_CA_PATH
     value: ""
+  - name: CHANNEL
+    value: "local"
+    description: >
+      Channel where this pod is deployed.
+      This is appended to the logs. Usually something like
+      "local", "staging" or "production".
+
