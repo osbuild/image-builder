@@ -168,6 +168,7 @@ objects:
     optionalDependencies:
     - provisioning-backend
     - content-sources-backend
+    - compliance
 
 - apiVersion: metrics.console.redhat.com/v1alpha1
   kind: FloorPlan
