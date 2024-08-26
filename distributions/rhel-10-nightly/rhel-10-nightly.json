@@ -12,11 +12,11 @@
     "image_types": ["aws", "azure", "gcp", "guest-image", "image-installer", "openstack", "vsphere", "vsphere-ova"],
     "repositories": [{
       "id": "baseos",
-      "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/BaseOS/x86_64/os/",
+      "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10/latest-RHEL-10/compose/BaseOS/x86_64/os/",
       "rhsm": false
     }, {
       "id": "appstream",
-      "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/AppStream/x86_64/os/",
+      "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10/latest-RHEL-10/compose/AppStream/x86_64/os/",
       "rhsm": false
     }, {
       "id": "google-compute-engine",
@@ -36,11 +36,11 @@
     "image_types": [ "aws", "azure", "guest-image", "openstack"],
     "repositories": [{
       "id": "baseos",
-      "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/BaseOS/aarch64/os/",
+      "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10/latest-RHEL-10/compose/BaseOS/aarch64/os/",
       "rhsm": false
     }, {
       "id": "appstream",
-      "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/AppStream/aarch64/os/",
+      "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10/latest-RHEL-10/compose/AppStream/aarch64/os/",
       "rhsm": false
     }]
   }
