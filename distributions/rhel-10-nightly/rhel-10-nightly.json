@@ -9,7 +9,7 @@
     "restricted_access": true
   },
   "x86_64": {
-    "image_types": ["aws", "azure", "guest-image", "openstack", "vsphere", "vsphere-ova"],
+    "image_types": ["aws", "azure", "gcp", "guest-image", "image-installer", "openstack", "vsphere", "vsphere-ova"],
     "repositories": [{
       "id": "baseos",
       "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/BaseOS/x86_64/os/",
@@ -18,6 +18,18 @@
       "id": "appstream",
       "baseurl": "http://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-10/compose/AppStream/x86_64/os/",
       "rhsm": false
+    }, {
+      "id": "google-compute-engine",
+      "baseurl": "https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable",
+      "rhsm": false,
+      "image_type_tags": ["gcp"],
+      "check_gpg": false
+    }, {
+      "id": "google-cloud-sdk",
+      "baseurl": "https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64",
+      "rhsm": false,
+      "image_type_tags": ["gcp"],
+      "check_gpg": false
     }]
   },
   "aarch64": {
