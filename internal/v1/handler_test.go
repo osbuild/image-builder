@@ -673,6 +673,21 @@ func TestGetCloneStatus(t *testing.T) {
 	require.Equal(t, "us-east-2", awsUS.Region)
 }
 
+func TestGetCloneEntryNotFoundResponse(t *testing.T) {
+	id := uuid.New().String()
+	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
+	defer func() {
+		err := srv.Shutdown(context.Background())
+		require.NoError(t, err)
+	}()
+	defer tokenSrv.Close()
+
+	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/clones/%s",
+		id), &tutils.AuthString0)
+	require.Equal(t, http.StatusNotFound, respStatusCode)
+	require.Contains(t, body, "Clone not found")
+}
+
 func TestValidateSpec(t *testing.T) {
 	spec, err := GetSwagger()
 	require.NoError(t, err)
