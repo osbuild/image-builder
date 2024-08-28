@@ -6,4 +6,8 @@ coverage:
         threshold: 5%
 codecov:
   require_ci_to_pass: no
-comment: no
+comment:
+    behavior: new
+    layout: "condensed_header, files, condensed_footer"
+    hide_project_coverage: TRUE
+
