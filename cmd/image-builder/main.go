@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime/debug"
 
 	"github.com/osbuild/image-builder/internal/oauth2"
 
@@ -27,6 +28,21 @@ import (
 	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"github.com/sirupsen/logrus"
 )
+
+func gitRev() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		logrus.Warn("cannot read build info")
+		return "unknown"
+	}
+	for _, bs := range info.Settings {
+		if bs.Key == "vcs.revision" {
+			return bs.Value
+		}
+	}
+	logrus.Warn("vcs.revision not found in debug.ReadBuildInfo()")
+	return "unknown"
+}
 
 func main() {
 	conf := config.ImageBuilderConfig{
@@ -59,6 +75,10 @@ func main() {
 		panic(err)
 	}
 	logrus.AddHook(&ctxHook{})
+
+	gitRev := gitRev()
+	logrus.Infof("Starting image-builder from Git Hash: %s", gitRev)
+	logrus.Infof("Changelog: https://github.com/osbuild/image-builder/commits/%s", gitRev)
 
 	if conf.GlitchTipDSN == "" {
 		logrus.Warn("Sentry/Glitchtip was not initialized")
