@@ -45,7 +45,7 @@ check-api-spec:
 
 .PHONY: ubi-container
 ubi-container:
-	podman build -t osbuild/image-builder -f distribution/Dockerfile-ubi .
+	podman build --pull=always -t osbuild/image-builder -f distribution/Dockerfile-ubi .
 
 .PHONY: generate-openscap-blueprints
 generate-openscap-blueprints:
