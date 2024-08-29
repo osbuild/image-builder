@@ -14,6 +14,8 @@ help:
 	@echo "    dev-prerequisites:  Install necessary development prerequisites on your system"
 	@echo "    push-check:         Replicates the github workflow checks as close as possible"
 	@echo "                        (do this before pushing!)"
+	@echo "	   coverage-report:    Run unit tests and generate an HTML coverage report."
+	@echo "    coverage-dump:      Run unit tests and display function-level coverage information."
 
 .PHONY: image-builder
 image-builder:
@@ -59,6 +61,14 @@ dev-prerequisites:
 .PHONY: unit-tests
 unit-tests: dev-prerequisites
 	go test -v -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=./... ./...
+
+.PHONY: coverage-dump
+coverage-dump: unit-tests
+	go tool cover -func=coverage.txt
+
+.PHONY: coverage-report
+coverage-report: unit-tests
+	go tool cover -o coverage.html -html coverage.txt
 
 .PHONY: generate
 generate:

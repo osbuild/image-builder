@@ -10,4 +10,4 @@ dnf-json
 /gen-oscap
 local.env
 __debug*
-coverage.txt
+coverage*
