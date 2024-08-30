@@ -45,6 +45,7 @@ check-api-spec:
 
 .PHONY: ubi-container
 ubi-container:
+	if [ -f .git ]; then echo "You seem to be in a git worktree - build will fail here"; exit 1; fi
 	podman build --pull=always -t osbuild/image-builder -f distribution/Dockerfile-ubi .
 
 .PHONY: generate-openscap-blueprints
