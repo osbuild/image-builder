@@ -7,7 +7,6 @@ coverage:
 codecov:
   require_ci_to_pass: no
 comment:
-    behavior: new
-    layout: "condensed_header, files, condensed_footer"
+    layout: "condensed_header, files"
     hide_project_coverage: TRUE
 
