@@ -60,6 +60,15 @@
                 },
                 "type": "object"
             },
+            "api.CreateUploadRequest": {
+                "properties": {
+                    "size": {
+                        "description": "Size of the upload in bytes",
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "api.DetectRpmsRequest": {
                 "properties": {
                     "limit": {
@@ -1072,6 +1081,20 @@
                         "description": "Timestamp of task creation",
                         "type": "string"
                     },
+                    "dependencies": {
+                        "description": "UUIDs of parent tasks",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "dependents": {
+                        "description": "UUIDs of child tasks",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "ended_at": {
                         "description": "Timestamp task ended running at",
                         "type": "string"
@@ -1267,11 +1290,40 @@
             "api.Upload": {
                 "properties": {
                     "href": {
-                        "description": "HREF to the unfinished upload",
+                        "description": "HREF to the unfinished upload, use with internal API",
                         "type": "string"
                     },
                     "sha256": {
                         "description": "SHA256 sum of the uploaded file",
+                        "type": "string"
+                    },
+                    "uuid": {
+                        "description": "Upload UUID, use with public API",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "api.UploadResponse": {
+                "properties": {
+                    "completed": {
+                        "description": "Timestamp when upload is committed",
+                        "type": "string"
+                    },
+                    "created": {
+                        "description": "Timestamp of creation",
+                        "type": "string"
+                    },
+                    "last_updated": {
+                        "description": "Timestamp of last update",
+                        "type": "string"
+                    },
+                    "size": {
+                        "description": "Size of the upload in bytes",
+                        "type": "integer"
+                    },
+                    "upload_uuid": {
+                        "description": "Upload UUID",
                         "type": "string"
                     }
                 },
@@ -2186,6 +2238,168 @@
                 ]
             }
         },
+        "/repositories/uploads/": {
+            "post": {
+                "description": "Create an upload.",
+                "operationId": "createUpload",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/api.CreateUploadRequest"
+                            }
+                        }
+                    },
+                    "description": "request body",
+                    "required": true,
+                    "x-originalParamName": "body"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/api.UploadResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Create an upload",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/repositories/uploads/{upload_uuid}/upload_chunk/": {
+            "post": {
+                "description": "Upload a file chunk.",
+                "operationId": "uploadChunk",
+                "parameters": [
+                    {
+                        "description": "Upload ID.",
+                        "in": "path",
+                        "name": "upload_uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Content-Range header",
+                        "in": "header",
+                        "name": "Content-Range",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "description": "file chunk",
+                                        "format": "binary",
+                                        "type": "string",
+                                        "x-formData-name": "file"
+                                    },
+                                    "sha256": {
+                                        "description": "sha256",
+                                        "type": "string",
+                                        "x-formData-name": "sha256"
+                                    }
+                                },
+                                "required": [
+                                    "sha256",
+                                    "file"
+                                ],
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/api.UploadResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Upload a file chunk",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
         "/repositories/{uuid}": {
             "delete": {
                 "description": "This enables deleting a specific repository.",
@@ -2511,7 +2725,7 @@
         },
         "/repositories/{uuid}/add_uploads/": {
             "post": {
-                "description": "Check for repository updates.",
+                "description": "Add uploads to a repository.",
                 "operationId": "add_upload",
                 "parameters": [
                     {
@@ -2526,13 +2740,14 @@
                 ],
                 "requestBody": {
                     "content": {
-                        "*/*": {
+                        "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/api.AddUploadsRequest"
                             }
                         }
                     },
                     "description": "request body",
+                    "required": true,
                     "x-originalParamName": "body"
                 },
                 "responses": {
@@ -2577,7 +2792,7 @@
                         "description": "Internal Server Error"
                     }
                 },
-                "summary": "add uploads to a repository",
+                "summary": "Add uploads to a repository",
                 "tags": [
                     "repositories"
                 ]
