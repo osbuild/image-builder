@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"runtime/debug"
 
@@ -29,19 +30,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func gitRev() string {
+// gitRev returns the gitHash of the current running binary
+func gitRev() (string, error) {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
-		logrus.Warn("cannot read build info")
-		return "unknown"
+		return "", errors.New("cannot read build info")
 	}
 	for _, bs := range info.Settings {
 		if bs.Key == "vcs.revision" {
-			return bs.Value
+			return bs.Value, nil
 		}
 	}
-	logrus.Warn("vcs.revision not found in debug.ReadBuildInfo()")
-	return "unknown"
+	return "", errors.New("vcs.revision not found in debug.ReadBuildInfo()")
 }
 
 func main() {
@@ -76,7 +76,12 @@ func main() {
 	}
 	logrus.AddHook(&ctxHook{})
 
-	gitRev := gitRev()
+	gitRev, err := gitRev()
+	if err != nil {
+		logrus.Warn(err.Error())
+		gitRev = "unknown"
+	}
+
 	logrus.Infof("Starting image-builder from Git Hash: %s", gitRev)
 	logrus.Infof("Changelog: https://github.com/osbuild/image-builder/commits/%s", gitRev)
 
