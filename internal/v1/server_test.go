@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -207,7 +208,9 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	URL := "http://" + addr
 	go func() {
 		err = echoServer.Start(addr)
-		require.Equal(t, err, http.ErrServerClosed)
+		if !errors.Is(err, http.ErrServerClosed) {
+			panic(fmt.Errorf("starting test server failed %w", err))
+		}
 	}()
 
 	// wait until server is ready
