@@ -703,11 +703,15 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 					Filepath:  "/etc/osbuild/openscap-tailoring.json",
 				},
 			}
+			res.Directories = &[]composer.Directory{
+				{
+					Path: "/etc/osbuild",
+				},
+			}
 			res.Files = &[]composer.File{
 				{
-					Path:          "/etc/osbuild/openscap-tailoring.json",
-					EnsureParents: common.ToPtr(true),
-					Data:          common.ToPtr(string(pdata.TailoringData)),
+					Path: "/etc/osbuild/openscap-tailoring.json",
+					Data: common.ToPtr(string(pdata.TailoringData)),
 				},
 			}
 		}
@@ -826,7 +830,12 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 				User:          user,
 			})
 		}
-		res.Directories = &dirs
+		// OpenSCAP tailoring creates a directory
+		if res.Directories != nil && len(*res.Directories) > 0 {
+			res.Directories = common.ToPtr(append(*res.Directories, dirs...))
+		} else {
+			res.Directories = &dirs
+		}
 	}
 
 	if cust.Files != nil {

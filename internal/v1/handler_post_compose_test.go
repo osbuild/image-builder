@@ -2497,11 +2497,15 @@ func TestComposeCustomizations(t *testing.T) {
 							Filepath:  "/etc/osbuild/openscap-tailoring.json",
 						},
 					},
+					Directories: &[]composer.Directory{
+						{
+							Path: "/etc/osbuild",
+						},
+					},
 					Files: &[]composer.File{
 						{
-							Path:          "/etc/osbuild/openscap-tailoring.json",
-							EnsureParents: common.ToPtr(true),
-							Data:          common.ToPtr("{ \"data\": \"some-tailoring-data\"}"),
+							Path: "/etc/osbuild/openscap-tailoring.json",
+							Data: common.ToPtr("{ \"data\": \"some-tailoring-data\"}"),
 						},
 					},
 				},
