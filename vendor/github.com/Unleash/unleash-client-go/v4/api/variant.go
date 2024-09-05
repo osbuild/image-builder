@@ -61,6 +61,10 @@ func (o Override) getIdentifier(ctx *context.Context) string {
 		value = ctx.SessionId
 	case "remoteAddress":
 		value = ctx.RemoteAddress
+	case "environment":
+		value = ctx.Environment
+	case "appName":
+		value = ctx.AppName
 	default:
 		if len(ctx.Properties) > 0 {
 			for k, v := range ctx.Properties {
