@@ -234,6 +234,10 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 	}
 
 	for _, repo := range *csRepos.Data {
+		if !*repo.Snapshot {
+			return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Repository %s has snapshotting disabled", *repo.Url))
+		}
+
 		repoUUIDs = append(repoUUIDs, *repo.Uuid)
 		repoMap[*repo.Uuid] = repo
 	}

@@ -826,12 +826,14 @@ func TestComposeWithSnapshots(t *testing.T) {
 				result := content_sources.ApiRepositoryCollectionResponse{
 					Data: &[]content_sources.ApiRepositoryResponse{
 						{
-							GpgKey: common.ToPtr(rhelGpg),
-							Uuid:   common.ToPtr(repoBaseId.String()),
+							GpgKey:   common.ToPtr(rhelGpg),
+							Uuid:     common.ToPtr(repoBaseId.String()),
+							Snapshot: common.ToPtr(true),
 						},
 						{
-							GpgKey: common.ToPtr(rhelGpg),
-							Uuid:   common.ToPtr(repoAppstrId.String()),
+							GpgKey:   common.ToPtr(rhelGpg),
+							Uuid:     common.ToPtr(repoAppstrId.String()),
+							Snapshot: common.ToPtr(true),
 						},
 					},
 				}
@@ -842,8 +844,9 @@ func TestComposeWithSnapshots(t *testing.T) {
 				result := content_sources.ApiRepositoryCollectionResponse{
 					Data: &[]content_sources.ApiRepositoryResponse{
 						{
-							GpgKey: common.ToPtr("some-gpg-key"),
-							Uuid:   common.ToPtr(repoPayloadId.String()),
+							GpgKey:   common.ToPtr("some-gpg-key"),
+							Uuid:     common.ToPtr(repoPayloadId.String()),
+							Snapshot: common.ToPtr(true),
 						},
 					},
 				}
@@ -857,11 +860,13 @@ func TestComposeWithSnapshots(t *testing.T) {
 				result := content_sources.ApiRepositoryCollectionResponse{
 					Data: &[]content_sources.ApiRepositoryResponse{
 						{
-							GpgKey: common.ToPtr("some-gpg-key"),
-							Uuid:   common.ToPtr(repoPayloadId.String()),
+							GpgKey:   common.ToPtr("some-gpg-key"),
+							Uuid:     common.ToPtr(repoPayloadId.String()),
+							Snapshot: common.ToPtr(true),
 						},
 						{
-							Uuid: common.ToPtr(repoPayloadId2.String()),
+							Uuid:     common.ToPtr(repoPayloadId2.String()),
+							Snapshot: common.ToPtr(true),
 						},
 					},
 				}
