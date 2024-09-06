@@ -698,6 +698,7 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 
 			res.Openscap = &composer.OpenSCAP{
 				ProfileId: pdata.ProfileID,
+				PolicyId:  &policy.PolicyId,
 				JsonTailoring: &composer.OpenSCAPJSONTailoring{
 					ProfileId: pdata.ProfileID,
 					Filepath:  "/etc/osbuild/openscap-tailoring.json",
