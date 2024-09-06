@@ -2492,6 +2492,7 @@ func TestComposeCustomizations(t *testing.T) {
 				Customizations: &composer.Customizations{
 					Openscap: &composer.OpenSCAP{
 						ProfileId: "openscap-ref-id",
+						PolicyId:  &policyID,
 						JsonTailoring: &composer.OpenSCAPJSONTailoring{
 							ProfileId: "openscap-ref-id",
 							Filepath:  "/etc/osbuild/openscap-tailoring.json",

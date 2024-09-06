@@ -315,8 +315,12 @@ type BlueprintFirewall struct {
 type BlueprintOpenSCAP struct {
 	Datastream    *string                `json:"datastream,omitempty"`
 	JsonTailoring *OpenSCAPJSONTailoring `json:"json_tailoring,omitempty"`
-	ProfileId     string                 `json:"profile_id"`
-	Tailoring     *OpenSCAPTailoring     `json:"tailoring,omitempty"`
+
+	// PolicyId Puts a specified policy ID in the RHSM facts, so that any instances registered to
+	// insights will be automatically connected to the compliance policy in the console.
+	PolicyId  *openapi_types.UUID `json:"policy_id,omitempty"`
+	ProfileId string              `json:"profile_id"`
+	Tailoring *OpenSCAPTailoring  `json:"tailoring,omitempty"`
 }
 
 // BlueprintRepository defines model for BlueprintRepository.
@@ -941,8 +945,12 @@ type ObjectReference struct {
 // OpenSCAP defines model for OpenSCAP.
 type OpenSCAP struct {
 	JsonTailoring *OpenSCAPJSONTailoring `json:"json_tailoring,omitempty"`
-	ProfileId     string                 `json:"profile_id"`
-	Tailoring     *OpenSCAPTailoring     `json:"tailoring,omitempty"`
+
+	// PolicyId Puts a specified policy ID in the RHSM facts, so that any instances registered to
+	// insights will be automatically connected to the compliance policy in the console.
+	PolicyId  *openapi_types.UUID `json:"policy_id,omitempty"`
+	ProfileId string              `json:"profile_id"`
+	Tailoring *OpenSCAPTailoring  `json:"tailoring,omitempty"`
 }
 
 // OpenSCAPJSONTailoring defines model for OpenSCAPJSONTailoring.
