@@ -816,6 +816,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.Equal(t, blueprint.ImageRequests, result.ImageRequests)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
+	require.Nil(t, blueprint.Customizations.Subscription)
 	// Check that the password returned is redacted
 	for _, u := range *result.Customizations.Users {
 		require.Nil(t, u.Password)
@@ -951,11 +952,11 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.Equal(t, name, result.Name)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
+	require.Equal(t, result.Customizations.Subscription, &Subscription{})
 	// Check that the password returned is redacted
 	for _, u := range *result.Customizations.Users {
 		require.Nil(t, u.Password)
 	}
-	require.Nil(t, result.Customizations.Subscription)
 	require.Equal(t, &id, result.Metadata.ParentId)
 	require.NotEqual(t, metadata.ExportedAt, result.Metadata.ExportedAt)
 
@@ -996,6 +997,15 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 
 	require.Equal(t, parentIdMeta, resultMeta.ParentId.String())
 	require.Equal(t, exportedAt, resultMeta.ExportedAt)
+
+	respStatusCode2, body2 := tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/export", resultPost.Id), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCode2)
+
+	var result2 BlueprintExportResponse
+	require.Equal(t, 200, respStatusCode2)
+	err = json.Unmarshal([]byte(body2), &result2)
+	require.NoError(t, err)
+	require.Nil(t, result2.Customizations.Subscription)
 }
 
 func TestHandlers_GetBlueprints(t *testing.T) {

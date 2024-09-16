@@ -301,7 +301,9 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 		return err
 	}
 
-	blueprint.Customizations.Subscription = nil
+	if blueprint.Customizations.Subscription != nil {
+		blueprint.Customizations.Subscription = &Subscription{}
+	}
 	blueprintExportResponse := BlueprintExportResponse{
 		Name:           blueprintEntry.Name,
 		Description:    blueprintEntry.Description,
