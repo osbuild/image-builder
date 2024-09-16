@@ -592,8 +592,14 @@ type ApiSnapshotResponse struct {
 	// RemovedCounts Count of each content type
 	RemovedCounts *map[string]int `json:"removed_counts,omitempty"`
 
+	// RepositoryName Name of repository the snapshot belongs to
+	RepositoryName *string `json:"repository_name,omitempty"`
+
 	// RepositoryPath Path to repository snapshot contents
 	RepositoryPath *string `json:"repository_path,omitempty"`
+
+	// RepositoryUuid UUID of the repository the snapshot belongs to
+	RepositoryUuid *string `json:"repository_uuid,omitempty"`
 
 	// Url URL to the snapshot's content
 	Url  *string `json:"url,omitempty"`
@@ -1110,6 +1116,12 @@ type ListTemplateRpmsParams struct {
 
 	// Search Term to filter and retrieve items that match the specified search criteria. Search term can include name.
 	Search *string `form:"search,omitempty" json:"search,omitempty"`
+}
+
+// ListSnapshotsForTemplateParams defines parameters for ListSnapshotsForTemplate.
+type ListSnapshotsForTemplateParams struct {
+	// RepositorySearch Search through snapshots by repository name.
+	RepositorySearch *string `form:"repository_search,omitempty" json:"repository_search,omitempty"`
 }
 
 // SearchEnvironmentsJSONRequestBody defines body for SearchEnvironments for application/json ContentType.
