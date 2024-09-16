@@ -976,8 +976,16 @@
                         "description": "Count of each content type",
                         "type": "object"
                     },
+                    "repository_name": {
+                        "description": "Name of repository the snapshot belongs to",
+                        "type": "string"
+                    },
                     "repository_path": {
                         "description": "Path to repository snapshot contents",
+                        "type": "string"
+                    },
+                    "repository_uuid": {
+                        "description": "UUID of the repository the snapshot belongs to",
                         "type": "string"
                     },
                     "url": {
@@ -2344,8 +2352,8 @@
                                     }
                                 },
                                 "required": [
-                                    "sha256",
-                                    "file"
+                                    "file",
+                                    "sha256"
                                 ],
                                 "type": "object"
                             }
@@ -3253,7 +3261,7 @@
         "/repositories/{uuid}/snapshots/": {
             "get": {
                 "description": "List snapshots of a repository.",
-                "operationId": "listSnapshots",
+                "operationId": "listSnapshotsForRepo",
                 "parameters": [
                     {
                         "description": "Repository ID.",
@@ -5367,6 +5375,87 @@
                 "summary": "List Template RPMs",
                 "tags": [
                     "rpms"
+                ]
+            }
+        },
+        "/templates/{uuid}/snapshots/": {
+            "get": {
+                "description": "List snapshots for a template.",
+                "operationId": "listSnapshotsForTemplate",
+                "parameters": [
+                    {
+                        "description": "Template ID.",
+                        "in": "path",
+                        "name": "uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Search through snapshots by repository name.",
+                        "in": "query",
+                        "name": "repository_search",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/api.SnapshotCollectionResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "List snapshots for a template",
+                "tags": [
+                    "snapshots"
                 ]
             }
         }
