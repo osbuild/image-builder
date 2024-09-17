@@ -196,6 +196,8 @@ objects:
           c.request->'customizations'->'filesystem' as filesystem,
           c.request->'customizations'->'payload_repositories' as payload_repositories,
           c.request->'customizations'->'openscap' as openscap,
+          c.request->'customizations'->'files' as files,
+          c.request->'customizations'->'services' as services,
           jsonb_array_length(c.request->'customizations'->'users') as num_users
         from
           composes c
