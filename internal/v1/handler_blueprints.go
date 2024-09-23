@@ -339,6 +339,9 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	if blueprintRequest.Customizations.Users != nil {
 		be, err := h.server.db.GetBlueprint(ctx.Request().Context(), blueprintId, userID.OrgID(), nil)
 		if err != nil {
+			if errors.Is(err, db.BlueprintNotFoundError) {
+				return echo.NewHTTPError(http.StatusNotFound, err)
+			}
 			return err
 		}
 		eb, err := BlueprintFromEntry(be)
@@ -406,6 +409,9 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 
 	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), nil)
 	if err != nil {
+		if errors.Is(err, db.BlueprintNotFoundError) {
+			return echo.NewHTTPError(http.StatusNotFound, err)
+		}
 		return err
 	}
 	blueprint, err := BlueprintFromEntryWithRedactedPasswords(blueprintEntry)

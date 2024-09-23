@@ -499,9 +499,14 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Invalid blueprint name", jsonResp.Errors[0].Title)
 
+	// Test non-existing blueprint
 	body["name"] = "Changing to correct body"
 	respStatusCodeNotFound, _ := tutils.PutResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), body)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
+
+	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "test"}}}
+	statusCode, _ = tutils.PutResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), body)
+	require.Equal(t, http.StatusNotFound, statusCode)
 }
 
 func TestHandlers_ComposeBlueprint(t *testing.T) {
@@ -618,6 +623,10 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 			}
 		})
 	}
+	t.Run("non-existing blueprint", func(t *testing.T) {
+		respStatusCode, _ := tutils.PostResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/compose", uuid.New()), ComposeBlueprintJSONBody{})
+		require.Equal(t, http.StatusNotFound, respStatusCode)
+	})
 }
 
 func TestHandlers_GetBlueprintComposes(t *testing.T) {
