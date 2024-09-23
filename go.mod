@@ -15,9 +15,9 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240117171535-401ddadefd40
-	github.com/osbuild/images v0.88.0
-	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
+	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240208125334-43c3aac2bb9c
+	github.com/osbuild/images v0.89.0
+	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240920151508-f001c0515757
 	github.com/prometheus/client_golang v1.20.4
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/identity v0.0.0-20220719174832-36a7b1cbeff1
@@ -27,7 +27,7 @@ require (
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -53,14 +53,14 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/common v0.59.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/twmb/murmur3 v1.1.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
-	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
