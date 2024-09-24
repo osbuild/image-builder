@@ -233,7 +233,7 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 	}
 	// hack to add an empty line at the end of the file for nicer diffs
 	bArray = append(bArray, '\n')
-	err = os.WriteFile(path.Join(dir, "customizations.json"), bArray, os.ModePerm)
+	err = os.WriteFile(path.Join(dir, "customizations.json"), bArray, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -264,7 +264,7 @@ func main() {
 				distro.Distribution.Name,
 				"oscap",
 				filepath.Base(string(profile)))
-			err := os.MkdirAll(dir, os.ModePerm)
+			err := os.MkdirAll(dir, 0750)
 			if err != nil {
 				panic(err)
 			}
