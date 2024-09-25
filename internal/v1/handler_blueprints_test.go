@@ -20,13 +20,7 @@ import (
 	"github.com/osbuild/image-builder/internal/tutils"
 )
 
-func TestHandlers_CreateBlueprint(t *testing.T) {
-	if runtime.GOOS == "darwin" {
-		t.Skip("crypt() not supported on darwin")
-	}
-
-	var jsonResp HTTPErrorList
-	ctx := context.Background()
+func makeTestServer(t *testing.T) (dbase db.DB, srvURL string, shutdown func()) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
@@ -34,11 +28,22 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
-	defer func() {
-		err := db_srv.Shutdown(ctx)
+	return dbase, db_srv.URL, func() {
+		err := db_srv.Shutdown(context.Background())
 		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+		tokenSrv.Close()
+	}
+}
+
+func TestHandlers_CreateBlueprint(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.Skip("crypt() not supported on darwin")
+	}
+
+	var jsonResp HTTPErrorList
+	ctx := context.Background()
+	dbase, srvURL, shutdownFn := makeTestServer(t)
+	defer shutdownFn()
 
 	body := map[string]interface{}{
 		"name":        "Blueprint",
@@ -59,11 +64,11 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 			},
 		},
 	}
-	statusCodePost, respPost := tutils.PostResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints", body)
+	statusCodePost, respPost := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
 	require.Equal(t, http.StatusCreated, statusCodePost)
 
 	var result CreateBlueprintResponse
-	err = json.Unmarshal([]byte(respPost), &result)
+	err := json.Unmarshal([]byte(respPost), &result)
 	require.NoError(t, err)
 
 	be, err := dbase.GetBlueprint(ctx, result.Id, "000000", nil)
@@ -71,7 +76,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	require.Nil(t, be.Metadata)
 
 	// Test unique name constraint
-	statusCode, resp := tutils.PostResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints", body)
+	statusCode, resp := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
 	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
 	err = json.Unmarshal([]byte(resp), &jsonResp)
 	require.NoError(t, err)
@@ -79,7 +84,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 
 	// Test non empty name constraint
 	body["name"] = ""
-	statusCode, resp = tutils.PostResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints", body)
+	statusCode, resp = tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
 	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
 	err = json.Unmarshal([]byte(resp), &jsonResp)
 	require.NoError(t, err)
@@ -88,7 +93,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	// Test customization users, user without password and key is invalid
 	body["name"] = "Blueprint with invalid user"
 	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test"}}}
-	statusCode, resp = tutils.PostResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints", body)
+	statusCode, resp = tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
 	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
 	err = json.Unmarshal([]byte(resp), &jsonResp)
 	require.NoError(t, err)
@@ -321,21 +326,11 @@ func TestUser_MergeForUpdate(t *testing.T) {
 }
 
 func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
+	dbase, srvURL, shutdownFn := makeTestServer(t)
+	defer shutdownFn()
+
 	var jsonResp HTTPErrorList
 	ctx := context.Background()
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		err := db_srv.Shutdown(ctx)
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
-
 	body := map[string]interface{}{
 		"name":        "Blueprint",
 		"description": "desc",
@@ -355,14 +350,14 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 	var result ComposeResponse
 
 	// No users in the blueprint = SUCCESS
-	statusCode, responseBody := tutils.PostResponseBody(t, "http://localhost:8086/api/image-builder/v1/blueprints", body)
+	statusCode, responseBody := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
 	require.Equal(t, http.StatusCreated, statusCode)
-	err = json.Unmarshal([]byte(responseBody), &result)
+	err := json.Unmarshal([]byte(responseBody), &result)
 	require.NoError(t, err)
 
 	// Add new user with password = SUCCESS
 	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "test"}}}
-	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("%s/api/image-builder/v1/blueprints/%s", srvURL, result.Id), body)
 	require.Equal(t, http.StatusCreated, statusCode)
 
 	blueprintEntry, err := dbase.GetBlueprint(ctx, result.Id, "000000", nil)
@@ -375,7 +370,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 	// Update with hashed password = SUCCESS
 	userHashedPassword := "$6$foo"
 	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": userHashedPassword}}}
-	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("%s/api/image-builder/v1/blueprints/%s", srvURL, result.Id), body)
 	require.Equal(t, http.StatusCreated, statusCode)
 
 	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
@@ -398,7 +393,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 
 	// add ssh key and remove password = SUCCESS
 	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "", "ssh_key": "ssh key"}}}
-	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("%s/api/image-builder/v1/blueprints/%s", srvURL, result.Id), body)
 	require.Equal(t, http.StatusCreated, statusCode)
 
 	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
@@ -421,7 +416,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 		{"name": "test2"}, // FAIL
 	}
 	body["customizations"] = map[string]interface{}{"users": users}
-	statusCode, responseBody = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	statusCode, responseBody = tutils.PutResponseBody(t, fmt.Sprintf("%s/api/image-builder/v1/blueprints/%s", srvURL, result.Id), body)
 	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
 	err = json.Unmarshal([]byte(responseBody), &jsonResp)
 	require.NoError(t, err)
@@ -433,7 +428,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 		{"name": "test2", "password": "test", "ssh_key": "ssh key"},
 	}
 	body["customizations"] = map[string]interface{}{"users": users}
-	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("http://localhost:8086/api/image-builder/v1/blueprints/%s", result.Id), body)
+	statusCode, _ = tutils.PutResponseBody(t, fmt.Sprintf("%s/api/image-builder/v1/blueprints/%s", srvURL, result.Id), body)
 	require.Equal(t, http.StatusCreated, statusCode)
 
 	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
@@ -458,19 +453,8 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	}
 
 	var jsonResp HTTPErrorList
-	ctx := context.Background()
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		err := db_srv.Shutdown(ctx)
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	_, srvURL, shutdownFn := makeTestServer(t)
+	defer shutdownFn()
 
 	body := map[string]interface{}{
 		"name":           "Blueprint",
@@ -485,15 +469,15 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 			},
 		},
 	}
-	statusCode, resp := tutils.PostResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints", body)
+	statusCode, resp := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
 	require.Equal(t, http.StatusCreated, statusCode)
 	var result ComposeResponse
-	err = json.Unmarshal([]byte(resp), &result)
+	err := json.Unmarshal([]byte(resp), &result)
 	require.NoError(t, err)
 
 	// Test non empty name constraint
 	body["name"] = ""
-	statusCode, resp = tutils.PutResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", result.Id), body)
+	statusCode, resp = tutils.PutResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", result.Id), body)
 	require.Equal(t, http.StatusUnprocessableEntity, statusCode)
 	err = json.Unmarshal([]byte(resp), &jsonResp)
 	require.NoError(t, err)
@@ -501,11 +485,11 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 
 	// Test non-existing blueprint
 	body["name"] = "Changing to correct body"
-	respStatusCodeNotFound, _ := tutils.PutResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), body)
+	respStatusCodeNotFound, _ := tutils.PutResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), body)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
 
 	body["customizations"] = map[string]interface{}{"users": []map[string]interface{}{{"name": "test", "password": "test"}}}
-	statusCode, _ = tutils.PutResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), body)
+	statusCode, _ = tutils.PutResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), body)
 	require.Equal(t, http.StatusNotFound, statusCode)
 }
 
@@ -637,22 +621,12 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	imageName := "MyImageName"
 	clientId := "ui"
 
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		err := db_srv.Shutdown(ctx)
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	dbase, srvURL, shutdownFn := makeTestServer(t)
+	defer shutdownFn()
 
 	var result ComposesResponse
 
-	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "500000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
+	err := dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "500000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
 	require.NoError(t, err)
 	id1 := uuid.New()
 	err = dbase.InsertCompose(ctx, id1, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
@@ -670,7 +644,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	err = dbase.InsertCompose(ctx, id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "gcp"}]}`), &clientId, &version2Id)
 	require.NoError(t, err)
 
-	respStatusCode, body := tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes", blueprintId.String()), &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes", blueprintId.String()), &tutils.AuthString0)
 	require.NoError(t, err)
 
 	require.Equal(t, 200, respStatusCode)
@@ -684,7 +658,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 4, result.Meta.Count)
 
 	// get composes for specific version
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes?blueprint_version=2", blueprintId.String()), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes?blueprint_version=2", blueprintId.String()), &tutils.AuthString0)
 	require.NoError(t, err)
 
 	require.Equal(t, 200, respStatusCode)
@@ -698,7 +672,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 2, result.Meta.Count)
 
 	// get composes for latest version
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes?blueprint_version=-1", blueprintId.String()), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes?blueprint_version=-1", blueprintId.String()), &tutils.AuthString0)
 	require.NoError(t, err)
 
 	require.Equal(t, 200, respStatusCode)
@@ -708,7 +682,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 2, *result.Data[0].BlueprintVersion)
 
 	// get composes for non-existing blueprint
-	respStatusCode, _ = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes?blueprint_version=1", uuid.New().String()), &tutils.AuthString0)
+	respStatusCode, _ = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes?blueprint_version=1", uuid.New().String()), &tutils.AuthString0)
 	require.Equal(t, 404, respStatusCode)
 
 	// get composes for a blueprint that does not have any composes
@@ -716,7 +690,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	versionId2 := uuid.New()
 	err = dbase.InsertBlueprint(ctx, id5, versionId2, "000000", "500000", "newBlueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
 	require.NoError(t, err)
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes?blueprint_version=1", id5), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes?blueprint_version=1", id5), &tutils.AuthString0)
 	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -748,24 +722,14 @@ func TestHandlers_BlueprintFromEntryWithRedactedPasswords(t *testing.T) {
 
 func TestHandlers_GetBlueprint(t *testing.T) {
 	ctx := context.Background()
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		err := db_srv.Shutdown(ctx)
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	dbase, srvURL, shutdownFn := makeTestServer(t)
+	defer shutdownFn()
 
 	id := uuid.New()
 	versionId := uuid.New()
 
 	uploadOptions := UploadRequest_Options{}
-	err = uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+	err := uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
@@ -812,7 +776,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, be.Metadata)
 
-	respStatusCode, body := tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", id.String()), &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", id.String()), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 
 	var result BlueprintResponse
@@ -830,7 +794,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 		require.Nil(t, u.Password)
 	}
 
-	respStatusCodeNotFound, _ := tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), &tutils.AuthString0)
+	respStatusCodeNotFound, _ := tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", uuid.New()), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCodeNotFound)
 
 	// fetch specific version
@@ -845,7 +809,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	err = dbase.UpdateBlueprint(ctx, version2Id, id, "000000", name, description, message2)
 	require.NoError(t, err)
 
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s?version=%d", id.String(), -1), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s?version=%d", id.String(), -1), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -854,7 +818,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 		require.Nil(t, u.Password)
 	}
 
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 2), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 2), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -863,7 +827,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 		require.Nil(t, u.Password)
 	}
 
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 1), &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s?version=%d", id.String(), 1), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -875,24 +839,14 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 
 func TestHandlers_ExportBlueprint(t *testing.T) {
 	ctx := context.Background()
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		err := db_srv.Shutdown(ctx)
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	dbase, srvURL, shutdownFn := makeTestServer(t)
+	defer shutdownFn()
 
 	id := uuid.New()
 	versionId := uuid.New()
 
 	uploadOptions := UploadRequest_Options{}
-	err = uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+	err := uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
@@ -949,7 +903,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, metadataMessage)
 	require.NoError(t, err)
 
-	respStatusCode, body := tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/export", id.String()), &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/export", id.String()), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 
 	var result BlueprintExportResponse
@@ -988,7 +942,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 		},
 	}
 
-	statusPost, respPost := tutils.PostResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints", bodyToImport)
+	statusPost, respPost := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", bodyToImport)
 	require.Equal(t, http.StatusCreated, statusPost)
 
 	var resultPost CreateBlueprintResponse
@@ -1009,22 +963,13 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 
 func TestHandlers_GetBlueprints(t *testing.T) {
 	ctx := context.Background()
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		err := db_srv.Shutdown(ctx)
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	dbase, srvURL, shutdownFn := makeTestServer(t)
+	defer shutdownFn()
 
 	blueprintId := uuid.New()
 	versionId := uuid.New()
-	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", "blueprint", "blueprint desc", json.RawMessage(`{}`), nil)
+	err := dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", "blueprint", "blueprint desc", json.RawMessage(`{}`), nil)
 	require.NoError(t, err)
 	blueprintId2 := uuid.New()
 	versionId2 := uuid.New()
@@ -1032,14 +977,14 @@ func TestHandlers_GetBlueprints(t *testing.T) {
 	require.NoError(t, err)
 
 	var result BlueprintsResponse
-	respStatusCode, body := tutils.GetResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints?name=blueprint", &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, srvURL+"/api/image-builder/v1/blueprints?name=blueprint", &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Len(t, result.Data, 1)
 	require.Equal(t, blueprintId, result.Data[0].Id)
 
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints?name=Blueprint", &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srvURL+"/api/image-builder/v1/blueprints?name=Blueprint", &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -1054,21 +999,11 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	clientId := "ui"
 	imageName := "MyImageName"
 
-	dbase, err := dbc.NewDB()
-	require.NoError(t, err)
-
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer func() {
-		err := db_srv.Shutdown(ctx)
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	dbase, srvURL, shutdownFn := makeTestServer(t)
+	defer shutdownFn()
 
 	blueprintName := "blueprint"
-	err = dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
+	err := dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
 	require.NoError(t, err)
 	id1 := uuid.New()
 	err = dbase.InsertCompose(ctx, id1, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
@@ -1087,12 +1022,12 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	err = dbase.InsertCompose(ctx, id4, "000000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "gcp"}]}`), &clientId, &version2Id)
 	require.NoError(t, err)
 
-	respStatusCode, body := tutils.DeleteResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", blueprintId.String()))
+	respStatusCode, body := tutils.DeleteResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", blueprintId.String()))
 	require.Equal(t, 204, respStatusCode)
 	require.Equal(t, "", body)
 
 	var errorResponse HTTPErrorList
-	notFoundCode, body := tutils.DeleteResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", blueprintId.String()))
+	notFoundCode, body := tutils.DeleteResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", blueprintId.String()))
 	require.Equal(t, 404, notFoundCode)
 	err = json.Unmarshal([]byte(body), &errorResponse)
 	require.NoError(t, err)
@@ -1103,7 +1038,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 
 	// We should not be able to list deleted blueprint
 	var result BlueprintsResponse
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints?name=blueprint", &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srvURL+"/api/image-builder/v1/blueprints?name=blueprint", &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -1115,7 +1050,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	require.ErrorIs(t, err, db.BlueprintNotFoundError)
 
 	// Composes should not be assigned to the blueprint anymore
-	respStatusCode, _ = tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes", blueprintId.String()), &tutils.AuthString0)
+	respStatusCode, _ = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes", blueprintId.String()), &tutils.AuthString0)
 	require.Equal(t, 404, respStatusCode)
 
 	// We should be able to create a Blueprint with same name
