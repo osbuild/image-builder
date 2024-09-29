@@ -82,8 +82,8 @@ github.com/getkin/kin-openapi/openapi3filter
 github.com/getkin/kin-openapi/routers
 github.com/getkin/kin-openapi/routers/legacy
 github.com/getkin/kin-openapi/routers/legacy/pathpattern
-# github.com/getsentry/sentry-go v0.30.0
-## explicit; go 1.21
+# github.com/getsentry/sentry-go v0.29.1
+## explicit; go 1.18
 github.com/getsentry/sentry-go
 github.com/getsentry/sentry-go/echo
 github.com/getsentry/sentry-go/internal/debug

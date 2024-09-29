@@ -735,32 +735,31 @@ const (
 	maxSpanStatus
 )
 
-var spanStatuses = [maxSpanStatus]string{
-	"",
-	"ok",
-	"cancelled", // [sic]
-	"unknown",
-	"invalid_argument",
-	"deadline_exceeded",
-	"not_found",
-	"already_exists",
-	"permission_denied",
-	"resource_exhausted",
-	"failed_precondition",
-	"aborted",
-	"out_of_range",
-	"unimplemented",
-	"internal_error",
-	"unavailable",
-	"data_loss",
-	"unauthenticated",
-}
-
 func (ss SpanStatus) String() string {
 	if ss >= maxSpanStatus {
 		return ""
 	}
-	return spanStatuses[ss]
+	m := [maxSpanStatus]string{
+		"",
+		"ok",
+		"cancelled", // [sic]
+		"unknown",
+		"invalid_argument",
+		"deadline_exceeded",
+		"not_found",
+		"already_exists",
+		"permission_denied",
+		"resource_exhausted",
+		"failed_precondition",
+		"aborted",
+		"out_of_range",
+		"unimplemented",
+		"internal_error",
+		"unavailable",
+		"data_loss",
+		"unauthenticated",
+	}
+	return m[ss]
 }
 
 func (ss SpanStatus) MarshalJSON() ([]byte, error) {

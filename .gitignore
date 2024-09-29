@@ -13,3 +13,4 @@ dnf-json
 local.env
 __debug*
 coverage*
+/tools/bin
