@@ -8,12 +8,6 @@ targets:
   - name: github
     tagPrefix: otel/v
     tagOnly: true
-  - name: github
-    tagPrefix: slog/v
-    tagOnly: true
-  - name: github
-    tagPrefix: zerolog/v
-    tagOnly: true
   - name: registry
     sdks:
       github:getsentry/sentry-go:
