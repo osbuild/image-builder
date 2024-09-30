@@ -235,6 +235,122 @@ type ApiRepositoryEnvironmentCollectionResponse struct {
 	Meta  *ApiResponseMetadata        `json:"meta,omitempty"`
 }
 
+// ApiRepositoryExportRequest defines model for api.RepositoryExportRequest.
+type ApiRepositoryExportRequest struct {
+	// RepositoryUuids List of repository uuids to export
+	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
+}
+
+// ApiRepositoryExportResponse defines model for api.RepositoryExportResponse.
+type ApiRepositoryExportResponse struct {
+	// DistributionArch Architecture to restrict client usage to
+	DistributionArch *string `json:"distribution_arch,omitempty"`
+
+	// DistributionVersions Versions to restrict client usage to
+	DistributionVersions *[]string `json:"distribution_versions,omitempty"`
+
+	// GpgKey GPG key for repository
+	GpgKey *string `json:"gpg_key,omitempty"`
+
+	// MetadataVerification Verify packages
+	MetadataVerification *bool `json:"metadata_verification,omitempty"`
+
+	// ModuleHotfixes Disable modularity filtering on this repository
+	ModuleHotfixes *bool `json:"module_hotfixes,omitempty"`
+
+	// Name Name of the remote yum repository
+	Name *string `json:"name,omitempty"`
+
+	// Origin Origin of the repository
+	Origin *string `json:"origin,omitempty"`
+
+	// Snapshot Enable snapshotting and hosting of this repository
+	Snapshot *bool `json:"snapshot,omitempty"`
+
+	// Url URL of the remote yum repository
+	Url *string `json:"url,omitempty"`
+}
+
+// ApiRepositoryImportResponse defines model for api.RepositoryImportResponse.
+type ApiRepositoryImportResponse struct {
+	// AccountId Account ID of the owner
+	AccountId *string `json:"account_id,omitempty"`
+
+	// ContentType Content Type (rpm) of the repository
+	ContentType *string `json:"content_type,omitempty"`
+
+	// DistributionArch Architecture to restrict client usage to
+	DistributionArch *string `json:"distribution_arch,omitempty"`
+
+	// DistributionVersions Versions to restrict client usage to
+	DistributionVersions *[]string `json:"distribution_versions,omitempty"`
+
+	// FailedIntrospectionsCount Number of consecutive failed introspections
+	FailedIntrospectionsCount *int `json:"failed_introspections_count,omitempty"`
+
+	// GpgKey GPG key for repository
+	GpgKey *string `json:"gpg_key,omitempty"`
+
+	// Label Label used to configure the yum repository on clients
+	Label *string `json:"label,omitempty"`
+
+	// LastIntrospectionError Error of last attempted introspection
+	LastIntrospectionError *string `json:"last_introspection_error,omitempty"`
+
+	// LastIntrospectionStatus Status of last introspection
+	LastIntrospectionStatus *string `json:"last_introspection_status,omitempty"`
+
+	// LastIntrospectionTime Timestamp of last attempted introspection
+	LastIntrospectionTime *string              `json:"last_introspection_time,omitempty"`
+	LastSnapshot          *ApiSnapshotResponse `json:"last_snapshot,omitempty"`
+	LastSnapshotTask      *ApiTaskInfoResponse `json:"last_snapshot_task,omitempty"`
+
+	// LastSnapshotTaskUuid UUID of the last snapshot task
+	LastSnapshotTaskUuid *string `json:"last_snapshot_task_uuid,omitempty"`
+
+	// LastSnapshotUuid UUID of the last dao.Snapshot
+	LastSnapshotUuid *string `json:"last_snapshot_uuid,omitempty"`
+
+	// LastSuccessIntrospectionTime Timestamp of last successful introspection
+	LastSuccessIntrospectionTime *string `json:"last_success_introspection_time,omitempty"`
+
+	// LastUpdateIntrospectionTime Timestamp of last introspection that had updates
+	LastUpdateIntrospectionTime *string `json:"last_update_introspection_time,omitempty"`
+
+	// MetadataVerification Verify packages
+	MetadataVerification *bool `json:"metadata_verification,omitempty"`
+
+	// ModuleHotfixes Disable modularity filtering on this repository
+	ModuleHotfixes *bool `json:"module_hotfixes,omitempty"`
+
+	// Name Name of the remote yum repository
+	Name *string `json:"name,omitempty"`
+
+	// OrgId Organization ID of the owner
+	OrgId *string `json:"org_id,omitempty"`
+
+	// Origin Origin of the repository
+	Origin *string `json:"origin,omitempty"`
+
+	// PackageCount Number of packages last read in the repository
+	PackageCount *int `json:"package_count,omitempty"`
+
+	// Snapshot Enable snapshotting and hosting of this repository
+	Snapshot *bool `json:"snapshot,omitempty"`
+
+	// Status Combined status of last introspection and snapshot of repository (Valid, Invalid, Unavailable, Pending)
+	Status *string `json:"status,omitempty"`
+
+	// Url URL of the remote yum repository
+	Url *string `json:"url,omitempty"`
+
+	// Uuid UUID of the object
+	Uuid *string `json:"uuid,omitempty"`
+
+	// Warnings Warnings to alert user of mismatched fields if there is an existing repo with the same URL
+	Warnings *[]map[string]interface{} `json:"warnings,omitempty"`
+}
+
 // ApiRepositoryIntrospectRequest defines model for api.RepositoryIntrospectRequest.
 type ApiRepositoryIntrospectRequest struct {
 	// ResetCount Reset the failed introspections count
@@ -672,14 +788,17 @@ type ApiTaskInfoResponse struct {
 	// Error Error thrown while running task
 	Error *string `json:"error,omitempty"`
 
+	// ObjectName Name of the associated repository or template
+	ObjectName *string `json:"object_name,omitempty"`
+
+	// ObjectType Type of the associated object, either repository or template
+	ObjectType *string `json:"object_type,omitempty"`
+
+	// ObjectUuid UUID of the associated repository or template
+	ObjectUuid *string `json:"object_uuid,omitempty"`
+
 	// OrgId Organization ID of the owner
 	OrgId *string `json:"org_id,omitempty"`
-
-	// RepositoryName Name of the associated repository
-	RepositoryName *string `json:"repository_name,omitempty"`
-
-	// RepositoryUuid UUID of the associated repository
-	RepositoryUuid *string `json:"repository_uuid,omitempty"`
 
 	// Status Status of task (running, failed, completed, canceled, pending)
 	Status *string `json:"status,omitempty"`
@@ -739,6 +858,13 @@ type ApiTemplateResponse struct {
 
 	// Description Description of the template
 	Description *string `json:"description,omitempty"`
+
+	// LastUpdateSnapshotError Error of last update_latest_snapshot task that updated the template
+	LastUpdateSnapshotError *string              `json:"last_update_snapshot_error,omitempty"`
+	LastUpdateTask          *ApiTaskInfoResponse `json:"last_update_task,omitempty"`
+
+	// LastUpdateTaskUuid UUID of the last update_template_content task that updated the template
+	LastUpdateTaskUuid *string `json:"last_update_task_uuid,omitempty"`
 
 	// LastUpdatedBy User that most recently updated the template
 	LastUpdatedBy *string `json:"last_updated_by,omitempty"`
@@ -944,6 +1070,9 @@ type ListRepositoriesParams struct {
 // BulkCreateRepositoriesJSONBody defines parameters for BulkCreateRepositories.
 type BulkCreateRepositoriesJSONBody = []ApiRepositoryRequest
 
+// BulkImportRepositoriesJSONBody defines parameters for BulkImportRepositories.
+type BulkImportRepositoriesJSONBody = []ApiRepositoryRequest
+
 // UploadChunkMultipartBody defines parameters for UploadChunk.
 type UploadChunkMultipartBody struct {
 	// File file chunk
@@ -1057,6 +1186,9 @@ type ListTasksParams struct {
 	// RepositoryUuid A unique identifier of a repository to filter the results.
 	RepositoryUuid *string `form:"repository_uuid,omitempty" json:"repository_uuid,omitempty"`
 
+	// TemplateUuid A unique identifier of a template to filter the results.
+	TemplateUuid *string `form:"template_uuid,omitempty" json:"template_uuid,omitempty"`
+
 	// ExcludeRedHatOrg A flag to exclude tasks for the red hat org from the query.
 	ExcludeRedHatOrg *bool `form:"exclude_red_hat_org,omitempty" json:"exclude_red_hat_org,omitempty"`
 }
@@ -1138,6 +1270,12 @@ type BulkCreateRepositoriesJSONRequestBody = BulkCreateRepositoriesJSONBody
 
 // BulkDeleteRepositoriesJSONRequestBody defines body for BulkDeleteRepositories for application/json ContentType.
 type BulkDeleteRepositoriesJSONRequestBody = ApiUUIDListRequest
+
+// BulkExportRepositoriesJSONRequestBody defines body for BulkExportRepositories for application/json ContentType.
+type BulkExportRepositoriesJSONRequestBody = ApiRepositoryExportRequest
+
+// BulkImportRepositoriesJSONRequestBody defines body for BulkImportRepositories for application/json ContentType.
+type BulkImportRepositoriesJSONRequestBody = BulkImportRepositoriesJSONBody
 
 // CreateUploadJSONRequestBody defines body for CreateUpload for application/json ContentType.
 type CreateUploadJSONRequestBody = ApiCreateUploadRequest
