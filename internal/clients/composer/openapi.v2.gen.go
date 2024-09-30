@@ -35,6 +35,17 @@ const (
 	CustomizationsPartitioningModeRaw     CustomizationsPartitioningMode = "raw"
 )
 
+// Defines values for ImageSBOMPipelinePurpose.
+const (
+	Buildroot ImageSBOMPipelinePurpose = "buildroot"
+	Image     ImageSBOMPipelinePurpose = "image"
+)
+
+// Defines values for ImageSBOMSbomType.
+const (
+	Spdx ImageSBOMSbomType = "spdx"
+)
+
 // Defines values for ImageStatusValue.
 const (
 	ImageStatusValueBuilding    ImageStatusValue = "building"
@@ -445,6 +456,16 @@ type ComposeRequest struct {
 	Koji           *Koji           `json:"koji,omitempty"`
 }
 
+// ComposeSBOMs defines model for ComposeSBOMs.
+type ComposeSBOMs struct {
+	Href string `json:"href"`
+	Id   string `json:"id"`
+
+	// Items The SBOM documents for each image built in the compose.
+	Items [][]ImageSBOM `json:"items"`
+	Kind  string        `json:"kind"`
+}
+
 // ComposeStatus defines model for ComposeStatus.
 type ComposeStatus struct {
 	Href          string             `json:"href"`
@@ -830,6 +851,36 @@ type ImageRequest struct {
 	// supported.
 	UploadTargets *[]UploadTarget `json:"upload_targets,omitempty"`
 }
+
+// ImageSBOM defines model for ImageSBOM.
+type ImageSBOM struct {
+	// PipelineName The name of the osbuild pipeline which has the packages described
+	// in the SBOM installed.
+	PipelineName string `json:"pipeline_name"`
+
+	// PipelinePurpose The purpose of the pipeline. The `buildroot` pipeline was used for
+	// the build environment dueing the image build. The `image` pipeline
+	// represents the actual content of the image. Due to the nature of
+	// some image types, there may be multiple pipelines of the same
+	// purpose.
+	PipelinePurpose ImageSBOMPipelinePurpose `json:"pipeline_purpose"`
+
+	// Sbom The SBOM document in the 'sbom_type' format.
+	Sbom interface{} `json:"sbom"`
+
+	// SbomType The type of the SBOM document. Currently only SPDX is supported.
+	SbomType ImageSBOMSbomType `json:"sbom_type"`
+}
+
+// ImageSBOMPipelinePurpose The purpose of the pipeline. The `buildroot` pipeline was used for
+// the build environment dueing the image build. The `image` pipeline
+// represents the actual content of the image. Due to the nature of
+// some image types, there may be multiple pipelines of the same
+// purpose.
+type ImageSBOMPipelinePurpose string
+
+// ImageSBOMSbomType The type of the SBOM document. Currently only SPDX is supported.
+type ImageSBOMSbomType string
 
 // ImageStatus defines model for ImageStatus.
 type ImageStatus struct {
