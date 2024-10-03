@@ -8,11 +8,11 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/osbuild/image-builder/internal/distribution"
+	"github.com/osbuild/image-builder/internal/oscap"
 	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
@@ -141,84 +141,16 @@ func generateJson(dir, profileDescription, profile string) {
 	if err != nil {
 		panic(err)
 	}
-	var bp Blueprint
+	var bp oscap.Blueprint
 	err = toml.Unmarshal(bpFileContent, &bp)
 	if err != nil {
 		panic(err)
 	}
 
-	// Convert the custom data structure into a `Customizations` object.
-	// This will be easier to handle in IB's API later on
-	customizations := v1.Customizations{}
-	var fs []v1.Filesystem
-	for _, bpFileSystem := range bp.Customizations.Filesystem {
-		fs = append(fs, v1.Filesystem{MinSize: bpFileSystem.Size, Mountpoint: bpFileSystem.Mountpoint})
-	}
-	if len(fs) > 0 {
-		customizations.Filesystem = &fs
-	}
-
-	var packages []string
-	for _, bpPackage := range bp.Packages {
-		packages = append(packages, bpPackage.Name)
-	}
-
-	var kernel *v1.Kernel
-	if k := bp.Customizations.Kernel; k != nil {
-		kernel = &v1.Kernel{}
-		if k.Name != nil {
-			kernel.Name = k.Name
-		}
-		if k.Append != nil {
-			kernel.Append = k.Append
-		}
-	}
-	if kernel != nil {
-		customizations.Kernel = kernel
-	}
-
-	var services *v1.Services
-	if s := bp.Customizations.Services; s != nil {
-		services = &v1.Services{}
-		if s.Enabled != nil {
-			firewalldPkg := "firewalld"
-			if slices.Contains(*s.Enabled, firewalldPkg) && !slices.Contains(packages, firewalldPkg) {
-				packages = append(packages, firewalldPkg)
-			}
-			services.Enabled = s.Enabled
-		}
-		var maskedAndDisabled []string
-		if s.Disabled != nil {
-			maskedAndDisabled = append(maskedAndDisabled, *s.Disabled...)
-		}
-		if s.Masked != nil {
-			maskedAndDisabled = append(maskedAndDisabled, *s.Masked...)
-		}
-		// we need to collect both disabled and masked services and
-		// assign them to the masked customization, since disabled services
-		// that aren't installed on the image will break the image build.
-		if maskedAndDisabled != nil {
-			services.Masked = &maskedAndDisabled
-		}
-	}
-	if services != nil {
-		customizations.Services = services
-	}
-
-	if len(packages) > 0 {
-		customizations.Packages = &packages
-	}
-
-	var openscap v1.OpenSCAP
-	err = openscap.FromOpenSCAPProfile(v1.OpenSCAPProfile{
-		ProfileId:          profile,
-		ProfileName:        &bp.Description, // annoyingly the Profile name is saved to the blueprint description
-		ProfileDescription: &profileDescription,
-	})
+	customizations, err := oscap.BlueprintToCustomizations(profile, profileDescription, bp)
 	if err != nil {
 		panic(err)
 	}
-	customizations.Openscap = &openscap
 
 	// Write it all down on the fileSystem
 	bArray, err := json.Marshal(customizations)
