@@ -1,6 +1,6 @@
 {
   "module_platform_id": "platform:el9",
-  "oscap_name": "cs9",
+  "oscap_datastream": "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml",
   "distribution": {
     "name": "centos-9",
     "description": "CentOS Stream 9"

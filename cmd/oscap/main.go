@@ -60,7 +60,7 @@ type Blueprint struct {
 	Name           string
 }
 
-func cleanToml(dir string, datastreamDistro string, profile string) {
+func cleanToml(dir string) {
 	fmt.Printf("        clean blueprint.toml ")
 	// delete toml file, there's no need to keep It
 	err := os.Remove(path.Join(dir, "blueprint.toml"))
@@ -70,7 +70,7 @@ func cleanToml(dir string, datastreamDistro string, profile string) {
 	fmt.Println("✓")
 }
 
-func getToml(dir string, datastreamDistro string, profile string) {
+func getToml(dir string, datastream string, profile string) {
 	fmt.Printf("        get blueprint.toml ")
 	cmd := exec.Command("oscap",
 		"xccdf",
@@ -80,10 +80,7 @@ func getToml(dir string, datastreamDistro string, profile string) {
 		string(profile),
 		"--fix-type",
 		"blueprint",
-		fmt.Sprintf(
-			"/usr/share/xml/scap/ssg/content/ssg-%s-ds.xml",
-			datastreamDistro,
-		),
+		datastream,
 	) // #nosec G204 This is a utility program that a dev is gonna start by hand, there's no risk here.
 	bpFile, err := os.Create(path.Join(dir, "blueprint.toml")) // #nosec G304
 	if err != nil {
@@ -111,16 +108,13 @@ func getDescriptionFromProfileInfo(profileInfo string) string {
 	return description[0] // get rid of new line
 }
 
-func getProfileDescription(datastreamDistro string, profile string) string {
+func getProfileDescription(datastream string, profile string) string {
 	fmt.Printf("        get profile description ")
 	cmd := exec.Command("oscap",
 		"info",
 		"--profile",
 		string(profile),
-		fmt.Sprintf(
-			"/usr/share/xml/scap/ssg/content/ssg-%s-ds.xml",
-			datastreamDistro,
-		),
+		datastream,
 	) // #nosec G204 This is a utility program that a dev is gonna start by hand, there's no risk here.
 	output, err := cmd.Output()
 	if err != nil {
@@ -135,7 +129,7 @@ func getProfileDescription(datastreamDistro string, profile string) string {
 	return description
 }
 
-func generateJson(dir, datastreamDistro, profileDescription, profile string) {
+func generateJson(dir, profileDescription, profile string) {
 	fmt.Printf("        generate customizations.json ")
 	bpFile, err := os.Open(path.Join(dir, "blueprint.toml")) // #nosec G304
 	if err != nil {
@@ -250,7 +244,7 @@ func main() {
 	}
 
 	for _, distro := range distros.Available(true).List() {
-		oscapDistroName := distro.OscapName
+		datastream := distro.OscapDatastream
 		profiles, _ := v1.OscapProfiles(
 			v1.Distributions(distro.Distribution.Name),
 		)
@@ -269,13 +263,13 @@ func main() {
 				panic(err)
 			}
 			// toml generation
-			getToml(dir, oscapDistroName, string(profile))
+			getToml(dir, datastream, string(profile))
 			// get profile description
-			profileDescription := getProfileDescription(oscapDistroName, string(profile))
+			profileDescription := getProfileDescription(datastream, string(profile))
 			// json generation
-			generateJson(dir, oscapDistroName, profileDescription, string(profile))
+			generateJson(dir, profileDescription, string(profile))
 			// toml is not needed in the repo
-			cleanToml(dir, oscapDistroName, string(profile))
+			cleanToml(dir)
 		}
 	}
 }

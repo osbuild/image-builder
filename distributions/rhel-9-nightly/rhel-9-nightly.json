@@ -1,6 +1,6 @@
 {
   "module_platform_id": "platform:el9",
-  "oscap_name": "rhel9",
+  "oscap_datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml",
   "distribution": {
     "name": "rhel-9-nightly",
     "composer_name": "rhel-9",

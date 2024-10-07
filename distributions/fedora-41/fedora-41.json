@@ -1,6 +1,6 @@
 {
   "module_platform_id": "platform:f41",
-  "oscap_name": "fedora",
+  "oscap_datastream": "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml",
   "distribution": {
     "name": "fedora-41",
     "description": "Fedora Linux 41",
