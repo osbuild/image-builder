@@ -11,21 +11,7 @@ import (
 
 func OscapProfiles(distribution Distributions) (DistributionProfileResponse, error) {
 	switch distribution {
-	case Rhel8:
-		fallthrough
-	case Rhel84:
-		fallthrough
-	case Rhel85:
-		fallthrough
-	case Rhel86:
-		fallthrough
-	case Rhel87:
-		fallthrough
-	case Rhel88:
-		fallthrough
-	case Rhel89:
-		fallthrough
-	case Rhel8Nightly:
+	case Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel89, Rhel810, Rhel8Nightly:
 		return DistributionProfileResponse{
 			XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
 			XccdfOrgSsgprojectContentProfileAnssiBp28High,
@@ -44,19 +30,7 @@ func OscapProfiles(distribution Distributions) (DistributionProfileResponse, err
 			XccdfOrgSsgprojectContentProfileStig,
 			XccdfOrgSsgprojectContentProfileStigGui,
 		}, nil
-	case Centos9:
-		fallthrough
-	case Rhel9:
-		fallthrough
-	case Rhel91:
-		fallthrough
-	case Rhel92:
-		fallthrough
-	case Rhel93:
-		fallthrough
-	case Rhel94:
-		fallthrough
-	case Rhel9Nightly:
+	case Centos9, Rhel9, Rhel91, Rhel92, Rhel93, Rhel94, Rhel9Nightly:
 		return DistributionProfileResponse{
 			XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
 			XccdfOrgSsgprojectContentProfileAnssiBp28High,
