@@ -47,7 +47,7 @@ func (h *Handlers) handleRecommendationsResponse(ctx echo.Context, uploadPackage
 	}
 
 	if len(responsePackages.Packages) == 0 {
-		ctx.Logger().Errorf("User should define packages")
+		ctx.Logger().Warn("User should define packages")
 		return RecommendationsResponse{}, nil
 	}
 
