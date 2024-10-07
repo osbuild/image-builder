@@ -2,11 +2,9 @@ package oscap
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
-	"slices"
 	"strings"
-
-	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
 type Packages struct {
@@ -78,88 +76,87 @@ func GetProfileDescription(profile string, datastream string) string {
 	return description[0] // get rid of new line
 }
 
-func BlueprintToCustomizations(profile string, description string, bp Blueprint) (v1.Customizations, error) {
-	// Convert the custom data structure into a `Customizations` object.
-	// This will be easier to handle in IB's API later on
-	customizations := v1.Customizations{}
-
-	var fs []v1.Filesystem
-	for _, bpFileSystem := range bp.Customizations.Filesystem {
-		fs = append(fs, v1.Filesystem{
-			MinSize:    bpFileSystem.Size,
-			Mountpoint: bpFileSystem.Mountpoint,
-		})
-	}
-	if len(fs) > 0 {
-		customizations.Filesystem = &fs
+func GenXMLTailoringFile(tailoring *string, datastream string) (*os.File, error) {
+	if tailoring == nil || *tailoring == "" {
+		// we don't need to process this any further,
+		// since the xml file will just end up blank
+		// and would cause issues later down the line
+		return nil, nil
 	}
 
-	var packages []string
-	for _, bpPackage := range bp.Packages {
-		packages = append(packages, bpPackage.Name)
-	}
-
-	var kernel *v1.Kernel
-	if k := bp.Customizations.Kernel; k != nil {
-		kernel = &v1.Kernel{}
-		if k.Name != nil {
-			kernel.Name = k.Name
-		}
-		if k.Append != nil {
-			kernel.Append = k.Append
-		}
-	}
-	if kernel != nil {
-		customizations.Kernel = kernel
-	}
-
-	var services *v1.Services
-	if s := bp.Customizations.Services; s != nil {
-		services = &v1.Services{}
-		if s.Enabled != nil {
-			firewalldPkg := "firewalld"
-			if slices.Contains(*s.Enabled, firewalldPkg) && !slices.Contains(packages, firewalldPkg) {
-				packages = append(packages, firewalldPkg)
-			}
-			services.Enabled = s.Enabled
-		}
-		var maskedAndDisabled []string
-		if s.Disabled != nil {
-			maskedAndDisabled = append(maskedAndDisabled, *s.Disabled...)
-		}
-		if s.Masked != nil {
-			maskedAndDisabled = append(maskedAndDisabled, *s.Masked...)
-		}
-		// we need to collect both disabled and masked services and
-		// assign them to the masked customization, since disabled services
-		// that aren't installed on the image will break the image build.
-		if maskedAndDisabled != nil {
-			services.Masked = &maskedAndDisabled
-		}
-	}
-	if services != nil {
-		customizations.Services = services
-	}
-
-	if len(packages) > 0 {
-		customizations.Packages = &packages
-	}
-
-	profileDescription := bp.Description
-	if description != "" {
-		profileDescription = description
-	}
-
-	var openscap v1.OpenSCAP
-	err := openscap.FromOpenSCAPProfile(v1.OpenSCAPProfile{
-		ProfileId:          profile,
-		ProfileName:        &bp.Description, // annoyingly the Profile name is saved to the blueprint description
-		ProfileDescription: &profileDescription,
-	})
+	jsonFile, err := os.CreateTemp("", "tailoring.json")
 	if err != nil {
-		return v1.Customizations{}, err
+		return nil, fmt.Errorf("Error creating temp json file: %w", err)
 	}
-	customizations.Openscap = &openscap
+	defer os.Remove(jsonFile.Name())
 
-	return customizations, nil
+	_, err = jsonFile.Write([]byte(*tailoring))
+	if err != nil {
+		return nil, fmt.Errorf("Error writing json customizations to temp file: %w", err)
+	}
+
+	xmlFile, err := os.CreateTemp("", "tailoring.xml")
+	if err != nil {
+		return nil, fmt.Errorf("Error creating temp xml file: %w", err)
+	}
+
+	// TODO: json schema validation
+	// we could potentially validate the `json` input
+	// here against:
+	// https://github.com/ComplianceAsCode/schemas/blob/b91c8e196a8cc515e0cc7f10b2c5a02b4179c0e5/tailoring/schema.json
+	// Alternatively, we could just fetch the `xml` blob from the compliance service and
+	// skip this step altogether
+
+	// The oscap blueprint generation tool
+	// doesn't accept `json` as input, so we
+	// need to convert it to `xml`
+	cmd := exec.Command(
+		"autotailor",
+		"-j", jsonFile.Name(),
+		"-o", xmlFile.Name(),
+		datastream,
+	) // #nosec G204
+
+	if err := cmd.Run(); err != nil {
+		defer os.Remove(xmlFile.Name())
+		return nil, fmt.Errorf("Error executing blueprint generation: %w", err)
+	}
+
+	return xmlFile, nil
+}
+
+func GenTOMLBlueprint(profile string, datastream string, file *os.File) ([]byte, error) {
+	var cmd *exec.Cmd
+	if file != nil {
+		cmd = exec.Command("oscap",
+			"xccdf",
+			"generate",
+			"fix",
+			"--profile",
+			string(profile),
+			"--tailoring-file",
+			file.Name(),
+			"--fix-type",
+			"blueprint",
+			datastream,
+		) // #nosec G204
+	} else {
+		cmd = exec.Command("oscap",
+			"xccdf",
+			"generate",
+			"fix",
+			"--profile",
+			string(profile),
+			"--fix-type",
+			"blueprint",
+			datastream,
+		) // #nosec G204
+	}
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("Error generating toml blueprint: %w", err)
+	}
+
+	return output, nil
 }

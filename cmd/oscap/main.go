@@ -147,7 +147,7 @@ func generateJson(dir, profileDescription, profile string) {
 		panic(err)
 	}
 
-	customizations, err := oscap.BlueprintToCustomizations(profile, profileDescription, bp)
+	customizations, err := v1.BlueprintToCustomizations(profile, profileDescription, bp)
 	if err != nil {
 		panic(err)
 	}
