@@ -191,8 +191,8 @@ github.com/oapi-codegen/runtime/types
 # github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240117171535-401ddadefd40
 ## explicit; go 1.19
 github.com/osbuild/community-gateway/oidc-authorizer/pkg/identity
-# github.com/osbuild/images v0.90.0
-## explicit; go 1.21.0
+# github.com/osbuild/images v0.91.0
+## explicit; go 1.22.0
 github.com/osbuild/images/pkg/crypt
 # github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 ## explicit; go 1.21
@@ -257,7 +257,7 @@ github.com/valyala/fasttemplate
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/pbkdf2
-# golang.org/x/net v0.28.0
+# golang.org/x/net v0.29.0
 ## explicit; go 1.18
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
