@@ -1,31 +1,17 @@
 package v1
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"os"
-	"path"
-	"path/filepath"
+	"slices"
+
+	"github.com/BurntSushi/toml"
+	"github.com/osbuild/image-builder/internal/oscap"
 )
 
 func OscapProfiles(distribution Distributions) (DistributionProfileResponse, error) {
 	switch distribution {
-	case Rhel8:
-		fallthrough
-	case Rhel84:
-		fallthrough
-	case Rhel85:
-		fallthrough
-	case Rhel86:
-		fallthrough
-	case Rhel87:
-		fallthrough
-	case Rhel88:
-		fallthrough
-	case Rhel89:
-		fallthrough
-	case Rhel8Nightly:
+	case Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel89, Rhel810, Rhel8Nightly:
 		return DistributionProfileResponse{
 			XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
 			XccdfOrgSsgprojectContentProfileAnssiBp28High,
@@ -44,19 +30,7 @@ func OscapProfiles(distribution Distributions) (DistributionProfileResponse, err
 			XccdfOrgSsgprojectContentProfileStig,
 			XccdfOrgSsgprojectContentProfileStigGui,
 		}, nil
-	case Centos9:
-		fallthrough
-	case Rhel9:
-		fallthrough
-	case Rhel91:
-		fallthrough
-	case Rhel92:
-		fallthrough
-	case Rhel93:
-		fallthrough
-	case Rhel94:
-		fallthrough
-	case Rhel9Nightly:
+	case Centos9, Rhel9, Rhel91, Rhel92, Rhel93, Rhel94, Rhel9Nightly:
 		return DistributionProfileResponse{
 			XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
 			XccdfOrgSsgprojectContentProfileAnssiBp28High,
@@ -85,35 +59,117 @@ func OscapProfiles(distribution Distributions) (DistributionProfileResponse, err
 	}
 }
 
-func loadOscapCustomizations(distributionDir string, distribution Distributions, profile DistributionProfileItem) (*Customizations, error) {
-	//Load the json file with the customizations
-	//Ignore the warning from gosec, as this function is only used internally. oscapDir comes from the server
-	//configuration and Base path is gotten from the other params, so everything is fine security wise.
-	jsonFile, err := os.Open(path.Join(
-		distributionDir,
-		string(distribution),
-		"oscap",
-		filepath.Base(string(profile)),
-		"customizations.json")) // #nosec G304
-	if err != nil {
-		return nil, err
+func BlueprintToCustomizations(profile string, description string, bp oscap.Blueprint) (*Customizations, error) {
+	// Convert the custom data structure into a `Customizations` object.
+	// This will be easier to handle in IB's API later on
+	customizations := Customizations{}
+
+	var fs []Filesystem
+	for _, bpFileSystem := range bp.Customizations.Filesystem {
+		fs = append(fs, Filesystem{
+			MinSize:    bpFileSystem.Size,
+			Mountpoint: bpFileSystem.Mountpoint,
+		})
 	}
-	defer jsonFile.Close()
-	bytes, err := io.ReadAll(jsonFile)
-	if err != nil {
-		return nil, err
-	}
-	// The customizations json file already contains a valid Customizations object to be returned as is.
-	var customizations Customizations
-	err = json.Unmarshal(bytes, &customizations)
-	if err != nil {
-		return nil, err
+	if len(fs) > 0 {
+		customizations.Filesystem = &fs
 	}
 
-	if customizations.Openscap == nil {
-		// set the profile id in the customizations object
-		return nil, errors.New("Customizations file is missing OpenSCAP section")
+	var packages []string
+	for _, bpPackage := range bp.Packages {
+		packages = append(packages, bpPackage.Name)
 	}
+
+	var kernel *Kernel
+	if k := bp.Customizations.Kernel; k != nil {
+		kernel = &Kernel{}
+		if k.Name != nil {
+			kernel.Name = k.Name
+		}
+		if k.Append != nil {
+			kernel.Append = k.Append
+		}
+	}
+	if kernel != nil {
+		customizations.Kernel = kernel
+	}
+
+	var services *Services
+	if s := bp.Customizations.Services; s != nil {
+		services = &Services{}
+		if s.Enabled != nil {
+			firewalldPkg := "firewalld"
+			if slices.Contains(*s.Enabled, firewalldPkg) && !slices.Contains(packages, firewalldPkg) {
+				packages = append(packages, firewalldPkg)
+			}
+			services.Enabled = s.Enabled
+		}
+		var maskedAndDisabled []string
+		if s.Disabled != nil {
+			maskedAndDisabled = append(maskedAndDisabled, *s.Disabled...)
+		}
+		if s.Masked != nil {
+			maskedAndDisabled = append(maskedAndDisabled, *s.Masked...)
+		}
+		// we need to collect both disabled and masked services and
+		// assign them to the masked customization, since disabled services
+		// that aren't installed on the image will break the image build.
+		if maskedAndDisabled != nil {
+			services.Masked = &maskedAndDisabled
+		}
+	}
+	if services != nil {
+		customizations.Services = services
+	}
+
+	if len(packages) > 0 {
+		customizations.Packages = &packages
+	}
+
+	profileDescription := bp.Description
+	if description != "" {
+		profileDescription = description
+	}
+
+	var openscap OpenSCAP
+	err := openscap.FromOpenSCAPProfile(OpenSCAPProfile{
+		ProfileId:          profile,
+		ProfileName:        &bp.Description, // annoyingly the Profile name is saved to the blueprint description
+		ProfileDescription: &profileDescription,
+	})
+	if err != nil {
+		return nil, err
+	}
+	customizations.Openscap = &openscap
 
 	return &customizations, nil
+}
+
+func processRequest(profile string, datastream string, tailoring *string) (*Customizations, error) {
+	// the generated blueprint doesn't contain the profile
+	// description, so we have to run the oscap tool to get
+	// this information
+	description := oscap.GetProfileDescription(profile, datastream)
+
+	var file *os.File
+	if tailoring != nil {
+		file, err := oscap.GenXMLTailoringFile(tailoring, datastream)
+		if err != nil {
+			return nil, err
+		}
+		defer os.Remove(file.Name())
+	}
+
+	rawBp, err := oscap.GenTOMLBlueprint(profile, datastream, file)
+	if err != nil {
+		return nil, err
+	}
+
+	var bp *oscap.Blueprint
+	err = toml.Unmarshal(rawBp, &bp)
+	if err != nil {
+		return nil, err
+	}
+
+	return BlueprintToCustomizations(profile, description, *bp)
 }
