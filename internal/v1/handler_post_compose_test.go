@@ -893,6 +893,8 @@ func TestComposeWithSnapshots(t *testing.T) {
 							Match: &content_sources.ApiSnapshotResponse{
 								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/baseos"),
+								Url:            common.ToPtr("http://snappy-url/snappy/baseos"),
+								RepositoryName: common.ToPtr("baseos"),
 							},
 							RepositoryUuid: common.ToPtr(repoBaseId.String()),
 						},
@@ -901,6 +903,8 @@ func TestComposeWithSnapshots(t *testing.T) {
 							Match: &content_sources.ApiSnapshotResponse{
 								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/appstream"),
+								Url:            common.ToPtr("http://snappy-url/snappy/appstream"),
+								RepositoryName: common.ToPtr("appstream"),
 							},
 							RepositoryUuid: common.ToPtr(repoAppstrId.String()),
 						},
@@ -916,6 +920,8 @@ func TestComposeWithSnapshots(t *testing.T) {
 							Match: &content_sources.ApiSnapshotResponse{
 								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/payload"),
+								Url:            common.ToPtr("http://snappy-url/snappy/payload"),
+								RepositoryName: common.ToPtr("payload"),
 							},
 							RepositoryUuid: common.ToPtr(repoPayloadId.String()),
 						},
@@ -934,6 +940,8 @@ func TestComposeWithSnapshots(t *testing.T) {
 							Match: &content_sources.ApiSnapshotResponse{
 								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/payload"),
+								Url:            common.ToPtr("http://snappy-url/snappy/payload"),
+								RepositoryName: common.ToPtr("payload"),
 							},
 							RepositoryUuid: common.ToPtr(repoPayloadId.String()),
 						},
@@ -942,6 +950,8 @@ func TestComposeWithSnapshots(t *testing.T) {
 							Match: &content_sources.ApiSnapshotResponse{
 								CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
 								RepositoryPath: common.ToPtr("/snappy/payload2"),
+								Url:            common.ToPtr("http://snappy-url/snappy/payload2"),
+								RepositoryName: common.ToPtr("payload2"),
 							},
 							RepositoryUuid: common.ToPtr(repoPayloadId2.String()),
 						},
@@ -1100,14 +1110,16 @@ func TestComposeWithSnapshots(t *testing.T) {
 					},
 					CustomRepositories: &[]composer.CustomRepository{
 						{
-							Baseurl:  &[]string{"https://content-sources.org/snappy/payload"},
+							Baseurl:  &[]string{"http://snappy-url/snappy/payload"},
+							Name:     common.ToPtr("payload"),
 							CheckGpg: common.ToPtr(true),
 							Enabled:  common.ToPtr(false),
 							Gpgkey:   &[]string{"some-gpg-key"},
 							Id:       repoPayloadId.String(),
 						},
 						{
-							Baseurl: &[]string{"https://content-sources.org/snappy/payload2"},
+							Baseurl: &[]string{"http://snappy-url/snappy/payload2"},
+							Name:    common.ToPtr("payload2"),
 							Enabled: common.ToPtr(false),
 							Id:      repoPayloadId2.String(),
 						},
@@ -1200,7 +1212,8 @@ func TestComposeWithSnapshots(t *testing.T) {
 					},
 					CustomRepositories: &[]composer.CustomRepository{
 						{
-							Baseurl:  &[]string{"https://content-sources.org/snappy/payload"},
+							Baseurl:  &[]string{"http://snappy-url/snappy/payload"},
+							Name:     common.ToPtr("payload"),
 							CheckGpg: common.ToPtr(true),
 							Enabled:  common.ToPtr(false),
 							Gpgkey:   &[]string{"some-gpg-key"},
