@@ -292,7 +292,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 		// Don't enable custom repositories, as they require further setup to be useable.
 		customRepo := composer.CustomRepository{
 			Id:      *snap.RepositoryUuid,
-			Name:    snap.Match.RepositoryName,
+			Name:    repo.Name,
 			Baseurl: &[]string{*snap.Match.Url},
 			Enabled: common.ToPtr(false),
 		}
