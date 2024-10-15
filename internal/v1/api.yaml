@@ -1099,6 +1099,7 @@ components:
         - rhel-8.10
         - rhel-9
         - rhel-9-nightly
+        - rhel-9-beta
         - rhel-90
         - rhel-91
         - rhel-92
