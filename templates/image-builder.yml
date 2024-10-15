@@ -192,6 +192,7 @@ objects:
           v.blueprint_id::text as blueprint_id,
           v.version as blueprint_version,
           b.deleted as blueprint_deleted,
+          c.request->'customizations'->'subscription' as subscription,
           c.request->'customizations'->'packages' as packages,
           c.request->'customizations'->'filesystem' as filesystem,
           c.request->'customizations'->'payload_repositories' as payload_repositories,
