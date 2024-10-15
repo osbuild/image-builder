@@ -77,15 +77,29 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	if composeRequest.ImageRequests[0].SnapshotDate != nil {
 		repoURLs := []string{}
 		for _, r := range arch.Repositories {
+			// Assume that non-rh repositories that are defined in the distributions file will not be snapshotted,
+			// as there's no guarantee the rpms will be kept forever like in RH repos.
+			if slices.Contains(r.ImageTypeTags, string(composeRequest.ImageRequests[0].ImageType)) && !r.Rhsm {
+				repositories = append(repositories, composer.Repository{
+					Baseurl:  r.Baseurl,
+					Metalink: r.Metalink,
+					Rhsm:     common.ToPtr(r.Rhsm),
+					Gpgkey:   r.GpgKey,
+					CheckGpg: r.CheckGpg,
+				})
+				continue
+			}
+
 			if len(r.ImageTypeTags) == 0 || slices.Contains(r.ImageTypeTags, string(composeRequest.ImageRequests[0].ImageType)) {
 				repoURLs = append(repoURLs, *r.Baseurl)
 			}
 		}
 
-		repositories, _, err = h.buildRepositorySnapshots(ctx, repoURLs, false, *composeRequest.ImageRequests[0].SnapshotDate)
+		snapshotRepos, _, err := h.buildRepositorySnapshots(ctx, repoURLs, false, *composeRequest.ImageRequests[0].SnapshotDate)
 		if err != nil {
 			return ComposeResponse{}, err
 		}
+		repositories = append(repositories, snapshotRepos...)
 
 		// A sanity check to make sure there's a snapshot for each repo
 		expected := len(buildRepositories(arch, composeRequest.ImageRequests[0].ImageType))
