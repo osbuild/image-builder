@@ -17,7 +17,7 @@ export EXTRA_DEPLOY_ARGS="sources unleash-proxy"
 export REF_ENV="insights-stage"
 export RESERVE_DURATION="2h"
 export DEPLOY_TIMEOUT="1200"
-export COMPONENTS_W_RESOURCES="compliance"
+export COMPONENTS_W_RESOURCES="compliance notifications-backend notifications-engine"
 
 # Install bonfire repo/initialize
 # https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd/bootstrap.sh
