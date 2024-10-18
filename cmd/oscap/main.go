@@ -8,11 +8,11 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/osbuild/image-builder/internal/distribution"
+	"github.com/osbuild/image-builder/internal/oscap"
 	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
@@ -60,7 +60,7 @@ type Blueprint struct {
 	Name           string
 }
 
-func cleanToml(dir string, datastreamDistro string, profile string) {
+func cleanToml(dir string) {
 	fmt.Printf("        clean blueprint.toml ")
 	// delete toml file, there's no need to keep It
 	err := os.Remove(path.Join(dir, "blueprint.toml"))
@@ -70,7 +70,7 @@ func cleanToml(dir string, datastreamDistro string, profile string) {
 	fmt.Println("✓")
 }
 
-func getToml(dir string, datastreamDistro string, profile string) {
+func getToml(dir string, datastream string, profile string) {
 	fmt.Printf("        get blueprint.toml ")
 	cmd := exec.Command("oscap",
 		"xccdf",
@@ -80,10 +80,7 @@ func getToml(dir string, datastreamDistro string, profile string) {
 		string(profile),
 		"--fix-type",
 		"blueprint",
-		fmt.Sprintf(
-			"/usr/share/xml/scap/ssg/content/ssg-%s-ds.xml",
-			datastreamDistro,
-		),
+		datastream,
 	) // #nosec G204 This is a utility program that a dev is gonna start by hand, there's no risk here.
 	bpFile, err := os.Create(path.Join(dir, "blueprint.toml")) // #nosec G304
 	if err != nil {
@@ -111,16 +108,13 @@ func getDescriptionFromProfileInfo(profileInfo string) string {
 	return description[0] // get rid of new line
 }
 
-func getProfileDescription(datastreamDistro string, profile string) string {
+func getProfileDescription(datastream string, profile string) string {
 	fmt.Printf("        get profile description ")
 	cmd := exec.Command("oscap",
 		"info",
 		"--profile",
 		string(profile),
-		fmt.Sprintf(
-			"/usr/share/xml/scap/ssg/content/ssg-%s-ds.xml",
-			datastreamDistro,
-		),
+		datastream,
 	) // #nosec G204 This is a utility program that a dev is gonna start by hand, there's no risk here.
 	output, err := cmd.Output()
 	if err != nil {
@@ -135,7 +129,7 @@ func getProfileDescription(datastreamDistro string, profile string) string {
 	return description
 }
 
-func generateJson(dir, datastreamDistro, profileDescription, profile string) {
+func generateJson(dir, profileDescription, profile string) {
 	fmt.Printf("        generate customizations.json ")
 	bpFile, err := os.Open(path.Join(dir, "blueprint.toml")) // #nosec G304
 	if err != nil {
@@ -147,84 +141,16 @@ func generateJson(dir, datastreamDistro, profileDescription, profile string) {
 	if err != nil {
 		panic(err)
 	}
-	var bp Blueprint
+	var bp oscap.Blueprint
 	err = toml.Unmarshal(bpFileContent, &bp)
 	if err != nil {
 		panic(err)
 	}
 
-	// Convert the custom data structure into a `Customizations` object.
-	// This will be easier to handle in IB's API later on
-	customizations := v1.Customizations{}
-	var fs []v1.Filesystem
-	for _, bpFileSystem := range bp.Customizations.Filesystem {
-		fs = append(fs, v1.Filesystem{MinSize: bpFileSystem.Size, Mountpoint: bpFileSystem.Mountpoint})
-	}
-	if len(fs) > 0 {
-		customizations.Filesystem = &fs
-	}
-
-	var packages []string
-	for _, bpPackage := range bp.Packages {
-		packages = append(packages, bpPackage.Name)
-	}
-
-	var kernel *v1.Kernel
-	if k := bp.Customizations.Kernel; k != nil {
-		kernel = &v1.Kernel{}
-		if k.Name != nil {
-			kernel.Name = k.Name
-		}
-		if k.Append != nil {
-			kernel.Append = k.Append
-		}
-	}
-	if kernel != nil {
-		customizations.Kernel = kernel
-	}
-
-	var services *v1.Services
-	if s := bp.Customizations.Services; s != nil {
-		services = &v1.Services{}
-		if s.Enabled != nil {
-			firewalldPkg := "firewalld"
-			if slices.Contains(*s.Enabled, firewalldPkg) && !slices.Contains(packages, firewalldPkg) {
-				packages = append(packages, firewalldPkg)
-			}
-			services.Enabled = s.Enabled
-		}
-		var maskedAndDisabled []string
-		if s.Disabled != nil {
-			maskedAndDisabled = append(maskedAndDisabled, *s.Disabled...)
-		}
-		if s.Masked != nil {
-			maskedAndDisabled = append(maskedAndDisabled, *s.Masked...)
-		}
-		// we need to collect both disabled and masked services and
-		// assign them to the masked customization, since disabled services
-		// that aren't installed on the image will break the image build.
-		if maskedAndDisabled != nil {
-			services.Masked = &maskedAndDisabled
-		}
-	}
-	if services != nil {
-		customizations.Services = services
-	}
-
-	if len(packages) > 0 {
-		customizations.Packages = &packages
-	}
-
-	var openscap v1.OpenSCAP
-	err = openscap.FromOpenSCAPProfile(v1.OpenSCAPProfile{
-		ProfileId:          profile,
-		ProfileName:        &bp.Description, // annoyingly the Profile name is saved to the blueprint description
-		ProfileDescription: &profileDescription,
-	})
+	customizations, err := v1.BlueprintToCustomizations(profile, profileDescription, bp)
 	if err != nil {
 		panic(err)
 	}
-	customizations.Openscap = &openscap
 
 	// Write it all down on the fileSystem
 	bArray, err := json.Marshal(customizations)
@@ -250,7 +176,7 @@ func main() {
 	}
 
 	for _, distro := range distros.Available(true).List() {
-		oscapDistroName := distro.OscapName
+		datastream := distro.OscapDatastream
 		profiles, _ := v1.OscapProfiles(
 			v1.Distributions(distro.Distribution.Name),
 		)
@@ -269,13 +195,13 @@ func main() {
 				panic(err)
 			}
 			// toml generation
-			getToml(dir, oscapDistroName, string(profile))
+			getToml(dir, datastream, string(profile))
 			// get profile description
-			profileDescription := getProfileDescription(oscapDistroName, string(profile))
+			profileDescription := getProfileDescription(datastream, string(profile))
 			// json generation
-			generateJson(dir, oscapDistroName, profileDescription, string(profile))
+			generateJson(dir, profileDescription, string(profile))
 			// toml is not needed in the repo
-			cleanToml(dir, oscapDistroName, string(profile))
+			cleanToml(dir)
 		}
 	}
 }

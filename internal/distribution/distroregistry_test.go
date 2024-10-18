@@ -42,7 +42,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 
 	require.Equal(t, &DistributionFile{
 		ModulePlatformID: "platform:el9",
-		OscapName:        "rhel9",
+		OscapDatastream:  "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml",
 		Distribution: DistributionItem{
 			Description:      "Red Hat Enterprise Linux (RHEL) 9",
 			Name:             "rhel-94",

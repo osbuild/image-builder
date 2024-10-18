@@ -4,11 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path"
 	"strings"
 	"testing"
 	"time"
@@ -990,63 +987,8 @@ func TestGetCustomizations(t *testing.T) {
 	}()
 	defer tokenSrv.Close()
 
-	t.Run("Access all customizations and check that they match", func(t *testing.T) {
-		for _, dist := range []Distributions{
-			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel8Nightly, Rhel9, Rhel91, Rhel92, Rhel9Nightly, Centos9,
-		} {
-			respStatusCode, body := tutils.GetResponseBody(t,
-				srv.URL+
-					fmt.Sprintf("/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
-			require.Equal(t, http.StatusOK, respStatusCode)
-			var result DistributionProfileResponse
-			err := json.Unmarshal([]byte(body), &result)
-			require.NoError(t, err)
-			for _, profile := range result {
-				// Get the customization from the API
-				var result Customizations
-				respStatusCode, body := tutils.GetResponseBody(t,
-					srv.URL+
-						fmt.Sprintf("/api/image-builder/v1/oscap/%s/%s/customizations", dist, profile), &tutils.AuthString0)
-				require.Equal(t, http.StatusOK, respStatusCode)
-				err := json.Unmarshal([]byte(body), &result)
-				require.NoError(t, err)
-				// load the corresponding file from the disk
-				require.NoError(t, err)
-				jsonFile, err := os.Open(
-					path.Join(
-						"../../distributions",
-						string(dist),
-						"oscap",
-						string(profile),
-						"customizations.json"))
-				require.NoError(t, err)
-				defer jsonFile.Close()
-				bytes, err := io.ReadAll(jsonFile)
-				require.NoError(t, err)
-				var customizations Customizations
-				err = json.Unmarshal(bytes, &customizations)
-				require.NoError(t, err)
-				// Make sure we get the same result both ways
-				if result.Packages == nil {
-					require.Nil(t, customizations.Packages)
-				} else {
-					require.ElementsMatch(t, *customizations.Packages, *result.Packages)
-				}
-				if result.Filesystem == nil {
-					require.Nil(t, customizations.Filesystem)
-				} else {
-					require.ElementsMatch(t, *customizations.Filesystem, *result.Filesystem)
-				}
-				if result.Openscap == nil {
-					require.Nil(t, customizations.Openscap)
-				} else {
-					require.Equal(t, *customizations.Openscap, *result.Openscap)
-				}
-			}
-		}
-	})
 	t.Run("Access customizations on a distro that does not have customizations returns an error", func(t *testing.T) {
-		for _, dist := range []Distributions{Rhel8} {
+		for _, dist := range []Distributions{Rhel9} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				srv.URL+
 					fmt.Sprintf("/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)

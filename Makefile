@@ -21,10 +21,6 @@ help:
 image-builder:
 	go build -o image-builder ./cmd/image-builder/
 
-.PHONY: gen-oscap
-gen-oscap:
-	go build -o gen-oscap ./cmd/oscap
-
 .PHONY: image-builder-migrate-db-tern
 image-builder-migrate-db-tern:
 	go build -o image-builder-migrate-db-tern ./cmd/image-builder-migrate-db-tern/
@@ -34,7 +30,7 @@ image-builder-db-test:
 	go test -c -tags=integration -o image-builder-db-test ./cmd/image-builder-db-test/
 
 .PHONY: build
-build: image-builder gen-oscap image-builder-migrate-db-tern image-builder-db-test
+build: image-builder image-builder-migrate-db-tern image-builder-db-test
 
 .PHONY: run
 run:
@@ -49,10 +45,6 @@ check-api-spec:
 ubi-container:
 	if [ -f .git ]; then echo "You seem to be in a git worktree - build will fail here"; exit 1; fi
 	podman build --pull=always -t osbuild/image-builder -f distribution/Dockerfile-ubi .
-
-.PHONY: generate-openscap-blueprints
-generate-openscap-blueprints:
-	go run ./cmd/oscap/ ./distributions
 
 .PHONY: dev-prerequisites
 dev-prerequisites:
