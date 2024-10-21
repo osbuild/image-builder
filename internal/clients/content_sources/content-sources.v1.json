@@ -1434,6 +1434,11 @@
                         },
                         "type": "array"
                     },
+                    "rhsm_environment_created": {
+                        "description": "Whether the candlepin environment is created and systems can be added",
+                        "readOnly": true,
+                        "type": "boolean"
+                    },
                     "rhsm_environment_id": {
                         "description": "Environment ID used by subscription-manager and candlepin",
                         "type": "string"

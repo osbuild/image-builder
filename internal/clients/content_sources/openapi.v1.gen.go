@@ -878,6 +878,9 @@ type ApiTemplateResponse struct {
 	// RepositoryUuids Repositories added to the template
 	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
 
+	// RhsmEnvironmentCreated Whether the candlepin environment is created and systems can be added
+	RhsmEnvironmentCreated *bool `json:"rhsm_environment_created,omitempty"`
+
 	// RhsmEnvironmentId Environment ID used by subscription-manager and candlepin
 	RhsmEnvironmentId *string `json:"rhsm_environment_id,omitempty"`
 
