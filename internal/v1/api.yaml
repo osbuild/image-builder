@@ -1069,6 +1069,14 @@ components:
           $ref: '#/components/schemas/Customizations'
         metadata:
           $ref: '#/components/schemas/BlueprintMetadata'
+        content_sources:
+          type: array
+          items:
+            type: object
+          additionalProperties: true
+          description: |
+            List of custom repositories including all the repository details needed in order
+            to recreate the repositories.
     BlueprintMetadata:
       required:
         - parent_id
@@ -1568,6 +1576,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CustomRepository'
+          description: List of custom repositories.
         openscap:
           $ref: '#/components/schemas/OpenSCAP'
         filesystem:

@@ -70,6 +70,24 @@ func (csc *ContentSourcesClient) GetRepositories(ctx context.Context, repoURLs [
 	}, nil)
 }
 
+// returns []ApiRepositoryExportResponse
+func (csc *ContentSourcesClient) BulkExportRepositories(ctx context.Context, body ApiRepositoryExportRequest) (*http.Response, error) {
+	id, ok := identity.GetIdentityHeader(ctx)
+	if !ok {
+		return nil, fmt.Errorf("Unable to get identity from context")
+	}
+
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	return csc.request("POST", csc.url.JoinPath("repositories", "bulk_export/").String(), map[string]string{
+		"x-rh-identity": id,
+		"content-type":  "application/json",
+	}, bytes.NewReader(buf))
+}
+
 // returns ApiListSnapshotByDateResponse
 func (csc *ContentSourcesClient) GetSnapshotsForDate(ctx context.Context, body ApiListSnapshotByDateRequest) (*http.Response, error) {
 	id, ok := identity.GetIdentityHeader(ctx)
