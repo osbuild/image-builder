@@ -843,9 +843,29 @@ func (h *Handlers) GetOscapProfiles(ctx echo.Context, distribution Distributions
 }
 
 func (h *Handlers) GetOscapCustomizations(ctx echo.Context, distribution Distributions, profile DistributionProfileItem) error {
-	customizations, err := loadOscapCustomizations(h.server.distributionsDir, distribution, profile)
+	// this is a quick and easy way of validating the profiles
+	// to make sure that we don't request customizations for
+	// a distro that isn't enabled for OpenSCAP
+	_, err := OscapProfiles(distribution)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
+	dr := h.server.distroRegistry(ctx)
+
+	distroFile, err := dr.Get(string(distribution))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if distroFile == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("Unable to process distro file"))
+	}
+
+	// TODO: get tailoring customizations with the compliance client
+	customizations, err := processRequest(string(profile), distroFile.OscapDatastream, nil)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
 	return ctx.JSON(http.StatusOK, customizations)
 }

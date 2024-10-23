@@ -1,6 +1,6 @@
 {
   "module_platform_id": "platform:el8",
-  "oscap_name": "rhel8",
+  "oscap_datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
   "distribution": {
     "name": "rhel-87",
     "description": "Red Hat Enterprise Linux (RHEL) 8"
