@@ -29,6 +29,7 @@ const (
 	// 64 GiB
 	FSMaxSize = 68719476736
 )
+const errorDescription = "Failed querying compose status"
 
 func (h *Handlers) newLinksWithExtraParams(path string, count, limit int, params url.Values) ListResponseLinks {
 	lastOffset := count - 1
@@ -238,35 +239,11 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 		return err
 	}
 
-	resp, err := h.server.cClient.ComposeStatus(composeId)
-	if err != nil {
-		return err
-	}
-	defer closeBody(ctx, resp.Body)
-
-	if resp.StatusCode == http.StatusNotFound {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		// Composes can get deleted in composer, usually when the image is expired
-		return echo.NewHTTPError(http.StatusNotFound, string(body))
-	} else if resp.StatusCode != http.StatusOK {
-		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
-		} else {
-			_ = httpError.SetInternal(fmt.Errorf("%s", body))
-		}
-		return httpError
-	}
-
 	var composeRequest ComposeRequest
-	err = json.Unmarshal(composeEntry.Request, &composeRequest)
-	if err != nil {
-		return err
+	if err := json.Unmarshal(composeEntry.Request, &composeRequest); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to unmarshal compose request").SetInternal(err)
 	}
+
 	if composeRequest.Customizations != nil && composeRequest.Customizations.Users != nil {
 		users := *composeRequest.Customizations.Users
 		for i := range users {
@@ -274,20 +251,37 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 		}
 	}
 
-	var cloudStat composer.ComposeStatus
-	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
+	resp, err := h.server.cClient.ComposeStatus(composeId)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get compose status from client").SetInternal(err)
+	}
+	defer closeBody(ctx, resp.Body)
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return h.handleComposeStatusResponse(ctx, resp, composeRequest)
+	case http.StatusNotFound:
+		return h.handleNotFoundResponse(resp)
+	default:
+		return h.handleErrorResponse(ctx, resp)
+	}
+}
+
+func (h *Handlers) handleComposeStatusResponse(ctx echo.Context, resp *http.Response, composeRequest ComposeRequest) error {
+	var cloudStat composer.ComposeStatus
+	err := json.NewDecoder(resp.Body).Decode(&cloudStat)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to decode compose status").SetInternal(err)
+	}
+	uploadStatus, err := parseComposerUploadStatus(cloudStat.ImageStatus.UploadStatus)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to parse upload status").SetInternal(err)
 	}
 
-	us, err := parseComposerUploadStatus(cloudStat.ImageStatus.UploadStatus)
-	if err != nil {
-		return err
-	}
 	status := ComposeStatus{
 		ImageStatus: ImageStatus{
 			Status:       ImageStatusStatus(cloudStat.ImageStatus.Status),
-			UploadStatus: us,
+			UploadStatus: uploadStatus,
 		},
 		Request: composeRequest,
 	}
@@ -297,6 +291,25 @@ func (h *Handlers) GetComposeStatus(ctx echo.Context, composeId uuid.UUID) error
 	}
 
 	return ctx.JSON(http.StatusOK, status)
+}
+
+func (h *Handlers) handleNotFoundResponse(resp *http.Response) error {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to read response body").SetInternal(err)
+	}
+	return echo.NewHTTPError(http.StatusNotFound, string(body))
+}
+
+func (h *Handlers) handleErrorResponse(ctx echo.Context, resp *http.Response) error {
+	httpError := echo.NewHTTPError(http.StatusInternalServerError, errorDescription)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		ctx.Logger().Errorf(errorDescription, ": %v", err)
+	} else {
+		_ = httpError.SetInternal(fmt.Errorf("%s", body))
+	}
+	return httpError
 }
 
 func parseComposerUploadStatus(us *composer.UploadStatus) (*UploadStatus, error) {
@@ -455,7 +468,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) err
 		}
 		return echo.NewHTTPError(http.StatusNotFound, string(body))
 	} else if resp.StatusCode != http.StatusOK {
-		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose status")
+		httpError := echo.NewHTTPError(http.StatusInternalServerError, errorDescription)
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
@@ -505,7 +518,7 @@ func (h *Handlers) getComposeByIdAndOrgId(ctx echo.Context, composeId uuid.UUID)
 	composeEntry, err := h.server.db.GetCompose(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
 		if errors.Is(err, db.ComposeEntryNotFoundError) {
-			return nil, echo.NewHTTPError(http.StatusNotFound, err)
+			return nil, echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Compose entry %v not found %s", composeId, err))
 		} else {
 			return nil, err
 		}
