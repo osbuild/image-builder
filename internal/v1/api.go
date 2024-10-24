@@ -227,8 +227,11 @@ type AzureUploadStatus struct {
 
 // BlueprintExportResponse defines model for BlueprintExportResponse.
 type BlueprintExportResponse struct {
-	Customizations Customizations `json:"customizations"`
-	Description    string         `json:"description"`
+	// CustomRepositoriesDetails List of custom repositories including all the repository details needed in order
+	// to recreate the repositories.
+	CustomRepositoriesDetails *string        `json:"custom_repositories_details,omitempty"`
+	Customizations            Customizations `json:"customizations"`
+	Description               string         `json:"description"`
 
 	// Distribution List of all distributions that image builder supports. A user might not have access to
 	// restricted distributions.
@@ -443,7 +446,9 @@ type CustomRepository struct {
 
 // Customizations defines model for Customizations.
 type Customizations struct {
-	Containers         *[]Container        `json:"containers,omitempty"`
+	Containers *[]Container `json:"containers,omitempty"`
+
+	// CustomRepositories List of custom repository ids without any details.
 	CustomRepositories *[]CustomRepository `json:"custom_repositories,omitempty"`
 	Directories        *[]Directory        `json:"directories,omitempty"`
 

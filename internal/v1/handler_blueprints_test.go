@@ -7,9 +7,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/osbuild/image-builder/internal/clients/content_sources"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/image-builder/internal/clients/composer"
@@ -33,6 +36,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
+		CSReposURL:       "https://content-sources.org",
 	})
 	defer func() {
 		err := db_srv.Shutdown(ctx)
@@ -878,12 +882,78 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	dbase, err := dbc.NewDB()
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	var composeId uuid.UUID
+	var composerRequest composer.ComposeRequest
+	repoPayloadId := uuid.New()
+	repoPayloadId2 := uuid.New()
+	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if "Bearer" == r.Header.Get("Authorization") {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		require.Equal(t, "Bearer accesstoken", r.Header.Get("Authorization"))
+		err := json.NewDecoder(r.Body).Decode(&composerRequest)
+		require.NoError(t, err)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		composeId = uuid.New()
+		result := composer.ComposeId{
+			Id: composeId,
+		}
+		err = json.NewEncoder(w).Encode(result)
+		require.NoError(t, err)
+	}))
+	defer apiSrv.Close()
+	csSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, tutils.AuthString0, r.Header.Get("x-rh-identity"))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if r.URL.Path == "/repositories/bulk_export/" {
+			require.Equal(t, "application/json", r.Header.Get("content-type"))
+			var body content_sources.ApiRepositoryExportRequest
+			err := json.NewDecoder(r.Body).Decode(&body)
+			require.NoError(t, err)
+			gpgKey := "some-gpg-key"
+			if slices.Equal(*body.RepositoryUuids, []string{
+				repoPayloadId.String(),
+			}) {
+				result := []content_sources.ApiRepositoryExportResponse{
+					{
+						GpgKey: &gpgKey,
+						Name:   common.ToPtr("payload"),
+						Url:    common.ToPtr("http://snappy-url/snappy/baseos"),
+					},
+				}
+				err = json.NewEncoder(w).Encode(result)
+				require.NoError(t, err)
+			} else if slices.Equal(*body.RepositoryUuids, []string{repoPayloadId.String(), repoPayloadId2.String()}) {
+				result := []content_sources.ApiRepositoryExportResponse{
+					{
+						GpgKey: &gpgKey,
+						Name:   common.ToPtr("payload"),
+						Url:    common.ToPtr("http://snappy-url/snappy/baseos"),
+					},
+					{
+						GpgKey: &gpgKey,
+						Name:   common.ToPtr("payload2"),
+						Url:    common.ToPtr("http://snappy-url/snappy/appstream"),
+					},
+				}
+				err = json.NewEncoder(w).Encode(result)
+				require.NoError(t, err)
+			}
+		}
+	}))
+	defer apiSrv.Close()
+
+	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, CSURL: csSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
+		CSReposURL:       "https://content-sources.org",
 	})
 	defer func() {
-		err := db_srv.Shutdown(ctx)
+		err := srv.Shutdown(context.Background())
 		require.NoError(t, err)
 	}()
 	defer tokenSrv.Close()
@@ -910,6 +980,14 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 					Password: common.ToPtr("password123"),
 				},
 			}),
+			CustomRepositories: &[]CustomRepository{
+				{
+					Baseurl: &[]string{"http://snappy-url/snappy/baseos"},
+					Name:    common.ToPtr("payload"),
+					Gpgkey:  &[]string{"some-gpg-key"},
+					Id:      repoPayloadId.String(),
+				},
+			},
 		},
 		Distribution: "centos-9",
 		ImageRequests: []ImageRequest{
@@ -949,17 +1027,24 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, metadataMessage)
 	require.NoError(t, err)
 
-	respStatusCode, body := tutils.GetResponseBody(t, db_srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/export", id.String()), &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/export", id.String()), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 
 	var result BlueprintExportResponse
 	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
+	var customRepositories []content_sources.ApiRepositoryExportResponse
+	err = json.Unmarshal([]byte(*result.CustomRepositoriesDetails), &customRepositories)
+	require.NoError(t, err)
 	require.Equal(t, description, result.Description)
 	require.Equal(t, name, result.Name)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
+	require.Equal(t, "payload", *customRepositories[0].Name)
+	require.Equal(t, "http://snappy-url/snappy/baseos", *customRepositories[0].Url)
+	require.Equal(t, "some-gpg-key", *customRepositories[0].GpgKey)
+	require.Len(t, customRepositories, 1)
 	// Check that the password returned is redacted
 	for _, u := range *result.Customizations.Users {
 		require.Nil(t, u.Password)
@@ -988,7 +1073,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 		},
 	}
 
-	statusPost, respPost := tutils.PostResponseBody(t, db_srv.URL+"/api/image-builder/v1/blueprints", bodyToImport)
+	statusPost, respPost := tutils.PostResponseBody(t, srv.URL+"/api/image-builder/v1/blueprints", bodyToImport)
 	require.Equal(t, http.StatusCreated, statusPost)
 
 	var resultPost CreateBlueprintResponse
@@ -1005,6 +1090,65 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 
 	require.Equal(t, parentIdMeta, resultMeta.ParentId.String())
 	require.Equal(t, exportedAt, resultMeta.ExportedAt)
+
+	respStatusCodeNoCustomRepos, _ := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/export", id.String()), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCodeNoCustomRepos)
+
+	id2 := uuid.New()
+	versionId2 := uuid.New()
+	moreRepos := BlueprintBody{
+		Customizations: Customizations{
+			Packages: common.ToPtr([]string{"nginx"}),
+			Subscription: &Subscription{
+				ActivationKey: "aaa",
+			},
+			Users: common.ToPtr([]User{
+				{
+					Name:     "user",
+					Password: common.ToPtr("password123"),
+				},
+			}),
+			CustomRepositories: &[]CustomRepository{
+				{
+					Baseurl: &[]string{"http://snappy-url/snappy/baseos"},
+					Name:    common.ToPtr("payload"),
+					Gpgkey:  &[]string{"some-gpg-key"},
+					Id:      repoPayloadId.String(),
+				},
+				{
+					Baseurl: &[]string{"http://snappy-url/snappy/appstream"},
+					Name:    common.ToPtr("payload2"),
+					Gpgkey:  &[]string{"some-gpg-key"},
+					Id:      repoPayloadId2.String(),
+				},
+			},
+		},
+		Distribution: "centos-9",
+	}
+
+	var message2 []byte
+	message2, err = json.Marshal(moreRepos)
+	require.NoError(t, err)
+
+	err = dbase.InsertBlueprint(ctx, id2, versionId2, "000000", "000000", "blueprint2", "", message2, metadataMessage)
+	require.NoError(t, err)
+
+	respStatusCodeMoreRepos, bodyMoreRepos := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/export", id2.String()), &tutils.AuthString0)
+	require.Equal(t, http.StatusOK, respStatusCodeMoreRepos)
+
+	var result2 BlueprintExportResponse
+	err = json.Unmarshal([]byte(bodyMoreRepos), &result2)
+	require.NoError(t, err)
+	var customRepositories2 []content_sources.ApiRepositoryExportResponse
+	err = json.Unmarshal([]byte(*result2.CustomRepositoriesDetails), &customRepositories2)
+	require.NoError(t, err)
+	require.Len(t, customRepositories2, 2)
+	require.Equal(t, "payload", *customRepositories2[0].Name)
+	require.Equal(t, "http://snappy-url/snappy/baseos", *customRepositories2[0].Url)
+	require.Equal(t, "some-gpg-key", *customRepositories2[0].GpgKey)
+	require.Equal(t, "payload2", *customRepositories2[1].Name)
+	require.Equal(t, "http://snappy-url/snappy/appstream", *customRepositories2[1].Url)
+	require.Equal(t, "some-gpg-key", *customRepositories2[1].GpgKey)
 }
 
 func TestHandlers_GetBlueprints(t *testing.T) {

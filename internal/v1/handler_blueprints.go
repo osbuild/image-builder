@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/osbuild/image-builder/internal/clients/content_sources"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -312,6 +315,52 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 			ParentId:   &id,
 		},
 	}
+
+	repoUUIDs := []string{}
+	if blueprint.Customizations.CustomRepositories != nil {
+		for _, repo := range *blueprint.Customizations.CustomRepositories {
+			repoUUIDs = append(repoUUIDs, repo.Id)
+		}
+	}
+
+	exportedRepositoriesResp, err := h.server.csClient.BulkExportRepositories(ctx.Request().Context(), content_sources.ApiRepositoryExportRequest{
+		RepositoryUuids: common.ToPtr(repoUUIDs),
+	})
+	if err != nil {
+		return err
+	}
+	defer closeBody(ctx, exportedRepositoriesResp.Body)
+
+	if exportedRepositoriesResp.StatusCode != http.StatusOK {
+		if exportedRepositoriesResp.StatusCode != http.StatusUnauthorized {
+			body, err := io.ReadAll(exportedRepositoriesResp.Body)
+			if err != nil {
+				return err
+			}
+			ctx.Logger().Warnf("Unable to export custom repositories: %s", body)
+		}
+		return fmt.Errorf("Unable to fetch custom repositories, got %v response", exportedRepositoriesResp.StatusCode)
+	}
+
+	if exportedRepositoriesResp.Body != nil {
+		bodyBytes, err := io.ReadAll(exportedRepositoriesResp.Body)
+		if err != nil {
+			return fmt.Errorf("Unable to export custom repositories: %w", err)
+		}
+
+		if len(bodyBytes) != 0 {
+			// Checking the contents of content sources response
+			var exportedRepositories []content_sources.ApiRepositoryExportResponse
+			err = json.Unmarshal(bodyBytes, &exportedRepositories)
+			if err != nil {
+				return fmt.Errorf("Unable to export custom repositories: %w, %s", err, string(bodyBytes))
+			}
+			// Saving the response in plaintext
+			repositoryDetails := string(bodyBytes)
+			blueprintExportResponse.CustomRepositoriesDetails = &repositoryDetails
+		}
+	}
+
 	return ctx.JSON(http.StatusOK, blueprintExportResponse)
 }
 
