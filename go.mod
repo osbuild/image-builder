@@ -6,7 +6,7 @@ toolchain go1.21.9
 
 require (
 	github.com/BurntSushi/toml v1.4.0
-	github.com/Unleash/unleash-client-go/v4 v4.1.3
+	github.com/Unleash/unleash-client-go/v4 v4.1.4
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/getkin/kin-openapi v0.124.0
 	github.com/getsentry/sentry-go v0.29.1
@@ -18,7 +18,7 @@ require (
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240117171535-401ddadefd40
-	github.com/osbuild/images v0.93.0
+	github.com/osbuild/images v0.94.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redhatinsights/app-common-go v1.6.8
