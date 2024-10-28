@@ -961,7 +961,10 @@ type UploadTypes string
 // On update empty string can be used to remove password or ssh_key,
 // but at least one of them still must be present.
 type User struct {
-	Name string `json:"name"`
+	// Groups List of groups to add the user to. The 'wheel' group should be added explicitly, as the
+	// default value is empty.
+	Groups *[]string `json:"groups,omitempty"`
+	Name   string    `json:"name"`
 
 	// Password Plaintext passwords are also supported, they will be hashed and stored using the SHA-512 algorithm.
 	// The password is never returned in the response.

@@ -1910,6 +1910,14 @@ components:
         name:
           type: string
           example: "user1"
+        groups:
+          type: array
+          items:
+            type: string
+          description: |
+            List of groups to add the user to. The 'wheel' group should be added explicitly, as the
+            default value is empty.
+          example: ['wheel']
         ssh_key:
           type: string
           example: "ssh-rsa AAAAB3NzaC1"
