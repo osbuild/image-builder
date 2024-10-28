@@ -751,13 +751,12 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 	if cust.Users != nil {
 		var users []composer.User
 		for _, u := range *cust.Users {
-			groups := &[]string{"wheel"}
 			u.RedactPassword()
 			users = append(users, composer.User{
 				Name:     u.Name,
 				Key:      u.SshKey,
 				Password: u.Password,
-				Groups:   groups,
+				Groups:   u.Groups,
 			})
 		}
 		res.Users = &users
