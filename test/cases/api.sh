@@ -219,8 +219,9 @@ function instanceCheck() {
   set -eu
   [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]
 
-  # Unregister subscription
-  $_ssh sudo subscription-manager unregister
+  # Unregister subscription (try one more time if it fails)
+  $_ssh sudo subscription-manager unregister || \
+	(sleep 5 && $_ssh sudo subscription-manager unregister)
 }
 
 ############### AWS-specific functions ################
