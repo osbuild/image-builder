@@ -10,6 +10,7 @@ stages:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
   interruptible: true
+  retry: 1
   tags:
     - terraform
   artifacts:
