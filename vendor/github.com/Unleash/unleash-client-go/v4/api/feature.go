@@ -52,6 +52,9 @@ type Feature struct {
 
 	// Dependencies is a list of feature toggle dependency objects
 	Dependencies *[]Dependency `json:"dependencies"`
+
+	// ImpressionData indicates whether the client SDK should emit an impression event
+	ImpressionData bool `json:"impressionData"`
 }
 
 type Dependency struct {
