@@ -331,32 +331,28 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 	}
 	defer closeBody(ctx, exportedRepositoriesResp.Body)
 
-	if exportedRepositoriesResp.StatusCode != http.StatusOK {
-		if exportedRepositoriesResp.StatusCode != http.StatusUnauthorized {
-			body, err := io.ReadAll(exportedRepositoriesResp.Body)
-			if err != nil {
-				return err
-			}
-			ctx.Logger().Warnf("Unable to export custom repositories: %s", body)
-		}
+	if exportedRepositoriesResp.StatusCode == http.StatusUnauthorized {
 		return fmt.Errorf("Unable to fetch custom repositories, got %v response", exportedRepositoriesResp.StatusCode)
 	}
 
-	if exportedRepositoriesResp.Body != nil {
-		bodyBytes, err := io.ReadAll(exportedRepositoriesResp.Body)
-		if err != nil {
-			return fmt.Errorf("Unable to export custom repositories: %w", err)
-		}
+	if exportedRepositoriesResp.Body == nil {
+		ctx.Logger().Warnf("Unable to export custom repositories, empty body")
+		return ctx.JSON(http.StatusOK, blueprintExportResponse)
+	}
 
-		if len(bodyBytes) != 0 {
-			// Saving the custom repositories in the object format
-			var result []map[string]interface{}
-			err = json.Unmarshal(bodyBytes, &result)
-			if err != nil {
-				return fmt.Errorf("Unable to export custom repositories: %w, %s", err, string(bodyBytes))
-			}
-			blueprintExportResponse.ContentSources = &result
+	bodyBytes, err := io.ReadAll(exportedRepositoriesResp.Body)
+	if err != nil {
+		return err
+	}
+
+	if len(bodyBytes) != 0 {
+		// Saving the custom repositories in the object format
+		var result []map[string]interface{}
+		err = json.Unmarshal(bodyBytes, &result)
+		if err != nil {
+			return fmt.Errorf("Unable to export custom repositories: %w, %s", err, string(bodyBytes))
 		}
+		blueprintExportResponse.ContentSources = &result
 	}
 
 	return ctx.JSON(http.StatusOK, blueprintExportResponse)
