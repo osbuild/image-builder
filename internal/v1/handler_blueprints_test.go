@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"runtime"
 	"slices"
 	"strings"
@@ -863,12 +864,47 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	}
 }
 
+func compareOutputExportBlueprint(t *testing.T, jsonResponse string) {
+	// exported_at is dynamically generated, we need to change it
+	var jsonResponseUnmarshal map[string]interface{}
+	err := json.Unmarshal([]byte(jsonResponse), &jsonResponseUnmarshal)
+	require.NoError(t, err)
+	metadata, ok := jsonResponseUnmarshal["metadata"].(map[string]interface{})
+	metadata["exported_at"] = "2013-06-13 00:00:00 +0000 UTC"
+	require.Equal(t, true, ok)
+
+	// Now let's wrap the data again
+	data, err := json.Marshal(jsonResponseUnmarshal)
+	require.NoError(t, err)
+	var responseDataUnmarshal interface{}
+	err = json.Unmarshal(data, &responseDataUnmarshal)
+	require.NoError(t, err)
+	generatedData, err := json.MarshalIndent(jsonResponseUnmarshal, "", "  ")
+	require.NoError(t, err)
+
+	// Do the same for our fixture
+	exportedBlueprintFile := "../common/testdata/exported_blueprint.json"
+	fixtureData, err := os.ReadFile(exportedBlueprintFile)
+	require.NoError(t, err)
+
+	var fixtureDataUnmarshal interface{}
+	err = json.Unmarshal(fixtureData, &fixtureDataUnmarshal)
+	require.NoError(t, err)
+	expectedData, err := json.MarshalIndent(fixtureDataUnmarshal, "", "  ")
+	require.NoError(t, err)
+
+	require.JSONEq(t, string(expectedData), string(generatedData))
+
+	require.NoError(t, err)
+}
+
 func TestHandlers_ExportBlueprint(t *testing.T) {
 	ctx := context.Background()
 
 	var composeId uuid.UUID
 	var composerRequest composer.ComposeRequest
-	repoPayloadId := uuid.New()
+	repoPayloadId, err := uuid.Parse("2531793b-c607-4e1c-80b2-fbbaf9d12790")
+	require.NoError(t, err)
 	repoPayloadId2 := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
@@ -933,11 +969,13 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	dbase, srvURL, shutdownFn := makeTestServer(t, &apiSrv.URL, &csSrv.URL)
 	defer shutdownFn()
 
-	id := uuid.New()
+	idString := "f43a4ec2-5447-4a25-8a62-e258ff11a2d9"
+	id, err := uuid.Parse(idString)
+	require.NoError(t, err)
 	versionId := uuid.New()
 
 	uploadOptions := UploadRequest_Options{}
-	err := uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+	err = uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
@@ -990,6 +1028,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.NoError(t, err)
 
 	parentId := uuid.New()
+	require.NoError(t, err)
 	exportedAt := time.RFC3339
 	metadata := BlueprintMetadata{
 		ParentId:   &parentId,
@@ -1005,6 +1044,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/export", id.String()), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 
+	compareOutputExportBlueprint(t, body)
 	var result BlueprintExportResponseUnmarshal
 	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)

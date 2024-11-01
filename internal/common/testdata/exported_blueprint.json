@@ -1,0 +1,38 @@
+{
+  "content_sources": [
+    {
+      "gpg_key": "some-gpg-key",
+      "name": "payload",
+      "url": "http://snappy-url/snappy/baseos"
+    }
+  ],
+  "customizations": {
+    "custom_repositories": [
+      {
+        "baseurl": [
+          "http://snappy-url/snappy/baseos"
+        ],
+        "gpgkey": [
+          "some-gpg-key"
+        ],
+        "id": "2531793b-c607-4e1c-80b2-fbbaf9d12790",
+        "name": "payload"
+      }
+    ],
+    "packages": [
+      "nginx"
+    ],
+    "users": [
+      {
+        "name": "user"
+      }
+    ]
+  },
+  "description": "desc",
+  "distribution": "centos-9",
+  "metadata": {
+    "exported_at": "2013-06-13 00:00:00 +0000 UTC",
+    "parent_id": "f43a4ec2-5447-4a25-8a62-e258ff11a2d9"
+  },
+  "name": "blueprint"
+}
