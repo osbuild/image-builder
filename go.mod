@@ -1,14 +1,14 @@
 module github.com/osbuild/image-builder
 
-go 1.21.0
+go 1.22
 
-toolchain go1.21.9
+toolchain go1.22.0
 
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Unleash/unleash-client-go/v4 v4.1.4
 	github.com/aws/aws-sdk-go v1.55.5
-	github.com/getkin/kin-openapi v0.124.0
+	github.com/getkin/kin-openapi v0.128.0
 	github.com/getsentry/sentry-go v0.29.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
@@ -17,9 +17,9 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240117171535-401ddadefd40
-	github.com/osbuild/images v0.102.0
-	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
+	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240208125334-43c3aac2bb9c
+	github.com/osbuild/images v0.97.0
+	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20241107161848-2eb3c9f44ca6
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/identity v0.0.0-20220719174832-36a7b1cbeff1
@@ -40,7 +40,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
-	github.com/invopop/yaml v0.2.0 // indirect
+	github.com/invopop/yaml v0.3.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect

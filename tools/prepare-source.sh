@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eux
 
-GO_VERSION=1.21.9
+GO_VERSION=1.22.0
 GO_BINARY=$(go env GOPATH)/bin/go$GO_VERSION
 OAPI_VERSION=2.3.0
 
