@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set up bootstrap Go 1.21
+      - name: Set up bootstrap Go 1.22
         uses: actions/setup-go@v5.1.0
         with:
-          go-version: '1.21'
+          go-version: '1.22'
           cache: false
         id: go
 
@@ -113,7 +113,7 @@ jobs:
       - uses: actions/checkout@v3.0.2
       - uses: actions/setup-go@v5.1.0
         with:
-          go-version: '1.21'
+          go-version: '1.22'
       - env:
           MIGRATIONS_DIR: internal/db/migrations
           TERN_MIGRATIONS_DIR: internal/db/migrations-tern
