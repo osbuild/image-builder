@@ -11,6 +11,8 @@ help:
 	@echo "    build:              Build the project from source code"
 	@echo "    run:                Run the project on localhost"
 	@echo "    unit-tests:         Run unit tests (calls dev-prerequisites)"
+	@echo "    db-tests:           Run database tests (starting postgres as container)"
+	@echo "    test:               Run all tests (unit-tests, db-tests, …)"
 	@echo "    dev-prerequisites:  Install necessary development prerequisites on your system"
 	@echo "    push-check:         Replicates the github workflow checks as close as possible"
 	@echo "                        (do this before pushing!)"
@@ -29,12 +31,8 @@ gen-oscap:
 image-builder-migrate-db-tern:
 	go build -o image-builder-migrate-db-tern ./cmd/image-builder-migrate-db-tern/
 
-.PHONY: image-builder-db-test
-image-builder-db-test:
-	go test -c -tags=integration -o image-builder-db-test ./cmd/image-builder-db-test/
-
 .PHONY: build
-build: image-builder gen-oscap image-builder-migrate-db-tern image-builder-db-test
+build: image-builder gen-oscap image-builder-migrate-db-tern
 
 .PHONY: run
 run:
@@ -83,3 +81,49 @@ push-check: generate build unit-tests
 	    exit 1; \
 	fi
 	@echo "All looks good - congratulations"
+
+CONTAINER_EXECUTABLE ?= podman
+
+.PHONY: db-tests-prune
+db-tests-prune:
+	-$(CONTAINER_EXECUTABLE) stop image-builder-test-db
+	-$(CONTAINER_EXECUTABLE) rm image-builder-test-db
+
+CHECK_DB_PORT_READY=$(CONTAINER_EXECUTABLE) exec image-builder-test-db pg_isready -d imagebuilder
+CHECK_DB_UP=$(CONTAINER_EXECUTABLE) exec image-builder-test-db psql -U postgres -d imagebuilder -c "SELECT 1"
+
+.PHONY: db-tests
+db-tests: dev-prerequisites
+	-$(CONTAINER_EXECUTABLE) stop image-builder-test-db 2>/dev/null || echo "DB already stopped"
+	-$(CONTAINER_EXECUTABLE) rm image-builder-test-db 2>/dev/null || echo "DB already removed"
+	$(CONTAINER_EXECUTABLE) run -d \
+      --name image-builder-test-db \
+      --env POSTGRES_PASSWORD=foobar \
+      --env POSTGRES_DB=imagebuilder \
+      --publish :5432 \
+      postgres:12
+	# essentially printing this now and at the end.
+	# printing here is useful if the tests fail
+	# printing at the end is just convenient for inspection
+	@echo "The database is available for inspection at"
+	@echo "-------------------------------------------"
+	@echo "$$($(CONTAINER_EXECUTABLE) port image-builder-test-db 5432)"
+	@echo "-------------------------------------------"
+	echo "Waiting for DB"
+	until $(CHECK_DB_PORT_READY) ; do sleep 1; done
+	until $(CHECK_DB_UP) ; do sleep 1; done
+	env PGPASSWORD=foobar \
+	    PGDATABASE=imagebuilder \
+	    PGUSER=postgres \
+	    PGHOST=localhost \
+	    PGPORT=$$($(CONTAINER_EXECUTABLE) inspect -f '{{ (index .NetworkSettings.Ports "5432/tcp" 0).HostPort }}' image-builder-test-db) \
+	    TERN_MIGRATIONS_DIR=internal/db/migrations-tern \
+	    sh -c './tools/dbtest-run-migrations.sh ; ./tools/dbtest-entrypoint.sh'
+	# we'll leave the image-builder-test-db container running
+	# for easier inspection is something fails
+	@echo "The database is available for inspection at"
+	@echo "$$($(CONTAINER_EXECUTABLE) port image-builder-test-db 5432)"
+
+
+.PHONY: test
+test: unit-tests db-tests

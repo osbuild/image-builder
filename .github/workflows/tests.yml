@@ -123,10 +123,9 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
         run: |
-          go install github.com/jackc/tern@latest
-          tern migrate -m "$TERN_MIGRATIONS_DIR"
-          make image-builder-db-test
-          ./image-builder-db-test
+          make dev-prerequisites
+          ./tools/dbtest-run-migrations.sh
+          ./tools/dbtest-entrypoint.sh
 
   kube-linter:
     name: "🎀 kube-linter"
