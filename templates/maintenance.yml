@@ -1,0 +1,126 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: image-builder-maintenance
+  annotations:
+    openshift.io/display-name: Image Builder maintenance
+    description: |
+      Cronjob related to maintaining the image-builder database.
+    tags: golang
+    iconClass: icon-shadowman
+    template.openshift.io/provider-display-name: Red Hat, Inc.
+labels:
+  template: image-builder-maintenance
+objects:
+- apiVersion: batch/v1
+  kind: CronJob
+  metadata:
+    labels:
+      service: image-builder
+    name: image-builder-maintenance
+  spec:
+    # run maintenance job at midnight on Tuesdays
+    schedule: 0 0 * * 2
+    concurrencyPolicy: Forbid
+    # don't run if the job doesn't get scheduled within 30 minutes
+    startingDeadlineSeconds: 1800
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            serviceAccountName: image-builder-maintenance
+            restartPolicy: Never
+            containers:
+            - image: "${IMAGE_NAME}:${IMAGE_TAG}"
+              name: image-builder-maintenance
+              resources:
+                requests:
+                  cpu: "${CPU_REQUEST}"
+                  memory: "${MEMORY_REQUEST}"
+                limits:
+                  cpu: "${CPU_LIMIT}"
+                  memory: "${MEMORY_LIMIT}"
+              env:
+              - name: PGHOST
+                valueFrom:
+                  secretKeyRef:
+                    name: image-builder-db
+                    key: db.host
+                    optional: true
+              - name: PGPORT
+                valueFrom:
+                  secretKeyRef:
+                    name: image-builder-db
+                    key: db.port
+                    optional: true
+              - name: PGDATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: image-builder-db
+                    key: db.name
+                    optional: true
+              - name: PGUSER
+                valueFrom:
+                  secretKeyRef:
+                    name: image-builder-db
+                    key: db.user
+                    optional: true
+              - name: PGPASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: image-builder-db
+                    key: db.password
+                    optional: true
+              - name: PGSSLMODE
+                value: "${PGSSLMODE}"
+              - name: DRY_RUN
+                value: "${MAINTENANCE_DRY_RUN}"
+              - name: ENABLE_DB_MAINTENANCE
+                value: "${ENABLE_DB_MAINTENANCE}"
+              - name: DB_CLONES_RETENTION_MONTHS
+                value: "${DB_CLONES_RETENTION_MONTHS}"
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: image-builder-maintenance
+  imagePullSecrets:
+  - name: quay.io
+
+parameters:
+  - description: maintenance image name
+    name: IMAGE_NAME
+    value: quay.io/app-sre/image-builder-maintenance
+    required: true
+  - description: composer image tag
+    name: IMAGE_TAG
+    required: true
+  - name: CPU_REQUEST
+    description: CPU request per container
+    value: "50m"
+  - name: CPU_LIMIT
+    description: CPU limit per container
+    value: "100m"
+  - name: MEMORY_REQUEST
+    description: Memory request per container
+    value: "128Mi"
+  - name: MEMORY_LIMIT
+    description: Memory limit per container
+    value: "512Mi"
+  - description: composer-maintenance dry run
+    name: MAINTENANCE_DRY_RUN
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "true"
+    required: true
+  - description: Enable DB maintenance
+    name: ENABLE_DB_MAINTENANCE
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "false"
+    required: true
+  - description: Retention period for entries in the "clones" table (in months)
+    name: DB_CLONES_RETENTION_MONTHS
+    required: false
+  - description: postgres sslmode to use when connecting to the db
+    name: PGSSLMODE
+    value: "require"
+    required: true

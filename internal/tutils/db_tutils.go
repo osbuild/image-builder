@@ -5,7 +5,6 @@ package tutils
 import (
 	"context"
 	"fmt"
-
 	"testing"
 
 	"github.com/jackc/pgx/v5"

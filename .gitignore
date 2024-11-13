@@ -1,6 +1,8 @@
 /image-builder
 rpmbuild
 /image-builder-db-test
+/image-builder-maintenance
+/image-builder-maintenance-test
 /image-builder-migrate-db
 /image-builder-migrate-db-tern
 dnf-json

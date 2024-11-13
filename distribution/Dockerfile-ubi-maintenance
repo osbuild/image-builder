@@ -1,0 +1,12 @@
+FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
+# ubi9/go-toolset defaults to uid 1001. Let's copy the files with this UID as well.
+# Otherwise, VCS stamping will fail because git >= 2.35.2 refuses to work in
+# a repository owned by a different user.
+COPY --chown=1001 . .
+ENV GOFLAGS=-mod=vendor
+RUN go install ./cmd/image-builder-maintenance/
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+RUN mkdir -p "/app"
+COPY --from=builder /opt/app-root/src/go/bin/image-builder-maintenance /app/
+ENTRYPOINT ["/app/image-builder-maintenance"]
