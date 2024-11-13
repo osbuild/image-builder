@@ -92,14 +92,23 @@ db-tests-prune:
 CHECK_DB_PORT_READY=$(CONTAINER_EXECUTABLE) exec image-builder-test-db pg_isready -d imagebuilder
 CHECK_DB_UP=$(CONTAINER_EXECUTABLE) exec image-builder-test-db psql -U postgres -d imagebuilder -c "SELECT 1"
 
+export POSTGRES_USER=postgres
+export POSTGRES_PASSWORD=foobar
+export POSTGRES_DB=imagebuilder
+
+export PGPASSWORD=$(POSTGRES_PASSWORD)
+export PGDATABASE=$(POSTGRES_DB)
+export PGUSER=$(POSTGRES_USER)
+
 .PHONY: db-tests
 db-tests: dev-prerequisites
 	-$(CONTAINER_EXECUTABLE) stop image-builder-test-db 2>/dev/null || echo "DB already stopped"
 	-$(CONTAINER_EXECUTABLE) rm image-builder-test-db 2>/dev/null || echo "DB already removed"
 	$(CONTAINER_EXECUTABLE) run -d \
       --name image-builder-test-db \
-      --env POSTGRES_PASSWORD=foobar \
-      --env POSTGRES_DB=imagebuilder \
+      --env POSTGRES_USER \
+      --env POSTGRES_PASSWORD \
+      --env POSTGRES_DB \
       --publish :5432 \
       postgres:12
 	# essentially printing this now and at the end.
@@ -112,10 +121,9 @@ db-tests: dev-prerequisites
 	echo "Waiting for DB"
 	until $(CHECK_DB_PORT_READY) ; do sleep 1; done
 	until $(CHECK_DB_UP) ; do sleep 1; done
-	env PGPASSWORD=foobar \
-	    PGDATABASE=imagebuilder \
-	    PGUSER=postgres \
-	    PGHOST=localhost \
+	# we must not "export" PGHOST and PGPORT globally as they
+	# are different for `unit-tests` and `db-tests`
+	env PGHOST=localhost \
 	    PGPORT=$$($(CONTAINER_EXECUTABLE) inspect -f '{{ (index .NetworkSettings.Ports "5432/tcp" 0).HostPort }}' image-builder-test-db) \
 	    TERN_MIGRATIONS_DIR=internal/db/migrations-tern \
 	    ./tools/dbtest-entrypoint.sh
