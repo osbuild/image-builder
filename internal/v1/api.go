@@ -67,6 +67,7 @@ const (
 	Fedora39      Distributions = "fedora-39"
 	Fedora40      Distributions = "fedora-40"
 	Fedora41      Distributions = "fedora-41"
+	Rhel10Beta    Distributions = "rhel-10-beta"
 	Rhel10Nightly Distributions = "rhel-10-nightly"
 	Rhel8         Distributions = "rhel-8"
 	Rhel810       Distributions = "rhel-8.10"
