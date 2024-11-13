@@ -31,8 +31,12 @@ gen-oscap:
 image-builder-migrate-db-tern:
 	go build -o image-builder-migrate-db-tern ./cmd/image-builder-migrate-db-tern/
 
+.PHONY: image-builder-maintenance
+image-builder-maintenance:
+	go build -o image-builder-maintenance ./cmd/image-builder-maintenance/
+
 .PHONY: build
-build: image-builder gen-oscap image-builder-migrate-db-tern
+build: image-builder gen-oscap image-builder-migrate-db-tern image-builder-maintenance
 
 .PHONY: run
 run:
@@ -47,6 +51,19 @@ check-api-spec:
 ubi-container:
 	if [ -f .git ]; then echo "You seem to be in a git worktree - build will fail here"; exit 1; fi
 	podman build --pull=always -t osbuild/image-builder -f distribution/Dockerfile-ubi .
+
+.PHONY: ubi-maintenance-container
+ubi-maintenance-container:
+	if [ -f .git ]; then echo "You seem to be in a git worktree - build will fail here"; exit 1; fi
+	# backwards compatibility with old podman used in github
+	podman build --pull=always -t osbuild/image-builder-maintenance -f distribution/Dockerfile-ubi-maintenance . || \
+	podman build -t osbuild/image-builder-maintenance -f distribution/Dockerfile-ubi-maintenance .
+
+.PHONY: ubi-maintenance-container-test
+ubi-maintenance-container-test: ubi-maintenance-container
+	# just check if the container would start
+	# functional tests are in the target "db-tests"
+	podman run --rm --tty osbuild/image-builder-maintenance 2>&1 | grep "Dry run, no state will be changed"
 
 .PHONY: generate-openscap-blueprints
 generate-openscap-blueprints:

@@ -149,3 +149,14 @@ jobs:
         with:
           directory: processed-templates
           config: templates/.kube-linter-config.yml
+  container-test:
+    name: "🚢 container test"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - name: Install Prerequisites
+        run: |
+          sudo apt update
+          sudo apt install -y podman
+      - name: Build and test maintenance container
+        run: make ubi-maintenance-container-test
