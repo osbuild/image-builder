@@ -118,7 +118,7 @@ db-tests: dev-prerequisites
 	    PGHOST=localhost \
 	    PGPORT=$$($(CONTAINER_EXECUTABLE) inspect -f '{{ (index .NetworkSettings.Ports "5432/tcp" 0).HostPort }}' image-builder-test-db) \
 	    TERN_MIGRATIONS_DIR=internal/db/migrations-tern \
-	    sh -c './tools/dbtest-run-migrations.sh ; ./tools/dbtest-entrypoint.sh'
+	    ./tools/dbtest-entrypoint.sh
 	# we'll leave the image-builder-test-db container running
 	# for easier inspection is something fails
 	@echo "The database is available for inspection at"
