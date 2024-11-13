@@ -124,7 +124,6 @@ jobs:
           PGPORT: 5432
         run: |
           make dev-prerequisites
-          ./tools/dbtest-run-migrations.sh
           ./tools/dbtest-entrypoint.sh
 
   kube-linter:
