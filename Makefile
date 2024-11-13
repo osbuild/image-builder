@@ -110,7 +110,7 @@ db-tests: dev-prerequisites
       --env POSTGRES_PASSWORD \
       --env POSTGRES_DB \
       --publish :5432 \
-      postgres:12
+      postgres:12 postgres -c fsync=off
 	# essentially printing this now and at the end.
 	# printing here is useful if the tests fail
 	# printing at the end is just convenient for inspection
