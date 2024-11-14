@@ -1,6 +1,7 @@
 package tutils
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os/exec"
@@ -110,6 +111,41 @@ func (p *PSQLContainer) Stop() error {
 	return err
 }
 
+type TernMigrateOptions struct {
+	MigrationsDir string
+	Hostname      string
+	DBName        string
+	DBPort        string
+	DBUser        string
+	DBPassword    string
+	SSLMode       string
+}
+
+func callTernMigrate(ctx context.Context, opt TernMigrateOptions) ([]byte, error) {
+	args := []string{
+		"migrate",
+	}
+
+	addArg := func(flag, value string) {
+		if value != "" {
+			args = append(args, flag, value)
+		}
+	}
+
+	addArg("--migrations", opt.MigrationsDir)
+	addArg("--host", opt.Hostname)
+	addArg("--database", opt.DBName)
+	addArg("--port", opt.DBPort)
+	addArg("--user", opt.DBUser)
+	addArg("--password", opt.DBPassword)
+	addArg("--sslmode", opt.SSLMode)
+
+	/* #nosec G204 */
+	cmd := exec.CommandContext(ctx, "tern", args...)
+
+	return cmd.CombinedOutput()
+}
+
 func (p *PSQLContainer) NewDB() (db.DB, error) {
 	dbName := fmt.Sprintf("test%s", strings.Replace(uuid.New().String(), "-", "", -1))
 	_, err := p.execQuery("", fmt.Sprintf("CREATE DATABASE %s", dbName))
@@ -117,18 +153,17 @@ func (p *PSQLContainer) NewDB() (db.DB, error) {
 		return nil, err
 	}
 
-	/* #nosec G204 */
-	cmd := exec.Command(
-		"tern",
-		"migrate",
-		"-m", "../db/migrations-tern/",
-		"--database", dbName,
-		"--host", "localhost",
-		"--port", fmt.Sprintf("%d", p.port),
-		"--user", user,
+	out, err := callTernMigrate(
+		context.Background(),
+		TernMigrateOptions{
+			MigrationsDir: "../db/migrations-tern/",
+			Hostname:      "localhost",
+			DBName:        dbName,
+			DBPort:        fmt.Sprintf("%d", p.port),
+			DBUser:        user,
+		},
 	)
 
-	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("tern command error: %w, output: %s", err, out)
 	}

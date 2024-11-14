@@ -1,24 +1,21 @@
-//go:build integration
+//go:build dbtests
 
 package main
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"os/exec"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
 	v1 "github.com/osbuild/image-builder/internal/v1"
+
+	"github.com/osbuild/image-builder/internal/tutils"
 )
 
 const (
@@ -35,72 +32,9 @@ const (
 	fortnight = time.Hour * 24 * 14
 )
 
-func conf(t *testing.T) *config.ImageBuilderConfig {
-	c := config.ImageBuilderConfig{
-		ListenAddress:     "unused",
-		LogLevel:          "INFO",
-		TernMigrationsDir: "/usr/share/image-builder/migrations-tern",
-		PGHost:            "localhost",
-		PGPort:            "5432",
-		PGDatabase:        "imagebuilder",
-		PGUser:            "postgres",
-		PGPassword:        "foobar",
-		PGSSLMode:         "disable",
-	}
-
-	err := config.LoadConfigFromEnv(&c)
-	require.NoError(t, err)
-
-	return &c
-}
-
-func connStr(t *testing.T) string {
-	c := conf(t)
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", c.PGUser, c.PGPassword, c.PGHost, c.PGPort, c.PGDatabase, c.PGSSLMode)
-}
-
-func migrateTern(t *testing.T) {
-	// run tern migration on top of existing db
-	c := conf(t)
-
-	a := []string{
-		"migrate",
-		"--migrations", c.TernMigrationsDir,
-		"--database", c.PGDatabase,
-		"--host", c.PGHost, "--port", c.PGPort,
-		"--user", c.PGUser, "--password", c.PGPassword,
-		"--sslmode", c.PGSSLMode,
-	}
-	cmd := exec.Command("tern", a...)
-
-	output, err := cmd.CombinedOutput()
-	require.NoErrorf(t, err, "tern command failed with non-zero code, cmd: tern %s, combined output: %s", strings.Join(a, " "), string(output))
-}
-
-func connect(t *testing.T) *pgx.Conn {
-	ctx := context.Background()
-	conn, err := pgx.Connect(ctx, connStr(t))
-	require.NoError(t, err)
-	return conn
-}
-
-func tearDown(t *testing.T) {
-	ctx := context.Background()
-	conn := connect(t)
-	defer conn.Close(ctx)
-	_, err := conn.Exec(ctx, "drop schema public cascade")
-	require.NoError(t, err)
-	_, err = conn.Exec(ctx, "create schema public")
-	require.NoError(t, err)
-	_, err = conn.Exec(ctx, "grant all on schema public to postgres")
-	require.NoError(t, err)
-	_, err = conn.Exec(ctx, "grant all on schema public to public")
-	require.NoError(t, err)
-}
-
 func testInsertCompose(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
@@ -108,7 +42,7 @@ func testInsertCompose(t *testing.T) {
 	blueprintId := uuid.New()
 	versionId := uuid.New()
 
-	migrateTern(t)
+	tutils.MigrateTern(t)
 
 	err = d.InsertBlueprint(ctx, blueprintId, versionId, ORGID1, ANR1, "blueprint", "blueprint desc", []byte("{}"), []byte("{}"))
 	require.NoError(t, err)
@@ -124,7 +58,7 @@ func testInsertCompose(t *testing.T) {
 
 func testGetCompose(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
@@ -166,12 +100,12 @@ func testGetCompose(t *testing.T) {
 
 func testCountComposesSince(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
 
-	conn := connect(t)
+	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id, image_name) VALUES ($1, $2, CURRENT_TIMESTAMP - interval '2 days', $3, $4, $5)"
 	_, err = conn.Exec(ctx, insert, uuid.New().String(), "{}", ANR3, ORGID3, &imageName)
@@ -200,10 +134,10 @@ func testCountComposesSince(t *testing.T) {
 
 func testCountGetComposesSince(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
 
-	conn := connect(t)
+	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
 
 	job1 := uuid.New()
@@ -234,9 +168,9 @@ func testCountGetComposesSince(t *testing.T) {
 
 func testGetComposeImageType(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
-	conn := connect(t)
+	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
 
 	composeId := uuid.New()
@@ -271,9 +205,9 @@ func testGetComposeImageType(t *testing.T) {
 
 func testDeleteCompose(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
-	conn := connect(t)
+	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
 
 	composeId := uuid.New()
@@ -301,9 +235,9 @@ func testDeleteCompose(t *testing.T) {
 
 func testClones(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
-	conn := connect(t)
+	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
 
 	composeId := uuid.New()
@@ -375,9 +309,9 @@ func testClones(t *testing.T) {
 
 func testBlueprints(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
-	conn := connect(t)
+	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
 
 	name1 := "name"
@@ -528,9 +462,9 @@ func testBlueprints(t *testing.T) {
 
 func testGetBlueprintComposes(t *testing.T) {
 	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(connStr(t))
+	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
 	require.NoError(t, err)
-	conn := connect(t)
+	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
 
 	id := uuid.New()
@@ -596,12 +530,6 @@ func testGetBlueprintComposes(t *testing.T) {
 	require.Equal(t, 2, version)
 }
 
-func runTest(t *testing.T, f func(*testing.T)) {
-	migrateTern(t)
-	defer tearDown(t)
-	f(t)
-}
-
 func TestAll(t *testing.T) {
 	fns := []func(*testing.T){
 		testInsertCompose,
@@ -615,6 +543,6 @@ func TestAll(t *testing.T) {
 	}
 
 	for _, f := range fns {
-		runTest(t, f)
+		tutils.RunTest(t, f)
 	}
 }
