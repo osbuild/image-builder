@@ -35,6 +35,13 @@
             },
             "api.ContentUnitSearchRequest": {
                 "properties": {
+                    "exact_names": {
+                        "description": "List of names to search using an exact match",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "limit": {
                         "description": "Maximum number of records to return for the search",
                         "type": "integer"
@@ -527,6 +534,10 @@
                         "description": "Timestamp of last introspection that had updates",
                         "type": "string"
                     },
+                    "latest_snapshot_url": {
+                        "description": "Latest URL for the snapshot distribution",
+                        "type": "string"
+                    },
                     "metadata_verification": {
                         "description": "Verify packages",
                         "type": "boolean"
@@ -775,6 +786,10 @@
                     },
                     "last_update_introspection_time": {
                         "description": "Timestamp of last introspection that had updates",
+                        "type": "string"
+                    },
+                    "latest_snapshot_url": {
+                        "description": "Latest URL for the snapshot distribution",
                         "type": "string"
                     },
                     "metadata_verification": {
@@ -1433,6 +1448,11 @@
                             "type": "string"
                         },
                         "type": "array"
+                    },
+                    "rhsm_environment_created": {
+                        "description": "Whether the candlepin environment is created and systems can be added",
+                        "readOnly": true,
+                        "type": "boolean"
                     },
                     "rhsm_environment_id": {
                         "description": "Environment ID used by subscription-manager and candlepin",
@@ -3200,6 +3220,78 @@
                 ]
             }
         },
+        "/repositories/{uuid}/config.repo": {
+            "get": {
+                "operationId": "getLatestRepoConfigurationFile",
+                "parameters": [
+                    {
+                        "description": "Repository ID.",
+                        "in": "path",
+                        "name": "uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Get latest configuration file for a repository",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
         "/repositories/{uuid}/environments": {
             "get": {
                 "description": "List environments in a repository.",
@@ -4113,6 +4205,7 @@
         },
         "/rpms/presence": {
             "post": {
+                "deprecated": true,
                 "description": "This enables users to detect presence of RPMs (Red Hat Package Manager) in a given list of repositories.",
                 "operationId": "detectRpm",
                 "requestBody": {
@@ -5800,6 +5893,30 @@
                         "name": "repository_search",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Sort the response data based on specific snapshot parameters. Sort criteria can include `repository_name` or `created_at`.",
+                        "in": "query",
+                        "name": "sort_by",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.",
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
                         }
                     }
                 ],

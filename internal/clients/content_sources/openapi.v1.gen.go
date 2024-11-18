@@ -27,6 +27,9 @@ type ApiArtifact struct {
 
 // ApiContentUnitSearchRequest defines model for api.ContentUnitSearchRequest.
 type ApiContentUnitSearchRequest struct {
+	// ExactNames List of names to search using an exact match
+	ExactNames *[]string `json:"exact_names,omitempty"`
+
 	// Limit Maximum number of records to return for the search
 	Limit *int `json:"limit,omitempty"`
 
@@ -317,6 +320,9 @@ type ApiRepositoryImportResponse struct {
 	// LastUpdateIntrospectionTime Timestamp of last introspection that had updates
 	LastUpdateIntrospectionTime *string `json:"last_update_introspection_time,omitempty"`
 
+	// LatestSnapshotUrl Latest URL for the snapshot distribution
+	LatestSnapshotUrl *string `json:"latest_snapshot_url,omitempty"`
+
 	// MetadataVerification Verify packages
 	MetadataVerification *bool `json:"metadata_verification,omitempty"`
 
@@ -467,6 +473,9 @@ type ApiRepositoryResponse struct {
 
 	// LastUpdateIntrospectionTime Timestamp of last introspection that had updates
 	LastUpdateIntrospectionTime *string `json:"last_update_introspection_time,omitempty"`
+
+	// LatestSnapshotUrl Latest URL for the snapshot distribution
+	LatestSnapshotUrl *string `json:"latest_snapshot_url,omitempty"`
 
 	// MetadataVerification Verify packages
 	MetadataVerification *bool `json:"metadata_verification,omitempty"`
@@ -878,6 +887,9 @@ type ApiTemplateResponse struct {
 	// RepositoryUuids Repositories added to the template
 	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
 
+	// RhsmEnvironmentCreated Whether the candlepin environment is created and systems can be added
+	RhsmEnvironmentCreated *bool `json:"rhsm_environment_created,omitempty"`
+
 	// RhsmEnvironmentId Environment ID used by subscription-manager and candlepin
 	RhsmEnvironmentId *string `json:"rhsm_environment_id,omitempty"`
 
@@ -1254,6 +1266,15 @@ type ListTemplateRpmsParams struct {
 type ListSnapshotsForTemplateParams struct {
 	// RepositorySearch Search through snapshots by repository name.
 	RepositorySearch *string `form:"repository_search,omitempty" json:"repository_search,omitempty"`
+
+	// SortBy Sort the response data based on specific snapshot parameters. Sort criteria can include `repository_name` or `created_at`.
+	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+
+	// Offset Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Limit Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // SearchEnvironmentsJSONRequestBody defines body for SearchEnvironments for application/json ContentType.
