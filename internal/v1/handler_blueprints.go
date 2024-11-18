@@ -316,6 +316,10 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 		},
 	}
 
+	if len(blueprint.ImageRequests) != 0 {
+		blueprintExportResponse.SnapshotDate = blueprint.ImageRequests[0].SnapshotDate
+	}
+
 	repoUUIDs := []string{}
 	if blueprint.Customizations.CustomRepositories != nil {
 		for _, repo := range *blueprint.Customizations.CustomRepositories {
