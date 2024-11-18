@@ -31,6 +31,7 @@ type BlueprintExportResponseUnmarshal struct {
 	Distribution   Distributions                                 `json:"distribution"`
 	Metadata       BlueprintMetadata                             `json:"metadata"`
 	Name           string                                        `json:"name"`
+	SnapshotDate   *string                                       `json:"snapshot_date,omitempty"`
 }
 
 func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, srvURL string, shutdown func()) {
@@ -1011,6 +1012,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 					Type:    UploadTypesAws,
 					Options: uploadOptions,
 				},
+				SnapshotDate: common.ToPtr("2012-12-20"),
 			},
 			{
 				Architecture: ImageRequestArchitectureAarch64,
@@ -1019,6 +1021,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 					Type:    UploadTypesAws,
 					Options: uploadOptions,
 				},
+				SnapshotDate: common.ToPtr("2012-12-21"),
 			},
 		},
 	}
@@ -1056,6 +1059,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.Equal(t, "payload", *result.ContentSources[0].Name)
 	require.Equal(t, "http://snappy-url/snappy/baseos", *result.ContentSources[0].Url)
 	require.Equal(t, "some-gpg-key", *result.ContentSources[0].GpgKey)
+	require.Equal(t, "2012-12-20", *result.SnapshotDate)
 	require.Len(t, result.ContentSources, 1)
 	// Check that the password returned is redacted
 	for _, u := range *result.Customizations.Users {
