@@ -19,7 +19,14 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.20'
+        go-version: 'stable'
+        
+    - name: Apt update
+      run: sudo apt update
+
+    # This is needed for the container resolver dependencies
+    - name: Install libgpgme devel package
+      run: sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev podman
 
     - name: Build
       run: go build -v ./...
