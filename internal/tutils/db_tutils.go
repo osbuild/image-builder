@@ -20,8 +20,6 @@ func conf(t *testing.T) *config.ImageBuilderConfig {
 		PGHost:            "localhost",
 		PGPort:            "5432",
 		PGDatabase:        "imagebuilder",
-		PGUser:            "postgres",
-		PGPassword:        "foobar",
 		PGSSLMode:         "disable",
 	}
 
