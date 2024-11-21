@@ -13,7 +13,7 @@ type ApiAddUploadsRequest struct {
 	Artifacts *[]ApiArtifact `json:"artifacts,omitempty"`
 
 	// Uploads List of unfinished uploads
-	Uploads *[]ApiUpload `json:"uploads,omitempty"`
+	Uploads []ApiUpload `json:"uploads"`
 }
 
 // ApiArtifact defines model for api.Artifact.
@@ -27,6 +27,9 @@ type ApiArtifact struct {
 
 // ApiContentUnitSearchRequest defines model for api.ContentUnitSearchRequest.
 type ApiContentUnitSearchRequest struct {
+	// ExactNames List of names to search using an exact match
+	ExactNames *[]string `json:"exact_names,omitempty"`
+
 	// Limit Maximum number of records to return for the search
 	Limit *int `json:"limit,omitempty"`
 
@@ -43,7 +46,7 @@ type ApiContentUnitSearchRequest struct {
 // ApiCreateUploadRequest defines model for api.CreateUploadRequest.
 type ApiCreateUploadRequest struct {
 	// Size Size of the upload in bytes
-	Size *int `json:"size,omitempty"`
+	Size int `json:"size"`
 }
 
 // ApiDetectRpmsRequest defines model for api.DetectRpmsRequest.
@@ -85,7 +88,7 @@ type ApiFeatureSet map[string]ApiFeature
 // ApiFetchGPGKeyRequest defines model for api.FetchGPGKeyRequest.
 type ApiFetchGPGKeyRequest struct {
 	// Url The url from which to download the GPG Key.
-	Url *string `json:"url,omitempty"`
+	Url string `json:"url"`
 }
 
 // ApiFetchGPGKeyResponse defines model for api.FetchGPGKeyResponse.
@@ -124,10 +127,10 @@ type ApiLinks struct {
 // ApiListSnapshotByDateRequest defines model for api.ListSnapshotByDateRequest.
 type ApiListSnapshotByDateRequest struct {
 	// Date Exact date to search by.
-	Date *string `json:"date,omitempty"`
+	Date string `json:"date"`
 
 	// RepositoryUuids Repository UUIDs to find snapshots for
-	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
+	RepositoryUuids []string `json:"repository_uuids"`
 }
 
 // ApiListSnapshotByDateResponse defines model for api.ListSnapshotByDateResponse.
@@ -238,7 +241,7 @@ type ApiRepositoryEnvironmentCollectionResponse struct {
 // ApiRepositoryExportRequest defines model for api.RepositoryExportRequest.
 type ApiRepositoryExportRequest struct {
 	// RepositoryUuids List of repository uuids to export
-	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
+	RepositoryUuids []string `json:"repository_uuids"`
 }
 
 // ApiRepositoryExportResponse defines model for api.RepositoryExportResponse.
@@ -316,6 +319,9 @@ type ApiRepositoryImportResponse struct {
 
 	// LastUpdateIntrospectionTime Timestamp of last introspection that had updates
 	LastUpdateIntrospectionTime *string `json:"last_update_introspection_time,omitempty"`
+
+	// LatestSnapshotUrl Latest URL for the snapshot distribution
+	LatestSnapshotUrl *string `json:"latest_snapshot_url,omitempty"`
 
 	// MetadataVerification Verify packages
 	MetadataVerification *bool `json:"metadata_verification,omitempty"`
@@ -410,7 +416,7 @@ type ApiRepositoryRequest struct {
 	ModuleHotfixes *bool `json:"module_hotfixes,omitempty"`
 
 	// Name Name of the remote yum repository
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 
 	// Origin Origin of the repository
 	Origin *string `json:"origin,omitempty"`
@@ -467,6 +473,9 @@ type ApiRepositoryResponse struct {
 
 	// LastUpdateIntrospectionTime Timestamp of last introspection that had updates
 	LastUpdateIntrospectionTime *string `json:"last_update_introspection_time,omitempty"`
+
+	// LatestSnapshotUrl Latest URL for the snapshot distribution
+	LatestSnapshotUrl *string `json:"latest_snapshot_url,omitempty"`
 
 	// MetadataVerification Verify packages
 	MetadataVerification *bool `json:"metadata_verification,omitempty"`
@@ -821,7 +830,7 @@ type ApiTemplateCollectionResponse struct {
 // ApiTemplateRequest defines model for api.TemplateRequest.
 type ApiTemplateRequest struct {
 	// Arch Architecture of the template
-	Arch *string `json:"arch,omitempty"`
+	Arch string `json:"arch"`
 
 	// Date Latest date to include snapshots for
 	Date *string `json:"date,omitempty"`
@@ -830,16 +839,16 @@ type ApiTemplateRequest struct {
 	Description *string `json:"description,omitempty"`
 
 	// Name Name of the template
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name"`
 
 	// RepositoryUuids Repositories to add to the template
-	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
+	RepositoryUuids []string `json:"repository_uuids"`
 
 	// UseLatest Use latest snapshot for all repositories in the template
 	UseLatest *bool `json:"use_latest,omitempty"`
 
 	// Version Version of the template
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version"`
 }
 
 // ApiTemplateResponse defines model for api.TemplateResponse.
@@ -878,6 +887,9 @@ type ApiTemplateResponse struct {
 	// RepositoryUuids Repositories added to the template
 	RepositoryUuids *[]string `json:"repository_uuids,omitempty"`
 
+	// RhsmEnvironmentCreated Whether the candlepin environment is created and systems can be added
+	RhsmEnvironmentCreated *bool `json:"rhsm_environment_created,omitempty"`
+
 	// RhsmEnvironmentId Environment ID used by subscription-manager and candlepin
 	RhsmEnvironmentId *string `json:"rhsm_environment_id,omitempty"`
 
@@ -912,7 +924,7 @@ type ApiTemplateUpdateRequest struct {
 
 // ApiUUIDListRequest defines model for api.UUIDListRequest.
 type ApiUUIDListRequest struct {
-	Uuids *[]string `json:"uuids,omitempty"`
+	Uuids []string `json:"uuids"`
 }
 
 // ApiUpload defines model for api.Upload.
@@ -1213,6 +1225,9 @@ type ListTemplatesParams struct {
 	// RepositoryUuids Filter templates by associated repositories using a comma separated list of repository UUIDs
 	RepositoryUuids *string `form:"repository_uuids,omitempty" json:"repository_uuids,omitempty"`
 
+	// SnapshotUuids Filter templates by associated snapshots using a comma separated list of snapshot UUIDs
+	SnapshotUuids *string `form:"snapshot_uuids,omitempty" json:"snapshot_uuids,omitempty"`
+
 	// SortBy Sort the response data based on specific parameters. Sort criteria can include `name`, `arch`, and `version`.
 	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
 }
@@ -1254,6 +1269,15 @@ type ListTemplateRpmsParams struct {
 type ListSnapshotsForTemplateParams struct {
 	// RepositorySearch Search through snapshots by repository name.
 	RepositorySearch *string `form:"repository_search,omitempty" json:"repository_search,omitempty"`
+
+	// SortBy Sort the response data based on specific snapshot parameters. Sort criteria can include `repository_name` or `created_at`.
+	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+
+	// Offset Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Limit Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // SearchEnvironmentsJSONRequestBody defines body for SearchEnvironments for application/json ContentType.

@@ -14,6 +14,12 @@ const (
 	BearerScopes = "Bearer.Scopes"
 )
 
+// Defines values for AzureUploadOptionsHyperVGeneration.
+const (
+	V1 AzureUploadOptionsHyperVGeneration = "V1"
+	V2 AzureUploadOptionsHyperVGeneration = "V2"
+)
+
 // Defines values for BlueprintCustomizationsPartitioningMode.
 const (
 	BlueprintCustomizationsPartitioningModeAutoLvm BlueprintCustomizationsPartitioningMode = "auto-lvm"
@@ -145,6 +151,10 @@ type AWSS3UploadStatus struct {
 
 // AzureUploadOptions defines model for AzureUploadOptions.
 type AzureUploadOptions struct {
+	// HyperVGeneration Choose the VM Image HyperV generation, different features on Azure are available
+	// depending on the HyperV generation.
+	HyperVGeneration *AzureUploadOptionsHyperVGeneration `json:"hyper_v_generation,omitempty"`
+
 	// ImageName Name of the uploaded image. It must be unique in the given resource group.
 	// If name is omitted from the request, a random one based on a UUID is
 	// generated.
@@ -167,6 +177,10 @@ type AzureUploadOptions struct {
 	// https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant
 	TenantId string `json:"tenant_id"`
 }
+
+// AzureUploadOptionsHyperVGeneration Choose the VM Image HyperV generation, different features on Azure are available
+// depending on the HyperV generation.
+type AzureUploadOptionsHyperVGeneration string
 
 // AzureUploadStatus defines model for AzureUploadStatus.
 type AzureUploadStatus struct {

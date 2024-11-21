@@ -18,6 +18,9 @@
                         "type": "array"
                     }
                 },
+                "required": [
+                    "uploads"
+                ],
                 "type": "object"
             },
             "api.Artifact": {
@@ -35,6 +38,13 @@
             },
             "api.ContentUnitSearchRequest": {
                 "properties": {
+                    "exact_names": {
+                        "description": "List of names to search using an exact match",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "limit": {
                         "description": "Maximum number of records to return for the search",
                         "type": "integer"
@@ -67,6 +77,9 @@
                         "type": "integer"
                     }
                 },
+                "required": [
+                    "size"
+                ],
                 "type": "object"
             },
             "api.DetectRpmsRequest": {
@@ -144,6 +157,9 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "url"
+                ],
                 "type": "object"
             },
             "api.FetchGPGKeyResponse": {
@@ -207,6 +223,10 @@
                         "type": "array"
                     }
                 },
+                "required": [
+                    "date",
+                    "repository_uuids"
+                ],
                 "type": "object"
             },
             "api.ListSnapshotByDateResponse": {
@@ -404,6 +424,9 @@
                         "type": "array"
                     }
                 },
+                "required": [
+                    "repository_uuids"
+                ],
                 "type": "object"
             },
             "api.RepositoryExportResponse": {
@@ -525,6 +548,10 @@
                     },
                     "last_update_introspection_time": {
                         "description": "Timestamp of last introspection that had updates",
+                        "type": "string"
+                    },
+                    "latest_snapshot_url": {
+                        "description": "Latest URL for the snapshot distribution",
                         "type": "string"
                     },
                     "metadata_verification": {
@@ -702,6 +729,9 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "name"
+                ],
                 "type": "object"
             },
             "api.RepositoryResponse": {
@@ -775,6 +805,10 @@
                     },
                     "last_update_introspection_time": {
                         "description": "Timestamp of last introspection that had updates",
+                        "type": "string"
+                    },
+                    "latest_snapshot_url": {
+                        "description": "Latest URL for the snapshot distribution",
                         "type": "string"
                     },
                     "metadata_verification": {
@@ -1380,6 +1414,12 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "arch",
+                    "name",
+                    "repository_uuids",
+                    "version"
+                ],
                 "type": "object"
             },
             "api.TemplateResponse": {
@@ -1433,6 +1473,11 @@
                             "type": "string"
                         },
                         "type": "array"
+                    },
+                    "rhsm_environment_created": {
+                        "description": "Whether the candlepin environment is created and systems can be added",
+                        "readOnly": true,
+                        "type": "boolean"
                     },
                     "rhsm_environment_id": {
                         "description": "Environment ID used by subscription-manager and candlepin",
@@ -1494,6 +1539,9 @@
                         "type": "array"
                     }
                 },
+                "required": [
+                    "uuids"
+                ],
                 "type": "object"
             },
             "api.Upload": {
@@ -2802,6 +2850,159 @@
                 ]
             }
         },
+        "/repositories/{repo_uuid}/snapshots/bulk_delete/": {
+            "post": {
+                "description": "This enables deleting specified snapshots from a repository.",
+                "operationId": "bulkDeleteSnapshots",
+                "parameters": [
+                    {
+                        "description": "Repository UUID.",
+                        "in": "path",
+                        "name": "repo_uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "*/*": {
+                            "schema": {
+                                "$ref": "#/components/schemas/api.UUIDListRequest"
+                            }
+                        }
+                    },
+                    "description": "Identifiers of the snapshots",
+                    "required": true,
+                    "x-originalParamName": "body"
+                },
+                "responses": {
+                    "204": {
+                        "description": "Snapshots were successfully deleted"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Bulk delete a snapshots",
+                "tags": [
+                    "snapshots"
+                ]
+            }
+        },
+        "/repositories/{repo_uuid}/snapshots/{snapshot_uuid}": {
+            "delete": {
+                "description": "This enables deleting a specific snapshot.",
+                "operationId": "deleteSnapshot",
+                "parameters": [
+                    {
+                        "description": "Repository UUID.",
+                        "in": "path",
+                        "name": "repo_uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Snapshot UUID.",
+                        "in": "path",
+                        "name": "snapshot_uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Snapshot was successfully deleted"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Delete a snapshot",
+                "tags": [
+                    "snapshots"
+                ]
+            }
+        },
         "/repositories/{uuid}": {
             "delete": {
                 "description": "This enables deleting a specific repository.",
@@ -3195,6 +3396,78 @@
                     }
                 },
                 "summary": "Add uploads to a repository",
+                "tags": [
+                    "repositories"
+                ]
+            }
+        },
+        "/repositories/{uuid}/config.repo": {
+            "get": {
+                "operationId": "getLatestRepoConfigurationFile",
+                "parameters": [
+                    {
+                        "description": "Repository ID.",
+                        "in": "path",
+                        "name": "uuid",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/errors.ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "summary": "Get latest configuration file for a repository",
                 "tags": [
                     "repositories"
                 ]
@@ -4113,6 +4386,7 @@
         },
         "/rpms/presence": {
             "post": {
+                "deprecated": true,
                 "description": "This enables users to detect presence of RPMs (Red Hat Package Manager) in a given list of repositories.",
                 "operationId": "detectRpm",
                 "requestBody": {
@@ -5067,6 +5341,14 @@
                         }
                     },
                     {
+                        "description": "Filter templates by associated snapshots using a comma separated list of snapshot UUIDs",
+                        "in": "query",
+                        "name": "snapshot_uuids",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "description": "Sort the response data based on specific parameters. Sort criteria can include `name`, `arch`, and `version`.",
                         "in": "query",
                         "name": "sort_by",
@@ -5800,6 +6082,30 @@
                         "name": "repository_search",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Sort the response data based on specific snapshot parameters. Sort criteria can include `repository_name` or `created_at`.",
+                        "in": "query",
+                        "name": "sort_by",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.",
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.",
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "type": "integer"
                         }
                     }
                 ],
