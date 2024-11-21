@@ -324,7 +324,7 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 	}
 
 	exportedRepositoriesResp, err := h.server.csClient.BulkExportRepositories(ctx.Request().Context(), content_sources.ApiRepositoryExportRequest{
-		RepositoryUuids: common.ToPtr(repoUUIDs),
+		RepositoryUuids: repoUUIDs,
 	})
 	if err != nil {
 		return err
