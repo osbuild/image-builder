@@ -935,7 +935,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 			err := json.NewDecoder(r.Body).Decode(&body)
 			require.NoError(t, err)
 			gpgKey := "some-gpg-key"
-			if slices.Equal(*body.RepositoryUuids, []string{
+			if slices.Equal(body.RepositoryUuids, []string{
 				repoPayloadId.String(),
 			}) {
 				result := []content_sources.ApiRepositoryExportResponse{
@@ -947,7 +947,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 				}
 				err = json.NewEncoder(w).Encode(result)
 				require.NoError(t, err)
-			} else if slices.Equal(*body.RepositoryUuids, []string{repoPayloadId.String(), repoPayloadId2.String()}) {
+			} else if slices.Equal(body.RepositoryUuids, []string{repoPayloadId.String(), repoPayloadId2.String()}) {
 				result := []content_sources.ApiRepositoryExportResponse{
 					{
 						GpgKey: &gpgKey,

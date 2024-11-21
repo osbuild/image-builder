@@ -886,9 +886,9 @@ func TestComposeWithSnapshots(t *testing.T) {
 			var body content_sources.ApiListSnapshotByDateRequest
 			err := json.NewDecoder(r.Body).Decode(&body)
 			require.NoError(t, err)
-			require.Equal(t, "1999-01-30T00:00:00Z", *body.Date)
+			require.Equal(t, "1999-01-30T00:00:00Z", body.Date)
 
-			if slices.Equal(*body.RepositoryUuids, []string{
+			if slices.Equal(body.RepositoryUuids, []string{
 				repoBaseId.String(),
 				repoAppstrId.String(),
 			}) {
@@ -916,7 +916,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				}
 				err = json.NewEncoder(w).Encode(result)
 				require.NoError(t, err)
-			} else if slices.Equal(*body.RepositoryUuids, []string{repoPayloadId.String()}) {
+			} else if slices.Equal(body.RepositoryUuids, []string{repoPayloadId.String()}) {
 				result := content_sources.ApiListSnapshotByDateResponse{
 					Data: &[]content_sources.ApiSnapshotForDate{
 						{
@@ -932,7 +932,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				}
 				err = json.NewEncoder(w).Encode(result)
 				require.NoError(t, err)
-			} else if slices.Equal(*body.RepositoryUuids, []string{
+			} else if slices.Equal(body.RepositoryUuids, []string{
 				repoPayloadId.String(),
 				repoPayloadId2.String(),
 			}) {
