@@ -1332,6 +1332,15 @@ components:
             Name of the created image.
             Must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens.
             The total length is limited to 60 characters.
+        hyper_v_generation:
+          type: string
+          enum:
+            - V1
+            - V2
+          default: V1
+          description: |
+            Choose the VM Image HyperV generation, different features on Azure are available
+            depending on the HyperV generation.
     OCIUploadRequestOptions:
       type: object
     OSTree:

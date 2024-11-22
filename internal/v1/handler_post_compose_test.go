@@ -1466,9 +1466,10 @@ func TestComposeCustomizations(t *testing.T) {
 	var auo UploadRequest_Options
 	require.NoError(t, auo.FromAzureUploadRequestOptions(AzureUploadRequestOptions{
 		ResourceGroup:  "group",
-		SubscriptionId: common.ToPtr("id"),
-		TenantId:       common.ToPtr("tenant"),
-		ImageName:      common.ToPtr("azure-image"),
+		SubscriptionId:   common.ToPtr("id"),
+		TenantId:         common.ToPtr("tenant"),
+		ImageName:        common.ToPtr("azure-image"),
+		HyperVGeneration: common.ToPtr(V2),
 	}))
 	var auo2 UploadRequest_Options
 	require.NoError(t, auo2.FromAzureUploadRequestOptions(AzureUploadRequestOptions{
@@ -1957,10 +1958,11 @@ func TestComposeCustomizations(t *testing.T) {
 						},
 					},
 					UploadOptions: makeUploadOptions(t, composer.AzureUploadOptions{
-						ImageName:      common.ToPtr("azure-image"),
-						ResourceGroup:  "group",
-						SubscriptionId: "id",
-						TenantId:       "tenant",
+						ImageName:        common.ToPtr("azure-image"),
+						ResourceGroup:    "group",
+						SubscriptionId:   "id",
+						TenantId:         "tenant",
+						HyperVGeneration: common.ToPtr(composer.V2),
 					}),
 				},
 			},

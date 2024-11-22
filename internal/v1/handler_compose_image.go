@@ -486,11 +486,17 @@ func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it Ima
 			subscriptionId = *uploadInfo.Azure.SubscriptionId
 		}
 
+		var hyperVGen *composer.AzureUploadOptionsHyperVGeneration
+		if uo.HyperVGeneration != nil {
+			hyperVGen = common.ToPtr(composer.AzureUploadOptionsHyperVGeneration(*uo.HyperVGeneration))
+		}
+
 		err = uploadOptions.FromAzureUploadOptions(composer.AzureUploadOptions{
-			TenantId:       tenantId,
-			SubscriptionId: subscriptionId,
-			ResourceGroup:  uo.ResourceGroup,
-			ImageName:      uo.ImageName,
+			TenantId:         tenantId,
+			SubscriptionId:   subscriptionId,
+			ResourceGroup:    uo.ResourceGroup,
+			ImageName:        uo.ImageName,
+			HyperVGeneration: hyperVGen,
 		})
 		if err != nil {
 			return uploadOptions, "", err
