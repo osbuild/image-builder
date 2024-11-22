@@ -1081,6 +1081,7 @@ components:
       required:
         - parent_id
         - exported_at
+        - is_on_prem
       properties:
         parent_id:
           type: string
@@ -1088,6 +1089,9 @@ components:
           nullable: true
         exported_at:
           type: string
+        is_on_prem:
+          type: boolean
+          default: false
     Distributions:
       type: string
       description: |

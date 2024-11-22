@@ -211,6 +211,7 @@ objects:
           v.blueprint_id::text as blueprint_id, v.version, b.deleted,
           b.metadata->>'exported_at' as exported_at,
           b.metadata->>'parent_id' as parent_id
+          b.metadata->>'is_on_prem' as is_on_prem
         from
           blueprint_versions v
           left outer join blueprints b ON v.blueprint_id = b.id
