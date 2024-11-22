@@ -403,7 +403,7 @@ func TestComposeStatusError(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB()
+	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
 	imageName := "MyImageName"
 	clientId := "ui"

@@ -34,7 +34,7 @@ type BlueprintExportResponseUnmarshal struct {
 }
 
 func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, srvURL string, shutdown func()) {
-	dbase, err := dbc.NewDB()
+	dbase, err := dbc.NewDB(context.Background())
 	require.NoError(t, err)
 
 	db_srv, tokenSrv := startServer(t, &testServerClientsConf{
@@ -542,7 +542,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB()
+	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
 	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 		DBase:            dbase,

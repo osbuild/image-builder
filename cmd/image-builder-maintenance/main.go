@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
+	ctx := context.Background()
+
 	logrus.SetReportCaller(true)
 
 	conf := Config{
@@ -36,7 +39,7 @@ func main() {
 		conf.PGDatabase,
 		conf.PGSSLMode,
 	)
-	err = DBCleanup(dbURL, conf.DryRun, conf.ClonesRetentionMonths)
+	err = DBCleanup(ctx, dbURL, conf.DryRun, conf.ClonesRetentionMonths)
 	if err != nil {
 		logrus.Fatalf("Error during DBCleanup: %v", err)
 	}

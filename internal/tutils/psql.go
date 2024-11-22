@@ -146,7 +146,7 @@ func callTernMigrate(ctx context.Context, opt TernMigrateOptions) ([]byte, error
 	return cmd.CombinedOutput()
 }
 
-func (p *PSQLContainer) NewDB() (db.DB, error) {
+func (p *PSQLContainer) NewDB(ctx context.Context) (db.DB, error) {
 	dbName := fmt.Sprintf("test%s", strings.Replace(uuid.New().String(), "-", "", -1))
 	_, err := p.execQuery("", fmt.Sprintf("CREATE DATABASE %s", dbName))
 	if err != nil {
@@ -154,7 +154,7 @@ func (p *PSQLContainer) NewDB() (db.DB, error) {
 	}
 
 	out, err := callTernMigrate(
-		context.Background(),
+		ctx,
 		TernMigrateOptions{
 			MigrationsDir: "../db/migrations-tern/",
 			Hostname:      "localhost",
@@ -167,5 +167,5 @@ func (p *PSQLContainer) NewDB() (db.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tern command error: %w, output: %s", err, out)
 	}
-	return db.InitDBConnectionPool(fmt.Sprintf("postgres://postgres@localhost:%d/%s", p.port, dbName))
+	return db.InitDBConnectionPool(ctx, fmt.Sprintf("postgres://postgres@localhost:%d/%s", p.port, dbName))
 }

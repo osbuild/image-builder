@@ -45,8 +45,8 @@ type maintenanceDB struct {
 	Conn *pgx.Conn
 }
 
-func newDB(dbURL string) (maintenanceDB, error) {
-	conn, err := pgx.Connect(context.Background(), dbURL)
+func newDB(ctx context.Context, dbURL string) (maintenanceDB, error) {
+	conn, err := pgx.Connect(ctx, dbURL)
 	if err != nil {
 		return maintenanceDB{}, err
 	}
@@ -60,50 +60,50 @@ func (d *maintenanceDB) Close() error {
 	return d.Conn.Close(context.Background())
 }
 
-func (d *maintenanceDB) DeleteClones(emailRetentionDate time.Time) (int64, error) {
-	tag, err := d.Conn.Exec(context.Background(), sqlDeleteClones, emailRetentionDate)
+func (d *maintenanceDB) DeleteClones(ctx context.Context, emailRetentionDate time.Time) (int64, error) {
+	tag, err := d.Conn.Exec(ctx, sqlDeleteClones, emailRetentionDate)
 	if err != nil {
 		return tag.RowsAffected(), fmt.Errorf("Error deleting clones: %v", err)
 	}
 	return tag.RowsAffected(), nil
 }
 
-func (d *maintenanceDB) DeleteComposes(emailRetentionDate time.Time) (int64, error) {
-	tag, err := d.Conn.Exec(context.Background(), sqlDeleteComposes, emailRetentionDate)
+func (d *maintenanceDB) DeleteComposes(ctx context.Context, emailRetentionDate time.Time) (int64, error) {
+	tag, err := d.Conn.Exec(ctx, sqlDeleteComposes, emailRetentionDate)
 	if err != nil {
 		return tag.RowsAffected(), fmt.Errorf("Error deleting composes: %v", err)
 	}
 	return tag.RowsAffected(), nil
 }
 
-func (d *maintenanceDB) ExpiredClonesCount(emailRetentionDate time.Time) (int64, error) {
+func (d *maintenanceDB) ExpiredClonesCount(ctx context.Context, emailRetentionDate time.Time) (int64, error) {
 	var count int64
-	err := d.Conn.QueryRow(context.Background(), sqlExpiredClonesCount, emailRetentionDate).Scan(&count)
+	err := d.Conn.QueryRow(ctx, sqlExpiredClonesCount, emailRetentionDate).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
 }
 
-func (d *maintenanceDB) ExpiredComposesCount(emailRetentionDate time.Time) (int64, error) {
+func (d *maintenanceDB) ExpiredComposesCount(ctx context.Context, emailRetentionDate time.Time) (int64, error) {
 	var count int64
-	err := d.Conn.QueryRow(context.Background(), sqlExpiredComposesCount, emailRetentionDate).Scan(&count)
+	err := d.Conn.QueryRow(ctx, sqlExpiredComposesCount, emailRetentionDate).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
 }
 
-func (d *maintenanceDB) VacuumAnalyze() error {
-	_, err := d.Conn.Exec(context.Background(), sqlVacuumAnalyze)
+func (d *maintenanceDB) VacuumAnalyze(ctx context.Context) error {
+	_, err := d.Conn.Exec(ctx, sqlVacuumAnalyze)
 	if err != nil {
 		return fmt.Errorf("Error running VACUUM ANALYZE: %v", err)
 	}
 	return nil
 }
 
-func (d *maintenanceDB) LogVacuumStats() (int64, error) {
-	rows, err := d.Conn.Query(context.Background(), sqlVacuumStats)
+func (d *maintenanceDB) LogVacuumStats(ctx context.Context) (int64, error) {
+	rows, err := d.Conn.Query(ctx, sqlVacuumStats)
 	if err != nil {
 		return int64(0), fmt.Errorf("Error querying vacuum stats: %v", err)
 	}
@@ -112,34 +112,41 @@ func (d *maintenanceDB) LogVacuumStats() (int64, error) {
 	deleted := int64(0)
 
 	for rows.Next() {
-		var relName, relSize string
-		var ins, upd, del, live, dead, vc, avc, ac, aac int64
-		var lvc, lavc, lan, laan *time.Time
-
-		err = rows.Scan(&relName, &relSize, &ins, &upd, &del, &live, &dead,
-			&vc, &avc, &ac, &aac,
-			&lvc, &lavc, &lan, &laan)
-		if err != nil {
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			logrus.Errorf("Context cancelled LogVacuumStats: %v", err)
 			return int64(0), err
-		}
+		default:
+			var relName, relSize string
+			var ins, upd, del, live, dead, vc, avc, ac, aac int64
+			var lvc, lavc, lan, laan *time.Time
 
-		logrus.WithFields(logrus.Fields{
-			"table_name":        relName,
-			"table_size":        relSize,
-			"tuples_inserted":   ins,
-			"tuples_updated":    upd,
-			"tuples_deleted":    del,
-			"tuples_live":       live,
-			"tuples_dead":       dead,
-			"vacuum_count":      vc,
-			"autovacuum_count":  avc,
-			"last_vacuum":       lvc,
-			"last_autovacuum":   lavc,
-			"analyze_count":     ac,
-			"autoanalyze_count": aac,
-			"last_analyze":      lan,
-			"last_autoanalyze":  laan,
-		}).Info("Vacuum and analyze stats for table")
+			err = rows.Scan(&relName, &relSize, &ins, &upd, &del, &live, &dead,
+				&vc, &avc, &ac, &aac,
+				&lvc, &lavc, &lan, &laan)
+			if err != nil {
+				return int64(0), err
+			}
+
+			logrus.WithFields(logrus.Fields{
+				"table_name":        relName,
+				"table_size":        relSize,
+				"tuples_inserted":   ins,
+				"tuples_updated":    upd,
+				"tuples_deleted":    del,
+				"tuples_live":       live,
+				"tuples_dead":       dead,
+				"vacuum_count":      vc,
+				"autovacuum_count":  avc,
+				"last_vacuum":       lvc,
+				"last_autovacuum":   lavc,
+				"analyze_count":     ac,
+				"autoanalyze_count": aac,
+				"last_analyze":      lan,
+				"last_autoanalyze":  laan,
+			}).Info("Vacuum and analyze stats for table")
+		}
 	}
 	if rows.Err() != nil {
 		return int64(0), rows.Err()
@@ -148,13 +155,13 @@ func (d *maintenanceDB) LogVacuumStats() (int64, error) {
 
 }
 
-func DBCleanup(dbURL string, dryRun bool, ClonesRetentionMonths int) error {
-	db, err := newDB(dbURL)
+func DBCleanup(ctx context.Context, dbURL string, dryRun bool, ClonesRetentionMonths int) error {
+	db, err := newDB(ctx, dbURL)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.LogVacuumStats()
+	_, err = db.LogVacuumStats(ctx)
 	if err != nil {
 		logrus.Errorf("Error running vacuum stats: %v", err)
 	}
@@ -165,13 +172,22 @@ func DBCleanup(dbURL string, dryRun bool, ClonesRetentionMonths int) error {
 	emailRetentionDate := time.Now().AddDate(0, ClonesRetentionMonths*-1, 0)
 
 	for {
+		select {
+		case <-ctx.Done():
+			err = ctx.Err()
+			logrus.Errorf("Context cancelled DBCleanup: %v", err)
+			return err
+		default:
+			// continue execution outside of select
+			// so `break` works as expected
+		}
 		if dryRun {
-			rowsClones, err = db.ExpiredClonesCount(emailRetentionDate)
+			rowsClones, err = db.ExpiredClonesCount(ctx, emailRetentionDate)
 			if err != nil {
 				logrus.Warningf("Error querying expired clones: %v", err)
 			}
 
-			rows, err = db.ExpiredComposesCount(emailRetentionDate)
+			rows, err = db.ExpiredComposesCount(ctx, emailRetentionDate)
 			if err != nil {
 				logrus.Warningf("Error querying expired composes: %v", err)
 			}
@@ -179,19 +195,19 @@ func DBCleanup(dbURL string, dryRun bool, ClonesRetentionMonths int) error {
 			break
 		}
 
-		rows, err = db.DeleteClones(emailRetentionDate)
+		rows, err = db.DeleteClones(ctx, emailRetentionDate)
 		if err != nil {
 			logrus.Errorf("Error deleting clones: %v, %d rows affected", rows, err)
 			return err
 		}
 
-		rows, err = db.DeleteComposes(emailRetentionDate)
+		rows, err = db.DeleteComposes(ctx, emailRetentionDate)
 		if err != nil {
 			logrus.Errorf("Error deleting composes: %v, %d rows affected", rows, err)
 			return err
 		}
 
-		err = db.VacuumAnalyze()
+		err = db.VacuumAnalyze(ctx)
 		if err != nil {
 			logrus.Errorf("Error running vacuum analyze: %v", err)
 			return err
@@ -204,7 +220,7 @@ func DBCleanup(dbURL string, dryRun bool, ClonesRetentionMonths int) error {
 		logrus.Infof("Deleted results for %d", rows)
 	}
 
-	_, err = db.LogVacuumStats()
+	_, err = db.LogVacuumStats(ctx)
 	if err != nil {
 		logrus.Errorf("Error running vacuum stats: %v", err)
 	}
