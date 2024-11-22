@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Hour)
+	defer cancel()
 
 	logrus.SetReportCaller(true)
 
