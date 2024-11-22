@@ -32,7 +32,8 @@
   "distribution": "centos-9",
   "metadata": {
     "exported_at": "2013-06-13 00:00:00 +0000 UTC",
-    "parent_id": "f43a4ec2-5447-4a25-8a62-e258ff11a2d9"
+    "parent_id": "f43a4ec2-5447-4a25-8a62-e258ff11a2d9",
+    "is_on_prem": false
   },
   "name": "blueprint"
 }

@@ -255,6 +255,7 @@ type BlueprintItem struct {
 // BlueprintMetadata defines model for BlueprintMetadata.
 type BlueprintMetadata struct {
 	ExportedAt string              `json:"exported_at"`
+	IsOnPrem   bool                `json:"is_on_prem"`
 	ParentId   *openapi_types.UUID `json:"parent_id"`
 }
 
