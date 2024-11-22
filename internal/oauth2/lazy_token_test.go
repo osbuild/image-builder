@@ -9,6 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+
+	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,6 +38,9 @@ func TestLazyToken(t *testing.T) {
 	}))
 	defer mockServer.Close()
 
+	_, hook := logrusTest.NewNullLogger()
+	logrus.AddHook(hook)
+
 	clientID := "test-client-id"
 	clientSecret := "test-client-secret"
 	lazyToken := &LazyToken{
@@ -46,9 +53,20 @@ func TestLazyToken(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "mock-token-1", token)
 
+	// ensure no token is not part of the logs
+	assert.Equal(t, 1, len(hook.Entries))
+	assert.Contains(t, hook.Entries[0].Message, "Acquired new token")
+	assert.NotContains(t, hook.Entries[0].Message, "mock-token-1")
+	hook.Reset()
+
 	token, err = lazyToken.Token(ctx)
 	require.NoError(t, err)
 	require.Equal(t, "mock-token-1", token)
+
+	assert.Equal(t, 1, len(hook.Entries))
+	assert.Contains(t, hook.Entries[0].Message, "AccessToken reused")
+	assert.NotContains(t, hook.Entries[0].Message, "mock-token-1")
+	hook.Reset()
 
 	// generates a new token when token expired
 	lazyToken.Expiration = time.Now().Add(-time.Minute) // Expire the token
