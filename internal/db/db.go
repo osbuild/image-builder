@@ -157,7 +157,7 @@ const (
 			WHERE composes.org_id=$2)`
 )
 
-func InitDBConnectionPool(connStr string) (DB, error) {
+func InitDBConnectionPool(ctx context.Context, connStr string) (DB, error) {
 	dbConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func InitDBConnectionPool(connStr string) (DB, error) {
 
 	dbConfig.ConnConfig.Tracer = &dbTracer{}
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), dbConfig)
+	pool, err := pgxpool.NewWithConfig(ctx, dbConfig)
 	if err != nil {
 		return nil, err
 	}

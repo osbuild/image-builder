@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"runtime/debug"
@@ -55,6 +56,8 @@ func main() {
 		PGPassword:    "foobar",
 		PGSSLMode:     "prefer",
 	}
+
+	ctx := context.Background()
 
 	err := config.LoadConfigFromEnv(&conf)
 	if err != nil {
@@ -113,7 +116,7 @@ func main() {
 	}
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase, conf.PGSSLMode)
-	dbase, err := db.InitDBConnectionPool(connStr)
+	dbase, err := db.InitDBConnectionPool(ctx, connStr)
 	if err != nil {
 		panic(err)
 	}

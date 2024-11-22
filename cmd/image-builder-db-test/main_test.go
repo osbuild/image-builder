@@ -32,9 +32,8 @@ const (
 	fortnight = time.Hour * 24 * 14
 )
 
-func testInsertCompose(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testInsertCompose(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
@@ -42,7 +41,7 @@ func testInsertCompose(t *testing.T) {
 	blueprintId := uuid.New()
 	versionId := uuid.New()
 
-	tutils.MigrateTern(t)
+	tutils.MigrateTern(ctx, t)
 
 	err = d.InsertBlueprint(ctx, blueprintId, versionId, ORGID1, ANR1, "blueprint", "blueprint desc", []byte("{}"), []byte("{}"))
 	require.NoError(t, err)
@@ -56,9 +55,8 @@ func testInsertCompose(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func testGetCompose(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testGetCompose(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
@@ -98,9 +96,8 @@ func testGetCompose(t *testing.T) {
 
 }
 
-func testCountComposesSince(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testCountComposesSince(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 
 	imageName := "MyImageName"
@@ -132,9 +129,8 @@ func testCountComposesSince(t *testing.T) {
 	require.Equal(t, 3, count)
 }
 
-func testCountGetComposesSince(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testCountGetComposesSince(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 
 	conn := tutils.Connect(t)
@@ -166,9 +162,8 @@ func testCountGetComposesSince(t *testing.T) {
 	require.Equal(t, job1, composes[0].Id)
 }
 
-func testGetComposeImageType(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testGetComposeImageType(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
@@ -203,9 +198,8 @@ func testGetComposeImageType(t *testing.T) {
 	require.Error(t, err)
 }
 
-func testDeleteCompose(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testDeleteCompose(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
@@ -233,9 +227,8 @@ func testDeleteCompose(t *testing.T) {
 	require.Equal(t, 1, count)
 }
 
-func testClones(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testClones(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
@@ -307,9 +300,8 @@ func testClones(t *testing.T) {
 	require.Equal(t, clones[1], *entry)
 }
 
-func testBlueprints(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testBlueprints(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
@@ -460,9 +452,8 @@ func testBlueprints(t *testing.T) {
 	require.Equal(t, 0, count)
 }
 
-func testGetBlueprintComposes(t *testing.T) {
-	ctx := context.Background()
-	d, err := db.InitDBConnectionPool(tutils.ConnStr(t))
+func testGetBlueprintComposes(ctx context.Context, t *testing.T) {
+	d, err := db.InitDBConnectionPool(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 	conn := tutils.Connect(t)
 	defer conn.Close(ctx)
@@ -531,7 +522,8 @@ func testGetBlueprintComposes(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
-	fns := []func(*testing.T){
+	ctx := context.Background()
+	fns := []func(context.Context, *testing.T){
 		testInsertCompose,
 		testGetCompose,
 		testCountComposesSince,
@@ -543,6 +535,12 @@ func TestAll(t *testing.T) {
 	}
 
 	for _, f := range fns {
-		tutils.RunTest(t, f)
+		select {
+		case <-ctx.Done():
+			require.NoError(t, ctx.Err())
+			return
+		default:
+			tutils.RunTest(ctx, t, f)
+		}
 	}
 }

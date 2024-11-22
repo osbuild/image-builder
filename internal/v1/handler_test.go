@@ -164,7 +164,7 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 			require.NoError(t, err)
 		}))
 
-		dbase, err := dbc.NewDB()
+		dbase, err := dbc.NewDB(ctx)
 		require.NoError(t, err)
 		cr := ComposeRequest{
 			Distribution: "rhel-9",
@@ -267,7 +267,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB()
+	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
 	imageName := "MyImageName"
 	clientId := "ui"
@@ -331,7 +331,7 @@ func TestGetComposes(t *testing.T) {
 	id5 := uuid.New()
 	id6 := uuid.New()
 
-	dbase, err := dbc.NewDB()
+	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
 
 	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
@@ -529,7 +529,7 @@ func TestGetClones(t *testing.T) {
 	}))
 	defer provSrv.Close()
 
-	dbase, err := dbc.NewDB()
+	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
 	err = dbase.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", nil, json.RawMessage(`
 {
@@ -622,7 +622,7 @@ func TestGetCloneStatus(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB()
+	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
 	err = dbase.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", nil, json.RawMessage(`
 {

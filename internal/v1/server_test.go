@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -113,6 +114,8 @@ type testServer struct {
 }
 
 func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) (*testServer, *httptest.Server) {
+	ctx := context.Background()
+
 	var log = &logrus.Logger{
 		Out:       os.Stderr,
 		Formatter: new(logrus.TextFormatter),
@@ -179,7 +182,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	}
 
 	if serverConfig.DBase == nil {
-		dbase, err := dbc.NewDB()
+		dbase, err := dbc.NewDB(ctx)
 		require.NoError(t, err)
 		serverConfig.DBase = dbase
 	}

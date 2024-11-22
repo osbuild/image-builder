@@ -41,8 +41,7 @@ func Connect(t *testing.T) *pgx.Conn {
 	return conn
 }
 
-func TearDown(t *testing.T) {
-	ctx := context.Background()
+func TearDown(ctx context.Context, t *testing.T) {
 	conn := Connect(t)
 	defer conn.Close(ctx)
 	_, err := conn.Exec(ctx, "drop schema public cascade")
@@ -55,12 +54,12 @@ func TearDown(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func MigrateTern(t *testing.T) {
+func MigrateTern(ctx context.Context, t *testing.T) {
 	// run tern migration on top of existing db
 	c := conf(t)
 
 	output, err := callTernMigrate(
-		context.Background(),
+		ctx,
 		TernMigrateOptions{
 			MigrationsDir: c.TernMigrationsDir,
 			DBName:        c.PGDatabase,
@@ -73,8 +72,8 @@ func MigrateTern(t *testing.T) {
 	require.NoErrorf(t, err, "tern command failed with non-zero code, combined output: %s", string(output))
 }
 
-func RunTest(t *testing.T, f func(*testing.T)) {
-	MigrateTern(t)
-	defer TearDown(t)
-	f(t)
+func RunTest(ctx context.Context, t *testing.T, f func(context.Context, *testing.T)) {
+	MigrateTern(ctx, t)
+	defer TearDown(ctx, t)
+	f(ctx, t)
 }

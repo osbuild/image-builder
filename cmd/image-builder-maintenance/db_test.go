@@ -29,11 +29,9 @@ const (
 
 // testExpireCompose testing expiration of compose only
 // also tests vacuum
-func testExpireCompose(t *testing.T) {
-	ctx := context.Background()
-
+func testExpireCompose(ctx context.Context, t *testing.T) {
 	connStr := tutils.ConnStr(t)
-	d, err := newDB(connStr)
+	d, err := newDB(ctx, connStr)
 	require.NoError(t, err)
 
 	dbClonesRetentionMonths := 5
@@ -46,16 +44,16 @@ func testExpireCompose(t *testing.T) {
 	_, err = d.Conn.Exec(ctx, insert, composeId, "{}", alreadyExpiredTime, ANR1, ORGID1)
 	require.NoError(t, err)
 
-	require.NoError(t, d.VacuumAnalyze())
-	deleted, err := d.LogVacuumStats()
+	require.NoError(t, d.VacuumAnalyze(ctx))
+	deleted, err := d.LogVacuumStats(ctx)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), deleted)
 
-	rows, err := d.ExpiredComposesCount(emailRetentionDate)
+	rows, err := d.ExpiredComposesCount(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
-	rows, err = d.DeleteComposes(emailRetentionDate)
+	rows, err = d.DeleteComposes(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
@@ -63,12 +61,12 @@ func testExpireCompose(t *testing.T) {
 	_, err = d.Conn.Exec(ctx, "CHECKPOINT")
 	require.NoError(t, err)
 
-	rows, err = d.ExpiredComposesCount(emailRetentionDate)
+	rows, err = d.ExpiredComposesCount(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), rows)
 
-	require.NoError(t, d.VacuumAnalyze())
-	_, err = d.LogVacuumStats()
+	require.NoError(t, d.VacuumAnalyze(ctx))
+	_, err = d.LogVacuumStats(ctx)
 	//deleted, err = d.LogVacuumStats()
 	// skip check for now
 	// until we found out why this works locally but not in
@@ -77,14 +75,12 @@ func testExpireCompose(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func testExpireByCallingDBCleanup(t *testing.T) {
-	ctx := context.Background()
-
+func testExpireByCallingDBCleanup(ctx context.Context, t *testing.T) {
 	connStr := tutils.ConnStr(t)
-	d, err := newDB(connStr)
+	d, err := newDB(ctx, connStr)
 	require.NoError(t, err)
 
-	internalDB, err := db.InitDBConnectionPool(connStr)
+	internalDB, err := db.InitDBConnectionPool(ctx, connStr)
 	require.NoError(t, err)
 
 	dbClonesRetentionMonths := 5
@@ -109,42 +105,40 @@ func testExpireByCallingDBCleanup(t *testing.T) {
 `)))
 
 	// two rows inserted, only one is expired
-	rows, err := d.ExpiredComposesCount(emailRetentionDate)
+	rows, err := d.ExpiredComposesCount(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
-	rows, err = d.ExpiredClonesCount(emailRetentionDate)
+	rows, err = d.ExpiredClonesCount(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
-	err = DBCleanup(connStr, false, dbClonesRetentionMonths)
+	err = DBCleanup(ctx, connStr, false, dbClonesRetentionMonths)
 	require.NoError(t, err)
 
-	rows, err = d.ExpiredComposesCount(emailRetentionDate)
+	rows, err = d.ExpiredComposesCount(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), rows)
 
-	rows, err = d.ExpiredClonesCount(emailRetentionDate)
+	rows, err = d.ExpiredClonesCount(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), rows)
 }
 
 // testVacuum test if no vacuum is performed on a clean database
-func testVacuum(t *testing.T) {
-	d, err := newDB(tutils.ConnStr(t))
+func testVacuum(ctx context.Context, t *testing.T) {
+	d, err := newDB(ctx, tutils.ConnStr(t))
 	require.NoError(t, err)
 
-	require.NoError(t, d.VacuumAnalyze())
-	deleted, err := d.LogVacuumStats()
+	require.NoError(t, d.VacuumAnalyze(ctx))
+	deleted, err := d.LogVacuumStats(ctx)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), deleted)
 }
 
-func testDryRun(t *testing.T) {
-	ctx := context.Background()
-
+func testDryRun(ctx context.Context, t *testing.T) {
 	connStr := tutils.ConnStr(t)
-	d, err := newDB(connStr)
+	d, err := newDB(ctx, connStr)
 	require.NoError(t, err)
 
 	dbClonesRetentionMonths := 5
@@ -156,21 +150,22 @@ func testDryRun(t *testing.T) {
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, $3, $4, $5)"
 	_, err = d.Conn.Exec(ctx, insert, composeIdExpired, "{}", alreadyExpiredTime, ANR1, ORGID1)
 
-	rows, err := d.ExpiredComposesCount(emailRetentionDate)
+	rows, err := d.ExpiredComposesCount(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
-	err = DBCleanup(connStr, true, dbClonesRetentionMonths)
+	err = DBCleanup(ctx, connStr, true, dbClonesRetentionMonths)
 	require.NoError(t, err)
 
 	// still there
-	rows, err = d.ExpiredComposesCount(emailRetentionDate)
+	rows, err = d.ExpiredComposesCount(ctx, emailRetentionDate)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 }
 
 func TestAll(t *testing.T) {
-	fns := []func(*testing.T){
+	ctx := context.Background()
+	fns := []func(context.Context, *testing.T){
 		testExpireCompose,
 		testExpireByCallingDBCleanup,
 		testDryRun,
@@ -178,6 +173,12 @@ func TestAll(t *testing.T) {
 	}
 
 	for _, f := range fns {
-		tutils.RunTest(t, f)
+		select {
+		case <-ctx.Done():
+			require.NoError(t, ctx.Err())
+			return
+		default:
+			tutils.RunTest(ctx, t, f)
+		}
 	}
 }
