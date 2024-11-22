@@ -13,6 +13,12 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for AzureUploadRequestOptionsHyperVGeneration.
+const (
+	V1 AzureUploadRequestOptionsHyperVGeneration = "V1"
+	V2 AzureUploadRequestOptionsHyperVGeneration = "V2"
+)
+
 // Defines values for ClientId.
 const (
 	Api ClientId = "api"
@@ -199,6 +205,10 @@ type Architectures = []ArchitectureItem
 
 // AzureUploadRequestOptions defines model for AzureUploadRequestOptions.
 type AzureUploadRequestOptions struct {
+	// HyperVGeneration Choose the VM Image HyperV generation, different features on Azure are available
+	// depending on the HyperV generation.
+	HyperVGeneration *AzureUploadRequestOptionsHyperVGeneration `json:"hyper_v_generation,omitempty"`
+
 	// ImageName Name of the created image.
 	// Must begin with a letter or number, end with a letter, number or underscore, and may contain only letters, numbers, underscores, periods, or hyphens.
 	// The total length is limited to 60 characters.
@@ -221,6 +231,10 @@ type AzureUploadRequestOptions struct {
 	// When providing a tenant_id, also be sure to provide a subscription_id and do not include a source_id.
 	TenantId *string `json:"tenant_id,omitempty"`
 }
+
+// AzureUploadRequestOptionsHyperVGeneration Choose the VM Image HyperV generation, different features on Azure are available
+// depending on the HyperV generation.
+type AzureUploadRequestOptionsHyperVGeneration string
 
 // AzureUploadStatus defines model for AzureUploadStatus.
 type AzureUploadStatus struct {
