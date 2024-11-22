@@ -52,9 +52,9 @@ func (lt *LazyToken) acquireNewToken(ctx context.Context, forceRefresh bool) (st
 		lt.AccessToken = tokenRes.AccessToken
 		lt.Expiration = time.Now().Add(time.Duration(tokenRes.ExpiresIn) * time.Second)
 
-		logrus.WithContext(ctx).Infof("Acquired new token %s with expiration at: %s", lt.AccessToken, lt.Expiration)
+		logrus.WithContext(ctx).Infof("Acquired new token with expiration at: %s", lt.Expiration)
 	} else {
-		logrus.WithContext(ctx).Infof("AccessToken reused: %s (expires at %s)", lt.AccessToken, lt.Expiration)
+		logrus.WithContext(ctx).Infof("AccessToken reused, which expires at %s", lt.Expiration)
 	}
 
 	return lt.AccessToken, nil
