@@ -90,7 +90,7 @@ generate:
 	go generate ./...
 
 .PHONY: push-check
-push-check: generate build unit-tests
+push-check: generate build unit-tests ubi-maintenance-container-test
 	./tools/prepare-source.sh
 	@if [ 0 -ne $$(git status --porcelain --untracked-files|wc -l) ]; then \
 	    echo "There should be no changed or untracked files"; \
