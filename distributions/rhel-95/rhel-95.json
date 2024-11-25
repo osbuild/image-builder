@@ -2,7 +2,8 @@
   "module_platform_id": "platform:el9",
   "oscap_name": "rhel9",
   "distribution": {
-    "name": "rhel-9.5",
+    "name": "rhel-95",
+    "composer_name": "rhel-9.5",
     "description": "Red Hat Enterprise Linux (RHEL) 9"
   },
   "x86_64": {
