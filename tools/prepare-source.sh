@@ -23,4 +23,3 @@ $GO_BINARY fmt -mod=mod ./internal/... ./cmd/...
 
 # ... and that go.mod and go.sum are up to date.
 $GO_BINARY mod tidy
-$GO_BINARY mod vendor
