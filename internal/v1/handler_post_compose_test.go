@@ -987,7 +987,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 		// basic without payload or custom repositories
 		{
 			imageBuilderRequest: ComposeRequest{
-				Distribution: "rhel-94",
+				Distribution: "rhel-95",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1001,7 +1001,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-94",
+				Distribution: "rhel-9.5",
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
 					ImageType:    composer.ImageTypesGuestImage,
@@ -1036,7 +1036,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 		// 1 payload 2 custom repositories
 		{
 			imageBuilderRequest: ComposeRequest{
-				Distribution: "rhel-94",
+				Distribution: "rhel-95",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1074,7 +1074,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-94",
+				Distribution: "rhel-9.5",
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
 					ImageType:    composer.ImageTypesGuestImage,
@@ -1135,7 +1135,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 		// 2 payload 1 custom repository
 		{
 			imageBuilderRequest: ComposeRequest{
-				Distribution: "rhel-94",
+				Distribution: "rhel-95",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1172,7 +1172,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-94",
+				Distribution: "rhel-9.5",
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
 					ImageType:    composer.ImageTypesGuestImage,
@@ -1231,7 +1231,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 		// gcp
 		{
 			imageBuilderRequest: ComposeRequest{
-				Distribution: "rhel-94",
+				Distribution: "rhel-95",
 				ImageRequests: []ImageRequest{
 					{
 						Architecture: "x86_64",
@@ -1265,7 +1265,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				},
 			},
 			composerRequest: composer.ComposeRequest{
-				Distribution: "rhel-94",
+				Distribution: "rhel-9.5",
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
 					ImageType:    composer.ImageTypesGcp,

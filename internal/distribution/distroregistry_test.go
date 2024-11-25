@@ -9,7 +9,7 @@ import (
 )
 
 func TestDistroRegistry_List(t *testing.T) {
-	allDistros := []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-8.10", "rhel-9", "rhel-9-beta", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "rhel-94", "centos-9", "rhel-10-beta", "rhel-10-nightly", "centos-10", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}
+	allDistros := []string{"rhel-8", "rhel-8-nightly", "rhel-84", "rhel-85", "rhel-86", "rhel-87", "rhel-88", "rhel-89", "rhel-8.10", "rhel-9", "rhel-9-beta", "rhel-9-nightly", "rhel-90", "rhel-91", "rhel-92", "rhel-93", "rhel-94", "rhel-95", "centos-9", "rhel-10-beta", "rhel-10-nightly", "centos-10", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}
 	notEntitledDistros := []string{"rhel-8-nightly", "rhel-9-nightly", "rhel-10-nightly", "centos-9", "centos-10", "fedora-37", "fedora-38", "fedora-39", "fedora-40", "fedora-41"}
 
 	dr, err := LoadDistroRegistry("../../distributions")
@@ -33,7 +33,7 @@ func TestDistroRegistry_Get(t *testing.T) {
 	require.NoError(t, err)
 
 	result, err := dr.Available(true).Get("rhel-9")
-	require.Equal(t, "rhel-94", result.Distribution.Name)
+	require.Equal(t, "rhel-95", result.Distribution.Name)
 	require.Nil(t, err)
 
 	// don't test packages, they are huge
@@ -45,7 +45,8 @@ func TestDistroRegistry_Get(t *testing.T) {
 		OscapName:        "rhel9",
 		Distribution: DistributionItem{
 			Description:      "Red Hat Enterprise Linux (RHEL) 9",
-			Name:             "rhel-94",
+			Name:             "rhel-95",
+			ComposerName:     common.ToPtr("rhel-9.5"),
 			RestrictedAccess: false,
 		},
 		ArchX86: &Architecture{
