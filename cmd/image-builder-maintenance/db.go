@@ -11,13 +11,6 @@ import (
 )
 
 const (
-	sqlDeleteClones = `
-                DELETE FROM clones
-                WHERE compose_id in (
-                    SELECT job_id
-                    FROM composes
-                    WHERE created_at < $1
-                )`
 	sqlDeleteComposes = `
                 DELETE FROM composes
                 WHERE created_at < $1`
@@ -58,14 +51,6 @@ func newDB(ctx context.Context, dbURL string) (maintenanceDB, error) {
 
 func (d *maintenanceDB) Close() error {
 	return d.Conn.Close(context.Background())
-}
-
-func (d *maintenanceDB) DeleteClones(ctx context.Context, emailRetentionDate time.Time) (int64, error) {
-	tag, err := d.Conn.Exec(ctx, sqlDeleteClones, emailRetentionDate)
-	if err != nil {
-		return tag.RowsAffected(), fmt.Errorf("Error deleting clones: %v", err)
-	}
-	return tag.RowsAffected(), nil
 }
 
 func (d *maintenanceDB) DeleteComposes(ctx context.Context, emailRetentionDate time.Time) (int64, error) {
@@ -193,12 +178,6 @@ func DBCleanup(ctx context.Context, dbURL string, dryRun bool, ClonesRetentionMo
 			}
 			logrus.Infof("Dryrun, expired composes count: %d (affecting %d clones)", rows, rowsClones)
 			break
-		}
-
-		rows, err = db.DeleteClones(ctx, emailRetentionDate)
-		if err != nil {
-			logrus.Errorf("Error deleting clones: %v, %d rows affected", rows, err)
-			return err
 		}
 
 		rows, err = db.DeleteComposes(ctx, emailRetentionDate)
