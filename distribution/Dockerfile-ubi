@@ -18,6 +18,7 @@ RUN mkdir /app
 RUN mkdir -p "/opt/migrate/"
 COPY --from=builder /opt/app-root/src/go/bin/image-builder /app/
 COPY --from=builder /opt/app-root/src/go/bin/image-builder-migrate-db-tern /app/
+COPY --from=builder /opt/app-root/src/go/bin/image-builder-maintenance /app/
 COPY ./distributions /app/distributions
 COPY ./internal/db/migrations-tern /app/migrations
 COPY ./distribution/openshift-startup.sh /opt/openshift-startup.sh

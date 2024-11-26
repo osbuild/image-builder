@@ -28,8 +28,3 @@ mkdir -p "$DOCKER_CONF"
 docker --config="$DOCKER_CONF" login -u="$QUAY_USER" -p="$QUAY_TOKEN" quay.io
 docker --config="$DOCKER_CONF" build -f distribution/Dockerfile-ubi -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 docker --config="$DOCKER_CONF" push "${IMAGE_NAME}:${IMAGE_TAG}"
-
-# Maintenance image
-IMAGE_NAME="quay.io/app-sre/image-builder-maintenance"
-docker --config="$DOCKER_CONF" build -f distribution/Dockerfile-ubi-maintenance -t "${IMAGE_NAME}:${IMAGE_TAG}" .
-docker --config="$DOCKER_CONF" push "${IMAGE_NAME}:${IMAGE_TAG}"

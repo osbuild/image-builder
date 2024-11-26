@@ -33,6 +33,7 @@ objects:
             containers:
             - image: "${IMAGE_NAME}:${IMAGE_TAG}"
               name: image-builder-maintenance
+              command: ["/app/image-builder-maintenance"]
               resources:
                 requests:
                   cpu: "${CPU_REQUEST}"
@@ -90,7 +91,7 @@ objects:
 parameters:
   - description: maintenance image name
     name: IMAGE_NAME
-    value: quay.io/app-sre/image-builder-maintenance
+    value: quay.io/cloudservices/image-builder
     required: true
   - description: composer image tag
     name: IMAGE_TAG

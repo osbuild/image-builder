@@ -50,20 +50,15 @@ check-api-spec:
 .PHONY: ubi-container
 ubi-container:
 	if [ -f .git ]; then echo "You seem to be in a git worktree - build will fail here"; exit 1; fi
-	podman build --pull=always -t osbuild/image-builder -f distribution/Dockerfile-ubi .
-
-.PHONY: ubi-maintenance-container
-ubi-maintenance-container:
-	if [ -f .git ]; then echo "You seem to be in a git worktree - build will fail here"; exit 1; fi
 	# backwards compatibility with old podman used in github
-	podman build --pull=always -t osbuild/image-builder-maintenance -f distribution/Dockerfile-ubi-maintenance . || \
-	podman build -t osbuild/image-builder-maintenance -f distribution/Dockerfile-ubi-maintenance .
+	podman build --pull=always -t osbuild/image-builder -f distribution/Dockerfile-ubi . || \
+	podman build -t osbuild/image-builder -f distribution/Dockerfile-ubi .
 
 .PHONY: ubi-maintenance-container-test
-ubi-maintenance-container-test: ubi-maintenance-container
+ubi-maintenance-container-test: ubi-container
 	# just check if the container would start
 	# functional tests are in the target "db-tests"
-	podman run --rm --tty osbuild/image-builder-maintenance 2>&1 | grep "Dry run, no state will be changed"
+	podman run --rm --tty --entrypoint /app/image-builder-maintenance osbuild/image-builder 2>&1 | grep "Dry run, no state will be changed"
 
 .PHONY: generate-openscap-blueprints
 generate-openscap-blueprints:
