@@ -14,6 +14,11 @@ var (
 	osStderr io.Writer = os.Stderr
 )
 
+type cmdlineOpts struct {
+	dataDir string
+	out     io.Writer
+}
+
 func cmdListImages(cmd *cobra.Command, args []string) error {
 	filter, err := cmd.Flags().GetStringArray("filter")
 	if err != nil {
@@ -23,8 +28,16 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return err
+	}
 
-	return listImages(osStdout, output, filter)
+	opts := &cmdlineOpts{
+		out:     osStdout,
+		dataDir: dataDir,
+	}
+	return listImages(output, filter, opts)
 }
 
 func run() error {
@@ -42,6 +55,7 @@ Image-builder builds operating system images for a range of predefined
 operating sytsems like centos and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 	}
+	rootCmd.PersistentFlags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 

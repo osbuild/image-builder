@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -33,7 +34,12 @@ func MockOsStderr(new io.Writer) (restore func()) {
 
 func MockNewRepoRegistry(f func() (*reporegistry.RepoRegistry, error)) (restore func()) {
 	saved := newRepoRegistry
-	newRepoRegistry = f
+	newRepoRegistry = func(dataDir string) (*reporegistry.RepoRegistry, error) {
+		if dataDir != "" {
+			panic(fmt.Sprintf("cannot use custom dataDir %v in mock", dataDir))
+		}
+		return f()
+	}
 	return func() {
 		newRepoRegistry = saved
 	}

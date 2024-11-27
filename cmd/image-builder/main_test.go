@@ -96,3 +96,15 @@ func TestBadCmdErrorsNoExtraCobraNoise(t *testing.T) {
 	// no extra output from cobra
 	assert.Equal(t, "", fakeStderr.String())
 }
+
+func TestListImagesOverrideDatadir(t *testing.T) {
+	restore := main.MockOsArgs([]string{"--datadir=/this/path/does/not/exist", "list-images"})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.EqualError(t, err, `no repositories found in the given paths: [/this/path/does/not/exist]`)
+}
