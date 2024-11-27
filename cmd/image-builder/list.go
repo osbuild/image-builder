@@ -4,8 +4,8 @@ import (
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
-func listImages(output string, filterExprs []string, opts *cmdlineOpts) error {
-	imageFilter, err := newImageFilterDefault(opts.dataDir)
+func listImages(dataDir, output string, filterExprs []string) error {
+	imageFilter, err := newImageFilterDefault(dataDir)
 	if err != nil {
 		return err
 	}
@@ -19,7 +19,7 @@ func listImages(output string, filterExprs []string, opts *cmdlineOpts) error {
 	if err != nil {
 		return err
 	}
-	if err := fmter.Output(opts.out, filteredResult); err != nil {
+	if err := fmter.Output(osStdout, filteredResult); err != nil {
 		return err
 	}
 

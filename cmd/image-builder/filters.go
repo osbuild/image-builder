@@ -16,6 +16,7 @@ func newImageFilterDefault(dataDir string) (*imagefilter.ImageFilter, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return imagefilter.New(fac, repos)
 }
 

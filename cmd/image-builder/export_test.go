@@ -10,6 +10,7 @@ import (
 
 var (
 	GetOneImage = getOneImage
+	Run         = run
 )
 
 func MockOsArgs(new []string) (restore func()) {
@@ -48,7 +49,3 @@ func MockNewRepoRegistry(f func() (*reporegistry.RepoRegistry, error)) (restore 
 		newRepoRegistry = saved
 	}
 }
-
-var (
-	Run = run
-)
