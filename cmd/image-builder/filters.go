@@ -5,9 +5,9 @@ import (
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
-func newImageFilterDefault() (*imagefilter.ImageFilter, error) {
+func newImageFilterDefault(dataDir string) (*imagefilter.ImageFilter, error) {
 	fac := distrofactory.NewDefault()
-	repos, err := newRepoRegistry()
+	repos, err := newRepoRegistry(dataDir)
 	if err != nil {
 		return nil, err
 	}

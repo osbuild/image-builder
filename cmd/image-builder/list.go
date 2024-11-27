@@ -1,13 +1,11 @@
 package main
 
 import (
-	"io"
-
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
-func listImages(out io.Writer, output string, filterExprs []string) error {
-	imageFilter, err := newImageFilterDefault()
+func listImages(output string, filterExprs []string, opts *cmdlineOpts) error {
+	imageFilter, err := newImageFilterDefault(opts.dataDir)
 	if err != nil {
 		return err
 	}
@@ -21,7 +19,7 @@ func listImages(out io.Writer, output string, filterExprs []string) error {
 	if err != nil {
 		return err
 	}
-	if err := fmter.Output(out, filteredResult); err != nil {
+	if err := fmter.Output(opts.out, filteredResult); err != nil {
 		return err
 	}
 
