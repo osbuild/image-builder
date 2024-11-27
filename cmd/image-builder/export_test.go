@@ -8,6 +8,10 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 )
 
+var (
+	GetOneImage = getOneImage
+)
+
 func MockOsArgs(new []string) (restore func()) {
 	saved := os.Args
 	os.Args = append([]string{"argv0"}, new...)
