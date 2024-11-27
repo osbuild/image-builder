@@ -7,17 +7,17 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/blueprint"
+
+	"github.com/osbuild/image-builder-cli/internal/manifestgen"
 )
 
 var (
 	osStdout io.Writer = os.Stdout
 	osStderr io.Writer = os.Stderr
 )
-
-type cmdlineOpts struct {
-	dataDir string
-	out     io.Writer
-}
 
 func cmdListImages(cmd *cobra.Command, args []string) error {
 	filter, err := cmd.Flags().GetStringArray("filter")
@@ -33,11 +33,40 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	opts := &cmdlineOpts{
-		out:     osStdout,
-		dataDir: dataDir,
+	return listImages(dataDir, output, filter)
+}
+
+func cmdManifest(cmd *cobra.Command, args []string) error {
+	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return err
 	}
-	return listImages(output, filter, opts)
+
+	distroStr := args[0]
+	imgTypeStr := args[1]
+	var archStr string
+	if len(args) > 2 {
+		archStr = args[2]
+	} else {
+		archStr = arch.Current().String()
+	}
+	res, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	if err != nil {
+		return err
+	}
+	repos, err := newRepoRegistry(dataDir)
+	if err != nil {
+		return err
+	}
+	// XXX: add --rpmmd/cachedir option like bib
+	mg, err := manifestgen.New(repos, &manifestgen.Options{
+		Output: osStdout,
+	})
+	if err != nil {
+		return err
+	}
+	var bp blueprint.Blueprint
+	return mg.Generate(&bp, res.Distro, res.ImgType, res.Arch, nil)
 }
 
 func run() error {
@@ -69,6 +98,17 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	listImagesCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:rhel*")`)
 	listImagesCmd.Flags().String("output", "", "Output in a specific format (text, json)")
 	rootCmd.AddCommand(listImagesCmd)
+
+	manifestCmd := &cobra.Command{
+		Use:          "manifest <distro> <image-type> [<arch>]",
+		Short:        "Build manifest for the given distro/image-type, e.g. centos-9 qcow2",
+		RunE:         cmdManifest,
+		SilenceUsage: true,
+		Args:         cobra.MinimumNArgs(2),
+		Hidden:       true,
+	}
+	// XXX: add blueprint switch
+	rootCmd.AddCommand(manifestCmd)
 
 	return rootCmd.Execute()
 }

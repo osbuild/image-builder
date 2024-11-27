@@ -3,6 +3,7 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -11,6 +12,7 @@ import (
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
 	"github.com/osbuild/image-builder-cli/cmd/image-builder"
+	"github.com/osbuild/image-builder-cli/internal/manifesttest"
 )
 
 func init() {
@@ -122,4 +124,39 @@ func TestListImagesErrorsOnExtraArgs(t *testing.T) {
 
 	err := main.Run()
 	assert.EqualError(t, err, `unknown command "extra-arg" for "image-builder list-images"`)
+}
+
+func hasDepsolveDnf() bool {
+	// XXX: expose images/pkg/depsolve:findDepsolveDnf()
+	_, err := os.Stat("/usr/libexec/osbuild-depsolve-dnf")
+	return err == nil
+}
+
+// XXX: move to pytest like bib maybe?
+func TestManifestIntegrationSmoke(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"manifest", "centos-9", "qcow2"},
+	)
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+	assert.NoError(t, err)
+	assert.Contains(t, pipelineNames, "qcow2")
 }
