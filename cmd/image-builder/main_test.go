@@ -108,3 +108,18 @@ func TestListImagesOverrideDatadir(t *testing.T) {
 	err := main.Run()
 	assert.EqualError(t, err, `no repositories found in the given paths: [/this/path/does/not/exist]`)
 }
+
+func TestListImagesErrorsOnExtraArgs(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs(append([]string{"list-images"}, "extra-arg"))
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.EqualError(t, err, `unknown command "extra-arg" for "image-builder list-images"`)
+}
