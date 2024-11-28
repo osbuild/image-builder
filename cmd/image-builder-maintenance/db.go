@@ -140,7 +140,7 @@ func (d *maintenanceDB) LogVacuumStats(ctx context.Context) (int64, error) {
 
 }
 
-func DBCleanup(ctx context.Context, dbURL string, dryRun bool, ClonesRetentionMonths int) error {
+func DBCleanup(ctx context.Context, dbURL string, dryRun bool, ComposesRetentionMonths int) error {
 	db, err := newDB(ctx, dbURL)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func DBCleanup(ctx context.Context, dbURL string, dryRun bool, ClonesRetentionMo
 	var rowsClones int64
 	var rows int64
 
-	emailRetentionDate := time.Now().AddDate(0, ClonesRetentionMonths*-1, 0)
+	emailRetentionDate := time.Now().AddDate(0, ComposesRetentionMonths*-1, 0)
 
 	for {
 		select {

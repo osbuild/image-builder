@@ -9,15 +9,15 @@ import (
 
 // Do not write this config to logs or stdout, it contains secrets!
 type Config struct {
-	DryRun                bool   `env:"DRY_RUN"`
-	EnableDBMaintenance   bool   `env:"ENABLE_DB_MAINTENANCE"`
-	ClonesRetentionMonths int    `env:"DB_CLONES_RETENTION_MONTHS"`
-	PGHost                string `env:"PGHOST"`
-	PGPort                string `env:"PGPORT"`
-	PGDatabase            string `env:"PGDATABASE"`
-	PGUser                string `env:"PGUSER"`
-	PGPassword            string `env:"PGPASSWORD"`
-	PGSSLMode             string `env:"PGSSLMODE"`
+	DryRun                  bool   `env:"DRY_RUN"`
+	EnableDBMaintenance     bool   `env:"ENABLE_DB_MAINTENANCE"`
+	ComposesRetentionMonths int    `env:"DB_COMPOSES_RETENTION_MONTHS"`
+	PGHost                  string `env:"PGHOST"`
+	PGPort                  string `env:"PGPORT"`
+	PGDatabase              string `env:"PGDATABASE"`
+	PGUser                  string `env:"PGUSER"`
+	PGPassword              string `env:"PGPASSWORD"`
+	PGSSLMode               string `env:"PGSSLMODE"`
 }
 
 // *string means the value is not required

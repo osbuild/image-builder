@@ -38,9 +38,9 @@ func main() {
 	logrus.SetReportCaller(true)
 
 	conf := Config{
-		DryRun:                true,
-		EnableDBMaintenance:   false,
-		ClonesRetentionMonths: 24,
+		DryRun:                  true,
+		EnableDBMaintenance:     false,
+		ComposesRetentionMonths: 24,
 	}
 
 	err := LoadConfigFromEnv(&conf)
@@ -64,7 +64,7 @@ func main() {
 		conf.PGDatabase,
 		conf.PGSSLMode,
 	)
-	err = DBCleanup(ctx, dbURL, conf.DryRun, conf.ClonesRetentionMonths)
+	err = DBCleanup(ctx, dbURL, conf.DryRun, conf.ComposesRetentionMonths)
 	if err != nil {
 		logrus.Fatalf("Error during DBCleanup: %v", err)
 	}

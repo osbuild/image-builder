@@ -78,8 +78,8 @@ objects:
                 value: "${MAINTENANCE_DRY_RUN}"
               - name: ENABLE_DB_MAINTENANCE
                 value: "${ENABLE_DB_MAINTENANCE}"
-              - name: DB_CLONES_RETENTION_MONTHS
-                value: "${DB_CLONES_RETENTION_MONTHS}"
+              - name: DB_COMPOSES_RETENTION_MONTHS
+                value: "${DB_COMPOSES_RETENTION_MONTHS}"
 
 - apiVersion: v1
   kind: ServiceAccount
@@ -118,8 +118,8 @@ parameters:
     # don't change this value, overwrite it in app-interface for a specific namespace
     value: "false"
     required: true
-  - description: Retention period for entries in the "clones" table (in months)
-    name: DB_CLONES_RETENTION_MONTHS
+  - description: Retention period for entries in the "composes" table (in months)
+    name: DB_COMPOSES_RETENTION_MONTHS
     required: false
   - description: postgres sslmode to use when connecting to the db
     name: PGSSLMODE
