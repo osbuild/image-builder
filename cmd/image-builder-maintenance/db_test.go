@@ -34,10 +34,10 @@ func testExpireCompose(ctx context.Context, t *testing.T) {
 	d, err := newDB(ctx, connStr)
 	require.NoError(t, err)
 
-	dbClonesRetentionMonths := 5
+	dbComposesRetentionMonths := 5
 
-	alreadyExpiredTime := time.Now().AddDate(0, (dbClonesRetentionMonths+1)*-1, 0)
-	emailRetentionDate := time.Now().AddDate(0, dbClonesRetentionMonths*-1, 0)
+	alreadyExpiredTime := time.Now().AddDate(0, (dbComposesRetentionMonths+1)*-1, 0)
+	emailRetentionDate := time.Now().AddDate(0, dbComposesRetentionMonths*-1, 0)
 
 	composeId := uuid.New()
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, $3, $4, $5)"
@@ -83,11 +83,11 @@ func testExpireByCallingDBCleanup(ctx context.Context, t *testing.T) {
 	internalDB, err := db.InitDBConnectionPool(ctx, connStr)
 	require.NoError(t, err)
 
-	dbClonesRetentionMonths := 5
+	dbComposesRetentionMonths := 5
 
 	notYetExpiredTime := time.Now()
-	alreadyExpiredTime := time.Now().AddDate(0, (dbClonesRetentionMonths+1)*-1, 0)
-	emailRetentionDate := time.Now().AddDate(0, dbClonesRetentionMonths*-1, 0)
+	alreadyExpiredTime := time.Now().AddDate(0, (dbComposesRetentionMonths+1)*-1, 0)
+	emailRetentionDate := time.Now().AddDate(0, dbComposesRetentionMonths*-1, 0)
 
 	composeIdNotYetExpired := uuid.New()
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, $3, $4, $5)"
@@ -113,7 +113,7 @@ func testExpireByCallingDBCleanup(ctx context.Context, t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
-	err = DBCleanup(ctx, connStr, false, dbClonesRetentionMonths)
+	err = DBCleanup(ctx, connStr, false, dbComposesRetentionMonths)
 	require.NoError(t, err)
 
 	rows, err = d.ExpiredComposesCount(ctx, emailRetentionDate)
@@ -141,10 +141,10 @@ func testDryRun(ctx context.Context, t *testing.T) {
 	d, err := newDB(ctx, connStr)
 	require.NoError(t, err)
 
-	dbClonesRetentionMonths := 5
+	dbComposesRetentionMonths := 5
 
-	alreadyExpiredTime := time.Now().AddDate(0, (dbClonesRetentionMonths+1)*-1, 0)
-	emailRetentionDate := time.Now().AddDate(0, dbClonesRetentionMonths*-1, 0)
+	alreadyExpiredTime := time.Now().AddDate(0, (dbComposesRetentionMonths+1)*-1, 0)
+	emailRetentionDate := time.Now().AddDate(0, dbComposesRetentionMonths*-1, 0)
 
 	composeIdExpired := uuid.New()
 	insert := "INSERT INTO composes(job_id, request, created_at, account_number, org_id) VALUES ($1, $2, $3, $4, $5)"
@@ -154,7 +154,7 @@ func testDryRun(ctx context.Context, t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
-	err = DBCleanup(ctx, connStr, true, dbClonesRetentionMonths)
+	err = DBCleanup(ctx, connStr, true, dbComposesRetentionMonths)
 	require.NoError(t, err)
 
 	// still there
