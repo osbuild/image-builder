@@ -25,7 +25,7 @@ jobs:
       run: sudo apt update
 
     # This is needed for the container resolver dependencies
-    - name: Install libgpgme devel package
+    - name: Install test dependencies
       run: sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev podman
 
     - name: Build
