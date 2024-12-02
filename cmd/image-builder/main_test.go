@@ -134,6 +134,11 @@ func hasDepsolveDnf() bool {
 }
 
 var testBlueprint = `{
+  "containers": [
+    {
+      "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+    }
+  ],
   "customizations": {
     "user": [
       {
@@ -183,4 +188,5 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
 	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
+	assert.Contains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 }
