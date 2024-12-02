@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -132,6 +133,24 @@ func hasDepsolveDnf() bool {
 	return err == nil
 }
 
+var testBlueprint = `{
+  "customizations": {
+    "user": [
+      {
+	"name": "alice"
+      }
+    ]
+  }
+}`
+
+func makeTestBlueprint(t *testing.T, testBlueprint string) string {
+	tmpdir := t.TempDir()
+	blueprintPath := filepath.Join(tmpdir, "blueprint.json")
+	err := os.WriteFile(blueprintPath, []byte(testBlueprint), 0644)
+	assert.NoError(t, err)
+	return blueprintPath
+}
+
 // XXX: move to pytest like bib maybe?
 func TestManifestIntegrationSmoke(t *testing.T) {
 	if testing.Short() {
@@ -145,7 +164,9 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	defer restore()
 
 	restore = main.MockOsArgs([]string{
-		"manifest", "centos-9", "qcow2"},
+		"manifest",
+		"--blueprint", makeTestBlueprint(t, testBlueprint),
+		"centos-9", "qcow2"},
 	)
 	defer restore()
 
@@ -159,4 +180,7 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
 	assert.NoError(t, err)
 	assert.Contains(t, pipelineNames, "qcow2")
+
+	// XXX: provide helpers in manifesttest to extract this in a nicer way
+	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
 }
