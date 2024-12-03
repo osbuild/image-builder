@@ -25,7 +25,7 @@ $ sudo dnf install osbuild osbuild-depsolve-dnf osbuild-composer
 (`osbuild-composer` is only needed to get the repository definitions
 and this dependency will go away soon).
 
-## Example
+## Examples
 
 To see the list of buildable images run:
 ```console
@@ -36,6 +36,15 @@ centos-9 type:qcow2 arch:x86_64
 rhel-10.0 type:ami arch:x86_64
 ...
 ```
+
+To actually build an image run:
+```console
+$ sudo image-builder build qcow2 --distro centos-9
+...
+```
+this will create a directory `centos-9-qcow2-x86_64` under which the
+output is stored.
+
 
 It is possible to filter:
 ```console

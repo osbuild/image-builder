@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/osbuild/image-builder-cli/cmd/image-builder"
 	"github.com/osbuild/image-builder-cli/internal/manifesttest"
+	"github.com/osbuild/image-builder-cli/internal/testutil"
 )
 
 func init() {
@@ -224,4 +226,88 @@ func TestManifestIntegrationCrossArch(t *testing.T) {
 
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
 	assert.Contains(t, fakeStdout.String(), `.el9.s390x.rpm`)
+}
+
+func TestBuildIntegrationHappy(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		makeTestBlueprint(t, testBlueprint),
+		"--distro", "centos-9",
+	})
+	defer restore()
+
+	script := `cat - > "$0".stdin`
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+	defer fakeOsbuildCmd.Restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	// ensure osbuild was run exactly one
+	assert.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
+	// and we passed the output dir
+	osbuildCall := fakeOsbuildCmd.Calls()[0]
+	outputDirPos := slices.Index(osbuildCall, "--output-directory")
+	assert.True(t, outputDirPos > -1)
+	assert.Equal(t, "centos-9-qcow2-x86_64", osbuildCall[outputDirPos+1])
+
+	// ... and that the manifest passed to osbuild
+	manifest, err := os.ReadFile(fakeOsbuildCmd.Path() + ".stdin")
+	assert.NoError(t, err)
+	// XXX: provide helpers in manifesttest to extract this in a nicer way
+	assert.Contains(t, string(manifest), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
+	assert.Contains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+}
+
+func TestBuildIntegrationErrors(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	var fakeStdout, fakeStderr bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+	restore = main.MockOsStderr(&fakeStderr)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		makeTestBlueprint(t, testBlueprint),
+		"--distro", "centos-9",
+	})
+	defer restore()
+
+	script := `
+cat - > "$0".stdin
+>&2 echo "error on stderr"
+exit 1
+`
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+	defer fakeOsbuildCmd.Restore()
+
+	err := main.Run()
+	assert.EqualError(t, err, "running osbuild failed: exit status 1")
+	// ensure errors from osbuild are passed to the user
+	// XXX: once the osbuild.Status is used, also check that stdout
+	// is available (but that cannot be done with the existing
+	// osbuild-exec.go)
+	assert.Equal(t, "error on stderr\n", fakeStderr.String())
 }
