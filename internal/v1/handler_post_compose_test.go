@@ -992,7 +992,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					{
 						Architecture: "x86_64",
 						ImageType:    ImageTypesGuestImage,
-						SnapshotDate: common.ToPtr("1999-01-30"),
+						SnapshotDate: common.ToPtr("1999-01-30T00:00:00Z"),
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesAwsS3,
 							Options: uo,
@@ -1041,7 +1041,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					{
 						Architecture: "x86_64",
 						ImageType:    ImageTypesGuestImage,
-						SnapshotDate: common.ToPtr("1999-01-30"),
+						SnapshotDate: common.ToPtr("1999-01-30T00:00:00Z"),
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesAwsS3,
 							Options: uo,
@@ -1140,7 +1140,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					{
 						Architecture: "x86_64",
 						ImageType:    ImageTypesGuestImage,
-						SnapshotDate: common.ToPtr("1999-01-30"),
+						SnapshotDate: common.ToPtr("1999-01-30T00:00:00Z"),
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesAwsS3,
 							Options: uo,
@@ -1236,7 +1236,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					{
 						Architecture: "x86_64",
 						ImageType:    ImageTypesGcp,
-						SnapshotDate: common.ToPtr("1999-01-30"),
+						SnapshotDate: common.ToPtr("1999-01-30T00:00:00Z"),
 						UploadRequest: UploadRequest{
 							Type:    UploadTypesGcp,
 							Options: uoGCP,
