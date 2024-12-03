@@ -2,6 +2,17 @@
 
 Build images from the commandline in a convenient way.
 
+## Run via container
+
+```console
+$ sudo podman run --privileged \
+   -v ./output:/output \
+   ghcr.io/osbuild/image-builder-cli:latest \
+   build \
+   --distro fedora-41 \
+   minimal-raw
+```
+
 ## Installation
 
 This project is under development right now and needs to be run via:
