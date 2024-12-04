@@ -11,6 +11,7 @@ import (
 var (
 	GetOneImage = getOneImage
 	Run         = run
+	FindDistro  = findDistro
 )
 
 func MockOsArgs(new []string) (restore func()) {
@@ -47,5 +48,13 @@ func MockNewRepoRegistry(f func() (*reporegistry.RepoRegistry, error)) (restore 
 	}
 	return func() {
 		newRepoRegistry = saved
+	}
+}
+
+func MockDistroGetHostDistroName(f func() (string, error)) (restore func()) {
+	saved := distroGetHostDistroName
+	distroGetHostDistroName = f
+	return func() {
+		distroGetHostDistroName = saved
 	}
 }
