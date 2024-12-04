@@ -41,19 +41,32 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	blueprintPath, err := cmd.Flags().GetString("blueprint")
+	archStr, err := cmd.Flags().GetString("arch")
+	if err != nil {
+		return err
+	}
+	if archStr == "" {
+		archStr = arch.Current().String()
+	}
+	distroStr, err := cmd.Flags().GetString("distro")
 	if err != nil {
 		return err
 	}
 
-	distroStr := args[0]
-	imgTypeStr := args[1]
-	var archStr string
-	if len(args) > 2 {
-		archStr = args[2]
-	} else {
-		archStr = arch.Current().String()
+	var blueprintPath string
+	imgTypeStr := args[0]
+	if len(args) > 1 {
+		blueprintPath = args[1]
 	}
+	bp, err := blueprintload.Load(blueprintPath)
+	if err != nil {
+		return err
+	}
+	distroStr, err = findDistro(distroStr, bp.Distro)
+	if err != nil {
+		return err
+	}
+
 	res, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
 	if err != nil {
 		return err
@@ -66,10 +79,6 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	mg, err := manifestgen.New(repos, &manifestgen.Options{
 		Output: osStdout,
 	})
-	if err != nil {
-		return err
-	}
-	bp, err := blueprintload.Load(blueprintPath)
 	if err != nil {
 		return err
 	}
@@ -108,15 +117,15 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	rootCmd.AddCommand(listImagesCmd)
 
 	manifestCmd := &cobra.Command{
-		Use:          "manifest <distro> <image-type> [<arch>]",
+		Use:          "manifest <image-type> [blueprint]",
 		Short:        "Build manifest for the given distro/image-type, e.g. centos-9 qcow2",
 		RunE:         cmdManifest,
 		SilenceUsage: true,
-		Args:         cobra.MinimumNArgs(2),
+		Args:         cobra.RangeArgs(1, 2),
 		Hidden:       true,
 	}
-	// XXX: share with build
-	manifestCmd.Flags().String("blueprint", "", `pass a blueprint file`)
+	manifestCmd.Flags().String("arch", "", `build manifest for a different architecture`)
+	manifestCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
 	rootCmd.AddCommand(manifestCmd)
 
 	return rootCmd.Execute()
