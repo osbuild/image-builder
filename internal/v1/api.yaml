@@ -1077,6 +1077,11 @@ components:
           description: |
             List of custom repositories including all the repository details needed in order
             to recreate the repositories.
+        snapshot_date:
+          type: string
+          description: |
+            Importing the snapshot date will not yet be supported. It is exported for informative reasons.
+            The format is YYYY-MM-DD.
     BlueprintMetadata:
       required:
         - parent_id

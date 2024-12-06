@@ -256,6 +256,10 @@ type BlueprintExportResponse struct {
 	Distribution Distributions     `json:"distribution"`
 	Metadata     BlueprintMetadata `json:"metadata"`
 	Name         string            `json:"name"`
+
+	// SnapshotDate Importing the snapshot date will not yet be supported. It is exported for informative reasons.
+	// The format is YYYY-MM-DD.
+	SnapshotDate *string `json:"snapshot_date,omitempty"`
 }
 
 // BlueprintItem defines model for BlueprintItem.
