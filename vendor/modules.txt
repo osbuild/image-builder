@@ -188,7 +188,7 @@ github.com/oapi-codegen/runtime/types
 # github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240208125334-43c3aac2bb9c
 ## explicit; go 1.19
 github.com/osbuild/community-gateway/oidc-authorizer/pkg/identity
-# github.com/osbuild/images v0.104.0
+# github.com/osbuild/images v0.105.0
 ## explicit; go 1.21.0
 github.com/osbuild/images/pkg/crypt
 # github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20241107161848-2eb3c9f44ca6
