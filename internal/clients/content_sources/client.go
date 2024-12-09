@@ -59,7 +59,7 @@ func (csc *ContentSourcesClient) GetRepositories(ctx context.Context, repoURLs [
 	queryValues := csReposURL.Query()
 	queryValues.Add("url", strings.Join(repoURLs, ","))
 	if external {
-		queryValues.Add("origin", "external")
+		queryValues.Add("origin", "external,upload")
 	} else {
 		queryValues.Add("origin", "red_hat")
 	}
