@@ -893,6 +893,9 @@ type ApiTemplateResponse struct {
 	// RhsmEnvironmentId Environment ID used by subscription-manager and candlepin
 	RhsmEnvironmentId *string `json:"rhsm_environment_id,omitempty"`
 
+	// Snapshots The list of snapshots in use by the template
+	Snapshots *[]ApiSnapshotResponse `json:"snapshots,omitempty"`
+
 	// UpdatedAt Datetime template was last updated
 	UpdatedAt *string `json:"updated_at,omitempty"`
 
