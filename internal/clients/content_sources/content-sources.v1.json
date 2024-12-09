@@ -1483,6 +1483,14 @@
                         "description": "Environment ID used by subscription-manager and candlepin",
                         "type": "string"
                     },
+                    "snapshots": {
+                        "description": "The list of snapshots in use by the template",
+                        "items": {
+                            "$ref": "#/components/schemas/api.SnapshotResponse"
+                        },
+                        "readOnly": true,
+                        "type": "array"
+                    },
                     "updated_at": {
                         "description": "Datetime template was last updated",
                         "type": "string"
