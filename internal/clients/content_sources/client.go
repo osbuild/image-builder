@@ -13,6 +13,8 @@ import (
 	"github.com/redhatinsights/identity"
 )
 
+type RepositoryByID map[string]ApiRepositoryResponse
+
 type ContentSourcesClient struct {
 	url    *url.URL
 	client *http.Client
@@ -48,8 +50,7 @@ func (csc *ContentSourcesClient) request(method, url string, headers map[string]
 	return csc.client.Do(req)
 }
 
-// returns ApiRepositoryCollectionResponse
-func (csc *ContentSourcesClient) GetRepositories(ctx context.Context, repoURLs []string, external bool) (*http.Response, error) {
+func (csc *ContentSourcesClient) fetchRepositories(ctx context.Context, repoURLs []string, repoIDs []string, external bool) (*ApiRepositoryCollectionResponse, error) {
 	id, ok := identity.GetIdentityHeader(ctx)
 	if !ok {
 		return nil, fmt.Errorf("Unable to get identity from context")
@@ -57,7 +58,13 @@ func (csc *ContentSourcesClient) GetRepositories(ctx context.Context, repoURLs [
 
 	csReposURL := csc.url.JoinPath("repositories/")
 	queryValues := csReposURL.Query()
-	queryValues.Add("url", strings.Join(repoURLs, ","))
+	if len(repoURLs) > 0 {
+		queryValues.Add("url", strings.Join(repoURLs, ","))
+	} else if len(repoIDs) > 0 {
+		queryValues.Add("uuid", strings.Join(repoIDs, ","))
+	} else {
+		return nil, fmt.Errorf("At least one repo url or repo id needs to be given")
+	}
 	if external {
 		queryValues.Add("origin", "external,upload")
 	} else {
@@ -65,9 +72,57 @@ func (csc *ContentSourcesClient) GetRepositories(ctx context.Context, repoURLs [
 	}
 	csReposURL.RawQuery = queryValues.Encode()
 
-	return csc.request("GET", csReposURL.String(), map[string]string{
+	resp, err := csc.request("GET", csReposURL.String(), map[string]string{
 		"x-rh-identity": id,
 	}, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusUnauthorized {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, fmt.Errorf("Unable to fetch repositories, got %v response, body: %s", resp.StatusCode, body)
+			}
+		}
+		return nil, fmt.Errorf("Unable to fetch repositories, got %v response", resp.StatusCode)
+	}
+
+	var repos *ApiRepositoryCollectionResponse
+	err = json.NewDecoder(resp.Body).Decode(&repos)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse repositories: %v", err)
+	}
+
+	return repos, nil
+}
+
+func (csc *ContentSourcesClient) GetRepositories(ctx context.Context, repoURLs []string, repoIDs []string, external bool) (RepositoryByID, error) {
+	result := make(RepositoryByID, len(repoURLs)+len(repoIDs))
+
+	if len(repoURLs) > 0 {
+		repos, err := csc.fetchRepositories(ctx, repoURLs, nil, external)
+		if err != nil {
+			return nil, err
+		}
+		for _, repo := range *repos.Data {
+			result[*repo.Uuid] = repo
+		}
+	}
+
+	if len(repoIDs) > 0 {
+		repos, err := csc.fetchRepositories(ctx, nil, repoIDs, external)
+		if err != nil {
+			return nil, err
+		}
+		for _, repo := range *repos.Data {
+			result[*repo.Uuid] = repo
+		}
+	}
+
+	return result, nil
 }
 
 // returns []ApiRepositoryExportResponse

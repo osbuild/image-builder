@@ -222,38 +222,18 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 		return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in RFC3339 (yyyy-mm-ddThh:mm:ssZ) format", snapshotDate))
 	}
 
-	repoUUIDs := []string{}
-	repoMap := map[string]content_sources.ApiRepositoryResponse{}
-	resp, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, external)
+	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, nil, external)
 	if err != nil {
+		ctx.Logger().Warnf("Unable to get repositories for base urls: %v", err)
 		return nil, nil, fmt.Errorf("Unable to retrieve repositories: %v", err)
 	}
-	defer closeBody(ctx, resp.Body)
 
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode != http.StatusUnauthorized {
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, nil, err
-			}
-			ctx.Logger().Warnf("Unable to get repositories for base urls: %v, got %s", repoURLs, body)
-		}
-		return nil, nil, fmt.Errorf("Unable to fetch repositories, got %v response.", resp.StatusCode)
-	}
-
-	var csRepos content_sources.ApiRepositoryCollectionResponse
-	err = json.NewDecoder(resp.Body).Decode(&csRepos)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to parse repositories: %v", err)
-	}
-
-	for _, repo := range *csRepos.Data {
+	repoUUIDs := make([]string, 0, len(repoMap))
+	for id, repo := range repoMap {
+		repoUUIDs = append(repoUUIDs, id)
 		if !*repo.Snapshot {
-			return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Repository %s has snapshotting disabled", *repo.Url))
+			return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Repository %s (id: %s) has snapshotting disabled", *repo.Url, id))
 		}
-
-		repoUUIDs = append(repoUUIDs, *repo.Uuid)
-		repoMap[*repo.Uuid] = repo
 	}
 
 	snapResp, err := h.server.csClient.GetSnapshotsForDate(ctx.Request().Context(), content_sources.ApiListSnapshotByDateRequest{
@@ -267,7 +247,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 
 	if snapResp.StatusCode != http.StatusOK {
 		if snapResp.StatusCode != http.StatusUnauthorized {
-			body, err := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(snapResp.Body)
 			if err != nil {
 				return nil, nil, err
 			}
