@@ -95,7 +95,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 			}
 		}
 
-		snapshotRepos, _, err := h.buildRepositorySnapshots(ctx, repoURLs, false, *composeRequest.ImageRequests[0].SnapshotDate)
+		snapshotRepos, _, err := h.buildRepositorySnapshots(ctx, repoURLs, nil, false, *composeRequest.ImageRequests[0].SnapshotDate)
 		if err != nil {
 			return ComposeResponse{}, err
 		}
@@ -216,13 +216,13 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 	return repositories
 }
 
-func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, external bool, snapshotDate string) ([]composer.Repository, []composer.CustomRepository, error) {
+func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, repoIDs []string, external bool, snapshotDate string) ([]composer.Repository, []composer.CustomRepository, error) {
 	date, err := time.Parse(time.RFC3339, snapshotDate)
 	if err != nil {
 		return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in RFC3339 (yyyy-mm-ddThh:mm:ssZ) format", snapshotDate))
 	}
 
-	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, nil, external)
+	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, repoIDs, external)
 	if err != nil {
 		ctx.Logger().Warnf("Unable to get repositories for base urls: %v", err)
 		return nil, nil, fmt.Errorf("Unable to retrieve repositories: %v", err)
@@ -567,12 +567,15 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 	snapshotDate := cr.ImageRequests[0].SnapshotDate
 	if cust.PayloadRepositories != nil && snapshotDate != nil {
 		var repoURLs []string
+		var repoIDs []string
 		for _, payloadRepository := range *cust.PayloadRepositories {
 			if payloadRepository.Baseurl != nil {
 				repoURLs = append(repoURLs, *payloadRepository.Baseurl)
+			} else if payloadRepository.Id != nil {
+				repoIDs = append(repoIDs, *payloadRepository.Id)
 			}
 		}
-		payloadRepositories, _, err := h.buildRepositorySnapshots(ctx, repoURLs, true, *snapshotDate)
+		payloadRepositories, _, err := h.buildRepositorySnapshots(ctx, repoURLs, repoIDs, true, *snapshotDate)
 		if err != nil {
 			return nil, err
 		}
@@ -609,12 +612,15 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 
 	if cust.CustomRepositories != nil && snapshotDate != nil {
 		var repoURLs []string
+		var repoIDs []string
 		for _, repo := range *cust.CustomRepositories {
 			if repo.Baseurl != nil && len(*repo.Baseurl) > 0 {
 				repoURLs = append(repoURLs, (*repo.Baseurl)[0])
+			} else if repo.Id != "" {
+				repoIDs = append(repoIDs, repo.Id)
 			}
 		}
-		_, customRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, true, *snapshotDate)
+		_, customRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, repoIDs, true, *snapshotDate)
 		if err != nil {
 			return nil, err
 		}

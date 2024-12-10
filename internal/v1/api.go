@@ -904,8 +904,12 @@ type Repository struct {
 	CheckGpg *bool   `json:"check_gpg,omitempty"`
 
 	// CheckRepoGpg Enables gpg verification of the repository metadata
-	CheckRepoGpg   *bool   `json:"check_repo_gpg,omitempty"`
-	Gpgkey         *string `json:"gpgkey,omitempty"`
+	CheckRepoGpg *bool   `json:"check_repo_gpg,omitempty"`
+	Gpgkey       *string `json:"gpgkey,omitempty"`
+
+	// Id An ID referring to a repository defined in content sources can be used instead of
+	// 'baseurl', 'mirrorlist' or 'metalink'.
+	Id             *string `json:"id,omitempty"`
 	IgnoreSsl      *bool   `json:"ignore_ssl,omitempty"`
 	Metalink       *string `json:"metalink,omitempty"`
 	Mirrorlist     *string `json:"mirrorlist,omitempty"`
