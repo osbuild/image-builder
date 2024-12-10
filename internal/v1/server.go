@@ -80,27 +80,27 @@ type Handlers struct {
 	server *Server
 }
 
-func Attach(conf *ServerConfig) error {
+func Attach(conf *ServerConfig) (*Server, error) {
 	spec, err := GetSwagger()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	router, err := legacyrouter.NewRouter(spec)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	majorVersion := strings.Split(spec.Info.Version, ".")[0]
 
 	allowList, err := common.LoadAllowList(conf.AllowFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	csReposURL, err := url.Parse(conf.CSReposURL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	s := Server{
@@ -162,7 +162,7 @@ func Attach(conf *ServerConfig) error {
 	})
 
 	h.server.echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
-	return nil
+	return &s, nil
 }
 
 func RoutePrefix() string {

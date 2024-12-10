@@ -400,18 +400,15 @@ func TestComposeStatusError(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB(ctx)
-	require.NoError(t, err)
-	imageName := "MyImageName"
-	clientId := "ui"
-	err = dbase.InsertCompose(ctx, id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
-	require.NoError(t, err)
-
 	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
-		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
 	defer srv.Shutdown(t)
+
+	imageName := "MyImageName"
+	clientId := "ui"
+	err := srv.DB.InsertCompose(ctx, id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
+	require.NoError(t, err)
 
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s",
 		id), &tutils.AuthString1)

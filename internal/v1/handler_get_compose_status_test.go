@@ -35,8 +35,6 @@ func TestComposeStatus(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB(ctx)
-	require.NoError(t, err)
 	cr := v1.ComposeRequest{
 		Distribution: "rhel-9",
 		Customizations: &v1.Customizations{
@@ -54,13 +52,13 @@ func TestComposeStatus(t *testing.T) {
 
 	crRaw, err := json.Marshal(cr)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
-	require.NoError(t, err)
 	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
-		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
 	defer srv.Shutdown(t)
+
+	err = srv.DB.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
+	require.NoError(t, err)
 
 	var awsUS composer.UploadStatus_Options
 	require.NoError(t, awsUS.FromAWSEC2UploadStatus(composer.AWSEC2UploadStatus{

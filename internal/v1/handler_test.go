@@ -158,8 +158,6 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 		}))
 		defer apiSrv.Close()
 
-		dbase, err := dbc.NewDB(ctx)
-		require.NoError(t, err)
 		cr := v1.ComposeRequest{
 			Distribution: "rhel-9",
 			Customizations: &v1.Customizations{
@@ -177,13 +175,13 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 
 		crRaw, err := json.Marshal(cr)
 		require.NoError(t, err)
-		err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
-		require.NoError(t, err)
 		srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
-			DBase:            dbase,
 			DistributionsDir: "../../distributions",
 		})
 		defer srv.Shutdown(t)
+		err = srv.DB.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
+		require.NoError(t, err)
+
 		payloads := []struct {
 			composerStatus composer.ComposeStatus
 			imageStatus    v1.ImageStatus
@@ -258,18 +256,15 @@ func TestGetComposeMetadata(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB(ctx)
-	require.NoError(t, err)
-	imageName := "MyImageName"
-	clientId := "ui"
-	err = dbase.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
-	require.NoError(t, err)
-
 	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
-		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
 	defer srv.Shutdown(t)
+
+	imageName := "MyImageName"
+	clientId := "ui"
+	err := srv.DB.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
+	require.NoError(t, err)
 
 	var result composer.ComposeMetadata
 
@@ -314,11 +309,7 @@ func TestGetComposes(t *testing.T) {
 	id5 := uuid.New()
 	id6 := uuid.New()
 
-	dbase, err := dbc.NewDB(ctx)
-	require.NoError(t, err)
-
 	srv := startServer(t, &testServerClientsConf{}, &v1.ServerConfig{
-		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
 	defer srv.Shutdown(t)
@@ -327,21 +318,21 @@ func TestGetComposes(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/composes", &tutils.AuthString0)
 
 	require.Equal(t, http.StatusOK, respStatusCode)
-	err = json.Unmarshal([]byte(body), &result)
+	err := json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
 	require.Equal(t, 0, result.Meta.Count)
 	require.Contains(t, body, "\"data\":[]")
 
 	imageName := "MyImageName"
 	clientId := "ui"
-	err = dbase.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
+	err = srv.DB.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, id2, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
+	err = srv.DB.InsertCompose(ctx, id2, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, id3, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
+	err = srv.DB.InsertCompose(ctx, id3, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
-	composeEntry, err := dbase.GetCompose(ctx, id, "000000")
+	composeEntry, err := srv.DB.GetCompose(ctx, id, "000000")
 	require.NoError(t, err)
 
 	respStatusCode, body = tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/composes", &tutils.AuthString0)
@@ -359,14 +350,14 @@ func TestGetComposes(t *testing.T) {
 
 	bpId := uuid.New()
 	versionId := uuid.New()
-	err = dbase.InsertBlueprint(ctx, bpId, versionId, "000000", "500000", "bpName", "desc", json.RawMessage("{}"), json.RawMessage("{}"))
+	err = srv.DB.InsertBlueprint(ctx, bpId, versionId, "000000", "500000", "bpName", "desc", json.RawMessage("{}"), json.RawMessage("{}"))
 	require.NoError(t, err)
 
-	err = dbase.InsertCompose(ctx, id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
+	err = srv.DB.InsertCompose(ctx, id4, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-installer"}]}`), &clientId, &versionId)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, id5, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &versionId)
+	err = srv.DB.InsertCompose(ctx, id5, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), &clientId, &versionId)
 	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, id6, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-commit"}]}`), &clientId, &versionId)
+	err = srv.DB.InsertCompose(ctx, id6, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-commit"}]}`), &clientId, &versionId)
 	require.NoError(t, err)
 
 	respStatusCode, body = tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/composes?ignoreImageTypes=edge-installer&ignoreImageTypes=aws", &tutils.AuthString0)
@@ -496,9 +487,12 @@ func TestGetClones(t *testing.T) {
 	}))
 	defer provSrv.Close()
 
-	dbase, err := dbc.NewDB(ctx)
-	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", nil, json.RawMessage(`
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, ProvURL: provSrv.URL}, &v1.ServerConfig{
+		DistributionsDir: "../../distributions",
+	})
+	defer srv.Shutdown(t)
+
+	err := srv.DB.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", nil, json.RawMessage(`
 {
   "image_requests": [
     {
@@ -507,11 +501,6 @@ func TestGetClones(t *testing.T) {
   ]
 }`), nil, nil)
 	require.NoError(t, err)
-	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, ProvURL: provSrv.URL}, &v1.ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer srv.Shutdown(t)
 
 	var csResp v1.ClonesResponse
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s/clones", id), &tutils.AuthString0)
@@ -585,9 +574,12 @@ func TestGetCloneStatus(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB(ctx)
-	require.NoError(t, err)
-	err = dbase.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", nil, json.RawMessage(`
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
+		DistributionsDir: "../../distributions",
+	})
+	defer srv.Shutdown(t)
+
+	err := srv.DB.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", nil, json.RawMessage(`
 {
   "image_requests": [
     {
@@ -596,11 +588,6 @@ func TestGetCloneStatus(t *testing.T) {
   ]
 }`), nil, nil)
 	require.NoError(t, err)
-	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
-		DBase:            dbase,
-		DistributionsDir: "../../distributions",
-	})
-	defer srv.Shutdown(t)
 
 	cloneReq := v1.AWSEC2Clone{
 		Region: "us-east-2",
