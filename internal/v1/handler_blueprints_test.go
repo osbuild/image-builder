@@ -1,4 +1,4 @@
-package v1
+package v1_test
 
 import (
 	"context"
@@ -13,23 +13,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/image-builder/internal/clients/content_sources"
-
 	"github.com/google/uuid"
-	"github.com/osbuild/image-builder/internal/clients/composer"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/db"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/image-builder/internal/clients/composer"
+	"github.com/osbuild/image-builder/internal/clients/content_sources"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/tutils"
+	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
 type BlueprintExportResponseUnmarshal struct {
 	ContentSources []content_sources.ApiRepositoryExportResponse `json:"content_sources,omitempty"`
-	Customizations Customizations                                `json:"customizations"`
+	Customizations v1.Customizations                             `json:"customizations"`
 	Description    string                                        `json:"description"`
-	Distribution   Distributions                                 `json:"distribution"`
-	Metadata       BlueprintMetadata                             `json:"metadata"`
+	Distribution   v1.Distributions                              `json:"distribution"`
+	Metadata       v1.BlueprintMetadata                          `json:"metadata"`
 	Name           string                                        `json:"name"`
 	SnapshotDate   *string                                       `json:"snapshot_date,omitempty"`
 }
@@ -51,7 +51,7 @@ func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, s
 			}
 			return ""
 		}(),
-	}, &ServerConfig{
+	}, &v1.ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 		CSReposURL:       "https://content-sources.org",
@@ -66,7 +66,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 		t.Skip("crypt() not supported on darwin")
 	}
 
-	var jsonResp HTTPErrorList
+	var jsonResp v1.HTTPErrorList
 	ctx := context.Background()
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
 	defer shutdownFn(t)
@@ -93,7 +93,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	statusCodePost, respPost := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
 	require.Equal(t, http.StatusCreated, statusCodePost)
 
-	var result CreateBlueprintResponse
+	var result v1.CreateBlueprintResponse
 	err := json.Unmarshal([]byte(respPost), &result)
 	require.NoError(t, err)
 
@@ -129,32 +129,32 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 func TestUser_MergeForUpdate(t *testing.T) {
 	tests := []struct {
 		name          string
-		newUser       User
-		existingUsers []User
+		newUser       v1.User
+		existingUsers []v1.User
 		wantPass      *string
 		wantSsh       *string
 		wantErr       bool
 	}{
 		{
 			name: "Both password and ssh_key are provided, no need to fetch user from DB",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				Password: common.ToPtr("password"),
 				SshKey:   common.ToPtr("ssh key"),
 			},
-			existingUsers: []User{},
+			existingUsers: []v1.User{},
 			wantPass:      common.ToPtr("password"),
 			wantSsh:       common.ToPtr("ssh key"),
 			wantErr:       false,
 		},
 		{
 			name: "User found in DB, merge should keep new values",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				Password: common.ToPtr("password"),
 				SshKey:   common.ToPtr("ssh key"),
 			},
-			existingUsers: []User{
+			existingUsers: []v1.User{
 				{
 					Name:     "test",
 					Password: common.ToPtr("old password"),
@@ -167,24 +167,24 @@ func TestUser_MergeForUpdate(t *testing.T) {
 		},
 		{
 			name: "New user, empty password set to nil",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				Password: common.ToPtr(""),
 				SshKey:   common.ToPtr("ssh key"),
 			},
-			existingUsers: []User{},
+			existingUsers: []v1.User{},
 			wantPass:      nil,
 			wantSsh:       common.ToPtr("ssh key"),
 			wantErr:       false,
 		},
 		{
 			name: "Existing user, empty password set to nil = change to only 'ssh key' user",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				Password: common.ToPtr(""),
 				SshKey:   common.ToPtr("ssh key"),
 			},
-			existingUsers: []User{
+			existingUsers: []v1.User{
 				{
 					Name:     "test",
 					Password: common.ToPtr("old password"),
@@ -197,24 +197,24 @@ func TestUser_MergeForUpdate(t *testing.T) {
 		},
 		{
 			name: "New user, empty ssh_key set to nil",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				Password: common.ToPtr("password"),
 				SshKey:   common.ToPtr(""),
 			},
-			existingUsers: []User{},
+			existingUsers: []v1.User{},
 			wantPass:      common.ToPtr("password"),
 			wantSsh:       nil,
 			wantErr:       false,
 		},
 		{
 			name: "Existing user, empty ssh key set to nil = change to 'password' user",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				Password: common.ToPtr("password"),
 				SshKey:   common.ToPtr(""),
 			},
-			existingUsers: []User{
+			existingUsers: []v1.User{
 				{
 					Name:     "test",
 					Password: nil,
@@ -227,32 +227,32 @@ func TestUser_MergeForUpdate(t *testing.T) {
 		},
 		{
 			name: "Both password and ssh_key are empty, invalid",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				Password: common.ToPtr(""),
 				SshKey:   common.ToPtr(""),
 			},
-			existingUsers: []User{},
+			existingUsers: []v1.User{},
 			wantPass:      nil,
 			wantSsh:       nil,
 			wantErr:       true,
 		},
 		{
 			name: "Both password and ssh_key are nil, no existing user, invalid",
-			newUser: User{
+			newUser: v1.User{
 				Name: "test",
 			},
-			existingUsers: []User{},
+			existingUsers: []v1.User{},
 			wantPass:      nil,
 			wantSsh:       nil,
 			wantErr:       true,
 		},
 		{
 			name: "Both password and ssh_key are nil, existing user, keep old values",
-			newUser: User{
+			newUser: v1.User{
 				Name: "test",
 			},
-			existingUsers: []User{
+			existingUsers: []v1.User{
 				{
 					Name:     "test",
 					Password: common.ToPtr("old password"),
@@ -265,12 +265,12 @@ func TestUser_MergeForUpdate(t *testing.T) {
 		},
 		{
 			name: "Empty password, existing user only with password, fail",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				Password: common.ToPtr(""),
 				SshKey:   nil,
 			},
-			existingUsers: []User{
+			existingUsers: []v1.User{
 				{
 					Name:     "test",
 					Password: common.ToPtr("old password"),
@@ -283,12 +283,12 @@ func TestUser_MergeForUpdate(t *testing.T) {
 		},
 		{
 			name: "Empty ssh key, existing user only with ssh key, fail",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test",
 				SshKey:   common.ToPtr(""),
 				Password: nil,
 			},
-			existingUsers: []User{
+			existingUsers: []v1.User{
 				{
 					Name:     "test",
 					Password: nil,
@@ -301,12 +301,12 @@ func TestUser_MergeForUpdate(t *testing.T) {
 		},
 		{
 			name: "Add new user to one already existing user, fail no password or ssh key",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test2",
 				SshKey:   nil,
 				Password: nil,
 			},
-			existingUsers: []User{
+			existingUsers: []v1.User{
 				{
 					Name:     "test",
 					SshKey:   common.ToPtr("old password"),
@@ -319,12 +319,12 @@ func TestUser_MergeForUpdate(t *testing.T) {
 		},
 		{
 			name: "Add new user to one already existing user",
-			newUser: User{
+			newUser: v1.User{
 				Name:     "test2",
 				SshKey:   common.ToPtr("ssh key"),
 				Password: nil,
 			},
-			existingUsers: []User{
+			existingUsers: []v1.User{
 				{
 					Name:     "test",
 					SshKey:   common.ToPtr("old password"),
@@ -355,7 +355,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
 	defer shutdownFn(t)
 
-	var jsonResp HTTPErrorList
+	var jsonResp v1.HTTPErrorList
 	ctx := context.Background()
 	body := map[string]interface{}{
 		"name":        "Blueprint",
@@ -373,7 +373,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 		},
 	}
 
-	var result ComposeResponse
+	var result v1.ComposeResponse
 
 	// No users in the blueprint = SUCCESS
 	statusCode, responseBody := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
@@ -388,7 +388,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 
 	blueprintEntry, err := dbase.GetBlueprint(ctx, result.Id, "000000", nil)
 	require.NoError(t, err)
-	updatedBlueprint, err := BlueprintFromEntry(blueprintEntry)
+	updatedBlueprint, err := v1.BlueprintFromEntry(blueprintEntry)
 	require.NoError(t, err)
 	require.NotEmpty(t, (*updatedBlueprint.Customizations.Users)[0].Password) // hashed, can't compare with plaintext value
 	require.Nil(t, (*updatedBlueprint.Customizations.Users)[0].SshKey)
@@ -401,7 +401,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 
 	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
 	require.NoError(t, err)
-	updatedBlueprint, err = BlueprintFromEntry(blueprintEntry)
+	updatedBlueprint, err = v1.BlueprintFromEntry(blueprintEntry)
 	require.NoError(t, err)
 
 	existingPassword := (*updatedBlueprint.Customizations.Users)[0].Password
@@ -425,11 +425,11 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
 	require.NoError(t, err)
 
-	updatedBlueprint, err = BlueprintFromEntryWithRedactedPasswords(blueprintEntry)
+	updatedBlueprint, err = v1.BlueprintFromEntryWithRedactedPasswords(blueprintEntry)
 	require.NoError(t, err)
 	require.Nil(t, (*updatedBlueprint.Customizations.Users)[0].Password)
 
-	updatedBlueprint, err = BlueprintFromEntry(blueprintEntry)
+	updatedBlueprint, err = v1.BlueprintFromEntry(blueprintEntry)
 	require.NoError(t, err)
 	sshKey := (*updatedBlueprint.Customizations.Users)[0].SshKey
 	require.NotNil(t, sshKey)
@@ -459,7 +459,7 @@ func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 
 	blueprintEntry, err = dbase.GetBlueprint(ctx, result.Id, "000000", nil)
 	require.NoError(t, err)
-	updatedBlueprint, err = BlueprintFromEntry(blueprintEntry)
+	updatedBlueprint, err = v1.BlueprintFromEntry(blueprintEntry)
 	require.NoError(t, err)
 	require.Len(t, *updatedBlueprint.Customizations.Users, 2)
 	user1 := (*updatedBlueprint.Customizations.Users)[0]
@@ -478,7 +478,7 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 		t.Skip("crypt() not supported on darwin")
 	}
 
-	var jsonResp HTTPErrorList
+	var jsonResp v1.HTTPErrorList
 	_, srvURL, shutdownFn := makeTestServer(t, nil, nil)
 	defer shutdownFn(t)
 
@@ -497,7 +497,7 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	}
 	statusCode, resp := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", body)
 	require.Equal(t, http.StatusCreated, statusCode)
-	var result ComposeResponse
+	var result v1.ComposeResponse
 	err := json.Unmarshal([]byte(resp), &result)
 	require.NoError(t, err)
 
@@ -543,7 +543,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 
 	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
-	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -552,17 +552,17 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	id := uuid.New()
 	versionId := uuid.New()
 
-	uploadOptions := UploadRequest_Options{}
-	err = uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+	uploadOptions := v1.UploadRequest_Options{}
+	err = uploadOptions.FromAWSUploadRequestOptions(v1.AWSUploadRequestOptions{
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
 	name := "Blueprint Human Name"
 	description := "desc"
-	blueprint := BlueprintBody{
-		Customizations: Customizations{
+	blueprint := v1.BlueprintBody{
+		Customizations: v1.Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
-			Users: common.ToPtr([]User{
+			Users: common.ToPtr([]v1.User{
 				{
 					Name:     "user1",
 					Password: common.ToPtr("$6$password123"),
@@ -574,28 +574,28 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 			}),
 		},
 		Distribution: "centos-9",
-		ImageRequests: []ImageRequest{
+		ImageRequests: []v1.ImageRequest{
 			{
-				Architecture: ImageRequestArchitectureX8664,
-				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAws,
+				Architecture: v1.ImageRequestArchitectureX8664,
+				ImageType:    v1.ImageTypesAws,
+				UploadRequest: v1.UploadRequest{
+					Type:    v1.UploadTypesAws,
 					Options: uploadOptions,
 				},
 			},
 			{
-				Architecture: ImageRequestArchitectureAarch64,
-				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAws,
+				Architecture: v1.ImageRequestArchitectureAarch64,
+				ImageType:    v1.ImageTypesAws,
+				UploadRequest: v1.UploadRequest{
+					Type:    v1.UploadTypesAws,
 					Options: uploadOptions,
 				},
 			},
 			{
-				Architecture: ImageRequestArchitectureAarch64,
-				ImageType:    ImageTypesGuestImage,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAwsS3,
+				Architecture: v1.ImageRequestArchitectureAarch64,
+				ImageType:    v1.ImageTypesGuestImage,
+				UploadRequest: v1.UploadRequest{
+					Type:    v1.UploadTypesAwsS3,
 					Options: uploadOptions,
 				},
 			},
@@ -612,15 +612,15 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 		expect  int
 	}{
 		"empty targets":    {payload: strings.NewReader(""), expect: 3},
-		"multiple targets": {payload: ComposeBlueprintJSONBody{ImageTypes: &[]ImageTypes{"aws", "guest-image", "gcp"}}, expect: 3},
-		"one target":       {payload: ComposeBlueprintJSONBody{ImageTypes: &[]ImageTypes{"aws"}}, expect: 2},
+		"multiple targets": {payload: v1.ComposeBlueprintJSONBody{ImageTypes: &[]v1.ImageTypes{"aws", "guest-image", "gcp"}}, expect: 3},
+		"one target":       {payload: v1.ComposeBlueprintJSONBody{ImageTypes: &[]v1.ImageTypes{"aws"}}, expect: 2},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			respStatusCode, body := tutils.PostResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/compose", id.String()), tc.payload)
 			require.Equal(t, http.StatusCreated, respStatusCode)
 
-			var result []ComposeResponse
+			var result []v1.ComposeResponse
 			err = json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Len(t, result, tc.expect)
@@ -630,7 +630,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 		})
 	}
 	t.Run("non-existing blueprint", func(t *testing.T) {
-		respStatusCode, _ := tutils.PostResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/compose", uuid.New()), ComposeBlueprintJSONBody{})
+		respStatusCode, _ := tutils.PostResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/compose", uuid.New()), v1.ComposeBlueprintJSONBody{})
 		require.Equal(t, http.StatusNotFound, respStatusCode)
 	})
 }
@@ -646,7 +646,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
 	defer shutdownFn(t)
 
-	var result ComposesResponse
+	var result v1.ComposesResponse
 
 	err := dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "500000", "blueprint", "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)
 	require.NoError(t, err)
@@ -726,7 +726,7 @@ func TestHandlers_BlueprintFromEntryWithRedactedPasswords(t *testing.T) {
 		be := &db.BlueprintEntry{
 			Body: body,
 		}
-		result, err := BlueprintFromEntryWithRedactedPasswords(be)
+		result, err := v1.BlueprintFromEntryWithRedactedPasswords(be)
 		require.NoError(t, err)
 		require.NotEqual(t, common.ToPtr("foo"), (*result.Customizations.Users)[0].Password)
 	})
@@ -735,7 +735,7 @@ func TestHandlers_BlueprintFromEntryWithRedactedPasswords(t *testing.T) {
 		be := &db.BlueprintEntry{
 			Body: body,
 		}
-		result, err := BlueprintFromEntryWithRedactedPasswords(be)
+		result, err := v1.BlueprintFromEntryWithRedactedPasswords(be)
 		require.NoError(t, err)
 
 		require.Nil(t, (*result.Customizations.Users)[0].Password)
@@ -750,17 +750,17 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	id := uuid.New()
 	versionId := uuid.New()
 
-	uploadOptions := UploadRequest_Options{}
-	err := uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+	uploadOptions := v1.UploadRequest_Options{}
+	err := uploadOptions.FromAWSUploadRequestOptions(v1.AWSUploadRequestOptions{
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
 	name := "blueprint"
 	description := "desc"
-	blueprint := BlueprintBody{
-		Customizations: Customizations{
+	blueprint := v1.BlueprintBody{
+		Customizations: v1.Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
-			Users: common.ToPtr([]User{
+			Users: common.ToPtr([]v1.User{
 				{
 					Name:     "user",
 					Password: common.ToPtr("password123"),
@@ -768,20 +768,20 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 			}),
 		},
 		Distribution: "centos-9",
-		ImageRequests: []ImageRequest{
+		ImageRequests: []v1.ImageRequest{
 			{
-				Architecture: ImageRequestArchitectureX8664,
-				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAws,
+				Architecture: v1.ImageRequestArchitectureX8664,
+				ImageType:    v1.ImageTypesAws,
+				UploadRequest: v1.UploadRequest{
+					Type:    v1.UploadTypesAws,
 					Options: uploadOptions,
 				},
 			},
 			{
-				Architecture: ImageRequestArchitectureAarch64,
-				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAws,
+				Architecture: v1.ImageRequestArchitectureAarch64,
+				ImageType:    v1.ImageTypesAws,
+				UploadRequest: v1.UploadRequest{
+					Type:    v1.UploadTypesAws,
 					Options: uploadOptions,
 				},
 			},
@@ -801,7 +801,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", id.String()), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 
-	var result BlueprintResponse
+	var result v1.BlueprintResponse
 	require.Equal(t, 200, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -821,7 +821,7 @@ func TestHandlers_GetBlueprint(t *testing.T) {
 
 	// fetch specific version
 	version2Id := uuid.New()
-	version2Body := BlueprintBody{}
+	version2Body := v1.BlueprintBody{}
 	err = json.Unmarshal(message, &version2Body)
 	require.NoError(t, err)
 	version2Body.Customizations.Packages = common.ToPtr([]string{"nginx", "httpd"})
@@ -969,26 +969,26 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.NoError(t, err)
 	versionId := uuid.New()
 
-	uploadOptions := UploadRequest_Options{}
-	err = uploadOptions.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
+	uploadOptions := v1.UploadRequest_Options{}
+	err = uploadOptions.FromAWSUploadRequestOptions(v1.AWSUploadRequestOptions{
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
 	name := "blueprint"
 	description := "desc"
-	blueprint := BlueprintBody{
-		Customizations: Customizations{
+	blueprint := v1.BlueprintBody{
+		Customizations: v1.Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
-			Subscription: &Subscription{
+			Subscription: &v1.Subscription{
 				ActivationKey: "aaa",
 			},
-			Users: common.ToPtr([]User{
+			Users: common.ToPtr([]v1.User{
 				{
 					Name:     "user",
 					Password: common.ToPtr("password123"),
 				},
 			}),
-			CustomRepositories: &[]CustomRepository{
+			CustomRepositories: &[]v1.CustomRepository{
 				{
 					Baseurl: &[]string{"http://snappy-url/snappy/baseos"},
 					Name:    common.ToPtr("payload"),
@@ -998,21 +998,21 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 			},
 		},
 		Distribution: "centos-9",
-		ImageRequests: []ImageRequest{
+		ImageRequests: []v1.ImageRequest{
 			{
-				Architecture: ImageRequestArchitectureX8664,
-				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAws,
+				Architecture: v1.ImageRequestArchitectureX8664,
+				ImageType:    v1.ImageTypesAws,
+				UploadRequest: v1.UploadRequest{
+					Type:    v1.UploadTypesAws,
 					Options: uploadOptions,
 				},
 				SnapshotDate: common.ToPtr("2012-12-20"),
 			},
 			{
-				Architecture: ImageRequestArchitectureAarch64,
-				ImageType:    ImageTypesAws,
-				UploadRequest: UploadRequest{
-					Type:    UploadTypesAws,
+				Architecture: v1.ImageRequestArchitectureAarch64,
+				ImageType:    v1.ImageTypesAws,
+				UploadRequest: v1.UploadRequest{
+					Type:    v1.UploadTypesAws,
 					Options: uploadOptions,
 				},
 				SnapshotDate: common.ToPtr("2012-12-21"),
@@ -1027,7 +1027,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	parentId := uuid.New()
 	require.NoError(t, err)
 	exportedAt := time.RFC3339
-	metadata := BlueprintMetadata{
+	metadata := v1.BlueprintMetadata{
 		ParentId:   &parentId,
 		ExportedAt: exportedAt,
 	}
@@ -1086,14 +1086,14 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	statusPost, respPost := tutils.PostResponseBody(t, srvURL+"/api/image-builder/v1/blueprints", bodyToImport)
 	require.Equal(t, http.StatusCreated, statusPost)
 
-	var resultPost CreateBlueprintResponse
+	var resultPost v1.CreateBlueprintResponse
 	err = json.Unmarshal([]byte(respPost), &resultPost)
 	require.NoError(t, err)
 
 	be, err := dbase.GetBlueprint(ctx, resultPost.Id, "000000", nil)
 	require.NoError(t, err)
 
-	var resultMeta BlueprintMetadata
+	var resultMeta v1.BlueprintMetadata
 	require.NotNil(t, be.Metadata)
 	err = json.Unmarshal(be.Metadata, &resultMeta)
 	require.NoError(t, err)
@@ -1106,19 +1106,19 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 
 	id2 := uuid.New()
 	versionId2 := uuid.New()
-	moreRepos := BlueprintBody{
-		Customizations: Customizations{
+	moreRepos := v1.BlueprintBody{
+		Customizations: v1.Customizations{
 			Packages: common.ToPtr([]string{"nginx"}),
-			Subscription: &Subscription{
+			Subscription: &v1.Subscription{
 				ActivationKey: "aaa",
 			},
-			Users: common.ToPtr([]User{
+			Users: common.ToPtr([]v1.User{
 				{
 					Name:     "user",
 					Password: common.ToPtr("password123"),
 				},
 			}),
-			CustomRepositories: &[]CustomRepository{
+			CustomRepositories: &[]v1.CustomRepository{
 				{
 					Baseurl: &[]string{"http://snappy-url/snappy/baseos"},
 					Name:    common.ToPtr("payload"),
@@ -1173,7 +1173,7 @@ func TestHandlers_GetBlueprints(t *testing.T) {
 	err = dbase.InsertBlueprint(ctx, blueprintId2, versionId2, "000000", "000000", "Blueprint2", "blueprint desc", json.RawMessage(`{}`), nil)
 	require.NoError(t, err)
 
-	var result BlueprintsResponse
+	var result v1.BlueprintsResponse
 	respStatusCode, body := tutils.GetResponseBody(t, srvURL+"/api/image-builder/v1/blueprints?name=blueprint", &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
@@ -1223,7 +1223,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	require.Equal(t, 204, respStatusCode)
 	require.Equal(t, "", body)
 
-	var errorResponse HTTPErrorList
+	var errorResponse v1.HTTPErrorList
 	notFoundCode, body := tutils.DeleteResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s", blueprintId.String()))
 	require.Equal(t, 404, notFoundCode)
 	err = json.Unmarshal([]byte(body), &errorResponse)
@@ -1234,7 +1234,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	require.ErrorIs(t, err, db.BlueprintNotFoundError)
 
 	// We should not be able to list deleted blueprint
-	var result BlueprintsResponse
+	var result v1.BlueprintsResponse
 	respStatusCode, body = tutils.GetResponseBody(t, srvURL+"/api/image-builder/v1/blueprints?name=blueprint", &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
@@ -1268,9 +1268,9 @@ func TestBlueprintBody_CryptPasswords(t *testing.T) {
 
 	// Create a sample blueprint body with users
 	passwordToHash := "password123"
-	blueprint := &BlueprintBody{
-		Customizations: Customizations{
-			Users: &[]User{
+	blueprint := &v1.BlueprintBody{
+		Customizations: v1.Customizations{
+			Users: &[]v1.User{
 				{
 					Name:     "user1",
 					Password: common.ToPtr(passwordToHash),
@@ -1293,7 +1293,7 @@ func TestBlueprintBody_CryptPasswords(t *testing.T) {
 }
 
 func TestUser_RedactPassword(t *testing.T) {
-	user := &User{
+	user := &v1.User{
 		Name:     "test",
 		Password: common.ToPtr("password123"),
 	}

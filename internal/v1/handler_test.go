@@ -1,4 +1,4 @@
-package v1
+package v1_test
 
 import (
 	"context"
@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/tutils"
+	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
@@ -34,7 +35,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/version", &tutils.AuthString0)
 		require.Equal(t, http.StatusOK, respStatusCode)
 
-		var result Version
+		var result v1.Version
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Equal(t, "1.0", result.Version)
@@ -76,7 +77,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 			var swagger *openapi3.T
 			var specB []byte
 			var err error
-			swagger, err = GetSwagger()
+			swagger, err = v1.GetSwagger()
 			require.NoError(t, err)
 
 			specB, err = swagger.MarshalJSON()
@@ -159,13 +160,13 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 
 		dbase, err := dbc.NewDB(ctx)
 		require.NoError(t, err)
-		cr := ComposeRequest{
+		cr := v1.ComposeRequest{
 			Distribution: "rhel-9",
-			Customizations: &Customizations{
+			Customizations: &v1.Customizations{
 				// Since we are not calling handleCommonCompose but inserting directly to DB
 				// there is no point in using plaintext passwords
 				// If there is plaintext password in DB there is problem elsewhere (eg. CreateBlueprint)
-				Users: &[]User{
+				Users: &[]v1.User{
 					{
 						Name:     "user",
 						SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
@@ -178,14 +179,14 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 		require.NoError(t, err)
 		err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
 		require.NoError(t, err)
-		srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+		srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
 			DBase:            dbase,
 			DistributionsDir: "../../distributions",
 		})
 		defer srv.Shutdown(t)
 		payloads := []struct {
 			composerStatus composer.ComposeStatus
-			imageStatus    ImageStatus
+			imageStatus    v1.ImageStatus
 		}{
 			{
 				composerStatus: composer.ComposeStatus{
@@ -200,7 +201,7 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 			respStatusCode, body := tutils.GetResponseBody(t, fmt.Sprintf(srv.URL+"/api/image-builder/v1/composes/%s",
 				composeId), &tutils.AuthString0)
 			require.Equal(t, tc.statusCode, respStatusCode)
-			var result ComposeStatus
+			var result v1.ComposeStatus
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			if tc.checkImageStatus {
@@ -264,7 +265,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	err = dbase.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
-	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -316,13 +317,13 @@ func TestGetComposes(t *testing.T) {
 	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
 
-	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &v1.ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
 	defer srv.Shutdown(t)
 
-	var result ComposesResponse
+	var result v1.ComposesResponse
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/composes", &tutils.AuthString0)
 
 	require.Equal(t, http.StatusOK, respStatusCode)
@@ -384,7 +385,7 @@ func TestGetComposes(t *testing.T) {
 // properly transfers the ostree options to the Composer structure.
 func TestBuildOSTreeOptions(t *testing.T) {
 	cases := []struct {
-		in  *OSTree
+		in  *v1.OSTree
 		out *composer.OSTree
 	}{
 		{
@@ -392,21 +393,21 @@ func TestBuildOSTreeOptions(t *testing.T) {
 			nil,
 		},
 		{
-			&OSTree{Ref: common.ToPtr("someref")},
+			&v1.OSTree{Ref: common.ToPtr("someref")},
 			&composer.OSTree{Ref: common.ToPtr("someref")},
 		},
 		{
-			&OSTree{Ref: common.ToPtr("someref"), Url: common.ToPtr("https://example.org")},
+			&v1.OSTree{Ref: common.ToPtr("someref"), Url: common.ToPtr("https://example.org")},
 			&composer.OSTree{Ref: common.ToPtr("someref"), Url: common.ToPtr("https://example.org")},
 		},
 		{
-			&OSTree{Url: common.ToPtr("https://example.org")},
+			&v1.OSTree{Url: common.ToPtr("https://example.org")},
 			&composer.OSTree{Url: common.ToPtr("https://example.org")},
 		},
 	}
 
 	for _, c := range cases {
-		require.Equal(t, c.out, buildOSTreeOptions(c.in), "input: %#v", c.in)
+		require.Equal(t, c.out, v1.BuildOSTreeOptions(c.in), "input: %#v", c.in)
 	}
 }
 
@@ -506,13 +507,13 @@ func TestGetClones(t *testing.T) {
   ]
 }`), nil, nil)
 	require.NoError(t, err)
-	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, ProvURL: provSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, ProvURL: provSrv.URL}, &v1.ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
 	defer srv.Shutdown(t)
 
-	var csResp ClonesResponse
+	var csResp v1.ClonesResponse
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s/clones", id), &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &csResp)
@@ -520,14 +521,14 @@ func TestGetClones(t *testing.T) {
 	require.Equal(t, 0, len(csResp.Data))
 	require.Contains(t, body, "\"data\":[]")
 
-	cloneReq := AWSEC2Clone{
+	cloneReq := v1.AWSEC2Clone{
 		Region:           "us-east-2",
 		ShareWithSources: &[]string{"1"},
 	}
 	respStatusCode, body = tutils.PostResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s/clone", id), cloneReq)
 	require.Equal(t, http.StatusCreated, respStatusCode)
 
-	var cResp CloneResponse
+	var cResp v1.CloneResponse
 	err = json.Unmarshal([]byte(body), &cResp)
 	require.NoError(t, err)
 	require.Equal(t, cloneId, cResp.Id)
@@ -595,34 +596,34 @@ func TestGetCloneStatus(t *testing.T) {
   ]
 }`), nil, nil)
 	require.NoError(t, err)
-	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
 	defer srv.Shutdown(t)
 
-	cloneReq := AWSEC2Clone{
+	cloneReq := v1.AWSEC2Clone{
 		Region: "us-east-2",
 	}
 	respStatusCode, body := tutils.PostResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s/clone", id), cloneReq)
 	require.Equal(t, http.StatusCreated, respStatusCode)
 
-	var cResp CloneResponse
+	var cResp v1.CloneResponse
 	err = json.Unmarshal([]byte(body), &cResp)
 	require.NoError(t, err)
 	require.Equal(t, cloneId, cResp.Id)
 
-	var usResp CloneStatusResponse
+	var usResp v1.CloneStatusResponse
 	respStatusCode, body = tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/clones/%s", cloneId), &tutils.AuthString0)
 
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &usResp)
 	require.NoError(t, err)
-	require.Equal(t, CloneStatusResponseStatusSuccess, usResp.Status)
-	require.Equal(t, UploadTypesAws, usResp.Type)
+	require.Equal(t, v1.CloneStatusResponseStatusSuccess, usResp.Status)
+	require.Equal(t, v1.UploadTypesAws, usResp.Type)
 	require.Equal(t, id, *usResp.ComposeId)
 
-	var awsUS AWSUploadStatus
+	var awsUS v1.AWSUploadStatus
 	jsonUO, err := json.Marshal(usResp.Options)
 	require.NoError(t, err)
 	err = json.Unmarshal(jsonUO, &awsUS)
@@ -643,7 +644,7 @@ func TestGetCloneEntryNotFoundResponse(t *testing.T) {
 }
 
 func TestValidateSpec(t *testing.T) {
-	spec, err := GetSwagger()
+	spec, err := v1.GetSwagger()
 	require.NoError(t, err)
 	err = spec.Validate(context.Background())
 	require.NoError(t, err)
@@ -652,7 +653,7 @@ func TestValidateSpec(t *testing.T) {
 func TestGetArchitectures(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &v1.ServerConfig{
 		DistributionsDir: distsDir,
 		AllowFile:        allowFile,
 	})
@@ -662,14 +663,14 @@ func TestGetArchitectures(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/architectures/centos-9", &tutils.AuthString0)
 		require.Equal(t, http.StatusOK, respStatusCode)
 
-		var result Architectures
+		var result v1.Architectures
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
-		require.Equal(t, Architectures{
-			ArchitectureItem{
+		require.Equal(t, v1.Architectures{
+			v1.ArchitectureItem{
 				Arch:       "x86_64",
 				ImageTypes: []string{"ami", "vhd", "aws", "gcp", "azure", "edge-commit", "edge-installer", "rhel-edge-commit", "rhel-edge-installer", "guest-image", "image-installer", "oci", "vsphere", "vsphere-ova", "wsl"},
-				Repositories: []Repository{
+				Repositories: []v1.Repository{
 					{
 						Baseurl: common.ToPtr("http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/"),
 						Rhsm:    false,
@@ -679,10 +680,10 @@ func TestGetArchitectures(t *testing.T) {
 					},
 				},
 			},
-			ArchitectureItem{
+			v1.ArchitectureItem{
 				Arch:       "aarch64",
 				ImageTypes: []string{"aws", "guest-image", "image-installer"},
-				Repositories: []Repository{
+				Repositories: []v1.Repository{
 					{
 						Baseurl: common.ToPtr("http://mirror.stream.centos.org/9-stream/BaseOS/aarch64/os/"),
 						Rhsm:    false,
@@ -708,7 +709,7 @@ func TestGetArchitectures(t *testing.T) {
 func TestGetPackages(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &v1.ServerConfig{
 		DistributionsDir: distsDir,
 		AllowFile:        allowFile,
 	})
@@ -720,7 +721,7 @@ func TestGetPackages(t *testing.T) {
 			respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh", arch), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
 
-			var result PackagesResponse
+			var result v1.PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Contains(t, result.Data[0].Name, "ssh")
@@ -733,7 +734,7 @@ func TestGetPackages(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=4e3086991b3f452d82eed1f2122aefeb", arch), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
-			var result PackagesResponse
+			var result v1.PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Empty(t, result.Data)
@@ -753,7 +754,7 @@ func TestGetPackages(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1", arch), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
-			var result PackagesResponse
+			var result v1.PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Greater(t, result.Meta.Count, 1)
@@ -764,7 +765,7 @@ func TestGetPackages(t *testing.T) {
 		for _, arch := range architectures {
 			respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/packages?distribution=rhel-8&architecture=%s&search=ssh&limit=1&offset=1", arch), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
-			var result PackagesResponse
+			var result v1.PackagesResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			require.Greater(t, result.Meta.Count, 1)
@@ -801,7 +802,7 @@ func TestGetPackages(t *testing.T) {
 func TestGetDistributions(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &v1.ServerConfig{
 		DistributionsDir: distsDir,
 		AllowFile:        allowFile,
 	})
@@ -810,7 +811,7 @@ func TestGetDistributions(t *testing.T) {
 	t.Run("Access to restricted distributions", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/distributions", &tutils.AuthString0)
 		require.Equal(t, http.StatusOK, respStatusCode)
-		var result DistributionsResponse
+		var result v1.DistributionsResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		distros := []string{}
@@ -823,7 +824,7 @@ func TestGetDistributions(t *testing.T) {
 	t.Run("No access to restricted distributions except global filter", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/distributions", &tutils.AuthString1)
 		require.Equal(t, http.StatusOK, respStatusCode)
-		var result DistributionsResponse
+		var result v1.DistributionsResponse
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		distros := []string{}
@@ -837,81 +838,81 @@ func TestGetDistributions(t *testing.T) {
 func TestGetProfiles(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &v1.ServerConfig{
 		DistributionsDir: distsDir,
 		AllowFile:        allowFile,
 	})
 	defer srv.Shutdown(t)
 
 	t.Run("Access profiles on all rhel8 variants returns a correct list of profiles", func(t *testing.T) {
-		for _, dist := range []Distributions{
-			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel89, Rhel8Nightly,
+		for _, dist := range []v1.Distributions{
+			v1.Rhel8, v1.Rhel84, v1.Rhel85, v1.Rhel86, v1.Rhel87, v1.Rhel88, v1.Rhel89, v1.Rhel8Nightly,
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				srv.URL+
 					fmt.Sprintf("/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
-			var result DistributionProfileResponse
+			var result v1.DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
-			require.ElementsMatch(t, DistributionProfileResponse{
-				XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
-				XccdfOrgSsgprojectContentProfileAnssiBp28High,
-				XccdfOrgSsgprojectContentProfileAnssiBp28Intermediary,
-				XccdfOrgSsgprojectContentProfileAnssiBp28Minimal,
-				XccdfOrgSsgprojectContentProfileCis,
-				XccdfOrgSsgprojectContentProfileCisServerL1,
-				XccdfOrgSsgprojectContentProfileCisWorkstationL1,
-				XccdfOrgSsgprojectContentProfileCisWorkstationL2,
-				XccdfOrgSsgprojectContentProfileCui,
-				XccdfOrgSsgprojectContentProfileE8,
-				XccdfOrgSsgprojectContentProfileHipaa,
-				XccdfOrgSsgprojectContentProfileIsmO,
-				XccdfOrgSsgprojectContentProfileOspp,
-				XccdfOrgSsgprojectContentProfilePciDss,
-				XccdfOrgSsgprojectContentProfileStig,
-				XccdfOrgSsgprojectContentProfileStigGui,
+			require.ElementsMatch(t, v1.DistributionProfileResponse{
+				v1.XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
+				v1.XccdfOrgSsgprojectContentProfileAnssiBp28High,
+				v1.XccdfOrgSsgprojectContentProfileAnssiBp28Intermediary,
+				v1.XccdfOrgSsgprojectContentProfileAnssiBp28Minimal,
+				v1.XccdfOrgSsgprojectContentProfileCis,
+				v1.XccdfOrgSsgprojectContentProfileCisServerL1,
+				v1.XccdfOrgSsgprojectContentProfileCisWorkstationL1,
+				v1.XccdfOrgSsgprojectContentProfileCisWorkstationL2,
+				v1.XccdfOrgSsgprojectContentProfileCui,
+				v1.XccdfOrgSsgprojectContentProfileE8,
+				v1.XccdfOrgSsgprojectContentProfileHipaa,
+				v1.XccdfOrgSsgprojectContentProfileIsmO,
+				v1.XccdfOrgSsgprojectContentProfileOspp,
+				v1.XccdfOrgSsgprojectContentProfilePciDss,
+				v1.XccdfOrgSsgprojectContentProfileStig,
+				v1.XccdfOrgSsgprojectContentProfileStigGui,
 			}, result)
 		}
 	})
 
 	t.Run("Access profiles on all rhel9 variants returns a correct list of profiles", func(t *testing.T) {
-		for _, dist := range []Distributions{
-			Rhel9, Rhel91, Rhel92, Rhel93, Rhel94, Rhel9Nightly, Centos9,
+		for _, dist := range []v1.Distributions{
+			v1.Rhel9, v1.Rhel91, v1.Rhel92, v1.Rhel93, v1.Rhel94, v1.Rhel9Nightly, v1.Centos9,
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				srv.URL+
 					fmt.Sprintf("/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
-			var result DistributionProfileResponse
+			var result v1.DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
-			require.ElementsMatch(t, DistributionProfileResponse{
-				XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
-				XccdfOrgSsgprojectContentProfileAnssiBp28High,
-				XccdfOrgSsgprojectContentProfileAnssiBp28Intermediary,
-				XccdfOrgSsgprojectContentProfileAnssiBp28Minimal,
-				XccdfOrgSsgprojectContentProfileCcnAdvanced,
-				XccdfOrgSsgprojectContentProfileCcnBasic,
-				XccdfOrgSsgprojectContentProfileCcnIntermediate,
-				XccdfOrgSsgprojectContentProfileCis,
-				XccdfOrgSsgprojectContentProfileCisServerL1,
-				XccdfOrgSsgprojectContentProfileCisWorkstationL1,
-				XccdfOrgSsgprojectContentProfileCisWorkstationL2,
-				XccdfOrgSsgprojectContentProfileCui,
-				XccdfOrgSsgprojectContentProfileE8,
-				XccdfOrgSsgprojectContentProfileHipaa,
-				XccdfOrgSsgprojectContentProfileIsmO,
-				XccdfOrgSsgprojectContentProfileOspp,
-				XccdfOrgSsgprojectContentProfilePciDss,
-				XccdfOrgSsgprojectContentProfileStig,
-				XccdfOrgSsgprojectContentProfileStigGui,
+			require.ElementsMatch(t, v1.DistributionProfileResponse{
+				v1.XccdfOrgSsgprojectContentProfileAnssiBp28Enhanced,
+				v1.XccdfOrgSsgprojectContentProfileAnssiBp28High,
+				v1.XccdfOrgSsgprojectContentProfileAnssiBp28Intermediary,
+				v1.XccdfOrgSsgprojectContentProfileAnssiBp28Minimal,
+				v1.XccdfOrgSsgprojectContentProfileCcnAdvanced,
+				v1.XccdfOrgSsgprojectContentProfileCcnBasic,
+				v1.XccdfOrgSsgprojectContentProfileCcnIntermediate,
+				v1.XccdfOrgSsgprojectContentProfileCis,
+				v1.XccdfOrgSsgprojectContentProfileCisServerL1,
+				v1.XccdfOrgSsgprojectContentProfileCisWorkstationL1,
+				v1.XccdfOrgSsgprojectContentProfileCisWorkstationL2,
+				v1.XccdfOrgSsgprojectContentProfileCui,
+				v1.XccdfOrgSsgprojectContentProfileE8,
+				v1.XccdfOrgSsgprojectContentProfileHipaa,
+				v1.XccdfOrgSsgprojectContentProfileIsmO,
+				v1.XccdfOrgSsgprojectContentProfileOspp,
+				v1.XccdfOrgSsgprojectContentProfilePciDss,
+				v1.XccdfOrgSsgprojectContentProfileStig,
+				v1.XccdfOrgSsgprojectContentProfileStigGui,
 			}, result)
 		}
 	})
 
 	t.Run("Access profiles on the other distros returns an error", func(t *testing.T) {
-		for _, dist := range []Distributions{Fedora37, Fedora38, Fedora39, Fedora40, Fedora41, Rhel90} {
+		for _, dist := range []v1.Distributions{v1.Fedora37, v1.Fedora38, v1.Fedora39, v1.Fedora40, v1.Fedora41, v1.Rhel90} {
 			respStatusCode, _ := tutils.GetResponseBody(t,
 				srv.URL+
 					fmt.Sprintf("/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
@@ -925,19 +926,19 @@ func TestGetCustomizations(t *testing.T) {
 	defer srv.Shutdown(t)
 
 	t.Run("Access all customizations and check that they match", func(t *testing.T) {
-		for _, dist := range []Distributions{
-			Rhel8, Rhel84, Rhel85, Rhel86, Rhel87, Rhel88, Rhel8Nightly, Rhel9, Rhel91, Rhel92, Rhel9Nightly, Centos9,
+		for _, dist := range []v1.Distributions{
+			v1.Rhel8, v1.Rhel84, v1.Rhel85, v1.Rhel86, v1.Rhel87, v1.Rhel88, v1.Rhel8Nightly, v1.Rhel9, v1.Rhel91, v1.Rhel92, v1.Rhel9Nightly, v1.Centos9,
 		} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				srv.URL+
 					fmt.Sprintf("/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
-			var result DistributionProfileResponse
+			var result v1.DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			for _, profile := range result {
 				// Get the customization from the API
-				var result Customizations
+				var result v1.Customizations
 				respStatusCode, body := tutils.GetResponseBody(t,
 					srv.URL+
 						fmt.Sprintf("/api/image-builder/v1/oscap/%s/%s/customizations", dist, profile), &tutils.AuthString0)
@@ -957,7 +958,7 @@ func TestGetCustomizations(t *testing.T) {
 				defer jsonFile.Close()
 				bytes, err := io.ReadAll(jsonFile)
 				require.NoError(t, err)
-				var customizations Customizations
+				var customizations v1.Customizations
 				err = json.Unmarshal(bytes, &customizations)
 				require.NoError(t, err)
 				// Make sure we get the same result both ways
@@ -980,29 +981,29 @@ func TestGetCustomizations(t *testing.T) {
 		}
 	})
 	t.Run("Access customizations on a distro that does not have customizations returns an error", func(t *testing.T) {
-		for _, dist := range []Distributions{Rhel8} {
+		for _, dist := range []v1.Distributions{v1.Rhel8} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				srv.URL+
 					fmt.Sprintf("/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
-			var result DistributionProfileResponse
+			var result v1.DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			for _, profile := range result {
 				respStatusCode, _ := tutils.GetResponseBody(t,
 					srv.URL+
-						fmt.Sprintf("/api/image-builder/v1/oscap/%s/%s/customizations", Fedora40, profile), &tutils.AuthString0)
+						fmt.Sprintf("/api/image-builder/v1/oscap/%s/%s/customizations", v1.Fedora40, profile), &tutils.AuthString0)
 				require.Equal(t, http.StatusBadRequest, respStatusCode)
 			}
 		}
 	})
 	t.Run("Access non existing customizations on a distro returns an error", func(t *testing.T) {
-		for _, dist := range []Distributions{Rhel8} {
+		for _, dist := range []v1.Distributions{v1.Rhel8} {
 			respStatusCode, body := tutils.GetResponseBody(t,
 				srv.URL+
 					fmt.Sprintf("/api/image-builder/v1/oscap/%s/profiles", dist), &tutils.AuthString0)
 			require.Equal(t, http.StatusOK, respStatusCode)
-			var result DistributionProfileResponse
+			var result v1.DistributionProfileResponse
 			err := json.Unmarshal([]byte(body), &result)
 			require.NoError(t, err)
 			respStatusCode, _ = tutils.GetResponseBody(t,
