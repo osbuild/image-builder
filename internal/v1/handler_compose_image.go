@@ -303,6 +303,72 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 	return repositories, customRepositories, nil
 }
 
+func (h *Handlers) buildPayloadRepositories(ctx echo.Context, payloadRepos []Repository) ([]composer.Repository, error) {
+	res := make([]composer.Repository, len(payloadRepos))
+
+	var repoIDs []string
+	for _, repo := range payloadRepos {
+		if repo.Id != nil {
+			repoIDs = append(repoIDs, *repo.Id)
+		}
+	}
+	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), nil, repoIDs, true)
+	if err != nil {
+		return nil, err
+	}
+	repoMapUpload, err := h.server.csClient.GetRepositories(ctx.Request().Context(), nil, repoIDs, true)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range repoMapUpload {
+		repoMap[k] = v
+	}
+
+	for i, pyrepo := range payloadRepos {
+		var repo content_sources.ApiRepositoryResponse
+		if pyrepo.Id != nil {
+			if r, ok := repoMap[*pyrepo.Id]; ok {
+				repo = r
+			}
+		}
+		if pyrepo.Baseurl != nil {
+			res[i].Baseurl = pyrepo.Baseurl
+		} else if repo.Url != nil {
+			res[i].Baseurl = repo.Url
+		}
+
+		if pyrepo.CheckGpg != nil {
+			res[i].CheckGpg = pyrepo.CheckGpg
+		} else if repo.GpgKey != nil {
+			res[i].CheckGpg = common.ToPtr(true)
+		}
+
+		if pyrepo.CheckRepoGpg != nil {
+			res[i].CheckRepoGpg = pyrepo.CheckRepoGpg
+		} else if repo.MetadataVerification != nil {
+			res[i].CheckRepoGpg = repo.MetadataVerification
+		}
+
+		if pyrepo.Gpgkey != nil {
+			res[i].Gpgkey = pyrepo.Gpgkey
+		} else if repo.GpgKey != nil {
+			res[i].Gpgkey = repo.GpgKey
+		}
+
+		if pyrepo.ModuleHotfixes != nil {
+			res[i].ModuleHotfixes = pyrepo.ModuleHotfixes
+		} else if repo.ModuleHotfixes != nil {
+			res[i].ModuleHotfixes = repo.ModuleHotfixes
+		}
+
+		res[i].IgnoreSsl = pyrepo.IgnoreSsl
+		res[i].Metalink = pyrepo.Metalink
+		res[i].Mirrorlist = pyrepo.Mirrorlist
+		res[i].Rhsm = common.ToPtr(pyrepo.Rhsm)
+	}
+	return res, nil
+}
+
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
 	var uploadOptions composer.UploadOptions
 	switch ur.Type {
@@ -580,34 +646,12 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 			return nil, err
 		}
 		res.PayloadRepositories = &payloadRepositories
-	} else if cust.PayloadRepositories != nil {
-		payloadRepositories := make([]composer.Repository, len(*cust.PayloadRepositories))
-		for i, payloadRepository := range *cust.PayloadRepositories {
-			if payloadRepository.Baseurl != nil {
-				payloadRepositories[i].Baseurl = payloadRepository.Baseurl
-			}
-			if payloadRepository.CheckGpg != nil {
-				payloadRepositories[i].CheckGpg = payloadRepository.CheckGpg
-			}
-			if payloadRepository.CheckRepoGpg != nil {
-				payloadRepositories[i].CheckRepoGpg = payloadRepository.CheckRepoGpg
-			}
-			if payloadRepository.Gpgkey != nil {
-				payloadRepositories[i].Gpgkey = payloadRepository.Gpgkey
-			}
-			if payloadRepository.IgnoreSsl != nil {
-				payloadRepositories[i].IgnoreSsl = payloadRepository.IgnoreSsl
-			}
-			if payloadRepository.Metalink != nil {
-				payloadRepositories[i].Metalink = payloadRepository.Metalink
-			}
-			if payloadRepository.Mirrorlist != nil {
-				payloadRepositories[i].Mirrorlist = payloadRepository.Mirrorlist
-			}
-			payloadRepositories[i].ModuleHotfixes = payloadRepository.ModuleHotfixes
-			payloadRepositories[i].Rhsm = common.ToPtr(payloadRepository.Rhsm)
+	} else if cust.PayloadRepositories != nil && len(*cust.PayloadRepositories) > 0 {
+		plrepos, err := h.buildPayloadRepositories(ctx, *cust.PayloadRepositories)
+		if err != nil {
+			return nil, err
 		}
-		res.PayloadRepositories = &payloadRepositories
+		res.PayloadRepositories = &plrepos
 	}
 
 	if cust.CustomRepositories != nil && snapshotDate != nil {
