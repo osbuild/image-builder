@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -13,12 +12,8 @@ import (
 func TestRedHatIdentity(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{}, nil)
+	defer srv.Shutdown(t)
 
 	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/version", nil)
@@ -69,14 +64,10 @@ func TestRedHatIdentity(t *testing.T) {
 func TestFedoraIdentity(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		FedoraAuth: true,
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	t.Run("VerifyIdentityHeaderMissing", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/version", nil)

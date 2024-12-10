@@ -108,12 +108,14 @@ type testServerClientsConf struct {
 }
 
 type testServer struct {
-	*echo.Echo
+	echo *echo.Echo
 
 	URL string
+
+	tokenSrv *httptest.Server
 }
 
-func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) (*testServer, *httptest.Server) {
+func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) *testServer {
 	ctx := context.Background()
 
 	var log = &logrus.Logger{
@@ -232,5 +234,10 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 		tries += 1
 	}
 
-	return &testServer{echoServer, URL}, tokenServer
+	return &testServer{echoServer, URL, tokenServer}
+}
+
+func (ts *testServer) Shutdown(t *testing.T) {
+	require.NoError(t, ts.echo.Shutdown(context.Background()))
+	ts.tokenSrv.Close()
 }
