@@ -2073,6 +2073,11 @@ components:
       required:
         - rhsm
       properties:
+        id:
+          type: string
+          description: |
+            An ID referring to a repository defined in content sources can be used instead of
+            'baseurl', 'mirrorlist' or 'metalink'.
         rhsm:
           type: boolean
         baseurl:
