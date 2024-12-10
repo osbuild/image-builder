@@ -251,7 +251,7 @@ func main() {
 		FedoraAuth:       conf.FedoraAuth,
 	}
 
-	err = v1.Attach(serverConfig)
+	_, err = v1.Attach(serverConfig)
 	if err != nil {
 		panic(err)
 	}

@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/clients/recommendations"
 	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/osbuild/image-builder/internal/oauth2"
@@ -111,6 +112,7 @@ type testServer struct {
 	echo *echo.Echo
 
 	URL string
+	DB  db.DB
 
 	tokenSrv *httptest.Server
 }
@@ -206,8 +208,9 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfi
 		serverConfig.AllDistros = adr
 	}
 
-	err = v1.Attach(serverConfig)
+	server, err := v1.Attach(serverConfig)
 	require.NoError(t, err)
+
 	// execute in parallel b/c .Run() will block execution
 	addr := "localhost:8086"
 	URL := "http://" + addr
@@ -234,7 +237,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfi
 		tries += 1
 	}
 
-	return &testServer{echoServer, URL, tokenServer}
+	return &testServer{echoServer, URL, server.GetDB(), tokenServer}
 }
 
 func (ts *testServer) Shutdown(t *testing.T) {

@@ -35,9 +35,6 @@ type BlueprintExportResponseUnmarshal struct {
 }
 
 func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, srvURL string, shutdown func(t *testing.T)) {
-	dbase, err := dbc.NewDB(context.Background())
-	require.NoError(t, err)
-
 	srv := startServer(t, &testServerClientsConf{
 		ComposerURL: func() string {
 			if apiSrv != nil {
@@ -56,7 +53,7 @@ func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, s
 		DistributionsDir: "../../distributions",
 		CSReposURL:       "https://content-sources.org",
 	})
-	return dbase, srv.URL, func(t *testing.T) {
+	return srv.DB, srv.URL, func(t *testing.T) {
 		srv.Shutdown(t)
 	}
 }
@@ -541,10 +538,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	dbase, err := dbc.NewDB(ctx)
-	require.NoError(t, err)
 	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
-		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
 	defer srv.Shutdown(t)
@@ -553,7 +547,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	versionId := uuid.New()
 
 	uploadOptions := v1.UploadRequest_Options{}
-	err = uploadOptions.FromAWSUploadRequestOptions(v1.AWSUploadRequestOptions{
+	err := uploadOptions.FromAWSUploadRequestOptions(v1.AWSUploadRequestOptions{
 		ShareWithAccounts: common.ToPtr([]string{"test-account"}),
 	})
 	require.NoError(t, err)
@@ -604,7 +598,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	var message []byte
 	message, err = json.Marshal(blueprint)
 	require.NoError(t, err)
-	err = dbase.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, nil)
+	err = srv.DB.InsertBlueprint(ctx, id, versionId, "000000", "000000", name, description, message, nil)
 	require.NoError(t, err)
 
 	tests := map[string]struct {
