@@ -30,12 +30,8 @@ const (
 func TestValidateComposeRequest(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{}, nil)
+	defer srv.Shutdown(t)
 
 	t.Run("ErrorsForZeroImageRequests", func(t *testing.T) {
 		payload := ComposeRequest{
@@ -410,15 +406,11 @@ func TestComposeStatusError(t *testing.T) {
 	err = dbase.InsertCompose(ctx, id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s",
 		id), &tutils.AuthString1)
@@ -454,12 +446,8 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
+	defer srv.Shutdown(t)
 
 	var uo UploadRequest_Options
 	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
@@ -502,12 +490,8 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
+	defer srv.Shutdown(t)
 
 	var uo UploadRequest_Options
 	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
@@ -553,12 +537,8 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
+	defer srv.Shutdown(t)
 
 	var uo UploadRequest_Options
 	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
@@ -586,12 +566,8 @@ func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 // This test case queries the image-builder for a non existing type of the os distribution
 // osbuild-composer is not being mock here as the error should be intercepted by image-builder
 func TestComposeImageErrorsWhenDistributionNotExists(t *testing.T) {
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{}, nil)
+	defer srv.Shutdown(t)
 
 	var uo UploadRequest_Options
 	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
@@ -633,12 +609,8 @@ func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
+	defer srv.Shutdown(t)
 
 	var uo UploadRequest_Options
 	require.NoError(t, uo.FromAWSUploadRequestOptions(AWSUploadRequestOptions{
@@ -714,15 +686,11 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+		srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 			DistributionsDir: distsDir,
 			AllowFile:        allowFile,
 		})
-		defer func() {
-			err := srv.Shutdown(context.Background())
-			require.NoError(t, err)
-		}()
-		defer tokenSrv.Close()
+		defer srv.Shutdown(t)
 
 		payload := createPayload("centos-9")
 
@@ -739,15 +707,11 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+		srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 			DistributionsDir: distsDir,
 			AllowFile:        allowFile,
 		})
-		defer func() {
-			err := srv.Shutdown(context.Background())
-			require.NoError(t, err)
-		}()
-		defer tokenSrv.Close()
+		defer srv.Shutdown(t)
 
 		payload := createPayload("rhel-8")
 
@@ -764,15 +728,11 @@ func TestComposeImageAllowList(t *testing.T) {
 		apiSrv := createApiSrv()
 		defer apiSrv.Close()
 
-		srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+		srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 			DistributionsDir: distsDir,
 			AllowFile:        "",
 		})
-		defer func() {
-			err := srv.Shutdown(context.Background())
-			require.NoError(t, err)
-		}()
-		defer tokenSrv.Close()
+		defer srv.Shutdown(t)
 
 		payload := createPayload("rhel-8")
 
@@ -965,14 +925,10 @@ func TestComposeWithSnapshots(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, CSURL: csSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, CSURL: csSrv.URL}, &ServerConfig{
 		CSReposURL: "https://content-sources.org",
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	var uo UploadRequest_Options
 	require.NoError(t, uo.FromAWSS3UploadRequestOptions(AWSS3UploadRequestOptions{}))
@@ -1446,16 +1402,12 @@ func TestComposeCustomizations(t *testing.T) {
 		}
 	}))
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{
+	srv := startServer(t, &testServerClientsConf{
 		ComposerURL:   apiSrv.URL,
 		ProvURL:       provSrv.URL,
 		ComplianceURL: complSrv.URL,
 	}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	var uo UploadRequest_Options
 	require.NoError(t, uo.FromAWSS3UploadRequestOptions(AWSS3UploadRequestOptions{}))

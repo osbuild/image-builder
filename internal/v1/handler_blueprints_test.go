@@ -34,11 +34,11 @@ type BlueprintExportResponseUnmarshal struct {
 	SnapshotDate   *string                                       `json:"snapshot_date,omitempty"`
 }
 
-func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, srvURL string, shutdown func()) {
+func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, srvURL string, shutdown func(t *testing.T)) {
 	dbase, err := dbc.NewDB(context.Background())
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{
+	srv := startServer(t, &testServerClientsConf{
 		ComposerURL: func() string {
 			if apiSrv != nil {
 				return *apiSrv
@@ -56,10 +56,8 @@ func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, s
 		DistributionsDir: "../../distributions",
 		CSReposURL:       "https://content-sources.org",
 	})
-	return dbase, db_srv.URL, func() {
-		err := db_srv.Shutdown(context.Background())
-		require.NoError(t, err)
-		tokenSrv.Close()
+	return dbase, srv.URL, func(t *testing.T) {
+		srv.Shutdown(t)
 	}
 }
 
@@ -71,7 +69,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	var jsonResp HTTPErrorList
 	ctx := context.Background()
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
-	defer shutdownFn()
+	defer shutdownFn(t)
 
 	body := map[string]interface{}{
 		"name":        "Blueprint",
@@ -355,7 +353,7 @@ func TestUser_MergeForUpdate(t *testing.T) {
 
 func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
-	defer shutdownFn()
+	defer shutdownFn(t)
 
 	var jsonResp HTTPErrorList
 	ctx := context.Background()
@@ -482,7 +480,7 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 
 	var jsonResp HTTPErrorList
 	_, srvURL, shutdownFn := makeTestServer(t, nil, nil)
-	defer shutdownFn()
+	defer shutdownFn(t)
 
 	body := map[string]interface{}{
 		"name":           "Blueprint",
@@ -545,15 +543,11 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 
 	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
-	defer func() {
-		shutdownErr := srv.Shutdown(ctx)
-		require.NoError(t, shutdownErr)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	id := uuid.New()
 	versionId := uuid.New()
@@ -650,7 +644,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	clientId := "ui"
 
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
-	defer shutdownFn()
+	defer shutdownFn(t)
 
 	var result ComposesResponse
 
@@ -751,7 +745,7 @@ func TestHandlers_BlueprintFromEntryWithRedactedPasswords(t *testing.T) {
 func TestHandlers_GetBlueprint(t *testing.T) {
 	ctx := context.Background()
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
-	defer shutdownFn()
+	defer shutdownFn(t)
 
 	id := uuid.New()
 	versionId := uuid.New()
@@ -968,7 +962,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	}))
 	defer csSrv.Close()
 	dbase, srvURL, shutdownFn := makeTestServer(t, &apiSrv.URL, &csSrv.URL)
-	defer shutdownFn()
+	defer shutdownFn(t)
 
 	idString := "f43a4ec2-5447-4a25-8a62-e258ff11a2d9"
 	id, err := uuid.Parse(idString)
@@ -1168,7 +1162,7 @@ func TestHandlers_GetBlueprints(t *testing.T) {
 	ctx := context.Background()
 
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
-	defer shutdownFn()
+	defer shutdownFn(t)
 
 	blueprintId := uuid.New()
 	versionId := uuid.New()
@@ -1203,7 +1197,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	imageName := "MyImageName"
 
 	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
-	defer shutdownFn()
+	defer shutdownFn(t)
 
 	blueprintName := "blueprint"
 	err := dbase.InsertBlueprint(ctx, blueprintId, versionId, "000000", "000000", blueprintName, "blueprint desc", json.RawMessage(`{"image_requests": [{"image_type": "aws"}]}`), nil)

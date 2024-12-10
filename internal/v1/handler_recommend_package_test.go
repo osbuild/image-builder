@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -29,12 +28,8 @@ func TestRecommendPackage_Success_with_StatusForbidden(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
+	defer srv.Shutdown(t)
 	payload := RecommendPackageRequest{
 		Packages: []string{
 			"some",
@@ -73,12 +68,8 @@ func TestRecommendPackage_Success_with_StatusUnauthorized(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
+	defer srv.Shutdown(t)
 	payload := RecommendPackageRequest{
 		Packages: []string{
 			"some",
@@ -117,12 +108,8 @@ func TestRecommendPackage_Success_with_no_packages(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
+	defer srv.Shutdown(t)
 	payload := RecommendPackageRequest{
 		Packages: []string{
 			"some",
@@ -162,12 +149,8 @@ func TestRecommendPackage_Success_with_packages(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
+	defer srv.Shutdown(t)
 	payload := RecommendPackageRequest{
 		Packages: []string{
 			"some",
@@ -218,12 +201,8 @@ func TestRecommendPackage_with_authenticationServer(t *testing.T) {
 	}))
 	defer oauthMock.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL, OAuthURL: oauthMock.URL}, &ServerConfig{})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL, OAuthURL: oauthMock.URL}, &ServerConfig{})
+	defer srv.Shutdown(t)
 	payload := RecommendPackageRequest{
 		Packages: []string{
 			"some",

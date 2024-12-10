@@ -27,12 +27,8 @@ import (
 func TestWithoutOsbuildComposerBackend(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{}, nil)
+	defer srv.Shutdown(t)
 
 	t.Run("GetVersion", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/version", &tutils.AuthString0)
@@ -119,12 +115,8 @@ func TestGetComposeEntryNotFoundResponse(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
+	defer srv.Shutdown(t)
 
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s",
 		id), &tutils.AuthString0)
@@ -163,6 +155,7 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 			err := json.NewEncoder(w).Encode(composerStatus)
 			require.NoError(t, err)
 		}))
+		defer apiSrv.Close()
 
 		dbase, err := dbc.NewDB(ctx)
 		require.NoError(t, err)
@@ -185,10 +178,11 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 		require.NoError(t, err)
 		err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
 		require.NoError(t, err)
-		srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+		srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 			DBase:            dbase,
 			DistributionsDir: "../../distributions",
 		})
+		defer srv.Shutdown(t)
 		payloads := []struct {
 			composerStatus composer.ComposeStatus
 			imageStatus    ImageStatus
@@ -216,11 +210,7 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 				require.Contains(t, body, tc.expectedBody)
 			}
 		}
-		tokenSrv.Close()
-
-		err = srv.Shutdown(context.Background())
-		require.NoError(t, err)
-
+		srv.Shutdown(t)
 		apiSrv.Close()
 	}
 }
@@ -274,15 +264,11 @@ func TestGetComposeMetadata(t *testing.T) {
 	err = dbase.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
 	require.NoError(t, err)
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	var result composer.ComposeMetadata
 
@@ -309,12 +295,8 @@ func TestGetComposeMetadata404(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
+	defer srv.Shutdown(t)
 
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s/metadata",
 		id), &tutils.AuthString0)
@@ -334,18 +316,14 @@ func TestGetComposes(t *testing.T) {
 	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
 
-	db_srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
-	defer func() {
-		err := db_srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	var result ComposesResponse
-	respStatusCode, body := tutils.GetResponseBody(t, db_srv.URL+"/api/image-builder/v1/composes", &tutils.AuthString0)
+	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/composes", &tutils.AuthString0)
 
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
@@ -365,7 +343,7 @@ func TestGetComposes(t *testing.T) {
 	composeEntry, err := dbase.GetCompose(ctx, id, "000000")
 	require.NoError(t, err)
 
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+"/api/image-builder/v1/composes", &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/composes", &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
 	err = json.Unmarshal([]byte(body), &result)
 	require.NoError(t, err)
@@ -390,7 +368,7 @@ func TestGetComposes(t *testing.T) {
 	err = dbase.InsertCompose(ctx, id6, "500000", "user100000@test.test", "000000", &imageName, json.RawMessage(`{"image_requests": [{"image_type": "edge-commit"}]}`), &clientId, &versionId)
 	require.NoError(t, err)
 
-	respStatusCode, body = tutils.GetResponseBody(t, db_srv.URL+"/api/image-builder/v1/composes?ignoreImageTypes=edge-installer&ignoreImageTypes=aws", &tutils.AuthString0)
+	respStatusCode, body = tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/composes?ignoreImageTypes=edge-installer&ignoreImageTypes=aws", &tutils.AuthString0)
 	require.NoError(t, err)
 
 	require.Equal(t, http.StatusOK, respStatusCode)
@@ -433,12 +411,8 @@ func TestBuildOSTreeOptions(t *testing.T) {
 }
 
 func TestReadinessProbeNotReady(t *testing.T) {
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{}, nil)
+	defer srv.Shutdown(t)
 
 	respStatusCode, _ := tutils.GetResponseBody(t, srv.URL+"/ready", &tutils.AuthString0)
 	require.NotEqual(t, http.StatusOK, respStatusCode)
@@ -458,12 +432,8 @@ func TestReadinessProbeReady(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, nil)
+	defer srv.Shutdown(t)
 
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/ready", &tutils.AuthString0)
 	require.Equal(t, http.StatusOK, respStatusCode)
@@ -471,12 +441,8 @@ func TestReadinessProbeReady(t *testing.T) {
 }
 
 func TestMetrics(t *testing.T) {
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{}, nil)
+	defer srv.Shutdown(t)
 
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/metrics", nil)
 	require.Equal(t, http.StatusOK, respStatusCode)
@@ -540,15 +506,11 @@ func TestGetClones(t *testing.T) {
   ]
 }`), nil, nil)
 	require.NoError(t, err)
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, ProvURL: provSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL, ProvURL: provSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	var csResp ClonesResponse
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s/clones", id), &tutils.AuthString0)
@@ -633,15 +595,11 @@ func TestGetCloneStatus(t *testing.T) {
   ]
 }`), nil, nil)
 	require.NoError(t, err)
-	srv, tokenSrv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	cloneReq := AWSEC2Clone{
 		Region: "us-east-2",
@@ -675,12 +633,8 @@ func TestGetCloneStatus(t *testing.T) {
 
 func TestGetCloneEntryNotFoundResponse(t *testing.T) {
 	id := uuid.New().String()
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{}, nil)
+	defer srv.Shutdown(t)
 
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/clones/%s",
 		id), &tutils.AuthString0)
@@ -698,15 +652,11 @@ func TestValidateSpec(t *testing.T) {
 func TestGetArchitectures(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DistributionsDir: distsDir,
 		AllowFile:        allowFile,
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	t.Run("Basic centos-9", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/architectures/centos-9", &tutils.AuthString0)
@@ -758,15 +708,11 @@ func TestGetArchitectures(t *testing.T) {
 func TestGetPackages(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DistributionsDir: distsDir,
 		AllowFile:        allowFile,
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 	architectures := []string{"x86_64", "aarch64"}
 
 	t.Run("Simple search", func(t *testing.T) {
@@ -855,15 +801,11 @@ func TestGetPackages(t *testing.T) {
 func TestGetDistributions(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DistributionsDir: distsDir,
 		AllowFile:        allowFile,
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	t.Run("Access to restricted distributions", func(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+"/api/image-builder/v1/distributions", &tutils.AuthString0)
@@ -895,15 +837,11 @@ func TestGetDistributions(t *testing.T) {
 func TestGetProfiles(t *testing.T) {
 	distsDir := "../../distributions"
 	allowFile := "../common/testdata/allow.json"
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
 		DistributionsDir: distsDir,
 		AllowFile:        allowFile,
 	})
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	defer srv.Shutdown(t)
 
 	t.Run("Access profiles on all rhel8 variants returns a correct list of profiles", func(t *testing.T) {
 		for _, dist := range []Distributions{
@@ -983,12 +921,8 @@ func TestGetProfiles(t *testing.T) {
 }
 
 func TestGetCustomizations(t *testing.T) {
-	srv, tokenSrv := startServer(t, &testServerClientsConf{}, nil)
-	defer func() {
-		err := srv.Shutdown(context.Background())
-		require.NoError(t, err)
-	}()
-	defer tokenSrv.Close()
+	srv := startServer(t, &testServerClientsConf{}, nil)
+	defer srv.Shutdown(t)
 
 	t.Run("Access all customizations and check that they match", func(t *testing.T) {
 		for _, dist := range []Distributions{
