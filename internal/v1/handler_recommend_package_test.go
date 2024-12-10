@@ -1,4 +1,4 @@
-package v1
+package v1_test
 
 import (
 	"encoding/json"
@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/image-builder/internal/tutils"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/image-builder/internal/tutils"
+	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
 func TestRecommendPackage_Success_with_StatusForbidden(t *testing.T) {
@@ -20,7 +22,7 @@ func TestRecommendPackage_Success_with_StatusForbidden(t *testing.T) {
 		require.Equal(t, "", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		result := RecommendationsResponse{
+		result := v1.RecommendationsResponse{
 			Packages: []string{"vim", "python"},
 		}
 		err := json.NewEncoder(w).Encode(result)
@@ -28,9 +30,9 @@ func TestRecommendPackage_Success_with_StatusForbidden(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &v1.ServerConfig{})
 	defer srv.Shutdown(t)
-	payload := RecommendPackageRequest{
+	payload := v1.RecommendPackageRequest{
 		Packages: []string{
 			"some",
 			"packages",
@@ -42,8 +44,8 @@ func TestRecommendPackage_Success_with_StatusForbidden(t *testing.T) {
 	}
 	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL+"/", payload)
 	require.Equal(t, http.StatusCreated, respStatusCode)
-	var result RecommendationsResponse
-	expectedResult := RecommendationsResponse{
+	var result v1.RecommendationsResponse
+	expectedResult := v1.RecommendationsResponse{
 		Packages: []string{"vim", "python"},
 	}
 	err := json.Unmarshal([]byte(body), &result)
@@ -60,7 +62,7 @@ func TestRecommendPackage_Success_with_StatusUnauthorized(t *testing.T) {
 		require.Equal(t, "", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		result := RecommendationsResponse{
+		result := v1.RecommendationsResponse{
 			Packages: []string{"vim", "python"},
 		}
 		err := json.NewEncoder(w).Encode(result)
@@ -68,9 +70,9 @@ func TestRecommendPackage_Success_with_StatusUnauthorized(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &v1.ServerConfig{})
 	defer srv.Shutdown(t)
-	payload := RecommendPackageRequest{
+	payload := v1.RecommendPackageRequest{
 		Packages: []string{
 			"some",
 			"packages",
@@ -83,8 +85,8 @@ func TestRecommendPackage_Success_with_StatusUnauthorized(t *testing.T) {
 
 	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL+"/", payload)
 	require.Equal(t, http.StatusCreated, respStatusCode)
-	var result RecommendationsResponse
-	expectedResult := RecommendationsResponse{
+	var result v1.RecommendationsResponse
+	expectedResult := v1.RecommendationsResponse{
 		Packages: []string{"vim", "python"},
 	}
 	err := json.Unmarshal([]byte(body), &result)
@@ -102,15 +104,15 @@ func TestRecommendPackage_Success_with_no_packages(t *testing.T) {
 		require.Equal(t, "", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		var result RecommendationsResponse
+		var result v1.RecommendationsResponse
 		err := json.NewEncoder(w).Encode(result)
 		require.NoError(t, err)
 	}))
 	defer apiSrv.Close()
 
-	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &v1.ServerConfig{})
 	defer srv.Shutdown(t)
-	payload := RecommendPackageRequest{
+	payload := v1.RecommendPackageRequest{
 		Packages: []string{
 			"some",
 			"packages",
@@ -122,8 +124,8 @@ func TestRecommendPackage_Success_with_no_packages(t *testing.T) {
 	}
 	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL+"/", payload)
 	require.Equal(t, http.StatusCreated, respStatusCode)
-	var result RecommendationsResponse
-	expectedResult := RecommendationsResponse{
+	var result v1.RecommendationsResponse
+	expectedResult := v1.RecommendationsResponse{
 		Packages: nil,
 	}
 	err := json.Unmarshal([]byte(body), &result)
@@ -141,7 +143,7 @@ func TestRecommendPackage_Success_with_packages(t *testing.T) {
 		require.Equal(t, "", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		result := RecommendationsResponse{
+		result := v1.RecommendationsResponse{
 			Packages: []string{"vim", "python"},
 		}
 		err := json.NewEncoder(w).Encode(result)
@@ -149,9 +151,9 @@ func TestRecommendPackage_Success_with_packages(t *testing.T) {
 	}))
 	defer apiSrv.Close()
 
-	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &ServerConfig{})
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL}, &v1.ServerConfig{})
 	defer srv.Shutdown(t)
-	payload := RecommendPackageRequest{
+	payload := v1.RecommendPackageRequest{
 		Packages: []string{
 			"some",
 			"packages",
@@ -163,8 +165,8 @@ func TestRecommendPackage_Success_with_packages(t *testing.T) {
 	}
 	respStatusCode, body := tutils.PostResponseBody(t, apiSrv.URL+"/", payload)
 	require.Equal(t, http.StatusCreated, respStatusCode)
-	var result RecommendationsResponse
-	expectedResult := RecommendationsResponse{
+	var result v1.RecommendationsResponse
+	expectedResult := v1.RecommendationsResponse{
 		Packages: []string{"vim", "python"},
 	}
 	err := json.Unmarshal([]byte(body), &result)
@@ -174,7 +176,7 @@ func TestRecommendPackage_Success_with_packages(t *testing.T) {
 
 func TestRecommendPackage_with_authenticationServer(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		result := RecommendationsResponse{
+		result := v1.RecommendationsResponse{
 			Packages: []string{"vim", "python"},
 		}
 		err := json.NewEncoder(w).Encode(result)
@@ -201,9 +203,9 @@ func TestRecommendPackage_with_authenticationServer(t *testing.T) {
 	}))
 	defer oauthMock.Close()
 
-	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL, OAuthURL: oauthMock.URL}, &ServerConfig{})
+	srv := startServer(t, &testServerClientsConf{RecommendURL: apiSrv.URL, OAuthURL: oauthMock.URL}, &v1.ServerConfig{})
 	defer srv.Shutdown(t)
-	payload := RecommendPackageRequest{
+	payload := v1.RecommendPackageRequest{
 		Packages: []string{
 			"some",
 			"packages",
@@ -215,8 +217,8 @@ func TestRecommendPackage_with_authenticationServer(t *testing.T) {
 	}
 	respStatusCode, body := tutils.PostResponseBody(t, srv.URL+"/api/image-builder/v1/experimental/recommendations", payload)
 	require.Equal(t, http.StatusOK, respStatusCode)
-	var result RecommendationsResponse
-	expectedResult := RecommendationsResponse{
+	var result v1.RecommendationsResponse
+	expectedResult := v1.RecommendationsResponse{
 		Packages: []string{"vim", "python"},
 	}
 	err := json.Unmarshal([]byte(body), &result)

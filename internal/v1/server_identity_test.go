@@ -1,4 +1,4 @@
-package v1
+package v1_test
 
 import (
 	"net/http"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/tutils"
+	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
 func TestRedHatIdentity(t *testing.T) {
@@ -64,7 +65,7 @@ func TestRedHatIdentity(t *testing.T) {
 func TestFedoraIdentity(t *testing.T) {
 	// note: any url will work, it'll only try to contact the osbuild-composer
 	// instance when calling /compose or /compose/$uuid
-	srv := startServer(t, &testServerClientsConf{}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{}, &v1.ServerConfig{
 		FedoraAuth: true,
 	})
 	defer srv.Shutdown(t)

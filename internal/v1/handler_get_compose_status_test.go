@@ -1,4 +1,4 @@
-package v1
+package v1_test
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/tutils"
+	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
 func TestComposeStatus(t *testing.T) {
@@ -36,13 +37,13 @@ func TestComposeStatus(t *testing.T) {
 
 	dbase, err := dbc.NewDB(ctx)
 	require.NoError(t, err)
-	cr := ComposeRequest{
+	cr := v1.ComposeRequest{
 		Distribution: "rhel-9",
-		Customizations: &Customizations{
+		Customizations: &v1.Customizations{
 			// Since we are not calling handleCommonCompose but inserting directly to DB
 			// there is no point in using plaintext passwords
 			// If there is plaintext password in DB there is problem elsewhere (eg. CreateBlueprint)
-			Users: &[]User{
+			Users: &[]v1.User{
 				{
 					Name:     "user",
 					SshKey:   common.ToPtr("ssh-rsa AAAAB3NzaC2"),
@@ -55,7 +56,7 @@ func TestComposeStatus(t *testing.T) {
 	require.NoError(t, err)
 	err = dbase.InsertCompose(ctx, composeId, "000000", "user000000@test.test", "000000", cr.ImageName, crRaw, (*string)(cr.ClientId), nil)
 	require.NoError(t, err)
-	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &ServerConfig{
+	srv := startServer(t, &testServerClientsConf{ComposerURL: apiSrv.URL}, &v1.ServerConfig{
 		DBase:            dbase,
 		DistributionsDir: "../../distributions",
 	})
@@ -66,8 +67,8 @@ func TestComposeStatus(t *testing.T) {
 		Ami:    "ami-fakeami",
 		Region: "us-east-1",
 	}))
-	var ibAwsUS UploadStatus_Options
-	require.NoError(t, ibAwsUS.FromAWSUploadStatus(AWSUploadStatus{
+	var ibAwsUS v1.UploadStatus_Options
+	require.NoError(t, ibAwsUS.FromAWSUploadStatus(v1.AWSUploadStatus{
 		Ami:    "ami-fakeami",
 		Region: "us-east-1",
 	}))
@@ -76,8 +77,8 @@ func TestComposeStatus(t *testing.T) {
 	require.NoError(t, awsS3US.FromAWSS3UploadStatus(composer.AWSS3UploadStatus{
 		Url: "url",
 	}))
-	var ibAwsS3US UploadStatus_Options
-	require.NoError(t, ibAwsS3US.FromAWSS3UploadStatus(AWSS3UploadStatus{
+	var ibAwsS3US v1.UploadStatus_Options
+	require.NoError(t, ibAwsS3US.FromAWSS3UploadStatus(v1.AWSS3UploadStatus{
 		Url: "url",
 	}))
 
@@ -85,8 +86,8 @@ func TestComposeStatus(t *testing.T) {
 	require.NoError(t, azureUS.FromAzureUploadStatus(composer.AzureUploadStatus{
 		ImageName: "image-name",
 	}))
-	var ibAzureUS UploadStatus_Options
-	require.NoError(t, ibAzureUS.FromAzureUploadStatus(AzureUploadStatus{
+	var ibAzureUS v1.UploadStatus_Options
+	require.NoError(t, ibAzureUS.FromAzureUploadStatus(v1.AzureUploadStatus{
 		ImageName: "image-name",
 	}))
 
@@ -95,8 +96,8 @@ func TestComposeStatus(t *testing.T) {
 		ImageName: "image-name",
 		ProjectId: "project-id",
 	}))
-	var ibGcpUS UploadStatus_Options
-	require.NoError(t, ibGcpUS.FromGCPUploadStatus(GCPUploadStatus{
+	var ibGcpUS v1.UploadStatus_Options
+	require.NoError(t, ibGcpUS.FromGCPUploadStatus(v1.GCPUploadStatus{
 		ImageName: "image-name",
 		ProjectId: "project-id",
 	}))
@@ -105,14 +106,14 @@ func TestComposeStatus(t *testing.T) {
 	require.NoError(t, ociUS.FromOCIUploadStatus(composer.OCIUploadStatus{
 		Url: "url",
 	}))
-	var ibOciUS UploadStatus_Options
-	require.NoError(t, ibOciUS.FromOCIUploadStatus(OCIUploadStatus{
+	var ibOciUS v1.UploadStatus_Options
+	require.NoError(t, ibOciUS.FromOCIUploadStatus(v1.OCIUploadStatus{
 		Url: "url",
 	}))
 
 	payloads := []struct {
 		composerStatus composer.ComposeStatus
-		imageStatus    ImageStatus
+		imageStatus    v1.ImageStatus
 	}{
 		{
 			composerStatus: composer.ComposeStatus{
@@ -126,11 +127,11 @@ func TestComposeStatus(t *testing.T) {
 				},
 				Status: composer.ComposeStatusValueSuccess,
 			},
-			imageStatus: ImageStatus{
-				Status: ImageStatusStatusSuccess,
-				UploadStatus: &UploadStatus{
-					Status:  Success,
-					Type:    UploadTypesAws,
+			imageStatus: v1.ImageStatus{
+				Status: v1.ImageStatusStatusSuccess,
+				UploadStatus: &v1.UploadStatus{
+					Status:  v1.Success,
+					Type:    v1.UploadTypesAws,
 					Options: ibAwsUS,
 				},
 			},
@@ -147,11 +148,11 @@ func TestComposeStatus(t *testing.T) {
 				},
 				Status: composer.ComposeStatusValueSuccess,
 			},
-			imageStatus: ImageStatus{
-				Status: ImageStatusStatusSuccess,
-				UploadStatus: &UploadStatus{
-					Status:  Success,
-					Type:    UploadTypesAwsS3,
+			imageStatus: v1.ImageStatus{
+				Status: v1.ImageStatusStatusSuccess,
+				UploadStatus: &v1.UploadStatus{
+					Status:  v1.Success,
+					Type:    v1.UploadTypesAwsS3,
 					Options: ibAwsS3US,
 				},
 			},
@@ -168,11 +169,11 @@ func TestComposeStatus(t *testing.T) {
 				},
 				Status: composer.ComposeStatusValueSuccess,
 			},
-			imageStatus: ImageStatus{
-				Status: ImageStatusStatusSuccess,
-				UploadStatus: &UploadStatus{
-					Status:  Success,
-					Type:    UploadTypesAzure,
+			imageStatus: v1.ImageStatus{
+				Status: v1.ImageStatusStatusSuccess,
+				UploadStatus: &v1.UploadStatus{
+					Status:  v1.Success,
+					Type:    v1.UploadTypesAzure,
 					Options: ibAzureUS,
 				},
 			},
@@ -189,11 +190,11 @@ func TestComposeStatus(t *testing.T) {
 				},
 				Status: composer.ComposeStatusValueSuccess,
 			},
-			imageStatus: ImageStatus{
-				Status: ImageStatusStatusSuccess,
-				UploadStatus: &UploadStatus{
-					Status:  Success,
-					Type:    UploadTypesGcp,
+			imageStatus: v1.ImageStatus{
+				Status: v1.ImageStatusStatusSuccess,
+				UploadStatus: &v1.UploadStatus{
+					Status:  v1.Success,
+					Type:    v1.UploadTypesGcp,
 					Options: ibGcpUS,
 				},
 			},
@@ -210,11 +211,11 @@ func TestComposeStatus(t *testing.T) {
 				},
 				Status: composer.ComposeStatusValueSuccess,
 			},
-			imageStatus: ImageStatus{
-				Status: ImageStatusStatusSuccess,
-				UploadStatus: &UploadStatus{
-					Status:  Success,
-					Type:    UploadTypesOciObjectstorage,
+			imageStatus: v1.ImageStatus{
+				Status: v1.ImageStatusStatusSuccess,
+				UploadStatus: &v1.UploadStatus{
+					Status:  v1.Success,
+					Type:    v1.UploadTypesOciObjectstorage,
 					Options: ibOciUS,
 				},
 			},
@@ -227,7 +228,7 @@ func TestComposeStatus(t *testing.T) {
 		respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s", composeId), &tutils.AuthString0)
 		require.Equal(t, http.StatusOK, respStatusCode)
 
-		var result ComposeStatus
+		var result v1.ComposeStatus
 		err := json.Unmarshal([]byte(body), &result)
 		require.NoError(t, err)
 		require.Equal(t, payload.imageStatus, result.ImageStatus)

@@ -1,4 +1,4 @@
-package v1
+package v1_test
 
 import (
 	"context"
@@ -11,9 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/image-builder/internal/clients/recommendations"
-	"github.com/osbuild/image-builder/internal/oauth2"
-
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -22,10 +19,13 @@ import (
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
+	"github.com/osbuild/image-builder/internal/clients/recommendations"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/osbuild/image-builder/internal/oauth2"
 	"github.com/osbuild/image-builder/internal/tutils"
+	v1 "github.com/osbuild/image-builder/internal/v1"
 )
 
 var dbc *tutils.PSQLContainer
@@ -115,7 +115,7 @@ type testServer struct {
 	tokenSrv *httptest.Server
 }
 
-func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) *testServer {
+func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfig) *testServer {
 	ctx := context.Background()
 
 	var log = &logrus.Logger{
@@ -180,7 +180,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 	echoServer.HideBanner = true
 	serverConfig := conf
 	if serverConfig == nil {
-		serverConfig = &ServerConfig{}
+		serverConfig = &v1.ServerConfig{}
 	}
 
 	if serverConfig.DBase == nil {
@@ -206,7 +206,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *ServerConfig) 
 		serverConfig.AllDistros = adr
 	}
 
-	err = Attach(serverConfig)
+	err = v1.Attach(serverConfig)
 	require.NoError(t, err)
 	// execute in parallel b/c .Run() will block execution
 	addr := "localhost:8086"
