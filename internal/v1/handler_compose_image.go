@@ -369,6 +369,86 @@ func (h *Handlers) buildPayloadRepositories(ctx echo.Context, payloadRepos []Rep
 	return res, nil
 }
 
+func (h *Handlers) buildCustomRepositories(ctx echo.Context, custRepos []CustomRepository) ([]composer.CustomRepository, error) {
+	res := make([]composer.CustomRepository, len(custRepos))
+
+	var repoIDs []string
+	for _, repo := range custRepos {
+		repoIDs = append(repoIDs, repo.Id)
+	}
+
+	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), nil, repoIDs, true)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, curepo := range custRepos {
+		var repo content_sources.ApiRepositoryResponse
+		if r, ok := repoMap[curepo.Id]; ok {
+			repo = r
+		}
+
+		res[i].Id = curepo.Id
+		if curepo.Name != nil {
+			res[i].Name = curepo.Name
+		} else if repo.Name != nil {
+			res[i].Name = repo.Name
+		}
+
+		if curepo.Filename != nil {
+			res[i].Filename = curepo.Filename
+		}
+
+		if curepo.Baseurl != nil {
+			res[i].Baseurl = curepo.Baseurl
+		} else if repo.Url != nil {
+			res[i].Baseurl = common.ToPtr([]string{*repo.Url})
+		}
+
+		if curepo.CheckGpg != nil {
+			res[i].CheckGpg = curepo.CheckGpg
+		} else if repo.GpgKey != nil {
+			res[i].CheckGpg = common.ToPtr(true)
+		}
+
+		if curepo.CheckRepoGpg != nil {
+			res[i].CheckRepoGpg = curepo.CheckRepoGpg
+		} else if repo.MetadataVerification != nil {
+			res[i].CheckRepoGpg = repo.MetadataVerification
+		}
+
+		if curepo.Gpgkey != nil {
+			res[i].Gpgkey = curepo.Gpgkey
+		} else if repo.GpgKey != nil {
+			res[i].Gpgkey = common.ToPtr([]string{*repo.GpgKey})
+		}
+
+		if curepo.SslVerify != nil {
+			res[i].SslVerify = curepo.SslVerify
+		}
+		if curepo.Metalink != nil {
+			res[i].Metalink = curepo.Metalink
+		}
+		if curepo.Mirrorlist != nil {
+			res[i].Mirrorlist = curepo.Mirrorlist
+		}
+		if curepo.Priority != nil {
+			res[i].Priority = curepo.Priority
+		}
+		if curepo.Enabled != nil {
+			res[i].Enabled = curepo.Enabled
+		}
+
+		if curepo.ModuleHotfixes != nil {
+			res[i].ModuleHotfixes = curepo.ModuleHotfixes
+		} else if repo.ModuleHotfixes != nil {
+			res[i].ModuleHotfixes = repo.ModuleHotfixes
+		}
+
+	}
+	return res, nil
+}
+
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
 	var uploadOptions composer.UploadOptions
 	switch ur.Type {
@@ -669,48 +749,12 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 			return nil, err
 		}
 		res.CustomRepositories = &customRepositories
-	} else if cust.CustomRepositories != nil {
-		customRepositories := make([]composer.CustomRepository, len(*cust.CustomRepositories))
-		for i, customRepository := range *cust.CustomRepositories {
-			if customRepository.Id != "" {
-				customRepositories[i].Id = customRepository.Id
-			}
-			if customRepository.Name != nil {
-				customRepositories[i].Name = customRepository.Name
-			}
-			if customRepository.Filename != nil {
-				customRepositories[i].Filename = customRepository.Filename
-			}
-			if customRepository.Baseurl != nil {
-				customRepositories[i].Baseurl = customRepository.Baseurl
-			}
-			if customRepository.CheckGpg != nil {
-				customRepositories[i].CheckGpg = customRepository.CheckGpg
-			}
-			if customRepository.CheckRepoGpg != nil {
-				customRepositories[i].CheckRepoGpg = customRepository.CheckRepoGpg
-			}
-			if customRepository.Gpgkey != nil {
-				customRepositories[i].Gpgkey = customRepository.Gpgkey
-			}
-			if customRepository.SslVerify != nil {
-				customRepositories[i].SslVerify = customRepository.SslVerify
-			}
-			if customRepository.Metalink != nil {
-				customRepositories[i].Metalink = customRepository.Metalink
-			}
-			if customRepository.Mirrorlist != nil {
-				customRepositories[i].Mirrorlist = customRepository.Mirrorlist
-			}
-			if customRepository.Priority != nil {
-				customRepositories[i].Priority = customRepository.Priority
-			}
-			if customRepository.Enabled != nil {
-				customRepositories[i].Enabled = customRepository.Enabled
-			}
-			customRepositories[i].ModuleHotfixes = customRepository.ModuleHotfixes
+	} else if cust.CustomRepositories != nil && len(*cust.CustomRepositories) > 0 {
+		custrepos, err := h.buildCustomRepositories(ctx, *cust.CustomRepositories)
+		if err != nil {
+			return nil, err
 		}
-		res.CustomRepositories = &customRepositories
+		res.CustomRepositories = &custrepos
 	}
 
 	if cust.Openscap != nil {
