@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"runtime"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -22,6 +21,7 @@ import (
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/tutils"
 	v1 "github.com/osbuild/image-builder/internal/v1"
+	"github.com/osbuild/image-builder/internal/v1/mocks"
 )
 
 type BlueprintExportResponseUnmarshal struct {
@@ -34,17 +34,11 @@ type BlueprintExportResponseUnmarshal struct {
 	SnapshotDate   *string                                       `json:"snapshot_date,omitempty"`
 }
 
-func makeTestServer(t *testing.T, apiSrv *string, csSrv *string) (dbase db.DB, srvURL string, shutdown func(t *testing.T)) {
+func makeTestServer(t *testing.T, apiSrv *string) (dbase db.DB, srvURL string, shutdown func(t *testing.T)) {
 	srv := startServer(t, &testServerClientsConf{
 		ComposerURL: func() string {
 			if apiSrv != nil {
 				return *apiSrv
-			}
-			return ""
-		}(),
-		CSURL: func() string {
-			if csSrv != nil {
-				return *csSrv
 			}
 			return ""
 		}(),
@@ -65,7 +59,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 
 	var jsonResp v1.HTTPErrorList
 	ctx := context.Background()
-	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
+	dbase, srvURL, shutdownFn := makeTestServer(t, nil)
 	defer shutdownFn(t)
 
 	body := map[string]interface{}{
@@ -349,7 +343,7 @@ func TestUser_MergeForUpdate(t *testing.T) {
 }
 
 func TestHandlers_UpdateBlueprint_CustomizationUser(t *testing.T) {
-	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
+	dbase, srvURL, shutdownFn := makeTestServer(t, nil)
 	defer shutdownFn(t)
 
 	var jsonResp v1.HTTPErrorList
@@ -476,7 +470,7 @@ func TestHandlers_UpdateBlueprint(t *testing.T) {
 	}
 
 	var jsonResp v1.HTTPErrorList
-	_, srvURL, shutdownFn := makeTestServer(t, nil, nil)
+	_, srvURL, shutdownFn := makeTestServer(t, nil)
 	defer shutdownFn(t)
 
 	body := map[string]interface{}{
@@ -637,7 +631,7 @@ func TestHandlers_GetBlueprintComposes(t *testing.T) {
 	imageName := "MyImageName"
 	clientId := "ui"
 
-	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
+	dbase, srvURL, shutdownFn := makeTestServer(t, nil)
 	defer shutdownFn(t)
 
 	var result v1.ComposesResponse
@@ -738,7 +732,7 @@ func TestHandlers_BlueprintFromEntryWithRedactedPasswords(t *testing.T) {
 
 func TestHandlers_GetBlueprint(t *testing.T) {
 	ctx := context.Background()
-	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
+	dbase, srvURL, shutdownFn := makeTestServer(t, nil)
 	defer shutdownFn(t)
 
 	id := uuid.New()
@@ -892,9 +886,6 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 
 	var composeId uuid.UUID
 	var composerRequest composer.ComposeRequest
-	repoPayloadId, err := uuid.Parse("2531793b-c607-4e1c-80b2-fbbaf9d12790")
-	require.NoError(t, err)
-	repoPayloadId2 := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if "Bearer" == r.Header.Get("Authorization") {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -914,48 +905,8 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 		require.NoError(t, err)
 	}))
 	defer apiSrv.Close()
-	csSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, tutils.AuthString0, r.Header.Get("x-rh-identity"))
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		if r.URL.Path == "/repositories/bulk_export/" {
-			require.Equal(t, "application/json", r.Header.Get("content-type"))
-			var body content_sources.ApiRepositoryExportRequest
-			err := json.NewDecoder(r.Body).Decode(&body)
-			require.NoError(t, err)
-			gpgKey := "some-gpg-key"
-			if slices.Equal(body.RepositoryUuids, []string{
-				repoPayloadId.String(),
-			}) {
-				result := []content_sources.ApiRepositoryExportResponse{
-					{
-						GpgKey: &gpgKey,
-						Name:   common.ToPtr("payload"),
-						Url:    common.ToPtr("http://snappy-url/snappy/baseos"),
-					},
-				}
-				err = json.NewEncoder(w).Encode(result)
-				require.NoError(t, err)
-			} else if slices.Equal(body.RepositoryUuids, []string{repoPayloadId.String(), repoPayloadId2.String()}) {
-				result := []content_sources.ApiRepositoryExportResponse{
-					{
-						GpgKey: &gpgKey,
-						Name:   common.ToPtr("payload"),
-						Url:    common.ToPtr("http://snappy-url/snappy/baseos"),
-					},
-					{
-						GpgKey: &gpgKey,
-						Name:   common.ToPtr("payload2"),
-						Url:    common.ToPtr("http://snappy-url/snappy/appstream"),
-					},
-				}
-				err = json.NewEncoder(w).Encode(result)
-				require.NoError(t, err)
-			}
-		}
-	}))
-	defer csSrv.Close()
-	dbase, srvURL, shutdownFn := makeTestServer(t, &apiSrv.URL, &csSrv.URL)
+
+	dbase, srvURL, shutdownFn := makeTestServer(t, &apiSrv.URL)
 	defer shutdownFn(t)
 
 	idString := "f43a4ec2-5447-4a25-8a62-e258ff11a2d9"
@@ -985,9 +936,9 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 			CustomRepositories: &[]v1.CustomRepository{
 				{
 					Baseurl: &[]string{"http://snappy-url/snappy/baseos"},
-					Name:    common.ToPtr("payload"),
-					Gpgkey:  &[]string{"some-gpg-key"},
-					Id:      repoPayloadId.String(),
+					Name:    common.ToPtr("baseos"),
+					Gpgkey:  &[]string{mocks.RhelGPG},
+					Id:      mocks.RepoBaseID,
 				},
 			},
 		},
@@ -1044,9 +995,9 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	require.Equal(t, name, result.Name)
 	require.Equal(t, blueprint.Distribution, result.Distribution)
 	require.Equal(t, blueprint.Customizations.Packages, result.Customizations.Packages)
-	require.Equal(t, "payload", *result.ContentSources[0].Name)
+	require.Equal(t, "baseos", *result.ContentSources[0].Name)
 	require.Equal(t, "http://snappy-url/snappy/baseos", *result.ContentSources[0].Url)
-	require.Equal(t, "some-gpg-key", *result.ContentSources[0].GpgKey)
+	require.Equal(t, mocks.RhelGPG, *result.ContentSources[0].GpgKey)
 	require.Equal(t, "2012-12-20", *result.SnapshotDate)
 	require.Len(t, result.ContentSources, 1)
 	// Check that the password returned is redacted
@@ -1115,15 +1066,15 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 			CustomRepositories: &[]v1.CustomRepository{
 				{
 					Baseurl: &[]string{"http://snappy-url/snappy/baseos"},
-					Name:    common.ToPtr("payload"),
-					Gpgkey:  &[]string{"some-gpg-key"},
-					Id:      repoPayloadId.String(),
+					Name:    common.ToPtr("baseos"),
+					Gpgkey:  &[]string{mocks.RhelGPG},
+					Id:      mocks.RepoBaseID,
 				},
 				{
 					Baseurl: &[]string{"http://snappy-url/snappy/appstream"},
-					Name:    common.ToPtr("payload2"),
-					Gpgkey:  &[]string{"some-gpg-key"},
-					Id:      repoPayloadId2.String(),
+					Name:    common.ToPtr("appstream"),
+					Gpgkey:  &[]string{mocks.RhelGPG},
+					Id:      mocks.RepoAppstrID,
 				},
 			},
 		},
@@ -1144,18 +1095,18 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	err = json.Unmarshal([]byte(bodyMoreRepos), &result2)
 	require.NoError(t, err)
 	require.Len(t, result2.ContentSources, 2)
-	require.Equal(t, "payload", *result2.ContentSources[0].Name)
+	require.Equal(t, "baseos", *result2.ContentSources[0].Name)
 	require.Equal(t, "http://snappy-url/snappy/baseos", *result2.ContentSources[0].Url)
-	require.Equal(t, "some-gpg-key", *result2.ContentSources[0].GpgKey)
-	require.Equal(t, "payload2", *result2.ContentSources[1].Name)
+	require.Equal(t, mocks.RhelGPG, *result2.ContentSources[0].GpgKey)
+	require.Equal(t, "appstream", *result2.ContentSources[1].Name)
 	require.Equal(t, "http://snappy-url/snappy/appstream", *result2.ContentSources[1].Url)
-	require.Equal(t, "some-gpg-key", *result2.ContentSources[1].GpgKey)
+	require.Equal(t, mocks.RhelGPG, *result2.ContentSources[1].GpgKey)
 }
 
 func TestHandlers_GetBlueprints(t *testing.T) {
 	ctx := context.Background()
 
-	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
+	dbase, srvURL, shutdownFn := makeTestServer(t, nil)
 	defer shutdownFn(t)
 
 	blueprintId := uuid.New()
@@ -1190,7 +1141,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	clientId := "ui"
 	imageName := "MyImageName"
 
-	dbase, srvURL, shutdownFn := makeTestServer(t, nil, nil)
+	dbase, srvURL, shutdownFn := makeTestServer(t, nil)
 	defer shutdownFn(t)
 
 	blueprintName := "blueprint"
