@@ -405,9 +405,7 @@ func TestComposeStatusError(t *testing.T) {
 	})
 	defer srv.Shutdown(t)
 
-	imageName := "MyImageName"
-	clientId := "ui"
-	err := srv.DB.InsertCompose(ctx, id, "600000", "user@test.test", "000001", &imageName, json.RawMessage("{}"), &clientId, nil)
+	err := srv.DB.InsertCompose(ctx, id, "600000", "user@test.test", "000001", common.ToPtr("MyImageName"), json.RawMessage("{}"), common.ToPtr("ui"), nil)
 	require.NoError(t, err)
 
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s",

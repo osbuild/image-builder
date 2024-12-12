@@ -261,9 +261,7 @@ func TestGetComposeMetadata(t *testing.T) {
 	})
 	defer srv.Shutdown(t)
 
-	imageName := "MyImageName"
-	clientId := "ui"
-	err := srv.DB.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", &imageName, json.RawMessage("{}"), &clientId, nil)
+	err := srv.DB.InsertCompose(ctx, id, "500000", "user500000@test.test", "000000", common.ToPtr("MyImageName"), json.RawMessage("{}"), common.ToPtr("ui"), nil)
 	require.NoError(t, err)
 
 	var result composer.ComposeMetadata
