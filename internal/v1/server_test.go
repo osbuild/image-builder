@@ -27,6 +27,7 @@ import (
 	"github.com/osbuild/image-builder/internal/oauth2"
 	"github.com/osbuild/image-builder/internal/tutils"
 	v1 "github.com/osbuild/image-builder/internal/v1"
+	"github.com/osbuild/image-builder/internal/v1/mocks"
 )
 
 var dbc *tutils.PSQLContainer
@@ -101,7 +102,6 @@ func makeUploadOptions(t *testing.T, uploadOptions interface{}) *composer.Upload
 type testServerClientsConf struct {
 	ComposerURL   string
 	ProvURL       string
-	CSURL         string
 	RecommendURL  string
 	ComplianceURL string
 	OAuthURL      string
@@ -115,6 +115,7 @@ type testServer struct {
 	DB  db.DB
 
 	tokenSrv *httptest.Server
+	csSrv    *httptest.Server
 }
 
 func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfig) *testServer {
@@ -152,8 +153,9 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfi
 	})
 	require.NoError(t, err)
 
+	csSrv := httptest.NewServer(http.HandlerFunc(mocks.ContentSources))
 	csClient, err := content_sources.NewClient(content_sources.ContentSourcesClientConfig{
-		URL: tscc.CSURL,
+		URL: csSrv.URL,
 	})
 	require.NoError(t, err)
 
@@ -194,6 +196,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfi
 	serverConfig.CompClient = compClient
 	serverConfig.ProvClient = provClient
 	serverConfig.CSClient = csClient
+	serverConfig.CSReposURL = "https://content-sources.org"
 	serverConfig.RecommendClient = recommendClient
 	serverConfig.ComplianceClient = complianceClient
 	if serverConfig.QuotaFile == "" {
@@ -237,10 +240,11 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfi
 		tries += 1
 	}
 
-	return &testServer{echoServer, URL, server.GetDB(), tokenServer}
+	return &testServer{echoServer, URL, server.GetDB(), tokenServer, csSrv}
 }
 
 func (ts *testServer) Shutdown(t *testing.T) {
 	require.NoError(t, ts.echo.Shutdown(context.Background()))
 	ts.tokenSrv.Close()
+	ts.csSrv.Close()
 }
