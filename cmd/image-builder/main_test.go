@@ -543,3 +543,27 @@ func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
 	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildroot-build.spdx.json"), sboms[0])
 	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.image-os.spdx.json"), sboms[1])
 }
+
+func TestDescribeImageSmoke(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"describe-image",
+		"qcow2",
+		"--distro=centos-9",
+		"--arch=x86_64",
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	assert.Contains(t, fakeStdout.String(), `distro: centos-9
+type: qcow2
+arch: x86_64`)
+}

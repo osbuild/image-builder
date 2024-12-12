@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	GetOneImage = getOneImage
-	Run         = run
-	FindDistro  = findDistro
+	GetOneImage   = getOneImage
+	Run           = run
+	FindDistro    = findDistro
+	DescribeImage = describeImage
 )
 
 func MockOsArgs(new []string) (restore func()) {

@@ -202,6 +202,32 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	return buildImage(pbar, res, mf.Bytes(), buildOpts)
 }
 
+func cmdDescribeImg(cmd *cobra.Command, args []string) error {
+	// XXX: boilderplate identical to cmdManifest() above
+	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return err
+	}
+	distroStr, err := cmd.Flags().GetString("distro")
+	if err != nil {
+		return err
+	}
+	archStr, err := cmd.Flags().GetString("arch")
+	if err != nil {
+		return err
+	}
+	if archStr == "" {
+		archStr = arch.Current().String()
+	}
+	imgTypeStr := args[0]
+	res, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	if err != nil {
+		return err
+	}
+
+	return describeImage(res, osStdout)
+}
+
 func run() error {
 	// images generates a lot of noisy logs a bunch of stuff to
 	// Debug/Info that is distracting the user (at least by
@@ -270,6 +296,20 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
 	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
 	rootCmd.AddCommand(buildCmd)
+
+	// XXX: add --format=json too?
+	describeImgCmd := &cobra.Command{
+		Use:          "describe-image <image-type>",
+		Short:        "Describe the given image-type, e.g. qcow2 (tip: combine with --distro,--arch)",
+		RunE:         cmdDescribeImg,
+		SilenceUsage: true,
+		Args:         cobra.ExactArgs(1),
+		Hidden:       true,
+	}
+	describeImgCmd.Flags().String("arch", "", `use the different architecture`)
+	describeImgCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
+
+	rootCmd.AddCommand(describeImgCmd)
 
 	return rootCmd.Execute()
 }
