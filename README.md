@@ -99,3 +99,17 @@ $ image-builder list-images --output=json
 Q: Does this require a backend.
 A: The osbuild binary is used to actually build the images but beyond that
    no setup is required, i.e. no daemons like osbuild-composer.
+
+## Project
+
+ * **Website**: <https://www.osbuild.org>
+ * **Bug Tracker**: <https://github.com/osbuild/image-builder-cli/issues>
+ * **Discussions**: https://github.com/orgs/osbuild/discussions
+ * **Matrix (chat)**: [Image Builder channel on Fedora Chat](https://matrix.to/#/#image-builder:fedoraproject.org?web-instance[element.io]=chat.fedoraproject.org)
+ * **Changelog**: <https://github.com/osbuild/image-builder-cli/releases>
+
+### Repository
+
+ - **web**:   <https://github.com/osbuild/image-builder-cli>
+ - **https**: `https://github.com/osbuild/image-builder-cli.git`
+ - **ssh**:   `git@github.com:osbuild/image-builder-cli.git`
