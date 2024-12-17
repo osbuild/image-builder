@@ -293,6 +293,7 @@ type BlueprintResponse struct {
 	// ImageRequests Array of image requests. Having more image requests in a single blueprint is currently not supported.
 	ImageRequests []ImageRequest `json:"image_requests"`
 	Name          string         `json:"name"`
+	Version       *int           `json:"version,omitempty"`
 }
 
 // BlueprintsResponse defines model for BlueprintsResponse.

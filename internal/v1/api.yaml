@@ -1039,6 +1039,8 @@ components:
           type: string
         description:
           type: string
+        version:
+          type: integer
         distribution:
           $ref: '#/components/schemas/Distributions'
         image_requests:
