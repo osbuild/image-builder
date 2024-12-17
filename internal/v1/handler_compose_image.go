@@ -95,7 +95,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 			}
 		}
 
-		snapshotRepos, _, err := h.buildRepositorySnapshots(ctx, repoURLs, false, *composeRequest.ImageRequests[0].SnapshotDate)
+		snapshotRepos, _, err := h.buildRepositorySnapshots(ctx, repoURLs, nil, false, *composeRequest.ImageRequests[0].SnapshotDate)
 		if err != nil {
 			return ComposeResponse{}, err
 		}
@@ -216,44 +216,24 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 	return repositories
 }
 
-func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, external bool, snapshotDate string) ([]composer.Repository, []composer.CustomRepository, error) {
+func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, repoIDs []string, external bool, snapshotDate string) ([]composer.Repository, []composer.CustomRepository, error) {
 	date, err := time.Parse(time.DateOnly, snapshotDate)
 	if err != nil {
 		return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in DateOnly (yyyy-mm-dd) format", snapshotDate))
 	}
 
-	repoUUIDs := []string{}
-	repoMap := map[string]content_sources.ApiRepositoryResponse{}
-	resp, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, external)
+	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, repoIDs, external)
 	if err != nil {
+		ctx.Logger().Warnf("Unable to get repositories for base urls: %v", err)
 		return nil, nil, fmt.Errorf("Unable to retrieve repositories: %v", err)
 	}
-	defer closeBody(ctx, resp.Body)
 
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode != http.StatusUnauthorized {
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, nil, err
-			}
-			ctx.Logger().Warnf("Unable to get repositories for base urls: %v, got %s", repoURLs, body)
-		}
-		return nil, nil, fmt.Errorf("Unable to fetch repositories, got %v response.", resp.StatusCode)
-	}
-
-	var csRepos content_sources.ApiRepositoryCollectionResponse
-	err = json.NewDecoder(resp.Body).Decode(&csRepos)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Unable to parse repositories: %v", err)
-	}
-
-	for _, repo := range *csRepos.Data {
+	repoUUIDs := []string{}
+	for id, repo := range repoMap {
+		repoUUIDs = append(repoUUIDs, id)
 		if !*repo.Snapshot {
-			return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Repository %s has snapshotting disabled", *repo.Url))
+			return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Repository %s (id: %s) has snapshotting disabled", *repo.Url, id))
 		}
-
-		repoUUIDs = append(repoUUIDs, *repo.Uuid)
-		repoMap[*repo.Uuid] = repo
 	}
 
 	snapResp, err := h.server.csClient.GetSnapshotsForDate(ctx.Request().Context(), content_sources.ApiListSnapshotByDateRequest{
@@ -267,7 +247,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 
 	if snapResp.StatusCode != http.StatusOK {
 		if snapResp.StatusCode != http.StatusUnauthorized {
-			body, err := io.ReadAll(resp.Body)
+			body, err := io.ReadAll(snapResp.Body)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -321,6 +301,152 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 
 	ctx.Logger().Debugf("Resolved snapshots: %v", repositories)
 	return repositories, customRepositories, nil
+}
+
+func (h *Handlers) buildPayloadRepositories(ctx echo.Context, payloadRepos []Repository) ([]composer.Repository, error) {
+	res := make([]composer.Repository, len(payloadRepos))
+
+	var repoIDs []string
+	for _, repo := range payloadRepos {
+		if repo.Id != nil {
+			repoIDs = append(repoIDs, *repo.Id)
+		}
+	}
+	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), nil, repoIDs, true)
+	if err != nil {
+		return nil, err
+	}
+	repoMapUpload, err := h.server.csClient.GetRepositories(ctx.Request().Context(), nil, repoIDs, true)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range repoMapUpload {
+		repoMap[k] = v
+	}
+
+	for i, pyrepo := range payloadRepos {
+		var repo content_sources.ApiRepositoryResponse
+		if pyrepo.Id != nil {
+			if r, ok := repoMap[*pyrepo.Id]; ok {
+				repo = r
+			}
+		}
+		if pyrepo.Baseurl != nil {
+			res[i].Baseurl = pyrepo.Baseurl
+		} else if repo.Url != nil {
+			res[i].Baseurl = repo.Url
+		}
+
+		if pyrepo.CheckGpg != nil {
+			res[i].CheckGpg = pyrepo.CheckGpg
+		} else if repo.GpgKey != nil {
+			res[i].CheckGpg = common.ToPtr(true)
+		}
+
+		if pyrepo.CheckRepoGpg != nil {
+			res[i].CheckRepoGpg = pyrepo.CheckRepoGpg
+		} else if repo.MetadataVerification != nil {
+			res[i].CheckRepoGpg = repo.MetadataVerification
+		}
+
+		if pyrepo.Gpgkey != nil {
+			res[i].Gpgkey = pyrepo.Gpgkey
+		} else if repo.GpgKey != nil {
+			res[i].Gpgkey = repo.GpgKey
+		}
+
+		if pyrepo.ModuleHotfixes != nil {
+			res[i].ModuleHotfixes = pyrepo.ModuleHotfixes
+		} else if repo.ModuleHotfixes != nil {
+			res[i].ModuleHotfixes = repo.ModuleHotfixes
+		}
+
+		res[i].IgnoreSsl = pyrepo.IgnoreSsl
+		res[i].Metalink = pyrepo.Metalink
+		res[i].Mirrorlist = pyrepo.Mirrorlist
+		res[i].Rhsm = common.ToPtr(pyrepo.Rhsm)
+	}
+	return res, nil
+}
+
+func (h *Handlers) buildCustomRepositories(ctx echo.Context, custRepos []CustomRepository) ([]composer.CustomRepository, error) {
+	res := make([]composer.CustomRepository, len(custRepos))
+
+	var repoIDs []string
+	for _, repo := range custRepos {
+		repoIDs = append(repoIDs, repo.Id)
+	}
+
+	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), nil, repoIDs, true)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, curepo := range custRepos {
+		var repo content_sources.ApiRepositoryResponse
+		if r, ok := repoMap[curepo.Id]; ok {
+			repo = r
+		}
+
+		res[i].Id = curepo.Id
+		if curepo.Name != nil {
+			res[i].Name = curepo.Name
+		} else if repo.Name != nil {
+			res[i].Name = repo.Name
+		}
+
+		if curepo.Filename != nil {
+			res[i].Filename = curepo.Filename
+		}
+
+		if curepo.Baseurl != nil {
+			res[i].Baseurl = curepo.Baseurl
+		} else if repo.Url != nil {
+			res[i].Baseurl = common.ToPtr([]string{*repo.Url})
+		}
+
+		if curepo.CheckGpg != nil {
+			res[i].CheckGpg = curepo.CheckGpg
+		} else if repo.GpgKey != nil {
+			res[i].CheckGpg = common.ToPtr(true)
+		}
+
+		if curepo.CheckRepoGpg != nil {
+			res[i].CheckRepoGpg = curepo.CheckRepoGpg
+		} else if repo.MetadataVerification != nil {
+			res[i].CheckRepoGpg = repo.MetadataVerification
+		}
+
+		if curepo.Gpgkey != nil {
+			res[i].Gpgkey = curepo.Gpgkey
+		} else if repo.GpgKey != nil {
+			res[i].Gpgkey = common.ToPtr([]string{*repo.GpgKey})
+		}
+
+		if curepo.SslVerify != nil {
+			res[i].SslVerify = curepo.SslVerify
+		}
+		if curepo.Metalink != nil {
+			res[i].Metalink = curepo.Metalink
+		}
+		if curepo.Mirrorlist != nil {
+			res[i].Mirrorlist = curepo.Mirrorlist
+		}
+		if curepo.Priority != nil {
+			res[i].Priority = curepo.Priority
+		}
+		if curepo.Enabled != nil {
+			res[i].Enabled = curepo.Enabled
+		}
+
+		if curepo.ModuleHotfixes != nil {
+			res[i].ModuleHotfixes = curepo.ModuleHotfixes
+		} else if repo.ModuleHotfixes != nil {
+			res[i].ModuleHotfixes = repo.ModuleHotfixes
+		}
+
+	}
+	return res, nil
 }
 
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
@@ -587,100 +713,48 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 	snapshotDate := cr.ImageRequests[0].SnapshotDate
 	if cust.PayloadRepositories != nil && snapshotDate != nil {
 		var repoURLs []string
+		var repoIDs []string
 		for _, payloadRepository := range *cust.PayloadRepositories {
 			if payloadRepository.Baseurl != nil {
 				repoURLs = append(repoURLs, *payloadRepository.Baseurl)
+			} else if payloadRepository.Id != nil {
+				repoIDs = append(repoIDs, *payloadRepository.Id)
 			}
 		}
-		payloadRepositories, _, err := h.buildRepositorySnapshots(ctx, repoURLs, true, *snapshotDate)
+		payloadRepositories, _, err := h.buildRepositorySnapshots(ctx, repoURLs, repoIDs, true, *snapshotDate)
 		if err != nil {
 			return nil, err
 		}
 		res.PayloadRepositories = &payloadRepositories
-	} else if cust.PayloadRepositories != nil {
-		payloadRepositories := make([]composer.Repository, len(*cust.PayloadRepositories))
-		for i, payloadRepository := range *cust.PayloadRepositories {
-			if payloadRepository.Baseurl != nil {
-				payloadRepositories[i].Baseurl = payloadRepository.Baseurl
-			}
-			if payloadRepository.CheckGpg != nil {
-				payloadRepositories[i].CheckGpg = payloadRepository.CheckGpg
-			}
-			if payloadRepository.CheckRepoGpg != nil {
-				payloadRepositories[i].CheckRepoGpg = payloadRepository.CheckRepoGpg
-			}
-			if payloadRepository.Gpgkey != nil {
-				payloadRepositories[i].Gpgkey = payloadRepository.Gpgkey
-			}
-			if payloadRepository.IgnoreSsl != nil {
-				payloadRepositories[i].IgnoreSsl = payloadRepository.IgnoreSsl
-			}
-			if payloadRepository.Metalink != nil {
-				payloadRepositories[i].Metalink = payloadRepository.Metalink
-			}
-			if payloadRepository.Mirrorlist != nil {
-				payloadRepositories[i].Mirrorlist = payloadRepository.Mirrorlist
-			}
-			payloadRepositories[i].ModuleHotfixes = payloadRepository.ModuleHotfixes
-			payloadRepositories[i].Rhsm = common.ToPtr(payloadRepository.Rhsm)
+	} else if cust.PayloadRepositories != nil && len(*cust.PayloadRepositories) > 0 {
+		plrepos, err := h.buildPayloadRepositories(ctx, *cust.PayloadRepositories)
+		if err != nil {
+			return nil, err
 		}
-		res.PayloadRepositories = &payloadRepositories
+		res.PayloadRepositories = &plrepos
 	}
 
 	if cust.CustomRepositories != nil && snapshotDate != nil {
 		var repoURLs []string
+		var repoIDs []string
 		for _, repo := range *cust.CustomRepositories {
 			if repo.Baseurl != nil && len(*repo.Baseurl) > 0 {
 				repoURLs = append(repoURLs, (*repo.Baseurl)[0])
+			} else if repo.Id != "" {
+				repoIDs = append(repoIDs, repo.Id)
 			}
 		}
-		_, customRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, true, *snapshotDate)
+		_, customRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, repoIDs, true, *snapshotDate)
 		if err != nil {
 			return nil, err
 		}
 		res.CustomRepositories = &customRepositories
-	} else if cust.CustomRepositories != nil {
-		customRepositories := make([]composer.CustomRepository, len(*cust.CustomRepositories))
-		for i, customRepository := range *cust.CustomRepositories {
-			if customRepository.Id != "" {
-				customRepositories[i].Id = customRepository.Id
-			}
-			if customRepository.Name != nil {
-				customRepositories[i].Name = customRepository.Name
-			}
-			if customRepository.Filename != nil {
-				customRepositories[i].Filename = customRepository.Filename
-			}
-			if customRepository.Baseurl != nil {
-				customRepositories[i].Baseurl = customRepository.Baseurl
-			}
-			if customRepository.CheckGpg != nil {
-				customRepositories[i].CheckGpg = customRepository.CheckGpg
-			}
-			if customRepository.CheckRepoGpg != nil {
-				customRepositories[i].CheckRepoGpg = customRepository.CheckRepoGpg
-			}
-			if customRepository.Gpgkey != nil {
-				customRepositories[i].Gpgkey = customRepository.Gpgkey
-			}
-			if customRepository.SslVerify != nil {
-				customRepositories[i].SslVerify = customRepository.SslVerify
-			}
-			if customRepository.Metalink != nil {
-				customRepositories[i].Metalink = customRepository.Metalink
-			}
-			if customRepository.Mirrorlist != nil {
-				customRepositories[i].Mirrorlist = customRepository.Mirrorlist
-			}
-			if customRepository.Priority != nil {
-				customRepositories[i].Priority = customRepository.Priority
-			}
-			if customRepository.Enabled != nil {
-				customRepositories[i].Enabled = customRepository.Enabled
-			}
-			customRepositories[i].ModuleHotfixes = customRepository.ModuleHotfixes
+	} else if cust.CustomRepositories != nil && len(*cust.CustomRepositories) > 0 {
+		custrepos, err := h.buildCustomRepositories(ctx, *cust.CustomRepositories)
+		if err != nil {
+			return nil, err
 		}
-		res.CustomRepositories = &customRepositories
+		res.CustomRepositories = &custrepos
 	}
 
 	if cust.Openscap != nil {
