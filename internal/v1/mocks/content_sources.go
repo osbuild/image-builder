@@ -24,20 +24,22 @@ var (
 	RepoPLID2    = "c01c2d9c-4624-4558-9ca9-8abcc5eb4437"
 )
 
-func rhRepos(urls []string) (res []content_sources.ApiRepositoryResponse) {
-	if slices.Contains(urls, "https://cdn.redhat.com/content/dist/rhel9/9/x86_64/baseos/os") {
+func rhRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryResponse) {
+	if slices.Contains(urls, "https://cdn.redhat.com/content/dist/rhel9/9/x86_64/baseos/os") || slices.Contains(ids, RepoBaseID) {
 		res = append(res, content_sources.ApiRepositoryResponse{
 			GpgKey:   common.ToPtr(RhelGPG),
 			Uuid:     common.ToPtr(RepoBaseID),
+			Url:      common.ToPtr("https://cdn.redhat.com/content/dist/rhel9/9/x86_64/baseos/os"),
 			Snapshot: common.ToPtr(true),
 			Name:     common.ToPtr("baseos"),
 		})
 	}
 
-	if slices.Contains(urls, "https://cdn.redhat.com/content/dist/rhel9/9/x86_64/appstream/os") {
+	if slices.Contains(urls, "https://cdn.redhat.com/content/dist/rhel9/9/x86_64/appstream/os") || slices.Contains(ids, RepoAppstrID) {
 		res = append(res, content_sources.ApiRepositoryResponse{
 			GpgKey:   common.ToPtr(RhelGPG),
 			Uuid:     common.ToPtr(RepoAppstrID),
+			Url:      common.ToPtr("https://cdn.redhat.com/content/dist/rhel9/9/x86_64/appstream/os"),
 			Snapshot: common.ToPtr(true),
 			Name:     common.ToPtr("appstream"),
 		})
@@ -46,19 +48,21 @@ func rhRepos(urls []string) (res []content_sources.ApiRepositoryResponse) {
 	return res
 }
 
-func extRepos(urls []string) (res []content_sources.ApiRepositoryResponse) {
-	if slices.Contains(urls, "https://some-repo-base-url.org") {
+func extRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryResponse) {
+	if slices.Contains(urls, "https://some-repo-base-url.org") || slices.Contains(ids, RepoPLID) {
 		res = append(res, content_sources.ApiRepositoryResponse{
 			GpgKey:   common.ToPtr("some-gpg-key"),
 			Uuid:     common.ToPtr(RepoPLID),
+			Url:      common.ToPtr("https://some-repo-base-url.org"),
 			Snapshot: common.ToPtr(true),
 			Name:     common.ToPtr("payload"),
 		})
 	}
 
-	if slices.Contains(urls, "https://some-repo-base-url2.org") {
+	if slices.Contains(urls, "https://some-repo-base-url2.org") || slices.Contains(ids, RepoPLID2) {
 		res = append(res, content_sources.ApiRepositoryResponse{
 			Uuid:     common.ToPtr(RepoPLID2),
+			Url:      common.ToPtr("https://some-repo-base-url2.org"),
 			Snapshot: common.ToPtr(true),
 			Name:     common.ToPtr("payload2"),
 		})
@@ -162,12 +166,15 @@ func ContentSources(w http.ResponseWriter, r *http.Request) {
 		urlForm := r.URL.Query().Get("url")
 		urls := strings.Split(urlForm, ",")
 
-		var repos []content_sources.ApiRepositoryResponse
+		idForm := r.URL.Query().Get("uuid")
+		ids := strings.Split(idForm, ",")
+
+		repos := []content_sources.ApiRepositoryResponse{}
 		switch r.URL.Query().Get("origin") {
 		case "red_hat":
-			repos = append(repos, rhRepos(urls)...)
-		case "external":
-			repos = append(repos, extRepos(urls)...)
+			repos = append(repos, rhRepos(ids, urls)...)
+		case "external,upload":
+			repos = append(repos, extRepos(ids, urls)...)
 		}
 		err := json.NewEncoder(w).Encode(content_sources.ApiRepositoryCollectionResponse{
 			Data: &repos,

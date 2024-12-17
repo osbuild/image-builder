@@ -1014,6 +1014,103 @@ func TestComposeWithSnapshots(t *testing.T) {
 				},
 			},
 		},
+		// repositories by uuid
+		{
+			imageBuilderRequest: v1.ComposeRequest{
+				Distribution: "rhel-95",
+				ImageRequests: []v1.ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    v1.ImageTypesGuestImage,
+						SnapshotDate: common.ToPtr("1999-01-30T00:00:00Z"),
+						UploadRequest: v1.UploadRequest{
+							Type:    v1.UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+				Customizations: &v1.Customizations{
+					PayloadRepositories: &[]v1.Repository{
+						{
+							Id:           common.ToPtr(mocks.RepoPLID),
+							CheckGpg:     common.ToPtr(true),
+							CheckRepoGpg: common.ToPtr(true),
+							Gpgkey:       common.ToPtr("some-gpg-key"),
+							IgnoreSsl:    common.ToPtr(false),
+							Rhsm:         false,
+						},
+					},
+					CustomRepositories: &[]v1.CustomRepository{
+						{
+							CheckGpg: common.ToPtr(true),
+							Gpgkey:   &[]string{"some-gpg-key"},
+							Id:       mocks.RepoPLID,
+						},
+						{
+							Id: mocks.RepoPLID2,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-9.5",
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(mocks.RhelGPG),
+							CheckGpg:    common.ToPtr(true),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+						},
+						{
+							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(mocks.RhelGPG),
+							CheckGpg:    common.ToPtr(true),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+				Customizations: &composer.Customizations{
+					PayloadRepositories: &[]composer.Repository{
+						{
+							Baseurl:  common.ToPtr("https://content-sources.org/snappy/payload"),
+							CheckGpg: common.ToPtr(true),
+							Gpgkey:   common.ToPtr("some-gpg-key"),
+							Rhsm:     common.ToPtr(false),
+						},
+					},
+					CustomRepositories: &[]composer.CustomRepository{
+						{
+							Baseurl:  &[]string{"http://snappy-url/snappy/payload"},
+							Name:     common.ToPtr("payload"),
+							CheckGpg: common.ToPtr(true),
+							Enabled:  common.ToPtr(false),
+							Gpgkey:   &[]string{"some-gpg-key"},
+							Id:       mocks.RepoPLID,
+						},
+						{
+							Baseurl: &[]string{"http://snappy-url/snappy/payload2"},
+							Name:    common.ToPtr("payload2"),
+							Enabled: common.ToPtr(false),
+							Id:      mocks.RepoPLID2,
+						},
+					},
+				},
+			},
+		},
 		// gcp
 		{
 			imageBuilderRequest: v1.ComposeRequest{
@@ -1498,6 +1595,109 @@ func TestComposeCustomizations(t *testing.T) {
 					Ostree:       nil,
 					Repositories: []composer.Repository{
 
+						{
+							Baseurl:     common.ToPtr("http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/"),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(mocks.CentosGPG),
+							CheckGpg:    common.ToPtr(true),
+						},
+						{
+							Baseurl:     common.ToPtr("http://mirror.stream.centos.org/9-stream/AppStream/x86_64/os/"),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(mocks.CentosGPG),
+							CheckGpg:    common.ToPtr(true),
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+			passwordsPresentAndRedacted: false,
+		},
+		// payload & custom repos by ID
+		{
+			imageBuilderRequest: v1.ComposeRequest{
+				Customizations: &v1.Customizations{
+					PayloadRepositories: &[]v1.Repository{
+						{
+							Id:           common.ToPtr(mocks.RepoPLID),
+							CheckGpg:     common.ToPtr(true),
+							CheckRepoGpg: common.ToPtr(true),
+							Gpgkey:       common.ToPtr("some-gpg-key"),
+							IgnoreSsl:    common.ToPtr(false),
+							Rhsm:         false,
+						},
+					},
+					CustomRepositories: &[]v1.CustomRepository{
+						{
+							Id:       mocks.RepoPLID,
+							Baseurl:  &[]string{"https://some-repo-base-url.org"},
+							Gpgkey:   &[]string{"some-gpg-key"},
+							CheckGpg: common.ToPtr(true),
+						},
+						{
+							Id:       "non-content-sources",
+							Baseurl:  &[]string{"non-content-sources.org"},
+							Gpgkey:   &[]string{"some-gpg-key"},
+							CheckGpg: common.ToPtr(true),
+						},
+					},
+				},
+				Distribution: "centos-9",
+				ImageRequests: []v1.ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    v1.ImageTypesGuestImage,
+						UploadRequest: v1.UploadRequest{
+							Type:    v1.UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "centos-9",
+				Customizations: &composer.Customizations{
+					PayloadRepositories: &[]composer.Repository{
+						{
+							Baseurl:      common.ToPtr("https://some-repo-base-url.org"),
+							CheckGpg:     common.ToPtr(true),
+							CheckRepoGpg: common.ToPtr(true),
+							Gpgkey:       common.ToPtr("some-gpg-key"),
+							IgnoreSsl:    common.ToPtr(false),
+							Rhsm:         common.ToPtr(false),
+						},
+					},
+					CustomRepositories: &[]composer.CustomRepository{
+						{
+							Id:       mocks.RepoPLID,
+							Baseurl:  &[]string{"https://some-repo-base-url.org"},
+							Gpgkey:   &[]string{"some-gpg-key"},
+							CheckGpg: common.ToPtr(true),
+							Name:     common.ToPtr("payload"),
+						},
+						{
+							Id:       "non-content-sources",
+							Baseurl:  &[]string{"non-content-sources.org"},
+							Gpgkey:   &[]string{"some-gpg-key"},
+							CheckGpg: common.ToPtr(true),
+						},
+					},
+				},
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Ostree:       nil,
+					Repositories: []composer.Repository{
 						{
 							Baseurl:     common.ToPtr("http://mirror.stream.centos.org/9-stream/BaseOS/x86_64/os/"),
 							IgnoreSsl:   nil,
