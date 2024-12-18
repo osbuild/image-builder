@@ -8,8 +8,7 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
-func buildImage(res *imagefilter.Result, osbuildManifest []byte) error {
-	osbuildStoreDir := ".store"
+func buildImage(res *imagefilter.Result, osbuildManifest []byte, osbuildStoreDir string) error {
 	// XXX: support output dir via commandline
 	// XXX2: support output filename via commandline (c.f.
 	//   https://github.com/osbuild/images/pull/1039)

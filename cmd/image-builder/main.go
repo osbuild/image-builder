@@ -88,8 +88,12 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 }
 
 func cmdBuild(cmd *cobra.Command, args []string) error {
-	var mf bytes.Buffer
+	storeDir, err := cmd.Flags().GetString("store")
+	if err != nil {
+		return err
+	}
 
+	var mf bytes.Buffer
 	// XXX: check env here, i.e. if user is root and osbuild is installed
 	res, err := cmdManifestWrapper(cmd, args, &mf, func(archStr string) error {
 		if archStr != arch.Current().String() {
@@ -101,7 +105,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return buildImage(res, mf.Bytes())
+	return buildImage(res, mf.Bytes(), storeDir)
 }
 
 func run() error {
@@ -154,6 +158,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.RangeArgs(1, 2),
 	}
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
+	buildCmd.Flags().String("store", ".store", `osbuild store directory to cache intermediata build artifacts"`)
 	rootCmd.AddCommand(buildCmd)
 
 	return rootCmd.Execute()

@@ -239,11 +239,13 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
+	tmpdir := t.TempDir()
 	restore = main.MockOsArgs([]string{
 		"build",
 		"qcow2",
 		makeTestBlueprint(t, testBlueprint),
 		"--distro", "centos-9",
+		"--store", tmpdir,
 	})
 	defer restore()
 
@@ -256,8 +258,12 @@ func TestBuildIntegrationHappy(t *testing.T) {
 
 	// ensure osbuild was run exactly one
 	assert.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
-	// and we passed the output dir
 	osbuildCall := fakeOsbuildCmd.Calls()[0]
+	// --store is passed correctly to osbuild
+	storePos := slices.Index(osbuildCall, "--store")
+	assert.True(t, storePos > -1)
+	assert.Equal(t, tmpdir, osbuildCall[storePos+1])
+	// and we passed the output dir
 	outputDirPos := slices.Index(osbuildCall, "--output-directory")
 	assert.True(t, outputDirPos > -1)
 	assert.Equal(t, "centos-9-qcow2-x86_64", osbuildCall[outputDirPos+1])
