@@ -1,0 +1,24 @@
+name: Integration tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    uses:  ./.github/workflows/testdeps.yml
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install integration test env
+      run: |
+        sudo apt update
+        sudo apt install -y pytest golang
+
+    - name: Run integration tests via pytest
+      run: |
+        # use "-s" for now for easier debugging
+        sudo pytest -s -v
