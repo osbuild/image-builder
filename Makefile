@@ -106,6 +106,7 @@ build: $(BUILDDIR)/bin/
 clean:
 	rm -rf $(BUILDDIR)/bin/
 	rm -rf $(CURDIR)/rpmbuild
+	rm -rf $(CURDIR)/release_artifacts
 
 #
 # Building packages
@@ -128,9 +129,15 @@ $(RPM_SPECFILE):
 	git show HEAD:image-builder-cli.spec > $(RPM_SPECFILE)
 	./tools/rpm_spec_add_provides_bundle.sh $(RPM_SPECFILE)
 
+RPM_TARBALL_UNCOMPRESSED=$(RPM_TARBALL:.tar.gz=.tar)
+
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
 	git archive --prefix=image-builder-cli-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+	gunzip -f $(RPM_TARBALL)
+	go mod vendor
+	tar --append --owner=0 --group=0 --transform "s;^;image-builder-cli-$(COMMIT)/;" --file $(RPM_TARBALL_UNCOMPRESSED) vendor/
+	gzip $(RPM_TARBALL_UNCOMPRESSED)
 
 .PHONY: srpm
 srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
@@ -156,3 +163,11 @@ scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
 		--without tests \
 		--nocheck \
 		$(RPM_SPECFILE)
+
+RPM_TARBALL_FILENAME=$(notdir $(RPM_TARBALL))
+
+.PHONY: release_artifacts
+release_artifacts: $(RPM_TARBALL)
+	mkdir -p release_artifacts
+	cp $< release_artifacts/
+

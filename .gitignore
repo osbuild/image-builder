@@ -18,3 +18,5 @@ container_built*.info
 github_pr_body.txt
 
 /*.test
+vendor
+release_artifacts
