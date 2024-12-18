@@ -1,10 +1,13 @@
-name: Install test dependencies
+name: Install common test dependencies
+
+on:
+  workflow_call:
 
 jobs:
   install:
     runs-on: ubuntu-latest
     steps:
-      - name: Install test dependencies
+      - name: Install common test dependencies
         run: |
           sudo apt update
           sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev podman
