@@ -1,0 +1,10 @@
+name: Install test dependencies
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install test dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev podman

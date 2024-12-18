@@ -13,6 +13,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    uses:  ./.github/workflows/testdeps.yml
     steps:
     - uses: actions/checkout@v4
 
@@ -21,13 +22,6 @@ jobs:
       with:
         go-version: 'stable'
         
-    - name: Apt update
-      run: sudo apt update
-
-    # This is needed for the container resolver dependencies
-    - name: Install test dependencies
-      run: sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev podman
-
     - name: Build
       run: go build -v ./...
 
