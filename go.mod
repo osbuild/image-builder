@@ -9,7 +9,7 @@ require (
 	github.com/Unleash/unleash-client-go/v4 v4.1.4
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/getkin/kin-openapi v0.128.0
-	github.com/getsentry/sentry-go v0.29.1
+	github.com/getsentry/sentry-go v0.30.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.7.1
@@ -18,7 +18,7 @@ require (
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240208125334-43c3aac2bb9c
-	github.com/osbuild/images v0.105.0
+	github.com/osbuild/images v0.106.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20241107161848-2eb3c9f44ca6
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redhatinsights/app-common-go v1.6.8
