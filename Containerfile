@@ -48,8 +48,8 @@ COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 VOLUME /output
 WORKDIR /output
+# XXX: add "store" flag like bib
 VOLUME /store
-VOLUME /rpmmd
 VOLUME /var/lib/containers/storage
 
 LABEL description="This tools allows to build and deploy disk-images."
