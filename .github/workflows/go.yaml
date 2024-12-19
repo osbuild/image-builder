@@ -13,7 +13,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    uses:  ./.github/workflows/testdeps.yml
+    uses:  ./.github/workflows/testdeps.yaml
     steps:
     - uses: actions/checkout@v4
 
