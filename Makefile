@@ -127,16 +127,18 @@ RPM_TARBALL=rpmbuild/SOURCES/image-builder-cli-$(COMMIT).tar.gz
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
 	git show HEAD:image-builder-cli.spec > $(RPM_SPECFILE)
+	go mod vendor
 	./tools/rpm_spec_add_provides_bundle.sh $(RPM_SPECFILE)
 
 RPM_TARBALL_UNCOMPRESSED=$(RPM_TARBALL:.tar.gz=.tar)
 
-$(RPM_TARBALL):
+$(RPM_TARBALL): $(RPM_SPECFILE)
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
 	git archive --prefix=image-builder-cli-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
 	gunzip -f $(RPM_TARBALL)
-	go mod vendor
-	tar --append --owner=0 --group=0 --transform "s;^;image-builder-cli-$(COMMIT)/;" --file $(RPM_TARBALL_UNCOMPRESSED) vendor/
+	tar --delete --owner=0 --group=0 --file $(RPM_TARBALL_UNCOMPRESSED) image-builder-cli-$(COMMIT)/$(notdir $(RPM_SPECFILE))
+	tar --append --owner=0 --group=0 --transform "s;^;image-builder-cli-$(COMMIT)/;" --file $(RPM_TARBALL_UNCOMPRESSED) $(RPM_SPECFILE) vendor/
+	tar --append --owner=0 --group=0 --transform "s;$(dir $(RPM_SPECFILE));image-builder-cli-$(COMMIT)/;" --file $(RPM_TARBALL_UNCOMPRESSED) $(RPM_SPECFILE)
 	gzip $(RPM_TARBALL_UNCOMPRESSED)
 
 .PHONY: srpm
