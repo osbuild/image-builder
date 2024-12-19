@@ -170,4 +170,6 @@ RPM_TARBALL_FILENAME=$(notdir $(RPM_TARBALL))
 release_artifacts: $(RPM_TARBALL)
 	mkdir -p release_artifacts
 	cp $< release_artifacts/
+	# Print the artifact path for Packit
+	echo "release_artifacts/$(shell basename $<)"
 
