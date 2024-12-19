@@ -17,7 +17,7 @@ def test_container_builds_image(tmp_path, build_container):
         build_container,
         "build",
         "minimal-raw",
-        "--distro", "fedora-41"
+        "--distro", "centos-9"
     ])
     arch = "x86_64"
     assert (output_dir / f"fedora-41-minimal-raw-{arch}/xz/disk.raw.xz").exists()
