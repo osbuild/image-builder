@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/osbuild/bootc-image-builder/bib/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -69,7 +70,7 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 	}, nil
 }
 
-func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("datadir")
 	if err != nil {
 		return nil, err
@@ -112,6 +113,8 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	}
 
 	imgTypeStr := args[0]
+	pbar.SetPulseMsgf("Manifest generation step")
+	pbar.SetMessagef("Building manifest for %s-%s", imgTypeStr, distroStr)
 
 	bp, err := blueprintload.Load(blueprintPath)
 	if err != nil {
@@ -145,7 +148,11 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
-	_, err := cmdManifestWrapper(cmd, args, osStdout, nil)
+	pbar, err := progress.New("")
+	if err != nil {
+		return err
+	}
+	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, nil)
 	return err
 }
 
@@ -158,15 +165,25 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
+	progressType, err := cmd.Flags().GetString("progress")
+	if err != nil {
+		return err
+	}
 	withManifest, err := cmd.Flags().GetBool("with-manifest")
 	if err != nil {
 		return err
 	}
 
+	pbar, err := progress.New(progressType)
+	if err != nil {
+		return err
+	}
+	pbar.Start()
+	defer pbar.Stop()
+
 	var mf bytes.Buffer
 	// XXX: check env here, i.e. if user is root and osbuild is installed
-	res, err := cmdManifestWrapper(cmd, args, &mf, func(archStr string) error {
+	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, func(archStr string) error {
 		if archStr != arch.Current().String() {
 			return fmt.Errorf("cannot build for arch %q from %q", archStr, arch.Current().String())
 		}
@@ -181,7 +198,8 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		StoreDir:      cacheDir,
 		WriteManifest: withManifest,
 	}
-	return buildImage(res, mf.Bytes(), buildOpts)
+	pbar.SetPulseMsgf("Image building step")
+	return buildImage(pbar, res, mf.Bytes(), buildOpts)
 }
 
 func run() error {
@@ -244,6 +262,9 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
 	buildCmd.Flags().String("cache", "/var/cache/image-builder/store", `osbuild directory to cache intermediate build artifacts"`)
+	// XXX: add "--verbose" here, similar to how bib is doing this
+	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
+	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
 	rootCmd.AddCommand(buildCmd)
 
 	return rootCmd.Execute()
