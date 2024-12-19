@@ -39,7 +39,7 @@ GOLANGCI_COMPOSER_IMAGE=composer_golangci
 #     VERSION:
 #         This evaluates the `Version` field of the specfile. Therefore, it will
 #         be set to the latest version number of this repository without any
-#         prefix (just a plain number).
+#         prefix (just a plan number or a version with dots).
 #
 #     COMMIT:
 #         This evaluates to the latest git commit sha. This will not work if
@@ -47,7 +47,7 @@ GOLANGCI_COMPOSER_IMAGE=composer_golangci
 #         pre-fetched but evaluated at time of use.
 #
 
-VERSION := $(shell (cd "$(SRCDIR)" && grep "^Version:" image-builder-cli.spec | sed 's/[^[:digit:]]*\([[:digit:]]\+\).*/\1/'))
+VERSION := $(shell (cd "$(SRCDIR)" && grep "^Version:" image-builder-cli.spec | sed -n 's/^[^0-9]*\([1-9][0-9]*\(\.[1-9][0-9]*\)*\)/\1/p'))
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
 
 #
@@ -121,7 +121,7 @@ clean:
 #
 
 RPM_SPECFILE=rpmbuild/SPECS/image-builder-cli.spec
-RPM_TARBALL=rpmbuild/SOURCES/image-builder-cli-$(COMMIT).tar.gz
+RPM_TARBALL=rpmbuild/SOURCES/image-builder-cli-$(VERSION).tar.gz
 
 .PHONY: $(RPM_SPECFILE)
 $(RPM_SPECFILE):
@@ -134,11 +134,11 @@ RPM_TARBALL_UNCOMPRESSED=$(RPM_TARBALL:.tar.gz=.tar)
 
 $(RPM_TARBALL): $(RPM_SPECFILE)
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
-	git archive --prefix=image-builder-cli-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
+	git archive --prefix=image-builder-cli-$(VERSION)/ --format=tar.gz HEAD > $(RPM_TARBALL)
 	gunzip -f $(RPM_TARBALL)
-	tar --delete --owner=0 --group=0 --file $(RPM_TARBALL_UNCOMPRESSED) image-builder-cli-$(COMMIT)/$(notdir $(RPM_SPECFILE))
-	tar --append --owner=0 --group=0 --transform "s;^;image-builder-cli-$(COMMIT)/;" --file $(RPM_TARBALL_UNCOMPRESSED) $(RPM_SPECFILE) vendor/
-	tar --append --owner=0 --group=0 --transform "s;$(dir $(RPM_SPECFILE));image-builder-cli-$(COMMIT)/;" --file $(RPM_TARBALL_UNCOMPRESSED) $(RPM_SPECFILE)
+	tar --delete --owner=0 --group=0 --file $(RPM_TARBALL_UNCOMPRESSED) image-builder-cli-$(VERSION)/$(notdir $(RPM_SPECFILE))
+	tar --append --owner=0 --group=0 --transform "s;^;image-builder-cli-$(VERSION)/;" --file $(RPM_TARBALL_UNCOMPRESSED) $(RPM_SPECFILE) vendor/
+	tar --append --owner=0 --group=0 --transform "s;$(dir $(RPM_SPECFILE));image-builder-cli-$(VERSION)/;" --file $(RPM_TARBALL_UNCOMPRESSED) $(RPM_SPECFILE)
 	gzip $(RPM_TARBALL_UNCOMPRESSED)
 
 .PHONY: srpm
