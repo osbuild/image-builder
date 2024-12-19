@@ -49,6 +49,8 @@ GOLANGCI_COMPOSER_IMAGE=composer_golangci
 
 VERSION := $(shell (cd "$(SRCDIR)" && grep "^Version:" image-builder-cli.spec | sed -n 's/^[^0-9]*\([1-9][0-9]*\(\.[1-9][0-9]*\)*\)/\1/p'))
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
+PACKAGE_NAME_VERSION = image-builder-cli-$(VERSION)
+PACKAGE_NAME_COMMIT = image-builder-cli-$(COMMIT)
 
 #
 # Generic Targets
@@ -121,7 +123,8 @@ clean:
 #
 
 RPM_SPECFILE=rpmbuild/SPECS/image-builder-cli.spec
-RPM_TARBALL=rpmbuild/SOURCES/image-builder-cli-$(VERSION).tar.gz
+RPM_TARBALL=rpmbuild/SOURCES/$(PACKAGE_NAME_COMMIT).tar.gz
+RPM_TARBALL_VERSIONED=rpmbuild/SOURCES/$(PACKAGE_NAME_VERSION).tar.gz
 
 .PHONY: $(RPM_SPECFILE)
 $(RPM_SPECFILE):
@@ -130,16 +133,24 @@ $(RPM_SPECFILE):
 	go mod vendor
 	./tools/rpm_spec_add_provides_bundle.sh $(RPM_SPECFILE)
 
-RPM_TARBALL_UNCOMPRESSED=$(RPM_TARBALL:.tar.gz=.tar)
+# This is the syntax to essentially get
+# either PACKAGE_NAME_COMMIT or PACKAGE_NAME_VERSION dynamically
+define get_package_name
+$(basename $(basename $(notdir $1)))
+endef
 
-$(RPM_TARBALL): $(RPM_SPECFILE)
+define get_uncompressed_name
+$(1:.tar.gz=.tar)
+endef
+
+$(RPM_TARBALL) $(RPM_TARBALL_VERSIONED): $(RPM_SPECFILE)
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES
-	git archive --prefix=image-builder-cli-$(VERSION)/ --format=tar.gz HEAD > $(RPM_TARBALL)
-	gunzip -f $(RPM_TARBALL)
-	tar --delete --owner=0 --group=0 --file $(RPM_TARBALL_UNCOMPRESSED) image-builder-cli-$(VERSION)/$(notdir $(RPM_SPECFILE))
-	tar --append --owner=0 --group=0 --transform "s;^;image-builder-cli-$(VERSION)/;" --file $(RPM_TARBALL_UNCOMPRESSED) $(RPM_SPECFILE) vendor/
-	tar --append --owner=0 --group=0 --transform "s;$(dir $(RPM_SPECFILE));image-builder-cli-$(VERSION)/;" --file $(RPM_TARBALL_UNCOMPRESSED) $(RPM_SPECFILE)
-	gzip $(RPM_TARBALL_UNCOMPRESSED)
+	git archive --prefix=$(call get_package_name,$@)/ --format=tar.gz HEAD > $@
+	gunzip -f $@
+	tar --delete --owner=0 --group=0 --file $(call get_uncompressed_name,$@) $(call get_package_name,$@)/$(notdir $(RPM_SPECFILE))
+	tar --append --owner=0 --group=0 --transform "s;^;$(call get_package_name,$@)/;" --file $(call get_uncompressed_name,$@) $(RPM_SPECFILE) vendor/
+	tar --append --owner=0 --group=0 --transform "s;$(dir $(RPM_SPECFILE));$(call get_package_name,$@)/;" --file $(call get_uncompressed_name,$@) $(RPM_SPECFILE)
+	gzip $(call get_uncompressed_name,$@)
 
 .PHONY: srpm
 srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
@@ -169,7 +180,7 @@ scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
 RPM_TARBALL_FILENAME=$(notdir $(RPM_TARBALL))
 
 .PHONY: release_artifacts
-release_artifacts: $(RPM_TARBALL)
+release_artifacts: $(RPM_TARBALL_VERSIONED)
 	mkdir -p release_artifacts
 	cp $< release_artifacts/
 	# Print the artifact path for Packit
