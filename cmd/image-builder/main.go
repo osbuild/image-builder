@@ -158,7 +158,8 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.RangeArgs(1, 2),
 	}
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
-	buildCmd.Flags().String("store", ".store", `osbuild store directory to cache intermediata build artifacts"`)
+	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
+	buildCmd.Flags().String("store", "/var/cache/image-builder/store", `osbuild store directory to cache intermediata build artifacts"`)
 	rootCmd.AddCommand(buildCmd)
 
 	return rootCmd.Execute()

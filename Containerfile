@@ -49,7 +49,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 VOLUME /output
 WORKDIR /output
 # XXX: add "store" flag like bib
-VOLUME /store
+VOLUME /var/cache/image-builder/store
 VOLUME /var/lib/containers/storage
 
 LABEL description="This tools allows to build and deploy disk-images."
