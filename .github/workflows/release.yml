@@ -14,3 +14,4 @@ jobs:
         with:
           token: "${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}"
           slack_webhook_url: "${{ secrets.SLACK_WEBHOOK_URL }}"
+          build_release_artifacts: 'true'
