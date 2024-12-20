@@ -1,7 +1,7 @@
 # This action creates a release every second Wednesday
 name: "Create and push release tag"
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
   schedule:
     - cron: "0 8 * * 3"

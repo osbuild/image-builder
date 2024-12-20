@@ -1,12 +1,12 @@
 name: Build & Deploy Container
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   merge_group:
-    types: [ "checks_requested" ]
+    types: ["checks_requested"]
 
 jobs:
   build-base:

@@ -9,7 +9,7 @@ We have unit tests and some integration testing.
 To work on bootc-image-builder one needs a working Go environment. See
 [go.mod](go.mod).
 
-To run the testsuite install the test dependencies as outlined in the
+To run the test suite install the test dependencies as outlined in the
 [github action](./.github/workflows/go.yml) under
 "Install test dependencies".
 

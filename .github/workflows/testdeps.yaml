@@ -1,6 +1,6 @@
 name: Install common test dependencies
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_call:
 
 jobs:
