@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
@@ -152,17 +151,12 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 	if imgOpts == nil {
 		imgOpts = &distro.ImageOptions{}
 	}
-	// we may allow to customize the seed in the future via imgOpts or
-	// an environment variable
-	// XXX: look into "images" so that it automatically seeds when pasing
-	// a "0" seed.
-	seed := time.Now().UnixNano()
 
 	repos, err := mg.reporegistry.ReposByImageTypeName(dist.Name(), a.Name(), imgType.Name())
 	if err != nil {
 		return err
 	}
-	preManifest, warnings, err := imgType.Manifest(bp, *imgOpts, repos, seed)
+	preManifest, warnings, err := imgType.Manifest(bp, *imgOpts, repos, nil)
 	if err != nil {
 		return err
 	}
