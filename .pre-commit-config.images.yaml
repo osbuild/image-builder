@@ -1,0 +1,31 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+---
+
+exclude: "vendor/.*"
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ".*\\.md$"
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+  - repo: https://github.com/schuellerf/pre-commit-pyspelling
+    rev: 0.1.0
+    hooks:
+      - id: pyspelling
+        args: ["--config", ".spellcheck.yml"]
+  - repo: https://github.com/hhatto/autopep8
+    rev: v2.3.0
+    hooks:
+      - id: autopep8
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.59.1
+    hooks:
+      - id: golangci-lint

@@ -85,6 +85,7 @@ help:
 	@echo "    srpm:               Build the source RPM"
 	@echo "    scratch:            Quick scratch build of RPM"
 	@echo "    clean:              Remove all built binaries"
+	@echo "    lint:               Run all known linters"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -186,3 +187,5 @@ release_artifacts: $(RPM_TARBALL_VERSIONED)
 	# Print the artifact path for Packit
 	echo "release_artifacts/$(shell basename $<)"
 
+lint:
+	pre-commit run --all
