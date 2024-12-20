@@ -63,6 +63,17 @@ BuildRequires:  btrfs-progs-devel
 
 %build
 export GOFLAGS="-buildmode=pie"
+%if 0%{?rhel}
+GO_BUILD_PATH=$PWD/_build
+install -m 0755 -vd $(dirname $GO_BUILD_PATH/src/%{goipath})
+ln -fs $PWD $GO_BUILD_PATH/src/%{goipath}
+cd $GO_BUILD_PATH/src/%{goipath}
+install -m 0755 -vd _bin
+export PATH=$PWD/_bin${PATH:+:$PATH}
+export GOPATH=$GO_BUILD_PATH:%{gopath}
+export GOFLAGS+=" -mod=vendor"
+%endif
+
 %if 0%{?fedora}
 # Fedora disables Go modules by default, but we want to use them.
 # Undefine the macro which disables it to use the default behavior.
@@ -82,7 +93,15 @@ install -m 0755 -vp %{gobuilddir}/bin/image-builder %{buildroot}%{_bindir}/
 
 %check
 export GOFLAGS="-buildmode=pie"
+%if 0%{?rhel}
+export GOFLAGS+=" -mod=vendor -tags=exclude_graphdriver_btrfs"
+export GOPATH=$PWD/_build:%{gopath}
+# cd inside GOPATH, otherwise go with GO111MODULE=off ignores vendor directory
+cd $PWD/_build/src/%{goipath}
+%gotest ./...
+%else
 %gocheck
+%endif
 
 %files
 %license LICENSE
