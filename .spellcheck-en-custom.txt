@@ -18,3 +18,17 @@ SBOM
 SBOMs
 spdx
 toml
+customizations
+entrypoint
+fedoraproject
+filesystems
+namespaced
+untrusted
+hostname
+roadmap
+COPR
+pre
+amongst
+RHEL
+hyperscalers
+weldr
