@@ -1,16 +1,17 @@
+---
 name: "Create GitHub release"
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     tags:
       - "v*"
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Upstream release
-        uses: osbuild/release-action@staging
+        uses: osbuild/release-action@main
         with:
           token: "${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}"
-          slack_webhook_url: "${{ secrets.SLACK_WEBHOOK_URL }}"
+          slack_bot_token: "${{ secrets.SLACK_BOT_TOKEN }}"
