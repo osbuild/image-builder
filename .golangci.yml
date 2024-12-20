@@ -1,68 +1,32 @@
 ---
-version: "2"
-run:
-  build-tags:
-    - integration
+exclude-dirs:
+  - vendor
+
+linters-settings:
+  govet:
+    disable:
+      - shadow  # default value recommended by golangci
+      - composites
+  gosec:
+    excludes:
+      - G101
 
 linters:
   enable:
     - gosec
-    - gomoddirectives
-    - staticcheck
-  settings:
-    gosec:
-      excludes:
-        - G101
-    govet:
-      disable:
-        # default value recommended by golangci
-        - shadow
-        - composites
-  exclusions:
-    generated: lax
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
-    rules:
-      - linters:
-          - gosec
-        path: ^(images/)?(pkg|internal)/.*_test\.go$
-      # unnecessary field selector
-      - linters:
-          - staticcheck
-        text: "QF1008"
-      # error strings should not be capitalized
-      - linters:
-          - staticcheck
-        text: "ST1005"
-      # unicode control character
-      - linters:
-          - staticcheck
-        path: ^(images/)?(pkg|internal)/.*_test\.go$
-        text: "ST1018"
-      # possible nil pointer dereference (many false alerts when t.Skip is used)
-      - linters:
-          - staticcheck
-        path: ^(images/)?(pkg|internal|internal/test)/(.*_test|helpers)\.go$
-        text: "SA5011"
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+
+run:
+  build-tags:
+    - integration
+  timeout: 5m
 
 issues:
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
+
   # Maximum count of issues with the same text. Set to 0 to disable. Default
   # is 3.
   max-same-issues: 0
-
-formatters:
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+  exclude-rules:
+    - path: ^(pkg|internal)/.*_test\.go$
+      linters: ["gosec"]
