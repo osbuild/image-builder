@@ -20,3 +20,6 @@ github_pr_body.txt
 /*.test
 vendor
 release_artifacts
+*.swp
+dictionary.dic
+__pycache__

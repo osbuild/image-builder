@@ -3,29 +3,29 @@
 
 name: Go
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   merge_group:
-    types: [ "checks_requested" ]
+    types: ["checks_requested"]
 
 jobs:
 
   build:
     runs-on: ubuntu-latest
-    uses:  ./.github/workflows/testdeps.yaml
+    uses: ./.github/workflows/testdeps.yaml
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: 'stable'
-        
-    - name: Build
-      run: go build -v ./...
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
 
-    - name: Test
-      run: go test -v ./...
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...

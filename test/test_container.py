@@ -3,8 +3,6 @@ import subprocess
 
 import pytest
 
-from containerbuild import build_container_fixture
-
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
 def test_container_builds_image(tmp_path, build_container):
@@ -24,4 +22,3 @@ def test_container_builds_image(tmp_path, build_container):
     # XXX: ensure no other leftover dirs
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
-
