@@ -37,15 +37,15 @@ We plan to provide rpm packages in fedora as well.
 You can compile the application in `cmd/image-builder` with
 the normal `go` command or use
 
-```
-make build
+```console
+$ make build
 ```
 
 To compile without go build tags you will need to install
 the required RPMs:
 
 ```console
-sudo dnf install gpgme-devel
+$ sudo dnf install gpgme-devel
 ```
 
 ## Prerequisites
@@ -171,9 +171,7 @@ $ image-builder list-images --output=json
     }
   }
 ]
-
 ```
-
 
 ## FAQ
 
