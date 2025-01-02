@@ -95,6 +95,7 @@ function cleanupAzure() {
 # Create a temporary directory and ensure it gets deleted when this script
 # terminates in any way.
 WORKDIR=$(mktemp -d)
+KILL_PIDS=()
 function cleanup() {
   case $CLOUD_PROVIDER in
     "$CLOUD_PROVIDER_AWS")
@@ -108,9 +109,32 @@ function cleanup() {
       ;;
   esac
 
+  for P in "${KILL_PIDS[@]}"; do
+      sudo kill "$P"
+  done
+
   sudo rm -rf "$WORKDIR"
 }
 trap cleanup EXIT
+
+# Content sources needs a little mock
+cat > "/tmp/cs-mock.py" <<EOF
+import json
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps({'data': [], 'links': {}, 'meta': {}}).encode('utf-8'))
+
+
+httpd = HTTPServer(("localhost", 10000), Handler)
+httpd.serve_forever()
+EOF
+python3 /tmp/cs-mock.py &
+KILL_PIDS+=("$!")
 
 ############### Common functions and variables ################
 
