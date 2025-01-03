@@ -9,7 +9,9 @@ require (
 	github.com/Unleash/unleash-client-go/v4 v4.1.4
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/getkin/kin-openapi v0.128.0
-	github.com/getsentry/sentry-go v0.30.0
+	github.com/getsentry/sentry-go v0.31.1
+	github.com/getsentry/sentry-go/echo v0.31.1
+	github.com/getsentry/sentry-go/logrus v0.31.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgx/v5 v5.7.2
