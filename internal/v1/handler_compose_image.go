@@ -218,8 +218,13 @@ func buildRepositories(arch *distribution.Architecture, imageType ImageTypes) []
 
 func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string, repoIDs []string, external bool, snapshotDate string) ([]composer.Repository, []composer.CustomRepository, error) {
 	date, err := time.Parse(time.RFC3339, snapshotDate)
+
 	if err != nil {
-		return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in RFC3339 (yyyy-mm-ddThh:mm:ssZ) format", snapshotDate))
+		date, err = time.Parse(time.DateOnly, snapshotDate)
+	}
+
+	if err != nil {
+		return nil, nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Snapshot date %s is not in DateOnly (yyyy-mm-dd) or RFC3339 (yyyy-mm-ddThh:mm:ssZ) format", snapshotDate))
 	}
 
 	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, repoIDs, external)
