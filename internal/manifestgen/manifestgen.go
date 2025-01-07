@@ -165,7 +165,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 		// what are these warnings?
 		return fmt.Errorf("warnings during manifest creation: %v", strings.Join(warnings, "\n"))
 	}
-	packageSpecs, _, err := mg.depsolver(mg.cacheDir, preManifest.GetPackageSetChains(), dist, a.Name())
+	packageSpecs, repoConfig, err := mg.depsolver(mg.cacheDir, preManifest.GetPackageSetChains(), dist, a.Name())
 	if err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 	if err != nil {
 		return err
 	}
-	mf, err := preManifest.Serialize(packageSpecs, containerSpecs, commitSpecs, nil)
+	mf, err := preManifest.Serialize(packageSpecs, containerSpecs, commitSpecs, repoConfig)
 	if err != nil {
 		return err
 	}
