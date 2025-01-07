@@ -819,6 +819,55 @@ func TestComposeWithSnapshots(t *testing.T) {
 				},
 			},
 		},
+		// basic with old snapshotting date format
+		{
+			imageBuilderRequest: v1.ComposeRequest{
+				Distribution: "rhel-95",
+				ImageRequests: []v1.ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    v1.ImageTypesGuestImage,
+						SnapshotDate: common.ToPtr("1999-01-30"),
+						UploadRequest: v1.UploadRequest{
+							Type:    v1.UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-9.5",
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(mocks.RhelGPG),
+							CheckGpg:    common.ToPtr(true),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+						},
+						{
+							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(mocks.RhelGPG),
+							CheckGpg:    common.ToPtr(true),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+			},
+		},
 		// 1 payload 2 custom repositories
 		{
 			imageBuilderRequest: v1.ComposeRequest{
