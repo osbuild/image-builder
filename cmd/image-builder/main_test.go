@@ -162,29 +162,36 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	restore = main.MockOsArgs([]string{
-		"manifest",
-		"qcow2",
-		"--arch=x86_64",
-		"--distro=centos-9",
-		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
-	})
-	defer restore()
+	for _, useLibrepo := range []bool{false, true} {
+		t.Run(fmt.Sprintf("use-librepo: %v", useLibrepo), func(t *testing.T) {
+			restore = main.MockOsArgs([]string{
+				"manifest",
+				"qcow2",
+				"--arch=x86_64",
+				"--distro=centos-9",
+				fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
+				fmt.Sprintf("--use-librepo=%v", useLibrepo),
+			})
+			defer restore()
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
+			var fakeStdout bytes.Buffer
+			restore = main.MockOsStdout(&fakeStdout)
+			defer restore()
 
-	err := main.Run()
-	assert.NoError(t, err)
+			err := main.Run()
+			assert.NoError(t, err)
 
-	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
-	assert.NoError(t, err)
-	assert.Contains(t, pipelineNames, "qcow2")
+			pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+			assert.NoError(t, err)
+			assert.Contains(t, pipelineNames, "qcow2")
 
-	// XXX: provide helpers in manifesttest to extract this in a nicer way
-	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-	assert.Contains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+			// XXX: provide helpers in manifesttest to extract this in a nicer way
+			assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
+			assert.Contains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+
+			assert.Equal(t, strings.Contains(fakeStdout.String(), "org.osbuild.librepo"), useLibrepo)
+		})
+	}
 }
 
 func TestManifestIntegrationCrossArch(t *testing.T) {
