@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -100,6 +101,8 @@ type Options struct {
 	Depsolver         DepsolveFunc
 	ContainerResolver ContainerResolverFunc
 	CommitResolver    CommitResolverFunc
+
+	RpmDownloader osbuild.RpmDownloader
 }
 
 // Generator can generate an osbuild manifest from a given repository
@@ -113,6 +116,8 @@ type Generator struct {
 	commitResolver    CommitResolverFunc
 
 	reporegistry *reporegistry.RepoRegistry
+
+	rpmDownloader osbuild.RpmDownloader
 }
 
 // New will create a new manifest generator
@@ -128,6 +133,7 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		depsolver:         opts.Depsolver,
 		containerResolver: opts.ContainerResolver,
 		commitResolver:    opts.CommitResolver,
+		rpmDownloader:     opts.RpmDownloader,
 	}
 	if mg.out == nil {
 		mg.out = os.Stdout
@@ -177,7 +183,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 	if err != nil {
 		return err
 	}
-	mf, err := preManifest.Serialize(packageSpecs, containerSpecs, commitSpecs, repoConfig)
+	mf, err := preManifest.Serialize(packageSpecs, containerSpecs, commitSpecs, repoConfig, mg.rpmDownloader)
 	if err != nil {
 		return err
 	}

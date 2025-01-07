@@ -11,6 +11,7 @@ import (
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
@@ -83,6 +84,14 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	if err != nil {
 		return nil, err
 	}
+	useLibrepo, err := cmd.Flags().GetBool("use-librepo")
+	if err != nil {
+		return nil, err
+	}
+	var rpmDownloader osbuild.RpmDownloader
+	if useLibrepo {
+		rpmDownloader = osbuild.RpmDownloaderLibrepo
+	}
 
 	blueprintPath, err := cmd.Flags().GetString("blueprint")
 	if err != nil {
@@ -111,7 +120,7 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		}
 	}
 
-	err = generateManifest(dataDir, blueprintPath, res, w, ostreeImgOpts)
+	err = generateManifest(dataDir, blueprintPath, res, w, ostreeImgOpts, rpmDownloader)
 	return res, err
 }
 
@@ -185,6 +194,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)
 	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
+	manifestCmd.Flags().Bool("use-librepo", false, `(experimental) use librepo to download packages, needs new osbuild`)
 	rootCmd.AddCommand(manifestCmd)
 
 	buildCmd := &cobra.Command{
