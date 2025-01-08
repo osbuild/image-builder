@@ -12,11 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/image-builder-crc/internal/common"
-	"github.com/osbuild/image-builder-crc/internal/oauth2"
-
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/image-builder-crc/internal/oauth2"
+	"github.com/osbuild/logging/pkg/logrus"
 )
 
 type ComposerClient struct {
@@ -83,7 +81,6 @@ func (cc *ComposerClient) request(method, url string, headers map[string]string,
 	for k, v := range headers {
 		req.Header.Add(k, v)
 	}
-	req.Header.Add("X-External-Id", common.RequestId(req.Context()))
 
 	token, err := cc.tokener.Token(req.Context())
 	if err != nil {

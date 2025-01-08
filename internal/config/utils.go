@@ -96,3 +96,10 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 
 	return nil
 }
+
+func InEphemeralClowder() bool {
+	if clowder.IsClowderEnabled() && strings.Contains(*clowder.LoadedConfig.Metadata.EnvName, "ephemeral") {
+		return true
+	}
+	return false
+}

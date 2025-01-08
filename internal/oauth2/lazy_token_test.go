@@ -4,15 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/logging/pkg/collect"
+	"github.com/osbuild/logging/pkg/logrus"
 	"github.com/stretchr/testify/assert"
-
-	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,8 +38,16 @@ func TestLazyToken(t *testing.T) {
 	}))
 	defer mockServer.Close()
 
-	_, hook := logrusTest.NewNullLogger()
-	logrus.AddHook(hook)
+	// this is not thread-safe but tests are not running in parallel
+	collector := collect.NewTestHandler(slog.LevelDebug, false, false, false)
+	old := slog.Default().Handler()
+	slog.SetDefault(slog.New(collector))
+	defer slog.SetDefault(slog.New(old))
+
+	// temporary logrus proxy - will be removed
+	oldP := logrus.Default()
+	logrus.SetDefault(logrus.NewProxyFor(slog.Default()))
+	defer logrus.SetDefault(oldP)
 
 	clientID := "test-client-id"
 	clientSecret := "test-client-secret"
@@ -54,19 +62,21 @@ func TestLazyToken(t *testing.T) {
 	require.Equal(t, "mock-token-1", token)
 
 	// ensure no token is not part of the logs
-	assert.Equal(t, 1, len(hook.Entries))
-	assert.Contains(t, hook.Entries[0].Message, "Acquired new token")
-	assert.NotContains(t, hook.Entries[0].Message, "mock-token-1")
-	hook.Reset()
+	field := collector.Last()["msg"]
+	assert.Equal(t, 1, len(collector.All()))
+	assert.Contains(t, field, "Acquired new token")
+	assert.NotContains(t, field, "mock-token-1")
+	collector.Reset()
 
 	token, err = lazyToken.Token(ctx)
 	require.NoError(t, err)
 	require.Equal(t, "mock-token-1", token)
 
-	assert.Equal(t, 1, len(hook.Entries))
-	assert.Contains(t, hook.Entries[0].Message, "AccessToken reused")
-	assert.NotContains(t, hook.Entries[0].Message, "mock-token-1")
-	hook.Reset()
+	field = collector.Last()["msg"]
+	assert.Equal(t, 1, len(collector.All()))
+	assert.Contains(t, field, "AccessToken reused")
+	assert.NotContains(t, field, "mock-token-1")
+	collector.Reset()
 
 	// generates a new token when token expired
 	lazyToken.Expiration = time.Now().Add(-time.Minute) // Expire the token
