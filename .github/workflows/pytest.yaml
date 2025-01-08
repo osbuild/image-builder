@@ -12,8 +12,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Install yamllint
-        run: sudo apt-get install -y yamllint aspell
+      - name: Install lint dependencies
+        run: sudo apt install -y yamllint aspell pre-commit
       - name: "Clone Repository"
         uses: actions/checkout@v4
       - name: Set up Python
@@ -23,13 +23,13 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    uses: ./.github/workflows/testdeps.yaml
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/testdeps
       - name: Install integration test env
         run: |
           sudo apt update
-          sudo apt install -y pytest golang
+          sudo apt install -y python3-pytest golang
 
       - name: Run integration tests via pytest
         run: |
