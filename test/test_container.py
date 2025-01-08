@@ -18,7 +18,7 @@ def test_container_builds_image(tmp_path, build_container):
         "--distro", "centos-9"
     ])
     arch = "x86_64"
-    assert (output_dir / f"fedora-41-minimal-raw-{arch}/xz/disk.raw.xz").exists()
+    assert (output_dir / f"centos-9-minimal-raw-{arch}/xz/disk.raw.xz").exists()
     # XXX: ensure no other leftover dirs
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
