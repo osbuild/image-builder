@@ -11,6 +11,7 @@ import (
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/ostree"
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
 )
@@ -37,6 +38,31 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	return listImages(dataDir, output, filter)
 }
 
+func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
+	imageRef, err := cmd.Flags().GetString("ostree-ref")
+	if err != nil {
+		return nil, err
+	}
+	parentRef, err := cmd.Flags().GetString("ostree-parent")
+	if err != nil {
+		return nil, err
+	}
+	url, err := cmd.Flags().GetString("ostree-url")
+	if err != nil {
+		return nil, err
+	}
+	if imageRef == "" && parentRef == "" && url == "" {
+		return nil, nil
+	}
+
+	// XXX: how to add RHSM?
+	return &ostree.ImageOptions{
+		ImageRef:  imageRef,
+		ParentRef: parentRef,
+		URL:       url,
+	}, nil
+}
+
 func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("datadir")
 	if err != nil {
@@ -50,6 +76,10 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		archStr = arch.Current().String()
 	}
 	distroStr, err := cmd.Flags().GetString("distro")
+	if err != nil {
+		return nil, err
+	}
+	ostreeImgOpts, err := ostreeImageOptions(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +108,7 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		}
 	}
 
-	err = generateManifest(dataDir, blueprintPath, res, w)
+	err = generateManifest(dataDir, blueprintPath, res, w, ostreeImgOpts)
 	return res, err
 }
 
@@ -148,6 +178,9 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	}
 	manifestCmd.Flags().String("arch", "", `build manifest for a different architecture`)
 	manifestCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
+	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)
+	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
+	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
 	rootCmd.AddCommand(manifestCmd)
 
 	buildCmd := &cobra.Command{
