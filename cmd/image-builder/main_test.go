@@ -3,9 +3,12 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -161,6 +164,7 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	restore = main.MockOsArgs([]string{
 		"manifest",
 		"qcow2",
+		"--arch=x86_64",
 		"--distro=centos-9",
 		makeTestBlueprint(t, testBlueprint),
 	})
@@ -214,6 +218,89 @@ func TestManifestIntegrationCrossArch(t *testing.T) {
 
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
 	assert.Contains(t, fakeStdout.String(), `.el9.s390x.rpm`)
+}
+
+func TestManifestIntegrationOstreeSmoke(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	// we cannot hit ostree.f.o directly, we need to go via the mirrorlist
+	resp, err := http.Get("https://ostree.fedoraproject.org/iot/mirrorlist")
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	restore = main.MockOsArgs([]string{
+		"manifest",
+		"iot-raw-image",
+		"--arch=x86_64",
+		"--distro=fedora-40",
+		"--ostree-url=" + strings.SplitN(string(body), "\n", 2)[0],
+		"--ostree-ref=fedora/stable/x86_64/iot",
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err = main.Run()
+	assert.NoError(t, err)
+
+	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+	assert.NoError(t, err)
+	assert.Contains(t, pipelineNames, "ostree-deployment")
+
+	// XXX: provide helpers in manifesttest to extract this in a nicer way
+	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.ostree.init-fs"`)
+}
+
+func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	baseArgs := []string{
+		"manifest",
+		"--arch=x86_64",
+		"--distro=fedora-40",
+	}
+
+	for _, tc := range []struct {
+		extraArgs   []string
+		expectedErr string
+	}{
+		{
+			[]string{"iot-raw-image"},
+			`iot-raw-image: ostree commit URL required`,
+		},
+		{
+			[]string{"qcow2", "--ostree-url=http://example.com/"},
+			`OSTree is not supported for "qcow2"`,
+		},
+	} {
+		args := append(baseArgs, tc.extraArgs...)
+		restore = main.MockOsArgs(args)
+		defer restore()
+
+		var fakeStdout bytes.Buffer
+		restore = main.MockOsStdout(&fakeStdout)
+		defer restore()
+
+		err := main.Run()
+		assert.EqualError(t, err, tc.expectedErr)
+	}
 }
 
 func TestBuildIntegrationHappy(t *testing.T) {

@@ -3,13 +3,15 @@ package main
 import (
 	"io"
 
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/ostree"
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
 	"github.com/osbuild/image-builder-cli/internal/manifestgen"
 )
 
-func generateManifest(dataDir, blueprintPath string, res *imagefilter.Result, output io.Writer) error {
+func generateManifest(dataDir, blueprintPath string, res *imagefilter.Result, output io.Writer, ostreeOpts *ostree.ImageOptions) error {
 	repos, err := newRepoRegistry(dataDir)
 	if err != nil {
 		return err
@@ -25,6 +27,12 @@ func generateManifest(dataDir, blueprintPath string, res *imagefilter.Result, ou
 	if err != nil {
 		return err
 	}
+	var imgOpts *distro.ImageOptions
+	if ostreeOpts != nil {
+		imgOpts = &distro.ImageOptions{
+			OSTree: ostreeOpts,
+		}
+	}
 
-	return mg.Generate(bp, res.Distro, res.ImgType, res.Arch, nil)
+	return mg.Generate(bp, res.Distro, res.ImgType, res.Arch, imgOpts)
 }
