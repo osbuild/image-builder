@@ -2,6 +2,7 @@ package composer
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -12,11 +13,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/oauth2"
-
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/image-builder/internal/oauth2"
+	"github.com/osbuild/logging/pkg/logrus"
+	"github.com/osbuild/logging/pkg/strc"
 )
 
 type ComposerClient struct {
@@ -83,7 +83,6 @@ func (cc *ComposerClient) request(method, url string, headers map[string]string,
 	for k, v := range headers {
 		req.Header.Add(k, v)
 	}
-	req.Header.Add("X-External-Id", common.RequestId(req.Context()))
 
 	token, err := cc.tokener.Token(req.Context())
 	if err != nil {
@@ -91,7 +90,10 @@ func (cc *ComposerClient) request(method, url string, headers map[string]string,
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
-	resp, err := cc.client.Do(req)
+	// TODO context must be passed to the request method
+	req = req.WithContext(context.TODO())
+	doer := strc.NewTracingDoer(cc.client)
+	resp, err := doer.Do(req)
 	if err != nil {
 		return nil, err
 	}

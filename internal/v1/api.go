@@ -998,7 +998,6 @@ type User struct {
 // Version defines model for Version.
 type Version struct {
 	BuildCommit *string `json:"build_commit,omitempty"`
-	BuildTime   *string `json:"build_time,omitempty"`
 	Version     string  `json:"version"`
 }
 

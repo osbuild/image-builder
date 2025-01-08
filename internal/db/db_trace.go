@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/logging/pkg/logrus"
 )
 
 // Used for pgx logging with context information

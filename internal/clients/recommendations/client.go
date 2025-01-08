@@ -2,6 +2,7 @@ package recommendations
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -14,7 +15,8 @@ import (
 	"strings"
 
 	"github.com/osbuild/image-builder/internal/oauth2"
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/logging/pkg/logrus"
+	"github.com/osbuild/logging/pkg/strc"
 )
 
 type RecommendationsClient struct {
@@ -106,7 +108,10 @@ func (rc *RecommendationsClient) request(method, url string, headers map[string]
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
-	resp, err := rc.client.Do(req)
+	// TODO context must be passed to the request method
+	req = req.WithContext(context.TODO())
+	doer := strc.NewTracingDoer(rc.client)
+	resp, err := doer.Do(req)
 	if err != nil {
 		return nil, err
 	}
