@@ -4,8 +4,9 @@ import subprocess
 import pytest
 
 
+@pytest.mark.parametrize("use_librepo", [False, True])
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
-def test_container_builds_image(tmp_path, build_container):
+def test_container_builds_image(tmp_path, build_container, use_librepo):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
     subprocess.check_call([
@@ -15,7 +16,8 @@ def test_container_builds_image(tmp_path, build_container):
         build_container,
         "build",
         "minimal-raw",
-        "--distro", "centos-9"
+        "--distro", "centos-9",
+        f"--use-librepo={use_librepo}",
     ])
     arch = "x86_64"
     assert (output_dir / f"centos-9-minimal-raw-{arch}/xz/disk.raw.xz").exists()
