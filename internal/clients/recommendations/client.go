@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/image-builder-crc/internal/oauth2"
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/logging/pkg/logrus"
 )
 
 type RecommendationsClient struct {

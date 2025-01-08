@@ -11,16 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/osbuild/image-builder-crc/internal/distribution"
-
 	"github.com/google/uuid"
-
+	"github.com/labstack/echo/v4"
 	"github.com/osbuild/image-builder-crc/internal/clients/composer"
 	"github.com/osbuild/image-builder-crc/internal/clients/provisioning"
 	"github.com/osbuild/image-builder-crc/internal/common"
 	"github.com/osbuild/image-builder-crc/internal/db"
-
-	"github.com/labstack/echo/v4"
+	"github.com/osbuild/image-builder-crc/internal/distribution"
+	"github.com/osbuild/logging"
 )
 
 const (
@@ -52,8 +50,8 @@ func (h *Handlers) newLinksWithExtraParams(path string, count, limit int, params
 func (h *Handlers) GetVersion(ctx echo.Context) error {
 	version := Version{
 		Version:     h.server.spec.Info.Version,
-		BuildCommit: common.ToPtr(common.BuildCommit),
-		BuildTime:   common.ToPtr(common.BuildTime),
+		BuildCommit: common.ToPtr(logging.BuildID()),
+		BuildTime:   common.ToPtr(logging.BuildTime()),
 	}
 	return ctx.JSON(http.StatusOK, version)
 }

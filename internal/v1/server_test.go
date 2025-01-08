@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,7 +13,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/logging/pkg/logrus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder-crc/internal/clients/compliance"
@@ -23,7 +24,6 @@ import (
 	"github.com/osbuild/image-builder-crc/internal/common"
 	"github.com/osbuild/image-builder-crc/internal/db"
 	"github.com/osbuild/image-builder-crc/internal/distribution"
-	"github.com/osbuild/image-builder-crc/internal/logger"
 	"github.com/osbuild/image-builder-crc/internal/oauth2"
 	"github.com/osbuild/image-builder-crc/internal/tutils"
 	v1 "github.com/osbuild/image-builder-crc/internal/v1"
@@ -121,15 +121,8 @@ type testServer struct {
 func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfig) *testServer {
 	ctx := context.Background()
 
-	var log = &logrus.Logger{
-		Out:       os.Stderr,
-		Formatter: new(logrus.TextFormatter),
-		Hooks:     make(logrus.LevelHooks),
-		Level:     logrus.DebugLevel,
-	}
-
-	err := logger.ConfigLogger(log, "DEBUG")
-	require.NoError(t, err)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(logger)
 
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
