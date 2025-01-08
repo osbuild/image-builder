@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/osbuild/logging/pkg/strc"
 	"github.com/redhatinsights/identity"
 )
 
@@ -47,7 +48,10 @@ func (csc *ContentSourcesClient) request(method, url string, headers map[string]
 		req.Header.Add(k, v)
 	}
 
-	return csc.client.Do(req)
+	// TODO context must be passed to the request method
+	req = req.WithContext(context.TODO())
+	doer := strc.NewTracingDoer(csc.client)
+	return doer.Do(req)
 }
 
 func (csc *ContentSourcesClient) fetchRepositories(ctx context.Context, repoURLs []string, repoIDs []string, external bool) (*ApiRepositoryCollectionResponse, error) {

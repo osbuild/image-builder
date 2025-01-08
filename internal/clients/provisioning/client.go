@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/osbuild/logging/pkg/strc"
 	"github.com/redhatinsights/identity"
 )
 
@@ -37,7 +38,10 @@ func (pc *ProvisioningClient) request(method, url string, headers map[string]str
 		req.Header.Add(k, v)
 	}
 
-	return pc.client.Do(req)
+	// TODO context must be passed to the request method
+	req = req.WithContext(context.TODO())
+	doer := strc.NewTracingDoer(pc.client)
+	return doer.Do(req)
 }
 
 func (pc *ProvisioningClient) GetUploadInfo(ctx context.Context, sourceID string) (*http.Response, error) {

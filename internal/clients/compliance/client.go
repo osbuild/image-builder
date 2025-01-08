@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/osbuild/logging/pkg/strc"
 	"github.com/redhatinsights/identity"
 )
 
@@ -53,7 +54,9 @@ func (cc *ComplianceClient) request(ctx context.Context, method, url string) (*h
 	req.Header.Add("x-rh-identity", id)
 	req.Header.Add("content-type", "application/json")
 
-	return cc.client.Do(req)
+	req = req.WithContext(ctx)
+	doer := strc.NewTracingDoer(cc.client)
+	return doer.Do(req)
 }
 
 type v2PolicyResponse struct {
