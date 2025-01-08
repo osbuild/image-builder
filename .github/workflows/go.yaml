@@ -12,20 +12,16 @@ on:  # yamllint disable-line rule:truthy
     types: ["checks_requested"]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
-    uses: ./.github/workflows/testdeps.yaml
     steps:
       - uses: actions/checkout@v4
-
+      - uses: ./.github/actions/testdeps
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: 'stable'
-
       - name: Build
         run: go build -v ./...
-
       - name: Test
         run: go test -v ./...

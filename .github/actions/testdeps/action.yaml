@@ -1,0 +1,13 @@
+name: Install common test dependencies
+
+on:  # yamllint disable-line rule:truthy
+  workflow_call:
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install common test dependencies
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev podman
