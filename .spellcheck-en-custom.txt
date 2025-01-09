@@ -12,3 +12,4 @@ json
 osbuild
 qcow
 UEFI
+datadir
