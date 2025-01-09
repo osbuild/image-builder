@@ -7,7 +7,7 @@ import (
 
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
-	"github.com/osbuild/image-builder-cli/cmd/image-builder"
+	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 )
 
 func TestGetOneImageHappy(t *testing.T) {

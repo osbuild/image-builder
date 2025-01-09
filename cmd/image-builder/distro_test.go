@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder-cli/cmd/image-builder"
+	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 )
 
 func TestFindDistro(t *testing.T) {

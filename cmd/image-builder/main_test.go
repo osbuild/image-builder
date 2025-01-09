@@ -13,7 +13,7 @@ import (
 
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
-	"github.com/osbuild/image-builder-cli/cmd/image-builder"
+	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 	"github.com/osbuild/image-builder-cli/internal/manifesttest"
 	"github.com/osbuild/image-builder-cli/internal/testutil"
 )
