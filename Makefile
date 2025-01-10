@@ -189,3 +189,6 @@ release_artifacts: $(RPM_TARBALL_VERSIONED)
 
 lint:
 	pre-commit run --all
+
+show-version:  ## Show the generated version to be reused in tools like `.packit.yaml`
+	@echo "$(VERSION)"
