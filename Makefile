@@ -47,7 +47,7 @@ GOLANGCI_COMPOSER_IMAGE=composer_golangci
 #         pre-fetched but evaluated at time of use.
 #
 
-VERSION := $(shell (cd "$(SRCDIR)" && grep "^Version:" image-builder-cli.spec | sed -n 's/^[^0-9]*\([1-9][0-9]*\(\.[1-9][0-9]*\)*\)/\1/p'))
+VERSION := $(shell ( git describe --tags --abbrev=0 2>/dev/null || echo v1 ) | sed 's|v||')
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
 PACKAGE_NAME_VERSION = image-builder-cli-$(VERSION)
 PACKAGE_NAME_COMMIT = image-builder-cli-$(COMMIT)
