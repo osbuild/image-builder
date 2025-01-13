@@ -1270,6 +1270,83 @@ func TestComposeWithSnapshots(t *testing.T) {
 				},
 			},
 		},
+		// 1 payload & custom repository with an empty, but not-nil gpg key
+		{
+			imageBuilderRequest: v1.ComposeRequest{
+				Distribution: "rhel-95",
+				ImageRequests: []v1.ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    v1.ImageTypesGuestImage,
+						SnapshotDate: common.ToPtr("1999-01-30T00:00:00Z"),
+						UploadRequest: v1.UploadRequest{
+							Type:    v1.UploadTypesAwsS3,
+							Options: uo,
+						},
+					},
+				},
+				Customizations: &v1.Customizations{
+					PayloadRepositories: &[]v1.Repository{
+						{
+							Id: common.ToPtr(mocks.RepoPLID3),
+						},
+					},
+					CustomRepositories: &[]v1.CustomRepository{
+						{
+							Id: mocks.RepoPLID3,
+						},
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Distribution: "rhel-9.5",
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					Repositories: []composer.Repository{
+						{
+							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(mocks.RhelGPG),
+							CheckGpg:    common.ToPtr(true),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+						},
+						{
+							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Rhsm:        common.ToPtr(false),
+							Gpgkey:      common.ToPtr(mocks.RhelGPG),
+							CheckGpg:    common.ToPtr(true),
+							IgnoreSsl:   nil,
+							Metalink:    nil,
+							Mirrorlist:  nil,
+							PackageSets: nil,
+						},
+					},
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+				},
+				Customizations: &composer.Customizations{
+					PayloadRepositories: &[]composer.Repository{
+						{
+							Baseurl: common.ToPtr("https://content-sources.org/snappy/payload3"),
+							Rhsm:    common.ToPtr(false),
+						},
+					},
+					CustomRepositories: &[]composer.CustomRepository{
+						{
+							Baseurl: &[]string{"http://snappy-url/snappy/payload3"},
+							Name:    common.ToPtr("payload3"),
+							Enabled: common.ToPtr(false),
+							Id:      mocks.RepoPLID3,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {
@@ -1685,6 +1762,9 @@ func TestComposeCustomizations(t *testing.T) {
 							IgnoreSsl:    common.ToPtr(false),
 							Rhsm:         false,
 						},
+						{
+							Id: common.ToPtr(mocks.RepoPLID3),
+						},
 					},
 					CustomRepositories: &[]v1.CustomRepository{
 						{
@@ -1692,6 +1772,9 @@ func TestComposeCustomizations(t *testing.T) {
 							Baseurl:  &[]string{"https://some-repo-base-url.org"},
 							Gpgkey:   &[]string{"some-gpg-key"},
 							CheckGpg: common.ToPtr(true),
+						},
+						{
+							Id: mocks.RepoPLID3,
 						},
 						{
 							Id:       "non-content-sources",
@@ -1725,6 +1808,11 @@ func TestComposeCustomizations(t *testing.T) {
 							IgnoreSsl:    common.ToPtr(false),
 							Rhsm:         common.ToPtr(false),
 						},
+						{
+							Baseurl:      common.ToPtr("https://some-repo-base-url3.org"),
+							CheckRepoGpg: common.ToPtr(false),
+							Rhsm:         common.ToPtr(false),
+						},
 					},
 					CustomRepositories: &[]composer.CustomRepository{
 						{
@@ -1733,6 +1821,11 @@ func TestComposeCustomizations(t *testing.T) {
 							Gpgkey:   &[]string{"some-gpg-key"},
 							CheckGpg: common.ToPtr(true),
 							Name:     common.ToPtr("payload"),
+						},
+						{
+							Id:      mocks.RepoPLID3,
+							Baseurl: &[]string{"https://some-repo-base-url3.org"},
+							Name:    common.ToPtr("payload3"),
 						},
 						{
 							Id:       "non-content-sources",

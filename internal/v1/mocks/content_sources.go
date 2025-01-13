@@ -22,6 +22,7 @@ var (
 	RepoAppstrID = "dbd21dfc-1733-4877-b1c8-8fb5a98beeb4"
 	RepoPLID     = "a7ec8864-0e3c-4af2-8c06-567891280af5"
 	RepoPLID2    = "c01c2d9c-4624-4558-9ca9-8abcc5eb4437"
+	RepoPLID3    = "d064585d-5d25-4e10-88d0-9ab4d192b21d"
 )
 
 func rhRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryResponse) {
@@ -65,6 +66,16 @@ func extRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryR
 			Url:      common.ToPtr("https://some-repo-base-url2.org"),
 			Snapshot: common.ToPtr(true),
 			Name:     common.ToPtr("payload2"),
+		})
+	}
+
+	if slices.Contains(urls, "https://some-repo-base-url3.org") || slices.Contains(ids, RepoPLID3) {
+		res = append(res, content_sources.ApiRepositoryResponse{
+			GpgKey:   common.ToPtr(""),
+			Uuid:     common.ToPtr(RepoPLID3),
+			Url:      common.ToPtr("https://some-repo-base-url3.org"),
+			Snapshot: common.ToPtr(true),
+			Name:     common.ToPtr("payload3"),
 		})
 	}
 
@@ -119,6 +130,18 @@ func snaps(uuids []string) (res []content_sources.ApiSnapshotForDate) {
 			RepositoryUuid: common.ToPtr(RepoPLID2),
 		})
 	}
+
+	if slices.Contains(uuids, RepoPLID3) {
+		res = append(res, content_sources.ApiSnapshotForDate{
+			IsAfter: common.ToPtr(false),
+			Match: &content_sources.ApiSnapshotResponse{
+				CreatedAt:      common.ToPtr("1998-01-30T00:00:00Z"),
+				RepositoryPath: common.ToPtr("/snappy/payload3"),
+				Url:            common.ToPtr("http://snappy-url/snappy/payload3"),
+			},
+			RepositoryUuid: common.ToPtr(RepoPLID3),
+		})
+	}
 	return res
 }
 
@@ -149,6 +172,13 @@ func exports(uuids []string) (res []content_sources.ApiRepositoryExportResponse)
 			GpgKey: common.ToPtr("some-gpg-key"),
 			Name:   common.ToPtr("payload2"),
 			Url:    common.ToPtr("http://snappy-url/snappy/payload2"),
+		})
+	}
+	if slices.Contains(uuids, RepoPLID3) {
+		res = append(res, content_sources.ApiRepositoryExportResponse{
+			GpgKey: common.ToPtr(""),
+			Name:   common.ToPtr("payload3"),
+			Url:    common.ToPtr("http://snappy-url/snappy/payload3"),
 		})
 	}
 	return res
