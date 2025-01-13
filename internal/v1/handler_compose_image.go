@@ -280,7 +280,9 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 			Rhsm:    common.ToPtr(false),
 		}
 
-		composerRepo.Gpgkey = repo.GpgKey
+		if repo.GpgKey != nil && *repo.GpgKey != "" {
+			composerRepo.Gpgkey = repo.GpgKey
+		}
 		if composerRepo.Gpgkey != nil && *composerRepo.Gpgkey != "" {
 			composerRepo.CheckGpg = common.ToPtr(true)
 		}
@@ -344,19 +346,19 @@ func (h *Handlers) buildPayloadRepositories(ctx echo.Context, payloadRepos []Rep
 
 		if pyrepo.CheckGpg != nil {
 			res[i].CheckGpg = pyrepo.CheckGpg
-		} else if repo.GpgKey != nil {
+		} else if repo.GpgKey != nil && *repo.GpgKey != "" {
 			res[i].CheckGpg = common.ToPtr(true)
 		}
 
 		if pyrepo.CheckRepoGpg != nil {
 			res[i].CheckRepoGpg = pyrepo.CheckRepoGpg
-		} else if repo.MetadataVerification != nil {
+		} else if repo.MetadataVerification != nil && *repo.GpgKey != "" {
 			res[i].CheckRepoGpg = repo.MetadataVerification
 		}
 
 		if pyrepo.Gpgkey != nil {
 			res[i].Gpgkey = pyrepo.Gpgkey
-		} else if repo.GpgKey != nil {
+		} else if repo.GpgKey != nil && *repo.GpgKey != "" {
 			res[i].Gpgkey = repo.GpgKey
 		}
 
@@ -412,19 +414,19 @@ func (h *Handlers) buildCustomRepositories(ctx echo.Context, custRepos []CustomR
 
 		if curepo.CheckGpg != nil {
 			res[i].CheckGpg = curepo.CheckGpg
-		} else if repo.GpgKey != nil {
+		} else if repo.GpgKey != nil && *repo.GpgKey != "" {
 			res[i].CheckGpg = common.ToPtr(true)
 		}
 
 		if curepo.CheckRepoGpg != nil {
 			res[i].CheckRepoGpg = curepo.CheckRepoGpg
-		} else if repo.MetadataVerification != nil {
+		} else if repo.MetadataVerification != nil && *repo.GpgKey != "" {
 			res[i].CheckRepoGpg = repo.MetadataVerification
 		}
 
 		if curepo.Gpgkey != nil {
 			res[i].Gpgkey = curepo.Gpgkey
-		} else if repo.GpgKey != nil {
+		} else if repo.GpgKey != nil && *repo.GpgKey != "" {
 			res[i].Gpgkey = common.ToPtr([]string{*repo.GpgKey})
 		}
 
