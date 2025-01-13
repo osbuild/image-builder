@@ -15,7 +15,13 @@ $ sudo podman run --privileged \
 
 ## Installation
 
-This project is under development right now and needs to be run via:
+This project is under development right now and we provide up-to-date
+development snapshots in the following way:
+
+A copr RPM build
+https://copr.fedorainfracloud.org/coprs/g/osbuild/image-builder-cli/
+
+Via the go build system:
 ```console
 $ go run github.com/osbuild/image-builder-cli/cmd/image-builder@main
 ```
@@ -24,7 +30,7 @@ or install it into `$GOPATH/bin`
 $ go install github.com/osbuild/image-builder-cli/cmd/image-builder@main
 ```
 
-we plan to provide rpm packages as well.
+We plan to provide rpm packages in fedora as well.
 
 
 ## Prerequisites
@@ -54,8 +60,27 @@ $ sudo image-builder build qcow2 --distro centos-9
 this will create a directory `centos-9-qcow2-x86_64` under which the
 output is stored.
 
+Blueprints are supported, first create a `config.toml` and put e.g.
+the following content in:
+```toml
+[[customizations.user]]
+name = "alice"
+password = "bob"
+key = "ssh-rsa AAA ... user@email.com"
+groups = ["wheel"]
+```
+Note that both toml and json are supported for the blueprint format.
 
-It is possible to filter:
+See https://osbuild.org/docs/user-guide/blueprint-reference/ for
+the full blueprint reference.
+
+Then just pass them as an additional argument after the image type:
+```console
+$ sudo image-builder build qcow2 ./config.toml --distro centos-9
+...
+```
+
+When listing images, it is possible to filter:
 ```console
 $ image-builder list-images --filter ami
 ...
