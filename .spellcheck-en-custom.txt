@@ -13,3 +13,5 @@ osbuild
 qcow
 UEFI
 datadir
+copr
+toml
