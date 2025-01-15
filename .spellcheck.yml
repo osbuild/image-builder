@@ -8,7 +8,7 @@ matrix:
       camel-case: true
       mode: markdown
     sources:
-      - "**/*.md|!venv/**|!vendor/**"
+      - "**/*.md|!venv/**|!vendor/**|!release_artifacts/**"
     dictionary:
       wordlists:
         - .spellcheck-en-custom.txt
