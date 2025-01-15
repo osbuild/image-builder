@@ -110,18 +110,23 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		return nil, err
 	}
 
-	res, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	img, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
 	if err != nil {
 		return nil, err
 	}
 	if archChecker != nil {
-		if err := archChecker(res.Arch.Name()); err != nil {
+		if err := archChecker(img.Arch.Name()); err != nil {
 			return nil, err
 		}
 	}
 
-	err = generateManifest(dataDir, blueprintPath, res, w, ostreeImgOpts, rpmDownloader)
-	return res, err
+	opts := &manifestOptions{
+		BlueprintPath: blueprintPath,
+		Ostree:        ostreeImgOpts,
+		RpmDownloader: rpmDownloader,
+	}
+	err = generateManifest(dataDir, img, w, opts)
+	return img, err
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
