@@ -12,8 +12,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Update apt repositories
+        run: sudo apt update
       - name: Install lint dependencies
         run: sudo apt install -y yamllint aspell pre-commit
+      - name: Install project dependencies
+        run: sudo apt install -y libgpgme-dev libbtrfs-dev
       - name: "Clone Repository"
         uses: actions/checkout@v4
       - name: Set up Python
