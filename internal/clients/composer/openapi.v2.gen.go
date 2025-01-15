@@ -214,6 +214,8 @@ type Blueprint struct {
 
 // BlueprintCustomizations defines model for BlueprintCustomizations.
 type BlueprintCustomizations struct {
+	Cacerts *CACertsCustomization `json:"cacerts,omitempty"`
+
 	// Directories Directories to create in the final artifact
 	Directories *[]Directory `json:"directories,omitempty"`
 
@@ -396,6 +398,11 @@ type BlueprintUser struct {
 	Uid *int `json:"uid,omitempty"`
 }
 
+// CACertsCustomization defines model for CACertsCustomization.
+type CACertsCustomization struct {
+	PemCerts []string `json:"pem_certs"`
+}
+
 // CloneComposeBody defines model for CloneComposeBody.
 type CloneComposeBody struct {
 	union json.RawMessage
@@ -550,7 +557,8 @@ type CustomRepository struct {
 
 // Customizations defines model for Customizations.
 type Customizations struct {
-	Containers *[]Container `json:"containers,omitempty"`
+	Cacerts    *CACertsCustomization `json:"cacerts,omitempty"`
+	Containers *[]Container          `json:"containers,omitempty"`
 
 	// CustomRepositories Extra repositories for packages specified in customizations. These
 	// repositories will be used to depsolve and retrieve packages. Additionally,
