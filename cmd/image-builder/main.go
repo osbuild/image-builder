@@ -22,6 +22,11 @@ var (
 	osStderr io.Writer = os.Stderr
 )
 
+// generate the default output directory name for the given image
+func outputDirFor(img *imagefilter.Result) string {
+	return fmt.Sprintf("%s-%s-%s", img.Distro.Name(), img.ImgType.Name(), img.Arch.Name())
+}
+
 func cmdListImages(cmd *cobra.Command, args []string) error {
 	filter, err := cmd.Flags().GetStringArray("filter")
 	if err != nil {
@@ -80,6 +85,10 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	if err != nil {
 		return nil, err
 	}
+	extraArtifacts, err := cmd.Flags().GetStringArray("extra-artifacts")
+	if err != nil {
+		return nil, err
+	}
 	ostreeImgOpts, err := ostreeImageOptions(cmd)
 	if err != nil {
 		return nil, err
@@ -121,9 +130,10 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	}
 
 	opts := &manifestOptions{
-		BlueprintPath: blueprintPath,
-		Ostree:        ostreeImgOpts,
-		RpmDownloader: rpmDownloader,
+		BlueprintPath:  blueprintPath,
+		Ostree:         ostreeImgOpts,
+		RpmDownloader:  rpmDownloader,
+		ExtraArtifacts: extraArtifacts,
 	}
 	err = generateManifest(dataDir, img, w, opts)
 	return img, err
@@ -171,6 +181,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 	}
 	rootCmd.PersistentFlags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().StringArray("extra-artifacts", nil, `Export extra artifacts to the output dir (e.g. "sbom")`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 
