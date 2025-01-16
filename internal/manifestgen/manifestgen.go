@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -21,30 +22,26 @@ import (
 // cmd/build/main.go:depsolve (and probably more places) should go
 // into a common helper in "images" or images should do this on its
 // own
-func defaultDepsolver(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
+func defaultDepsolver(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
 	if cacheDir == "" {
 		var err error
 		cacheDir, err = os.MkdirTemp("", "manifestgen")
 		if err != nil {
-			return nil, nil, fmt.Errorf("cannot create temporary directory: %w", err)
+			return nil, fmt.Errorf("cannot create temporary directory: %w", err)
 		}
 		defer os.RemoveAll(cacheDir)
 	}
 
 	solver := depsolvednf.NewSolver(d.ModulePlatformID(), d.Releasever(), arch, d.Name(), cacheDir)
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-	repoSets := make(map[string][]rpmmd.RepoConfig)
+	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
 	for name, pkgSet := range packageSets {
 		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error depsolving: %w", err)
+			return nil, fmt.Errorf("error depsolving: %w", err)
 		}
-		depsolvedSets[name] = res.Packages
-		repoSets[name] = res.Repos
-		// the depsolve result also contains SBOM information,
-		// it is currently not used here though
+		depsolvedSets[name] = *res
 	}
-	return depsolvedSets, repoSets, nil
+	return depsolvedSets, nil
 }
 
 func resolveContainers(containers []container.SourceSpec, archName string) ([]container.Spec, error) {
@@ -86,7 +83,7 @@ func defaultCommitResolver(commitSources map[string][]ostree.SourceSpec) (map[st
 }
 
 type (
-	DepsolveFunc func(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error)
+	DepsolveFunc func(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error)
 
 	ContainerResolverFunc func(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error)
 
@@ -171,7 +168,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 		// what are these warnings?
 		return fmt.Errorf("warnings during manifest creation: %v", strings.Join(warnings, "\n"))
 	}
-	packageSpecs, repoConfig, err := mg.depsolver(mg.cacheDir, preManifest.GetPackageSetChains(), dist, a.Name())
+	depsolved, err := mg.depsolver(mg.cacheDir, preManifest.GetPackageSetChains(), dist, a.Name())
 	if err != nil {
 		return err
 	}
@@ -183,7 +180,11 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 	if err != nil {
 		return err
 	}
-	mf, err := preManifest.Serialize(packageSpecs, containerSpecs, commitSpecs, repoConfig, mg.rpmDownloader)
+
+	opts := &manifest.SerializeOptions{
+		RpmDownloader: mg.rpmDownloader,
+	}
+	mf, err := preManifest.Serialize(depsolved, containerSpecs, commitSpecs, opts)
 	if err != nil {
 		return err
 	}

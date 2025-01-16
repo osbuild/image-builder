@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -133,31 +134,28 @@ func TestManifestGeneratorWithOstreeCommit(t *testing.T) {
 	assert.Contains(t, osbuildManifest.String(), expectedSha256)
 }
 
-func fakeDepsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-	repoSets := make(map[string][]rpmmd.RepoConfig)
+func fakeDepsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]dnfjson.DepsolveResult, error) {
+	depsolvedSets := make(map[string]dnfjson.DepsolveResult)
 	for name, pkgSets := range packageSets {
 		repoId := fmt.Sprintf("repo_id_%s", name)
-		var resolvedSet []rpmmd.PackageSpec
+		var resolvedSet dnfjson.DepsolveResult
 		for _, pkgSet := range pkgSets {
 			for _, pkgName := range pkgSet.Include {
-				resolvedSet = append(resolvedSet, rpmmd.PackageSpec{
+				resolvedSet.Packages = append(resolvedSet.Packages, rpmmd.PackageSpec{
 					Name:     pkgName,
 					Checksum: sha256For(pkgName),
 					Path:     fmt.Sprintf("path/%s.rpm", pkgName),
 					RepoID:   repoId,
 				})
+				resolvedSet.Repos = append(resolvedSet.Repos, rpmmd.RepoConfig{
+					Id:       repoId,
+					Metalink: "https://example.com/metalink",
+				})
 			}
 		}
 		depsolvedSets[name] = resolvedSet
-		repoSets[name] = []rpmmd.RepoConfig{
-			{
-				Id:       repoId,
-				Metalink: "http://example.com/metalink",
-			},
-		}
 	}
-	return depsolvedSets, repoSets, nil
+	return depsolvedSets, nil
 }
 
 func fakeCommitResolver(commitSources map[string][]ostree.SourceSpec) (map[string][]ostree.CommitSpec, error) {
