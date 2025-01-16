@@ -359,6 +359,41 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	assert.Contains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 }
 
+func TestBuildIntegrationSwitchOutputDir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	tmpdir := t.TempDir()
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		"--distro", "centos-9",
+		"--store", tmpdir,
+		"--output-dir", "some-output-dir",
+	})
+	defer restore()
+
+	script := `cat - > "$0".stdin`
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+	defer fakeOsbuildCmd.Restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	// ensure output dir override works
+	osbuildCall := fakeOsbuildCmd.Calls()[0]
+	outputDirPos := slices.Index(osbuildCall, "--output-directory")
+	assert.True(t, outputDirPos > -1)
+	assert.Equal(t, "some-output-dir", osbuildCall[outputDirPos+1])
+}
+
 func TestBuildIntegrationErrors(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
@@ -398,4 +433,41 @@ exit 1
 	// is available (but that cannot be done with the existing
 	// osbuild-exec.go)
 	assert.Equal(t, "error on stderr\n", fakeStderr.String())
+}
+
+func TestManifestIntegrationExtraArtifactsSBOMWithOutputDir(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+	outputDir := filepath.Join(t.TempDir(), "output-dir")
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"manifest",
+		"qcow2",
+		"--arch=x86_64",
+		"--distro=centos-9",
+		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
+		"--extra-artifacts=sbom",
+		"--output-dir", outputDir,
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	sboms, err := filepath.Glob(filepath.Join(outputDir, "*.spdx.json"))
+	assert.NoError(t, err)
+	assert.Equal(t, len(sboms), 2)
+	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildroot-build.spdx.json"), sboms[0])
+	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.image-os.spdx.json"), sboms[1])
 }
