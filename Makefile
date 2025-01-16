@@ -74,18 +74,13 @@ PACKAGE_NAME_COMMIT = image-builder-cli-$(COMMIT)
 #
 
 .PHONY: help
-help:
+help:  ## Print this usage information
 	@echo "make [TARGETS...]"
 	@echo
 	@echo "This is the maintenance makefile of image-builder. The following"
 	@echo "targets are available:"
 	@echo
-	@echo "    help:               Print this usage information."
-	@echo "    rpm:                Build the RPM"
-	@echo "    srpm:               Build the source RPM"
-	@echo "    scratch:            Quick scratch build of RPM"
-	@echo "    clean:              Remove all built binaries"
-	@echo "    lint:               Run all known linters"
+	@awk 'match($$0, /^([a-zA-Z_\/-]+):.*? ## (.*)$$/, m) {printf "  \033[36m%-30s\033[0m %s\n", m[1], m[2]}' $(MAKEFILE_LIST) | sort
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -102,11 +97,11 @@ $(BUILDDIR)/%/:
 #
 
 .PHONY: build
-build: $(BUILDDIR)/bin/
+build: $(BUILDDIR)/bin/  ## build the binary from source
 	go build -o $<image-builder ./cmd/image-builder/
 
 .PHONY: clean
-clean:
+clean:  ## Remove all built binaries
 	rm -rf $(BUILDDIR)/bin/
 	rm -rf $(CURDIR)/rpmbuild
 	rm -rf $(CURDIR)/release_artifacts
@@ -154,7 +149,7 @@ $(RPM_TARBALL) $(RPM_TARBALL_VERSIONED): $(RPM_SPECFILE)
 	gzip $(call get_uncompressed_name,$@)
 
 .PHONY: srpm
-srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+srpm: $(RPM_SPECFILE) $(RPM_TARBALL)  ## Build the source RPM
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--define "commit $(COMMIT)" \
@@ -162,7 +157,7 @@ srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		$(RPM_SPECFILE)
 
 .PHONY: rpm
-rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+rpm: $(RPM_SPECFILE) $(RPM_TARBALL)  ## Build the RPM
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--define "commit $(COMMIT)" \
@@ -170,7 +165,7 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		$(RPM_SPECFILE)
 
 .PHONY: scratch
-scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
+scratch: $(RPM_SPECFILE) $(RPM_TARBALL)  ## Quick scratch build of RPM
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--define "commit $(COMMIT)" \
@@ -181,13 +176,13 @@ scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
 RPM_TARBALL_FILENAME=$(notdir $(RPM_TARBALL))
 
 .PHONY: release_artifacts
-release_artifacts: $(RPM_TARBALL_VERSIONED)
+release_artifacts: $(RPM_TARBALL_VERSIONED)  ## build a release tar but with vendor directory and matching spec file
 	mkdir -p release_artifacts
 	cp $< release_artifacts/
 	# Print the artifact path for Packit
 	echo "release_artifacts/$(shell basename $<)"
 
-lint:
+lint:  ## Run all known linters
 	pre-commit run --all
 
 show-version:  ## Show the generated version to be reused in tools like `.packit.yaml`
