@@ -84,15 +84,18 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		return nil, err
 	}
 
-	var blueprintPath string
-	imgTypeStr := args[0]
-	if len(args) > 1 {
-		blueprintPath = args[1]
+	blueprintPath, err := cmd.Flags().GetString("blueprint")
+	if err != nil {
+		return nil, err
 	}
+
+	imgTypeStr := args[0]
+
 	bp, err := blueprintload.Load(blueprintPath)
 	if err != nil {
 		return nil, err
 	}
+
 	distroStr, err = findDistro(distroStr, bp.Distro)
 	if err != nil {
 		return nil, err
@@ -176,6 +179,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.RangeArgs(1, 2),
 		Hidden:       true,
 	}
+	manifestCmd.Flags().String("blueprint", "", `blueprint to customize an image`)
 	manifestCmd.Flags().String("arch", "", `build manifest for a different architecture`)
 	manifestCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
 	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)

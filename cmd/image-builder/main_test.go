@@ -3,6 +3,7 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -166,7 +167,7 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 		"qcow2",
 		"--arch=x86_64",
 		"--distro=centos-9",
-		makeTestBlueprint(t, testBlueprint),
+		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
 	})
 	defer restore()
 
@@ -318,7 +319,7 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	restore = main.MockOsArgs([]string{
 		"build",
 		"qcow2",
-		makeTestBlueprint(t, testBlueprint),
+		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
 		"--distro", "centos-9",
 		"--store", tmpdir,
 	})
