@@ -81,16 +81,17 @@ func LoadConfigFromEnv(conf *ImageBuilderConfig) error {
 		}
 
 		// feature flags
-		conf.UnleashURL = fmt.Sprintf(
-			"%s://%s:%d/api",
-			clowder.LoadedConfig.FeatureFlags.Scheme,
-			clowder.LoadedConfig.FeatureFlags.Hostname,
-			clowder.LoadedConfig.FeatureFlags.Port,
-		)
-		if clowder.LoadedConfig.FeatureFlags.ClientAccessToken != nil {
-			conf.UnleashToken = *clowder.LoadedConfig.FeatureFlags.ClientAccessToken
+		if clowder.LoadedConfig.FeatureFlags != nil {
+			conf.UnleashURL = fmt.Sprintf(
+				"%s://%s:%d/api",
+				clowder.LoadedConfig.FeatureFlags.Scheme,
+				clowder.LoadedConfig.FeatureFlags.Hostname,
+				clowder.LoadedConfig.FeatureFlags.Port,
+			)
+			if clowder.LoadedConfig.FeatureFlags.ClientAccessToken != nil {
+				conf.UnleashToken = *clowder.LoadedConfig.FeatureFlags.ClientAccessToken
+			}
 		}
-
 	}
 
 	return nil
