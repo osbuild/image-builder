@@ -16,6 +16,7 @@ import (
 )
 
 type manifestOptions struct {
+	OutputDir      string
 	BlueprintPath  string
 	Ostree         *ostree.ImageOptions
 	RpmDownloader  osbuild.RpmDownloader
@@ -46,7 +47,10 @@ func generateManifest(dataDir string, img *imagefilter.Result, output io.Writer,
 		RpmDownloader: opts.RpmDownloader,
 	}
 	if slices.Contains(opts.ExtraArtifacts, "sbom") {
-		outputDir := outputDirFor(img)
+		outputDir := opts.OutputDir
+		if outputDir == "" {
+			outputDir = outputDirFor(img)
+		}
 		if err := os.MkdirAll(outputDir, 0755); err != nil {
 			return err
 		}

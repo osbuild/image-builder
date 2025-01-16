@@ -89,6 +89,10 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	if err != nil {
 		return nil, err
 	}
+	outputDir, err := cmd.Flags().GetString("output-dir")
+	if err != nil {
+		return nil, err
+	}
 	ostreeImgOpts, err := ostreeImageOptions(cmd)
 	if err != nil {
 		return nil, err
@@ -130,6 +134,7 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	}
 
 	opts := &manifestOptions{
+		OutputDir:      outputDir,
 		BlueprintPath:  blueprintPath,
 		Ostree:         ostreeImgOpts,
 		RpmDownloader:  rpmDownloader,
@@ -149,6 +154,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	outputDir, err := cmd.Flags().GetString("output-dir")
+	if err != nil {
+		return err
+	}
 
 	var mf bytes.Buffer
 	// XXX: check env here, i.e. if user is root and osbuild is installed
@@ -162,7 +171,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return buildImage(res, mf.Bytes(), storeDir)
+	return buildImage(res, mf.Bytes(), storeDir, outputDir)
 }
 
 func run() error {
@@ -181,6 +190,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 	}
 	rootCmd.PersistentFlags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified direcotry`)
 	rootCmd.PersistentFlags().StringArray("extra-artifacts", nil, `Export extra artifacts to the output dir (e.g. "sbom")`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
