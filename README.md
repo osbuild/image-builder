@@ -76,7 +76,7 @@ the full blueprint reference.
 
 Then just pass them as an additional argument after the image type:
 ```console
-$ sudo image-builder build qcow2 ./config.toml --distro centos-9
+$ sudo image-builder build qcow2 --blueprint ./config.toml --distro centos-9
 ...
 ```
 
