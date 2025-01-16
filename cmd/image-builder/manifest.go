@@ -2,6 +2,9 @@ package main
 
 import (
 	"io"
+	"os"
+	"path/filepath"
+	"slices"
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/imagefilter"
@@ -13,9 +16,23 @@ import (
 )
 
 type manifestOptions struct {
-	BlueprintPath string
-	Ostree        *ostree.ImageOptions
-	RpmDownloader osbuild.RpmDownloader
+	BlueprintPath  string
+	Ostree         *ostree.ImageOptions
+	RpmDownloader  osbuild.RpmDownloader
+	ExtraArtifacts []string
+}
+
+func sbomWriter(outputDir, filename string, content io.Reader) error {
+	p := filepath.Join(outputDir, filename)
+	f, err := os.Create(p)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err := io.Copy(f, content); err != nil {
+		return err
+	}
+	return nil
 }
 
 func generateManifest(dataDir string, img *imagefilter.Result, output io.Writer, opts *manifestOptions) error {
@@ -24,13 +41,25 @@ func generateManifest(dataDir string, img *imagefilter.Result, output io.Writer,
 		return err
 	}
 	// XXX: add --rpmmd/cachedir option like bib
-	mg, err := manifestgen.New(repos, &manifestgen.Options{
+	manifestGenOpts := &manifestgen.Options{
 		Output:        output,
 		RpmDownloader: opts.RpmDownloader,
-	})
+	}
+	if slices.Contains(opts.ExtraArtifacts, "sbom") {
+		outputDir := outputDirFor(img)
+		if err := os.MkdirAll(outputDir, 0755); err != nil {
+			return err
+		}
+		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader) error {
+			return sbomWriter(outputDir, filename, content)
+		}
+	}
+
+	mg, err := manifestgen.New(repos, manifestGenOpts)
 	if err != nil {
 		return err
 	}
+
 	bp, err := blueprintload.Load(opts.BlueprintPath)
 	if err != nil {
 		return err
