@@ -51,8 +51,11 @@ BuildRequires:  btrfs-progs-devel
 # BUNDLE_END
 %endif
 
-Requires:       osbuild
-Requires:       osbuild-depsolve-dnf
+Requires:   osbuild
+Requires:   osbuild-ostree
+Requires:   osbuild-lvm2
+Requires:   osbuild-luks2
+Requires:   osbuild-depsolve-dnf
 
 %description
 %{common_description}
