@@ -329,8 +329,8 @@ github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.11.0 h1:+5Zbo97w3Lbmb3PeqQtpmTkMwsW5nRI3YaLpt7tQ7oU=
 github.com/opencontainers/selinux v1.11.0/go.mod h1:E5dMC3VPuVvVHDYmi78qvhJp8+M586T4DlDRYpFkyec=
-github.com/osbuild/images v0.108.1-0.20250109111809-f295ad7807a3 h1:gUuQvYWQggIrR6/tIGOiFz4L1kapAPGL1xdJ9SqvkQs=
-github.com/osbuild/images v0.108.1-0.20250109111809-f295ad7807a3/go.mod h1:58tzp7jV50rjaH9gMpvmQdVati0c4TaC5Op7wmSD/tY=
+github.com/osbuild/images v0.109.1-0.20250117082457-97ca7c62eb09 h1:9ABt4zMJ6tNp1+AHI4FrDq1Fxy/l5uYuDXs6EOR6QJ0=
+github.com/osbuild/images v0.109.1-0.20250117082457-97ca7c62eb09/go.mod h1:58tzp7jV50rjaH9gMpvmQdVati0c4TaC5Op7wmSD/tY=
 github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f h1:/UDgs8FGMqwnHagNDPGOlts35QkhAZ8by3DR7nMih7M=
 github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f/go.mod h1:J6OG6YJVEWopen4avK3VNQSnALmmjvniMmni/YFYAwc=
 >>>>>>> c45b5e978 (build(deps): bump the go-deps group with 2 updates)
