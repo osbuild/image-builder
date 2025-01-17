@@ -176,7 +176,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Short:        "Build manifest for the given distro/image-type, e.g. centos-9 qcow2",
 		RunE:         cmdManifest,
 		SilenceUsage: true,
-		Args:         cobra.RangeArgs(1, 2),
+		Args:         cobra.ExactArgs(1),
 		Hidden:       true,
 	}
 	manifestCmd.Flags().String("blueprint", "", `blueprint to customize an image`)
@@ -192,7 +192,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Short:        "Build the given distro/image-type, e.g. centos-9 qcow2",
 		RunE:         cmdBuild,
 		SilenceUsage: true,
-		Args:         cobra.RangeArgs(1, 2),
+		Args:         cobra.ExactArgs(1),
 	}
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
 	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
