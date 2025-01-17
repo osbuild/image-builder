@@ -7,7 +7,7 @@ toolchain go1.22.0
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Unleash/unleash-client-go/v4 v4.1.4
-	github.com/aws/aws-sdk-go v1.55.5
+	github.com/aws/aws-sdk-go v1.55.6
 	github.com/getkin/kin-openapi v0.128.0
 	github.com/getsentry/sentry-go v0.31.1
 	github.com/getsentry/sentry-go/echo v0.31.1
