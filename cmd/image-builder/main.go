@@ -172,7 +172,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	rootCmd.AddCommand(listImagesCmd)
 
 	manifestCmd := &cobra.Command{
-		Use:          "manifest <image-type> [blueprint]",
+		Use:          "manifest <image-type>",
 		Short:        "Build manifest for the given distro/image-type, e.g. centos-9 qcow2",
 		RunE:         cmdManifest,
 		SilenceUsage: true,
@@ -188,7 +188,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	rootCmd.AddCommand(manifestCmd)
 
 	buildCmd := &cobra.Command{
-		Use:          "build <image-type> [blueprint]",
+		Use:          "build <image-type>",
 		Short:        "Build the given distro/image-type, e.g. centos-9 qcow2",
 		RunE:         cmdBuild,
 		SilenceUsage: true,
