@@ -51,6 +51,8 @@ BuildRequires:  btrfs-progs-devel
 # BUNDLE_END
 %endif
 
+Requires:       osbuild
+
 %description
 %{common_description}
 
