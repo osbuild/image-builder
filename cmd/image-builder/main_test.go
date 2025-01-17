@@ -379,7 +379,6 @@ func TestBuildIntegrationErrors(t *testing.T) {
 	restore = main.MockOsArgs([]string{
 		"build",
 		"qcow2",
-		makeTestBlueprint(t, testBlueprint),
 		"--distro", "centos-9",
 	})
 	defer restore()
