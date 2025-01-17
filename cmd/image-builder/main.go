@@ -199,7 +199,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)
 	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
-	manifestCmd.Flags().Bool("use-librepo", false, `(experimental) use librepo to download packages, needs new osbuild`)
+	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	rootCmd.AddCommand(manifestCmd)
 
 	buildCmd := &cobra.Command{
