@@ -52,6 +52,7 @@ BuildRequires:  btrfs-progs-devel
 %endif
 
 Requires:       osbuild
+Requires:       osbuild-depsolve-dnf
 
 %description
 %{common_description}
