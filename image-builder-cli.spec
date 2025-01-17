@@ -3,8 +3,12 @@
 %bcond_with tests
 %bcond_with relax_requires
 
-# The minimum required osbuild version
-%global min_osbuild_version 129
+# The minimum required osbuild version, note that this used to be 129
+# but got bumped to 138 for librepo support which is not strictly
+# required. So if this needs backport to places where there is no
+# recent osbuild available we could simply make --use-librepo false
+# and go back to 129.
+%global min_osbuild_version 138
 
 %global goipath         github.com/osbuild/image-builder-cli
 
