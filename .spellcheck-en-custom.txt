@@ -14,4 +14,7 @@ qcow
 UEFI
 datadir
 copr
+SBOM
+SBOMs
+spdx
 toml

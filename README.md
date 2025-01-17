@@ -42,6 +42,8 @@ $ sudo dnf install osbuild osbuild-depsolve-dnf
 
 ## Examples
 
+### Listing
+
 To see the list of buildable images run:
 ```console
 $ image-builder list-images
@@ -52,6 +54,8 @@ rhel-10.0 type:ami arch:x86_64
 ...
 ```
 
+### Building
+
 To actually build an image run:
 ```console
 $ sudo image-builder build qcow2 --distro centos-9
@@ -59,6 +63,8 @@ $ sudo image-builder build qcow2 --distro centos-9
 ```
 this will create a directory `centos-9-qcow2-x86_64` under which the
 output is stored.
+
+### Blueprints
 
 Blueprints are supported, first create a `config.toml` and put e.g.
 the following content in:
@@ -79,6 +85,14 @@ Then just pass them as an additional argument after the image type:
 $ sudo image-builder build qcow2 --blueprint ./config.toml --distro centos-9
 ...
 ```
+
+### SBOMs
+
+It is possible to generate spdx based SBOM (software bill of materials)
+documents as part of the build. Just pass `--extra-artifacts=sbom` and
+it will put them into the output directory.
+
+### Filtering
 
 When listing images, it is possible to filter:
 ```console
@@ -104,6 +118,8 @@ The following filters are currently supported, shell-style globbing is supported
  * arch: the architecture name (e.g. x86_64)
  * type: the image type name (e.g. qcow2)
  * bootmode: the bootmode (legacy, UEFI, hybrid)
+
+### Output control
 
 The output can also be switched, supported are "text", "json":
 ```console
