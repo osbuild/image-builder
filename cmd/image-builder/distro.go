@@ -25,6 +25,6 @@ func findDistro(argDistroName, bpDistroName string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error deriving host distro %w", err)
 	}
-	fmt.Fprintf(osStderr, "No distro name specified, selecting %q based on host, use --distro to override", distroStr)
+	fmt.Fprintf(osStderr, "No distro name specified, selecting %q based on host, use --distro to override\n", distroStr)
 	return distroStr, nil
 }

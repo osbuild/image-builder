@@ -44,5 +44,5 @@ func TestFindDistroAutoDetect(t *testing.T) {
 	distro, err := main.FindDistro("", "")
 	assert.NoError(t, err)
 	assert.Equal(t, "mocked-host-distro", distro)
-	assert.Equal(t, `No distro name specified, selecting "mocked-host-distro" based on host, use --distro to override`, buf.String())
+	assert.Equal(t, "No distro name specified, selecting \"mocked-host-distro\" based on host, use --distro to override\n", buf.String())
 }
