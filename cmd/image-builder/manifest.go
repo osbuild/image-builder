@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/imagefilter"
@@ -16,11 +15,11 @@ import (
 )
 
 type manifestOptions struct {
-	OutputDir      string
-	BlueprintPath  string
-	Ostree         *ostree.ImageOptions
-	RpmDownloader  osbuild.RpmDownloader
-	ExtraArtifacts []string
+	OutputDir     string
+	BlueprintPath string
+	Ostree        *ostree.ImageOptions
+	RpmDownloader osbuild.RpmDownloader
+	WithSBOM      bool
 }
 
 func sbomWriter(outputDir, filename string, content io.Reader) error {
@@ -46,7 +45,7 @@ func generateManifest(dataDir string, img *imagefilter.Result, output io.Writer,
 		Output:        output,
 		RpmDownloader: opts.RpmDownloader,
 	}
-	if slices.Contains(opts.ExtraArtifacts, "sbom") {
+	if opts.WithSBOM {
 		outputDir := opts.OutputDir
 		if outputDir == "" {
 			outputDir = outputNameFor(img)
