@@ -151,7 +151,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 }
 
 func cmdBuild(cmd *cobra.Command, args []string) error {
-	storeDir, err := cmd.Flags().GetString("store")
+	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	buildOpts := &buildOptions{
 		OutputDir:     outputDir,
-		StoreDir:      storeDir,
+		StoreDir:      cacheDir,
 		WriteManifest: slices.Contains(extraArtifacts, "manifest"),
 	}
 	return buildImage(res, mf.Bytes(), buildOpts)
@@ -242,7 +242,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	}
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
 	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
-	buildCmd.Flags().String("store", "/var/cache/image-builder/store", `osbuild store directory to cache intermediata build artifacts"`)
+	buildCmd.Flags().String("cache", "/var/cache/image-builder/store", `osbuild directory to cache intermediate build artifacts"`)
 	rootCmd.AddCommand(buildCmd)
 
 	return rootCmd.Execute()
