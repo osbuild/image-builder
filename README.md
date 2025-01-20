@@ -18,8 +18,8 @@ $ sudo podman run --privileged \
 This project is under development right now and we provide up-to-date
 development snapshots in the following way:
 
-A copr RPM build
-https://copr.fedorainfracloud.org/coprs/g/osbuild/image-builder-cli/
+A COPR RPM build
+https://copr.fedorainfracloud.org/coprs/g/osbuild/image-builder/
 
 Via the go build system:
 ```console
