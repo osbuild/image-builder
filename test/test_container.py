@@ -40,7 +40,7 @@ def test_container_manifest_generates_sbom(tmp_path, build_container):
         "manifest",
         "minimal-raw",
         "--distro", "centos-9",
-        "--extra-artifacts=sbom",
+        "--with-sbom",
     ], stdout=subprocess.DEVNULL)
     arch = platform.processor()
     fn = f"centos-9-minimal-raw-{arch}/centos-9-minimal-raw-{arch}.image-os.spdx.json"
