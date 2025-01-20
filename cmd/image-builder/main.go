@@ -171,7 +171,11 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return buildImage(res, mf.Bytes(), storeDir, outputDir)
+	buildOpts := &buildOptions{
+		OutputDir: outputDir,
+		StoreDir:  storeDir,
+	}
+	return buildImage(res, mf.Bytes(), buildOpts)
 }
 
 func run() error {
