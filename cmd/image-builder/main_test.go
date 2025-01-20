@@ -394,6 +394,41 @@ func TestBuildIntegrationSwitchOutputDir(t *testing.T) {
 	assert.Equal(t, "some-output-dir", osbuildCall[outputDirPos+1])
 }
 
+func TestBuildIntegrationExtraArtifactsManifest(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	outputDir := t.TempDir()
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		"--distro", "centos-9",
+		"--store", outputDir,
+		"--extra-artifacts", "manifest",
+		"--output-dir", outputDir,
+	})
+	defer restore()
+
+	script := `cat - > "$0".stdin`
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+	defer fakeOsbuildCmd.Restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	manifest, err := filepath.Glob(filepath.Join(outputDir, "*.osbuild-manifest.json"))
+	assert.Equal(t, len(manifest), 1)
+	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.osbuild-manifest.json"), manifest[0])
+
+}
+
 func TestBuildIntegrationErrors(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")

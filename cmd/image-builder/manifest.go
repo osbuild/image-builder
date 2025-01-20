@@ -49,7 +49,7 @@ func generateManifest(dataDir string, img *imagefilter.Result, output io.Writer,
 	if slices.Contains(opts.ExtraArtifacts, "sbom") {
 		outputDir := opts.OutputDir
 		if outputDir == "" {
-			outputDir = outputDirFor(img)
+			outputDir = outputNameFor(img)
 		}
 		if err := os.MkdirAll(outputDir, 0755); err != nil {
 			return err
