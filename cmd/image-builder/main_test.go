@@ -411,7 +411,7 @@ func TestBuildIntegrationExtraArtifactsManifest(t *testing.T) {
 		"qcow2",
 		"--distro", "centos-9",
 		"--cache", outputDir,
-		"--extra-artifacts", "manifest",
+		"--with-manifest",
 		"--output-dir", outputDir,
 	})
 	defer restore()
@@ -488,7 +488,7 @@ func TestManifestIntegrationExtraArtifactsSBOMWithOutputDir(t *testing.T) {
 		"--arch=x86_64",
 		"--distro=centos-9",
 		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
-		"--extra-artifacts=sbom",
+		"--with-sbom",
 		"--output-dir", outputDir,
 	})
 	defer restore()
