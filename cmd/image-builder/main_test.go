@@ -359,7 +359,7 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	assert.Contains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 }
 
-func TestBuildIntegrationSwitchOutputDir(t *testing.T) {
+func TestBuildIntegrationArgs(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
 	}
@@ -370,63 +370,67 @@ func TestBuildIntegrationSwitchOutputDir(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	tmpdir := t.TempDir()
-	restore = main.MockOsArgs([]string{
-		"build",
-		"qcow2",
-		"--distro", "centos-9",
-		"--cache", tmpdir,
-		"--output-dir", "some-output-dir",
-	})
-	defer restore()
+	cacheDir := t.TempDir()
+	for _, tc := range []struct {
+		args          []string
+		expectedFiles []string
+	}{
+		{
+			nil,
+			nil,
+		}, {
+			[]string{"--with-manifest"},
+			[]string{"centos-9-qcow2-x86_64.osbuild-manifest.json"},
+		}, {
+			[]string{"--with-sbom"},
+			[]string{"centos-9-qcow2-x86_64.buildroot-build.spdx.json",
+				"centos-9-qcow2-x86_64.image-os.spdx.json",
+			},
+		}, {
+			[]string{"--with-manifest", "--with-sbom"},
+			[]string{"centos-9-qcow2-x86_64.buildroot-build.spdx.json",
+				"centos-9-qcow2-x86_64.image-os.spdx.json",
+				"centos-9-qcow2-x86_64.osbuild-manifest.json",
+			},
+		},
+	} {
+		t.Run(strings.Join(tc.args, ","), func(t *testing.T) {
+			outputDir := t.TempDir()
 
-	script := `cat - > "$0".stdin`
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
-	defer fakeOsbuildCmd.Restore()
+			cmd := []string{
+				"build",
+				"qcow2",
+				"--distro", "centos-9",
+				"--cache", cacheDir,
+				"--output-dir", outputDir,
+			}
+			cmd = append(cmd, tc.args...)
+			restore = main.MockOsArgs(cmd)
+			defer restore()
 
-	err := main.Run()
-	assert.NoError(t, err)
+			script := `cat - > "$0".stdin`
+			fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+			defer fakeOsbuildCmd.Restore()
 
-	// ensure output dir override works
-	osbuildCall := fakeOsbuildCmd.Calls()[0]
-	outputDirPos := slices.Index(osbuildCall, "--output-directory")
-	assert.True(t, outputDirPos > -1)
-	assert.Equal(t, "some-output-dir", osbuildCall[outputDirPos+1])
-}
+			err := main.Run()
+			assert.NoError(t, err)
 
-func TestBuildIntegrationWithManifest(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
+			// ensure output dir override works
+			osbuildCall := fakeOsbuildCmd.Calls()[0]
+			outputDirPos := slices.Index(osbuildCall, "--output-directory")
+			assert.True(t, outputDirPos > -1)
+			assert.Equal(t, outputDir, osbuildCall[outputDirPos+1])
+
+			// ensure we get exactly the expected files
+			files, err := filepath.Glob(outputDir + "/*")
+			assert.NoError(t, err)
+			assert.Equal(t, len(tc.expectedFiles), len(files), files)
+			for _, expected := range tc.expectedFiles {
+				_, err = os.Stat(filepath.Join(outputDir, expected))
+				assert.NoError(t, err, fmt.Sprintf("file %q missing", expected))
+			}
+		})
 	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
-
-	restore := main.MockNewRepoRegistry(testrepos.New)
-	defer restore()
-
-	outputDir := t.TempDir()
-	restore = main.MockOsArgs([]string{
-		"build",
-		"qcow2",
-		"--distro", "centos-9",
-		"--cache", outputDir,
-		"--with-manifest",
-		"--output-dir", outputDir,
-	})
-	defer restore()
-
-	script := `cat - > "$0".stdin`
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
-	defer fakeOsbuildCmd.Restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
-
-	manifest, err := filepath.Glob(filepath.Join(outputDir, "*.osbuild-manifest.json"))
-	assert.Equal(t, len(manifest), 1)
-	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.osbuild-manifest.json"), manifest[0])
-
 }
 
 func TestBuildIntegrationErrors(t *testing.T) {
@@ -499,47 +503,6 @@ func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
 
 	err := main.Run()
 	assert.NoError(t, err)
-
-	sboms, err := filepath.Glob(filepath.Join(outputDir, "*.spdx.json"))
-	assert.NoError(t, err)
-	assert.Equal(t, len(sboms), 2)
-	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildroot-build.spdx.json"), sboms[0])
-	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.image-os.spdx.json"), sboms[1])
-}
-
-func TestBuildIntegrationWithManifestWithSBOM(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
-
-	restore := main.MockNewRepoRegistry(testrepos.New)
-	defer restore()
-
-	outputDir := t.TempDir()
-	restore = main.MockOsArgs([]string{
-		"build",
-		"qcow2",
-		"--distro", "centos-9",
-		"--cache", outputDir,
-		"--with-manifest",
-		"--with-sbom",
-		"--output-dir", outputDir,
-	})
-	defer restore()
-
-	script := `cat - > "$0".stdin`
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
-	defer fakeOsbuildCmd.Restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
-
-	manifest, err := filepath.Glob(filepath.Join(outputDir, "*.osbuild-manifest.json"))
-	assert.Equal(t, len(manifest), 1)
-	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.osbuild-manifest.json"), manifest[0])
 
 	sboms, err := filepath.Glob(filepath.Join(outputDir, "*.spdx.json"))
 	assert.NoError(t, err)
