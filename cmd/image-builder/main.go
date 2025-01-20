@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -23,7 +24,7 @@ var (
 )
 
 // generate the default output directory name for the given image
-func outputDirFor(img *imagefilter.Result) string {
+func outputNameFor(img *imagefilter.Result) string {
 	return fmt.Sprintf("%s-%s-%s", img.Distro.Name(), img.ImgType.Name(), img.Arch.Name())
 }
 
@@ -158,6 +159,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	extraArtifacts, err := cmd.Flags().GetStringArray("extra-artifacts")
+	if err != nil {
+		return err
+	}
 
 	var mf bytes.Buffer
 	// XXX: check env here, i.e. if user is root and osbuild is installed
@@ -172,8 +177,9 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	buildOpts := &buildOptions{
-		OutputDir: outputDir,
-		StoreDir:  storeDir,
+		OutputDir:     outputDir,
+		StoreDir:      storeDir,
+		WriteManifest: slices.Contains(extraArtifacts, "manifest"),
 	}
 	return buildImage(res, mf.Bytes(), buildOpts)
 }
@@ -195,7 +201,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	}
 	rootCmd.PersistentFlags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified direcotry`)
-	rootCmd.PersistentFlags().StringArray("extra-artifacts", nil, `Export extra artifacts to the output dir (e.g. "sbom")`)
+	rootCmd.PersistentFlags().StringArray("extra-artifacts", nil, `Export extra artifacts to the output dir (supported: "sbom","manifest", can be given multiple times)`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 

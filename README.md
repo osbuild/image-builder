@@ -64,6 +64,10 @@ $ sudo image-builder build qcow2 --distro centos-9
 this will create a directory `centos-9-qcow2-x86_64` under which the
 output is stored.
 
+With the `--extra-artifacts=manifest` an
+[osbuild](https://github.com/osbuild/osbuild) manifest will be
+placed in the output directory too.
+
 ### Blueprints
 
 Blueprints are supported, first create a `config.toml` and put e.g.
