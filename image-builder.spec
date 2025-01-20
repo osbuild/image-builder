@@ -17,16 +17,13 @@ Version:        5
 %gometa
 
 %global common_description %{expand:
-A service for building customized OS artifacts, such as VM images and OSTree
-commits, that uses osbuild under the hood. Besides building images for local
-usage, it can also upload images directly to cloud.
-
-It is compatible with composer-cli and cockpit-composer clients.
+A local binary for building customized OS artifacts such as VM images and
+OSTree commits. Uses osbuild under the hood.
 }
 
 Name:           image-builder
 Release:        1%{?dist}
-Summary:        An image building service based on osbuild
+Summary:        An image building executable using osbuild
 ExcludeArch:    i686 armv7hl
 
 # Upstream license specification: Apache-2.0
