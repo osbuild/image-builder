@@ -49,8 +49,8 @@ GOLANGCI_COMPOSER_IMAGE=composer_golangci
 
 VERSION := $(shell ( git describe --tags --abbrev=0 2>/dev/null || echo v1 ) | sed 's|v||')
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
-PACKAGE_NAME_VERSION = image-builder-cli-$(VERSION)
-PACKAGE_NAME_COMMIT = image-builder-cli-$(COMMIT)
+PACKAGE_NAME_VERSION = image-builder-$(VERSION)
+PACKAGE_NAME_COMMIT = image-builder-$(COMMIT)
 
 #
 # Generic Targets
@@ -77,7 +77,7 @@ PACKAGE_NAME_COMMIT = image-builder-cli-$(COMMIT)
 help:
 	@echo "make [TARGETS...]"
 	@echo
-	@echo "This is the maintenance makefile of image-builder-cli. The following"
+	@echo "This is the maintenance makefile of image-builder. The following"
 	@echo "targets are available:"
 	@echo
 	@echo "    help:               Print this usage information."
@@ -114,7 +114,7 @@ clean:
 #
 # Building packages
 #
-# The following rules build image-builder-cli packages from the current HEAD
+# The following rules build image-builder packages from the current HEAD
 # commit, based on the spec file in this directory.  The resulting packages
 # have the commit hash in their version, so that they don't get overwritten
 # when calling `make rpm` again after switching to another branch.
@@ -123,14 +123,14 @@ clean:
 # ./rpmbuild, using rpmbuild's usual directory structure.
 #
 
-RPM_SPECFILE=rpmbuild/SPECS/image-builder-cli.spec
+RPM_SPECFILE=rpmbuild/SPECS/image-builder.spec
 RPM_TARBALL=rpmbuild/SOURCES/$(PACKAGE_NAME_COMMIT).tar.gz
 RPM_TARBALL_VERSIONED=rpmbuild/SOURCES/$(PACKAGE_NAME_VERSION).tar.gz
 
 .PHONY: $(RPM_SPECFILE)
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
-	git show HEAD:image-builder-cli.spec > $(RPM_SPECFILE)
+	git show HEAD:image-builder.spec > $(RPM_SPECFILE)
 	go mod vendor
 	./tools/rpm_spec_add_provides_bundle.sh $(RPM_SPECFILE)
 
