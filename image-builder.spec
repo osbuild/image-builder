@@ -24,7 +24,7 @@ usage, it can also upload images directly to cloud.
 It is compatible with composer-cli and cockpit-composer clients.
 }
 
-Name:           image-builder-cli
+Name:           image-builder
 Release:        1%{?dist}
 Summary:        An image building service based on osbuild
 ExcludeArch:    i686 armv7hl

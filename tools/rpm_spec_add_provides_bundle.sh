@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-SPEC_FILE=${1:-"image-builder-cli.spec"}
+SPEC_FILE=${1:-"image-builder.spec"}
 
 # Save the list of bundled packages into a file
 WORKDIR=$(mktemp -d)

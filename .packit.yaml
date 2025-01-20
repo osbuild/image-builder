@@ -1,9 +1,9 @@
 # https://packit.dev/docs/configuration/
 
-specfile_path: image-builder-cli.spec
+specfile_path: image-builder.spec
 
 files_to_sync:
-  - image-builder-cli.spec
+  - image-builder.spec
   - .packit.yaml
 
 copy_upstream_release_description: true
@@ -24,7 +24,7 @@ actions:
 upstream_tag_include: 'v\d+'
 
 jobs:
-  # image-builder-cli is not yet in Fedora, so we don't need to update it there
+  # image-builder is not yet in Fedora, so we don't need to update it there
   # - job: bodhi_update
   #   trigger: commit
   #   dist_git_branches:
@@ -58,5 +58,5 @@ jobs:
     trigger: commit
     branch: main
     owner: "@osbuild"  # copr repo namespace
-    project: image-builder-cli  # copr repo name so you can consume the builds
+    project: image-builder  # copr repo name so you can consume the builds
     targets: *build_targets
