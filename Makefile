@@ -49,8 +49,8 @@ GOLANGCI_COMPOSER_IMAGE=composer_golangci
 
 VERSION := $(shell ( git describe --tags --abbrev=0 2>/dev/null || echo v1 ) | sed 's|v||')
 COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
-PACKAGE_NAME_VERSION = image-builder-$(VERSION)
-PACKAGE_NAME_COMMIT = image-builder-$(COMMIT)
+PACKAGE_NAME_VERSION = image-builder-cli-$(VERSION)
+PACKAGE_NAME_COMMIT = image-builder-cli-$(COMMIT)
 
 #
 # Generic Targets
