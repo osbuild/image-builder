@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"slices"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -86,7 +85,7 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 	if err != nil {
 		return nil, err
 	}
-	extraArtifacts, err := cmd.Flags().GetStringArray("extra-artifacts")
+	withSBOM, err := cmd.Flags().GetBool("with-sbom")
 	if err != nil {
 		return nil, err
 	}
@@ -134,6 +133,12 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		}
 	}
 
+	var extraArtifacts []string
+
+	if withSBOM {
+		extraArtifacts = append(extraArtifacts, "sbom")
+	}
+
 	opts := &manifestOptions{
 		OutputDir:      outputDir,
 		BlueprintPath:  blueprintPath,
@@ -159,7 +164,8 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	extraArtifacts, err := cmd.Flags().GetStringArray("extra-artifacts")
+
+	withManifest, err := cmd.Flags().GetBool("with-manifest")
 	if err != nil {
 		return err
 	}
@@ -179,7 +185,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	buildOpts := &buildOptions{
 		OutputDir:     outputDir,
 		StoreDir:      cacheDir,
-		WriteManifest: slices.Contains(extraArtifacts, "manifest"),
+		WriteManifest: withManifest,
 	}
 	return buildImage(res, mf.Bytes(), buildOpts)
 }
@@ -201,7 +207,6 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	}
 	rootCmd.PersistentFlags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified direcotry`)
-	rootCmd.PersistentFlags().StringArray("extra-artifacts", nil, `Export extra artifacts to the output dir (supported: "sbom","manifest", can be given multiple times)`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 
@@ -231,6 +236,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
+	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	rootCmd.AddCommand(manifestCmd)
 
 	buildCmd := &cobra.Command{
@@ -241,6 +247,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.ExactArgs(1),
 	}
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
+	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
 	buildCmd.Flags().String("cache", "/var/cache/image-builder/store", `osbuild directory to cache intermediate build artifacts"`)
 	rootCmd.AddCommand(buildCmd)
