@@ -328,7 +328,7 @@ func TestBuildIntegrationHappy(t *testing.T) {
 		"qcow2",
 		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
 		"--distro", "centos-9",
-		"--store", tmpdir,
+		"--cache", tmpdir,
 	})
 	defer restore()
 
@@ -342,7 +342,7 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	// ensure osbuild was run exactly one
 	assert.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
 	osbuildCall := fakeOsbuildCmd.Calls()[0]
-	// --store is passed correctly to osbuild
+	// --cache is passed correctly to osbuild
 	storePos := slices.Index(osbuildCall, "--store")
 	assert.True(t, storePos > -1)
 	assert.Equal(t, tmpdir, osbuildCall[storePos+1])
@@ -375,7 +375,7 @@ func TestBuildIntegrationSwitchOutputDir(t *testing.T) {
 		"build",
 		"qcow2",
 		"--distro", "centos-9",
-		"--store", tmpdir,
+		"--cache", tmpdir,
 		"--output-dir", "some-output-dir",
 	})
 	defer restore()
@@ -410,7 +410,7 @@ func TestBuildIntegrationExtraArtifactsManifest(t *testing.T) {
 		"build",
 		"qcow2",
 		"--distro", "centos-9",
-		"--store", outputDir,
+		"--cache", outputDir,
 		"--extra-artifacts", "manifest",
 		"--output-dir", outputDir,
 	})
