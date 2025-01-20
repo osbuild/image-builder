@@ -133,18 +133,12 @@ func cmdManifestWrapper(cmd *cobra.Command, args []string, w io.Writer, archChec
 		}
 	}
 
-	var extraArtifacts []string
-
-	if withSBOM {
-		extraArtifacts = append(extraArtifacts, "sbom")
-	}
-
 	opts := &manifestOptions{
-		OutputDir:      outputDir,
-		BlueprintPath:  blueprintPath,
-		Ostree:         ostreeImgOpts,
-		RpmDownloader:  rpmDownloader,
-		ExtraArtifacts: extraArtifacts,
+		OutputDir:     outputDir,
+		BlueprintPath: blueprintPath,
+		Ostree:        ostreeImgOpts,
+		RpmDownloader: rpmDownloader,
+		WithSBOM:      withSBOM,
 	}
 	err = generateManifest(dataDir, img, w, opts)
 	return img, err
