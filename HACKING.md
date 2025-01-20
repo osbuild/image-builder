@@ -1,4 +1,4 @@
-# Hacking on image-builder-cli
+# Hacking on image-builder
 
 Hacking on `image-builder` should be fun and is easy.
 
@@ -15,7 +15,7 @@ To run the test suite install the test dependencies as outlined in the
 
 ## Code layout
 
-The go source code of image-builder-cli is under
+The go source code of image-builder is under
 `./cmd/image-builder`. It uses the
 [images](https://github.com/osbuild/images) library internally to
 generate the images. Unit tests (and integration tests where it makes
