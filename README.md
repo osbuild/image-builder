@@ -64,8 +64,11 @@ $ sudo image-builder build qcow2 --distro centos-9
 this will create a directory `centos-9-qcow2-x86_64` under which the
 output is stored.
 
-With the `--extra-artifacts=manifest` an
+With the `--with-manifest` option an
 [osbuild](https://github.com/osbuild/osbuild) manifest will be
+placed in the output directory too.
+
+With the `--with-sbom` option an SPDX SBOM document will be
 placed in the output directory too.
 
 ### Blueprints
@@ -93,7 +96,7 @@ $ sudo image-builder build qcow2 --blueprint ./config.toml --distro centos-9
 ### SBOMs
 
 It is possible to generate spdx based SBOM (software bill of materials)
-documents as part of the build. Just pass `--extra-artifacts=sbom` and
+documents as part of the build. Just pass `--with-sbom` and
 it will put them into the output directory.
 
 ### Filtering
