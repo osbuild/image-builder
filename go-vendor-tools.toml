@@ -1,0 +1,13 @@
+# See: https://fedora.gitlab.io/sigs/go/go-vendor-tools/config/#licenses-list-of-license-entry-tables
+
+# These files' licenses can't be autodetected by `go-vendor-tools`; we need to list
+# them manually.
+
+[[licensing.licenses]]
+path = "vendor/gopkg.in/yaml.v3/LICENSE"
+sha256sum = "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+expression = "Apache-2.0 AND MIT"
+[[licensing.licenses]]
+path = "vendor/github.com/go-openapi/spec/license.go"
+sha256sum = "9ba36f66fba6f2e3b7dce95d9413a738688abcfce8c3d38c581b276f9437d1c6"
+expression = "Apache-2.0"

@@ -27,7 +27,10 @@ Summary:        An image building executable using osbuild
 ExcludeArch:    i686 armv7hl
 
 # Upstream license specification: Apache-2.0
-License:        Apache-2.0
+# Others generated with:
+#   $ go_vendor_license -C <UNPACKED ARCHIVE> report expression
+License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CC-BY-SA-4.0 AND ISC AND MIT AND MPL-2.0 AND Unlicense
+
 URL:            %{gourl}
 Source0:        %{gosource}
 
