@@ -1,8 +1,3 @@
-# Do not build with tests by default
-# Pass --with tests to rpmbuild to override
-%bcond_with tests
-%bcond_with relax_requires
-
 # The minimum required osbuild version, note that this used to be 129
 # but got bumped to 138 for librepo support which is not strictly
 # required. So if this needs backport to places where there is no
