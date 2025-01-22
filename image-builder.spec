@@ -19,7 +19,7 @@ OSTree commits. Uses osbuild under the hood.
 Name:           image-builder
 Release:        1%{?dist}
 Summary:        An image building executable using osbuild
-ExcludeArch:    i686 armv7hl
+ExcludeArch:    i686
 
 # Upstream license specification: Apache-2.0
 # Others generated with:
