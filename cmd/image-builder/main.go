@@ -223,7 +223,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		Args:         cobra.ExactArgs(1),
 		Hidden:       true,
 	}
-	manifestCmd.Flags().String("blueprint", "", `blueprint to customize an image`)
+	manifestCmd.Flags().String("blueprint", "", `filename of a blueprint to customize an image`)
 	manifestCmd.Flags().String("arch", "", `build manifest for a different architecture`)
 	manifestCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
 	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)
