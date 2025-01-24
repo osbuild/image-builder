@@ -51,4 +51,4 @@ def test_container_manifest_generates_sbom(tmp_path, build_container):
     assert buildroot_sbom_json_path.exists()
     sbom_json = json.loads(image_sbom_json_path.read_text())
     # smoke test that we have glibc in the json doc
-    assert "glibc" in [s["name"] for s in sbom_json["Document"]["packages"]]
+    assert "glibc" in [s["name"] for s in sbom_json["packages"]], f"missing glibc in {sbom_json}"

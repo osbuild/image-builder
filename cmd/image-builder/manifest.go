@@ -7,11 +7,12 @@ import (
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/sbom"
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
-	"github.com/osbuild/image-builder-cli/internal/manifestgen"
 )
 
 type manifestOptions struct {
@@ -53,7 +54,7 @@ func generateManifest(dataDir string, img *imagefilter.Result, output io.Writer,
 		if err := os.MkdirAll(outputDir, 0755); err != nil {
 			return err
 		}
-		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader) error {
+		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
 			return sbomWriter(outputDir, filename, content)
 		}
 	}
