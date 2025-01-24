@@ -14,13 +14,17 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:41
+    env:
+      # workaround for expired cert at source of indirect dependency
+      # (go.opencensus.io/trace)
+      GOPROXY: "https://proxy.golang.org,direct"
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/testdeps
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 'stable'
+      - name: Install dependencies
+        run: |
+          # we have the same build-deps as the images library
+          curl -sL https://raw.githubusercontent.com/osbuild/images/refs/heads/main/test/scripts/install-dependencies | bash
       - name: Build
         run: go build -v ./...
       - name: Test
