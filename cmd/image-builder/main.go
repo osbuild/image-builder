@@ -211,7 +211,7 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		SilenceUsage: true,
 		Args:         cobra.NoArgs,
 	}
-	listImagesCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:rhel*")`)
+	listImagesCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:iot*")`)
 	listImagesCmd.Flags().String("output", "", "Output in a specific format (text, json)")
 	rootCmd.AddCommand(listImagesCmd)
 
