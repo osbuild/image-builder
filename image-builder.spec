@@ -111,5 +111,5 @@ cd $PWD/_build/src/%{goipath}
 # the changelog is distribution-specific, therefore there's just one entry
 # to make rpmlint happy.
 
-* Wed Sep 11 2019 Image Builder team <osbuilders@redhat.com> - 0-1
-- On this day, this project was born.
+* Fri Jan 24 2025 Image Builder team <osbuilders@redhat.com> - 0-1
+- On this day, this project was born and the RPM created.
