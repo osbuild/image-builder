@@ -196,11 +196,11 @@ func run() error {
 image-type and blueprint.
 
 Image-builder builds operating system images for a range of predefined
-operating sytsems like centos and RHEL with easy customizations support.`,
+operating systems like Fedora, CentOS and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 	}
-	rootCmd.PersistentFlags().String("datadir", "", `Override the default data direcotry for e.g. custom repositories/*.json data`)
-	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified direcotry`)
+	rootCmd.PersistentFlags().String("datadir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 
