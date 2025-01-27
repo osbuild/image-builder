@@ -188,6 +188,12 @@ A: Sure! The repositories are encoded in json in "<distro>-<vesion>.json",
    "--datadir ~/my-project --distro foo-1" a json file must be put under
    "~/my-project/repositories/foo-1.json.
 
+Q: What is the relation to [bootc-image-builder](https://github.com/osbuild/bootc-image-builder)?
+A: Both projects are very close. The `bootc-image-builder` focuses on providing
+   image-based artifacts while `image-builder` works with traditional package
+   based inputs. We expect the two projects to merge eventually and they already
+   share a lot of code.
+
 ## Project
 
  * **Website**: <https://www.osbuild.org>
