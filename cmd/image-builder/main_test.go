@@ -385,6 +385,9 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			[]string{"--with-manifest"},
 			[]string{"centos-9-qcow2-x86_64.osbuild-manifest.json"},
 		}, {
+			[]string{"--with-buildlog"},
+			[]string{"centos-9-qcow2-x86_64.buildlog"},
+		}, {
 			[]string{"--with-sbom"},
 			[]string{"centos-9-qcow2-x86_64.buildroot-build.spdx.json",
 				"centos-9-qcow2-x86_64.image-os.spdx.json",
@@ -416,7 +419,7 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			defer fakeOsbuildCmd.Restore()
 
 			err := main.Run()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			// ensure output dir override works
 			osbuildCall := fakeOsbuildCmd.Calls()[0]
@@ -441,6 +444,7 @@ cat - > "$0".stdin
 echo "error on stdout"
 >&2 echo "error on stderr"
 
+sleep 0.1
 >&3 echo '{"message": "osbuild-stage-output"}'
 exit 1
 `
@@ -471,10 +475,59 @@ func TestBuildIntegrationErrorsProgressVerbose(t *testing.T) {
 	stdout, stderr := testutil.CaptureStdio(t, func() {
 		err = main.Run()
 	})
-	assert.EqualError(t, err, "running osbuild failed: exit status 1")
+	assert.EqualError(t, err, "error running osbuild: exit status 1")
 
 	assert.Contains(t, stdout, "error on stdout\n")
 	assert.Contains(t, stderr, "error on stderr\n")
+}
+
+func TestBuildIntegrationErrorsProgressVerboseWithBuildlog(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	outputDir := t.TempDir()
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		"--distro", "centos-9",
+		"--progress=verbose",
+		"--with-buildlog",
+		"--output-dir", outputDir,
+	})
+	defer restore()
+
+	failingOsbuild := `#!/bin/sh
+cat - > "$0".stdin
+echo "error on stdout"
+>&2 echo "error on stderr"
+exit 1
+`
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", failingOsbuild)
+	defer fakeOsbuildCmd.Restore()
+
+	var err error
+	stdout, _ := testutil.CaptureStdio(t, func() {
+		err = main.Run()
+	})
+	assert.EqualError(t, err, "error running osbuild: exit status 1")
+
+	// when the buildlog is used we do not get the direct output of
+	// osbuild on stderr, to avoid races everything goes via stdout
+	assert.Contains(t, stdout, "error on stdout\n")
+	assert.Contains(t, stdout, "error on stderr\n")
+
+	buildLog, err := os.ReadFile(filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildlog"))
+	assert.NoError(t, err)
+	assert.Equal(t, string(buildLog), `error on stdout
+error on stderr
+`)
 }
 
 func TestBuildIntegrationErrorsProgressTerm(t *testing.T) {
@@ -488,30 +541,52 @@ func TestBuildIntegrationErrorsProgressTerm(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	restore = main.MockOsArgs([]string{
-		"build",
-		"qcow2",
-		"--distro", "centos-9",
-		"--progress=term",
-	})
-	defer restore()
+	for _, withBuildlog := range []bool{false, true} {
+		t.Run(fmt.Sprintf("with buildlog %v", withBuildlog), func(t *testing.T) {
+			outputDir := t.TempDir()
+			cmd := []string{
+				"build",
+				"qcow2",
+				"--distro", "centos-9",
+				"--progress=term",
+				"--output-dir", outputDir,
+			}
+			if withBuildlog {
+				cmd = append(cmd, "--with-buildlog")
+			}
+			restore = main.MockOsArgs(cmd)
+			defer restore()
 
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", failingOsbuild)
-	defer fakeOsbuildCmd.Restore()
+			fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", failingOsbuild)
+			defer fakeOsbuildCmd.Restore()
 
-	var err error
-	stdout, stderr := testutil.CaptureStdio(t, func() {
-		err = main.Run()
-	})
-	assert.EqualError(t, err, `error running osbuild: exit status 1
+			var err error
+			stdout, stderr := testutil.CaptureStdio(t, func() {
+				err = main.Run()
+			})
+			assert.EqualError(t, err, `error running osbuild: exit status 1
 BuildLog:
 osbuild-stage-output
 Output:
 error on stdout
 error on stderr
 `)
-	assert.NotContains(t, stdout, "error on stdout")
-	assert.NotContains(t, stderr, "error on stderr")
+			assert.NotContains(t, stdout, "error on stdout")
+			assert.NotContains(t, stderr, "error on stderr")
+
+			if withBuildlog {
+				buildLog, err := os.ReadFile(filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildlog"))
+				assert.NoError(t, err)
+				assert.Equal(t, string(buildLog), `error on stdout
+error on stderr
+osbuild-stage-output
+`)
+			} else {
+				_, err := os.Stat(filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildlog"))
+				assert.True(t, os.IsNotExist(err))
+			}
+		})
+	}
 }
 
 func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
