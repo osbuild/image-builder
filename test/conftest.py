@@ -38,6 +38,7 @@ def build_fake_container_fixture(tmpdir_factory, build_container):
     # do this images may fail with "broken" pipe errors
     cat - >/dev/null
 
+    echo "osbuild-stdout-output"
     mkdir -p /output/qcow2
     echo "fake-disk.qcow2" > /output/qcow2/disk.qcow2
 
