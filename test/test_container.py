@@ -72,3 +72,25 @@ def test_container_build_generates_manifest(tmp_path, build_container):
     fn = f"centos-9-minimal-raw-{arch}/centos-9-minimal-raw-{arch}.osbuild-manifest.json"
     image_manifest_path = output_dir / fn
     assert image_manifest_path.exists()
+
+
+@pytest.mark.parametrize("progress,needle,forbidden", [
+    ("verbose", "osbuild-stdout-output", "[|]"),
+    ("term", "[|]", "osbuild-stdout-output"),
+])
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_container_with_progress(tmp_path, build_fake_container, progress, needle, forbidden):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    output = subprocess.check_output([
+        "podman", "run", "-t",
+        "--privileged",
+        "-v", f"{output_dir}:/output",
+        build_fake_container,
+        "build",
+        "minimal-raw",
+        "--distro", "centos-9",
+        f"--progress={progress}",
+    ], text=True)
+    assert needle in output
+    assert forbidden not in output
