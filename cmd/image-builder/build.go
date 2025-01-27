@@ -14,6 +14,7 @@ type buildOptions struct {
 	StoreDir  string
 
 	WriteManifest bool
+	WriteBuildlog bool
 }
 
 func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManifest []byte, opts *buildOptions) error {
@@ -31,5 +32,19 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		}
 	}
 
-	return progress.RunOSBuild(pbar, osbuildManifest, opts.StoreDir, opts.OutputDir, res.ImgType.Exports(), nil)
+	osbuildOpts := &progress.OSBuildOptions{
+		StoreDir:  opts.StoreDir,
+		OutputDir: opts.OutputDir,
+	}
+	if opts.WriteBuildlog {
+		p := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.buildlog", outputNameFor(res)))
+		f, err := os.Create(p)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		osbuildOpts.BuildLog = f
+	}
+	return progress.RunOSBuild(pbar, osbuildManifest, res.ImgType.Exports(), osbuildOpts)
 }
