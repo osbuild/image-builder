@@ -1,9 +1,12 @@
 package testutil
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -59,4 +62,51 @@ func (mc *MockCmd) Calls() [][]string {
 		calls = append(calls, call[0:len(call)-1])
 	}
 	return calls
+}
+
+// CaptureStdio runs the given function f() in an environment that
+// captures stdout, stderr and returns the the result as string.
+//
+// Use this very targeted to avoid real stdout/stderr output
+// from being displayed.
+func CaptureStdio(t *testing.T, f func()) (string, string) {
+	saved1 := os.Stdout
+	saved2 := os.Stderr
+
+	r1, w1, err := os.Pipe()
+	require.NoError(t, err)
+	defer r1.Close()
+	defer w1.Close()
+	r2, w2, err := os.Pipe()
+	require.NoError(t, err)
+	defer r2.Close()
+	defer w2.Close()
+
+	var wg sync.WaitGroup
+	var stdout, stderr bytes.Buffer
+	wg.Add(1)
+	// this needs to be a go-routines or we could deadlock
+	// when the pipe is full
+	go func() {
+		defer wg.Done()
+		io.Copy(&stdout, r1)
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		io.Copy(&stderr, r2)
+	}()
+
+	os.Stdout = w1
+	os.Stderr = w2
+	defer func() {
+		os.Stdout = saved1
+		os.Stderr = saved2
+	}()
+
+	f()
+	w1.Close()
+	w2.Close()
+	wg.Wait()
+	return stdout.String(), stderr.String()
 }
