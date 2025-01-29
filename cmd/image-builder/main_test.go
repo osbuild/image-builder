@@ -433,7 +433,14 @@ func TestBuildIntegrationArgs(t *testing.T) {
 	}
 }
 
-func TestBuildIntegrationErrors(t *testing.T) {
+var failingOsbuild = `
+cat - > "$0".stdin
+echo "error on stdout"
+>&2 echo "error on stderr"
+exit 1
+`
+
+func TestBuildIntegrationErrorsProgressVerbose(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
 	}
@@ -444,34 +451,60 @@ func TestBuildIntegrationErrors(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	var fakeStdout, fakeStderr bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		"--distro", "centos-9",
+		"--progress=verbose",
+	})
 	defer restore()
-	restore = main.MockOsStderr(&fakeStderr)
+
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", failingOsbuild)
+	defer fakeOsbuildCmd.Restore()
+
+	var err error
+	stdout, stderr := testutil.CaptureStdio(t, func() {
+		err = main.Run()
+	})
+	assert.EqualError(t, err, "running osbuild failed: exit status 1")
+
+	assert.Contains(t, stdout, "error on stdout\n")
+	assert.Contains(t, stderr, "error on stderr\n")
+}
+
+func TestBuildIntegrationErrorsProgressTerm(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	restore = main.MockOsArgs([]string{
 		"build",
 		"qcow2",
 		"--distro", "centos-9",
+		"--progress=term",
 	})
 	defer restore()
 
-	script := `
-cat - > "$0".stdin
->&2 echo "error on stderr"
-exit 1
-`
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", failingOsbuild)
 	defer fakeOsbuildCmd.Restore()
 
-	err := main.Run()
-	assert.EqualError(t, err, "running osbuild failed: exit status 1")
-	// ensure errors from osbuild are passed to the user
-	// XXX: once the osbuild.Status is used, also check that stdout
-	// is available (but that cannot be done with the existing
-	// osbuild-exec.go)
-	assert.Equal(t, "error on stderr\n", fakeStderr.String())
+	var err error
+	stdout, stderr := testutil.CaptureStdio(t, func() {
+		err = main.Run()
+	})
+	assert.EqualError(t, err, `error running osbuild: exit status 1
+Output:
+error on stdout
+error on stderr
+`)
+	assert.NotContains(t, stdout, "error on stdout")
+	assert.NotContains(t, stderr, "error on stderr")
 }
 
 func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
