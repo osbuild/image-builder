@@ -6,7 +6,10 @@ COPY . /build
 WORKDIR /build
 # keep in sync with:
 # https://github.com/containers/podman/blob/2981262215f563461d449b9841741339f4d9a894/Makefile#L51
-RUN go build -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper" ./cmd/image-builder
+# disable cgo as
+# a) gcc crashes on fedora41/arm64 regularly
+# b) we don't really need it
+RUN CGO_ENABLED=0 go build -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper" ./cmd/image-builder
 
 FROM registry.fedoraproject.org/fedora:41
 
