@@ -1,6 +1,8 @@
 package testutil_test
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -22,4 +24,13 @@ func TestMockCommand(t *testing.T) {
 		{"run1-arg1", "run1-arg2"},
 		{"run2-arg1", "run2-arg2"},
 	}, fakeCmd.Calls())
+}
+
+func TestCaptureStdout(t *testing.T) {
+	stdout, stderr := testutil.CaptureStdio(t, func() {
+		fmt.Fprintf(os.Stdout, "output on stdout")
+		fmt.Fprintf(os.Stderr, "output on stderr")
+	})
+	assert.Equal(t, "output on stdout", stdout)
+	assert.Equal(t, "output on stderr", stderr)
 }
