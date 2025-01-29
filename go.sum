@@ -324,8 +324,8 @@ github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXch
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
 github.com/osbuild/blueprint v1.31.0 h1:1uWYkrnq0zI7RTuLiTr0WF8PecTHV2MDyYHv0UyG0qY=
 github.com/osbuild/blueprint v1.31.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
-github.com/osbuild/bootc-image-builder/bib v0.0.0-20250125114430-c5d674173ba0 h1:aLxeLEO/C6/mAc4O8fgmDE7uaf6EwAiW79IP2GI/bvo=
-github.com/osbuild/bootc-image-builder/bib v0.0.0-20250125114430-c5d674173ba0/go.mod h1:22erXOiwfznPLNE5Y8hp35fnE0vh5ZjWp/iIQsVnYTg=
+github.com/osbuild/bootc-image-builder/bib v0.0.0-20250128074618-f6403409fc97 h1:Xyv+vDEGCcG1qkHkdQFPBXhvM5WiMiAJm/AjBkzW4Sw=
+github.com/osbuild/bootc-image-builder/bib v0.0.0-20250128074618-f6403409fc97/go.mod h1:22erXOiwfznPLNE5Y8hp35fnE0vh5ZjWp/iIQsVnYTg=
 github.com/osbuild/image-builder-cli v0.0.0-20260617045734-ed14e442c0fc h1:V3htk9dNn+0NV2sRhV3QqcjczaiKz3UY/hCKmTTfPFs=
 github.com/osbuild/image-builder-cli v0.0.0-20260617045734-ed14e442c0fc/go.mod h1:5rZ1AwGWcqONiNF3/IwzMJYqd7PsibbFvGCCdt8SNl4=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
