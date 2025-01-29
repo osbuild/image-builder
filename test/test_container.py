@@ -52,3 +52,23 @@ def test_container_manifest_generates_sbom(tmp_path, build_container):
     sbom_json = json.loads(image_sbom_json_path.read_text())
     # smoke test that we have glibc in the json doc
     assert "glibc" in [s["name"] for s in sbom_json["packages"]], f"missing glibc in {sbom_json}"
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_container_build_generates_manifest(tmp_path, build_container):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    subprocess.check_call([
+        "podman", "run",
+        "--privileged",
+        "-v", f"{output_dir}:/output",
+        build_container,
+        "build",
+        "minimal-raw",
+        "--distro", "centos-9",
+        "--with-manifest",
+    ], stdout=subprocess.DEVNULL)
+    arch = platform.machine()
+    fn = f"centos-9-minimal-raw-{arch}/centos-9-minimal-raw-{arch}.osbuild-manifest.json"
+    image_manifest_path = output_dir / fn
+    assert image_manifest_path.exists()
