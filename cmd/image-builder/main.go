@@ -6,13 +6,16 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -173,6 +176,66 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 	return progress.New(progressType)
 }
 
+var awscloudNewUploader = awscloud.NewUploader
+
+func cmdUploadAWS(cmd *cobra.Command, args []string) error {
+	amiName, err := cmd.Flags().GetString("aws-ami-name")
+	if err != nil {
+		return err
+	}
+	bucketName, err := cmd.Flags().GetString("aws-bucket")
+	if err != nil {
+		return err
+	}
+	region, err := cmd.Flags().GetString("aws-region")
+	if err != nil {
+		return err
+	}
+
+	rawDiskPath := args[0]
+	// XXX: can we actually inspect the image or leave some artifacts?
+	if filepath.Ext(rawDiskPath) != ".raw" {
+		return fmt.Errorf("expecting a raw disk ending with '.raw', got %q", filepath.Base(rawDiskPath))
+	}
+
+	uploader, err := awscloudNewUploader(region, bucketName, amiName, nil)
+	if err != nil {
+		return err
+	}
+	f, err := os.Open(rawDiskPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// setup basic progress
+	st, err := f.Stat()
+	if err != nil {
+		return fmt.Errorf("cannot stat upload: %v", err)
+	}
+	pbar := pb.New64(st.Size())
+	pbar.Set(pb.Bytes, true)
+	pbar.SetWriter(osStdout)
+	r := pbar.NewProxyReader(f)
+	pbar.Start()
+	defer pbar.Finish()
+
+	return uploader.UploadAndRegister(r, osStderr)
+}
+
+func cmdUpload(cmd *cobra.Command, args []string) error {
+	uploadTo, err := cmd.Flags().GetString("to")
+	if err != nil {
+		return err
+	}
+	switch uploadTo {
+	case "aws":
+		return cmdUploadAWS(cmd, args)
+	default:
+		return fmt.Errorf("unsupported cloud %q", uploadTo)
+	}
+}
+
 func cmdBuild(cmd *cobra.Command, args []string) error {
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
@@ -299,6 +362,19 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	rootCmd.AddCommand(manifestCmd)
+
+	uploadCmd := &cobra.Command{
+		Use:          "upload <image-path>",
+		Short:        "Upload the given image from <image-path>",
+		RunE:         cmdUpload,
+		SilenceUsage: true,
+		Args:         cobra.ExactArgs(1),
+	}
+	uploadCmd.Flags().String("aws-ami-name", "", "name for the AMI in AWS (only for type=ami)")
+	uploadCmd.Flags().String("aws-bucket", "", "target S3 bucket name for intermediate storage when creating AMI (only for type=ami)")
+	uploadCmd.Flags().String("aws-region", "", "target region for AWS uploads (only for type=ami)")
+	rootCmd.AddCommand(uploadCmd)
+	uploadCmd.Flags().String("to", "", "upload to the given cloud")
 
 	buildCmd := &cobra.Command{
 		Use:          "build <image-type>",
