@@ -235,7 +235,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	manifestCmd := &cobra.Command{
 		Use:          "manifest <image-type>",
-		Short:        "Build manifest for the given distro/image-type, e.g. centos-9 qcow2",
+		Short:        "Build manifest for the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
 		RunE:         cmdManifest,
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
@@ -253,7 +253,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	buildCmd := &cobra.Command{
 		Use:          "build <image-type>",
-		Short:        "Build the given distro/image-type, e.g. centos-9 qcow2",
+		Short:        "Build the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
 		RunE:         cmdBuild,
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
