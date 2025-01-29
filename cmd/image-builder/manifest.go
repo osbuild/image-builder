@@ -25,6 +25,9 @@ type manifestOptions struct {
 
 func sbomWriter(outputDir, filename string, content io.Reader) error {
 	p := filepath.Join(outputDir, filename)
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		return err
+	}
 	f, err := os.Create(p)
 	if err != nil {
 		return err
@@ -50,9 +53,6 @@ func generateManifest(dataDir string, img *imagefilter.Result, output io.Writer,
 		outputDir := opts.OutputDir
 		if outputDir == "" {
 			outputDir = outputNameFor(img)
-		}
-		if err := os.MkdirAll(outputDir, 0755); err != nil {
-			return err
 		}
 		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
 			return sbomWriter(outputDir, filename, content)
