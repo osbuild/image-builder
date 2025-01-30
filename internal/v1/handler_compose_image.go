@@ -1108,5 +1108,7 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 		}
 	}
 
+	res.Hostname = cust.Hostname
+
 	return res, nil
 }
