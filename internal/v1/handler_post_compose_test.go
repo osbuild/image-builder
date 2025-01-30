@@ -2519,7 +2519,7 @@ func TestComposeCustomizations(t *testing.T) {
 			},
 			passwordsPresentAndRedacted: false,
 		},
-		// firewall, services, locale, tz, containers
+		// firewall, services, locale, tz, containers, hostname
 		{
 			imageBuilderRequest: v1.ComposeRequest{
 				Customizations: &v1.Customizations{
@@ -2541,6 +2541,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Source: "container.io/test",
 						},
 					},
+					Hostname: common.ToPtr("test-host"),
 				},
 				Distribution: "rhel-8",
 				ImageRequests: []v1.ImageRequest{
@@ -2575,6 +2576,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Source: "container.io/test",
 						},
 					},
+					Hostname: common.ToPtr("test-host"),
 				},
 				ImageRequest: &composer.ImageRequest{
 					Architecture: "x86_64",
