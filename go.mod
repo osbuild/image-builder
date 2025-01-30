@@ -20,7 +20,7 @@ require (
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240208125334-43c3aac2bb9c
-	github.com/osbuild/images v0.109.0
+	github.com/osbuild/images v0.112.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20250102070339-8b0a1d1714f6
 	github.com/prometheus/client_golang v1.20.5
 	github.com/redhatinsights/app-common-go v1.6.8
