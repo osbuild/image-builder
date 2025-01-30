@@ -203,9 +203,13 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 }
 
 func run() error {
-	// images logs a bunch of stuff to Debug/Info that is distracting
-	// the user (at least by default, like what repos being loaded)
-	logrus.SetLevel(logrus.WarnLevel)
+	// images generates a lot of noisy logs a bunch of stuff to
+	// Debug/Info that is distracting the user (at least by
+	// default, like what repos being loaded)
+	//
+	// Disable for now until we can filter out the usless log
+	// messages.
+	logrus.SetOutput(io.Discard)
 
 	rootCmd := &cobra.Command{
 		Use:   "image-builder",
