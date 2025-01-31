@@ -45,8 +45,12 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	extraRepos, err := cmd.Flags().GetStringArray("extra-repo")
+	if err != nil {
+		return err
+	}
 
-	return listImages(dataDir, output, filter)
+	return listImages(dataDir, extraRepos, output, filter)
 }
 
 func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
@@ -76,6 +80,10 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 
 func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("datadir")
+	if err != nil {
+		return nil, err
+	}
+	extraRepos, err := cmd.Flags().GetStringArray("extra-repo")
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +137,11 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	pbar.SetPulseMsgf("Manifest generation step")
 	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
 
-	img, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	repoOpts := &repoOptions{
+		DataDir:    dataDir,
+		ExtraRepos: extraRepos,
+	}
+	img, err := getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +158,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		RpmDownloader: rpmDownloader,
 		WithSBOM:      withSBOM,
 	}
-	err = generateManifest(dataDir, img, w, opts)
+	err = generateManifest(dataDir, extraRepos, img, w, opts)
 	return img, err
 }
 
@@ -276,7 +288,7 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 		archStr = arch.Current().String()
 	}
 	imgTypeStr := args[0]
-	res, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
+	res, err := getOneImage(distroStr, imgTypeStr, archStr, &repoOptions{DataDir: dataDir})
 	if err != nil {
 		return err
 	}
@@ -304,6 +316,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		SilenceErrors: true,
 	}
 	rootCmd.PersistentFlags().String("datadir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode`)
 	rootCmd.SetOut(osStdout)

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
@@ -598,4 +600,49 @@ func TestProgressFromCmd(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, tc.expectedProgress, fmt.Sprintf("%T", pbar))
 	}
+}
+
+func TestManifestExtraRepo(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+	if _, err := exec.LookPath("createrepo_c"); err != nil {
+		t.Skip("need createrepo_c to run this test")
+	}
+
+	localRepoDir := filepath.Join(t.TempDir(), "repo")
+	err := os.MkdirAll(localRepoDir, 0755)
+	assert.NoError(t, err)
+	err = exec.Command("cp", "-a", "../../test/data/rpm/dummy-1.0.0-0.noarch.rpm", localRepoDir).Run()
+	assert.NoError(t, err)
+	err = exec.Command("createrepo_c", localRepoDir).Run()
+	assert.NoError(t, err)
+
+	pkgHelloBlueprint := `{
+          "packages": [
+            {"name":"dummy"}
+          ]
+        }`
+	restore := main.MockOsArgs([]string{
+		"manifest",
+		"qcow2",
+		"--distro=centos-9",
+		fmt.Sprintf("--extra-repo=file://%s", localRepoDir),
+		"--blueprint", makeTestBlueprint(t, pkgHelloBlueprint),
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err = main.Run()
+	require.NoError(t, err)
+
+	// our local repo got added
+	assert.Contains(t, fakeStdout.String(), `"path":"dummy-1.0.0-0.noarch.rpm"`)
+	assert.Contains(t, fakeStdout.String(), fmt.Sprintf(`"url":"file://%s"`, localRepoDir))
 }
