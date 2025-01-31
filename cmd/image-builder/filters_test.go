@@ -14,7 +14,6 @@ func TestGetOneImageHappy(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	dataDir := ""
 	for _, tc := range []struct {
 		distro, imgType, arch string
 	}{
@@ -23,7 +22,7 @@ func TestGetOneImageHappy(t *testing.T) {
 		{"distro:centos-9", "type:qcow2", "x86_64"},
 		{"distro:centos-9", "type:qcow2", "arch:x86_64"},
 	} {
-		res, err := main.GetOneImage(dataDir, tc.distro, tc.imgType, tc.arch)
+		res, err := main.GetOneImage(tc.distro, tc.imgType, tc.arch, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, "centos-9", res.Distro.Name())
 		assert.Equal(t, "qcow2", res.ImgType.Name())
@@ -35,7 +34,6 @@ func TestGetOneImageError(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	dataDir := ""
 	for _, tc := range []struct {
 		distro, imgType, arch string
 		expectedErr           string
@@ -49,7 +47,7 @@ func TestGetOneImageError(t *testing.T) {
 			`cannot use globs in "centos*" when getting a single image`,
 		},
 	} {
-		_, err := main.GetOneImage(dataDir, tc.distro, tc.imgType, tc.arch)
+		_, err := main.GetOneImage(tc.distro, tc.imgType, tc.arch, nil)
 		assert.EqualError(t, err, tc.expectedErr)
 	}
 }

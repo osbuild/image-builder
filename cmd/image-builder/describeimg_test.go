@@ -15,7 +15,7 @@ func TestDescribeImage(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	res, err := main.GetOneImage("", "centos-9", "tar", "x86_64")
+	res, err := main.GetOneImage("centos-9", "tar", "x86_64", nil)
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer
