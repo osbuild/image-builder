@@ -24,19 +24,18 @@ actions:
 upstream_tag_include: 'v\d+'
 
 jobs:
-  # image-builder is not yet in Fedora, so we don't need to update it there
-  # - job: bodhi_update
-  #   trigger: commit
-  #   dist_git_branches:
-  #     - fedora-branched # rawhide updates are created automatically
-  # - job: koji_build
-  #   trigger: commit
-  #   dist_git_branches:
-  #     - fedora-all
-  # - job: propose_downstream
-  #   trigger: release
-  #   dist_git_branches:
-  #     - fedora-all
+  - job: bodhi_update
+    trigger: commit
+    dist_git_branches:
+      - fedora-branched  # rawhide updates are created automatically
+  - job: koji_build
+    trigger: commit
+    dist_git_branches:
+      - fedora-all
+  - job: propose_downstream
+    trigger: release
+    dist_git_branches:
+      - fedora-all
   - job: copr_build
     trigger: pull_request
     targets: &build_targets
