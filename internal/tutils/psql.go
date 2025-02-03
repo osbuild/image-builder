@@ -33,7 +33,7 @@ func containerRuntime() (string, error) {
 	if err == nil {
 		return strings.TrimSpace(string(out)), nil
 	}
-	return "", fmt.Errorf("No container runtime found (looked for podman or docker)")
+	return "", fmt.Errorf("no container runtime found (looked for podman or docker)")
 }
 
 func NewPSQLContainer() (*PSQLContainer, error) {
@@ -79,7 +79,7 @@ func NewPSQLContainer() (*PSQLContainer, error) {
 		}
 		return p, nil
 	}
-	return p, fmt.Errorf("Container not ready: %v", err)
+	return p, fmt.Errorf("container not ready: %v", err)
 }
 
 func (p *PSQLContainer) execCommand(args ...string) (string, error) {

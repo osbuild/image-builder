@@ -15,7 +15,7 @@ import (
 
 func TestRecommendPackage_Success_with_StatusForbidden(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
@@ -55,7 +55,7 @@ func TestRecommendPackage_Success_with_StatusForbidden(t *testing.T) {
 
 func TestRecommendPackage_Success_with_StatusUnauthorized(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -96,7 +96,7 @@ func TestRecommendPackage_Success_with_StatusUnauthorized(t *testing.T) {
 
 func TestRecommendPackage_Success_with_no_packages(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
@@ -135,7 +135,7 @@ func TestRecommendPackage_Success_with_no_packages(t *testing.T) {
 
 func TestRecommendPackage_Success_with_packages(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}

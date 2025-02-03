@@ -31,7 +31,7 @@ func LoadConfigFromEnv(intf interface{}) error {
 		fieldV := v.Field(i)
 		key, ok := fieldT.Tag.Lookup("env")
 		if !ok {
-			return fmt.Errorf("No env tag in config field")
+			return fmt.Errorf("no env tag in config field")
 		}
 
 		confV, ok := os.LookupEnv(key)
@@ -53,7 +53,7 @@ func LoadConfigFromEnv(intf interface{}) error {
 				}
 				fieldV.SetBool(value)
 			default:
-				return fmt.Errorf("Unsupported type")
+				return fmt.Errorf("unsupported type")
 			}
 		}
 	}

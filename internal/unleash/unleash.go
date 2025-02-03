@@ -31,7 +31,7 @@ func Initialize(conf Config) error {
 		unleash.WithCustomHeaders(http.Header{"Authorization": {conf.Token}}),
 	)
 	if err != nil {
-		return fmt.Errorf("Unleash error: %w", err)
+		return fmt.Errorf("unleash error: %w", err)
 	}
 
 	return nil

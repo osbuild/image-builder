@@ -57,15 +57,15 @@ func CheckQuota(ctx context.Context, orgID string, dB db.DB, quotaFile string) (
 	var quotas map[string]Quota
 	jsonFile, err := os.Open(filepath.Clean(quotaFile))
 	if _, ok := err.(*os.PathError); ok {
-		return false, fmt.Errorf("No config file for quotas found at %s\n", quotaFile)
+		return false, fmt.Errorf("no config file for quotas found at %s", quotaFile)
 	} else {
 		rawJsonFile, err := io.ReadAll(jsonFile)
 		if err != nil {
-			return false, fmt.Errorf("Failed to read quota file %q: %s", quotaFile, err.Error())
+			return false, fmt.Errorf("failed to read quota file %q: %s", quotaFile, err.Error())
 		}
 		err = json.Unmarshal(rawJsonFile, &quotas)
 		if err != nil {
-			return false, fmt.Errorf("Failed to unmarshal quota file %q: %s", quotaFile, err.Error())
+			return false, fmt.Errorf("failed to unmarshal quota file %q: %s", quotaFile, err.Error())
 		}
 		if quota, ok := quotas[orgID]; ok {
 			authorizedRequests = quota.Quota
@@ -74,7 +74,7 @@ func CheckQuota(ctx context.Context, orgID string, dB db.DB, quotaFile string) (
 			authorizedRequests = quota.Quota
 			slidingWindow = quota.SlidingWindow
 		} else {
-			return false, fmt.Errorf("No default values in the quotas' file %s\n", quotaFile)
+			return false, fmt.Errorf("no default values in the quotas file %s", quotaFile)
 		}
 	}
 

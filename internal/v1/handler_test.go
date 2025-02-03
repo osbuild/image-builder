@@ -105,7 +105,7 @@ func TestWithoutOsbuildComposerBackend(t *testing.T) {
 func TestGetComposeEntryNotFoundResponse(t *testing.T) {
 	id := uuid.New().String()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -122,7 +122,7 @@ func TestGetComposeEntryNotFoundResponse(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s",
 		id), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCode)
-	require.Contains(t, body, "Compose entry not found")
+	require.Contains(t, body, "compose entry not found")
 }
 
 func TestGetComposeStatusErrorResponse(t *testing.T) {
@@ -147,7 +147,7 @@ func TestGetComposeStatusErrorResponse(t *testing.T) {
 
 		var composerStatus composer.ComposeStatus
 		apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if "Bearer" == r.Header.Get("Authorization") {
+			if r.Header.Get("Authorization") == "Bearer" {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
@@ -240,7 +240,7 @@ func TestGetComposeMetadata(t *testing.T) {
 		},
 	}
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -278,7 +278,7 @@ func TestGetComposeMetadata(t *testing.T) {
 func TestGetComposeMetadata404(t *testing.T) {
 	id := uuid.New().String()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -295,7 +295,7 @@ func TestGetComposeMetadata404(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/composes/%s/metadata",
 		id), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCode)
-	require.Contains(t, body, "Compose entry not found")
+	require.Contains(t, body, "compose entry not found")
 }
 
 func TestGetComposes(t *testing.T) {
@@ -411,7 +411,7 @@ func TestReadinessProbeNotReady(t *testing.T) {
 
 func TestReadinessProbeReady(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -447,7 +447,7 @@ func TestGetClones(t *testing.T) {
 	awsAccountId := "123456123456"
 
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -539,7 +539,7 @@ func TestGetCloneStatus(t *testing.T) {
 	cloneId := uuid.New()
 	id := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -625,7 +625,7 @@ func TestGetCloneEntryNotFoundResponse(t *testing.T) {
 	respStatusCode, body := tutils.GetResponseBody(t, srv.URL+fmt.Sprintf("/api/image-builder/v1/clones/%s",
 		id), &tutils.AuthString0)
 	require.Equal(t, http.StatusNotFound, respStatusCode)
-	require.Contains(t, body, "Clone not found")
+	require.Contains(t, body, "clone not found")
 }
 
 func TestValidateSpec(t *testing.T) {

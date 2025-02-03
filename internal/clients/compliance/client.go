@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	ErrorAuth         = errors.New("User is not authorized")
-	ErrorMajorVersion = errors.New("Major version of policy doesn't match requested major version")
-	ErrorNotFound     = errors.New("Policy or its tailorings are missing")
-	ErrorNotOk        = errors.New("Unexpected http status")
+	ErrorAuth         = errors.New("user is not authorized")
+	ErrorMajorVersion = errors.New("major version of policy doesn't match requested major version")
+	ErrorNotFound     = errors.New("policy or its tailorings are missing")
+	ErrorNotOk        = errors.New("unexpected http status")
 )
 
 type ComplianceClient struct {
@@ -48,7 +48,7 @@ func (cc *ComplianceClient) request(ctx context.Context, method, url string) (*h
 
 	id, ok := identity.GetIdentityHeader(ctx)
 	if !ok {
-		return nil, fmt.Errorf("Unable to get identity from context")
+		return nil, fmt.Errorf("unable to get identity from context")
 	}
 	req.Header.Add("x-rh-identity", id)
 	req.Header.Add("content-type", "application/json")

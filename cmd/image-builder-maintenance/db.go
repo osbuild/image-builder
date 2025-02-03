@@ -56,7 +56,7 @@ func (d *maintenanceDB) Close() error {
 func (d *maintenanceDB) DeleteComposes(ctx context.Context, emailRetentionDate time.Time) (int64, error) {
 	tag, err := d.Conn.Exec(ctx, sqlDeleteComposes, emailRetentionDate)
 	if err != nil {
-		return tag.RowsAffected(), fmt.Errorf("Error deleting composes: %v", err)
+		return tag.RowsAffected(), fmt.Errorf("error deleting composes: %v", err)
 	}
 	return tag.RowsAffected(), nil
 }
@@ -82,7 +82,7 @@ func (d *maintenanceDB) ExpiredComposesCount(ctx context.Context, emailRetention
 func (d *maintenanceDB) VacuumAnalyze(ctx context.Context) error {
 	_, err := d.Conn.Exec(ctx, sqlVacuumAnalyze)
 	if err != nil {
-		return fmt.Errorf("Error running VACUUM ANALYZE: %v", err)
+		return fmt.Errorf("error running VACUUM ANALYZE: %v", err)
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (d *maintenanceDB) VacuumAnalyze(ctx context.Context) error {
 func (d *maintenanceDB) LogVacuumStats(ctx context.Context) (int64, error) {
 	rows, err := d.Conn.Query(ctx, sqlVacuumStats)
 	if err != nil {
-		return int64(0), fmt.Errorf("Error querying vacuum stats: %v", err)
+		return int64(0), fmt.Errorf("error querying vacuum stats: %v", err)
 	}
 	defer rows.Close()
 

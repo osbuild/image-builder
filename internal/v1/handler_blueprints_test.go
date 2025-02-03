@@ -516,7 +516,7 @@ func TestHandlers_ComposeBlueprint(t *testing.T) {
 	ids := []uuid.UUID{}
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		newId := uuid.New()
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -887,7 +887,7 @@ func TestHandlers_ExportBlueprint(t *testing.T) {
 	var composeId uuid.UUID
 	var composerRequest composer.ComposeRequest
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -1176,7 +1176,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	require.Equal(t, "Not Found", errorResponse.Errors[0].Detail)
 
 	_, err = dbase.GetBlueprint(ctx, blueprintId, "000000", nil)
-	require.ErrorIs(t, err, db.BlueprintNotFoundError)
+	require.ErrorIs(t, err, db.ErrBlueprintNotFound)
 
 	// We should not be able to list deleted blueprint
 	var result v1.BlueprintsResponse
@@ -1189,7 +1189,7 @@ func TestHandlers_DeleteBlueprint(t *testing.T) {
 	// We should not be able to update deleted blueprint
 	id5 := uuid.New()
 	err = dbase.UpdateBlueprint(ctx, id5, blueprintId, "000000", "newName", "desc2", json.RawMessage(`{"image_requests": [{"image_type": "aws"}, {"image_type": "gcp"}]}`))
-	require.ErrorIs(t, err, db.BlueprintNotFoundError)
+	require.ErrorIs(t, err, db.ErrBlueprintNotFound)
 
 	// Composes should not be assigned to the blueprint anymore
 	respStatusCode, _ = tutils.GetResponseBody(t, srvURL+fmt.Sprintf("/api/image-builder/v1/blueprints/%s/composes", blueprintId.String()), &tutils.AuthString0)

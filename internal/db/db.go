@@ -11,11 +11,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// ComposeEntryNotFoundError occurs when no compose request is found for a user.
-var ComposeEntryNotFoundError = errors.New("Compose entry not found")
-var CloneNotFoundError = errors.New("Clone not found")
-var BlueprintNotFoundError = errors.New("blueprint not found")
-var AffectedRowsMismatchError = errors.New("Unexpected affected rows")
+// ErrComposeEntryNotFound occurs when no compose request is found for a user.
+var ErrComposeEntryNotFound = errors.New("compose entry not found")
+var ErrCloneNotFound = errors.New("clone not found")
+var ErrBlueprintNotFound = errors.New("blueprint not found")
+var ErrAffectedRowsMismatch = errors.New("unexpected affected rows")
 
 type dB struct {
 	Pool *pgxpool.Pool
@@ -197,7 +197,7 @@ func (db *dB) GetCompose(ctx context.Context, jobId uuid.UUID, orgId string) (*C
 	err = result.Scan(&compose.Id, &compose.Request, &compose.CreatedAt, &compose.ImageName, &compose.ClientId)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ComposeEntryNotFoundError
+			return nil, ErrComposeEntryNotFound
 		} else {
 			return nil, err
 		}
@@ -219,7 +219,7 @@ func (db *dB) GetComposeImageType(ctx context.Context, jobId uuid.UUID, orgId st
 	err = result.Scan(&imageType)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", ComposeEntryNotFoundError
+			return "", ErrComposeEntryNotFound
 		} else {
 			return "", err
 		}
@@ -306,7 +306,7 @@ func (db *dB) DeleteCompose(ctx context.Context, jobId uuid.UUID, orgId string) 
 
 	tag, err := conn.Exec(ctx, sqlDeleteCompose, orgId, jobId)
 	if tag.RowsAffected() != 1 {
-		return ComposeEntryNotFoundError
+		return ErrComposeEntryNotFound
 	}
 
 	return err
@@ -378,7 +378,7 @@ func (db *dB) GetClone(ctx context.Context, id uuid.UUID, orgId string) (*CloneE
 	err = conn.QueryRow(ctx, sqlGetClone, id, orgId).Scan(&clone.Id, &clone.ComposeId, &clone.Request, &clone.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, CloneNotFoundError
+			return nil, ErrCloneNotFound
 		} else {
 			return nil, err
 		}

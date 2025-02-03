@@ -262,7 +262,7 @@ func (s *Server) distroRegistry(ctx echo.Context) *distribution.DistroRegistry {
 // wraps DistroRegistry.Get and verifies the user has access
 func (s *Server) getDistro(ctx echo.Context, distro Distributions) (*distribution.DistributionFile, error) {
 	d, err := s.distroRegistry(ctx).Get(string(distro))
-	if err == distribution.DistributionNotFound {
+	if err == distribution.ErrDistributionNotFound {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 	if err != nil {

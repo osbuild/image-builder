@@ -111,5 +111,5 @@ func TestDistroRegistry_Get(t *testing.T) {
 
 	result, err = dr.Available(false).Get("toucan-42")
 	require.Nil(t, result)
-	require.Equal(t, DistributionNotFound, err)
+	require.Equal(t, ErrDistributionNotFound, err)
 }

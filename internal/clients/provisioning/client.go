@@ -43,7 +43,7 @@ func (pc *ProvisioningClient) request(method, url string, headers map[string]str
 func (pc *ProvisioningClient) GetUploadInfo(ctx context.Context, sourceID string) (*http.Response, error) {
 	id, ok := identity.GetIdentityHeader(ctx)
 	if !ok {
-		return nil, fmt.Errorf("Unable to get identity from context")
+		return nil, fmt.Errorf("unable to get identity from context")
 	}
 
 	return pc.request("GET", fmt.Sprintf("%s/sources/%s/upload_info", pc.url, sourceID), map[string]string{

@@ -22,7 +22,7 @@ func TestComposeStatus(t *testing.T) {
 	composeId := uuid.New()
 	var composerStatus composer.ComposeStatus
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

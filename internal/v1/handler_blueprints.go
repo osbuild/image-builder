@@ -93,7 +93,7 @@ func (u *User) Valid() error {
 	validPassword := u.Password != nil && len(*u.Password) > 0
 	validSshKey := u.SshKey != nil && len(*u.SshKey) > 0
 	if !validName || !(validPassword || validSshKey) {
-		return fmt.Errorf("User ('%s') must have a name and either a password or an SSH key set.", u.Name)
+		return fmt.Errorf("user ('%s') must have a name and either a password or an SSH key set", u.Name)
 	}
 	return nil
 }
@@ -261,7 +261,7 @@ func (h *Handlers) GetBlueprint(ctx echo.Context, id openapi_types.UUID, params 
 
 	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), params.Version)
 	if err != nil {
-		if errors.Is(err, db.BlueprintNotFoundError) {
+		if errors.Is(err, db.ErrBlueprintNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return err
@@ -293,7 +293,7 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 	ctx.Logger().Infof("Fetching blueprint %s", id)
 	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), nil)
 	if err != nil {
-		if errors.Is(err, db.BlueprintNotFoundError) {
+		if errors.Is(err, db.ErrBlueprintNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return err
@@ -336,7 +336,7 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 	defer closeBody(ctx, exportedRepositoriesResp.Body)
 
 	if exportedRepositoriesResp.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("Unable to fetch custom repositories, got %v response", exportedRepositoriesResp.StatusCode)
+		return fmt.Errorf("unable to fetch custom repositories, got %v response", exportedRepositoriesResp.StatusCode)
 	}
 
 	if exportedRepositoriesResp.Body == nil {
@@ -354,7 +354,7 @@ func (h *Handlers) ExportBlueprint(ctx echo.Context, id openapi_types.UUID) erro
 		var result []map[string]interface{}
 		err = json.Unmarshal(bodyBytes, &result)
 		if err != nil {
-			return fmt.Errorf("Unable to export custom repositories: %w, %s", err, string(bodyBytes))
+			return fmt.Errorf("unable to export custom repositories: %w, %s", err, string(bodyBytes))
 		}
 		blueprintExportResponse.ContentSources = &result
 	}
@@ -386,7 +386,7 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	if blueprintRequest.Customizations.Users != nil {
 		be, err := h.server.db.GetBlueprint(ctx.Request().Context(), blueprintId, userID.OrgID(), nil)
 		if err != nil {
-			if errors.Is(err, db.BlueprintNotFoundError) {
+			if errors.Is(err, db.ErrBlueprintNotFound) {
 				return echo.NewHTTPError(http.StatusNotFound, err)
 			}
 			return err
@@ -431,7 +431,7 @@ func (h *Handlers) UpdateBlueprint(ctx echo.Context, blueprintId uuid.UUID) erro
 	err = h.server.db.UpdateBlueprint(ctx.Request().Context(), versionId, blueprintId, userID.OrgID(), blueprintRequest.Name, desc, body)
 	if err != nil {
 		ctx.Logger().Errorf("Error updating blueprint in db: %v", err)
-		if errors.Is(err, db.BlueprintNotFoundError) {
+		if errors.Is(err, db.ErrBlueprintNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return err
@@ -456,7 +456,7 @@ func (h *Handlers) ComposeBlueprint(ctx echo.Context, id openapi_types.UUID) err
 
 	blueprintEntry, err := h.server.db.GetBlueprint(ctx.Request().Context(), id, userID.OrgID(), nil)
 	if err != nil {
-		if errors.Is(err, db.BlueprintNotFoundError) {
+		if errors.Is(err, db.ErrBlueprintNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return err
@@ -596,7 +596,7 @@ func (h *Handlers) GetBlueprintComposes(ctx echo.Context, blueprintId openapi_ty
 
 	composes, err := h.server.db.GetBlueprintComposes(ctx.Request().Context(), userID.OrgID(), blueprintId, params.BlueprintVersion, since, limit, offset, ignoreImageTypeStrings)
 	if err != nil {
-		if errors.Is(err, db.BlueprintNotFoundError) {
+		if errors.Is(err, db.ErrBlueprintNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 		return err
@@ -646,7 +646,7 @@ func (h *Handlers) DeleteBlueprint(ctx echo.Context, blueprintId openapi_types.U
 
 	err = h.server.db.DeleteBlueprint(ctx.Request().Context(), blueprintId, userID.OrgID(), userID.AccountNumber())
 	if err != nil {
-		if errors.Is(err, db.BlueprintNotFoundError) {
+		if errors.Is(err, db.ErrBlueprintNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 		return err
