@@ -36,6 +36,7 @@ BuildRequires:  gpgme-devel
 BuildRequires:  libassuan-devel
 # Build requirements of 'github.com/containers/storage' package
 BuildRequires:  device-mapper-devel
+BuildRequires:  libxcrypt-devel
 %if 0%{?fedora}
 # Build requirements of 'github.com/containers/storage' package
 BuildRequires:  btrfs-progs-devel
