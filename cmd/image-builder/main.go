@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,13 +10,11 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -176,66 +175,6 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 	return progress.New(progressType)
 }
 
-var awscloudNewUploader = awscloud.NewUploader
-
-func cmdUploadAWS(cmd *cobra.Command, args []string) error {
-	amiName, err := cmd.Flags().GetString("aws-ami-name")
-	if err != nil {
-		return err
-	}
-	bucketName, err := cmd.Flags().GetString("aws-bucket")
-	if err != nil {
-		return err
-	}
-	region, err := cmd.Flags().GetString("aws-region")
-	if err != nil {
-		return err
-	}
-
-	rawDiskPath := args[0]
-	// XXX: can we actually inspect the image or leave some artifacts?
-	if filepath.Ext(rawDiskPath) != ".raw" {
-		return fmt.Errorf("expecting a raw disk ending with '.raw', got %q", filepath.Base(rawDiskPath))
-	}
-
-	uploader, err := awscloudNewUploader(region, bucketName, amiName, nil)
-	if err != nil {
-		return err
-	}
-	f, err := os.Open(rawDiskPath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	// setup basic progress
-	st, err := f.Stat()
-	if err != nil {
-		return fmt.Errorf("cannot stat upload: %v", err)
-	}
-	pbar := pb.New64(st.Size())
-	pbar.Set(pb.Bytes, true)
-	pbar.SetWriter(osStdout)
-	r := pbar.NewProxyReader(f)
-	pbar.Start()
-	defer pbar.Finish()
-
-	return uploader.UploadAndRegister(r, osStderr)
-}
-
-func cmdUpload(cmd *cobra.Command, args []string) error {
-	uploadTo, err := cmd.Flags().GetString("to")
-	if err != nil {
-		return err
-	}
-	switch uploadTo {
-	case "aws":
-		return cmdUploadAWS(cmd, args)
-	default:
-		return fmt.Errorf("unsupported cloud %q", uploadTo)
-	}
-}
-
 func cmdBuild(cmd *cobra.Command, args []string) error {
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
@@ -274,13 +213,49 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	var uploadUnsupported *UploadTypeUnsupportedError
+	var missingUploadConfig *MissingUploadConfigError
+	uploader, err := uploaderFor(cmd, res.ImgType.Name())
+	if err != nil && !errors.As(err, &missingUploadConfig) && !errors.As(err, &uploadUnsupported) {
+		return err
+	}
+	if missingUploadConfig != nil && !missingUploadConfig.allMissing {
+		return fmt.Errorf("partial upload config provided: %w", err)
+	}
+
+	if uploader != nil {
+		pbar.SetPulseMsgf("Checking cloud access")
+		if err := uploaderCheckWithProgress(pbar, uploader); err != nil {
+			return err
+		}
+	}
+
+	// XXX: support output filename via commandline (c.f.
+	//   https://github.com/osbuild/images/pull/1039)
+	if outputDir == "" {
+		outputDir = outputNameFor(res)
+	}
 	buildOpts := &buildOptions{
 		OutputDir:     outputDir,
 		StoreDir:      cacheDir,
 		WriteManifest: withManifest,
 	}
 	pbar.SetPulseMsgf("Image building step")
-	return buildImage(pbar, res, mf.Bytes(), buildOpts)
+	if err := buildImage(pbar, res, mf.Bytes(), buildOpts); err != nil {
+		return err
+	}
+
+	if uploader != nil {
+		// XXX: integrate better into the progress, see bib
+		pbar.Stop()
+		imagePath := filepath.Join(outputDir, res.ImgType.Name(), res.ImgType.Filename())
+
+		if err := uploadImageWithProgress(uploader, imagePath); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func cmdDescribeImg(cmd *cobra.Command, args []string) error {
@@ -374,7 +349,6 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("aws-bucket", "", "target S3 bucket name for intermediate storage when creating AMI (only for type=ami)")
 	uploadCmd.Flags().String("aws-region", "", "target region for AWS uploads (only for type=ami)")
 	rootCmd.AddCommand(uploadCmd)
-	uploadCmd.Flags().String("to", "", "upload to the given cloud")
 
 	buildCmd := &cobra.Command{
 		Use:          "build <image-type>",
@@ -391,6 +365,10 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
 	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
 	rootCmd.AddCommand(buildCmd)
+	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
+	// add after the rest of the uploadCmd flag set is added to avoid
+	// that build gets a "--to" parameter
+	uploadCmd.Flags().String("to", "", "upload to the given cloud")
 
 	// XXX: add --format=json too?
 	describeImgCmd := &cobra.Command{
