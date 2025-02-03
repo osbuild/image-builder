@@ -75,7 +75,7 @@ func (dr DistroRegistry) Map() map[string]*DistributionFile {
 }
 
 // Get returns a distribution with a specific name.
-// If it's not found, ErrDistributionNot is returned.
+// If it's not found, ErrDistributionNotFound is returned.
 func (dr DistroRegistry) Get(name string) (*DistributionFile, error) {
 	df, found := dr.distros[name]
 	if !found {
