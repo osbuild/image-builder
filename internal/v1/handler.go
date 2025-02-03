@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/osbuild/image-builder/internal/distribution"
+	"github.com/osbuild/logging"
 
 	"github.com/google/uuid"
 
@@ -52,8 +53,7 @@ func (h *Handlers) newLinksWithExtraParams(path string, count, limit int, params
 func (h *Handlers) GetVersion(ctx echo.Context) error {
 	version := Version{
 		Version:     h.server.spec.Info.Version,
-		BuildCommit: common.ToPtr(common.BuildCommit),
-		BuildTime:   common.ToPtr(common.BuildTime),
+		BuildCommit: common.ToPtr(logging.BuildID()),
 	}
 	return ctx.JSON(http.StatusOK, version)
 }
