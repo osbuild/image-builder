@@ -1,6 +1,7 @@
 # https://packit.dev/docs/configuration/
 
 specfile_path: image-builder.spec
+downstream_package_name: image-builder
 
 files_to_sync:
   - image-builder.spec
