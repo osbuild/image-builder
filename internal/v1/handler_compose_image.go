@@ -104,7 +104,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		// A sanity check to make sure there's a snapshot for each repo
 		expected := len(buildRepositories(arch, composeRequest.ImageRequests[0].ImageType))
 		if len(repositories) != expected {
-			return ComposeResponse{}, fmt.Errorf("No snapshots found for all repositories (found %d, expected %d)", len(repositories), expected)
+			return ComposeResponse{}, fmt.Errorf("no snapshots found for all repositories (found %d, expected %d)", len(repositories), expected)
 		}
 
 	} else {
@@ -148,7 +148,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed posting compose request to osbuild-composer")
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
+			ctx.Logger().Errorf("unable to parse composer's compose response: %v", err)
 		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 			var serviceStat composer.Error
@@ -230,7 +230,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), repoURLs, repoIDs, external)
 	if err != nil {
 		ctx.Logger().Warnf("Unable to get repositories for base urls: %v", err)
-		return nil, nil, fmt.Errorf("Unable to retrieve repositories: %v", err)
+		return nil, nil, fmt.Errorf("unable to retrieve repositories: %v", err)
 	}
 
 	repoUUIDs := make([]string, 0, len(repoMap))
@@ -258,7 +258,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 			}
 			ctx.Logger().Warnf("Unable to resolve snapshots: %s", body)
 		}
-		return nil, nil, fmt.Errorf("Unable to fetch snapshots for date, got %v response", snapResp.StatusCode)
+		return nil, nil, fmt.Errorf("unable to fetch snapshots for date, got %v response", snapResp.StatusCode)
 	}
 
 	var csSnapshots content_sources.ApiListSnapshotByDateResponse
@@ -272,7 +272,7 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 	for _, snap := range *csSnapshots.Data {
 		repo, ok := repoMap[*snap.RepositoryUuid]
 		if !ok {
-			return repositories, customRepositories, fmt.Errorf("Returned snapshot %v unexpected repository id %v", *snap.Match.Uuid, *snap.RepositoryUuid)
+			return repositories, customRepositories, fmt.Errorf("returned snapshot %v unexpected repository id %v", *snap.Match.Uuid, *snap.RepositoryUuid)
 		}
 
 		composerRepo := composer.Repository{
@@ -655,13 +655,11 @@ func buildOSTreeOptions(ostreeOptions *OSTree) *composer.OSTree {
 	}
 
 	cloudOptions := new(composer.OSTree)
-	if ostreeOptions != nil {
-		cloudOptions.Ref = ostreeOptions.Ref
-		cloudOptions.Url = ostreeOptions.Url
-		cloudOptions.Contenturl = ostreeOptions.Contenturl
-		cloudOptions.Parent = ostreeOptions.Parent
-		cloudOptions.Rhsm = ostreeOptions.Rhsm
-	}
+	cloudOptions.Ref = ostreeOptions.Ref
+	cloudOptions.Url = ostreeOptions.Url
+	cloudOptions.Contenturl = ostreeOptions.Contenturl
+	cloudOptions.Parent = ostreeOptions.Parent
+	cloudOptions.Rhsm = ostreeOptions.Rhsm
 	return cloudOptions
 }
 
@@ -792,11 +790,11 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 			}
 
 			pdata, err := h.server.complianceClient.PolicyDataForMinorVersion(ctx.Request().Context(), major, minor, policy.PolicyId.String())
-			if errors.Is(compliance.ErrorAuth, err) {
+			if errors.Is(err, compliance.ErrorAuth) {
 				return nil, echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("User is not authorized to get compliance data for given policy ID (%s)", policy.PolicyId.String()))
-			} else if errors.Is(compliance.ErrorMajorVersion, err) {
+			} else if errors.Is(err, compliance.ErrorMajorVersion) {
 				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Compliance policy (%s) does not support requested major version %d", policy.PolicyId.String(), major))
-			} else if errors.Is(compliance.ErrorNotFound, err) {
+			} else if errors.Is(err, compliance.ErrorNotFound) {
 				return nil, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Compliance policy (%s) or its tailorings weren't found", policy.PolicyId.String()))
 			} else if err != nil {
 				return nil, err

@@ -91,7 +91,7 @@ func testGetCompose(ctx context.Context, t *testing.T) {
 
 	// cross-account compose access not allowed
 	compose, err = d.GetCompose(ctx, composes[0].Id, ORGID2)
-	require.Equal(t, db.ComposeEntryNotFoundError, err)
+	require.Equal(t, db.ErrComposeEntryNotFound, err)
 	require.Nil(t, compose)
 
 }
@@ -209,10 +209,10 @@ func testDeleteCompose(ctx context.Context, t *testing.T) {
 	_, err = conn.Exec(ctx, insert, composeId, "{}", ANR1, ORGID1)
 
 	err = d.DeleteCompose(ctx, composeId, ORGID2)
-	require.Equal(t, db.ComposeEntryNotFoundError, err)
+	require.Equal(t, db.ErrComposeEntryNotFound, err)
 
 	err = d.DeleteCompose(ctx, uuid.New(), ORGID1)
-	require.Equal(t, db.ComposeEntryNotFoundError, err)
+	require.Equal(t, db.ErrComposeEntryNotFound, err)
 
 	err = d.DeleteCompose(ctx, composeId, ORGID1)
 	require.NoError(t, err)
@@ -292,7 +292,7 @@ func testClones(ctx context.Context, t *testing.T) {
 	require.Equal(t, cloneId, clones[1].Id)
 
 	entry, err := d.GetClone(ctx, cloneId, ORGID2)
-	require.ErrorIs(t, err, db.CloneNotFoundError)
+	require.ErrorIs(t, err, db.ErrCloneNotFound)
 	require.Nil(t, entry)
 
 	entry, err = d.GetClone(ctx, cloneId, ORGID1)

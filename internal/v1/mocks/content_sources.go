@@ -220,7 +220,7 @@ func ContentSources(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if "1999-01-30T00:00:00Z" != body.Date {
+		if body.Date != "1999-01-30T00:00:00Z" {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

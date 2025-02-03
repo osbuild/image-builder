@@ -54,9 +54,9 @@ jobs:
         run: make build
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.56.2
+          version: v1.63.4
           skip-cache: true
 
       - name: Run unit tests

@@ -81,7 +81,7 @@ func OscapProfiles(distribution Distributions) (DistributionProfileResponse, err
 	case Rhel90:
 		fallthrough
 	default:
-		return nil, errors.New("No profile for the specified distribution")
+		return nil, errors.New("no profile for the specified distribution")
 	}
 }
 
@@ -112,7 +112,7 @@ func loadOscapCustomizations(distributionDir string, distribution Distributions,
 
 	if customizations.Openscap == nil {
 		// set the profile id in the customizations object
-		return nil, errors.New("Customizations file is missing OpenSCAP section")
+		return nil, errors.New("customizations file is missing OpenSCAP section")
 	}
 
 	return &customizations, nil

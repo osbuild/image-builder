@@ -89,7 +89,7 @@ func TestRHELMajorMinor(t *testing.T) {
 	d, err = adr.Available(true).Get("centos-9")
 	require.NoError(t, err)
 	_, _, err = d.RHELMajorMinor()
-	require.Error(t, err, MajorMinorError)
+	require.Error(t, err, ErrMajorMinor)
 }
 
 func TestArchitecture_FindPackages(t *testing.T) {
@@ -172,7 +172,7 @@ func TestArchitecture_FindPackages(t *testing.T) {
 
 func TestInvalidDistribution(t *testing.T) {
 	_, err := readDistribution("../../distributions", "none")
-	require.Error(t, err, DistributionNotFound)
+	require.Error(t, err, ErrDistributionNotFound)
 }
 
 func TestDistributionFileIsRestricted(t *testing.T) {
@@ -233,7 +233,7 @@ func TestArchitecture_validate(t *testing.T) {
 				},
 				Packages: nil,
 			},
-			RepoSourceError,
+			ErrRepoSource,
 		},
 		{
 			"no-source",
@@ -244,7 +244,7 @@ func TestArchitecture_validate(t *testing.T) {
 				},
 				Packages: nil,
 			},
-			RepoSourceError,
+			ErrRepoSource,
 		},
 	}
 	for _, tt := range tests {

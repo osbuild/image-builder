@@ -53,7 +53,7 @@ func (csc *ContentSourcesClient) request(method, url string, headers map[string]
 func (csc *ContentSourcesClient) fetchRepositories(ctx context.Context, repoURLs []string, repoIDs []string, external bool) (*ApiRepositoryCollectionResponse, error) {
 	id, ok := identity.GetIdentityHeader(ctx)
 	if !ok {
-		return nil, fmt.Errorf("Unable to get identity from context")
+		return nil, fmt.Errorf("unable to get identity from context")
 	}
 
 	csReposURL := csc.url.JoinPath("repositories/")
@@ -63,7 +63,7 @@ func (csc *ContentSourcesClient) fetchRepositories(ctx context.Context, repoURLs
 	} else if len(repoIDs) > 0 {
 		queryValues.Add("uuid", strings.Join(repoIDs, ","))
 	} else {
-		return nil, fmt.Errorf("At least one repo url or repo id needs to be given")
+		return nil, fmt.Errorf("at least one repo url or repo id needs to be given")
 	}
 	if external {
 		queryValues.Add("origin", "external,upload")
@@ -84,16 +84,16 @@ func (csc *ContentSourcesClient) fetchRepositories(ctx context.Context, repoURLs
 		if resp.StatusCode != http.StatusUnauthorized {
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to fetch repositories, got %v response, body: %s", resp.StatusCode, body)
+				return nil, fmt.Errorf("unable to fetch repositories, got %v response, body: %s", resp.StatusCode, body)
 			}
 		}
-		return nil, fmt.Errorf("Unable to fetch repositories, got %v response", resp.StatusCode)
+		return nil, fmt.Errorf("unable to fetch repositories, got %v response", resp.StatusCode)
 	}
 
 	var repos *ApiRepositoryCollectionResponse
 	err = json.NewDecoder(resp.Body).Decode(&repos)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to parse repositories: %v", err)
+		return nil, fmt.Errorf("unable to parse repositories: %v", err)
 	}
 
 	return repos, nil
@@ -129,7 +129,7 @@ func (csc *ContentSourcesClient) GetRepositories(ctx context.Context, repoURLs [
 func (csc *ContentSourcesClient) BulkExportRepositories(ctx context.Context, body ApiRepositoryExportRequest) (*http.Response, error) {
 	id, ok := identity.GetIdentityHeader(ctx)
 	if !ok {
-		return nil, fmt.Errorf("Unable to get identity from context")
+		return nil, fmt.Errorf("unable to get identity from context")
 	}
 
 	buf, err := json.Marshal(body)
@@ -147,7 +147,7 @@ func (csc *ContentSourcesClient) BulkExportRepositories(ctx context.Context, bod
 func (csc *ContentSourcesClient) GetSnapshotsForDate(ctx context.Context, body ApiListSnapshotByDateRequest) (*http.Response, error) {
 	id, ok := identity.GetIdentityHeader(ctx)
 	if !ok {
-		return nil, fmt.Errorf("Unable to get identity from context")
+		return nil, fmt.Errorf("unable to get identity from context")
 	}
 
 	buf, err := json.Marshal(body)

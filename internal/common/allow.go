@@ -31,23 +31,23 @@ func LoadAllowList(allowFile string) (AllowList, error) {
 
 	jsonFile, err := os.Open(filepath.Clean(allowFile))
 	if err != nil {
-		return nil, fmt.Errorf("No allow file found at %s: %v", allowFile, err)
+		return nil, fmt.Errorf("no allow file found at %s: %v", allowFile, err)
 	}
 	defer func() {
 		if err := jsonFile.Close(); err != nil {
-			logrus.Errorln(fmt.Sprintf("Error closing file: %s", err))
+			logrus.Errorln(fmt.Sprintf("error closing file: %s", err))
 		}
 	}()
 
 	rawJsonFile, err := io.ReadAll(jsonFile)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read allow file %q: %s", allowFile, err.Error())
+		return nil, fmt.Errorf("failed to read allow file %q: %s", allowFile, err.Error())
 	}
 
 	var allowList AllowList
 	err = json.Unmarshal(rawJsonFile, &allowList)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to unmarshal allow file %q: %s", allowFile, err.Error())
+		return nil, fmt.Errorf("failed to unmarshal allow file %q: %s", allowFile, err.Error())
 	}
 
 	return allowList, nil

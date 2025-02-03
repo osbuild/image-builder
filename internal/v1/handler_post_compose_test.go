@@ -350,7 +350,7 @@ func TestComposeStatusError(t *testing.T) {
 	ctx := context.Background()
 	id := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -358,18 +358,16 @@ func TestComposeStatusError(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 
 		//nolint
-		var manifestErrorDetails interface{}
-		manifestErrorDetails = []composer.ComposeStatusError{
-			composer.ComposeStatusError{
+		var manifestErrorDetails any = []composer.ComposeStatusError{
+			{
 				Id:     23,
 				Reason: "Marking errors: package",
 			},
 		}
 
 		//nolint
-		var osbuildErrorDetails interface{}
-		osbuildErrorDetails = []composer.ComposeStatusError{
-			composer.ComposeStatusError{
+		var osbuildErrorDetails any = []composer.ComposeStatusError{
+			{
 				Id:      5,
 				Reason:  "dependency failed",
 				Details: &manifestErrorDetails,
@@ -421,7 +419,7 @@ func TestComposeStatusError(t *testing.T) {
 
 func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -462,7 +460,7 @@ func TestComposeImageErrorsWhenStatusCodeIsNotStatusCreated(t *testing.T) {
 
 func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -512,7 +510,7 @@ func TestComposeImageErrorResolvingOSTree(t *testing.T) {
 
 func TestComposeImageErrorsWhenCannotParseResponse(t *testing.T) {
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -582,7 +580,7 @@ func TestComposeImageErrorsWhenDistributionNotExists(t *testing.T) {
 func TestComposeImageReturnsIdWhenNoErrors(t *testing.T) {
 	id := uuid.New()
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -634,7 +632,7 @@ func TestComposeImageAllowList(t *testing.T) {
 
 	createApiSrv := func() *httptest.Server {
 		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if "Bearer" == r.Header.Get("Authorization") {
+			if r.Header.Get("Authorization") == "Bearer" {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
@@ -738,7 +736,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 	var composeId uuid.UUID
 	var composerRequest composer.ComposeRequest
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -1369,7 +1367,7 @@ func TestComposeCustomizations(t *testing.T) {
 	var id uuid.UUID
 	var composerRequest composer.ComposeRequest
 	apiSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if "Bearer" == r.Header.Get("Authorization") {
+		if r.Header.Get("Authorization") == "Bearer" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

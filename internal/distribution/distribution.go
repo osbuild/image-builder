@@ -13,9 +13,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var DistributionNotFound = errors.New("Distribution not available")
-var RepoSourceError = errors.New("Repository must always have one of these properties: baseurl, metalink")
-var MajorMinorError = errors.New("Unable to get major and minor version for distribution")
+var ErrDistributionNotFound = errors.New("distribution not available")
+var ErrRepoSource = errors.New("repository must always have one of these properties: baseurl, metalink")
+var ErrMajorMinor = errors.New("unable to get major and minor version for distribution")
 
 type DistributionItem struct {
 	Description      string  `json:"description"`
@@ -89,34 +89,34 @@ func (dist DistributionFile) IsRestricted() bool {
 func (dist DistributionFile) RHELMajorMinor() (int, int, error) {
 	splitHyphen := strings.Split(dist.Distribution.Name, "-")
 	if len(splitHyphen) != 2 || splitHyphen[0] != "rhel" {
-		return 0, 0, MajorMinorError
+		return 0, 0, ErrMajorMinor
 	}
 
 	version := splitHyphen[1]
 	if len(version) < 2 || len(version) > 4 {
-		return 0, 0, MajorMinorError
+		return 0, 0, ErrMajorMinor
 	}
 
 	if strings.Contains(version, ".") {
 		splitDot := strings.Split(version, ".")
 		major, err := strconv.Atoi(splitDot[0])
 		if err != nil {
-			return 0, 0, fmt.Errorf("%w: %w", MajorMinorError, err)
+			return 0, 0, fmt.Errorf("%w: %w", ErrMajorMinor, err)
 		}
 		minor, err := strconv.Atoi(splitDot[1])
 		if err != nil {
-			return major, 0, fmt.Errorf("%w: %w", MajorMinorError, err)
+			return major, 0, fmt.Errorf("%w: %w", ErrMajorMinor, err)
 		}
 		return major, minor, nil
 	}
 
 	major, err := strconv.Atoi(version[:1])
 	if err != nil {
-		return 0, 0, fmt.Errorf("%w: %w", MajorMinorError, err)
+		return 0, 0, fmt.Errorf("%w: %w", ErrMajorMinor, err)
 	}
 	minor, err := strconv.Atoi(version[1:])
 	if err != nil {
-		return major, 0, fmt.Errorf("%w: %w", MajorMinorError, err)
+		return major, 0, fmt.Errorf("%w: %w", ErrMajorMinor, err)
 	}
 	return major, minor, nil
 }
@@ -163,13 +163,13 @@ func (arch Architecture) validate() error {
 
 		if r.Metalink != nil {
 			if sourceSet {
-				return RepoSourceError
+				return ErrRepoSource
 			}
 			sourceSet = true
 		}
 
 		if !sourceSet {
-			return RepoSourceError
+			return ErrRepoSource
 		}
 	}
 
@@ -199,7 +199,7 @@ func validDistribution(distsDir, distro string) (string, error) {
 			return d, nil
 		}
 	}
-	return "", DistributionNotFound
+	return "", ErrDistributionNotFound
 }
 
 func readDistribution(distsDir, distroIn string) (d DistributionFile, err error) {

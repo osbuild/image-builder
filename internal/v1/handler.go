@@ -304,7 +304,7 @@ func (h *Handlers) handleErrorResponse(ctx echo.Context, resp *http.Response, er
 	httpError := echo.NewHTTPError(http.StatusInternalServerError, errorDescription)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		ctx.Logger().Errorf("Unable to read error response data: %v", err)
+		ctx.Logger().Errorf("unable to read error response data: %v", err)
 	} else {
 		_ = httpError.SetInternal(fmt.Errorf("%s", body))
 	}
@@ -439,7 +439,7 @@ func (h *Handlers) DeleteCompose(ctx echo.Context, composeId uuid.UUID) error {
 
 	err = h.server.db.DeleteCompose(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
-		if errors.Is(err, db.ComposeEntryNotFoundError) {
+		if errors.Is(err, db.ErrComposeEntryNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -470,7 +470,7 @@ func (h *Handlers) GetComposeMetadata(ctx echo.Context, composeId uuid.UUID) err
 		httpError := echo.NewHTTPError(http.StatusInternalServerError, "Failed querying compose metadata")
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			ctx.Logger().Errorf("Unable to parse composer's compose response: %v", err)
+			ctx.Logger().Errorf("unable to parse composer's compose response: %v", err)
 		} else {
 			_ = httpError.SetInternal(fmt.Errorf("%s", body))
 		}
@@ -516,7 +516,7 @@ func (h *Handlers) getComposeByIdAndOrgId(ctx echo.Context, composeId uuid.UUID)
 
 	composeEntry, err := h.server.db.GetCompose(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
-		if errors.Is(err, db.ComposeEntryNotFoundError) {
+		if errors.Is(err, db.ErrComposeEntryNotFound) {
 			return nil, echo.NewHTTPError(http.StatusNotFound, fmt.Sprintf("Compose entry %v not found %s", composeId, err))
 		} else {
 			return nil, err
@@ -609,7 +609,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 	}
 	imageType, err := h.server.db.GetComposeImageType(ctx.Request().Context(), composeId, userID.OrgID())
 	if err != nil {
-		if errors.Is(err, db.ComposeEntryNotFoundError) {
+		if errors.Is(err, db.ErrComposeEntryNotFound) {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unable to find compose %v", composeId))
 		}
 		ctx.Logger().Errorf("Error querying image type for compose %v: %v", composeId, err)
@@ -695,7 +695,7 @@ func (h *Handlers) CloneCompose(ctx echo.Context, composeId uuid.UUID) error {
 	var cloneResponse composer.CloneComposeResponse
 	err = json.NewDecoder(resp.Body).Decode(&cloneResponse)
 	if err != nil {
-		ctx.Logger().Errorf("Unable to decode CloneComposeResponse: %v", err)
+		ctx.Logger().Errorf("unable to decode CloneComposeResponse: %v", err)
 		return err
 	}
 
@@ -718,7 +718,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 
 	cloneEntry, err := h.server.db.GetClone(ctx.Request().Context(), id, userID.OrgID())
 	if err != nil {
-		if errors.Is(err, db.CloneNotFoundError) {
+		if errors.Is(err, db.ErrCloneNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, err)
 		}
 		ctx.Logger().Errorf("Error querying clone %v: %v", id, err)
@@ -746,14 +746,14 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 	var cloudStat composer.CloneStatus
 	err = json.NewDecoder(resp.Body).Decode(&cloudStat)
 	if err != nil {
-		ctx.Logger().Errorf("Unable to decode clone status: %v", err)
+		ctx.Logger().Errorf("unable to decode clone status: %v", err)
 		return err
 	}
 
 	var options CloneStatusResponse_Options
 	uo, err := cloudStat.Options.AsAWSEC2UploadStatus()
 	if err != nil {
-		ctx.Logger().Errorf("Unable to decode clone status: %v", err)
+		ctx.Logger().Errorf("unable to decode clone status: %v", err)
 		return err
 	}
 
@@ -762,7 +762,7 @@ func (h *Handlers) GetCloneStatus(ctx echo.Context, id uuid.UUID) error {
 		Region: uo.Region,
 	})
 	if err != nil {
-		ctx.Logger().Errorf("Unable to encode clone status: %v", err)
+		ctx.Logger().Errorf("unable to encode clone status: %v", err)
 		return err
 	}
 
