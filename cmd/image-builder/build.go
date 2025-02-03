@@ -21,11 +21,6 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		opts = &buildOptions{}
 	}
 
-	// XXX: support output filename via commandline (c.f.
-	//   https://github.com/osbuild/images/pull/1039)
-	if opts.OutputDir == "" {
-		opts.OutputDir = outputNameFor(res)
-	}
 	if opts.WriteManifest {
 		p := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.osbuild-manifest.json", outputNameFor(res)))
 		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {

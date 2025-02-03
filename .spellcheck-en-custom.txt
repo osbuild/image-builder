@@ -1,3 +1,4 @@
+ami
 backend
 bootc
 bootmode

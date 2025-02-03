@@ -114,6 +114,22 @@ It is possible to generate spdx based SBOM (software bill of materials)
 documents as part of the build. Just pass `--with-sbom` and
 it will put them into the output directory.
 
+### Cloud integration
+
+When building an image type that can be uploaded to the cloud
+(e.g. an "ami") image-builder will automatically upload if
+all cloud parameters are provided, e.g.
+```
+$ image-builder build ami --distro centos-9 \
+    --aws-region us-east-1 \
+	--aws-bucket example-bucket \
+	--aws-ami-name my-image-1
+```
+Images can also be uploaded with the `image-builder upload` command
+after they are built.
+
+
+
 ### Filtering
 
 When listing images, it is possible to filter:
