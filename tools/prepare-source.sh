@@ -1,25 +1,32 @@
 #!/bin/sh
-set -eux
+set -eu
 
-GO_VERSION=1.22.0
+GO_MAJOR_VER=1.22
+GO_VERSION=1.22.9
 OAPI_VERSION=2.4.1
-
-GO_BINARY=$(go env GOPATH)/bin/go$GO_VERSION
 TOOLS_PATH="$(realpath "$(dirname "$0")/bin")"
 
-# Install Go SDK
-go install golang.org/dl/go$GO_VERSION@latest
-$GO_BINARY download
+# Check latest Go version for the minor we're using
+LATEST=$(curl -s https://endoflife.date/api/go/"${GO_MAJOR_VER}".json  | jq -r .latest)
+if test "$LATEST" != "$GO_VERSION"; then
+    echo "WARNING: A new minor release is available (${LATEST}), consider bumping the project version (${GO_VERSION})"
+fi
+
+set -x
+
+# Pin Go and toolbox versions at a reasonable version
+go get go@$GO_VERSION toolchain@$GO_VERSION
+
+# Update go.mod and go.sum:
+go mod tidy
 
 # Ensure dev tools are installed
-test -e "$TOOLS_PATH/goimports" || GOBIN=$TOOLS_PATH $GO_BINARY install golang.org/x/tools/cmd/goimports@latest
-("$TOOLS_PATH/oapi-codegen" -version | grep "$OAPI_VERSION" >/dev/null) || GOBIN=$TOOLS_PATH $GO_BINARY install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v$OAPI_VERSION
+test -e "$TOOLS_PATH/goimports" || GOBIN=$TOOLS_PATH go install golang.org/x/tools/cmd/goimports@latest
+("$TOOLS_PATH/oapi-codegen" -version | grep "$OAPI_VERSION" >/dev/null) || GOBIN=$TOOLS_PATH go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v$OAPI_VERSION
 
-GOBIN=$TOOLS_PATH $GO_BINARY generate -x -mod=mod ./...
+# Generate source (skip vendor/):
+GOBIN=$TOOLS_PATH go generate -x ./cmd/... ./internal/...
 
-# ... the code is formatted correctly, ...
-"$TOOLS_PATH/goimports" -w internal cmd
-$GO_BINARY fmt -mod=mod ./internal/... ./cmd/...
-
-# ... and that go.mod and go.sum are up to date.
-$GO_BINARY mod tidy
+# Reformat source (skip vendor/):
+"$TOOLS_PATH/goimports" -w ./internal ./cmd
+go fmt ./cmd/... ./internal/...
