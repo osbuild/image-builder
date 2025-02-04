@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -179,6 +181,12 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 	pbar.Start()
 	defer pbar.Stop()
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		pbar.Stop()
+	}()
 
 	var mf bytes.Buffer
 	// XXX: check env here, i.e. if user is root and osbuild is installed
