@@ -112,10 +112,6 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		return nil, err
 	}
 
-	imgTypeStr := args[0]
-	pbar.SetPulseMsgf("Manifest generation step")
-	pbar.SetMessagef("Building manifest for %s-%s", imgTypeStr, distroStr)
-
 	bp, err := blueprintload.Load(blueprintPath)
 	if err != nil {
 		return nil, err
@@ -125,6 +121,9 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	imgTypeStr := args[0]
+	pbar.SetPulseMsgf("Manifest generation step")
+	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
 
 	img, err := getOneImage(dataDir, distroStr, imgTypeStr, archStr)
 	if err != nil {
