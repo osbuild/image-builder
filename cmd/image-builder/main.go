@@ -157,6 +157,22 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	return err
 }
 
+func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
+	progressType, err := cmd.Flags().GetString("progress")
+	if err != nil {
+		return nil, err
+	}
+	verbose, err := cmd.Flags().GetBool("verbose")
+	if err != nil {
+		return nil, err
+	}
+	if progressType == "auto" && verbose {
+		progressType = "verbose"
+	}
+
+	return progress.New(progressType)
+}
+
 func cmdBuild(cmd *cobra.Command, args []string) error {
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
@@ -166,16 +182,11 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	progressType, err := cmd.Flags().GetString("progress")
-	if err != nil {
-		return err
-	}
 	withManifest, err := cmd.Flags().GetBool("with-manifest")
 	if err != nil {
 		return err
 	}
-
-	pbar, err := progress.New(progressType)
+	pbar, err := progressFromCmd(cmd)
 	if err != nil {
 		return err
 	}
@@ -256,6 +267,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 	rootCmd.PersistentFlags().String("datadir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 

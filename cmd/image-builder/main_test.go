@@ -13,8 +13,10 @@ import (
 	"testing"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 
+	//"github.com/osbuild/bootc-image-builder/bib/pkg/progress"
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
@@ -566,4 +568,31 @@ func TestDescribeImageSmoke(t *testing.T) {
 	assert.Contains(t, fakeStdout.String(), `distro: centos-9
 type: qcow2
 arch: x86_64`)
+}
+
+func TestProgressFromCmd(t *testing.T) {
+	cmd := &cobra.Command{}
+	cmd.Flags().String("progress", "auto", "")
+	cmd.Flags().Bool("verbose", false, "")
+
+	for _, tc := range []struct {
+		progress string
+		verbose  bool
+		// XXX: progress should just export the types, then
+		// this would be a bit nicer
+		expectedProgress string
+	}{
+		// we cannto test the "auto/false" case because it
+		// depends on if there is a terminal attached or not
+		//{"auto", false, "*progress.terminalProgressBar"},
+		{"auto", true, "*progress.verboseProgressBar"},
+		{"term", false, "*progress.terminalProgressBar"},
+		{"term", true, "*progress.terminalProgressBar"},
+	} {
+		cmd.Flags().Set("progress", tc.progress)
+		cmd.Flags().Set("verbose", fmt.Sprintf("%v", tc.verbose))
+		pbar, err := main.ProgressFromCmd(cmd)
+		assert.NoError(t, err)
+		assert.Equal(t, tc.expectedProgress, fmt.Sprintf("%T", pbar))
+	}
 }
