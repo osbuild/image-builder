@@ -9,10 +9,11 @@ import (
 )
 
 var (
-	GetOneImage   = getOneImage
-	Run           = run
-	FindDistro    = findDistro
-	DescribeImage = describeImage
+	GetOneImage     = getOneImage
+	Run             = run
+	FindDistro      = findDistro
+	DescribeImage   = describeImage
+	ProgressFromCmd = progressFromCmd
 )
 
 func MockOsArgs(new []string) (restore func()) {
