@@ -22,7 +22,7 @@ $ sudo dnf copr enable @osbuild/image-builder
 # ...
 $ sudo dnf install image-builder
 # ...
-$ sudo image-builder build --distro fedora-41 minimal-raw
+$ sudo image-builder build minimal-raw
 # ...
 ```
 
@@ -38,7 +38,6 @@ $ sudo podman run \
     -it \
     -v ./output:/output \
     ghcr.io/osbuild/image-builder-cli:latest \
-    --distro fedora-41 \
     build minimal-raw
 # ...
 ```
@@ -55,5 +54,5 @@ $ git clone github.com/osbuild/image-builder-cli
 $ cd image-builder-cli
 $ go build ./cmd/image-builder build
 # ...
-$ sudo ./image-builder --distro fedora-41 minimal-raw
+$ sudo ./image-builder minimal-raw
 ```
