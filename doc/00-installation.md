@@ -52,7 +52,7 @@ $ sudo dnf install go git-core osbuild osbuild-depsolve-dnf osbuild-ostree osbui
 $ git clone github.com/osbuild/image-builder-cli
 # ...
 $ cd image-builder-cli
-$ go build ./cmd/image-builder build
+$ go build ./cmd/image-builder
 # ...
-$ sudo ./image-builder minimal-raw
+$ sudo ./image-builder build minimal-raw
 ```
