@@ -22,7 +22,7 @@ type describeImgYAML struct {
 	Arch   string `yaml:"arch"`
 
 	// XXX: think about ordering (as this is what the user will see)
-	OsVersion string `yaml:"os_vesion"`
+	OsVersion string `yaml:"os_version"`
 
 	Bootmode        string `yaml:"bootmode"`
 	PartitionType   string `yaml:"partition_type"`

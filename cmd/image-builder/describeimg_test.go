@@ -26,7 +26,7 @@ func TestDescribeImage(t *testing.T) {
 distro: centos-9
 type: tar
 arch: x86_64
-os_vesion: 9-stream
+os_version: 9-stream
 bootmode: none
 partition_type: ""
 default_filename: root.tar.xz
