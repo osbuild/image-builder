@@ -7,7 +7,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/osbuild/images/pkg/blueprint"
+	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/imagefilter"
 )

@@ -439,6 +439,8 @@ var failingOsbuild = `
 cat - > "$0".stdin
 echo "error on stdout"
 >&2 echo "error on stderr"
+
+>&3 echo '{"message": "osbuild-stage-output"}'
 exit 1
 `
 
@@ -501,6 +503,8 @@ func TestBuildIntegrationErrorsProgressTerm(t *testing.T) {
 		err = main.Run()
 	})
 	assert.EqualError(t, err, `error running osbuild: exit status 1
+BuildLog:
+osbuild-stage-output
 Output:
 error on stdout
 error on stderr
