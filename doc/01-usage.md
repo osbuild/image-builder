@@ -25,7 +25,7 @@ fedora-41 type:qcow2 arch:x86_64
 fedora-41 type:vhd arch:x86_64
 fedora-41 type:vmdk arch:x86_64
 fedora-41 type:wsl arch:x86_64
-$ image-builder build --distro fedora-41 qcow2
+$ sudo image-builder build --distro fedora-41 qcow2
 # ...
 ```
 
