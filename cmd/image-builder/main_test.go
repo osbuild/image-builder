@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 
-	//"github.com/osbuild/bootc-image-builder/bib/pkg/progress"
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
