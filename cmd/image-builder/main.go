@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/osbuild/bootc-image-builder/bib/pkg/progress"
+	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
