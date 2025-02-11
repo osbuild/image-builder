@@ -53,7 +53,7 @@ func parseExtraRepo(extraRepo string) ([]rpmmd.RepoConfig, error) {
 	}, nil
 }
 
-var newRepoRegistry = func(dataDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
+func newRepoRegistryImpl(dataDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
 	var dataDirs []string
 	if dataDir != "" {
 		dataDirs = []string{dataDir}
@@ -87,3 +87,6 @@ var newRepoRegistry = func(dataDir string, extraRepos []string) (*reporegistry.R
 
 	return reporegistry.NewFromDistrosRepoConfigs(conf), nil
 }
+
+// this is a variable to make it overridable in tests
+var newRepoRegistry = newRepoRegistryImpl
