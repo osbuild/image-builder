@@ -189,6 +189,55 @@ $ image-builder list-images --output=json
 ]
 ```
 
+## Modifying the set of used repositories
+
+There are various ways to add extra repositories or override the default
+base repositories. Most users will want to use the
+[blueprint systems](https://osbuild.org/docs/user-guide/blueprint-reference/#repositories)
+for this. Repositories that are part of the blueprint will get added
+to the installed image but are not used at build time to install third-party
+packages.
+
+To change repositories during image build time the command line options
+`--datadir`, `--extra-repo` and `--force-repo` can be used. The repositories
+there will only added during build time and will not be available in the
+installed system (use the above blueprint options if that the goal).
+
+Note that both options are targeting advanced users/use-cases and when
+used wrongly can result in failing image builds or non-booting
+systems.
+
+## Using the datadir switch
+
+When using the `--datadir` flag `image-builder` will look into
+the <datadir>/repositories directory for a file called <distro>.json
+that contains the repositories for the <distro>.
+
+This <distro>.json file is a simple architecture-> repositories mapping
+that looks like [this example](https://github.com/osbuild/images/blob/main/data/repositories/centos-10.json).
+
+### Adding extra repositories during the build
+
+To add one or more extra repositories during the build use:
+`--extra-repo <baseurl>`, e.g. `--extra-repo file:///path/to/repo`.
+This will make the content of the repository available during image
+building and the dependency solver will pick packages from there as
+appropriate (e.g. if that repository contains a libc or kernel with a
+higher version number it will be picked over the default
+repositories).
+
+### Overriding the default base repositories during build
+
+To completely replace the default base repositories during a build the
+option `--force-repo=file:///path/to/repos` can be used.
+
+Note that the repositories defined there will be used for all
+dependency solving and there is no safeguards, i.e. one can point to
+a fedora-42 repository url and try to build a centos-9 image type and
+the system will happily try its best (and most likely fail). Use with
+caution.
+
+
 ## FAQ
 
 Q: Does this require a backend.

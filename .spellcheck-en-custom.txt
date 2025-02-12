@@ -3,6 +3,7 @@ backend
 bootc
 bootmode
 buildable
+centos
 Changelog
 cli
 distro
@@ -33,3 +34,5 @@ amongst
 RHEL
 hyperscalers
 weldr
+libc
+url
