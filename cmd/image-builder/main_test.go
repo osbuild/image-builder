@@ -343,7 +343,7 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	assert.NoError(t, err)
 
 	// ensure osbuild was run exactly one
-	assert.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
+	require.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
 	osbuildCall := fakeOsbuildCmd.Calls()[0]
 	// --cache is passed correctly to osbuild
 	storePos := slices.Index(osbuildCall, "--store")

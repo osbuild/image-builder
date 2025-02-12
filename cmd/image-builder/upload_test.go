@@ -98,7 +98,7 @@ func TestUploadCmdlineErrors(t *testing.T) {
 			`missing --to parameter, try --to=aws`,
 		}, {
 			[]string{"--to=aws"},
-			`missing upload configuration: ["--aws-ami-name" "--aws-bucket" "--aws-region"]`,
+			`missing all upload configuration: ["--aws-ami-name" "--aws-bucket" "--aws-region"]`,
 		},
 		{
 			[]string{"--to=aws", "--aws-ami-name=1"},
@@ -242,5 +242,5 @@ func TestBuildAndUploadWithAWSPartialCmdlineErrors(t *testing.T) {
 	defer restore()
 
 	err := main.Run()
-	assert.EqualError(t, err, `partial upload config provided: missing upload configuration: ["--aws-ami-name" "--aws-bucket"]`)
+	assert.EqualError(t, err, `missing upload configuration: ["--aws-ami-name" "--aws-bucket"]`)
 }
