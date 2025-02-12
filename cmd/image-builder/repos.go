@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/osbuild/images/data/repositories"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -24,33 +25,37 @@ type repoConfig struct {
 	ExtraRepos []string
 }
 
-func parseExtraRepo(extraRepo string) ([]rpmmd.RepoConfig, error) {
-	// We want to eventually support more URIs repos here:
-	// - config:/path/to/repo.json
-	// - copr:@osbuild/osbuild (with full gpg retrival via the copr API)
-	// But for now just default to base-urls
+func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
+	var repoConf []rpmmd.RepoConfig
 
-	baseURL, err := url.Parse(extraRepo)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse extra repo %w", err)
-	}
-	if baseURL.Scheme == "" {
-		return nil, fmt.Errorf(`scheme missing in %q, please prefix with e.g. file:`, extraRepo)
-	}
+	for i, repoURL := range repoURLs {
+		// We want to eventually support more URIs repos here:
+		// - config:/path/to/repo.json
+		// - copr:@osbuild/osbuild (with full gpg retrival via the copr API)
+		// But for now just default to base-urls
 
-	// TODO: to support gpg checking we will need to add signing keys.
-	// We will eventually add support for our own "repo.json" format
-	// which is rich enough to contain gpg keys (and more).
-	checkGPG := false
-	return []rpmmd.RepoConfig{
-		{
-			Id:           baseURL.String(),
-			Name:         baseURL.String(),
+		baseURL, err := url.Parse(repoURL)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse extra repo %w", err)
+		}
+		if baseURL.Scheme == "" {
+			return nil, fmt.Errorf(`scheme missing in %q, please prefix with e.g. file:// or https://`, repoURL)
+		}
+
+		// TODO: to support gpg checking we will need to add signing keys.
+		// We will eventually add support for our own "repo.json" format
+		// which is rich enough to contain gpg keys (and more).
+		checkGPG := false
+		repoConf = append(repoConf, rpmmd.RepoConfig{
+			Id:           fmt.Sprintf("%s-repo-%v", what, i),
+			Name:         fmt.Sprintf("%s repo#%v %s%s", what, i, baseURL.Host, baseURL.Path),
 			BaseURLs:     []string{baseURL.String()},
 			CheckGPG:     &checkGPG,
 			CheckRepoGPG: &checkGPG,
-		},
-	}, nil
+		})
+	}
+
+	return repoConf, nil
 }
 
 func newRepoRegistryImpl(dataDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
@@ -68,21 +73,19 @@ func newRepoRegistryImpl(dataDir string, extraRepos []string) (*reporegistry.Rep
 
 	// XXX: this should probably go into manifestgen.Options as
 	// a new Options.ExtraRepoConf eventually (just like OverrideRepos)
-	for _, repo := range extraRepos {
-		// XXX: this loads the extra repo unconditionally to all
-		// distro/arch versions. we do not know in advance where
-		// it belongs to
-		extraRepo, err := parseExtraRepo(repo)
-		if err != nil {
-			return nil, err
-		}
-		for _, repoArchConfigs := range conf {
-			for arch := range repoArchConfigs {
-				archCfg := repoArchConfigs[arch]
-				archCfg = append(archCfg, extraRepo...)
-				repoArchConfigs[arch] = archCfg
-			}
-		}
+	repoConf, err := parseRepoURLs(extraRepos, "extra")
+	if err != nil {
+		return nil, err
+	}
+	// Only add extra repos for the host architecture. We do not support
+	// cross-building (yet) so this is fine. Once we support cross-building
+	// this needs to move (probably into manifestgen) because at this
+	// level we we do not know (yet) what manifest we will generate.
+	myArch := arch.Current().String()
+	for _, repoArchConfigs := range conf {
+		archCfg := repoArchConfigs[myArch]
+		archCfg = append(archCfg, repoConf...)
+		repoArchConfigs[myArch] = archCfg
 	}
 
 	return reporegistry.NewFromDistrosRepoConfigs(conf), nil

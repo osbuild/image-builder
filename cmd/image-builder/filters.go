@@ -21,8 +21,14 @@ func newImageFilterDefault(dataDir string, extraRepos []string) (*imagefilter.Im
 }
 
 type repoOptions struct {
-	DataDir    string
+	// DataDir contains the base dir for the repo definition search path
+	DataDir string
+
+	// ExtraRepos contains extra baseURLs that get added to the depsolving
 	ExtraRepos []string
+
+	// ForceRepos contains baseURLs that replace *all* base repositories
+	ForceRepos []string
 }
 
 // should this be moved to images:imagefilter?

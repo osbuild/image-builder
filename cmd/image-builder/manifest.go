@@ -21,6 +21,8 @@ type manifestOptions struct {
 	Ostree        *ostree.ImageOptions
 	RpmDownloader osbuild.RpmDownloader
 	WithSBOM      bool
+
+	ForceRepos []string
 }
 
 func sbomWriter(outputDir, filename string, content io.Reader) error {
@@ -57,6 +59,13 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
 			return sbomWriter(outputDir, filename, content)
 		}
+	}
+	if len(opts.ForceRepos) > 0 {
+		forcedRepos, err := parseRepoURLs(opts.ForceRepos, "forced")
+		if err != nil {
+			return err
+		}
+		manifestGenOpts.OverrideRepos = forcedRepos
 	}
 
 	mg, err := manifestgen.New(repos, manifestGenOpts)
