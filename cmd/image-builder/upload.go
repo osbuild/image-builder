@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -14,22 +15,14 @@ import (
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 )
 
-type MissingUploadConfigError struct {
-	missing    []string
-	allMissing bool
-}
+// ErrMissingUploadConfig is returned when the upload configuration is missing
+var ErrMissingUploadConfig = errors.New("missing upload configuration")
 
-func (e *MissingUploadConfigError) Error() string {
-	return fmt.Sprintf("missing upload configuration: %q", e.missing)
-}
+// ErrUploadConfigNotProvided is returned when all the upload configuration is missing
+var ErrUploadConfigNotProvided = errors.New("missing all upload configuration")
 
-type UploadTypeUnsupportedError struct {
-	typ string
-}
-
-func (e *UploadTypeUnsupportedError) Error() string {
-	return fmt.Sprintf("unsupported upload type %q", e.typ)
-}
+// ErrUploadTypeUnsupported is returned when the upload type is not supported
+var ErrUploadTypeUnsupported = errors.New("unsupported type")
 
 var awscloudNewUploader = awscloud.NewUploader
 
@@ -73,7 +66,7 @@ func uploaderFor(cmd *cobra.Command, typeOrCloud string) (cloud.Uploader, error)
 	case "ami", "aws":
 		return uploaderForCmdAWS(cmd)
 	default:
-		return nil, &UploadTypeUnsupportedError{typeOrCloud}
+		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)
 	}
 
 }
@@ -104,10 +97,11 @@ func uploaderForCmdAWS(cmd *cobra.Command) (cloud.Uploader, error) {
 		}
 	}
 	if len(missing) > 0 {
-		return nil, &MissingUploadConfigError{
-			missing:    missing,
-			allMissing: len(missing) == len(requiredArgs),
+		if len(missing) == len(requiredArgs) {
+			return nil, fmt.Errorf("%w: %q", ErrUploadConfigNotProvided, missing)
 		}
+
+		return nil, fmt.Errorf("%w: %q", ErrMissingUploadConfig, missing)
 	}
 
 	return awscloudNewUploader(region, bucketName, amiName, nil)
