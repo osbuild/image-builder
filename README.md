@@ -1,28 +1,26 @@
-Image Builder
-=============
+# Image Builder console.redhat.com Middleware
 
-Image Builder serves as an HTTP API on top of [Osbuild
-Composer](https://github.com/osbuild/osbuild-composer), and serves as the
-backend for [Image Builder
-Frontend](https://github.com/osbuild/image-builder-frontend/).
+"Image Builder **C**onsole.**R**edhat.**C**om" serves as
+an HTTP API on top of [Osbuild Composer](https://github.com/osbuild/osbuild-composer),
+and serves as the backend for [Image Builder Frontend](https://github.com/osbuild/image-builder-frontend/).
 
-Image Builder is intended to be run within the
+Image Builder Middleware is intended to be run within the
 [console.redhat.com](https://console.redhat.com) platform.
 
 ### Project
 
  * **Website**: <https://www.osbuild.org>
- * **Bug Tracker**: <https://github.com/osbuild/image-builder/issues>
+ * **Bug Tracker**: <https://github.com/osbuild/image-builder-crc/issues>
  * **Discussions**: https://github.com/orgs/osbuild/discussions
  * **Matrix**: [#image-builder on fedoraproject.org](https://matrix.to/#/#image-builder:fedoraproject.org)
- * **Changelog**: <https://github.com/osbuild/image-builder/releases>
+ * **Changelog**: <https://github.com/osbuild/image-builder-crc/releases>
 
 ### OpenAPI spec
 
 The latest OpenAPI specification:
 
-* [raw YAML](https://github.com/osbuild/image-builder/blob/main/internal/v1/api.yaml)
-* [on-line version](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/osbuild/image-builder/main/internal/v1/api.yaml)
+* [raw YAML](https://github.com/osbuild/image-builder-crc/blob/main/internal/v1/api.yaml)
+* [on-line version](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/osbuild/image-builder-crc/main/internal/v1/api.yaml)
 
 ### Contributing
 
@@ -54,9 +52,9 @@ To run the project use `make run` target
 
 ## Repository
 
- - **web**:   <https://github.com/osbuild/image-builder>
- - **https**: `https://github.com/osbuild/image-builder.git`
- - **ssh**:   `git@github.com:osbuild/image-builder.git`
+ - **web**:   <https://github.com/osbuild/image-builder-crc>
+ - **https**: `https://github.com/osbuild/image-builder-crc.git`
+ - **ssh**:   `git@github.com:osbuild/image-builder-crc.git`
 
 ## License
 
