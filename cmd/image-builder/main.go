@@ -87,6 +87,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	forceRepos, err := cmd.Flags().GetStringArray("force-repo")
+	if err != nil {
+		return nil, err
+	}
 	archStr, err := cmd.Flags().GetString("arch")
 	if err != nil {
 		return nil, err
@@ -140,6 +144,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	repoOpts := &repoOptions{
 		DataDir:    dataDir,
 		ExtraRepos: extraRepos,
+		ForceRepos: forceRepos,
 	}
 	img, err := getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
 	if err != nil {
@@ -157,6 +162,8 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		Ostree:        ostreeImgOpts,
 		RpmDownloader: rpmDownloader,
 		WithSBOM:      withSBOM,
+
+		ForceRepos: forceRepos,
 	}
 	err = generateManifest(dataDir, extraRepos, img, w, opts)
 	return img, err
@@ -317,6 +324,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 	rootCmd.PersistentFlags().String("datadir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
+	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode`)
 	rootCmd.SetOut(osStdout)

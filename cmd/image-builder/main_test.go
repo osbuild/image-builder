@@ -646,3 +646,40 @@ func TestManifestExtraRepo(t *testing.T) {
 	assert.Contains(t, fakeStdout.String(), `"path":"dummy-1.0.0-0.noarch.rpm"`)
 	assert.Contains(t, fakeStdout.String(), fmt.Sprintf(`"url":"file://%s"`, localRepoDir))
 }
+
+func TestManifestOverrideRepo(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	var fakeStderr bytes.Buffer
+	restore := main.MockOsStderr(&fakeStderr)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"manifest",
+		"qcow2",
+		"--distro=centos-9",
+		"--arch=x86_64",
+		"--force-repo=http://xxx.abcdefgh-no-such-host.com/repo",
+	})
+	defer restore()
+
+	// XXX: dnfjson is very chatty and puts a bunch of output on stderr
+	// we should probably silence this in images as its the job of the
+	// error to catpure this. Use CaptureStdio here to ensure we don't
+	// get noisy and confusing errors when this test runs.
+	var err error
+	testutil.CaptureStdio(t, func() {
+		err = main.Run()
+	})
+	assert.ErrorContains(t, err, "forced repo#0 xxx.abcdefgh-no-such-host.com/repo: http://xxx.abcdefgh-no-such-host.com/repo]: Cannot download repomd.xml")
+	// XXX: we should probably look into "images" here, there is a bunch
+	// of redundancy in the full error message:
+	//
+	// `error depsolving: running osbuild-depsolve-dnf failed:
+	// DNF error occurred: RepoError: There was a problem reading a repository: Failed to download metadata for repo '9828718901ab404ac1b600157aec1a8b19f4b2139e7756f347fb0ecc06c92929' [forced repo#0 xxx.abcdefgh-no-such-host.com/repo: http://xxx.abcdefgh-no-such-host.com/repo]: Cannot download repomd.xml: Cannot download repodata/repomd.xml: All mirrors were tried`
+}
