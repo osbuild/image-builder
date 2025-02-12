@@ -29,6 +29,73 @@ $ sudo image-builder build --distro fedora-41 qcow2
 # ...
 ```
 
+## `image-builder list-images`
+
+The `list-images` command for `image-builder` lists the available built-in image types that can be built for the [built-in distributions](./10-faq.md#built-in-distributions).
+
+```console
+$ image-builder list-images
+# ... long list ...
+```
+
+### Format
+
+The output format used by `list-images` can be swapped with the `--output` flag. Available types are `text` (for display in a terminal) and `json` which can be useful to consume programmatically:
+
+```console
+$ image-builder list-images --output=json | jq '.[0]'
+{
+  "distro": {
+    "name": "centos-9"
+  },
+  "arch": {
+    "name": "aarch64"
+  },
+  "image_type": {
+    "name": "ami"
+  }
+}
+```
+
+### Filtering
+
+`list-images` output can be filtered with the `--filter` argument.
+
+### Distribution
+
+To filter on a given distribution, one can use `--filter` with the `distro:` prefix:
+
+```console
+$ image-builder list-images --filter distro:fedora-41
+# ... long list ...
+```
+
+### Type
+
+To filter on a given [image type](./10-fq.md#image-types) the `type:` prefix:
+
+```console
+$ image-builder list-images --filter type:qcow2
+# ... long list ...
+```
+### Architecture
+
+To filter on a given architecture use the `arch:` prefix:
+
+```console
+$ image-builder list-images --filter arch:aarch64
+# ... long list ...
+```
+
+### Combinations
+
+Filters can be combined to narrow the list further.
+
+```console
+$ image-builder list-images --filter type:qcow2 --filter distro:fedora-41
+# ... list ...
+```
+
 # Blueprints
 
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we could build the `qcow2` we built above with some customizations applied.
