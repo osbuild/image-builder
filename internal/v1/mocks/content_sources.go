@@ -23,6 +23,7 @@ var (
 	RepoPLID     = "a7ec8864-0e3c-4af2-8c06-567891280af5"
 	RepoPLID2    = "c01c2d9c-4624-4558-9ca9-8abcc5eb4437"
 	RepoPLID3    = "d064585d-5d25-4e10-88d0-9ab4d192b21d"
+	RepoUplID    = "7fa07d5a-3df4-4c83-bfe3-79633a0ad27d"
 )
 
 func rhRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryResponse) {
@@ -57,6 +58,7 @@ func extRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryR
 			Url:      common.ToPtr("https://some-repo-base-url.org"),
 			Snapshot: common.ToPtr(true),
 			Name:     common.ToPtr("payload"),
+			Origin:   common.ToPtr("external"),
 		})
 	}
 
@@ -66,6 +68,7 @@ func extRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryR
 			Url:      common.ToPtr("https://some-repo-base-url2.org"),
 			Snapshot: common.ToPtr(true),
 			Name:     common.ToPtr("payload2"),
+			Origin:   common.ToPtr("external"),
 		})
 	}
 
@@ -76,9 +79,26 @@ func extRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryR
 			Url:      common.ToPtr("https://some-repo-base-url3.org"),
 			Snapshot: common.ToPtr(true),
 			Name:     common.ToPtr("payload3"),
+			Origin:   common.ToPtr("external"),
 		})
 	}
 
+	return res
+}
+
+func uploadRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryResponse) {
+	if slices.Contains(urls, "https://upload-latest-snapshot-url.org") || slices.Contains(ids, RepoUplID) {
+		// upload repositories have an empty URL
+		res = append(res, content_sources.ApiRepositoryResponse{
+			GpgKey:            common.ToPtr("some-gpg-key"),
+			Uuid:              common.ToPtr(RepoUplID),
+			Url:               common.ToPtr(""),
+			LatestSnapshotUrl: common.ToPtr("https://upload-latest-snapshot-url.org"),
+			Snapshot:          common.ToPtr(true),
+			Name:              common.ToPtr("upload"),
+			Origin:            common.ToPtr("upload"),
+		})
+	}
 	return res
 }
 
@@ -205,6 +225,7 @@ func ContentSources(w http.ResponseWriter, r *http.Request) {
 			repos = append(repos, rhRepos(ids, urls)...)
 		case "external,upload":
 			repos = append(repos, extRepos(ids, urls)...)
+			repos = append(repos, uploadRepos(ids, urls)...)
 		}
 		err := json.NewEncoder(w).Encode(content_sources.ApiRepositoryCollectionResponse{
 			Data: &repos,

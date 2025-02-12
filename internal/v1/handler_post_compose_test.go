@@ -1763,6 +1763,9 @@ func TestComposeCustomizations(t *testing.T) {
 						{
 							Id: common.ToPtr(mocks.RepoPLID3),
 						},
+						{
+							Id: common.ToPtr(mocks.RepoUplID),
+						},
 					},
 					CustomRepositories: &[]v1.CustomRepository{
 						{
@@ -1779,6 +1782,9 @@ func TestComposeCustomizations(t *testing.T) {
 							Baseurl:  &[]string{"non-content-sources.org"},
 							Gpgkey:   &[]string{"some-gpg-key"},
 							CheckGpg: common.ToPtr(true),
+						},
+						{
+							Id: mocks.RepoUplID,
 						},
 					},
 				},
@@ -1811,6 +1817,13 @@ func TestComposeCustomizations(t *testing.T) {
 							CheckRepoGpg: common.ToPtr(false),
 							Rhsm:         common.ToPtr(false),
 						},
+						{
+							Baseurl:      common.ToPtr("https://upload-latest-snapshot-url.org"),
+							Gpgkey:       common.ToPtr("some-gpg-key"),
+							CheckGpg:     common.ToPtr(true),
+							CheckRepoGpg: common.ToPtr(false),
+							Rhsm:         common.ToPtr(false),
+						},
 					},
 					CustomRepositories: &[]composer.CustomRepository{
 						{
@@ -1828,6 +1841,13 @@ func TestComposeCustomizations(t *testing.T) {
 						{
 							Id:       "non-content-sources",
 							Baseurl:  &[]string{"non-content-sources.org"},
+							Gpgkey:   &[]string{"some-gpg-key"},
+							CheckGpg: common.ToPtr(true),
+						},
+						{
+							Id:       mocks.RepoUplID,
+							Name:     common.ToPtr("upload"),
+							Baseurl:  &[]string{"https://upload-latest-snapshot-url.org"},
 							Gpgkey:   &[]string{"some-gpg-key"},
 							CheckGpg: common.ToPtr(true),
 						},

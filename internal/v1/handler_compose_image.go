@@ -340,8 +340,13 @@ func (h *Handlers) buildPayloadRepositories(ctx echo.Context, payloadRepos []Rep
 		}
 		if pyrepo.Baseurl != nil {
 			res[i].Baseurl = pyrepo.Baseurl
-		} else if repo.Url != nil {
-			res[i].Baseurl = repo.Url
+		} else if repo.Uuid != nil {
+			// If the repo was found in content sources, its uuid will be set
+			baseurl, err := content_sources.GetBaseURL(repo)
+			if err != nil {
+				return nil, err
+			}
+			res[i].Baseurl = common.ToPtr(baseurl)
 		}
 
 		if pyrepo.CheckGpg != nil {
@@ -408,8 +413,13 @@ func (h *Handlers) buildCustomRepositories(ctx echo.Context, custRepos []CustomR
 
 		if curepo.Baseurl != nil {
 			res[i].Baseurl = curepo.Baseurl
-		} else if repo.Url != nil {
-			res[i].Baseurl = common.ToPtr([]string{*repo.Url})
+		} else if repo.Uuid != nil {
+			// If the repo was found in content sources, its uuid will be set
+			baseurl, err := content_sources.GetBaseURL(repo)
+			if err != nil {
+				return nil, err
+			}
+			res[i].Baseurl = common.ToPtr([]string{baseurl})
 		}
 
 		if curepo.CheckGpg != nil {
