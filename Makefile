@@ -4,7 +4,7 @@ PACKAGE_NAME = image-builder
 help:
 	@echo "make [TARGETS...]"
 	@echo
-	@echo "This is the maintenance makefile of image-builder. The following"
+	@echo "This is the maintenance makefile of image-builder-crc. The following"
 	@echo "targets are available:"
 	@echo
 	@echo "    help:               Print this usage information."
