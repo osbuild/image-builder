@@ -96,6 +96,22 @@ $ image-builder list-images --filter type:qcow2 --filter distro:fedora-41
 # ... list ...
 ```
 
+## `image-builder build`
+
+The `build` command builds images of a given [image type](./10-faq.md#image-types), for example:
+
+```console
+$ sudo image-builder build minimal-raw
+# ... progress ...
+```
+
+By default the `build` command uses the same distribution and version as the host system, you can pass another distribution and version with the `--distro` argument:
+
+```console
+$ sudo image-builder build --distro fedora-43 minimal-raw
+# ... progress ...
+```
+
 # Blueprints
 
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we could build the `qcow2` we built above with some customizations applied.

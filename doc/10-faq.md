@@ -15,3 +15,9 @@ The above can be quite confusing, hence we've created `image-builder`. It allows
 ## Why does `image-builder` need `root` permissions?
 
 For image types where we need to work with filesystems we need root. Mounting and working with filesystems is not namespaced in the Linux kernel and mounting filesystems is generally considered to be "running untrusted code in the kernel" hence it requires root permissions.
+
+## Built-in distributions
+
+- Fedora
+- CentOS
+- RHEL
