@@ -15,3 +15,6 @@ __debug*
 coverage*
 /tools/bin
 vendor/
+container_built.info
+go.local.mod
+go.local.sum
