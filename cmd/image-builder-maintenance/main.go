@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/logging/pkg/sinit"
 )
 
 func main() {
@@ -35,8 +36,6 @@ func main() {
 	ctx, cancelTimeout := context.WithTimeout(ctx, 2*time.Hour)
 	defer cancelTimeout()
 
-	logrus.SetReportCaller(true)
-
 	conf := Config{
 		DryRun:                  true,
 		EnableDBMaintenance:     false,
@@ -45,15 +44,30 @@ func main() {
 
 	err := LoadConfigFromEnv(&conf)
 	if err != nil {
-		logrus.Fatal(err)
+		panic(err)
 	}
 
+	loggingConfig := sinit.LoggingConfig{
+		StdoutConfig: sinit.StdoutConfig{
+			Enabled: true,
+			Level:   "debug",
+			Format:  "text",
+		},
+	}
+
+	err = sinit.InitializeLogging(ctx, loggingConfig)
+	if err != nil {
+		panic(err)
+	}
+
+	slog.InfoContext(ctx, "starting image-builder maintainance")
+
 	if conf.DryRun {
-		logrus.Info("Dry run, no state will be changed")
+		slog.InfoContext(ctx, "dry run, no state will be changed")
 	}
 
 	if !conf.EnableDBMaintenance {
-		logrus.Info("🦀🦀🦀 DB maintenance not enabled, skipping  🦀🦀🦀")
+		slog.InfoContext(ctx, "🦀🦀🦀 DB maintenance not enabled, skipping  🦀🦀🦀")
 		return
 	}
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
@@ -66,8 +80,9 @@ func main() {
 	)
 	err = DBCleanup(ctx, dbURL, conf.DryRun, conf.ComposesRetentionMonths)
 	if err != nil {
-		logrus.Fatalf("Error during DBCleanup: %v", err)
+		slog.ErrorContext(ctx, "error during DBCleanup", "err", err)
+		os.Exit(1)
 	}
-	logrus.Info("🦀🦀🦀 dbqueue cleanup done 🦀🦀🦀")
+	slog.InfoContext(ctx, "🦀🦀🦀 dbqueue cleanup done 🦀🦀🦀")
 	close(shutdownSignal)
 }

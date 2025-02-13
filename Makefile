@@ -58,7 +58,7 @@ ubi-container:
 ubi-maintenance-container-test: ubi-container
 	# just check if the container would start
 	# functional tests are in the target "db-tests"
-	podman run --rm --tty --entrypoint /app/image-builder-maintenance osbuild/image-builder 2>&1 | grep "Dry run, no state will be changed"
+	podman run --rm --tty --entrypoint /app/image-builder-maintenance osbuild/image-builder 2>&1 | tee ubi-maintenance-container-test.log | grep "dry run, no state will be changed"
 
 .PHONY: generate-openscap-blueprints
 generate-openscap-blueprints:

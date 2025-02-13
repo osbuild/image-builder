@@ -2,48 +2,30 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"runtime/debug"
-
-	"github.com/osbuild/image-builder/internal/oauth2"
+	"log/slog"
+	"os"
 
 	"github.com/osbuild/image-builder/internal/clients/compliance"
 	"github.com/osbuild/image-builder/internal/clients/composer"
 	"github.com/osbuild/image-builder/internal/clients/content_sources"
 	"github.com/osbuild/image-builder/internal/clients/provisioning"
 	"github.com/osbuild/image-builder/internal/clients/recommendations"
-	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/config"
 	"github.com/osbuild/image-builder/internal/db"
 	"github.com/osbuild/image-builder/internal/distribution"
-	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/osbuild/image-builder/internal/oauth2"
 	"github.com/osbuild/image-builder/internal/unleash"
 	v1 "github.com/osbuild/image-builder/internal/v1"
 
-	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
-	sentrylogrus "github.com/getsentry/sentry-go/logrus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
-	"github.com/sirupsen/logrus"
+	echoproxy "github.com/osbuild/logging/pkg/echo"
+	"github.com/osbuild/logging/pkg/sinit"
+	"github.com/osbuild/logging/pkg/strc"
 )
-
-// gitRev returns the gitHash of the current running binary
-func gitRev() (string, error) {
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return "", errors.New("cannot read build info")
-	}
-	for _, bs := range info.Settings {
-		if bs.Key == "vcs.revision" {
-			return bs.Value, nil
-		}
-	}
-	return "", errors.New("vcs.revision not found in debug.ReadBuildInfo()")
-}
 
 func main() {
 	conf := config.ImageBuilderConfig{
@@ -64,56 +46,51 @@ func main() {
 		panic(err)
 	}
 
-	if conf.GlitchTipDSN != "" {
-		err = sentry.Init(sentry.ClientOptions{
-			Dsn: conf.GlitchTipDSN,
-		})
-		if err != nil {
-			panic(err)
-		}
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "image-builder-unknown"
 	}
 
-	err = logger.ConfigLogger(logrus.StandardLogger(), conf.LogLevel)
+	loggingConfig := sinit.LoggingConfig{
+		StdoutConfig: sinit.StdoutConfig{
+			Enabled: true,
+			Level:   "warning",
+			Format:  "text",
+		},
+		SplunkConfig: sinit.SplunkConfig{
+			Enabled:  conf.SplunkHost != "" && conf.SplunkPort != "" && conf.SplunkToken != "",
+			Level:    conf.LogLevel,
+			URL:      fmt.Sprintf("https://%s:%s/services/collector/event", conf.SplunkHost, conf.SplunkPort),
+			Token:    conf.SplunkToken,
+			Source:   "image-builder",
+			Hostname: hostname,
+		},
+		CloudWatchConfig: sinit.CloudWatchConfig{
+			Enabled:      conf.CwAccessKeyID != "" && conf.CwSecretAccessKey != "" && conf.CwRegion != "",
+			Level:        conf.LogLevel,
+			AWSRegion:    conf.CwRegion,
+			AWSSecret:    conf.CwSecretAccessKey,
+			AWSKey:       conf.CwAccessKeyID,
+			AWSLogGroup:  conf.LogGroup,
+			AWSLogStream: hostname,
+		},
+		SentryConfig: sinit.SentryConfig{
+			Enabled: conf.GlitchTipDSN != "",
+			DSN:     conf.GlitchTipDSN,
+		},
+	}
+
+	err = sinit.InitializeLogging(ctx, loggingConfig)
 	if err != nil {
 		panic(err)
 	}
-	logrus.AddHook(&ctxHook{})
+	defer sinit.Flush()
 
-	gitRev, err := gitRev()
-	if err != nil {
-		logrus.Warn(err.Error())
-		gitRev = "unknown"
-	}
-
-	logrus.Infof("Starting image-builder from Git Hash: %s", gitRev)
-	logrus.Infof("Changelog: https://github.com/osbuild/image-builder/commits/%s", gitRev)
-
-	if conf.GlitchTipDSN == "" {
-		logrus.Warn("Sentry/Glitchtip was not initialized")
-	} else {
-		sentryhook := sentrylogrus.NewFromClient([]logrus.Level{logrus.PanicLevel,
-			logrus.FatalLevel, logrus.ErrorLevel},
-			sentry.CurrentHub().Client())
-		logrus.AddHook(sentryhook)
-	}
-
-	if conf.CwAccessKeyID != "" {
-		err = logger.AddCloudWatchHook(logrus.StandardLogger(), conf.CwAccessKeyID, conf.CwSecretAccessKey, conf.CwRegion, conf.LogGroup)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	if conf.DeploymentChannel != "" {
-		logrus.AddHook(&slogger.EnvironmentHook{Channel: conf.DeploymentChannel})
-	}
-
-	if conf.SplunkHost != "" {
-		err = logger.AddSplunkHook(logrus.StandardLogger(), conf.SplunkHost, conf.SplunkPort, conf.SplunkToken)
-		if err != nil {
-			panic(err)
-		}
-	}
+	slog.Info("starting image-builder",
+		"splunk", loggingConfig.SplunkConfig.Enabled,
+		"cloudwatch", loggingConfig.CloudWatchConfig.Enabled,
+		"sentry", loggingConfig.SentryConfig.Enabled,
+	)
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", conf.PGUser, conf.PGPassword, conf.PGHost, conf.PGPort, conf.PGDatabase, conf.PGSSLMode)
 	dbase, err := db.InitDBConnectionPool(ctx, connStr)
@@ -189,34 +166,13 @@ func main() {
 
 	echoServer := echo.New()
 	echoServer.HideBanner = true
-	echoServer.Logger = common.Logger()
-	echoServer.Use(requestIdExtractMiddleware)
-	echoServer.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogURI:     true,
-		LogStatus:  true,
-		LogLatency: true,
-		LogMethod:  true,
-		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
-			fields := logrus.Fields{
-				"uri":         values.URI,
-				"method":      values.Method,
-				"status":      values.Status,
-				"latency_ms":  values.Latency.Milliseconds(),
-				"request_id":  common.RequestId(c.Request().Context()),
-				"insights_id": common.InsightsRequestId(c.Request().Context()),
-			}
-			if values.Error != nil {
-				fields["error"] = values.Error
-			}
-			logrus.WithContext(c.Request().Context()).
-				WithFields(fields).Infof("Processed request %s %s", values.Method, values.URI)
-
-			return nil
-		},
-		Skipper: func(c echo.Context) bool {
-			return SkipPath(c.Path())
-		},
-	}))
+	echoServer.Logger = echoproxy.NewProxyFor(slog.Default())
+	echoServer.Use(echo.WrapMiddleware(strc.NewMiddlewareWithFilters(
+		slog.Default(),
+		strc.IgnorePathPrefix("/metrics"),
+		strc.IgnorePathPrefix("/status"),
+		strc.IgnorePathPrefix("/ready"),
+	)))
 	if conf.GlitchTipDSN != "" {
 		echoServer.Use(sentryecho.New(sentryecho.Options{}))
 	}
@@ -256,7 +212,7 @@ func main() {
 		panic(err)
 	}
 
-	logrus.Infof("🚀 Starting image-builder built %s sha %s server on %v ...\n", common.BuildTime, common.BuildCommit, conf.ListenAddress)
+	log.Info("🚀 starting image-builder server", "listen", conf.ListenAddress)
 	err = echoServer.Start(conf.ListenAddress)
 	if err != nil {
 		panic(err)

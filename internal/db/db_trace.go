@@ -4,16 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/sirupsen/logrus"
 )
 
 // Used for pgx logging with context information
 type dbTracer struct{}
 
 func (dt *dbTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
-	logrus.WithContext(ctx).Debug(formatSqlLog(data))
+	if !slog.Default().Enabled(ctx, slog.LevelDebug) {
+		return ctx
+	}
+
+	slog.DebugContext(ctx, formatSqlLog(data))
 	return ctx
 }
 
@@ -22,10 +26,6 @@ func (dt *dbTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.
 }
 
 func formatSqlLog(data pgx.TraceQueryStartData) string {
-	if logrus.GetLevel() > logrus.DebugLevel {
-		return ""
-	}
-
 	d := make([]interface{}, len(data.Args))
 	copy(d, data.Args)
 	for i, v := range d {
