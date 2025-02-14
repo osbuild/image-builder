@@ -9,7 +9,7 @@ on:
 jobs:
   update-openscap:
     name: "Update OpenSCAP configs"
-    if: github.repository == 'osbuild/image-builder'
+    if: github.repository == 'osbuild/image-builder-crc'
     runs-on: ubuntu-latest
     container:
       image: registry.fedoraproject.org/fedora:39
