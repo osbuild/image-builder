@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/osbuild/image-builder/internal/config"
+	"github.com/osbuild/image-builder-crc/internal/config"
 	"github.com/stretchr/testify/require"
 )
 

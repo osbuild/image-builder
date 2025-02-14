@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder-crc/internal/db"
 )
 
 var (

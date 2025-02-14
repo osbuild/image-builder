@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/tutils"
-	v1 "github.com/osbuild/image-builder/internal/v1"
+	"github.com/osbuild/image-builder-crc/internal/tutils"
+	v1 "github.com/osbuild/image-builder-crc/internal/v1"
 )
 
 func TestRedHatIdentity(t *testing.T) {

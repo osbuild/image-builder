@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder-crc/internal/db"
 )
 
 type PSQLContainer struct {

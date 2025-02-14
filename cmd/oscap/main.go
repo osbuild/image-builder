@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/osbuild/image-builder/internal/distribution"
-	v1 "github.com/osbuild/image-builder/internal/v1"
+	"github.com/osbuild/image-builder-crc/internal/distribution"
+	v1 "github.com/osbuild/image-builder-crc/internal/v1"
 )
 
 // Unmarshal the blueprint toml file in a custom data structure

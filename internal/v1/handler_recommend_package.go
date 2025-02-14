@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/osbuild/image-builder/internal/clients/recommendations"
+	"github.com/osbuild/image-builder-crc/internal/clients/recommendations"
 
 	"github.com/labstack/echo/v4"
 )

@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder-crc/internal/common"
 )
 
 func TestDistroRegistry_List(t *testing.T) {

@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/oauth2"
+	"github.com/osbuild/image-builder-crc/internal/common"
+	"github.com/osbuild/image-builder-crc/internal/oauth2"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"

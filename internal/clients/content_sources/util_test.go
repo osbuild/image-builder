@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/clients/content_sources"
-	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder-crc/internal/clients/content_sources"
+	"github.com/osbuild/image-builder-crc/internal/common"
 )
 
 func TestGetBaseURL(t *testing.T) {

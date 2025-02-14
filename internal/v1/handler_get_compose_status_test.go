@@ -11,10 +11,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/clients/composer"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/tutils"
-	v1 "github.com/osbuild/image-builder/internal/v1"
+	"github.com/osbuild/image-builder-crc/internal/clients/composer"
+	"github.com/osbuild/image-builder-crc/internal/common"
+	"github.com/osbuild/image-builder-crc/internal/tutils"
+	v1 "github.com/osbuild/image-builder-crc/internal/v1"
 )
 
 func TestComposeStatus(t *testing.T) {
