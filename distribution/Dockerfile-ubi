@@ -1,7 +1,7 @@
 # Use a builder container to build the Go application (which we extract in
 # the second container).
 FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
-WORKDIR $GOPATH/go/src/github.com/osbuild/image-builder
+WORKDIR $GOPATH/go/src/github.com/osbuild/image-builder-crc
 # ubi9/go-toolset defaults to uid 1001. Let's copy the files with this UID as well.
 # Otherwise, VCS stamping will fail because git >= 2.35.2 refuses to work in
 # a repository owned by a different user.
