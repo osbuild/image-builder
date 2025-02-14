@@ -14,7 +14,7 @@ on:
 jobs:
   coverity:
     name: "🔎 gosec check"
-    if: github.repository == 'osbuild/image-builder'
+    if: github.repository == 'osbuild/image-builder-crc'
     runs-on: ubuntu-latest
     env:
       GO111MODULE: on
