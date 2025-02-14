@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/image-builder/internal/db"
-	"github.com/osbuild/image-builder/internal/tutils"
+	"github.com/osbuild/image-builder-crc/internal/db"
+	"github.com/osbuild/image-builder-crc/internal/tutils"
 	"github.com/stretchr/testify/require"
 )
 

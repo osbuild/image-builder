@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"os/exec"
 
-	"github.com/osbuild/image-builder/internal/config"
-	"github.com/osbuild/image-builder/internal/logger"
+	"github.com/osbuild/image-builder-crc/internal/config"
+	"github.com/osbuild/image-builder-crc/internal/logger"
 	"github.com/sirupsen/logrus"
 )
 

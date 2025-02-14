@@ -6,20 +6,20 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/osbuild/image-builder/internal/oauth2"
+	"github.com/osbuild/image-builder-crc/internal/oauth2"
 
-	"github.com/osbuild/image-builder/internal/clients/compliance"
-	"github.com/osbuild/image-builder/internal/clients/composer"
-	"github.com/osbuild/image-builder/internal/clients/content_sources"
-	"github.com/osbuild/image-builder/internal/clients/provisioning"
-	"github.com/osbuild/image-builder/internal/clients/recommendations"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/config"
-	"github.com/osbuild/image-builder/internal/db"
-	"github.com/osbuild/image-builder/internal/distribution"
-	"github.com/osbuild/image-builder/internal/logger"
-	"github.com/osbuild/image-builder/internal/unleash"
-	v1 "github.com/osbuild/image-builder/internal/v1"
+	"github.com/osbuild/image-builder-crc/internal/clients/compliance"
+	"github.com/osbuild/image-builder-crc/internal/clients/composer"
+	"github.com/osbuild/image-builder-crc/internal/clients/content_sources"
+	"github.com/osbuild/image-builder-crc/internal/clients/provisioning"
+	"github.com/osbuild/image-builder-crc/internal/clients/recommendations"
+	"github.com/osbuild/image-builder-crc/internal/common"
+	"github.com/osbuild/image-builder-crc/internal/config"
+	"github.com/osbuild/image-builder-crc/internal/db"
+	"github.com/osbuild/image-builder-crc/internal/distribution"
+	"github.com/osbuild/image-builder-crc/internal/logger"
+	"github.com/osbuild/image-builder-crc/internal/unleash"
+	v1 "github.com/osbuild/image-builder-crc/internal/v1"
 
 	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
@@ -86,7 +86,7 @@ func main() {
 	}
 
 	logrus.Infof("Starting image-builder from Git Hash: %s", gitRev)
-	logrus.Infof("Changelog: https://github.com/osbuild/image-builder/commits/%s", gitRev)
+	logrus.Infof("Changelog: https://github.com/osbuild/image-builder-crc/commits/%s", gitRev)
 
 	if conf.GlitchTipDSN == "" {
 		logrus.Warn("Sentry/Glitchtip was not initialized")

@@ -6,9 +6,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/clients/content_sources"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/tutils"
+	"github.com/osbuild/image-builder-crc/internal/clients/content_sources"
+	"github.com/osbuild/image-builder-crc/internal/common"
+	"github.com/osbuild/image-builder-crc/internal/tutils"
 )
 
 const (

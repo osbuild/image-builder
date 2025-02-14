@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/oauth2"
+	"github.com/osbuild/image-builder-crc/internal/oauth2"
 	"github.com/sirupsen/logrus"
 )
 

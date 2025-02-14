@@ -11,13 +11,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/osbuild/image-builder/internal/clients/content_sources"
+	"github.com/osbuild/image-builder-crc/internal/clients/content_sources"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	openapi_types "github.com/oapi-codegen/runtime/types"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder-crc/internal/common"
+	"github.com/osbuild/image-builder-crc/internal/db"
 	"github.com/osbuild/images/pkg/crypt"
 
 	"slices"

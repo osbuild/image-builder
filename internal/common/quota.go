@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/osbuild/image-builder/internal/db"
+	"github.com/osbuild/image-builder-crc/internal/db"
 )
 
 const (
