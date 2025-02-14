@@ -302,6 +302,11 @@ type BlueprintsResponse struct {
 	Meta  ListResponseMeta  `json:"meta"`
 }
 
+// CACertsCustomization defines model for CACertsCustomization.
+type CACertsCustomization struct {
+	PemCerts []string `json:"pem_certs"`
+}
+
 // ClientId defines model for ClientId.
 type ClientId string
 
@@ -467,7 +472,8 @@ type CustomRepository struct {
 
 // Customizations defines model for Customizations.
 type Customizations struct {
-	Containers *[]Container `json:"containers,omitempty"`
+	Cacerts    *CACertsCustomization `json:"cacerts,omitempty"`
+	Containers *[]Container          `json:"containers,omitempty"`
 
 	// CustomRepositories List of custom repositories.
 	CustomRepositories *[]CustomRepository `json:"custom_repositories,omitempty"`

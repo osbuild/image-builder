@@ -1654,6 +1654,8 @@ components:
           $ref: '#/components/schemas/FIPS'
         installer:
           $ref: '#/components/schemas/Installer'
+        cacerts:
+          $ref: '#/components/schemas/CACertsCustomization'
     Container:
       type: object
       required:
@@ -1874,6 +1876,17 @@ components:
             type: string
             description: |
               Enable passwordless sudo for users or groups (groups must be prefixed by %)
+    CACertsCustomization:
+      type: object
+      additionalProperties: false
+      required:
+        - pem_certs
+      properties:
+        pem_certs:
+          type: array
+          example: [ '---BEGIN CERTIFICATE---\nMIIC0DCCAbigAwIBAgIUI...\n---END CERTIFICATE---' ]
+          items:
+            type: string
     Ignition:
       type: object
       additionalProperties: false
