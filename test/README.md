@@ -122,7 +122,7 @@ section and run `test/cases/api.sh gcp`.
 ## Code coverage
 
 Coverage report is available from
-[CodeCov](https://codecov.io/github/osbuild/image-builder/).
+[CodeCov](https://codecov.io/github/osbuild/image-builder-crc/).
 
 ## Load Testing
 
