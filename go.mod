@@ -1,4 +1,4 @@
-module github.com/osbuild/image-builder
+module github.com/osbuild/image-builder-crc
 
 go 1.22
 
