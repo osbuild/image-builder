@@ -2797,6 +2797,124 @@ func TestComposeCustomizations(t *testing.T) {
 				},
 			},
 		},
+		// content template with 1 custom repository
+		{
+			imageBuilderRequest: v1.ComposeRequest{
+				Customizations: &v1.Customizations{
+					Template: &mocks.TemplateID,
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []v1.ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    v1.ImageTypesGuestImage,
+						UploadRequest: v1.UploadRequest{
+							Type:    v1.UploadTypesAwsS3,
+							Options: uo,
+						},
+						SnapshotDate: common.ToPtr("2000-01-30T00:00:00Z"),
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Customizations: &composer.Customizations{
+					CustomRepositories: &[]composer.CustomRepository{
+						{
+							Baseurl:  &[]string{"http://snappy-url/template/snapshot1"},
+							Name:     common.ToPtr("payload"),
+							CheckGpg: common.ToPtr(true),
+							Enabled:  common.ToPtr(false),
+							Gpgkey:   &[]string{"some-gpg-key"},
+							Id:       mocks.RepoPLID,
+						},
+					},
+				},
+				Distribution: "rhel-8.10",
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+					Repositories: []composer.Repository{
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
+							Rhsm:     common.ToPtr(true),
+							CheckGpg: common.ToPtr(true),
+							Gpgkey:   common.ToPtr(mocks.RhelGPG),
+						},
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
+							Rhsm:     common.ToPtr(true),
+							CheckGpg: common.ToPtr(true),
+							Gpgkey:   common.ToPtr(mocks.RhelGPG),
+						},
+					},
+				},
+			},
+		},
+		// content template with 2 custom repositories
+		{
+			imageBuilderRequest: v1.ComposeRequest{
+				Customizations: &v1.Customizations{
+					Template: &mocks.TemplateID2,
+				},
+				Distribution: "rhel-8",
+				ImageRequests: []v1.ImageRequest{
+					{
+						Architecture: "x86_64",
+						ImageType:    v1.ImageTypesGuestImage,
+						UploadRequest: v1.UploadRequest{
+							Type:    v1.UploadTypesAwsS3,
+							Options: uo,
+						},
+						SnapshotDate: common.ToPtr("2000-01-30T00:00:00Z"),
+					},
+				},
+			},
+			composerRequest: composer.ComposeRequest{
+				Customizations: &composer.Customizations{
+					CustomRepositories: &[]composer.CustomRepository{
+						{
+							Baseurl:  &[]string{"http://snappy-url/template/snapshot1"},
+							Name:     common.ToPtr("payload"),
+							CheckGpg: common.ToPtr(true),
+							Enabled:  common.ToPtr(false),
+							Gpgkey:   &[]string{"some-gpg-key"},
+							Id:       mocks.RepoPLID,
+						},
+						{
+							Baseurl: &[]string{"http://snappy-url/template/snapshot2"},
+							Name:    common.ToPtr("payload2"),
+							Enabled: common.ToPtr(false),
+							Id:      mocks.RepoPLID2,
+						},
+					},
+				},
+				Distribution: "rhel-8.10",
+				ImageRequest: &composer.ImageRequest{
+					Architecture: "x86_64",
+					ImageType:    composer.ImageTypesGuestImage,
+					UploadOptions: makeUploadOptions(t, composer.AWSS3UploadOptions{
+						Region: "",
+					}),
+					Repositories: []composer.Repository{
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"),
+							Rhsm:     common.ToPtr(true),
+							CheckGpg: common.ToPtr(true),
+							Gpgkey:   common.ToPtr(mocks.RhelGPG),
+						},
+						{
+							Baseurl:  common.ToPtr("https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"),
+							Rhsm:     common.ToPtr(true),
+							CheckGpg: common.ToPtr(true),
+							Gpgkey:   common.ToPtr(mocks.RhelGPG),
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for idx, payload := range payloads {

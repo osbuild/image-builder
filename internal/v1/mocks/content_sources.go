@@ -23,6 +23,10 @@ var (
 	RepoPLID     = "a7ec8864-0e3c-4af2-8c06-567891280af5"
 	RepoPLID2    = "c01c2d9c-4624-4558-9ca9-8abcc5eb4437"
 	RepoPLID3    = "d064585d-5d25-4e10-88d0-9ab4d192b21d"
+	TemplateID   = "267232b1-d5af-467f-b6c0-2b502fa02d3d"
+	TemplateID2  = "f3203472-e8ed-4d52-8a98-0e9905e91953"
+	SnapshotID   = "6161fd44-ade8-4300-882b-ede6d65ee56e"
+	SnapshotID2  = "470f9dfa-10dd-4d70-aacb-96ba9a3d9f06"
 )
 
 func rhRepos(ids []string, urls []string) (res []content_sources.ApiRepositoryResponse) {
@@ -184,6 +188,47 @@ func exports(uuids []string) (res []content_sources.ApiRepositoryExportResponse)
 	return res
 }
 
+func templateByID(uuid string) (res content_sources.ApiTemplateResponse) {
+	if uuid == TemplateID {
+		res = content_sources.ApiTemplateResponse{
+			Uuid:            common.ToPtr(uuid),
+			Name:            common.ToPtr("template1"),
+			RepositoryUuids: common.ToPtr([]string{RepoBaseID, RepoAppstrID, RepoPLID}),
+			Date:            common.ToPtr("2000-01-30T00:00:00Z"),
+			Snapshots: &[]content_sources.ApiSnapshotResponse{
+				{
+					Uuid:           common.ToPtr(SnapshotID),
+					RepositoryUuid: common.ToPtr(RepoPLID),
+					RepositoryPath: common.ToPtr("/template/snapshot1"),
+					Url:            common.ToPtr("http://snappy-url/template/snapshot1"),
+				},
+			},
+		}
+	} else if uuid == TemplateID2 {
+		res = content_sources.ApiTemplateResponse{
+			Uuid:            common.ToPtr(uuid),
+			Name:            common.ToPtr("template2"),
+			RepositoryUuids: common.ToPtr([]string{RepoBaseID, RepoAppstrID, RepoPLID, RepoPLID2}),
+			Date:            common.ToPtr("2000-01-30T00:00:00Z"),
+			Snapshots: &[]content_sources.ApiSnapshotResponse{
+				{
+					Uuid:           common.ToPtr(SnapshotID),
+					RepositoryUuid: common.ToPtr(RepoPLID),
+					RepositoryPath: common.ToPtr("/template/snapshot1"),
+					Url:            common.ToPtr("http://snappy-url/template/snapshot1"),
+				},
+				{
+					Uuid:           common.ToPtr(SnapshotID2),
+					RepositoryUuid: common.ToPtr(RepoPLID2),
+					RepositoryPath: common.ToPtr("/template/snapshot2"),
+					Url:            common.ToPtr("http://snappy-url/template/snapshot2"),
+				},
+			},
+		}
+	}
+	return res
+}
+
 func ContentSources(w http.ResponseWriter, r *http.Request) {
 	if tutils.AuthString0 != r.Header.Get("x-rh-identity") {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -241,6 +286,18 @@ func ContentSources(w http.ResponseWriter, r *http.Request) {
 		err = json.NewEncoder(w).Encode(exports(body.RepositoryUuids))
 		if err != nil {
 			w.WriteHeader(http.StatusInsufficientStorage)
+			return
+		}
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/templates/") {
+		pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/templates/"), "/")
+		if len(pathParts) == 1 {
+			uuid := pathParts[0]
+			err := json.NewEncoder(w).Encode(templateByID(uuid))
+			if err != nil {
+				w.WriteHeader(http.StatusInsufficientStorage)
+			}
 			return
 		}
 	}

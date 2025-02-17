@@ -160,3 +160,36 @@ func (csc *ContentSourcesClient) GetSnapshotsForDate(ctx context.Context, body A
 		"content-type":  "application/json",
 	}, bytes.NewReader(buf))
 }
+
+// returns ApiTemplateResponse
+func (csc *ContentSourcesClient) GetTemplateByID(ctx context.Context, uuid string) (*ApiTemplateResponse, error) {
+	id, ok := identity.GetIdentityHeader(ctx)
+	if !ok {
+		return nil, fmt.Errorf("Unable to get identity from context")
+	}
+	resp, err := csc.request("GET", csc.url.JoinPath("templates", uuid).String(), map[string]string{
+		"x-rh-identity": id,
+	}, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusUnauthorized {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, fmt.Errorf("Unable to fetch template, got %v response, body: %s", resp.StatusCode, body)
+			}
+		}
+		return nil, fmt.Errorf("Unable to fetch template, got %v response", resp.StatusCode)
+	}
+
+	var template *ApiTemplateResponse
+	err = json.NewDecoder(resp.Body).Decode(&template)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse template: %v", err)
+	}
+
+	return template, nil
+}

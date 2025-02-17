@@ -74,7 +74,7 @@ func (h *Handlers) handleCommonCompose(ctx echo.Context, composeRequest ComposeR
 	}
 
 	var repositories []composer.Repository
-	if composeRequest.ImageRequests[0].SnapshotDate != nil {
+	if composeRequest.ImageRequests[0].SnapshotDate != nil && composeRequest.Customizations.Template == nil {
 		repoURLs := []string{}
 		for _, r := range arch.Repositories {
 			// Assume that non-rh repositories that are defined in the distributions file will not be snapshotted,
@@ -456,6 +456,85 @@ func (h *Handlers) buildCustomRepositories(ctx echo.Context, custRepos []CustomR
 	return res, nil
 }
 
+func (h *Handlers) buildTemplateRepositories(ctx echo.Context, templateID string) ([]composer.Repository, []composer.CustomRepository, error) {
+	var rhRepoIDs []string
+	var customRepoIDs []string
+	template, err := h.server.csClient.GetTemplateByID(ctx.Request().Context(), templateID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Unable to retrieve template: %v", err)
+	}
+	if template.RepositoryUuids != nil {
+		for _, id := range *template.RepositoryUuids {
+			// Check if repo is Red Hat
+			rhRepoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), []string{}, []string{id}, false)
+			if err != nil {
+				return nil, nil, fmt.Errorf("Unable to retrieve Red Hat repositories: %v", err)
+			}
+			// Separate Red Hat repos from custom
+			if len(rhRepoMap) > 0 {
+				rhRepoIDs = append(rhRepoIDs, id)
+			} else {
+				customRepoIDs = append(customRepoIDs, id)
+			}
+		}
+	} else {
+		return nil, nil, fmt.Errorf("Template %v has no repositories", templateID)
+	}
+
+	repoMap, err := h.server.csClient.GetRepositories(ctx.Request().Context(), []string{}, customRepoIDs, true)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Unable to retrieve external repositories: %v", err)
+	}
+
+	var repositories []composer.Repository
+	var customRepositories []composer.CustomRepository
+	if template.Snapshots != nil {
+		for _, snap := range *template.Snapshots {
+			if slices.Contains(customRepoIDs, *snap.RepositoryUuid) {
+				repo, ok := repoMap[*snap.RepositoryUuid]
+				if !ok {
+					return repositories, customRepositories, fmt.Errorf("Returned snapshot %v unexpected repository id %v", *snap.Uuid, *snap.RepositoryUuid)
+				}
+
+				composerRepo := composer.Repository{
+					Baseurl: common.ToPtr(h.server.csReposURL.JoinPath(*snap.RepositoryPath).String()),
+					Rhsm:    common.ToPtr(false),
+				}
+
+				if repo.GpgKey != nil && *repo.GpgKey != "" {
+					composerRepo.Gpgkey = repo.GpgKey
+				}
+				if composerRepo.Gpgkey != nil && *composerRepo.Gpgkey != "" {
+					composerRepo.CheckGpg = common.ToPtr(true)
+				}
+				composerRepo.ModuleHotfixes = repo.ModuleHotfixes
+				composerRepo.CheckRepoGpg = repo.MetadataVerification
+				repositories = append(repositories, composerRepo)
+
+				// Don't enable custom repositories, as they require further setup to be useable.
+				customRepo := composer.CustomRepository{
+					Id:      *snap.RepositoryUuid,
+					Name:    repo.Name,
+					Baseurl: &[]string{*snap.Url},
+					Enabled: common.ToPtr(false),
+				}
+				if repo.GpgKey != nil && *repo.GpgKey != "" {
+					customRepo.Gpgkey = &[]string{*repo.GpgKey}
+					customRepo.CheckGpg = common.ToPtr(true)
+				}
+				customRepo.ModuleHotfixes = repo.ModuleHotfixes
+				customRepo.CheckRepoGpg = repo.MetadataVerification
+				customRepositories = append(customRepositories, customRepo)
+			}
+		}
+	} else {
+		return nil, nil, fmt.Errorf("Template %v has no snapshots", templateID)
+	}
+
+	ctx.Logger().Debugf("Resolved repository snapshots from template: %v", repositories)
+	return repositories, customRepositories, nil
+}
+
 func (h *Handlers) buildUploadOptions(ctx echo.Context, ur UploadRequest, it ImageTypes) (composer.UploadOptions, composer.ImageTypes, error) {
 	var uploadOptions composer.UploadOptions
 	switch ur.Type {
@@ -717,51 +796,59 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 		res.Packages = cust.Packages
 	}
 
-	snapshotDate := cr.ImageRequests[0].SnapshotDate
-	if cust.PayloadRepositories != nil && snapshotDate != nil {
-		var repoURLs []string
-		var repoIDs []string
-		for _, payloadRepository := range *cust.PayloadRepositories {
-			if payloadRepository.Baseurl != nil {
-				repoURLs = append(repoURLs, *payloadRepository.Baseurl)
-			} else if payloadRepository.Id != nil {
-				repoIDs = append(repoIDs, *payloadRepository.Id)
+	if cust.Template != nil {
+		_, templateRepositories, err := h.buildTemplateRepositories(ctx, *cust.Template)
+		if err != nil {
+			return nil, err
+		}
+		res.CustomRepositories = &templateRepositories
+	} else {
+		snapshotDate := cr.ImageRequests[0].SnapshotDate
+		if cust.PayloadRepositories != nil && snapshotDate != nil {
+			var repoURLs []string
+			var repoIDs []string
+			for _, payloadRepository := range *cust.PayloadRepositories {
+				if payloadRepository.Baseurl != nil {
+					repoURLs = append(repoURLs, *payloadRepository.Baseurl)
+				} else if payloadRepository.Id != nil {
+					repoIDs = append(repoIDs, *payloadRepository.Id)
+				}
 			}
+			payloadRepositories, _, err := h.buildRepositorySnapshots(ctx, repoURLs, repoIDs, true, *snapshotDate)
+			if err != nil {
+				return nil, err
+			}
+			res.PayloadRepositories = &payloadRepositories
+		} else if cust.PayloadRepositories != nil && len(*cust.PayloadRepositories) > 0 {
+			plrepos, err := h.buildPayloadRepositories(ctx, *cust.PayloadRepositories)
+			if err != nil {
+				return nil, err
+			}
+			res.PayloadRepositories = &plrepos
 		}
-		payloadRepositories, _, err := h.buildRepositorySnapshots(ctx, repoURLs, repoIDs, true, *snapshotDate)
-		if err != nil {
-			return nil, err
-		}
-		res.PayloadRepositories = &payloadRepositories
-	} else if cust.PayloadRepositories != nil && len(*cust.PayloadRepositories) > 0 {
-		plrepos, err := h.buildPayloadRepositories(ctx, *cust.PayloadRepositories)
-		if err != nil {
-			return nil, err
-		}
-		res.PayloadRepositories = &plrepos
-	}
 
-	if cust.CustomRepositories != nil && snapshotDate != nil {
-		var repoURLs []string
-		var repoIDs []string
-		for _, repo := range *cust.CustomRepositories {
-			if repo.Baseurl != nil && len(*repo.Baseurl) > 0 {
-				repoURLs = append(repoURLs, (*repo.Baseurl)[0])
-			} else if repo.Id != "" {
-				repoIDs = append(repoIDs, repo.Id)
+		if cust.CustomRepositories != nil && snapshotDate != nil {
+			var repoURLs []string
+			var repoIDs []string
+			for _, repo := range *cust.CustomRepositories {
+				if repo.Baseurl != nil && len(*repo.Baseurl) > 0 {
+					repoURLs = append(repoURLs, (*repo.Baseurl)[0])
+				} else if repo.Id != "" {
+					repoIDs = append(repoIDs, repo.Id)
+				}
 			}
+			_, customRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, repoIDs, true, *snapshotDate)
+			if err != nil {
+				return nil, err
+			}
+			res.CustomRepositories = &customRepositories
+		} else if cust.CustomRepositories != nil && len(*cust.CustomRepositories) > 0 {
+			custrepos, err := h.buildCustomRepositories(ctx, *cust.CustomRepositories)
+			if err != nil {
+				return nil, err
+			}
+			res.CustomRepositories = &custrepos
 		}
-		_, customRepositories, err := h.buildRepositorySnapshots(ctx, repoURLs, repoIDs, true, *snapshotDate)
-		if err != nil {
-			return nil, err
-		}
-		res.CustomRepositories = &customRepositories
-	} else if cust.CustomRepositories != nil && len(*cust.CustomRepositories) > 0 {
-		custrepos, err := h.buildCustomRepositories(ctx, *cust.CustomRepositories)
-		if err != nil {
-			return nil, err
-		}
-		res.CustomRepositories = &custrepos
 	}
 
 	if cust.Openscap != nil {

@@ -214,6 +214,14 @@ func (h *Handlers) CreateBlueprint(ctx echo.Context) error {
 		}
 	}
 
+	if blueprintRequest.Customizations.Template != nil {
+		template, err := h.server.csClient.GetTemplateByID(ctx.Request().Context(), *blueprintRequest.Customizations.Template)
+		if err != nil {
+			return err
+		}
+		blueprintRequest.ImageRequests[0].SnapshotDate = template.Date
+	}
+
 	blueprint, err := BlueprintFromAPI(blueprintRequest)
 	if err != nil {
 		return err

@@ -514,6 +514,9 @@ type Customizations struct {
 	Services            *Services                       `json:"services,omitempty"`
 	Subscription        *Subscription                   `json:"subscription,omitempty"`
 
+	// Template ID of template.
+	Template *string `json:"template,omitempty"`
+
 	// Timezone Timezone configuration
 	Timezone *Timezone `json:"timezone,omitempty"`
 

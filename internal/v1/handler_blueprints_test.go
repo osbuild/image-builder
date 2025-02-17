@@ -71,6 +71,7 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 				{"name": "user", "password": "test"},
 				{"name": "user2", "ssh_key": "ssh-rsa AAAAB3NzaC1"},
 			},
+			"template": mocks.TemplateID,
 		},
 		"distribution": "centos-9",
 		"image_requests": []map[string]interface{}{
@@ -115,6 +116,12 @@ func TestHandlers_CreateBlueprint(t *testing.T) {
 	err = json.Unmarshal([]byte(resp), &jsonResp)
 	require.NoError(t, err)
 	require.Equal(t, "Invalid user", jsonResp.Errors[0].Title)
+
+	// Test the template ID and date from the template were saved to the blueprint
+	blueprintResp, err := v1.BlueprintFromEntry(be)
+	require.NoError(t, err)
+	require.Equal(t, *blueprintResp.Customizations.Template, mocks.TemplateID)
+	require.Equal(t, *blueprintResp.ImageRequests[0].SnapshotDate, "2000-01-30T00:00:00Z")
 }
 
 func TestUser_MergeForUpdate(t *testing.T) {
