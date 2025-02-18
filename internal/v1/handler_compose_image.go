@@ -342,7 +342,7 @@ func (h *Handlers) buildPayloadRepositories(ctx echo.Context, payloadRepos []Rep
 			res[i].Baseurl = pyrepo.Baseurl
 		} else if repo.Uuid != nil {
 			// If the repo was found in content sources, its uuid will be set
-			baseurl, err := content_sources.GetBaseURL(repo)
+			baseurl, err := content_sources.GetBaseURL(repo, h.server.csReposURL)
 			if err != nil {
 				return nil, err
 			}
@@ -415,7 +415,7 @@ func (h *Handlers) buildCustomRepositories(ctx echo.Context, custRepos []CustomR
 			res[i].Baseurl = curepo.Baseurl
 		} else if repo.Uuid != nil {
 			// If the repo was found in content sources, its uuid will be set
-			baseurl, err := content_sources.GetBaseURL(repo)
+			baseurl, err := content_sources.GetBaseURL(repo, h.server.csReposURL)
 			if err != nil {
 				return nil, err
 			}
