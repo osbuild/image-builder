@@ -34,6 +34,8 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y python3-pytest golang
+      - name: Install cross build dependencies
+        run: sudo apt install -y qemu-user-static
 
       - name: Run integration tests via pytest
         run: |

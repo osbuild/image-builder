@@ -13,6 +13,8 @@ RUN CGO_ENABLED=0 go build -tags "containers_image_openpgp exclude_graphdriver_b
 
 FROM registry.fedoraproject.org/fedora:41
 
+# podman mount needs this
+RUN mkdir -p /etc/containers/networks
 # Fast-track osbuild so we don't depend on the "slow" Fedora release process to implement new features in bib
 RUN dnf install -y dnf-plugins-core \
     && dnf copr enable -y @osbuild/osbuild \
