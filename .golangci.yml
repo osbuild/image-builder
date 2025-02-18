@@ -1,9 +1,7 @@
 ---
-exclude-dirs:
-  - vendor
 linters:
   enable:
   - bodyclose
-run:
-  skip-dirs:
+issues:
+  exclude-dirs:
     - vendor
