@@ -15,6 +15,7 @@ import (
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -150,7 +151,9 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
-	if archChecker != nil {
+	// assume that users with the "bootstrap" flag want cross building
+	// and skip arch checks then
+	if archChecker != nil && experimentalflags.String("bootstrap") == "" {
 		if err := archChecker(img.Arch.Name()); err != nil {
 			return nil, err
 		}

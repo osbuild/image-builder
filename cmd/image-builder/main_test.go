@@ -764,3 +764,43 @@ func TestManifestOverrideRepo(t *testing.T) {
 	// `error depsolving: running osbuild-depsolve-dnf failed:
 	// DNF error occurred: RepoError: There was a problem reading a repository: Failed to download metadata for repo '9828718901ab404ac1b600157aec1a8b19f4b2139e7756f347fb0ecc06c92929' [forced repo#0 xxx.abcdefgh-no-such-host.com/repo: http://xxx.abcdefgh-no-such-host.com/repo]: Cannot download repomd.xml: Cannot download repodata/repomd.xml: All mirrors were tried`
 }
+
+func TestBuildCrossArchCheckSkippedOnExperimentalBuildroot(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	tmpdir := t.TempDir()
+	for _, withExperimentalBootstrapEnv := range []bool{false, true} {
+		if withExperimentalBootstrapEnv {
+			t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "bootstrap=ghcr.io/mvo5/fedora-buildroot:41")
+		}
+		restore = main.MockOsArgs([]string{
+			"build",
+			"qcow2",
+			"--distro", "centos-9",
+			"--cache", tmpdir,
+			"--arch=s390x",
+		})
+		defer restore()
+
+		script := `cat - > "$0".stdin`
+		fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+		defer fakeOsbuildCmd.Restore()
+
+		err := main.Run()
+		if withExperimentalBootstrapEnv {
+			assert.NoError(t, err)
+			require.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
+		} else {
+			assert.EqualError(t, err, `cannot build for arch "s390x" from "x86_64"`)
+			require.Equal(t, 0, len(fakeOsbuildCmd.Calls()))
+		}
+	}
+}
