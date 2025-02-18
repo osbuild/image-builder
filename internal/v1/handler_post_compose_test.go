@@ -1818,7 +1818,7 @@ func TestComposeCustomizations(t *testing.T) {
 							Rhsm:         common.ToPtr(false),
 						},
 						{
-							Baseurl:      common.ToPtr("https://upload-latest-snapshot-url.org"),
+							Baseurl:      common.ToPtr("https://content-sources.org"),
 							Gpgkey:       common.ToPtr("some-gpg-key"),
 							CheckGpg:     common.ToPtr(true),
 							CheckRepoGpg: common.ToPtr(false),
@@ -1847,7 +1847,7 @@ func TestComposeCustomizations(t *testing.T) {
 						{
 							Id:       mocks.RepoUplID,
 							Name:     common.ToPtr("upload"),
-							Baseurl:  &[]string{"https://upload-latest-snapshot-url.org"},
+							Baseurl:  &[]string{"https://content-sources.org"},
 							Gpgkey:   &[]string{"some-gpg-key"},
 							CheckGpg: common.ToPtr(true),
 						},
