@@ -1,5 +1,13 @@
 PACKAGE_NAME = image-builder
 
+# Keep it in sync between here (https://hub.docker.com/r/docker/golangci-lint/tags) and
+# https://github.com/osbuild/image-builder-crc/blob/main/.github/workflows/tests.yml
+GOLANGCI_LINT_VERSION=1.64.5-go1.24.0
+GOLANGCI_LINT_CACHE_DIR=$(HOME)/.cache/golangci-lint/$(GOLANGCI_LINT_VERSION)
+GOLANGCI_COMPOSER_IMAGE=docker.io/docker/golangci-lint:$(GOLANGCI_LINT_VERSION)
+
+SHELLCHECK_FILES=$(shell find . -name "*.sh" -not -regex "./vendor/.*")
+
 .PHONY: help
 help:
 	@echo "make [TARGETS...]"
@@ -10,6 +18,7 @@ help:
 	@echo "    help:               Print this usage information."
 	@echo "    build:              Build the project from source code"
 	@echo "    run:                Run the project on localhost"
+	@echo "    lint:               Run linters"
 	@echo "    unit-tests:         Run unit tests (calls dev-prerequisites)"
 	@echo "    db-tests:           Run database tests (starting postgres as container)"
 	@echo "    test:               Run all tests (unit-tests, db-tests, …)"
@@ -41,6 +50,18 @@ build: image-builder gen-oscap image-builder-migrate-db-tern image-builder-maint
 .PHONY: run
 run:
 	go run ./cmd/image-builder/
+
+$(GOLANGCI_LINT_CACHE_DIR):
+	mkdir -p "$@"
+
+.golangci.verified: $(GOLANGCI_LINT_CACHE_DIR) .golangci.yml
+	podman run -t --rm -v .:/app:z,ro -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint config verify -v
+	@touch .golangci.verified
+
+.PHONY: lint
+lint: $(GOLANGCI_LINT_CACHE_DIR) .golangci.verified
+	podman run -t --rm -v .:/app:z,ro -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint run -v
+	echo "$(SHELLCHECK_FILES)" | xargs shellcheck --shell bash -e SC1091 -e SC2002 -e SC2317
 
 # pip3 install openapi-spec-validator
 .PHONY: check-api-spec
