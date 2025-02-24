@@ -2,7 +2,7 @@
 set -eu
 
 GO_MAJOR_VER=1.22
-GO_VERSION=1.22.9
+GO_VERSION=1.22.9 # also update .github/workflows/tests.yml
 OAPI_VERSION=2.4.1
 TOOLS_PATH="$(realpath "$(dirname "$0")/bin")"
 
@@ -13,8 +13,11 @@ if test "$LATEST" != "$GO_VERSION"; then
 fi
 
 set -x
+export GOTOOLCHAIN=go$GO_VERSION
+export GOSUMDB='sum.golang.org' # this is turned off for Go from Fedora / RHEL
+go version
 
-# Pin Go and toolbox versions at a reasonable version
+# Pin Go and toolchain versions at a reasonable version
 go get go@$GO_VERSION toolchain@$GO_VERSION
 
 # Update go.mod and go.sum:

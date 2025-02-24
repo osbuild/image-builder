@@ -18,7 +18,7 @@ jobs:
       - name: Set up bootstrap Go 1.22
         uses: actions/setup-go@v5.3.0
         with:
-          go-version: '1.22'
+          go-version: '1.22.9' # also update tools/prepare-source.sh
           cache: false
         id: go
 
@@ -40,6 +40,7 @@ jobs:
 
       - name: Check that source has been prepared
         run: |
+          go env
           ./tools/prepare-source.sh
           if [ -n "$(git status --porcelain)" ]; then
             echo
