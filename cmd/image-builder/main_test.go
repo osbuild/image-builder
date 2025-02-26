@@ -34,7 +34,7 @@ func TestListImagesNoArguments(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	for _, args := range [][]string{nil, []string{"--output=text"}} {
+	for _, args := range [][]string{nil, []string{"--format=text"}} {
 		restore = main.MockOsArgs(append([]string{"list-images"}, args...))
 		defer restore()
 
@@ -55,7 +55,7 @@ func TestListImagesNoArgsOutputJSON(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	restore = main.MockOsArgs([]string{"list-images", "--output=json"})
+	restore = main.MockOsArgs([]string{"list-images", "--format=json"})
 	defer restore()
 
 	var fakeStdout bytes.Buffer
