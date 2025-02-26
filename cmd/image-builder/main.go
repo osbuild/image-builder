@@ -41,7 +41,7 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	dataDir, err := cmd.Flags().GetString("datadir")
+	dataDir, err := cmd.Flags().GetString("data-dir")
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 }
 
 func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
-	dataDir, err := cmd.Flags().GetString("datadir")
+	dataDir, err := cmd.Flags().GetString("data-dir")
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	// XXX: boilderplate identical to cmdManifest() above
-	dataDir, err := cmd.Flags().GetString("datadir")
+	dataDir, err := cmd.Flags().GetString("data-dir")
 	if err != nil {
 		return err
 	}
@@ -327,7 +327,7 @@ Image-builder builds operating system images for a range of predefined
 operating systems like Fedora, CentOS and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 	}
-	rootCmd.PersistentFlags().String("datadir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().String("data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)

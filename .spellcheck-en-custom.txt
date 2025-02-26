@@ -14,7 +14,6 @@ json
 osbuild
 qcow
 UEFI
-datadir
 copr
 SBOM
 SBOMs
@@ -36,3 +35,4 @@ hyperscalers
 weldr
 libc
 url
+dir
