@@ -157,11 +157,11 @@ The following filters are currently supported, shell-style globbing is supported
  * type: the image type name (e.g. qcow2)
  * bootmode: the bootmode (legacy, UEFI, hybrid)
 
-### Output control
+### Text control
 
-The output can also be switched, supported are "text", "json":
+The text format can also be switched, supported are "text", "json":
 ```console
-$ image-builder list-images --output=json
+$ image-builder list-images --format=json
 [
   {
     "distro": {
