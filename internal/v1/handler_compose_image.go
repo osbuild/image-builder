@@ -1118,5 +1118,11 @@ func (h *Handlers) buildCustomizations(ctx echo.Context, cr *ComposeRequest, d *
 
 	res.Hostname = cust.Hostname
 
+	if cust.Cacerts != nil {
+		res.Cacerts = &composer.CACertsCustomization{
+			PemCerts: cust.Cacerts.PemCerts,
+		}
+	}
+
 	return res, nil
 }

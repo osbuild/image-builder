@@ -1649,6 +1649,9 @@ func TestComposeCustomizations(t *testing.T) {
 						Unattended:   common.ToPtr(true),
 						SudoNopasswd: &[]string{"admin", "%wheel"},
 					},
+					Cacerts: &v1.CACertsCustomization{
+						PemCerts: []string{"---BEGIN CERTIFICATE---\nMIIC0DCCAbigAwIBAgIUI...\n---END CERTIFICATE---"},
+					},
 				},
 				Distribution: "centos-9",
 				ImageRequests: []v1.ImageRequest{
@@ -1711,6 +1714,9 @@ func TestComposeCustomizations(t *testing.T) {
 					Installer: &composer.Installer{
 						Unattended:   common.ToPtr(true),
 						SudoNopasswd: &[]string{"admin", "%wheel"},
+					},
+					Cacerts: &composer.CACertsCustomization{
+						PemCerts: []string{"---BEGIN CERTIFICATE---\nMIIC0DCCAbigAwIBAgIUI...\n---END CERTIFICATE---"},
 					},
 				},
 				ImageRequest: &composer.ImageRequest{
