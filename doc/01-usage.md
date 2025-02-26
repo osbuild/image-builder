@@ -40,10 +40,10 @@ $ image-builder list-images
 
 ### Format
 
-The output format used by `list-images` can be swapped with the `--output` flag. Available types are `text` (for display in a terminal) and `json` which can be useful to consume programmatically:
+The output format used by `list-images` can be swapped with the `--format` flag. Available types are `text` (for display in a terminal) and `json` which can be useful to consume programmatically:
 
 ```console
-$ image-builder list-images --output=json | jq '.[0]'
+$ image-builder list-images --format=json | jq '.[0]'
 {
   "distro": {
     "name": "centos-9"
