@@ -199,7 +199,7 @@ to the installed image but are not used at build time to install third-party
 packages.
 
 To change repositories during image build time the command line options
-`--datadir`, `--extra-repo` and `--force-repo` can be used. The repositories
+`--data-dir`, `--extra-repo` and `--force-repo` can be used. The repositories
 there will only added during build time and will not be available in the
 installed system (use the above blueprint options if that the goal).
 
@@ -207,9 +207,9 @@ Note that both options are targeting advanced users/use-cases and when
 used wrongly can result in failing image builds or non-booting
 systems.
 
-## Using the datadir switch
+## Using the data-dir switch
 
-When using the `--datadir` flag `image-builder` will look into
+When using the `--data-dir` flag `image-builder` will look into
 the <datadir>/repositories directory for a file called <distro>.json
 that contains the repositories for the <distro>.
 
@@ -246,9 +246,9 @@ A: The osbuild binary is used to actually build the images but beyond that
 
 Q: Can I have custom repository files?
 A: Sure! The repositories are encoded in json in "<distro>-<vesion>.json",
-   files, e.g. "fedora-41.json". See these [examples](https://github.com/osbuild/images/tree/main/data/repositories). Use the "--datadir" switch and
+   files, e.g. "fedora-41.json". See these [examples](https://github.com/osbuild/images/tree/main/data/repositories). Use the "--data-dir" switch and
    place them under "repositories/name-version.json", e.g. for:
-   "--datadir ~/my-project --distro foo-1" a json file must be put under
+   "--data-dir ~/my-project --distro foo-1" a json file must be put under
    "~/my-project/repositories/foo-1.json.
 
 Q: What is the relation to [bootc-image-builder](https://github.com/osbuild/bootc-image-builder)?
