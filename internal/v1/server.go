@@ -35,6 +35,7 @@ type Server struct {
 	pClient          *provisioning.ProvisioningClient
 	csClient         *content_sources.ContentSourcesClient
 	csReposURL       *url.URL
+	csReposPrefix    string
 	rClient          *recommendations.RecommendationsClient
 	complianceClient *compliance.ComplianceClient
 	spec             *openapi3.T
@@ -55,6 +56,7 @@ type ServerConfig struct {
 	ProvClient       *provisioning.ProvisioningClient
 	CSClient         *content_sources.ContentSourcesClient
 	CSReposURL       string
+	CSReposPrefix    string
 	RecommendClient  *recommendations.RecommendationsClient
 	ComplianceClient *compliance.ComplianceClient
 	DBase            db.DB
@@ -109,6 +111,7 @@ func Attach(conf *ServerConfig) (*Server, error) {
 		conf.ProvClient,
 		conf.CSClient,
 		csReposURL,
+		conf.CSReposPrefix,
 		conf.RecommendClient,
 		conf.ComplianceClient,
 		spec,
