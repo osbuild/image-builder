@@ -235,6 +235,7 @@ func main() {
 		ComplianceClient: complianceClient,
 		CSClient:         csClient,
 		CSReposURL:       conf.ContentSourcesRepoURL,
+		CSReposPrefix:    conf.ContentSourcesRepoPrefix,
 		DBase:            dbase,
 
 		AwsConfig: v1.AWSConfig{

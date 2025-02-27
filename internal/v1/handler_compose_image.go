@@ -276,7 +276,8 @@ func (h *Handlers) buildRepositorySnapshots(ctx echo.Context, repoURLs []string,
 		}
 
 		composerRepo := composer.Repository{
-			Baseurl: common.ToPtr(h.server.csReposURL.JoinPath(*snap.Match.RepositoryPath).String()),
+			// unlike latest snapshot URLs, the repository path of a snapshot match doesn't contain the path prefix
+			Baseurl: common.ToPtr(h.server.csReposURL.JoinPath(h.server.csReposPrefix, *snap.Match.RepositoryPath).String()),
 			Rhsm:    common.ToPtr(false),
 		}
 
