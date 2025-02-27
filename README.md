@@ -5,7 +5,7 @@ an HTTP API on top of [Osbuild Composer](https://github.com/osbuild/osbuild-comp
 and serves as the backend for [Image Builder Frontend](https://github.com/osbuild/image-builder-frontend/).
 
 Image Builder Middleware is intended to be run within the
-[console.redhat.com](https://console.redhat.com) platform.
+[console.redhat.com](https://console.redhat.com/insights/image-builder) platform.
 
 ### Project
 
