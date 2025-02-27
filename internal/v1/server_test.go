@@ -197,6 +197,7 @@ func startServer(t *testing.T, tscc *testServerClientsConf, conf *v1.ServerConfi
 	serverConfig.ProvClient = provClient
 	serverConfig.CSClient = csClient
 	serverConfig.CSReposURL = "https://content-sources.org"
+	serverConfig.CSReposPrefix = "/api/neat"
 	serverConfig.RecommendClient = recommendClient
 	serverConfig.ComplianceClient = complianceClient
 	if serverConfig.QuotaFile == "" {
