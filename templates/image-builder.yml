@@ -69,6 +69,8 @@ objects:
             value: "${PGSSLMODE}"
           - name: CONTENT_SOURCES_REPO_URL
             value: "${CONTENT_SOURCES_REPO_URL}"
+          - name: CONTENT_SOURCES_REPO_PREFIX
+            value: "${CONTENT_SOURCES_REPO_PREFIX}"
           # Configuration for the osbuild client within image-builder
           - name: COMPOSER_URL
             value: "${COMPOSER_URL}"
@@ -316,6 +318,8 @@ parameters:
     value: "INFO"
     description: Main application log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   - name: CONTENT_SOURCES_REPO_URL
+    value: ""
+  - name: CONTENT_SOURCES_REPO_PREFIX
     value: ""
     description: URL where content sources hosts its repositories
   - name: RECOMMENDATIONS_URL
