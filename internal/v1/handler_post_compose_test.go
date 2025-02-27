@@ -791,7 +791,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/baseos"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -801,7 +801,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 							PackageSets: nil,
 						},
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/appstream"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -840,7 +840,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/baseos"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -850,7 +850,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 							PackageSets: nil,
 						},
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/appstream"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -913,7 +913,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/baseos"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -923,7 +923,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 							PackageSets: nil,
 						},
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/appstream"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -940,7 +940,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				Customizations: &composer.Customizations{
 					PayloadRepositories: &[]composer.Repository{
 						{
-							Baseurl:  common.ToPtr("https://content-sources.org/snappy/payload"),
+							Baseurl:  common.ToPtr("https://content-sources.org/api/neat/snappy/payload"),
 							CheckGpg: common.ToPtr(true),
 							Gpgkey:   common.ToPtr("some-gpg-key"),
 							Rhsm:     common.ToPtr(false),
@@ -1011,7 +1011,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/baseos"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -1021,7 +1021,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 							PackageSets: nil,
 						},
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/appstream"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -1038,13 +1038,13 @@ func TestComposeWithSnapshots(t *testing.T) {
 				Customizations: &composer.Customizations{
 					PayloadRepositories: &[]composer.Repository{
 						{
-							Baseurl:  common.ToPtr("https://content-sources.org/snappy/payload"),
+							Baseurl:  common.ToPtr("https://content-sources.org/api/neat/snappy/payload"),
 							CheckGpg: common.ToPtr(true),
 							Gpgkey:   common.ToPtr("some-gpg-key"),
 							Rhsm:     common.ToPtr(false),
 						},
 						{
-							Baseurl: common.ToPtr("https://content-sources.org/snappy/payload2"),
+							Baseurl: common.ToPtr("https://content-sources.org/api/neat/snappy/payload2"),
 							Rhsm:    common.ToPtr(false),
 						},
 					},
@@ -1106,7 +1106,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/baseos"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -1116,7 +1116,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 							PackageSets: nil,
 						},
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/appstream"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -1133,7 +1133,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				Customizations: &composer.Customizations{
 					PayloadRepositories: &[]composer.Repository{
 						{
-							Baseurl:  common.ToPtr("https://content-sources.org/snappy/payload"),
+							Baseurl:  common.ToPtr("https://content-sources.org/api/neat/snappy/payload"),
 							CheckGpg: common.ToPtr(true),
 							Gpgkey:   common.ToPtr("some-gpg-key"),
 							Rhsm:     common.ToPtr(false),
@@ -1220,7 +1220,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 							Mirrorlist:  nil,
 							PackageSets: nil,
 						}, {
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/baseos"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -1230,7 +1230,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 							PackageSets: nil,
 						},
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/appstream"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -1249,7 +1249,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				Customizations: &composer.Customizations{
 					PayloadRepositories: &[]composer.Repository{
 						{
-							Baseurl:  common.ToPtr("https://content-sources.org/snappy/payload"),
+							Baseurl:  common.ToPtr("https://content-sources.org/api/neat/snappy/payload"),
 							CheckGpg: common.ToPtr(true),
 							Gpgkey:   common.ToPtr("some-gpg-key"),
 							Rhsm:     common.ToPtr(false),
@@ -1303,7 +1303,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 					ImageType:    composer.ImageTypesGuestImage,
 					Repositories: []composer.Repository{
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/baseos"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/baseos"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -1313,7 +1313,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 							PackageSets: nil,
 						},
 						{
-							Baseurl:     common.ToPtr("https://content-sources.org/snappy/appstream"),
+							Baseurl:     common.ToPtr("https://content-sources.org/api/neat/snappy/appstream"),
 							Rhsm:        common.ToPtr(false),
 							Gpgkey:      common.ToPtr(mocks.RhelGPG),
 							CheckGpg:    common.ToPtr(true),
@@ -1330,7 +1330,7 @@ func TestComposeWithSnapshots(t *testing.T) {
 				Customizations: &composer.Customizations{
 					PayloadRepositories: &[]composer.Repository{
 						{
-							Baseurl: common.ToPtr("https://content-sources.org/snappy/payload3"),
+							Baseurl: common.ToPtr("https://content-sources.org/api/neat/snappy/payload3"),
 							Rhsm:    common.ToPtr(false),
 						},
 					},
