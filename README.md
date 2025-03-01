@@ -15,13 +15,22 @@ $ sudo podman run --privileged \
 
 ## Installation
 
-This project is under development right now and we provide up-to-date
-development snapshots in the following way:
+You can install `image-builder` in Fedora from the repositories:
 
-A COPR RPM build
-https://copr.fedorainfracloud.org/coprs/g/osbuild/image-builder/
+```console
+$ dnf install image-builder
+```
 
-Via the go build system:
+As this project is under development right now we provide up-to-date
+development snapshots of the main branch through COPR:
+
+```console
+$ dnf copr enable @osbuild/image-builder
+$ dnf install image-builder
+```
+
+You can also install `image-builder` via the go build system.
+
 ```console
 $ go run github.com/osbuild/image-builder-cli/cmd/image-builder@main
 ```
@@ -30,7 +39,11 @@ or install it into `$GOPATH/bin`
 $ go install github.com/osbuild/image-builder-cli/cmd/image-builder@main
 ```
 
-We plan to provide rpm packages in fedora as well.
+Lastly you can use a container:
+
+```console
+$ sudo podman run --privileged ghcr.io/osbuild/image-builder-cli
+```
 
 ## Compilation
 
