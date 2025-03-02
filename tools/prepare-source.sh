@@ -23,6 +23,9 @@ go get go@$GO_VERSION toolchain@$GO_VERSION
 # Update go.mod and go.sum:
 go mod tidy
 
+# Make sure dev tools are in go.mod
+go get github.com/oapi-codegen/oapi-codegen/v2@v$OAPI_VERSION
+
 # Ensure dev tools are installed
 test -e "$TOOLS_PATH/goimports" || GOBIN=$TOOLS_PATH go install golang.org/x/tools/cmd/goimports@latest
 ("$TOOLS_PATH/oapi-codegen" -version | grep "$OAPI_VERSION" >/dev/null) || GOBIN=$TOOLS_PATH go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v$OAPI_VERSION
