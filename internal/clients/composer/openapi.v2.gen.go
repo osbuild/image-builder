@@ -437,6 +437,15 @@ type ComposeId struct {
 	Kind string             `json:"kind"`
 }
 
+// ComposeList defines model for ComposeList.
+type ComposeList struct {
+	Items []ComposeStatus `json:"items"`
+	Kind  string          `json:"kind"`
+	Page  int             `json:"page"`
+	Size  int             `json:"size"`
+	Total int             `json:"total"`
+}
+
 // ComposeLogs defines model for ComposeLogs.
 type ComposeLogs struct {
 	Href        string        `json:"href"`
@@ -630,6 +639,20 @@ type DNFPluginConfig struct {
 	Enabled *bool `json:"enabled,omitempty"`
 }
 
+// DepsolveRequest defines model for DepsolveRequest.
+type DepsolveRequest struct {
+	Architecture string        `json:"architecture"`
+	Blueprint    Blueprint     `json:"blueprint"`
+	Distribution string        `json:"distribution"`
+	Repositories *[]Repository `json:"repositories,omitempty"`
+}
+
+// DepsolveResponse defines model for DepsolveResponse.
+type DepsolveResponse struct {
+	// Packages Package list including NEVRA
+	Packages []PackageMetadata `json:"packages"`
+}
+
 // Directory A custom directory to create in the final artifact.
 type Directory struct {
 	// EnsureParents Ensure that the parent directories exist
@@ -668,6 +691,12 @@ type DirectoryUser1 = int
 // Directory_User Owner of the directory as a user name or a uid
 type Directory_User struct {
 	union json.RawMessage
+}
+
+// DistributionList defines model for DistributionList.
+type DistributionList struct {
+	// Map Distribution name
+	Map *map[string]interface{} `json:"map,omitempty"`
 }
 
 // Error defines model for Error.
@@ -967,11 +996,11 @@ type List struct {
 }
 
 // LocalUploadOptions defines model for LocalUploadOptions.
-type LocalUploadOptions struct {
-	// LocalSave This is used in combination with the OSBUILD_LOCALSAVE environmental
-	// variable on the server to enable saving the compose locally. This
-	// is for development use only, and is not available to users.
-	LocalSave bool `json:"local_save"`
+type LocalUploadOptions = map[string]interface{}
+
+// LocalUploadStatus defines model for LocalUploadStatus.
+type LocalUploadStatus struct {
+	ArtifactPath string `json:"artifact_path"`
 }
 
 // Locale Locale configuration
@@ -1050,6 +1079,20 @@ type Package struct {
 	Version *string `json:"version,omitempty"`
 }
 
+// PackageDetails defines model for PackageDetails.
+type PackageDetails struct {
+	Arch        string  `json:"arch"`
+	Buildtime   *string `json:"buildtime,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Epoch       *string `json:"epoch,omitempty"`
+	License     *string `json:"license,omitempty"`
+	Name        string  `json:"name"`
+	Release     string  `json:"release"`
+	Summary     *string `json:"summary,omitempty"`
+	Url         *string `json:"url,omitempty"`
+	Version     string  `json:"version"`
+}
+
 // PackageGroup defines model for PackageGroup.
 type PackageGroup struct {
 	// Name Package group name
@@ -1058,11 +1101,14 @@ type PackageGroup struct {
 
 // PackageMetadata defines model for PackageMetadata.
 type PackageMetadata struct {
-	Arch      string  `json:"arch"`
+	Arch string `json:"arch"`
+
+	// Checksum Optional package checksum using ALGO:HASH form
+	Checksum  *string `json:"checksum,omitempty"`
 	Epoch     *string `json:"epoch,omitempty"`
 	Name      string  `json:"name"`
 	Release   string  `json:"release"`
-	Sigmd5    string  `json:"sigmd5"`
+	Sigmd5    *string `json:"sigmd5,omitempty"`
 	Signature *string `json:"signature,omitempty"`
 	Type      string  `json:"type"`
 	Version   string  `json:"version"`
@@ -1134,6 +1180,23 @@ type SSHKey struct {
 
 	// User User to configure the ssh key for
 	User string `json:"user"`
+}
+
+// SearchPackagesRequest defines model for SearchPackagesRequest.
+type SearchPackagesRequest struct {
+	Architecture string `json:"architecture"`
+	Distribution string `json:"distribution"`
+
+	// Packages Array of package names to search for. Supports * wildcards for
+	// names, but not for versions.
+	Packages     []string      `json:"packages"`
+	Repositories *[]Repository `json:"repositories,omitempty"`
+}
+
+// SearchPackagesResponse defines model for SearchPackagesResponse.
+type SearchPackagesResponse struct {
+	// Packages Detailed package information from DNF
+	Packages []PackageDetails `json:"packages"`
 }
 
 // Services defines model for Services.
@@ -1264,6 +1327,12 @@ type PostComposeJSONRequestBody = ComposeRequest
 
 // PostCloneComposeJSONRequestBody defines body for PostCloneCompose for application/json ContentType.
 type PostCloneComposeJSONRequestBody = CloneComposeBody
+
+// PostDepsolveBlueprintJSONRequestBody defines body for PostDepsolveBlueprint for application/json ContentType.
+type PostDepsolveBlueprintJSONRequestBody = DepsolveRequest
+
+// PostSearchPackagesJSONRequestBody defines body for PostSearchPackages for application/json ContentType.
+type PostSearchPackagesJSONRequestBody = SearchPackagesRequest
 
 // AsBlueprintFileGroup0 returns the union data inside the BlueprintFile_Group as a BlueprintFileGroup0
 func (t BlueprintFile_Group) AsBlueprintFileGroup0() (BlueprintFileGroup0, error) {
@@ -1597,6 +1666,32 @@ func (t *CloneStatus_Options) FromPulpOSTreeUploadStatus(v PulpOSTreeUploadStatu
 
 // MergePulpOSTreeUploadStatus performs a merge with any union data inside the CloneStatus_Options, using the provided PulpOSTreeUploadStatus
 func (t *CloneStatus_Options) MergePulpOSTreeUploadStatus(v PulpOSTreeUploadStatus) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsLocalUploadStatus returns the union data inside the CloneStatus_Options as a LocalUploadStatus
+func (t CloneStatus_Options) AsLocalUploadStatus() (LocalUploadStatus, error) {
+	var body LocalUploadStatus
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLocalUploadStatus overwrites any union data inside the CloneStatus_Options as the provided LocalUploadStatus
+func (t *CloneStatus_Options) FromLocalUploadStatus(v LocalUploadStatus) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLocalUploadStatus performs a merge with any union data inside the CloneStatus_Options, using the provided LocalUploadStatus
+func (t *CloneStatus_Options) MergeLocalUploadStatus(v LocalUploadStatus) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -2255,6 +2350,32 @@ func (t *UploadStatus_Options) FromPulpOSTreeUploadStatus(v PulpOSTreeUploadStat
 
 // MergePulpOSTreeUploadStatus performs a merge with any union data inside the UploadStatus_Options, using the provided PulpOSTreeUploadStatus
 func (t *UploadStatus_Options) MergePulpOSTreeUploadStatus(v PulpOSTreeUploadStatus) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsLocalUploadStatus returns the union data inside the UploadStatus_Options as a LocalUploadStatus
+func (t UploadStatus_Options) AsLocalUploadStatus() (LocalUploadStatus, error) {
+	var body LocalUploadStatus
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLocalUploadStatus overwrites any union data inside the UploadStatus_Options as the provided LocalUploadStatus
+func (t *UploadStatus_Options) FromLocalUploadStatus(v LocalUploadStatus) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLocalUploadStatus performs a merge with any union data inside the UploadStatus_Options, using the provided LocalUploadStatus
+func (t *UploadStatus_Options) MergeLocalUploadStatus(v LocalUploadStatus) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err

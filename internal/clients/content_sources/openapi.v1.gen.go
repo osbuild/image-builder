@@ -13,7 +13,7 @@ type ApiAddUploadsRequest struct {
 	Artifacts *[]ApiArtifact `json:"artifacts,omitempty"`
 
 	// Uploads List of unfinished uploads
-	Uploads []ApiUpload `json:"uploads"`
+	Uploads *[]ApiUpload `json:"uploads,omitempty"`
 }
 
 // ApiArtifact defines model for api.Artifact.
@@ -45,6 +45,12 @@ type ApiContentUnitSearchRequest struct {
 
 // ApiCreateUploadRequest defines model for api.CreateUploadRequest.
 type ApiCreateUploadRequest struct {
+	// ChunkSize Size of the chunk
+	ChunkSize int `json:"chunk_size"`
+
+	// Sha256 SHA-256 checksum of the file
+	Sha256 string `json:"sha256"`
+
 	// Size Size of the upload in bytes
 	Size int `json:"size"`
 }
@@ -291,6 +297,12 @@ type ApiRepositoryImportResponse struct {
 	// FailedIntrospectionsCount Number of consecutive failed introspections
 	FailedIntrospectionsCount *int `json:"failed_introspections_count,omitempty"`
 
+	// FailedSnapshotCount Number of consecutive failed snapshots
+	FailedSnapshotCount *int `json:"failed_snapshot_count,omitempty"`
+
+	// FeatureName The feature name this repo requires
+	FeatureName *string `json:"feature_name,omitempty"`
+
 	// GpgKey GPG key for repository
 	GpgKey *string `json:"gpg_key,omitempty"`
 
@@ -444,6 +456,12 @@ type ApiRepositoryResponse struct {
 
 	// FailedIntrospectionsCount Number of consecutive failed introspections
 	FailedIntrospectionsCount *int `json:"failed_introspections_count,omitempty"`
+
+	// FailedSnapshotCount Number of consecutive failed snapshots
+	FailedSnapshotCount *int `json:"failed_snapshot_count,omitempty"`
+
+	// FeatureName The feature name this repo requires
+	FeatureName *string `json:"feature_name,omitempty"`
 
 	// GpgKey GPG key for repository
 	GpgKey *string `json:"gpg_key,omitempty"`
@@ -619,6 +637,33 @@ type ApiSearchEnvironmentResponse struct {
 	Id *string `json:"id,omitempty"`
 }
 
+// ApiSearchModuleStreams defines model for api.SearchModuleStreams.
+type ApiSearchModuleStreams struct {
+	// ModuleName Module name
+	ModuleName *string `json:"module_name,omitempty"`
+
+	// Streams A list of stream related information for the module
+	Streams *[]ApiStream `json:"streams,omitempty"`
+}
+
+// ApiSearchModuleStreamsRequest defines model for api.SearchModuleStreamsRequest.
+type ApiSearchModuleStreamsRequest struct {
+	// RpmNames List of rpm names to search
+	RpmNames []string `json:"rpm_names"`
+
+	// Search Search string to search rpm names
+	Search *string `json:"search,omitempty"`
+
+	// SortBy SortBy sets the sort order of the result
+	SortBy *string `json:"sort_by,omitempty"`
+
+	// Urls List of repository URLs to search
+	Urls []string `json:"urls"`
+
+	// Uuids List of repository UUIDs to search
+	Uuids []string `json:"uuids"`
+}
+
 // ApiSearchPackageGroupResponse defines model for api.SearchPackageGroupResponse.
 type ApiSearchPackageGroupResponse struct {
 	// Description Description of the package group found
@@ -641,6 +686,21 @@ type ApiSearchRpmResponse struct {
 
 	// Summary Summary of the package found
 	Summary *string `json:"summary,omitempty"`
+}
+
+// ApiSearchSnapshotModuleStreamsRequest defines model for api.SearchSnapshotModuleStreamsRequest.
+type ApiSearchSnapshotModuleStreamsRequest struct {
+	// RpmNames List of rpm names to restrict returned modules
+	RpmNames []string `json:"rpm_names"`
+
+	// Search Search string to search module names
+	Search *string `json:"search,omitempty"`
+
+	// SortBy SortBy sets the sort order of the result
+	SortBy *string `json:"sort_by,omitempty"`
+
+	// Uuids List of snapshot UUIDs to search
+	Uuids []string `json:"uuids"`
 }
 
 // ApiSnapshotCollectionResponse defines model for api.SnapshotCollectionResponse.
@@ -772,6 +832,30 @@ type ApiSnapshotSearchRpmRequest struct {
 	Uuids *[]string `json:"uuids,omitempty"`
 }
 
+// ApiStream defines model for api.Stream.
+type ApiStream struct {
+	// Arch The Architecture of the rpm
+	Arch *string `json:"arch,omitempty"`
+
+	// Context Context of the module
+	Context *string `json:"context,omitempty"`
+
+	// Description Module description
+	Description *string `json:"description,omitempty"`
+
+	// Name Name of the module
+	Name *string `json:"name,omitempty"`
+
+	// Profiles Module profile data
+	Profiles *map[string][]string `json:"profiles,omitempty"`
+
+	// Stream Module stream version
+	Stream *string `json:"stream,omitempty"`
+
+	// Version The version of the rpm
+	Version *string `json:"version,omitempty"`
+}
+
 // ApiTaskInfoCollectionResponse defines model for api.TaskInfoCollectionResponse.
 type ApiTaskInfoCollectionResponse struct {
 	// Data Requested Data
@@ -896,6 +980,9 @@ type ApiTemplateResponse struct {
 	// Snapshots The list of snapshots in use by the template
 	Snapshots *[]ApiSnapshotResponse `json:"snapshots,omitempty"`
 
+	// ToBeDeletedSnapshots List of snapshots used by this template which are going to be deleted soon
+	ToBeDeletedSnapshots *[]ApiSnapshotResponse `json:"to_be_deleted_snapshots,omitempty"`
+
 	// UpdatedAt Datetime template was last updated
 	UpdatedAt *string `json:"updated_at,omitempty"`
 
@@ -944,8 +1031,14 @@ type ApiUpload struct {
 
 // ApiUploadResponse defines model for api.UploadResponse.
 type ApiUploadResponse struct {
+	// ArtifactHref Artifact href if one exists (on create only)
+	ArtifactHref *string `json:"artifact_href,omitempty"`
+
 	// Completed Timestamp when upload is committed
 	Completed *string `json:"completed,omitempty"`
+
+	// CompletedChecksums A list of already completed checksums
+	CompletedChecksums *[]string `json:"completed_checksums,omitempty"`
 
 	// Created Timestamp of creation
 	Created *string `json:"created,omitempty"`
@@ -1148,6 +1241,18 @@ type ListRepositoriesRpmsParams struct {
 	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
 }
 
+// ListSnapshotsForRepoParams defines parameters for ListSnapshotsForRepo.
+type ListSnapshotsForRepoParams struct {
+	// SortBy Sort the response data based on specific repository parameters. Sort criteria can include `created_at`.
+	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty"`
+
+	// Offset Starting point for retrieving a subset of results. Determines how many items to skip from the beginning of the result set. Default value:`0`.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Limit Number of items to include in response. Use it to control the number of items, particularly when dealing with large datasets. Default value: `100`.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ValidateRepositoryParametersJSONBody defines parameters for ValidateRepositoryParameters.
 type ValidateRepositoryParametersJSONBody = []ApiRepositoryValidationRequest
 
@@ -1286,6 +1391,9 @@ type ListSnapshotsForTemplateParams struct {
 // SearchEnvironmentsJSONRequestBody defines body for SearchEnvironments for application/json ContentType.
 type SearchEnvironmentsJSONRequestBody = ApiContentUnitSearchRequest
 
+// SearchRepositoryModuleStreamsJSONRequestBody defines body for SearchRepositoryModuleStreams for application/json ContentType.
+type SearchRepositoryModuleStreamsJSONRequestBody = ApiSearchModuleStreamsRequest
+
 // SearchPackageGroupJSONRequestBody defines body for SearchPackageGroup for application/json ContentType.
 type SearchPackageGroupJSONRequestBody = ApiContentUnitSearchRequest
 
@@ -1336,6 +1444,9 @@ type SearchSnapshotEnvironmentsJSONRequestBody = ApiSnapshotSearchRpmRequest
 
 // ListSnapshotsByDateJSONRequestBody defines body for ListSnapshotsByDate for application/json ContentType.
 type ListSnapshotsByDateJSONRequestBody = ApiListSnapshotByDateRequest
+
+// SearchSnapshotModuleStreamsJSONRequestBody defines body for SearchSnapshotModuleStreams for application/json ContentType.
+type SearchSnapshotModuleStreamsJSONRequestBody = ApiSearchSnapshotModuleStreamsRequest
 
 // SearchSnapshotPackageGroupsJSONRequestBody defines body for SearchSnapshotPackageGroups for application/json ContentType.
 type SearchSnapshotPackageGroupsJSONRequestBody = ApiSnapshotSearchRpmRequest
