@@ -814,7 +814,7 @@ func TestManifestOverrideRepo(t *testing.T) {
 	// DNF error occurred: RepoError: There was a problem reading a repository: Failed to download metadata for repo '9828718901ab404ac1b600157aec1a8b19f4b2139e7756f347fb0ecc06c92929' [forced repo#0 xxx.abcdefgh-no-such-host.com/repo: http://xxx.abcdefgh-no-such-host.com/repo]: Cannot download repomd.xml: Cannot download repodata/repomd.xml: All mirrors were tried`
 }
 
-func TestBuildCrossArchCheckSkippedOnExperimentalBuildroot(t *testing.T) {
+func TestBuildCrossArchSmoke(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
 	}
@@ -826,31 +826,42 @@ func TestBuildCrossArchCheckSkippedOnExperimentalBuildroot(t *testing.T) {
 	defer restore()
 
 	tmpdir := t.TempDir()
-	for _, withExperimentalBootstrapEnv := range []bool{false, true} {
-		if withExperimentalBootstrapEnv {
-			t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "bootstrap=ghcr.io/mvo5/fedora-buildroot:41")
-		}
-		restore = main.MockOsArgs([]string{
+	for _, withCrossArch := range []bool{false, true} {
+		cmd := []string{
 			"build",
 			"qcow2",
 			"--distro", "centos-9",
 			"--cache", tmpdir,
-			"--arch=s390x",
 			"--output-dir", tmpdir,
-		})
+		}
+		if withCrossArch {
+			cmd = append(cmd, "--arch=aarch64")
+		}
+		restore = main.MockOsArgs(cmd)
 		defer restore()
 
 		script := makeFakeOsbuildScript()
 		fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
 		defer fakeOsbuildCmd.Restore()
 
-		err := main.Run()
-		if withExperimentalBootstrapEnv {
-			assert.NoError(t, err)
-			require.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
+		var err error
+		_, stderr := testutil.CaptureStdio(t, func() {
+			err = main.Run()
+		})
+		assert.NoError(t, err)
+
+		manifest, err := os.ReadFile(fakeOsbuildCmd.Path() + ".stdin")
+		assert.NoError(t, err)
+		pipelines, err := manifesttest.PipelineNamesFrom(manifest)
+		assert.NoError(t, err)
+		crossArchPipeline := "bootstrap-buildroot"
+		crossArchWarning := `WARNING: using experimental cross-architecture building to build "aarch64"`
+		if withCrossArch {
+			assert.Contains(t, pipelines, crossArchPipeline)
+			assert.Contains(t, stderr, crossArchWarning)
 		} else {
-			assert.EqualError(t, err, `cannot build for arch "s390x" from "x86_64"`)
-			require.Equal(t, 0, len(fakeOsbuildCmd.Calls()))
+			assert.NotContains(t, pipelines, crossArchPipeline)
+			assert.NotContains(t, stderr, crossArchWarning)
 		}
 	}
 }
