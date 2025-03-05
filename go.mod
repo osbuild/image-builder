@@ -15,9 +15,9 @@ require (
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/osbuild/community-gateway/oidc-authorizer v0.0.0-20240208125334-43c3aac2bb9c
-	github.com/osbuild/images v0.117.0
+	github.com/osbuild/images v0.121.0
 	github.com/osbuild/logging v0.0.3
-	github.com/prometheus/client_golang v1.20.5
+	github.com/prometheus/client_golang v1.21.1
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/identity v0.0.0-20220719174832-36a7b1cbeff1
 	github.com/stretchr/testify v1.10.0
@@ -54,11 +54,10 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/samber/lo v1.47.0 // indirect
 	github.com/samber/slog-common v0.18.0 // indirect
