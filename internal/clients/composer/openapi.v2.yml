@@ -37,6 +37,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /composes/:
+    get:
+      operationId: getComposeList
+      summary: The list of composes
+      security:
+        - Bearer: []
+      description: |-
+        Get the list of composes. They may be completed, uploaded,
+        locally saved, or failed.
+      responses:
+        '200':
+          description: list of composes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /composes/{id}:
     get:
       operationId: getComposeStatus
@@ -251,6 +292,62 @@ paths:
               schema:
                 type: string
 
+  /composes/{id}/download:
+    get:
+      operationId: getComposeDownload
+      summary: Download the artifact for a compose.
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose to download
+      description: |-
+        Download the  artifact of a finished compose.
+      responses:
+        '200':
+          description: The metadata for the given compose.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /composes/{id}/clone:
     post:
       operationId: postCloneCompose
@@ -390,6 +487,115 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /depsolve/blueprint:
+    post:
+      operationId: postDepsolveBlueprint
+      summary: Depsolve one or more blueprints
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepsolveRequest'
+      responses:
+        '200':
+          description: Depsolved package list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepsolveResponse'
+        '400':
+          description: Invalid depsolve request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /search/packages:
+    post:
+      operationId: postSearchPackages
+      summary: Search for detailed information on a list of package names
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchPackagesRequest'
+      responses:
+        '200':
+          description: Search response with package details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchPackagesResponse'
+        '400':
+          description: Invalid search request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /distributions:
+    get:
+      operationId: getDistributionList
+      summary: |-
+        Get all of the supported distribution repository details
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Distribution repositories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributionList'
         '500':
           description: Unexpected error occurred
           content:
@@ -548,6 +754,37 @@ components:
             items:
               $ref: '#/components/schemas/Error'
 
+    ComposeList:
+      allOf:
+        - $ref: '#/components/schemas/List'
+        - type: object
+          required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ComposeStatus'
+
+    DistributionList:
+      properties:
+        map:
+          type: object
+          description: Distribution name
+          additionalProperties:
+            map:
+              type: object
+              description: Architecture name
+              additionalProperties:
+                map:
+                  type: object
+                  description: Image type name
+                  additionalProperties:
+                    type: array
+                    description: Repository used for this distro:arch:image-type
+                    items:
+                      $ref: '#/components/schemas/BlueprintRepository'
+
     ComposeStatus:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -703,6 +940,7 @@ components:
             - $ref: '#/components/schemas/ContainerUploadStatus'
             - $ref: '#/components/schemas/OCIUploadStatus'
             - $ref: '#/components/schemas/PulpOSTreeUploadStatus'
+            - $ref: '#/components/schemas/LocalUploadStatus'
     UploadStatusValue:
       type: string
       enum: ['success', 'failure', 'pending', 'running']
@@ -792,6 +1030,13 @@ components:
       properties:
         repo_url:
           type: string
+    LocalUploadStatus:
+      type: object
+      required:
+        - artifact_path
+      properties:
+        artifact_path:
+          type: string
     ComposeMetadata:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -812,7 +1057,6 @@ components:
         - version
         - release
         - arch
-        - sigmd5
       properties:
         type:
           type: string
@@ -830,6 +1074,10 @@ components:
           type: string
         signature:
           type: string
+        checksum:
+          type: string
+          description: 'Optional package checksum using ALGO:HASH form'
+          example: 'sha256:525788de3dd44497c27d4172568366b20380a6b6707f0a1970473e4d97046a4f'
 
     ComposeRequest:
       additionalProperties: false
@@ -1218,16 +1466,7 @@ components:
     LocalUploadOptions:
       type: object
       additionalProperties: false
-      required:
-        - local_save
-      properties:
-        local_save:
-          type: boolean
-          default: false
-          description: |
-            This is used in combination with the OSBUILD_LOCALSAVE environmental
-            variable on the server to enable saving the compose locally. This
-            is for development use only, and is not available to users.
+      properties: {}
     AWSEC2UploadOptions:
       type: object
       additionalProperties: false
@@ -2209,6 +2448,102 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/UploadStatus'
+
+    DepsolveRequest:
+      additionalProperties: false
+      required:
+        - blueprint
+        - distribution
+        - architecture
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+        distribution:
+          type: string
+          example: 'rhel-8'
+        architecture:
+          type: string
+          example: 'x86_64'
+        blueprint:
+          $ref: '#/components/schemas/Blueprint'
+
+    DepsolveResponse:
+      type: object
+      required:
+        - packages
+      properties:
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageMetadata'
+          description: 'Package list including NEVRA'
+
+    SearchPackagesRequest:
+      additionalProperties: false
+      required:
+        - packages
+        - distribution
+        - architecture
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+        distribution:
+          type: string
+          example: 'rhel-8'
+        architecture:
+          type: string
+          example: 'x86_64'
+        packages:
+          type: array
+          description: |
+            Array of package names to search for. Supports * wildcards for
+            names, but not for versions.
+          items:
+            type: string
+
+    SearchPackagesResponse:
+      type: object
+      required:
+        - packages
+      properties:
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageDetails'
+          description: 'Detailed package information from DNF'
+
+    PackageDetails:
+      type: object
+      required:
+        - name
+        - version
+        - release
+        - arch
+      properties:
+        name:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        version:
+          type: string
+        release:
+          type: string
+        epoch:
+          type: string
+        arch:
+          type: string
+        buildtime:
+          type: string
+        license:
+          type: string
 
   parameters:
     page:
