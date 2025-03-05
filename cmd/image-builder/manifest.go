@@ -25,7 +25,8 @@ type manifestOptions struct {
 	RpmDownloader  osbuild.RpmDownloader
 	WithSBOM       bool
 
-	ForceRepos []string
+	ForceRepos            []string
+	UseBootstrapContainer bool
 }
 
 func sbomWriter(outputDir, filename string, content io.Reader) error {
@@ -51,8 +52,9 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 	}
 	// XXX: add --rpmmd/cachedir option like bib
 	manifestGenOpts := &manifestgen.Options{
-		Output:        output,
-		RpmDownloader: opts.RpmDownloader,
+		Output:                output,
+		RpmDownloader:         opts.RpmDownloader,
+		UseBootstrapContainer: opts.UseBootstrapContainer,
 	}
 	if opts.WithSBOM {
 		outputDir := basenameFor(img, opts.OutputDir)

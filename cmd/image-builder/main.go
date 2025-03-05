@@ -14,7 +14,6 @@ import (
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -82,7 +81,7 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 	}, nil
 }
 
-func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, archChecker func(string) error) (*imagefilter.Result, error) {
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, needBootstrap func(string) bool) (*imagefilter.Result, error) {
 	dataDir, err := cmd.Flags().GetString("data-dir")
 	if err != nil {
 		return nil, err
@@ -157,13 +156,6 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
-	// assume that users with the "bootstrap" flag want cross building
-	// and skip arch checks then
-	if archChecker != nil && experimentalflags.String("bootstrap") == "" {
-		if err := archChecker(img.Arch.Name()); err != nil {
-			return nil, err
-		}
-	}
 	if len(img.ImgType.Exports()) > 1 {
 		return nil, fmt.Errorf("image %q has multiple exports: this is current unsupport: please report this as a bug", basenameFor(img, ""))
 	}
@@ -178,6 +170,13 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 
 		ForceRepos: forceRepos,
 	}
+	if needBootstrap != nil {
+		opts.UseBootstrapContainer = needBootstrap(img.Arch.Name())
+	}
+	if opts.UseBootstrapContainer {
+		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.Arch.Name())
+	}
+
 	err = generateManifest(dataDir, extraRepos, img, w, opts)
 	return img, err
 }
@@ -244,11 +243,8 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	var mf bytes.Buffer
 	// XXX: check env here, i.e. if user is root and osbuild is installed
-	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, func(archStr string) error {
-		if archStr != arch.Current().String() {
-			return fmt.Errorf("cannot build for arch %q from %q", archStr, arch.Current().String())
-		}
-		return nil
+	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, func(archStr string) bool {
+		return archStr != arch.Current().String()
 	})
 	if err != nil {
 		return err
