@@ -29,14 +29,20 @@ jobs:
     trigger: commit
     dist_git_branches:
       - fedora-branched  # rawhide updates are created automatically
+      - epel-10
+      - epel-9
   - job: koji_build
     trigger: commit
     dist_git_branches:
       - fedora-all
+      - epel-10
+      - epel-9
   - job: propose_downstream
     trigger: release
     dist_git_branches:
       - fedora-all
+      - epel-10
+      - epel-9
   - job: copr_build
     trigger: pull_request
     targets: &build_targets
