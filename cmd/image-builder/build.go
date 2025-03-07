@@ -37,10 +37,13 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		OutputDir: opts.OutputDir,
 	}
 	if opts.WriteBuildlog {
+		if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
+			return fmt.Errorf("cannot create buildlog base directory: %w", err)
+		}
 		p := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.buildlog", outputNameFor(res)))
 		f, err := os.Create(p)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot create buildlog: %w", err)
 		}
 		defer f.Close()
 
