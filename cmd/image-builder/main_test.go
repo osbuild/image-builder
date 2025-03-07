@@ -401,7 +401,7 @@ func TestBuildIntegrationArgs(t *testing.T) {
 		},
 	} {
 		t.Run(strings.Join(tc.args, ","), func(t *testing.T) {
-			outputDir := t.TempDir()
+			outputDir := filepath.Join(t.TempDir(), "output")
 
 			cmd := []string{
 				"build",
