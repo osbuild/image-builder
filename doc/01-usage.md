@@ -72,7 +72,7 @@ $ image-builder list-images --filter distro:fedora-41
 
 ### Type
 
-To filter on a given [image type](./10-fq.md#image-types) the `type:` prefix:
+To filter on a given [image type](./10-faq.md#image-types) the `type:` prefix:
 
 ```console
 $ image-builder list-images --filter type:qcow2
