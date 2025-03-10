@@ -325,6 +325,10 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
 	tmpdir := t.TempDir()
 	restore = main.MockOsArgs([]string{
 		"build",
@@ -341,6 +345,8 @@ func TestBuildIntegrationHappy(t *testing.T) {
 
 	err := main.Run()
 	assert.NoError(t, err)
+
+	assert.Contains(t, fakeStdout.String(), `Image build successful, result in "centos-9-qcow2-x86_64"`+"\n")
 
 	// ensure osbuild was run exactly one
 	require.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
