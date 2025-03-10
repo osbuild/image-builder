@@ -268,10 +268,11 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err := buildImage(pbar, res, mf.Bytes(), buildOpts); err != nil {
 		return err
 	}
+	pbar.Stop()
+	fmt.Fprintf(osStdout, "Image build successful, result in %q\n", outputDir)
 
 	if uploader != nil {
 		// XXX: integrate better into the progress, see bib
-		pbar.Stop()
 		imagePath := filepath.Join(outputDir, res.ImgType.Name(), res.ImgType.Filename())
 
 		if err := uploadImageWithProgress(uploader, imagePath); err != nil {
