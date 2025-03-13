@@ -34,3 +34,15 @@ func TestCaptureStdout(t *testing.T) {
 	assert.Equal(t, "output on stdout", stdout)
 	assert.Equal(t, "output on stderr", stderr)
 }
+
+func TestChroot(t *testing.T) {
+	tmpdir := t.TempDir()
+	testutil.Chdir(t, tmpdir, func() {
+		cwd, err := os.Getwd()
+		assert.NoError(t, err)
+		assert.Equal(t, tmpdir, cwd)
+	})
+	cwd, err := os.Getwd()
+	assert.NoError(t, err)
+	assert.NotEqual(t, tmpdir, cwd)
+}

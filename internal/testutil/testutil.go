@@ -110,3 +110,19 @@ func CaptureStdio(t *testing.T, f func()) (string, string) {
 	wg.Wait()
 	return stdout.String(), stderr.String()
 }
+
+func Chdir(t *testing.T, dir string, f func()) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("%s", err.Error())
+	}
+	defer func() {
+		os.Chdir(cwd)
+	}()
+
+	err = os.Chdir(dir)
+	if err != nil {
+		t.Errorf("%s", err.Error())
+	}
+	f()
+}
