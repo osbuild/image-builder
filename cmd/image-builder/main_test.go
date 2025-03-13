@@ -370,14 +370,6 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	defer restore()
 
 	tmpdir := t.TempDir()
-	curdir, err := os.Getwd()
-	require.NoError(t, err)
-	err = os.Chdir(tmpdir)
-	require.NoError(t, err)
-	defer func() {
-		os.Chdir(curdir)
-	}()
-
 	restore = main.MockOsArgs([]string{
 		"build",
 		"qcow2",
@@ -391,7 +383,12 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
 	defer fakeOsbuildCmd.Restore()
 
-	err = main.Run()
+	var err error
+	// run inside the tmpdir to validate that the default output dir
+	// creation works
+	testutil.Chdir(t, tmpdir, func() {
+		err = main.Run()
+	})
 	assert.NoError(t, err)
 
 	assert.Contains(t, fakeStdout.String(), `Image build successful, result in "centos-9-qcow2-x86_64"`+"\n")
