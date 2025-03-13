@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
@@ -28,8 +27,12 @@ var (
 	osStderr io.Writer = os.Stderr
 )
 
-// generate the default output directory name for the given image
-func outputNameFor(img *imagefilter.Result) string {
+// basenameFor returns the basename for directory and filenames
+// for the given imageType. This can be user overriden via userBasename.
+func basenameFor(img *imagefilter.Result, userBasename string) string {
+	if userBasename != "" {
+		return userBasename
+	}
 	return fmt.Sprintf("%s-%s-%s", img.Distro.Name(), img.ImgType.Name(), img.Arch.Name())
 }
 
@@ -123,11 +126,14 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if useLibrepo {
 		rpmDownloader = osbuild.RpmDownloaderLibrepo
 	}
-
 	blueprintPath, err := cmd.Flags().GetString("blueprint")
 	if err != nil {
 		return nil, err
 	}
+	// no error check here as this is (deliberately) not defined on
+	// "manifest" (if "images" learn to set the output filename in
+	// manifests we would change this
+	outputFilename, _ := cmd.Flags().GetString("output-name")
 
 	bp, err := blueprintload.Load(blueprintPath)
 	if err != nil {
@@ -158,13 +164,17 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 			return nil, err
 		}
 	}
+	if len(img.ImgType.Exports()) > 1 {
+		return nil, fmt.Errorf("image %q has multiple exports: this is current unsupport: please report this as a bug", basenameFor(img, ""))
+	}
 
 	opts := &manifestOptions{
-		OutputDir:     outputDir,
-		BlueprintPath: blueprintPath,
-		Ostree:        ostreeImgOpts,
-		RpmDownloader: rpmDownloader,
-		WithSBOM:      withSBOM,
+		OutputDir:      outputDir,
+		OutputFilename: outputFilename,
+		BlueprintPath:  blueprintPath,
+		Ostree:         ostreeImgOpts,
+		RpmDownloader:  rpmDownloader,
+		WithSBOM:       withSBOM,
 
 		ForceRepos: forceRepos,
 	}
@@ -203,6 +213,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	outputDir, err := cmd.Flags().GetString("output-dir")
+	if err != nil {
+		return err
+	}
+	outputBasename, err := cmd.Flags().GetString("output-name")
 	if err != nil {
 		return err
 	}
@@ -255,20 +269,18 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+	outputDir = basenameFor(res, outputDir)
 
-	// XXX: support output filename via commandline (c.f.
-	//   https://github.com/osbuild/images/pull/1039)
-	if outputDir == "" {
-		outputDir = outputNameFor(res)
-	}
 	buildOpts := &buildOptions{
-		OutputDir:     outputDir,
-		StoreDir:      cacheDir,
-		WriteManifest: withManifest,
-		WriteBuildlog: withBuildlog,
+		OutputDir:      outputDir,
+		OutputBasename: outputBasename,
+		StoreDir:       cacheDir,
+		WriteManifest:  withManifest,
+		WriteBuildlog:  withBuildlog,
 	}
 	pbar.SetPulseMsgf("Image building step")
-	if err := buildImage(pbar, res, mf.Bytes(), buildOpts); err != nil {
+	imagePath, err := buildImage(pbar, res, mf.Bytes(), buildOpts)
+	if err != nil {
 		return err
 	}
 	pbar.Stop()
@@ -276,8 +288,6 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	if uploader != nil {
 		// XXX: integrate better into the progress, see bib
-		imagePath := filepath.Join(outputDir, res.ImgType.Name(), res.ImgType.Filename())
-
 		if err := uploadImageWithProgress(uploader, imagePath); err != nil {
 			return err
 		}
@@ -395,6 +405,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	// XXX: add "--verbose" here, similar to how bib is doing this
 	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
 	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
+	buildCmd.Flags().String("output-name", "", "set specific output basename")
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
 	// add after the rest of the uploadCmd flag set is added to avoid
