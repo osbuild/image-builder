@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/imagefilter"
@@ -16,11 +18,12 @@ import (
 )
 
 type manifestOptions struct {
-	OutputDir     string
-	BlueprintPath string
-	Ostree        *ostree.ImageOptions
-	RpmDownloader osbuild.RpmDownloader
-	WithSBOM      bool
+	OutputDir      string
+	OutputFilename string
+	BlueprintPath  string
+	Ostree         *ostree.ImageOptions
+	RpmDownloader  osbuild.RpmDownloader
+	WithSBOM       bool
 
 	ForceRepos []string
 }
@@ -52,11 +55,12 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 		RpmDownloader: opts.RpmDownloader,
 	}
 	if opts.WithSBOM {
-		outputDir := opts.OutputDir
-		if outputDir == "" {
-			outputDir = outputNameFor(img)
-		}
+		outputDir := basenameFor(img, opts.OutputDir)
+		overrideSBOMBase := strings.SplitN(opts.OutputFilename, ".", 2)[0]
 		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
+			if overrideSBOMBase != "" {
+				filename = fmt.Sprintf("%s.%s", overrideSBOMBase, strings.SplitN(filename, ".", 2)[1])
+			}
 			return sbomWriter(outputDir, filename, content)
 		}
 	}

@@ -121,12 +121,6 @@ func TestUploadCmdlineErrors(t *testing.T) {
 	}
 }
 
-var fakeOsbuildScriptAmiFmt = `#!/bin/sh -e
-cat - > "$0".stdin
-mkdir -p %[1]s/ami
-echo -n %[2]s > %[1]s/ami/image.raw
-`
-
 func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
@@ -145,9 +139,8 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	})
 	defer restore()
 
-	fakeDiskContent := "fake-raw-img"
 	outputDir := t.TempDir()
-	fakeOsbuildScript := fmt.Sprintf(fakeOsbuildScriptAmiFmt, outputDir, fakeDiskContent)
+	fakeOsbuildScript := makeFakeOsbuildScript()
 	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 	defer fakeOsbuildCmd.Restore()
 
@@ -174,7 +167,7 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	assert.Equal(t, amiName, "aws-ami-3")
 	assert.Equal(t, 1, fa.checkCalls)
 	assert.Equal(t, 1, fa.uploadAndRegisterCalls)
-	assert.Equal(t, fakeDiskContent, fa.uploadAndRegisterRead.String())
+	assert.Equal(t, "fake-img-raw\n", fa.uploadAndRegisterRead.String())
 }
 
 func TestBuildAmiButNotUpload(t *testing.T) {
@@ -193,9 +186,8 @@ func TestBuildAmiButNotUpload(t *testing.T) {
 	})
 	defer restore()
 
-	fakeDiskContent := "fake-raw-img"
 	outputDir := t.TempDir()
-	fakeOsbuildScript := fmt.Sprintf(fakeOsbuildScriptAmiFmt, outputDir, fakeDiskContent)
+	fakeOsbuildScript := makeFakeOsbuildScript()
 	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 	defer fakeOsbuildCmd.Restore()
 
@@ -225,9 +217,8 @@ func TestBuildAndUploadWithAWSPartialCmdlineErrors(t *testing.T) {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
 
-	fakeDiskContent := "fake-raw-img"
 	outputDir := t.TempDir()
-	fakeOsbuildScript := fmt.Sprintf(fakeOsbuildScriptAmiFmt, outputDir, fakeDiskContent)
+	fakeOsbuildScript := makeFakeOsbuildScript()
 	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 	defer fakeOsbuildCmd.Restore()
 

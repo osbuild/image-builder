@@ -22,7 +22,8 @@ def test_container_builds_image(tmp_path, build_container, use_librepo):
         f"--use-librepo={use_librepo}",
     ])
     arch = "x86_64"
-    assert (output_dir / f"centos-9-minimal-raw-{arch}/xz/disk.raw.xz").exists()
+    basename = f"centos-9-minimal-raw-{arch}"
+    assert (output_dir / basename / f"{basename}.raw.xz").exists()
     # XXX: ensure no other leftover dirs
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
@@ -88,8 +89,9 @@ def test_container_with_progress(tmp_path, build_fake_container, progress, needl
         "-v", f"{output_dir}:/output",
         build_fake_container,
         "build",
-        "minimal-raw",
+        "qcow2",
         "--distro", "centos-9",
+        "--output-dir=.",
         f"--progress={progress}",
     ], text=True)
     assert needle in output

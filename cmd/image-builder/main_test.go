@@ -314,6 +314,46 @@ func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
 	}
 }
 
+// this is needed because images currently hardcodes the artifact filenames
+// so we need to faithfully reproduce this in our tests. see images PR#1039
+// for an alternative way that would make this unneeded.
+func makeFakeOsbuildScript() string {
+	return `
+cat - > "$0".stdin
+
+output_dir=""
+export=""
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --output-directory)
+      output_dir="$2"
+      shift 2
+      ;;
+    --export)
+      export="$2"
+      shift 2
+      ;;
+    *)
+      shift 1
+  esac
+done
+mkdir -p "$output_dir/$export"
+case $export in
+  qcow2)
+    echo "fake-img-qcow2" > "$output_dir/$export/disk.qcow2"
+    ;;
+  image)
+    echo "fake-img-raw" > "$output_dir/$export/image.raw"
+    ;;
+  *)
+    echo "Unknown export: $1 - add to testscript"
+    exit 1
+    ;;
+esac
+`
+}
+
 func TestBuildIntegrationHappy(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
@@ -330,6 +370,14 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	defer restore()
 
 	tmpdir := t.TempDir()
+	curdir, err := os.Getwd()
+	require.NoError(t, err)
+	err = os.Chdir(tmpdir)
+	require.NoError(t, err)
+	defer func() {
+		os.Chdir(curdir)
+	}()
+
 	restore = main.MockOsArgs([]string{
 		"build",
 		"qcow2",
@@ -339,11 +387,11 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	})
 	defer restore()
 
-	script := `cat - > "$0".stdin`
+	script := makeFakeOsbuildScript()
 	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
 	defer fakeOsbuildCmd.Restore()
 
-	err := main.Run()
+	err = main.Run()
 	assert.NoError(t, err)
 
 	assert.Contains(t, fakeStdout.String(), `Image build successful, result in "centos-9-qcow2-x86_64"`+"\n")
@@ -420,7 +468,7 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			restore = main.MockOsArgs(cmd)
 			defer restore()
 
-			script := `cat - > "$0".stdin`
+			script := makeFakeOsbuildScript()
 			fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
 			defer fakeOsbuildCmd.Restore()
 
@@ -436,7 +484,9 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			// ensure we get exactly the expected files
 			files, err := filepath.Glob(outputDir + "/*")
 			assert.NoError(t, err)
-			assert.Equal(t, len(tc.expectedFiles), len(files), files)
+			// we always have the qcow2 dir
+			expectedFiles := append(tc.expectedFiles, "qcow")
+			assert.Equal(t, len(expectedFiles), len(files), files)
 			for _, expected := range tc.expectedFiles {
 				_, err = os.Stat(filepath.Join(outputDir, expected))
 				assert.NoError(t, err, fmt.Sprintf("file %q missing", expected))
@@ -466,11 +516,13 @@ func TestBuildIntegrationErrorsProgressVerbose(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
+	outputDir := t.TempDir()
 	restore = main.MockOsArgs([]string{
 		"build",
 		"qcow2",
 		"--distro", "centos-9",
 		"--progress=verbose",
+		"--output-dir", outputDir,
 	})
 	defer restore()
 
@@ -787,10 +839,11 @@ func TestBuildCrossArchCheckSkippedOnExperimentalBuildroot(t *testing.T) {
 			"--distro", "centos-9",
 			"--cache", tmpdir,
 			"--arch=s390x",
+			"--output-dir", tmpdir,
 		})
 		defer restore()
 
-		script := `cat - > "$0".stdin`
+		script := makeFakeOsbuildScript()
 		fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
 		defer fakeOsbuildCmd.Restore()
 
@@ -802,5 +855,59 @@ func TestBuildCrossArchCheckSkippedOnExperimentalBuildroot(t *testing.T) {
 			assert.EqualError(t, err, `cannot build for arch "s390x" from "x86_64"`)
 			require.Equal(t, 0, len(fakeOsbuildCmd.Calls()))
 		}
+	}
+}
+
+func TestBuildIntegrationOutputFilename(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	tmpdir := t.TempDir()
+	outputDir := filepath.Join(tmpdir, "output")
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
+		"--distro", "centos-9",
+		"--cache", tmpdir,
+		"--output-dir", outputDir,
+		"--output-name=foo",
+		"--with-manifest",
+		"--with-sbom",
+		"--with-buildlog",
+	})
+	defer restore()
+
+	script := makeFakeOsbuildScript()
+	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
+	defer fakeOsbuildCmd.Restore()
+
+	err := main.Run()
+	assert.NoError(t, err)
+
+	expectedFiles := []string{
+		"foo.buildroot-build.spdx.json",
+		"foo.image-os.spdx.json",
+		"foo.osbuild-manifest.json",
+		"foo.buildlog",
+		"foo.qcow2",
+	}
+	files, err := filepath.Glob(outputDir + "/*")
+	assert.NoError(t, err)
+	assert.Equal(t, len(expectedFiles), len(files), files)
+	for _, expected := range expectedFiles {
+		_, err = os.Stat(filepath.Join(outputDir, expected))
+		assert.NoError(t, err, fmt.Sprintf("file %q missing from %v", expected, files))
 	}
 }
