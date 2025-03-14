@@ -879,7 +879,7 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 		"--distro", "centos-9",
 		"--cache", tmpdir,
 		"--output-dir", outputDir,
-		"--output-name=foo",
+		"--output-name=foo.n.0",
 		"--with-manifest",
 		"--with-sbom",
 		"--with-buildlog",
@@ -894,11 +894,11 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 	assert.NoError(t, err)
 
 	expectedFiles := []string{
-		"foo.buildroot-build.spdx.json",
-		"foo.image-os.spdx.json",
-		"foo.osbuild-manifest.json",
-		"foo.buildlog",
-		"foo.qcow2",
+		"foo.n.0.buildroot-build.spdx.json",
+		"foo.n.0.image-os.spdx.json",
+		"foo.n.0.osbuild-manifest.json",
+		"foo.n.0.buildlog",
+		"foo.n.0.qcow2",
 	}
 	files, err := filepath.Glob(outputDir + "/*")
 	assert.NoError(t, err)

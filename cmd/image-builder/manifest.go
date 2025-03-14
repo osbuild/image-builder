@@ -56,10 +56,9 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 	}
 	if opts.WithSBOM {
 		outputDir := basenameFor(img, opts.OutputDir)
-		overrideSBOMBase := strings.SplitN(opts.OutputFilename, ".", 2)[0]
 		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
-			if overrideSBOMBase != "" {
-				filename = fmt.Sprintf("%s.%s", overrideSBOMBase, strings.SplitN(filename, ".", 2)[1])
+			if opts.OutputFilename != "" {
+				filename = fmt.Sprintf("%s.%s", opts.OutputFilename, strings.SplitN(filename, ".", 2)[1])
 			}
 			return sbomWriter(outputDir, filename, content)
 		}
