@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
@@ -211,6 +213,17 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 	return progress.New(progressType)
 }
 
+// listOutputdir will return a string with the output dir content.
+// Any errors will also just appear as part of the string (as it is
+// purely informational)
+func listOutputdir(path string) string {
+	ents, err := filepath.Glob(filepath.Join(path, "/*"))
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	return strings.Join(ents, ",")
+}
+
 func cmdBuild(cmd *cobra.Command, args []string) error {
 	cacheDir, err := cmd.Flags().GetString("cache")
 	if err != nil {
@@ -286,7 +299,8 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	pbar.Stop()
-	fmt.Fprintf(osStdout, "Image build successful, result in %q\n", outputDir)
+
+	fmt.Fprintf(osStdout, "Image build successful, results:\n%s\n", listOutputdir(outputDir))
 
 	if uploader != nil {
 		// XXX: integrate better into the progress, see bib
