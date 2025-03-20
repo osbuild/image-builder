@@ -16,6 +16,7 @@ var (
 	FindDistro      = findDistro
 	DescribeImage   = describeImage
 	ProgressFromCmd = progressFromCmd
+	BasenameFor     = basenameFor
 )
 
 func MockOsArgs(new []string) (restore func()) {
