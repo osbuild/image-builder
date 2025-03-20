@@ -892,7 +892,9 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 		"--distro", "centos-9",
 		"--cache", tmpdir,
 		"--output-dir", outputDir,
-		"--output-name=foo.n.0",
+		// XXX: also test --output-name="foo.n.0" here which should
+		// have exactly the same result (once the depsolving is mocked)
+		"--output-name=foo.n.0.qcow2",
 		"--with-manifest",
 		"--with-sbom",
 		"--with-buildlog",
@@ -919,5 +921,33 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 	for _, expected := range expectedFiles {
 		_, err = os.Stat(filepath.Join(outputDir, expected))
 		assert.NoError(t, err, fmt.Sprintf("file %q missing from %v", expected, files))
+	}
+}
+
+func TestBasenameFor(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	for _, tc := range []struct {
+		imgTypeName string
+		basename    string
+		expected    string
+	}{
+		// no user provided output name
+		{"qcow2", "", "centos-9-qcow2-x86_64"},
+		{"minimal-raw", "", "centos-9-minimal-raw-x86_64"},
+		// simple
+		{"qcow2", "foo", "foo"},
+		{"qcow2", "foo.n.0", "foo.n.0"},
+		// with extension
+		{"qcow2", "foo.n.0.qcow2", "foo.n.0"},
+		{"minimal-raw", "foo.n.0.raw.xz", "foo.n.0"},
+		// with the "wrong" extension, we just ignore that and trust
+		// the user (what else could we do?)
+		{"qcow2", "foo.n.0.raw", "foo.n.0.raw"},
+	} {
+		res, err := main.GetOneImage("centos-9", tc.imgTypeName, "x86_64", nil)
+		require.NoError(t, err)
+		assert.Equal(t, tc.expected, main.BasenameFor(res, tc.basename))
 	}
 }
