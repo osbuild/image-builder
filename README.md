@@ -121,6 +121,20 @@ $ sudo image-builder build qcow2 --blueprint ./config.toml --distro centos-9
 ...
 ```
 
+### Cross architecture building
+
+When `qemu-user-static` is installed images can be build for foreign
+architectures. To do this, pass `--arch`, e.g.:
+
+```console
+$ sudo image-builder build --arch=riscv64 minimal-raw --distro fedora-41
+```
+building is about 8x-10x slower than native building but still fast
+enough to be usable.
+
+Note that this feature is considered experimental currently.
+
+
 ### SBOMs
 
 It is possible to generate spdx based SBOM (software bill of materials)
