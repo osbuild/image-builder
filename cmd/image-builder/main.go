@@ -81,7 +81,14 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 	}, nil
 }
 
-func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, needBootstrap func(string) bool) (*imagefilter.Result, error) {
+type cmdManifestWrapperOptions struct {
+	useBootstrapIfNeeded bool
+}
+
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
+	if wrapperOpts == nil {
+		wrapperOpts = &cmdManifestWrapperOptions{}
+	}
 	dataDir, err := cmd.Flags().GetString("data-dir")
 	if err != nil {
 		return nil, err
@@ -170,9 +177,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 
 		ForceRepos: forceRepos,
 	}
-	if needBootstrap != nil {
-		opts.UseBootstrapContainer = needBootstrap(img.Arch.Name())
-	}
+	opts.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.Arch.Name() != arch.Current().String())
 	if opts.UseBootstrapContainer {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.Arch.Name())
 	}
@@ -227,6 +232,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	// XXX: check env here, i.e. if user is root and osbuild is installed
 
 	pbar, err := progressFromCmd(cmd)
 	if err != nil {
@@ -242,10 +248,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}()
 
 	var mf bytes.Buffer
-	// XXX: check env here, i.e. if user is root and osbuild is installed
-	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, func(archStr string) bool {
-		return archStr != arch.Current().String()
-	})
+	opts := &cmdManifestWrapperOptions{
+		useBootstrapIfNeeded: true,
+	}
+	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, opts)
 	if err != nil {
 		return err
 	}
