@@ -85,6 +85,7 @@ export GOFLAGS+=" -mod=vendor"
 GOTAGS="exclude_graphdriver_btrfs"
 %endif
 
+export LDFLAGS="${LDFLAGS} -X 'main.BuildVersion=%{version}'"
 %gobuild ${GOTAGS:+-tags=$GOTAGS} -o %{gobuilddir}/bin/image-builder %{goipath}/cmd/image-builder
 
 %install
