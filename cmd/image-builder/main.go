@@ -151,6 +151,14 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	var customSeed *int64
+	if cmd.Flags().Changed("seed") {
+		seedFlagVal, err := cmd.Flags().GetInt64("seed")
+		if err != nil {
+			return nil, err
+		}
+		customSeed = &seedFlagVal
+	}
 	// no error check here as this is (deliberately) not defined on
 	// "manifest" (if "images" learn to set the output filename in
 	// manifests we would change this
@@ -189,6 +197,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		Ostree:         ostreeImgOpts,
 		RpmDownloader:  rpmDownloader,
 		WithSBOM:       withSBOM,
+		CustomSeed:     customSeed,
 
 		ForceRepos: forceRepos,
 	}
@@ -398,6 +407,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		Hidden:       true,
 	}
 	manifestCmd.Flags().String("blueprint", "", `filename of a blueprint to customize an image`)
+	manifestCmd.Flags().Int64("seed", 0, `rng seed, some values are derived randomly, pinning the seed allows more reproducibility if you need it. must be an integer. only used when changed.`)
 	manifestCmd.Flags().String("arch", "", `build manifest for a different architecture`)
 	manifestCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
 	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)

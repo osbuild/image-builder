@@ -122,3 +122,37 @@ def test_container_cross_build(tmp_path, build_container, arch):
         f"--arch={arch}",
     ], text=True)
     assert os.path.exists(output_dir / f"fedora-41-container-{arch}.tar")
+
+
+@pytest.mark.parametrize("use_seed_arg", [False, True])
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_container_manifest_seeded_is_the_same(build_container, use_seed_arg):
+    manifests = set()
+
+    cmd = [
+        "podman", "run",
+        "--privileged",
+        build_container,
+        "manifest",
+        "--distro", "centos-9",
+        "minimal-raw",
+    ]
+
+    if use_seed_arg:
+        cmd.extend(["--seed", "0"])
+
+    for _ in range(3):
+        p = subprocess.run(
+            cmd,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+
+        manifests.add(p.stdout)
+
+    # verify all calls with the same seed generated the same manifest
+    if use_seed_arg:
+        assert len(manifests) == 1
+    else:
+        print(cmd)
+        assert len(manifests) == 3
