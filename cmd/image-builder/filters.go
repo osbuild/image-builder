@@ -42,7 +42,7 @@ func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) 
 		return nil, err
 	}
 	// strip prefixes to make ib copy/paste friendly when pasting output
-	// from "list-images"
+	// from "list"
 	distroName = strings.TrimPrefix(distroName, "distro:")
 	imgTypeStr = strings.TrimPrefix(imgTypeStr, "type:")
 	archStr = strings.TrimPrefix(archStr, "arch:")

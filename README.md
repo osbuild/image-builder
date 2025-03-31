@@ -74,7 +74,7 @@ $ sudo dnf install osbuild osbuild-depsolve-dnf
 
 To see the list of buildable images run:
 ```console
-$ image-builder list-images
+$ image-builder list
 ...
 centos-9 type:qcow2 arch:x86_64
 ...
@@ -161,7 +161,7 @@ after they are built.
 
 When listing images, it is possible to filter:
 ```console
-$ image-builder list-images --filter ami
+$ image-builder list --filter ami
 ...
 centos-9 type:ami arch:x86_64
 ...
@@ -171,7 +171,7 @@ rhel-10.0 type:ami arch:aarch64
 ```
 or be more specific
 ```console
-$ image-builder list-images --filter "arch:x86*" --filter "distro:*centos*"
+$ image-builder list --filter "arch:x86*" --filter "distro:*centos*"
 centos-9 type:ami arch:x86_64
 ...
 centos-9 type:qcow2 arch:x86_64
@@ -188,7 +188,7 @@ The following filters are currently supported, shell-style globbing is supported
 
 The text format can also be switched, supported are "text", "json":
 ```console
-$ image-builder list-images --format=json
+$ image-builder list --format=json
 [
   {
     "distro": {

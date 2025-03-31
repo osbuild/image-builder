@@ -35,7 +35,7 @@ func TestListImagesNoArguments(t *testing.T) {
 	defer restore()
 
 	for _, args := range [][]string{nil, []string{"--format=text"}} {
-		restore = main.MockOsArgs(append([]string{"list-images"}, args...))
+		restore = main.MockOsArgs(append([]string{"list"}, args...))
 		defer restore()
 
 		var fakeStdout bytes.Buffer
@@ -55,7 +55,7 @@ func TestListImagesNoArgsOutputJSON(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	restore = main.MockOsArgs([]string{"list-images", "--format=json"})
+	restore = main.MockOsArgs([]string{"list", "--format=json"})
 	defer restore()
 
 	var fakeStdout bytes.Buffer
@@ -80,7 +80,7 @@ func TestListImagesFilteringSmoke(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	restore = main.MockOsArgs([]string{"list-images", "--filter=centos*"})
+	restore = main.MockOsArgs([]string{"list", "--filter=centos*"})
 	defer restore()
 
 	var fakeStdout bytes.Buffer
@@ -113,7 +113,7 @@ func TestListImagesErrorsOnExtraArgs(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
-	restore = main.MockOsArgs(append([]string{"list-images"}, "extra-arg"))
+	restore = main.MockOsArgs(append([]string{"list"}, "extra-arg"))
 	defer restore()
 
 	var fakeStdout bytes.Buffer
@@ -121,7 +121,7 @@ func TestListImagesErrorsOnExtraArgs(t *testing.T) {
 	defer restore()
 
 	err := main.Run()
-	assert.EqualError(t, err, `unknown command "extra-arg" for "image-builder list-images"`)
+	assert.EqualError(t, err, `unknown command "extra-arg" for "image-builder list"`)
 }
 
 func hasDepsolveDnf() bool {
