@@ -24,6 +24,7 @@ type manifestOptions struct {
 	Ostree         *ostree.ImageOptions
 	RpmDownloader  osbuild.RpmDownloader
 	WithSBOM       bool
+	CustomSeed     *int64
 
 	ForceRepos            []string
 	UseBootstrapContainer bool
@@ -55,6 +56,7 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 		Output:                output,
 		RpmDownloader:         opts.RpmDownloader,
 		UseBootstrapContainer: opts.UseBootstrapContainer,
+		CustomSeed:            opts.CustomSeed,
 	}
 	if opts.WithSBOM {
 		outputDir := basenameFor(img, opts.OutputDir)
