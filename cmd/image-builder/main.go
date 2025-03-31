@@ -392,16 +392,17 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 
-	listImagesCmd := &cobra.Command{
-		Use:          "list-images",
+	listCmd := &cobra.Command{
+		Use:          "list",
 		Short:        "List buildable images, use --filter to limit further",
 		RunE:         cmdListImages,
 		SilenceUsage: true,
 		Args:         cobra.NoArgs,
+        Aliases:      []string{"list-images"},
 	}
-	listImagesCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:iot*")`)
-	listImagesCmd.Flags().String("format", "", "Output in a specific format (text, json)")
-	rootCmd.AddCommand(listImagesCmd)
+	listCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:iot*")`)
+	listCmd.Flags().String("format", "", "Output in a specific format (text, json)")
+	rootCmd.AddCommand(listCmd)
 
 	manifestCmd := &cobra.Command{
 		Use:          "manifest <image-type>",
