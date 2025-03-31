@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/bootc-image-builder/bib/internal/setup"
+	"github.com/osbuild/image-builder-cli/pkg/setup"
 )
 
 func TestValidateCanRunTargetArchTrivial(t *testing.T) {

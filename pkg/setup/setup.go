@@ -12,8 +12,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/osbuild/bootc-image-builder/bib/internal/podmanutil"
-	"github.com/osbuild/bootc-image-builder/bib/internal/util"
+	"github.com/osbuild/image-builder-cli/pkg/podmanutil"
+	"github.com/osbuild/image-builder-cli/pkg/util"
 )
 
 // EnsureEnvironment mutates external filesystem state as necessary
