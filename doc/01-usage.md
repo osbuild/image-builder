@@ -112,6 +112,16 @@ $ sudo image-builder build --distro fedora-43 minimal-raw
 # ... progress ...
 ```
 
+When passed `--arch` `image-builder` will try to do an experimental cross-architecture build. Note that not all image types are available for all architectures.
+
+Cross-architecture builds are much slower than being able to build on native hardware. However, if no native hardware is available they might be an acceptable compromise.
+
+```console
+$ sudo image-builder build --arch s390x qcow2
+WARNING: using experimental cross-architecture building to build "s390x"
+# ... progress ...
+```
+
 # Blueprints
 
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we could build the `qcow2` we built above with some customizations applied.
