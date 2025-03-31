@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/bootc-image-builder/bib/internal/util"
+	"github.com/osbuild/image-builder-cli/pkg/util"
 )
 
 func TestOutputErrPassthrough(t *testing.T) {
