@@ -31,6 +31,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/hashicorp/go-version v1.9.0
 	github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b
+	github.com/mattn/go-isatty v0.0.22
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
@@ -133,7 +134,6 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20240620165639-de9c06129bec // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect

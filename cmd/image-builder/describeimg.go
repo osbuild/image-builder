@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -8,7 +9,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
@@ -31,6 +34,8 @@ type describeImgYAML struct {
 	BuildPipelines   []string                 `yaml:"build_pipelines"`
 	PayloadPipelines []string                 `yaml:"payload_pipelines"`
 	Packages         map[string]*packagesYAML `yaml:"packages"`
+
+	PartitionTable *disk.PartitionTable `yaml:"partition_table,omitempty"`
 }
 
 type packagesYAML struct {
@@ -86,6 +91,10 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	partTable, err := img.ImgType.BasePartitionTable()
+	if err != nil && !errors.Is(err, defs.ErrNoPartitionTableForImgType) {
+		return err
+	}
 
 	outYaml := &describeImgYAML{
 		Distro:           img.Distro.Name(),
@@ -98,6 +107,7 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 		BuildPipelines:   img.ImgType.BuildPipelines(),
 		PayloadPipelines: img.ImgType.PayloadPipelines(),
 		Packages:         pkgSets,
+		PartitionTable:   partTable,
 	}
 	// deliberately break the yaml until the feature is stable
 	fmt.Fprint(out, "@WARNING - the output format is not stable yet and may change\n")
