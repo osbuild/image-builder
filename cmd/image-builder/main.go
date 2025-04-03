@@ -455,12 +455,13 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	// XXX: add --format=json too?
 	describeImgCmd := &cobra.Command{
-		Use:          "describe-image <image-type>",
+		Use:          "describe <image-type>",
 		Short:        "Describe the given image-type, e.g. qcow2 (tip: combine with --distro,--arch)",
 		RunE:         cmdDescribeImg,
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
 		Hidden:       true,
+		Aliases:      []string{"describe-image"},
 	}
 	describeImgCmd.Flags().String("arch", "", `use the different architecture`)
 	describeImgCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)

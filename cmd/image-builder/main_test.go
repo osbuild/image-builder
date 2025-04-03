@@ -688,7 +688,7 @@ func TestDescribeImageSmoke(t *testing.T) {
 	defer restore()
 
 	restore = main.MockOsArgs([]string{
-		"describe-image",
+		"describe",
 		"qcow2",
 		"--distro=centos-9",
 		"--arch=x86_64",
