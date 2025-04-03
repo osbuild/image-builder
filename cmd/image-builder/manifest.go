@@ -46,17 +46,18 @@ func sbomWriter(outputDir, filename string, content io.Reader) error {
 	return nil
 }
 
-func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, opts *manifestOptions) error {
+func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, depsolveWarningsOutput io.Writer, opts *manifestOptions) error {
 	repos, err := newRepoRegistry(dataDir, extraRepos)
 	if err != nil {
 		return err
 	}
 	// XXX: add --rpmmd/cachedir option like bib
 	manifestGenOpts := &manifestgen.Options{
-		Output:                output,
-		RpmDownloader:         opts.RpmDownloader,
-		UseBootstrapContainer: opts.UseBootstrapContainer,
-		CustomSeed:            opts.CustomSeed,
+		Output:                 output,
+		DepsolveWarningsOutput: depsolveWarningsOutput,
+		RpmDownloader:          opts.RpmDownloader,
+		UseBootstrapContainer:  opts.UseBootstrapContainer,
+		CustomSeed:             opts.CustomSeed,
 	}
 	if opts.WithSBOM {
 		outputDir := basenameFor(img, opts.OutputDir)
