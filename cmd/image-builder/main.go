@@ -101,7 +101,7 @@ type cmdManifestWrapperOptions struct {
 	useBootstrapIfNeeded bool
 }
 
-func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
 	if wrapperOpts == nil {
 		wrapperOpts = &cmdManifestWrapperOptions{}
 	}
@@ -207,7 +207,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.Arch.Name())
 	}
 
-	err = generateManifest(dataDir, extraRepos, img, w, opts)
+	err = generateManifest(dataDir, extraRepos, img, w, wd, opts)
 	return img, err
 }
 
@@ -216,7 +216,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, nil)
+	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, osStderr, nil)
 	return err
 }
 
@@ -287,7 +287,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	opts := &cmdManifestWrapperOptions{
 		useBootstrapIfNeeded: true,
 	}
-	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, opts)
+
+	// We discard any warnings from the depsolver until we figure out a better
+	// idea (likely in manifestgen)
+	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, io.Discard, opts)
 	if err != nil {
 		return err
 	}
