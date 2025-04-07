@@ -216,7 +216,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, osStderr, nil)
+	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, io.Discard, nil)
 	return err
 }
 
