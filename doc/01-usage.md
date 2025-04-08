@@ -105,6 +105,8 @@ $ sudo image-builder build minimal-raw
 # ... progress ...
 ```
 
+The `build` command requires root privileges in many cases as `image-builder` needs access to loopback devices and `mount`.
+
 By default the `build` command uses the same distribution and version as the host system, you can pass another distribution and version with the `--distro` argument:
 
 ```console
