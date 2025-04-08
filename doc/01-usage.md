@@ -193,6 +193,29 @@ $ image-builder describe --arch aarch64 minimal-raw
 # ... output ...
 ```
 
+## `image-builder manifest`
+
+The `manifest` command outputs an [osbuild](https://github.com/osbuild/osbuild) manifest for an image. This manifest contains all the steps performed to assemble the eventual image but the image itself is not created.
+
+```console
+$ image-builder manifest minimal-raw
+# ... json ...
+```
+
+By default the `manifest` command uses the same distribution and version as the host system, you can pass another distribution and version with the `--distro` argument:
+
+```console
+$ image-builder manifest --distro fedora-43 minimal-raw
+# ... json ...
+```
+
+When passed `--arch` `image-builder` will show the manifest for that architecture:
+
+```console
+$ image-builder manifest --arch aarch64 minimal-raw
+# ... output ...
+```
+
 # Blueprints
 
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we could build the `qcow2` we built above with some customizations applied.
