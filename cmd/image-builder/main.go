@@ -473,7 +473,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		RunE:         cmdDescribeImg,
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
-		Hidden:       true,
+		Hidden:       false,
 		Aliases:      []string{"describe-image"},
 	}
 	describeImgCmd.Flags().String("arch", "", `use the different architecture`)
