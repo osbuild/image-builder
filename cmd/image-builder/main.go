@@ -389,6 +389,9 @@ Image-builder builds operating system images for a range of predefined
 operating systems like Fedora, CentOS and RHEL with easy customizations support.`,
 		SilenceErrors: true,
 		Version:       BuildVersion,
+		CompletionOptions: cobra.CompletionOptions{
+			HiddenDefaultCmd: true,
+		},
 	}
 	rootCmd.PersistentFlags().String("data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
