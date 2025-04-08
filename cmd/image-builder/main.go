@@ -355,6 +355,12 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	if archStr == "" {
 		archStr = arch.Current().String()
 	}
+
+	distroStr, err = findDistro(distroStr, "")
+	if err != nil {
+		return err
+	}
+
 	imgTypeStr := args[0]
 	res, err := getOneImage(distroStr, imgTypeStr, archStr, &repoOptions{DataDir: dataDir})
 	if err != nil {
