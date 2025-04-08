@@ -27,6 +27,17 @@ var testBlueprintTOML = `
 name = "alice"
 `
 
+var testBlueprintJSONunknownKeys = `
+{
+  "birds": {"name": "robin"}
+}
+`
+
+var testBlueprintTOMLunknownKeys = `
+[[birds]]
+name = "robin"
+`
+
 var expectedBlueprint = &blueprint.Blueprint{
 	Customizations: &blueprint.Customizations{
 		User: []blueprint.UserCustomization{
@@ -55,9 +66,11 @@ func TestBlueprintLoadJSON(t *testing.T) {
 	}{
 		{"bp.json", testBlueprintJSON, expectedBlueprint, ""},
 		{"bp.toml", testBlueprintTOML, expectedBlueprint, ""},
-		{"bp.toml", "wrong-content", nil, `cannot decode .*/bp.toml": toml: `},
-		{"bp.json", "wrong-content", nil, `cannot decode .*/bp.json": invalid `},
+		{"bp.toml", "wrong-content", nil, `cannot decode ".*/bp.toml": toml: `},
+		{"bp.json", "wrong-content", nil, `cannot decode ".*/bp.json": invalid `},
 		{"bp", "wrong-content", nil, `unsupported file extension for "/.*/bp"`},
+		{"bp.toml", testBlueprintTOMLunknownKeys, nil, `cannot decode ".*/bp.toml": unknown keys found: \[birds birds.name\]`},
+		{"bp.json", testBlueprintJSONunknownKeys, nil, `cannot decode ".*/bp.json": json: unknown field "birds"`},
 	} {
 		blueprintPath := makeTestBlueprint(t, tc.fname, tc.content)
 		bp, err := blueprintload.Load(blueprintPath)
