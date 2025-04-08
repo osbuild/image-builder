@@ -122,6 +122,77 @@ WARNING: using experimental cross-architecture building to build "s390x"
 # ... progress ...
 ```
 
+## `image-builder describe`
+
+The `describe` command outputs structured information about an image without building it. It lists the packages that would be used to build the images and the partition tables.
+
+```console
+$ image-builder describe minimal-raw
+@WARNING - the output format is not stable yet and may change
+distro: fedora-43
+type: minimal-raw-zst
+arch: x86_64
+os_version: "43"
+bootmode: uefi
+partition_type: gpt
+default_filename: disk.raw.zst
+build_pipelines:
+  - build
+payload_pipelines:
+  - os
+  - image
+  - zstd
+packages:
+  build:
+    include:
+      - coreutils
+      - dosfstools
+      - e2fsprogs
+      - glibc
+      - policycoreutils
+      - python3
+      - rpm
+      - selinux-policy-targeted
+      - systemd
+      - xz
+      - zstd
+    exclude: []
+  os:
+    include:
+      - '@core'
+      - NetworkManager-wifi
+      - brcmfmac-firmware
+      - dosfstools
+      - dracut-config-generic
+      - e2fsprogs
+      - efibootmgr
+      - grub2-efi-x64
+      - initial-setup
+      - iwlwifi-mvm-firmware
+      - kernel
+      - libxkbcommon
+      - realtek-firmware
+      - selinux-policy-targeted
+      - shim-x64
+    exclude:
+      - dracut-config-rescue
+      - firewalld
+```
+
+By default the `describe` command uses the same distribution and version as the host system, you can pass another distribution and version with the `--distro` argument:
+
+```console
+$ image-builder describe --distro fedora-43 minimal-raw
+# ... output ...
+```
+
+When passed `--arch` `image-builder` will show the description for that architecture:
+
+```console
+$ image-builder describe --arch aarch64 minimal-raw
+# ... output ...
+```
+
 # Blueprints
 
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we could build the `qcow2` we built above with some customizations applied.
