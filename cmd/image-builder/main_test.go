@@ -130,24 +130,22 @@ func hasDepsolveDnf() bool {
 	return err == nil
 }
 
-var testBlueprint = `{
-  "containers": [
-    {
-      "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
-    }
-  ],
-  "customizations": {
-    "user": [
-      {
-	"name": "alice"
-      }
-    ]
-  }
-}`
+var testBlueprint = `
+[[containers]]
+source = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+
+[[customizations.user]]
+name = "alice"
+
+[[customizations.disk.partitions]]
+type = "lvm"
+name = "mainvg"
+minsize = "20 GiB"
+`
 
 func makeTestBlueprint(t *testing.T, testBlueprint string) string {
 	tmpdir := t.TempDir()
-	blueprintPath := filepath.Join(tmpdir, "blueprint.json")
+	blueprintPath := filepath.Join(tmpdir, "blueprint.toml")
 	err := os.WriteFile(blueprintPath, []byte(testBlueprint), 0644)
 	assert.NoError(t, err)
 	return blueprintPath
