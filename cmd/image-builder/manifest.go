@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/manifestgen"
@@ -22,6 +23,7 @@ type manifestOptions struct {
 	OutputFilename string
 	BlueprintPath  string
 	Ostree         *ostree.ImageOptions
+	Subscription   *subscription.ImageOptions
 	RpmDownloader  osbuild.RpmDownloader
 	WithSBOM       bool
 	CustomSeed     *int64
@@ -46,6 +48,9 @@ func sbomWriter(outputDir, filename string, content io.Reader) error {
 	return nil
 }
 
+// used in tests
+var manifestgenDepsolver manifestgen.DepsolveFunc
+
 func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, depsolveWarningsOutput io.Writer, opts *manifestOptions) error {
 	repos, err := newRepoRegistry(dataDir, extraRepos)
 	if err != nil {
@@ -58,6 +63,7 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 		RpmDownloader:          opts.RpmDownloader,
 		UseBootstrapContainer:  opts.UseBootstrapContainer,
 		CustomSeed:             opts.CustomSeed,
+		Depsolver:              manifestgenDepsolver,
 	}
 	if opts.WithSBOM {
 		outputDir := basenameFor(img, opts.OutputDir)
@@ -84,9 +90,10 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 		return err
 	}
 	var imgOpts *distro.ImageOptions
-	if opts.Ostree != nil {
+	if opts.Ostree != nil || opts.Subscription != nil {
 		imgOpts = &distro.ImageOptions{
-			OSTree: opts.Ostree,
+			OSTree:       opts.Ostree,
+			Subscription: opts.Subscription,
 		}
 	}
 

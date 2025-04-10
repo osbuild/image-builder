@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,6 +19,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/rpmmd"
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
@@ -947,4 +951,82 @@ func TestBasenameFor(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, tc.expected, main.BasenameFor(res, tc.basename))
 	}
+}
+
+// XXX: move into as manifestgen.FakeDepsolve
+func fakeDepsolve(cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]dnfjson.DepsolveResult, error) {
+	depsolvedSets := make(map[string]dnfjson.DepsolveResult)
+
+	for name, pkgSetChain := range packageSets {
+		specSet := make([]rpmmd.PackageSpec, 0)
+		for _, pkgSet := range pkgSetChain {
+			include := pkgSet.Include
+			slices.Sort(include)
+			for _, pkgName := range include {
+				checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(pkgName)))
+				spec := rpmmd.PackageSpec{
+					Name:     pkgName,
+					Checksum: "sha256:" + checksum,
+				}
+				specSet = append(specSet, spec)
+			}
+
+			depsolvedSets[name] = dnfjson.DepsolveResult{
+				Packages: specSet,
+				Repos:    pkgSet.Repositories,
+			}
+		}
+	}
+
+	return depsolvedSets, nil
+}
+
+func TestManifestIntegrationWithRegistrations(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	// XXX: only "proxy_123", "server_url_123" are actually observable
+	// in the manifest(?)
+	fakeRegContent := `{
+  "redhat": {
+    "subscription": {
+      "activation_key": "ak_123",
+      "organization": "org_123",
+      "server_url": "server_url_123",
+      "base_url": "base_url_123",
+      "insights": true,
+      "rhc": true,
+      "proxy": "proxy_123"
+    }
+  }
+}`
+	fakeRegistrationsPath := filepath.Join(t.TempDir(), "registrations.json")
+	err := os.WriteFile(fakeRegistrationsPath, []byte(fakeRegContent), 0644)
+	assert.NoError(t, err)
+
+	// XXX: fake the depsolving or we will need full support for
+	// subscripbed hosts in the tests
+	restore = main.MockOsArgs([]string{
+		"manifest",
+		"qcow2",
+		"--arch=x86_64",
+		"--distro=rhel-9.6",
+		"--registrations", fakeRegistrationsPath,
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err = main.Run()
+	assert.NoError(t, err)
+
+	// XXX: manifesttest really needs to grow more helpers
+	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.insights-client.config","options":{"proxy":"proxy_123"}}`)
+	assert.Contains(t, fakeStdout.String(), `"type":"org.osbuild.systemd.unit.create","options":{"filename":"osbuild-subscription-register.service"`)
+	assert.Contains(t, fakeStdout.String(), `server_url_123`)
 }
