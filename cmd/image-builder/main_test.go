@@ -751,11 +751,10 @@ func TestManifestExtraRepo(t *testing.T) {
 	err = exec.Command("createrepo_c", localRepoDir).Run()
 	assert.NoError(t, err)
 
-	pkgHelloBlueprint := `{
-          "packages": [
-            {"name":"dummy"}
-          ]
-        }`
+	pkgHelloBlueprint := `
+        [[packages]]
+        name = "dummy"
+`
 	restore := main.MockOsArgs([]string{
 		"manifest",
 		"qcow2",
