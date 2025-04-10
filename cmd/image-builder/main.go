@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -97,6 +99,37 @@ func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
 	}, nil
 }
 
+type registrations struct {
+	Redhat struct {
+		Subscription *subscription.ImageOptions `json:"subscription,omitempty"`
+	} `json:"redhat,omitempty"`
+}
+
+func subscriptionImageOptions(cmd *cobra.Command) (*subscription.ImageOptions, error) {
+	regFilePath, err := cmd.Flags().GetString("registrations")
+	if err != nil {
+		return nil, err
+	}
+	if regFilePath == "" {
+		return nil, nil
+	}
+
+	f, err := os.Open(regFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open registrations file: %w", err)
+	}
+	defer f.Close()
+
+	// XXX: support yaml eventually
+	var regs registrations
+	dec := json.NewDecoder(f)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&regs); err != nil {
+		return nil, fmt.Errorf("cannot parse registrations file: %w", err)
+	}
+	return regs.Redhat.Subscription, nil
+}
+
 type cmdManifestWrapperOptions struct {
 	useBootstrapIfNeeded bool
 }
@@ -160,6 +193,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		}
 		customSeed = &seedFlagVal
 	}
+	subscription, err := subscriptionImageOptions(cmd)
+	if err != nil {
+		return nil, err
+	}
 	// no error check here as this is (deliberately) not defined on
 	// "manifest" (if "images" learn to set the output filename in
 	// manifests we would change this
@@ -199,6 +236,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		RpmDownloader:  rpmDownloader,
 		WithSBOM:       withSBOM,
 		CustomSeed:     customSeed,
+		Subscription:   subscription,
 
 		ForceRepos: forceRepos,
 	}
@@ -407,7 +445,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		RunE:         cmdListImages,
 		SilenceUsage: true,
 		Args:         cobra.NoArgs,
-        Aliases:      []string{"list-images"},
+		Aliases:      []string{"list-images"},
 	}
 	listCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:iot*")`)
 	listCmd.Flags().String("format", "", "Output in a specific format (text, json)")
@@ -430,6 +468,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
+	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
 	rootCmd.AddCommand(manifestCmd)
 
 	uploadCmd := &cobra.Command{

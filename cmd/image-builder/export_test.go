@@ -7,6 +7,7 @@ import (
 
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
+	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/reporegistry"
 )
 
@@ -69,5 +70,13 @@ func MockAwscloudNewUploader(f func(string, string, string, *awscloud.UploaderOp
 	awscloudNewUploader = f
 	return func() {
 		awscloudNewUploader = saved
+	}
+}
+
+func MockManifestgenDepsolver(new manifestgen.DepsolveFunc) (restore func()) {
+	saved := manifestgenDepsolver
+	manifestgenDepsolver = new
+	return func() {
+		manifestgenDepsolver = saved
 	}
 }
