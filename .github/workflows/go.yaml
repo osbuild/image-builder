@@ -25,6 +25,8 @@ jobs:
         run: |
           # we have the same build-deps as the images library
           curl -sL https://raw.githubusercontent.com/osbuild/images/refs/heads/main/test/scripts/install-dependencies | bash
+          # we also need createrepo_c
+          dnf install -y createrepo_c
       - name: Build
         run: go build -v ./...
       - name: Test
