@@ -38,3 +38,4 @@ url
 dir
 programmatically
 loopback
+CDN

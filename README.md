@@ -293,6 +293,15 @@ a fedora-42 repository url and try to build a centos-9 image type and
 the system will happily try its best (and most likely fail). Use with
 caution.
 
+## Subscriptions
+
+When executing `image-builder-cli` via `podman`, subscription information is
+passed to the container and used to access Red Hat CDN. As long as the host
+machine is properly subscribed with attached Red Hat Enterprise Linux
+subscription, building RHEL images will work automatically.
+
+To use content from Red Hat Satellite, follow the extra repositories section
+above.
 
 ## FAQ
 
