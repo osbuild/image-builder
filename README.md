@@ -121,6 +121,35 @@ $ sudo image-builder build qcow2 --blueprint ./config.toml --distro centos-9
 ...
 ```
 
+### Adding registrations
+
+Adding registrations/subscriptions to an image can be done at
+build time via the `--registrations` command line option. When
+using this option the resulting image will include the given
+subscriptions/registrations in the resulting image.
+
+Currently the Red Hat subscription is supported, e.g.
+```console
+$ cat > registrations.json <<EOF
+{
+  "redhat": {
+    "subscription": {
+      "activation_key": "replace-with_activation_key",
+      "organization": "replace-with_org",
+      "server_url": "replace-with_server_url",
+      "base_url": "replace_with-base_url",
+      "insights": true,
+      "rhc": true,
+      "proxy": "replace-with_proxy"
+    }
+  }
+}
+EOF
+$ sudo image-builder build qcow2 --registrations registrations.json --distro centos-9
+```
+Note that some of these options are optional and the image must have
+`subscription-manager` installed.
+
 ### Cross architecture building
 
 When `qemu-user-static` is installed images can be build for foreign
