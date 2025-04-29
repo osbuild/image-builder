@@ -14,7 +14,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,11 +28,6 @@ import (
 	"github.com/osbuild/images/internal/manifesttest"
 	"github.com/osbuild/images/pkg/arch"
 )
-
-func init() {
-	// silence logrus by default, it is quite verbose
-	logrus.SetLevel(logrus.WarnLevel)
-}
 
 func TestListImagesNoArguments(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)

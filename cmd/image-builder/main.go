@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
@@ -24,6 +24,7 @@ import (
 	"github.com/osbuild/images/pkg/ostree"
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
+	"github.com/osbuild/image-builder-cli/internal/olog"
 )
 
 var (
@@ -409,13 +410,8 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 }
 
 func run() error {
-	// images generates a lot of noisy logs a bunch of stuff to
-	// Debug/Info that is distracting the user (at least by
-	// default, like what repos being loaded)
-	//
-	// Disable for now until we can filter out the usless log
-	// messages.
-	logrus.SetOutput(io.Discard)
+	// Initialize console logger (stderr, no prefix)
+	log.SetFlags(0)
 
 	rootCmd := &cobra.Command{
 		Use:   "image-builder",
@@ -435,7 +431,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
-	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode`)
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode (more logging on stderr and verbose progress)`)
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 
@@ -520,12 +516,21 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	rootCmd.AddCommand(describeImgCmd)
 
+	verbose, err := rootCmd.PersistentFlags().GetBool("verbose")
+	if err != nil {
+		return err
+	}
+	if verbose {
+		olog.SetDefault(log.New(os.Stderr, "", 0))
+		// XXX: add once images has olog support
+		//images_log.SetDefault(log.New(os.Stderr, "", 0))
+	}
+
 	return rootCmd.Execute()
 }
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintf(osStderr, "error: %s\n", err)
-		os.Exit(1)
+		log.Fatalf("error: %s\n", err)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/mattn/go-isatty"
-	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -241,7 +241,7 @@ func (b *terminalProgressBar) Stop() {
 		// I cannot think of how this could happen, i.e. why
 		// closing would not work but lets be conservative -
 		// without a timeout we hang here forever
-		logrus.Warnf("no progress channel shutdown after 1sec")
+		log.Printf("WARNING: no progress channel shutdown after 1sec")
 	}
 	b.shutdownCh = nil
 	// This should never happen but be paranoid, this should
@@ -479,7 +479,7 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 		i := 0
 		for p := st.Progress; p != nil; p = p.SubProgress {
 			if err := pb.SetProgress(i, p.Message, p.Done, p.Total); err != nil {
-				logrus.Warnf("cannot set progress: %v", err)
+				log.Printf("WARNING: cannot set progress: %v", err)
 			}
 			i++
 		}

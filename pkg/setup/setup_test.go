@@ -3,12 +3,12 @@ package setup_test
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/image-builder-cli/pkg/setup"
@@ -23,11 +23,13 @@ func TestValidateCanRunTargetArchTrivial(t *testing.T) {
 
 func TestValidateCanRunTargetArchUnsupportedCanary(t *testing.T) {
 	var logbuf bytes.Buffer
-	logrus.SetOutput(&logbuf)
+	ow := log.Writer()
+	log.SetOutput(&logbuf)
+	defer log.SetOutput(ow)
 
 	err := setup.ValidateCanRunTargetArch("unsupported-arch")
 	assert.NoError(t, err)
-	assert.Contains(t, logbuf.String(), `level=warning msg="cannot check architecture support for unsupported-arch: no canary binary found"`)
+	assert.Contains(t, logbuf.String(), `cannot check architecture support for unsupported-arch: no canary binary found`)
 }
 
 func makeFakeBinary(t *testing.T, binary, content string) {
@@ -43,7 +45,9 @@ func makeFakeCanary(t *testing.T, content string) {
 
 func TestValidateCanRunTargetArchHappy(t *testing.T) {
 	var logbuf bytes.Buffer
-	logrus.SetOutput(&logbuf)
+	ow := log.Writer()
+	log.SetOutput(&logbuf)
+	defer log.SetOutput(ow)
 
 	makeFakeCanary(t, "#!/bin/sh\necho ok")
 
