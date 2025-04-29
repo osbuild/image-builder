@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/image-builder-cli/internal/olog"
 )
 
 // IsMountpoint checks if the target path is a mount point
@@ -17,7 +17,7 @@ func IsMountpoint(path string) bool {
 // Synchronously invoke a command, propagating stdout and stderr
 // to the current process's stdout and stderr
 func RunCmdSync(cmdName string, args ...string) error {
-	logrus.Debugf("Running: %s %s", cmdName, strings.Join(args, " "))
+	olog.Printf("Running: %s %s", cmdName, strings.Join(args, " "))
 	cmd := exec.Command(cmdName, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

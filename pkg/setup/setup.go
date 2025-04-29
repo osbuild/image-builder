@@ -2,6 +2,7 @@ package setup
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -9,8 +10,6 @@ import (
 	"strings"
 
 	"golang.org/x/sys/unix"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/image-builder-cli/pkg/podmanutil"
 	"github.com/osbuild/image-builder-cli/pkg/util"
@@ -136,7 +135,7 @@ func validateCanRunTargetArch(targetArch string) error {
 		// we could error here but in principle with a working qemu-user
 		// any arch should work so let's just warn. the common case
 		// (arm64/amd64) is covered properly
-		logrus.Warningf("cannot check architecture support for %v: no canary binary found", targetArch)
+		log.Printf("WARNING: cannot check architecture support for %v: no canary binary found", targetArch)
 		return nil
 	}
 	output, err := exec.Command(canaryCmd).CombinedOutput()
