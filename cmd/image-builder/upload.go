@@ -84,6 +84,10 @@ func uploaderForCmdAWS(cmd *cobra.Command) (cloud.Uploader, error) {
 	if err != nil {
 		return nil, err
 	}
+	targetArch, err := cmd.Flags().GetString("arch")
+	if err != nil {
+		return nil, err
+	}
 
 	var missing []string
 	requiredArgs := []string{"aws-ami-name", "aws-bucket", "aws-region"}
@@ -103,8 +107,11 @@ func uploaderForCmdAWS(cmd *cobra.Command) (cloud.Uploader, error) {
 
 		return nil, fmt.Errorf("%w: %q", ErrMissingUploadConfig, missing)
 	}
+	opts := &awscloud.UploaderOptions{
+		TargetArch: targetArch,
+	}
 
-	return awscloudNewUploader(region, bucketName, amiName, nil)
+	return awscloudNewUploader(region, bucketName, amiName, opts)
 }
 
 func cmdUpload(cmd *cobra.Command, args []string) error {

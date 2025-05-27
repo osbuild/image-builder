@@ -51,41 +51,54 @@ func TestUploadWithAWSMock(t *testing.T) {
 	assert.NoError(t, err)
 
 	var regionName, bucketName, amiName string
-	var fa fakeAwsUploader
-	restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
-		regionName = region
-		bucketName = bucket
-		amiName = ami
-		return &fa, nil
-	})
-	defer restore()
+	var uploadOpts *awscloud.UploaderOptions
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
+	for _, tc := range []struct {
+		targetArchArg      string
+		expectedUploadArch string
+	}{
+		{"", ""},
+		{"aarch64", "aarch64"},
+	} {
+		var fa fakeAwsUploader
+		restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
+			regionName = region
+			bucketName = bucket
+			amiName = ami
+			uploadOpts = opts
+			return &fa, nil
+		})
+		defer restore()
 
-	restore = main.MockOsArgs([]string{
-		"upload",
-		"--to=aws",
-		"--aws-region=aws-region-1",
-		"--aws-bucket=aws-bucket-2",
-		"--aws-ami-name=aws-ami-3",
-		fakeImageFilePath,
-	})
-	defer restore()
+		var fakeStdout bytes.Buffer
+		restore = main.MockOsStdout(&fakeStdout)
+		defer restore()
 
-	err = main.Run()
-	require.NoError(t, err)
+		restore = main.MockOsArgs([]string{
+			"upload",
+			"--to=aws",
+			"--aws-region=aws-region-1",
+			"--aws-bucket=aws-bucket-2",
+			"--aws-ami-name=aws-ami-3",
+			"--arch=" + tc.targetArchArg,
+			fakeImageFilePath,
+		})
+		defer restore()
 
-	assert.Equal(t, regionName, "aws-region-1")
-	assert.Equal(t, bucketName, "aws-bucket-2")
-	assert.Equal(t, amiName, "aws-ami-3")
+		err = main.Run()
+		require.NoError(t, err)
 
-	assert.Equal(t, 0, fa.checkCalls)
-	assert.Equal(t, 1, fa.uploadAndRegisterCalls)
-	assert.Equal(t, fakeDiskContent, fa.uploadAndRegisterRead.String())
-	// progress was rendered
-	assert.Contains(t, fakeStdout.String(), "--] 100.00%")
+		assert.Equal(t, regionName, "aws-region-1")
+		assert.Equal(t, bucketName, "aws-bucket-2")
+		assert.Equal(t, amiName, "aws-ami-3")
+		assert.Equal(t, &awscloud.UploaderOptions{TargetArch: tc.expectedUploadArch}, uploadOpts)
+
+		assert.Equal(t, 0, fa.checkCalls)
+		assert.Equal(t, 1, fa.uploadAndRegisterCalls)
+		assert.Equal(t, fakeDiskContent, fa.uploadAndRegisterRead.String())
+		// progress was rendered
+		assert.Contains(t, fakeStdout.String(), "--] 100.00%")
+	}
 }
 
 func TestUploadCmdlineErrors(t *testing.T) {

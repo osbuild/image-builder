@@ -477,6 +477,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("aws-ami-name", "", "name for the AMI in AWS (only for type=ami)")
 	uploadCmd.Flags().String("aws-bucket", "", "target S3 bucket name for intermediate storage when creating AMI (only for type=ami)")
 	uploadCmd.Flags().String("aws-region", "", "target region for AWS uploads (only for type=ami)")
+	uploadCmd.Flags().String("arch", "", "upload for the given architecture")
 	rootCmd.AddCommand(uploadCmd)
 
 	buildCmd := &cobra.Command{
