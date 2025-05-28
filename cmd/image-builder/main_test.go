@@ -250,7 +250,7 @@ func TestManifestIntegrationOstreeSmoke(t *testing.T) {
 		"manifest",
 		"iot-raw-image",
 		"--arch=x86_64",
-		"--distro=fedora-40",
+		"--distro=fedora-42",
 		"--ostree-url=" + strings.SplitN(string(body), "\n", 2)[0],
 		"--ostree-ref=fedora/stable/x86_64/iot",
 	})
@@ -282,7 +282,7 @@ func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
 	baseArgs := []string{
 		"manifest",
 		"--arch=x86_64",
-		"--distro=fedora-40",
+		"--distro=fedora-42",
 	}
 
 	for _, tc := range []struct {
