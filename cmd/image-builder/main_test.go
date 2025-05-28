@@ -1048,7 +1048,7 @@ func TestManifestIntegrationWithRegistrations(t *testing.T) {
 	assert.NoError(t, err)
 
 	// XXX: manifesttest really needs to grow more helpers
-	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.insights-client.config","options":{"proxy":"proxy_123"}}`)
+	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.insights-client.config","options":{"config":{"proxy":"proxy_123"}}}`)
 	assert.Contains(t, fakeStdout.String(), `"type":"org.osbuild.systemd.unit.create","options":{"filename":"osbuild-subscription-register.service"`)
 	assert.Contains(t, fakeStdout.String(), `server_url_123`)
 }
