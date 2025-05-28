@@ -248,7 +248,7 @@ func TestManifestIntegrationOstreeSmoke(t *testing.T) {
 	assert.NoError(t, err)
 	restore = main.MockOsArgs([]string{
 		"manifest",
-		"iot-raw-image",
+		"iot-raw-xz",
 		"--arch=x86_64",
 		"--distro=fedora-42",
 		"--ostree-url=" + strings.SplitN(string(body), "\n", 2)[0],
@@ -290,12 +290,12 @@ func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			[]string{"iot-raw-image"},
-			`iot-raw-image: ostree commit URL required`,
+			[]string{"iot-raw-xz"},
+			`iot-raw-xz: ostree commit URL required`,
 		},
 		{
-			[]string{"qcow2", "--ostree-url=http://example.com/"},
-			`OSTree is not supported for "qcow2"`,
+			[]string{"server-qcow2", "--ostree-url=http://example.com/"},
+			`OSTree is not supported for "server-qcow2"`,
 		},
 	} {
 		args := append(baseArgs, tc.extraArgs...)
