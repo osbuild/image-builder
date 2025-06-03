@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/platform"
@@ -58,7 +59,7 @@ func TestUploadWithAWSMock(t *testing.T) {
 		targetArchArg      string
 		expectedUploadArch string
 	}{
-		{"", ""},
+		{"", "x86_64"},
 		{"aarch64", "aarch64"},
 	} {
 		var fa fakeAwsUploader
@@ -71,8 +72,10 @@ func TestUploadWithAWSMock(t *testing.T) {
 		})
 		defer restore()
 
-		var fakeStdout bytes.Buffer
+		var fakeStdout, fakeStderr bytes.Buffer
 		restore = main.MockOsStdout(&fakeStdout)
+		defer restore()
+		restore = main.MockOsStderr(&fakeStderr)
 		defer restore()
 
 		restore = main.MockOsArgs([]string{
@@ -100,10 +103,19 @@ func TestUploadWithAWSMock(t *testing.T) {
 		assert.Equal(t, fakeDiskContent, fa.uploadAndRegisterRead.String())
 		// progress was rendered
 		assert.Contains(t, fakeStdout.String(), "--] 100.00%")
+
+		// warning was passed
+		if tc.targetArchArg == "" {
+			assert.Equal(t, fakeStderr.String(), `WARNING: no upload architecture specified, using "x86_64" (use --arch to override)`+"\n")
+		}
 	}
 }
 
 func TestUploadCmdlineErrors(t *testing.T) {
+	var fakeStderr bytes.Buffer
+	restore := main.MockOsStderr(&fakeStderr)
+	defer restore()
+
 	for _, tc := range []struct {
 		cmdline     []string
 		expectedErr string
@@ -183,7 +195,7 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	assert.Equal(t, bucketName, "aws-bucket-2")
 	assert.Equal(t, amiName, "aws-ami-3")
 	expectedBootMode := platform.BOOT_HYBRID
-	assert.Equal(t, &awscloud.UploaderOptions{BootMode: &expectedBootMode}, uploadOpts)
+	assert.Equal(t, &awscloud.UploaderOptions{BootMode: &expectedBootMode, TargetArch: arch.Current().String()}, uploadOpts)
 	assert.Equal(t, 1, fa.checkCalls)
 	assert.Equal(t, 1, fa.uploadAndRegisterCalls)
 	assert.Equal(t, "fake-img-raw\n", fa.uploadAndRegisterRead.String())
