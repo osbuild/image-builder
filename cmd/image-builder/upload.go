@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
+	"github.com/osbuild/images/pkg/platform"
 )
 
 // ErrMissingUploadConfig is returned when the upload configuration is missing
@@ -61,17 +62,17 @@ func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploade
 	return uploader.Check(pw)
 }
 
-func uploaderFor(cmd *cobra.Command, typeOrCloud string) (cloud.Uploader, error) {
+func uploaderFor(cmd *cobra.Command, typeOrCloud string, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	switch typeOrCloud {
 	case "ami", "aws":
-		return uploaderForCmdAWS(cmd)
+		return uploaderForCmdAWS(cmd, bootMode)
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)
 	}
 
 }
 
-func uploaderForCmdAWS(cmd *cobra.Command) (cloud.Uploader, error) {
+func uploaderForCmdAWS(cmd *cobra.Command, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	amiName, err := cmd.Flags().GetString("aws-ami-name")
 	if err != nil {
 		return nil, err
@@ -109,6 +110,7 @@ func uploaderForCmdAWS(cmd *cobra.Command) (cloud.Uploader, error) {
 	}
 	opts := &awscloud.UploaderOptions{
 		TargetArch: targetArch,
+		BootMode:   bootMode,
 	}
 
 	return awscloudNewUploader(region, bucketName, amiName, opts)
@@ -124,7 +126,9 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 	}
 
 	imagePath := args[0]
-	uploader, err := uploaderFor(cmd, uploadTo)
+	// XXX: we need a way to introspect the image for bootmode here
+	// and/or error if no bootmode is specified
+	uploader, err := uploaderFor(cmd, uploadTo, nil)
 	if err != nil {
 		return err
 	}

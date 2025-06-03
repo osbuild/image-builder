@@ -14,6 +14,7 @@ import (
 
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
+	"github.com/osbuild/images/pkg/platform"
 
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 	"github.com/osbuild/image-builder-cli/internal/testutil"
@@ -144,10 +145,12 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 
 	var regionName, bucketName, amiName string
 	var fa fakeAwsUploader
+	var uploadOpts *awscloud.UploaderOptions
 	restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
 		regionName = region
 		bucketName = bucket
 		amiName = ami
+		uploadOpts = opts
 		return &fa, nil
 	})
 	defer restore()
@@ -178,6 +181,8 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	assert.Equal(t, regionName, "aws-region-1")
 	assert.Equal(t, bucketName, "aws-bucket-2")
 	assert.Equal(t, amiName, "aws-ami-3")
+	expectedBootMode := platform.BOOT_HYBRID
+	assert.Equal(t, &awscloud.UploaderOptions{BootMode: &expectedBootMode}, uploadOpts)
 	assert.Equal(t, 1, fa.checkCalls)
 	assert.Equal(t, 1, fa.uploadAndRegisterCalls)
 	assert.Equal(t, "fake-img-raw\n", fa.uploadAndRegisterRead.String())

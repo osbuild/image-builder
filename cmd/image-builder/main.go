@@ -334,7 +334,8 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	uploader, err := uploaderFor(cmd, res.ImgType.Name())
+	bootMode := res.ImgType.BootMode()
+	uploader, err := uploaderFor(cmd, res.ImgType.Name(), &bootMode)
 	if errors.Is(err, ErrUploadTypeUnsupported) || errors.Is(err, ErrUploadConfigNotProvided) {
 		err = nil
 	}
