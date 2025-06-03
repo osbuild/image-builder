@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/platform"
@@ -62,17 +63,17 @@ func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploade
 	return uploader.Check(pw)
 }
 
-func uploaderFor(cmd *cobra.Command, typeOrCloud string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	switch typeOrCloud {
 	case "ami", "aws":
-		return uploaderForCmdAWS(cmd, bootMode)
+		return uploaderForCmdAWS(cmd, targetArch, bootMode)
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)
 	}
 
 }
 
-func uploaderForCmdAWS(cmd *cobra.Command, bootMode *platform.BootMode) (cloud.Uploader, error) {
+func uploaderForCmdAWS(cmd *cobra.Command, targetArch string, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	amiName, err := cmd.Flags().GetString("aws-ami-name")
 	if err != nil {
 		return nil, err
@@ -82,10 +83,6 @@ func uploaderForCmdAWS(cmd *cobra.Command, bootMode *platform.BootMode) (cloud.U
 		return nil, err
 	}
 	region, err := cmd.Flags().GetString("aws-region")
-	if err != nil {
-		return nil, err
-	}
-	targetArch, err := cmd.Flags().GetString("arch")
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +124,8 @@ func uploaderForCmdAWS(cmd *cobra.Command, bootMode *platform.BootMode) (cloud.U
 }
 
 func cmdUpload(cmd *cobra.Command, args []string) error {
+	imagePath := args[0]
+
 	uploadTo, err := cmd.Flags().GetString("to")
 	if err != nil {
 		return err
@@ -135,8 +134,18 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("missing --to parameter, try --to=aws")
 	}
 
-	imagePath := args[0]
-	uploader, err := uploaderFor(cmd, uploadTo, nil)
+	targetArch, err := cmd.Flags().GetString("arch")
+	if err != nil {
+		return err
+	}
+	if targetArch == "" {
+		// we could try to inspect the image here and get a
+		// better guess
+		targetArch = arch.Current().String()
+		fmt.Fprintf(osStderr, "WARNING: no upload architecture specified, using %q (use --arch to override)\n", targetArch)
+	}
+
+	uploader, err := uploaderFor(cmd, uploadTo, targetArch, nil)
 	if err != nil {
 		return err
 	}
