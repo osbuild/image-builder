@@ -92,7 +92,8 @@ func TestUploadWithAWSMock(t *testing.T) {
 		assert.Equal(t, regionName, "aws-region-1")
 		assert.Equal(t, bucketName, "aws-bucket-2")
 		assert.Equal(t, amiName, "aws-ami-3")
-		assert.Equal(t, &awscloud.UploaderOptions{TargetArch: tc.expectedUploadArch}, uploadOpts)
+		expectedBootMode := platform.BOOT_HYBRID
+		assert.Equal(t, &awscloud.UploaderOptions{TargetArch: tc.expectedUploadArch, BootMode: &expectedBootMode}, uploadOpts)
 
 		assert.Equal(t, 0, fa.checkCalls)
 		assert.Equal(t, 1, fa.uploadAndRegisterCalls)
