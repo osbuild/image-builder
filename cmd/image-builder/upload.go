@@ -89,6 +89,16 @@ func uploaderForCmdAWS(cmd *cobra.Command, bootMode *platform.BootMode) (cloud.U
 	if err != nil {
 		return nil, err
 	}
+	if bootMode == nil {
+		// If unset, default to BOOT_HYBIRD which translated
+		// to "uefi-prefered" when registering the image.
+		// This should give us wide compatibility. Ideally
+		// we would introspect the image but we have no
+		// metadata there right now.
+		// XXX: move this into the "images" library itself?
+		bootModeHybrid := platform.BOOT_HYBRID
+		bootMode = &bootModeHybrid
+	}
 
 	var missing []string
 	requiredArgs := []string{"aws-ami-name", "aws-bucket", "aws-region"}
@@ -126,8 +136,6 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 	}
 
 	imagePath := args[0]
-	// XXX: we need a way to introspect the image for bootmode here
-	// and/or error if no bootmode is specified
 	uploader, err := uploaderFor(cmd, uploadTo, nil)
 	if err != nil {
 		return err
