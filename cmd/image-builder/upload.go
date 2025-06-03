@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/spf13/cobra"
@@ -123,6 +125,26 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArch string, bootMode *platform
 	return awscloudNewUploader(region, bucketName, amiName, opts)
 }
 
+func detectArchFromImagePath(imagePath string) string {
+	// This detection is currently rather naive, we just look for
+	// the file name and try to infer from that. We could extend
+	// this to smartz like inspect the image via libguestfs or
+	// add extra metadata to the image. But for now this is what
+	// we got.
+
+	// imagePath by default looks like
+	//   /path/to/<disro>-<imgtype>-<arch>.img.xz
+	// so try to infer the arch
+	baseName := filepath.Base(imagePath)
+	nameNoEx := strings.SplitN(baseName, ".", -1)[0]
+	frags := strings.Split(nameNoEx, "-")
+	maybeArch := frags[len(frags)-1]
+	if a, err := arch.FromString(maybeArch); err == nil {
+		return a.String()
+	}
+	return ""
+}
+
 func cmdUpload(cmd *cobra.Command, args []string) error {
 	imagePath := args[0]
 
@@ -139,10 +161,14 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if targetArch == "" {
-		// we could try to inspect the image here and get a
-		// better guess
-		targetArch = arch.Current().String()
-		fmt.Fprintf(osStderr, "WARNING: no upload architecture specified, using %q (use --arch to override)\n", targetArch)
+		targetArch = detectArchFromImagePath(imagePath)
+		if targetArch != "" {
+			fmt.Fprintf(osStderr, "Note: using architecture %q based on image filename (use --arch to override)\n", targetArch)
+		}
+		if targetArch == "" {
+			targetArch = arch.Current().String()
+			fmt.Fprintf(osStderr, "WARNING: no upload architecture specified, using %q (use --arch to override)\n", targetArch)
+		}
 	}
 
 	uploader, err := uploaderFor(cmd, uploadTo, targetArch, nil)

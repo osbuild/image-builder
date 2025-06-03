@@ -48,20 +48,26 @@ func (fa *fakeAwsUploader) UploadAndRegister(r io.Reader, status io.Writer) erro
 func TestUploadWithAWSMock(t *testing.T) {
 	fakeDiskContent := "fake-raw-img"
 
-	fakeImageFilePath := filepath.Join(t.TempDir(), "disk.raw")
-	err := os.WriteFile(fakeImageFilePath, []byte(fakeDiskContent), 0644)
-	assert.NoError(t, err)
-
 	var regionName, bucketName, amiName string
 	var uploadOpts *awscloud.UploaderOptions
 
 	for _, tc := range []struct {
+		fakeDiskName       string
 		targetArchArg      string
 		expectedUploadArch string
+		expectedWarning    string
 	}{
-		{"", "x86_64"},
-		{"aarch64", "aarch64"},
+		// simple case: explicit target arch, no warning
+		{"fake-disk.img", "aarch64", "aarch64", ""},
+		// no target arch, detectable from filename: add note
+		{"centos-9-ami-aarch64.img", "", "aarch64", `Note: using architecture "aarch64" based on image filename (use --arch to override)` + "\n"},
+		// no target arch, not detectable form filename: we warn and expect host arch
+		{"fake-disk.img", "", arch.Current().String(), fmt.Sprintf("WARNING: no upload architecture specified, using %q (use --arch to override)\n", arch.Current().String())},
 	} {
+		fakeImageFilePath := filepath.Join(t.TempDir(), tc.fakeDiskName)
+		err := os.WriteFile(fakeImageFilePath, []byte(fakeDiskContent), 0644)
+		assert.NoError(t, err)
+
 		var fa fakeAwsUploader
 		restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
 			regionName = region
@@ -105,9 +111,8 @@ func TestUploadWithAWSMock(t *testing.T) {
 		assert.Contains(t, fakeStdout.String(), "--] 100.00%")
 
 		// warning was passed
-		if tc.targetArchArg == "" {
-			assert.Equal(t, fakeStderr.String(), `WARNING: no upload architecture specified, using "x86_64" (use --arch to override)`+"\n")
-		}
+		assert.Equal(t, fakeStderr.String(), tc.expectedWarning)
+
 	}
 }
 
