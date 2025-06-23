@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -46,6 +47,14 @@ type packagesYAML struct {
 
 func packageSetsFor(imgType distro.ImageType) (map[string]*packagesYAML, error) {
 	var bp blueprint.Blueprint
+	// XXX: '*-simplified-installer' images require the installation device to be specified as a BP customization.
+	// Workaround this for now by setting a dummy device. We should ideally have a way to get image type pkg sets
+	// without doing this.
+	if strings.HasSuffix(imgType.Name(), "-simplified-installer") {
+		bp.Customizations = &blueprint.Customizations{
+			InstallationDevice: "/dev/dummy",
+		}
+	}
 
 	var imgOpts distro.ImageOptions
 	// Mock ostree options for ostree-based images to make describe work
