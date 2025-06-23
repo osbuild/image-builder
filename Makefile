@@ -98,7 +98,7 @@ $(BUILDDIR)/%/:
 
 .PHONY: build
 build: $(BUILDDIR)/bin/  ## build the binary from source
-	go build -ldflags="-X main.BuildVersion=${VERSION}" -o $<image-builder ./cmd/image-builder/
+	go build -ldflags="-X main.version=${VERSION}" -o $<image-builder ./cmd/image-builder/
 
 .PHONY: clean
 clean:  ## Remove all built binaries
