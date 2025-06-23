@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/ostree"
 )
 
 // Use yaml output by default because it is both nicely human and
@@ -45,7 +46,16 @@ type packagesYAML struct {
 
 func packageSetsFor(imgType distro.ImageType) (map[string]*packagesYAML, error) {
 	var bp blueprint.Blueprint
-	manifest, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil)
+
+	var imgOpts distro.ImageOptions
+	// Mock ostree options for ostree-based images to make describe work
+	if imgType.OSTreeRef() != "" {
+		imgOpts.OSTree = &ostree.ImageOptions{
+			URL: "http://example.com/repo",
+		}
+	}
+
+	manifest, _, err := imgType.Manifest(&bp, imgOpts, nil, nil)
 	if err != nil {
 		return nil, err
 	}
