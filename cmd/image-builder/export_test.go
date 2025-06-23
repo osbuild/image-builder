@@ -13,12 +13,15 @@ import (
 
 var (
 	GetOneImage     = getOneImage
+	GetAllImages    = getAllImages
 	Run             = run
 	FindDistro      = findDistro
 	DescribeImage   = describeImage
 	ProgressFromCmd = progressFromCmd
 	BasenameFor     = basenameFor
 )
+
+type DescribeImgYAML describeImgYAML
 
 func MockOsArgs(new []string) (restore func()) {
 	saved := os.Args

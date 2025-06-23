@@ -76,3 +76,22 @@ func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) 
 		return nil, fmt.Errorf("internal error: found %v results for %q %q %q", len(filteredResults), distroName, imgTypeStr, archStr)
 	}
 }
+
+// getAllImages returns all images matching the filter expressions.
+func getAllImages(repoOpts *repoOptions, filterExprs ...string) ([]imagefilter.Result, error) {
+	if repoOpts == nil {
+		repoOpts = &repoOptions{}
+	}
+
+	imageFilter, err := newImageFilterDefault(repoOpts.DataDir, repoOpts.ExtraRepos)
+	if err != nil {
+		return nil, err
+	}
+
+	filteredResults, err := imageFilter.Filter(filterExprs...)
+	if err != nil {
+		return nil, err
+	}
+
+	return filteredResults, nil
+}
