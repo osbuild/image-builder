@@ -28,9 +28,8 @@ import (
 )
 
 var (
-	osStdout     io.Writer = os.Stdout
-	osStderr     io.Writer = os.Stderr
-	BuildVersion           = "DEVEL"
+	osStdout io.Writer = os.Stdout
+	osStderr io.Writer = os.Stderr
 )
 
 // basenameFor returns the basename for directory and filenames
@@ -423,11 +422,13 @@ image-type and blueprint.
 Image-builder builds operating system images for a range of predefined
 operating systems like Fedora, CentOS and RHEL with easy customizations support.`,
 		SilenceErrors: true,
-		Version:       BuildVersion,
+		Version:       prettyVersion(),
 		CompletionOptions: cobra.CompletionOptions{
 			HiddenDefaultCmd: true,
 		},
 	}
+	rootCmd.SetVersionTemplate(prettyVersion())
+
 	rootCmd.PersistentFlags().String("data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
