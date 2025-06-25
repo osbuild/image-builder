@@ -45,6 +45,13 @@ Lastly you can use a container:
 $ sudo podman run --privileged ghcr.io/osbuild/image-builder-cli
 ```
 
+When building an image in the container it will be written to `/output` in the container. If you want the produced images available on your host system mount that directory:
+
+```console
+$ mkdir output
+$ sudo podman run --privileged -v ./output:/output ghcr.io/osbuild/image-builder-cli
+```
+
 ## Compilation
 
 You can compile the application in `cmd/image-builder` with
