@@ -21,3 +21,9 @@ For image types where we need to work with filesystems we need root. Mounting an
 - Fedora
 - CentOS
 - RHEL
+
+## Image Types
+
+The image types are defined in our [images](https://github.com/osbuild/images) repository.
+An overview of which **image types** are available for which **distribution** can be found in
+https://osbuild.org/docs/user-guide/image-descriptions/
