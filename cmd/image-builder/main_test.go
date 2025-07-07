@@ -45,8 +45,8 @@ func TestListImagesNoArguments(t *testing.T) {
 		assert.NoError(t, err)
 		// we expect at least this canary
 		assert.Contains(t, fakeStdout.String(), "rhel-10.0 type:qcow2 arch:x86_64\n")
-		// output is sorted, i.e. 8.9 comes before 8.10
-		assert.Regexp(t, `(?ms)rhel-8.9.*rhel-8.10`, fakeStdout.String())
+		// output is sorted, i.e. 8.8 comes before 8.10
+		assert.Regexp(t, `(?ms)rhel-8.8.*rhel-8.10`, fakeStdout.String())
 	}
 }
 
