@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/sbom"
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
@@ -91,12 +92,11 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 	if err != nil {
 		return err
 	}
-	var imgOpts *distro.ImageOptions
-	if opts.Ostree != nil || opts.Subscription != nil {
-		imgOpts = &distro.ImageOptions{
-			OSTree:       opts.Ostree,
-			Subscription: opts.Subscription,
-		}
+
+	imgOpts := &distro.ImageOptions{
+		Facts:        &facts.ImageOptions{APIType: facts.IBCLI_APITYPE},
+		OSTree:       opts.Ostree,
+		Subscription: opts.Subscription,
 	}
 
 	return mg.Generate(bp, img.Distro, img.ImgType, img.Arch, imgOpts)
