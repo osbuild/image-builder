@@ -24,6 +24,7 @@ type manifestOptions struct {
 	OutputFilename string
 	BlueprintPath  string
 	Ostree         *ostree.ImageOptions
+	BootcRef       string
 	Subscription   *subscription.ImageOptions
 	RpmDownloader  osbuild.RpmDownloader
 	WithSBOM       bool
