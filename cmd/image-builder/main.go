@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/distro/bootc"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -201,6 +202,14 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	bootcRef, err := cmd.Flags().GetString("bootc-ref")
+	if err != nil {
+		return nil, err
+	}
+	if bootcRef != "" && distroStr != "" {
+		return nil, fmt.Errorf("cannot use --distro with --bootc-ref")
+	}
+
 	// no error check here as this is (deliberately) not defined on
 	// "manifest" (if "images" learn to set the output filename in
 	// manifests we would change this
@@ -210,23 +219,48 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
-
-	distroStr, err = findDistro(distroStr, bp.Distro)
-	if err != nil {
-		return nil, err
+	if bootcRef == "" {
+		distroStr, err = findDistro(distroStr, bp.Distro)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		distroStr = "bootc-based"
 	}
+
 	imgTypeStr := args[0]
 	pbar.SetPulseMsgf("Manifest generation step")
 	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
 
-	repoOpts := &repoOptions{
-		DataDir:    dataDir,
-		ExtraRepos: extraRepos,
-		ForceRepos: forceRepos,
-	}
-	img, err := getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
-	if err != nil {
-		return nil, err
+	var img *imagefilter.Result
+	if bootcRef != "" {
+		distro, err := bootc.NewBootcDistro(bootcRef)
+		if err != nil {
+			return nil, err
+		}
+		archi, err := distro.GetArch(archStr)
+		if err != nil {
+			return nil, err
+		}
+		imgType, err := archi.GetImageType(imgTypeStr)
+		if err != nil {
+			return nil, err
+		}
+		img = &imagefilter.Result{distro, archi, imgType}
+		// XXX: hack to skip repo loading for the bootc image.
+		// We need to add a SkipRepositories or similar to
+		// manifestgen instead to make this clean
+		forceRepos = []string{"https://example.com/not-used"}
+	} else {
+		repoOpts := &repoOptions{
+			DataDir:    dataDir,
+			ExtraRepos: extraRepos,
+			ForceRepos: forceRepos,
+		}
+		img, err = getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if len(img.ImgType.Exports()) > 1 {
 		return nil, fmt.Errorf("image %q has multiple exports: this is current unsupport: please report this as a bug", basenameFor(img, ""))
@@ -237,6 +271,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		OutputFilename: outputFilename,
 		BlueprintPath:  blueprintPath,
 		Ostree:         ostreeImgOpts,
+		BootcRef:       bootcRef,
 		RpmDownloader:  rpmDownloader,
 		WithSBOM:       withSBOM,
 		IgnoreWarnings: ignoreWarnings,
@@ -469,6 +504,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)
 	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
+	manifestCmd.Flags().String("bootc-ref", "", `bootc container ref`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
