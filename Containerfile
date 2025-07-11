@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/fedora:41 AS builder
+FROM registry.fedoraproject.org/fedora:42 AS builder
 RUN dnf install -y git-core golang gpgme-devel libassuan-devel && mkdir -p /build/
 ARG GOPROXY=https://proxy.golang.org,direct
 RUN go env -w GOPROXY=$GOPROXY

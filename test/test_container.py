@@ -173,3 +173,26 @@ def test_container_version_smoke(build_container):
     assert ver_yaml["image-builder"]["version"] != ""
     assert ver_yaml["image-builder"]["commit"] != ""
     assert ver_yaml["image-builder"]["dependencies"]["images"] != ""
+
+
+def test_container_builds_bootc(tmp_path, build_container):
+    bootc_ref = "quay.io/centos-bootc/centos-bootc:stream9"
+    subprocess.check_call(["podman", "pull", bootc_ref])
+
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    subprocess.check_call([
+        "podman", "run",
+        "--privileged",
+        "-v", f"{output_dir}:/output",
+        build_container,
+        "build",
+        "qcow2",
+        "--bootc-ref", bootc_ref,
+    ])
+    arch = "x86_64"
+    basename = f"bootc-centos-9-qcow2-{arch}"
+    assert (output_dir / basename / f"{basename}.qcow2").exists()
+    # XXX: ensure no other leftover dirs
+    dents = os.listdir(output_dir)
+    assert len(dents) == 1, f"too many dentries in output dir: {dents}"
