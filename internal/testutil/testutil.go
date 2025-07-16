@@ -41,10 +41,6 @@ func (mc *MockCmd) Path() string {
 	return filepath.Join(mc.binDir, mc.name)
 }
 
-func (mc *MockCmd) Restore() error {
-	return os.RemoveAll(mc.binDir)
-}
-
 func (mc *MockCmd) Calls() [][]string {
 	b, err := os.ReadFile(mc.Path() + ".run")
 	if os.IsNotExist(err) {

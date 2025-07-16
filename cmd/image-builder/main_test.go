@@ -378,7 +378,6 @@ func TestBuildIntegrationHappy(t *testing.T) {
 
 	script := makeFakeOsbuildScript()
 	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
-	defer fakeOsbuildCmd.Restore()
 
 	var err error
 	// run inside the tmpdir to validate that the default output dir
@@ -466,7 +465,6 @@ func TestBuildIntegrationArgs(t *testing.T) {
 
 			script := makeFakeOsbuildScript()
 			fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
-			defer fakeOsbuildCmd.Restore()
 
 			err := main.Run()
 			require.NoError(t, err)
@@ -522,8 +520,7 @@ func TestBuildIntegrationErrorsProgressVerbose(t *testing.T) {
 	})
 	defer restore()
 
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", failingOsbuild)
-	defer fakeOsbuildCmd.Restore()
+	testutil.MockCommand(t, "osbuild", failingOsbuild)
 
 	var err error
 	stdout, stderr := testutil.CaptureStdio(t, func() {
@@ -563,8 +560,7 @@ echo "error on stdout"
 >&2 echo "error on stderr"
 exit 1
 `
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", failingOsbuild)
-	defer fakeOsbuildCmd.Restore()
+	testutil.MockCommand(t, "osbuild", failingOsbuild)
 
 	var err error
 	stdout, _ := testutil.CaptureStdio(t, func() {
@@ -611,8 +607,7 @@ func TestBuildIntegrationErrorsProgressTerm(t *testing.T) {
 			restore = main.MockOsArgs(cmd)
 			defer restore()
 
-			fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", failingOsbuild)
-			defer fakeOsbuildCmd.Restore()
+			testutil.MockCommand(t, "osbuild", failingOsbuild)
 
 			var err error
 			stdout, stderr := testutil.CaptureStdio(t, func() {
@@ -867,7 +862,6 @@ func TestBuildCrossArchSmoke(t *testing.T) {
 
 		script := makeFakeOsbuildScript()
 		fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
-		defer fakeOsbuildCmd.Restore()
 
 		var err error
 		_, stderr := testutil.CaptureStdio(t, func() {
@@ -925,8 +919,7 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 	defer restore()
 
 	script := makeFakeOsbuildScript()
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", script)
-	defer fakeOsbuildCmd.Restore()
+	testutil.MockCommand(t, "osbuild", script)
 
 	err := main.Run()
 	assert.NoError(t, err)
