@@ -22,7 +22,7 @@ func TestMockCommand(t *testing.T) {
 	assert.Equal(t, [][]string{
 		{"run1-arg1", "run1-arg2"},
 		{"run2-arg1", "run2-arg2"},
-	}, fakeCmd.Calls())
+	}, fakeCmd.CallArgsList())
 }
 
 func TestCaptureStdout(t *testing.T) {
