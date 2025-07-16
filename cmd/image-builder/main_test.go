@@ -392,8 +392,8 @@ centos-9-qcow2-x86_64/centos-9-qcow2-x86_64.qcow2
 `)
 
 	// ensure osbuild was run exactly one
-	require.Equal(t, 1, len(fakeOsbuildCmd.Calls()))
-	osbuildCall := fakeOsbuildCmd.Calls()[0]
+	require.Equal(t, 1, len(fakeOsbuildCmd.CallArgsList()))
+	osbuildCall := fakeOsbuildCmd.CallArgsList()[0]
 	// --cache is passed correctly to osbuild
 	storePos := slices.Index(osbuildCall, "--store")
 	assert.True(t, storePos > -1)
@@ -470,7 +470,7 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			require.NoError(t, err)
 
 			// ensure output dir override works
-			osbuildCall := fakeOsbuildCmd.Calls()[0]
+			osbuildCall := fakeOsbuildCmd.CallArgsList()[0]
 			outputDirPos := slices.Index(osbuildCall, "--output-directory")
 			assert.True(t, outputDirPos > -1)
 			assert.Equal(t, outputDir, osbuildCall[outputDirPos+1])

@@ -41,7 +41,7 @@ func (mc *MockCmd) Path() string {
 	return filepath.Join(mc.binDir, mc.name)
 }
 
-func (mc *MockCmd) Calls() [][]string {
+func (mc *MockCmd) CallArgsList() [][]string {
 	b, err := os.ReadFile(mc.Path() + ".run")
 	if os.IsNotExist(err) {
 		return nil
@@ -49,15 +49,15 @@ func (mc *MockCmd) Calls() [][]string {
 	if err != nil {
 		panic(err)
 	}
-	var calls [][]string
+	var callArgsList [][]string
 	for _, line := range strings.Split(string(b), "\n") {
 		if line == "" {
 			continue
 		}
 		call := strings.Split(line, "\000")
-		calls = append(calls, call[0:len(call)-1])
+		callArgsList = append(callArgsList, call[0:len(call)-1])
 	}
-	return calls
+	return callArgsList
 }
 
 // CaptureStdio runs the given function f() in an environment that
