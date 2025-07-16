@@ -27,6 +27,7 @@ type manifestOptions struct {
 	Subscription   *subscription.ImageOptions
 	RpmDownloader  osbuild.RpmDownloader
 	WithSBOM       bool
+	IgnoreWarnings bool
 	CustomSeed     *int64
 
 	ForceRepos            []string
@@ -81,6 +82,9 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 			return err
 		}
 		manifestGenOpts.OverrideRepos = forcedRepos
+	}
+	if opts.IgnoreWarnings {
+		manifestGenOpts.WarningsOutput = os.Stderr
 	}
 
 	mg, err := manifestgen.New(repos, manifestGenOpts)

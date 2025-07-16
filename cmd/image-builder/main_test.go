@@ -1045,3 +1045,50 @@ func TestManifestIntegrationWithRegistrations(t *testing.T) {
 	assert.Contains(t, fakeStdout.String(), `"type":"org.osbuild.systemd.unit.create","options":{"filename":"osbuild-subscription-register.service"`)
 	assert.Contains(t, fakeStdout.String(), `server_url_123`)
 }
+
+func TestManifestIntegrationWarningsHandling(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	testBlueprint := `
+customizations.FIPS = true
+`
+	fipsWarning := "The host building this image is not running in FIPS mode. The image will still be FIPS compliant. If you have custom steps that generate keys or perform cryptographic operations, those must be considered non-compliant.\n"
+	for _, tc := range []struct {
+		extraCmdline   []string
+		expectedErr    string
+		expectedStderr string
+	}{
+		{nil, fipsWarning, ""},
+		{[]string{"--ignore-warnings"}, "", fipsWarning},
+	} {
+		t.Run(fmt.Sprintf("extra-cmdline: %v", tc.extraCmdline), func(t *testing.T) {
+			restore = main.MockOsArgs(append([]string{
+				"manifest",
+				"qcow2",
+				"--arch=x86_64",
+				"--distro=centos-9",
+				fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
+			}, tc.extraCmdline...))
+			defer restore()
+
+			var fakeStdout bytes.Buffer
+			restore = main.MockOsStdout(&fakeStdout)
+			defer restore()
+
+			var err error
+			_, stderr := testutil.CaptureStdio(t, func() {
+				err = main.Run()
+			})
+			if tc.expectedErr != "" {
+				assert.ErrorContains(t, err, tc.expectedErr)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Contains(t, stderr, tc.expectedStderr)
+		})
+	}
+}

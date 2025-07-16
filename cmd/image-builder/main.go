@@ -165,6 +165,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	ignoreWarnings, err := cmd.Flags().GetBool("ignore-warnings")
+	if err != nil {
+		return nil, err
+	}
 	outputDir, err := cmd.Flags().GetString("output-dir")
 	if err != nil {
 		return nil, err
@@ -235,6 +239,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		Ostree:         ostreeImgOpts,
 		RpmDownloader:  rpmDownloader,
 		WithSBOM:       withSBOM,
+		IgnoreWarnings: ignoreWarnings,
 		CustomSeed:     customSeed,
 		Subscription:   subscription,
 
@@ -466,6 +471,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
+	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
 	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
 	rootCmd.AddCommand(manifestCmd)
 
