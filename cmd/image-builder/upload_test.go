@@ -175,8 +175,7 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 
 	outputDir := t.TempDir()
 	fakeOsbuildScript := makeFakeOsbuildScript()
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
-	defer fakeOsbuildCmd.Restore()
+	testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 
 	var fakeStdout bytes.Buffer
 	restore = main.MockOsStdout(&fakeStdout)
@@ -224,8 +223,7 @@ func TestBuildAmiButNotUpload(t *testing.T) {
 
 	outputDir := t.TempDir()
 	fakeOsbuildScript := makeFakeOsbuildScript()
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
-	defer fakeOsbuildCmd.Restore()
+	testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 
 	var fakeStdout bytes.Buffer
 	restore = main.MockOsStdout(&fakeStdout)
@@ -255,8 +253,7 @@ func TestBuildAndUploadWithAWSPartialCmdlineErrors(t *testing.T) {
 
 	outputDir := t.TempDir()
 	fakeOsbuildScript := makeFakeOsbuildScript()
-	fakeOsbuildCmd := testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
-	defer fakeOsbuildCmd.Restore()
+	testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 
 	restore := main.MockOsArgs([]string{
 		"build",

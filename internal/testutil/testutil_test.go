@@ -13,7 +13,6 @@ import (
 
 func TestMockCommand(t *testing.T) {
 	fakeCmd := testutil.MockCommand(t, "false", "exit 0")
-	defer fakeCmd.Restore()
 
 	err := exec.Command("false", "run1-arg1", "run1-arg2").Run()
 	assert.NoError(t, err)
