@@ -329,6 +329,11 @@ A: Both projects are very close. The `bootc-image-builder` focuses on providing
    based inputs. We expect the two projects to merge eventually and they already
    share a lot of code.
 
+Q: I get `Warnings during manifest creation` and the build stops, what can I do?
+A: This is a safety feature so that in e.g. CI systems warnings cannot
+   go unnoticed. Just add `--ignore-warnings` to the build they are
+   harmless.
+
 ## Project
 
  * **Website**: <https://www.osbuild.org>
