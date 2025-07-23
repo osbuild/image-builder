@@ -1,6 +1,5 @@
 ---
-exclude-dirs:
-  - vendor
+version: "2"
 
 linters-settings:
   govet:

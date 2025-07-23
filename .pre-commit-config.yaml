@@ -20,7 +20,7 @@ repos:
       - id: pyspelling
         args: ["--config", ".spellcheck.yml"]
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.63.1
+    rev: v2.3.0
     hooks:
       - id: golangci-lint
   - repo: https://github.com/hhatto/autopep8
