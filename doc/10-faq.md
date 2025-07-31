@@ -21,6 +21,8 @@ For image types where we need to work with filesystems we need root. Mounting an
 - Fedora
 - CentOS
 - RHEL
+- Alma Linux
+- Alma Linux Kitten
 
 ## Image Types
 
