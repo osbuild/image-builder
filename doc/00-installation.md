@@ -2,7 +2,7 @@
 
 `image-builder` packages are available in [Fedora](https://fedoraproject.org) ([package details](https://packages.fedoraproject.org/pkgs/image-builder/image-builder/)). You can also get a copy from other places listed here. After you have `image-builder` installed take a look at its [usage](./01-usage.md).
 
-## Fedora
+## Fedora or CentOS
 
 Install `image-builder` with the following command:
 
