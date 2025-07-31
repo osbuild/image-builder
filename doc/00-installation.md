@@ -9,7 +9,7 @@ Install `image-builder` with the following command:
 ```console
 $ sudo dnf install image-builder
 # ...
-$ sudo image-builder build minimal-raw
+$ sudo image-builder build --distro fedora-42 minimal-raw-xz
 # ...
 ```
 
@@ -22,7 +22,7 @@ $ sudo dnf copr enable @osbuild/image-builder
 # ...
 $ sudo dnf install image-builder
 # ...
-$ sudo image-builder build minimal-raw
+$ sudo image-builder build --distro fedora-42 minimal-raw-xz
 # ...
 ```
 
@@ -38,7 +38,7 @@ $ sudo podman run \
     -it \
     -v ./output:/output \
     ghcr.io/osbuild/image-builder-cli:latest \
-    build minimal-raw
+    build --distro fedora-42 minimal-raw-xz
 # ...
 ```
 
@@ -54,5 +54,5 @@ $ git clone github.com/osbuild/image-builder-cli
 $ cd image-builder-cli
 $ go build ./cmd/image-builder
 # ...
-$ sudo ./image-builder build minimal-raw
+$ sudo ./image-builder build --distro fedora-42 minimal-raw-xz
 ```
