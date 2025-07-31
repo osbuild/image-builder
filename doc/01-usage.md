@@ -110,7 +110,7 @@ $ sudo image-builder build --distro fedora-42 minimal-raw-xz
 
 The `build` command requires root privileges in many cases as `image-builder` needs access to loopback devices and `mount`.
 
-By default the `build` command uses the same distribution and version as the host system, you can pass another distribution and version with the `--distro` argument:
+By default the `build` command uses the same distribution and version as the host system, you can pass another distribution and version with the `--distro` argument. Note that image types are per-distribution, names might be different between them; you can find all supported image types for a distribution by using the `image-builder list` command.
 
 ```console
 $ sudo image-builder build --distro centos-10 qcow2
