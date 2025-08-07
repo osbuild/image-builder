@@ -9,17 +9,14 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	// XXX: there should only be one importable blueprint, i.e.
-	// importing the external and passing it to images, if
-	// images needs its own it should not be public
-	externalBlueprint "github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/blueprint/pkg/blueprint"
 )
 
 // XXX: move this helper into images, share with bib
-func decodeToml(r io.Reader, what string) (*externalBlueprint.Blueprint, error) {
+func decodeToml(r io.Reader, what string) (*blueprint.Blueprint, error) {
 	dec := toml.NewDecoder(r)
 
-	var conf externalBlueprint.Blueprint
+	var conf blueprint.Blueprint
 	metadata, err := dec.Decode(&conf)
 	if err != nil {
 		return nil, fmt.Errorf("cannot decode %q: %w", what, err)
@@ -31,11 +28,11 @@ func decodeToml(r io.Reader, what string) (*externalBlueprint.Blueprint, error) 
 	return &conf, nil
 }
 
-func decodeJson(r io.Reader, what string) (*externalBlueprint.Blueprint, error) {
+func decodeJson(r io.Reader, what string) (*blueprint.Blueprint, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var conf externalBlueprint.Blueprint
+	var conf blueprint.Blueprint
 	if err := dec.Decode(&conf); err != nil {
 		return nil, fmt.Errorf("cannot decode %q: %w", what, err)
 	}
@@ -45,13 +42,13 @@ func decodeJson(r io.Reader, what string) (*externalBlueprint.Blueprint, error) 
 	return &conf, nil
 }
 
-func load(path string) (*externalBlueprint.Blueprint, error) {
+func Load(path string) (*blueprint.Blueprint, error) {
 	var fp io.ReadCloser
 	var err error
 
 	switch path {
 	case "":
-		return &externalBlueprint.Blueprint{}, nil
+		return &blueprint.Blueprint{}, nil
 	case "-":
 		fp = os.Stdin
 	default:
@@ -70,15 +67,4 @@ func load(path string) (*externalBlueprint.Blueprint, error) {
 	default:
 		return nil, fmt.Errorf("unsupported file extension for %q (please use .toml or .json)", path)
 	}
-}
-
-func Load(path string) (*externalBlueprint.Blueprint, error) {
-	externalBp, err := load(path)
-	if err != nil {
-		return nil, err
-	}
-	// XXX: make convert a method on "Blueprint"
-	// XXX2: make Convert() take a pointer
-	imagesBp := externalBlueprint.Convert(*externalBp)
-	return &imagesBp, nil
 }
