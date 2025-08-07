@@ -102,7 +102,9 @@ func TestUploadWithAWSMock(t *testing.T) {
 		assert.Equal(t, bucketName, "aws-bucket-2")
 		assert.Equal(t, amiName, "aws-ami-3")
 		expectedBootMode := platform.BOOT_HYBRID
-		assert.Equal(t, &awscloud.UploaderOptions{TargetArch: tc.expectedUploadArch, BootMode: &expectedBootMode}, uploadOpts)
+		targetArch, err := arch.FromString(tc.expectedUploadArch)
+		assert.NoError(t, err)
+		assert.Equal(t, &awscloud.UploaderOptions{TargetArch: targetArch, BootMode: &expectedBootMode}, uploadOpts)
 
 		assert.Equal(t, 0, fa.checkCalls)
 		assert.Equal(t, 1, fa.uploadAndRegisterCalls)
@@ -199,7 +201,7 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	assert.Equal(t, bucketName, "aws-bucket-2")
 	assert.Equal(t, amiName, "aws-ami-3")
 	expectedBootMode := platform.BOOT_HYBRID
-	assert.Equal(t, &awscloud.UploaderOptions{BootMode: &expectedBootMode, TargetArch: arch.Current().String()}, uploadOpts)
+	assert.Equal(t, &awscloud.UploaderOptions{BootMode: &expectedBootMode, TargetArch: arch.Current()}, uploadOpts)
 	assert.Equal(t, 1, fa.checkCalls)
 	assert.Equal(t, 1, fa.uploadAndRegisterCalls)
 	assert.Equal(t, "fake-img-raw\n", fa.uploadAndRegisterRead.String())
