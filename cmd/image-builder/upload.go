@@ -75,7 +75,7 @@ func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, boot
 
 }
 
-func uploaderForCmdAWS(cmd *cobra.Command, targetArch string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	amiName, err := cmd.Flags().GetString("aws-ami-name")
 	if err != nil {
 		return nil, err
@@ -97,6 +97,10 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArch string, bootMode *platform
 		// XXX: move this into the "images" library itself?
 		bootModeHybrid := platform.BOOT_HYBRID
 		bootMode = &bootModeHybrid
+	}
+	targetArch, err := arch.FromString(targetArchStr)
+	if err != nil {
+		return nil, err
 	}
 
 	var missing []string
