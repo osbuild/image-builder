@@ -39,3 +39,5 @@ dir
 programmatically
 loopback
 CDN
+Koji
+subcommand
