@@ -42,7 +42,7 @@ func EnsureEnvironment(storePath string) error {
 	// a nosuid, no_new_privs environment. In such an environment, we cannot transition from `unconfined_t` to `install_t`,
 	// because we would get more privileges.
 	installType := "system_u:object_r:install_exec_t:s0"
-	// Where we dump temporary files; this must be an overlayfs as we cannot
+	// Where we dump temporary files; this must be a tmpfs as we cannot
 	// write security contexts on overlayfs.
 	runTmp := "/run/osbuild/"
 
