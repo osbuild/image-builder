@@ -19,7 +19,7 @@ jobs:
       - name: Install project dependencies
         run: sudo apt install -y libgpgme-dev libbtrfs-dev
       - name: "Clone Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Python
         uses: actions/setup-python@v5
       - name: Run linters
@@ -28,7 +28,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/testdeps
       - name: Install integration test env
         run: |

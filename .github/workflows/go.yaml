@@ -20,7 +20,7 @@ jobs:
       # (go.opencensus.io/trace)
       GOPROXY: "https://proxy.golang.org,direct"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: |
           # we have the same build-deps as the images library
