@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 )
 
@@ -45,7 +46,7 @@ type packagesYAML struct {
 	Exclude []string `yaml:"exclude"`
 }
 
-func packageSetsFor(imgType distro.ImageType) (map[string]*packagesYAML, error) {
+func dummyManifestFor(imgType distro.ImageType) (*manifest.Manifest, error) {
 	var bp blueprint.Blueprint
 	// XXX: '*-simplified-installer' images require the installation device to be specified as a BP customization.
 	// Workaround this for now by setting a dummy device. We should ideally have a way to get image type pkg sets
@@ -65,6 +66,14 @@ func packageSetsFor(imgType distro.ImageType) (map[string]*packagesYAML, error) 
 	}
 
 	manifest, _, err := imgType.Manifest(&bp, imgOpts, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return manifest, nil
+}
+
+func packageSetsFor(imgType distro.ImageType) (map[string]*packagesYAML, error) {
+	manifest, err := dummyManifestFor(imgType)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +123,10 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 	if err != nil && !errors.Is(err, defs.ErrNoPartitionTableForImgType) {
 		return err
 	}
+	m, err := dummyManifestFor(img.ImgType)
+	if err != nil {
+		return err
+	}
 
 	outYaml := &describeImgYAML{
 		Distro:           img.Distro.Name(),
@@ -123,8 +136,8 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 		Bootmode:         img.ImgType.BootMode().String(),
 		PartitionType:    img.ImgType.PartitionType().String(),
 		DefaultFilename:  img.ImgType.Filename(),
-		BuildPipelines:   img.ImgType.BuildPipelines(),
-		PayloadPipelines: img.ImgType.PayloadPipelines(),
+		BuildPipelines:   m.BuildPipelines(),
+		PayloadPipelines: m.PayloadPipelines(),
 		Packages:         pkgSets,
 		PartitionTable:   partTable,
 	}
