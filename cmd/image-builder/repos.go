@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/osbuild/images/data/repositories"
-	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -71,21 +70,24 @@ func newRepoRegistryImpl(dataDir string, extraRepos []string) (*reporegistry.Rep
 		return nil, err
 	}
 
-	// XXX: this should probably go into manifestgen.Options as
-	// a new Options.ExtraRepoConf eventually (just like OverrideRepos)
+	// Add extra repos to all architecture. We support
+	// cross-building but at this level here we don't know yet
+	// what manifests will be generated so we must (for now)
+	// rely on the user to DTRT with extraRepos.
+	//
+	// XXX: this should probably go into manifestgen.Options as a
+	// new Options.ExtraRepoConf eventually (just like
+	// OverrideRepos)
 	repoConf, err := parseRepoURLs(extraRepos, "extra")
 	if err != nil {
 		return nil, err
 	}
-	// Only add extra repos for the host architecture. We do not support
-	// cross-building (yet) so this is fine. Once we support cross-building
-	// this needs to move (probably into manifestgen) because at this
-	// level we we do not know (yet) what manifest we will generate.
-	myArch := arch.Current().String()
 	for _, repoArchConfigs := range conf {
-		archCfg := repoArchConfigs[myArch]
-		archCfg = append(archCfg, repoConf...)
-		repoArchConfigs[myArch] = archCfg
+		for arch := range repoArchConfigs {
+			archCfg := repoArchConfigs[arch]
+			archCfg = append(archCfg, repoConf...)
+			repoArchConfigs[arch] = archCfg
+		}
 	}
 
 	return reporegistry.NewFromDistrosRepoConfigs(conf), nil

@@ -753,7 +753,7 @@ func TestProgressFromCmd(t *testing.T) {
 	}
 }
 
-func TestManifestExtraRepo(t *testing.T) {
+func TestManifestExtraRepos(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
 	}
@@ -776,25 +776,38 @@ func TestManifestExtraRepo(t *testing.T) {
         [[packages]]
         name = "dummy"
 `
-	restore := main.MockOsArgs([]string{
-		"manifest",
-		"qcow2",
-		"--distro=centos-9",
-		fmt.Sprintf("--extra-repo=file://%s", localRepoDir),
-		"--blueprint", makeTestBlueprint(t, pkgHelloBlueprint),
-	})
-	defer restore()
+	nativeArch := arch.Current()
+	// setup test for cross-arch, if we happen to run on the
+	// cross arch already just pick a different arch
+	crossArch := arch.ARCH_AARCH64
+	if arch.Current() == arch.ARCH_AARCH64 {
+		crossArch = arch.ARCH_X86_64
+	}
 
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
+	for _, arch := range []arch.Arch{nativeArch, crossArch} {
+		t.Run(arch.String(), func(t *testing.T) {
+			restore := main.MockOsArgs([]string{
+				"manifest",
+				"qcow2",
+				"--distro=centos-9",
+				fmt.Sprintf("--arch=%s", arch),
+				fmt.Sprintf("--extra-repo=file://%s", localRepoDir),
+				"--blueprint", makeTestBlueprint(t, pkgHelloBlueprint),
+			})
+			defer restore()
 
-	err = main.Run()
-	require.NoError(t, err)
+			var fakeStdout bytes.Buffer
+			restore = main.MockOsStdout(&fakeStdout)
+			defer restore()
 
-	// our local repo got added
-	assert.Contains(t, fakeStdout.String(), `"path":"dummy-1.0.0-0.noarch.rpm"`)
-	assert.Contains(t, fakeStdout.String(), fmt.Sprintf(`"url":"file://%s"`, localRepoDir))
+			err = main.Run()
+			require.NoError(t, err)
+
+			// our local repo got added
+			assert.Contains(t, fakeStdout.String(), `"path":"dummy-1.0.0-0.noarch.rpm"`)
+			assert.Contains(t, fakeStdout.String(), fmt.Sprintf(`"url":"file://%s"`, localRepoDir))
+		})
+	}
 }
 
 func TestManifestOverrideRepo(t *testing.T) {
