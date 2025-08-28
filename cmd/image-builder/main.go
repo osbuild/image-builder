@@ -209,6 +209,12 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if bootcRef != "" && distroStr != "" {
 		return nil, fmt.Errorf("cannot use --distro with --bootc-ref")
 	}
+	// XXX: remove once https://github.com/osbuild/images/pull/1797
+	// and https://github.com/osbuild/bootc-image-builder/pull/1014
+	// are merged
+	if bootcRef != "" {
+		fmt.Fprintln(os.Stderr, "WARNING: bootc support is experimental")
+	}
 
 	// no error check here as this is (deliberately) not defined on
 	// "manifest" (if "images" learn to set the output filename in
