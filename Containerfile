@@ -18,7 +18,7 @@ RUN mkdir -p /etc/containers/networks
 # Fast-track osbuild so we don't depend on the "slow" Fedora release process to implement new features in bib
 RUN dnf install -y dnf-plugins-core \
     && dnf copr enable -y @osbuild/osbuild \
-    && dnf install -y libxcrypt-compat wget osbuild osbuild-ostree osbuild-depsolve-dnf osbuild-lvm2 \
+    && dnf install -y libxcrypt-compat wget osbuild osbuild-ostree osbuild-depsolve-dnf osbuild-lvm2 openssl \
     && dnf clean all
 
 COPY --from=builder /build/image-builder /usr/bin/
