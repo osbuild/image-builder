@@ -291,7 +291,7 @@ func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
 	}{
 		{
 			[]string{"iot-raw-xz"},
-			`iot-raw-xz: ostree commit URL required`,
+			`options validation failed for image type "iot-raw-xz": ostree.url: required`,
 		},
 		{
 			[]string{"server-qcow2", "--ostree-url=http://example.com/"},
