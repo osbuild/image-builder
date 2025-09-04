@@ -20,12 +20,12 @@ import (
 
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/osbuild/manifesttest"
 	"github.com/osbuild/images/pkg/rpmmd"
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 	"github.com/osbuild/image-builder-cli/internal/testutil"
-	"github.com/osbuild/images/internal/manifesttest"
 	"github.com/osbuild/images/pkg/arch"
 )
 
