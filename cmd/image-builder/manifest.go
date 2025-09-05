@@ -56,6 +56,7 @@ func sbomWriter(outputDir, filename string, content io.Reader) error {
 // used in tests
 var manifestgenDepsolver manifestgen.DepsolveFunc
 
+// XXX: just return []byte instead of using output writer
 func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, depsolveWarningsOutput io.Writer, opts *manifestOptions) error {
 	repos, err := newRepoRegistry(dataDir, extraRepos)
 	if err != nil {
@@ -63,7 +64,6 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 	}
 	// XXX: add --rpmmd/cachedir option like bib
 	manifestGenOpts := &manifestgen.Options{
-		Output:                 output,
 		DepsolveWarningsOutput: depsolveWarningsOutput,
 		RpmDownloader:          opts.RpmDownloader,
 		UseBootstrapContainer:  opts.UseBootstrapContainer,
@@ -104,5 +104,12 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 		Subscription: opts.Subscription,
 	}
 
-	return mg.Generate(bp, img.Distro, img.ImgType, img.Arch, imgOpts)
+	mf, err := mg.Generate(bp, img.ImgType, imgOpts)
+	if err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(output, "%s\n", mf); err != nil {
+		return err
+	}
+	return nil
 }

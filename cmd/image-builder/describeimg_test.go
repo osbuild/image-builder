@@ -72,7 +72,9 @@ func TestDescribeImageAll(t *testing.T) {
 	require.NotEmpty(t, allImages)
 
 	for _, res := range allImages {
-		t.Run(fmt.Sprintf("%s/%s/%s", res.Distro.Name(), res.Arch.Name(), res.ImgType.Name()), func(t *testing.T) {
+		arch := res.ImgType.Arch()
+		distro := arch.Distro()
+		t.Run(fmt.Sprintf("%s/%s/%s", distro.Name(), arch.Name(), res.ImgType.Name()), func(t *testing.T) {
 			var buf bytes.Buffer
 			err = main.DescribeImage(&res, &buf)
 			require.NoError(t, err)
@@ -87,8 +89,8 @@ func TestDescribeImageAll(t *testing.T) {
 			var imgDef main.DescribeImgYAML
 			err := yaml.Unmarshal([]byte(describeOutput), &imgDef)
 			require.NoError(t, err)
-			require.Equal(t, res.Distro.Name(), imgDef.Distro)
-			require.Equal(t, res.Arch.Name(), imgDef.Arch)
+			require.Equal(t, res.ImgType.Arch().Distro().Name(), imgDef.Distro)
+			require.Equal(t, res.ImgType.Arch().Name(), imgDef.Arch)
 			require.Equal(t, res.ImgType.Name(), imgDef.Type)
 		})
 	}

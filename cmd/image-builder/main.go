@@ -51,7 +51,9 @@ func basenameFor(img *imagefilter.Result, userBasename string) string {
 		}
 		return userBasename
 	}
-	return fmt.Sprintf("%s-%s-%s", img.Distro.Name(), img.ImgType.Name(), img.Arch.Name())
+	arch := img.ImgType.Arch()
+	distro := arch.Distro()
+	return fmt.Sprintf("%s-%s-%s", distro.Name(), img.ImgType.Name(), arch.Name())
 }
 
 func cmdListImages(cmd *cobra.Command, args []string) error {
@@ -252,7 +254,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		if err != nil {
 			return nil, err
 		}
-		img = &imagefilter.Result{distro, archi, imgType, nil}
+		img = &imagefilter.Result{imgType, nil}
 		// XXX: hack to skip repo loading for the bootc image.
 		// We need to add a SkipRepositories or similar to
 		// manifestgen instead to make this clean
@@ -286,9 +288,9 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 
 		ForceRepos: forceRepos,
 	}
-	opts.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.Arch.Name() != arch.Current().String())
+	opts.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.ImgType.Arch().Name() != arch.Current().String())
 	if opts.UseBootstrapContainer {
-		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.Arch.Name())
+		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
 
 	err = generateManifest(dataDir, extraRepos, img, w, wd, opts)
