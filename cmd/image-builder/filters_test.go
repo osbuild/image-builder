@@ -24,9 +24,9 @@ func TestGetOneImageHappy(t *testing.T) {
 	} {
 		res, err := main.GetOneImage(tc.distro, tc.imgType, tc.arch, nil)
 		assert.NoError(t, err)
-		assert.Equal(t, "centos-9", res.Distro.Name())
+		assert.Equal(t, "centos-9", res.ImgType.Arch().Distro().Name())
 		assert.Equal(t, "qcow2", res.ImgType.Name())
-		assert.Equal(t, "x86_64", res.Arch.Name())
+		assert.Equal(t, "x86_64", res.ImgType.Arch().Name())
 	}
 }
 

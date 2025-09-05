@@ -128,10 +128,12 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 		return err
 	}
 
+	arch := img.ImgType.Arch()
+	distro := arch.Distro()
 	outYaml := &describeImgYAML{
-		Distro:           img.Distro.Name(),
-		OsVersion:        img.Distro.OsVersion(),
-		Arch:             img.Arch.Name(),
+		Distro:           distro.Name(),
+		OsVersion:        distro.OsVersion(),
+		Arch:             arch.Name(),
 		Type:             img.ImgType.Name(),
 		Bootmode:         img.ImgType.BootMode().String(),
 		PartitionType:    img.ImgType.PartitionType().String(),
