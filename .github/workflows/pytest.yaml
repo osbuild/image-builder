@@ -17,7 +17,7 @@ jobs:
       - name: Install lint dependencies
         run: sudo apt install -y yamllint aspell pre-commit
       - name: Install project dependencies
-        run: sudo apt install -y libgpgme-dev libbtrfs-dev
+        run: sudo apt install -y libgpgme-dev libbtrfs-dev libvirt-dev
       - name: "Clone Repository"
         uses: actions/checkout@v5
       - name: Set up Python
@@ -33,7 +33,7 @@ jobs:
       - name: Install integration test env
         run: |
           sudo apt update
-          sudo apt install -y python3-pytest golang
+          sudo apt install -y python3-pytest golang libvirt-dev
       - name: Install cross build dependencies
         run: sudo apt install -y qemu-user-static
 

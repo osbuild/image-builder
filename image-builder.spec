@@ -37,6 +37,8 @@ BuildRequires:  libassuan-devel
 # Build requirements of 'github.com/containers/storage' package
 BuildRequires:  device-mapper-devel
 BuildRequires:  libxcrypt-devel
+# Build requiremets of 'github.com/osbuild/images' package
+BuildRequires:  libvirt-devel
 %if 0%{?fedora}
 # Build requirements of 'github.com/containers/storage' package
 BuildRequires:  btrfs-progs-devel
