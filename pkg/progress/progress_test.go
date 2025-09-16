@@ -23,13 +23,25 @@ func TestProgressNew(t *testing.T) {
 		// unknown progress type
 		{"bad", nil, `unknown progress type: "bad"`},
 	} {
-		pb, err := progress.New(tc.typ)
-		if tc.expectedErr == "" {
-			assert.NoError(t, err)
-			assert.Equal(t, reflect.TypeOf(pb), reflect.TypeOf(tc.expected), fmt.Sprintf("[%v] %T not the expected %T", tc.typ, pb, tc.expected))
-		} else {
-			assert.EqualError(t, err, tc.expectedErr)
-		}
+		t.Run(tc.typ, func(t *testing.T) {
+			restoreIsTerminal := progress.MockIsattyIsTerminal(func(uintptr) bool {
+				return true
+			})
+			defer restoreIsTerminal()
+
+			restoreGetTermSize := progress.MockGetTerminalSize(func() (int, int) {
+				return 80, 24
+			})
+			defer restoreGetTermSize()
+
+			pb, err := progress.New(tc.typ)
+			if tc.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, reflect.TypeOf(pb), reflect.TypeOf(tc.expected), fmt.Sprintf("[%v] %T not the expected %T", tc.typ, pb, tc.expected))
+			} else {
+				assert.EqualError(t, err, tc.expectedErr)
+			}
+		})
 	}
 }
 
@@ -120,13 +132,23 @@ func TestProgressNewAutoselect(t *testing.T) {
 		{false, &progress.VerboseProgressBar{}},
 		{true, &progress.TerminalProgressBar{}},
 	} {
-		restore := progress.MockIsattyIsTerminal(func(uintptr) bool {
-			return tc.onTerm
-		})
-		defer restore()
+		t.Run(fmt.Sprintf("term:%v", tc.onTerm), func(t *testing.T) {
+			restoreIsTerminal := progress.MockIsattyIsTerminal(func(uintptr) bool {
+				return tc.onTerm
+			})
+			defer restoreIsTerminal()
 
-		pb, err := progress.New("auto")
-		assert.NoError(t, err)
-		assert.Equal(t, reflect.TypeOf(pb), reflect.TypeOf(tc.expected), fmt.Sprintf("[%v] %T not the expected %T", tc.onTerm, pb, tc.expected))
+			restoreGetTermSize := progress.MockGetTerminalSize(func() (int, int) {
+				if tc.onTerm {
+					return 80, 24
+				}
+				return 0, 0
+			})
+			defer restoreGetTermSize()
+
+			pb, err := progress.New("auto")
+			assert.NoError(t, err)
+			assert.Equal(t, reflect.TypeOf(pb), reflect.TypeOf(tc.expected), fmt.Sprintf("[%v] %T not the expected %T", tc.onTerm, pb, tc.expected))
+		})
 	}
 }

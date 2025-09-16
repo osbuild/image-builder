@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
-	"github.com/mattn/go-isatty"
+
+	"github.com/osbuild/image-builder-cli/pkg/util"
 )
 
 var (
@@ -71,15 +72,16 @@ type ProgressBar interface {
 	Stop()
 }
 
-var isattyIsTerminal = isatty.IsTerminal
-
 // New creates a new progressbar based on the requested type
 func New(typ string) (ProgressBar, error) {
+	updateTerminalSize(os.Stdout.Fd())
+	w, h := getTerminalSize()
+
 	switch typ {
 	case "", "auto":
 		// autoselect based on if we are on an interactive
 		// terminal, use verbose progress for scripts
-		if isattyIsTerminal(os.Stdin.Fd()) {
+		if isattyIsTerminal(os.Stdin.Fd()) && w > 0 && h > 0 {
 			return NewTerminalProgressBar()
 		}
 		return NewVerboseProgressBar()
@@ -144,32 +146,29 @@ func (b *terminalProgressBar) SetProgress(subLevel int, msg string, done int, to
 	return nil
 }
 
-func shorten(msg string) string {
-	msg = strings.Replace(msg, "\n", " ", -1)
-	// XXX: make this smarter
-	if len(msg) > 60 {
-		return msg[:60] + "..."
-	}
-	return msg
-}
-
 func (b *terminalProgressBar) SetPulseMsgf(msg string, args ...interface{}) {
-	b.spinnerPb.Set("spinnerMsg", shorten(fmt.Sprintf(msg, args...)))
+	b.spinnerPb.Set("spinnerMsg", fmt.Sprintf(msg, args...))
 }
 
 func (b *terminalProgressBar) SetMessagef(msg string, args ...interface{}) {
-	b.msgPb.Set("msg", shorten(fmt.Sprintf(msg, args...)))
+	b.msgPb.Set("msg", fmt.Sprintf(msg, args...))
+}
+
+func shortenString(msg string) string {
+	width, _ := getTerminalSize()
+	msg = strings.ReplaceAll(msg, "\n", " ")
+	return util.ShortenString(msg, width)
 }
 
 func (b *terminalProgressBar) render() {
 	var renderedLines int
-	fmt.Fprintf(b.out, "%s%s\n", ERASE_LINE, b.spinnerPb.String())
+	fmt.Fprintf(b.out, "%s%s\n", ERASE_LINE, shortenString(b.spinnerPb.String()))
 	renderedLines++
 	for _, prog := range b.subLevelPbs {
 		fmt.Fprintf(b.out, "%s%s\n", ERASE_LINE, prog.String())
 		renderedLines++
 	}
-	fmt.Fprintf(b.out, "%s%s\n", ERASE_LINE, b.msgPb.String())
+	fmt.Fprintf(b.out, "%s%s\n", ERASE_LINE, shortenString(b.msgPb.String()))
 	renderedLines++
 	fmt.Fprint(b.out, cursorUp(renderedLines))
 }
