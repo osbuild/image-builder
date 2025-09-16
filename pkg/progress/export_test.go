@@ -45,3 +45,11 @@ func MockOsbuildCmd(s string) (restore func()) {
 		osbuildCmd = saved
 	}
 }
+
+func MockGetTerminalSize(fn func() (int, int)) (restore func()) {
+	saved := getTerminalSize
+	getTerminalSize = fn
+	return func() {
+		getTerminalSize = saved
+	}
+}

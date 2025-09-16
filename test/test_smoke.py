@@ -1,5 +1,7 @@
 import os
 import subprocess
+import shlex
+from dataclasses import dataclass
 
 import pytest
 import yaml
@@ -77,3 +79,58 @@ def test_smoke_version_smoke(build_container):
     assert ver_yaml["image-builder"]["commit"] != ""
     assert ver_yaml["image-builder"]["dependencies"]["images"] != ""
     assert ver_yaml["image-builder"]["dependencies"]["osbuild"] != ""
+
+
+@dataclass
+class ProgressTestCase:
+    """Test case for progress output tests."""
+    progress: str
+    pty: bool
+    needle: str
+    forbidden: str
+
+
+@pytest.mark.parametrize("case", [
+    ProgressTestCase("verbose", True, "osbuild-stdout-output", "[|]"),
+    ProgressTestCase("term", True, "[|]", "osbuild-stdout-output"),
+    ProgressTestCase("verbose", False, "osbuild-stdout-output", "[|]"),
+    ProgressTestCase("term", False, "[|]", "osbuild-stdout-output"),
+])
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_progress_smoke(tmp_path, build_fake_container, case: ProgressTestCase):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    podman_command = podman_run + [
+        "-t" if case.pty else "-i",
+        "-v", f"{output_dir}:/output",
+        build_fake_container,
+        "build",
+        "qcow2",
+        "--distro", "centos-9",
+        "--output-dir=.",
+        f"--progress={case.progress}",
+    ]
+
+    cast_filename = f"recording-{case.progress}.cast.json"
+    asciinema_command = [
+        "asciinema", "rec",
+        "--quiet",
+        "--overwrite",
+        "--cols=80", "--rows=25",
+        "--command", shlex.join(podman_command),
+        cast_filename,
+    ]
+
+    if case.pty:
+        result = subprocess.run(asciinema_command, text=True, check=False)
+    else:
+        result = subprocess.run(podman_command, text=True, check=False)
+    assert result.returncode == 0, f"Podman with asciinema failed:\nSTDERR:\n{result.stderr}"
+
+    assert os.path.exists(cast_filename)
+    with open(cast_filename, "r", encoding="utf-8") as f:
+        cast_text = f.read()
+
+    assert case.needle in cast_text
+    assert case.forbidden not in cast_text

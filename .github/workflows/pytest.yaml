@@ -82,7 +82,7 @@ jobs:
       - name: Install integration test env
         run: |
           sudo apt update
-          sudo apt install -y python3-pytest golang
+          sudo apt install -y python3-pytest golang asciinema
       - name: Run integration tests via pytest
         run: |
           # use "-s" for now for easier debugging
