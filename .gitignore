@@ -24,3 +24,10 @@ release_artifacts
 dictionary.dic
 __pycache__
 /bin
+*.raw.xz
+*.qcow2
+*.img.xz
+*.iso
+*.tar.gz
+*.tar.xz
+*.tar.bz2
