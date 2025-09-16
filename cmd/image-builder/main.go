@@ -252,7 +252,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		if err != nil {
 			return nil, err
 		}
-		img = &imagefilter.Result{distro, archi, imgType}
+		img = &imagefilter.Result{distro, archi, imgType, nil}
 		// XXX: hack to skip repo loading for the bootc image.
 		// We need to add a SkipRepositories or similar to
 		// manifestgen instead to make this clean
