@@ -67,7 +67,7 @@ func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploade
 
 func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, bootMode *platform.BootMode) (cloud.Uploader, error) {
 	switch typeOrCloud {
-	case "ami", "aws":
+	case "ami", "server-ami", "aws":
 		return uploaderForCmdAWS(cmd, targetArch, bootMode)
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)

@@ -207,6 +207,58 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	assert.Equal(t, "fake-img-raw\n", fa.uploadAndRegisterRead.String())
 }
 
+func TestBuildAndUploadFedoraWithAWSMock(t *testing.T) {
+	if testing.Short() {
+		t.Skip("manifest generation takes a while")
+	}
+	if !hasDepsolveDnf() {
+		t.Skip("no osbuild-depsolve-dnf binary found")
+	}
+
+	var regionName, bucketName, amiName string
+	var fa fakeAwsUploader
+	var uploadOpts *awscloud.UploaderOptions
+	restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
+		regionName = region
+		bucketName = bucket
+		amiName = ami
+		uploadOpts = opts
+		return &fa, nil
+	})
+	defer restore()
+
+	outputDir := t.TempDir()
+	fakeOsbuildScript := makeFakeOsbuildScript()
+	testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"--output-dir", outputDir,
+		"--aws-region=aws-region-1",
+		"--aws-bucket=aws-bucket-2",
+		"--aws-ami-name=aws-ami-3",
+		"server-ami",
+		"--distro=fedora-42",
+	})
+	defer restore()
+
+	err := main.Run()
+	require.NoError(t, err)
+
+	assert.Equal(t, regionName, "aws-region-1")
+	assert.Equal(t, bucketName, "aws-bucket-2")
+	assert.Equal(t, amiName, "aws-ami-3")
+	expectedBootMode := platform.BOOT_HYBRID
+	assert.Equal(t, &awscloud.UploaderOptions{BootMode: &expectedBootMode, TargetArch: arch.Current()}, uploadOpts)
+	assert.Equal(t, 1, fa.checkCalls)
+	assert.Equal(t, 1, fa.uploadAndRegisterCalls)
+	assert.Equal(t, "fake-img-raw\n", fa.uploadAndRegisterRead.String())
+}
+
 func TestBuildAmiButNotUpload(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
