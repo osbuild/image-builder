@@ -548,6 +548,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("aws-ami-name", "", "name for the AMI in AWS (only for type=ami)")
 	uploadCmd.Flags().String("aws-bucket", "", "target S3 bucket name for intermediate storage when creating AMI (only for type=ami)")
 	uploadCmd.Flags().String("aws-region", "", "target region for AWS uploads (only for type=ami)")
+	uploadCmd.Flags().StringArray("aws-tag", []string{}, "tag the AMI with this Key=Value (only for type=aws)")
 	uploadCmd.Flags().String("libvirt-connection", "", "connection URI (only for type=libvirt)")
 	uploadCmd.Flags().String("libvirt-pool", "", "pool name (only for type=libvirt)")
 	uploadCmd.Flags().String("libvirt-volume", "", "volume name (only for type=libvirt)")

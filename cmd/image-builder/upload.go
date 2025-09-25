@@ -97,6 +97,21 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 	if err != nil {
 		return nil, err
 	}
+	tags, err := cmd.Flags().GetStringArray("aws-tag")
+	if err != nil {
+		return nil, err
+	}
+	var slicedTags []awscloud.AWSTag
+	for _, tag := range tags {
+		parts := strings.SplitN(tag, "=", 2)
+		if len(parts) < 2 {
+			return nil, fmt.Errorf("Invalid tag format: %s (expected key=value)", tag)
+		}
+		slicedTags = append(slicedTags, awscloud.AWSTag{
+			Name: parts[0],
+			Value: parts[1],
+		})
+	}
 	if bootMode == nil {
 		// If unset, default to BOOT_HYBIRD which translated
 		// to "uefi-prefered" when registering the image.
@@ -133,6 +148,7 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 	opts := &awscloud.UploaderOptions{
 		TargetArch: targetArch,
 		BootMode:   bootMode,
+		Tags:       slicedTags,
 	}
 
 	return awscloudNewUploader(region, bucketName, amiName, opts)
