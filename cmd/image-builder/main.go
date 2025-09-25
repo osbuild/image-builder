@@ -211,6 +211,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if bootcRef != "" && distroStr != "" {
 		return nil, fmt.Errorf("cannot use --distro with --bootc-ref")
 	}
+	bootcBuildRef, err := cmd.Flags().GetString("bootc-build-ref")
+	if err != nil {
+		return nil, err
+	}
 	// XXX: remove once https://github.com/osbuild/images/pull/1797
 	// and https://github.com/osbuild/bootc-image-builder/pull/1014
 	// are merged
@@ -245,6 +249,11 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		distro, err := bootc.NewBootcDistro(bootcRef)
 		if err != nil {
 			return nil, err
+		}
+		if bootcBuildRef != "" {
+			if err := distro.SetBuildContainer(bootcBuildRef); err != nil {
+				return nil, err
+			}
 		}
 		archi, err := distro.GetArch(archStr)
 		if err != nil {
@@ -513,6 +522,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
 	manifestCmd.Flags().String("bootc-ref", "", `bootc container ref`)
+	manifestCmd.Flags().String("bootc-build-ref", "", `bootc build container ref`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
