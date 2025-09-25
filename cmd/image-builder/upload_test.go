@@ -36,7 +36,7 @@ func (fa *fakeAwsUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (fa *fakeAwsUploader) UploadAndRegister(r io.Reader, status io.Writer) error {
+func (fa *fakeAwsUploader) UploadAndRegister(r io.Reader, _ uint64, status io.Writer) error {
 	fa.uploadAndRegisterCalls++
 	_, err := io.Copy(&fa.uploadAndRegisterRead, r)
 	if err != nil {
