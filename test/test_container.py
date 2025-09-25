@@ -6,15 +6,16 @@ import subprocess
 import pytest
 import yaml
 
+# put common podman run args in once place
+podman_run = ["podman", "run", "--rm", "--privileged"]
+
 
 @pytest.mark.parametrize("use_librepo", [False, True])
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
 def test_container_builds_image(tmp_path, build_container, use_librepo):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    subprocess.check_call([
-        "podman", "run",
-        "--privileged",
+    subprocess.check_call(podman_run + [
         "-v", f"{output_dir}:/output",
         build_container,
         "build",
@@ -34,9 +35,7 @@ def test_container_builds_image(tmp_path, build_container, use_librepo):
 def test_container_manifest_generates_sbom(tmp_path, build_container):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    subprocess.check_call([
-        "podman", "run",
-        "--privileged",
+    subprocess.check_call(podman_run + [
         "-v", f"{output_dir}:/output",
         build_container,
         "manifest",
@@ -60,9 +59,7 @@ def test_container_manifest_generates_sbom(tmp_path, build_container):
 def test_container_build_generates_manifest(tmp_path, build_container):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    subprocess.check_call([
-        "podman", "run",
-        "--privileged",
+    subprocess.check_call(podman_run + [
         "-v", f"{output_dir}:/output",
         build_container,
         "build",
@@ -84,9 +81,8 @@ def test_container_build_generates_manifest(tmp_path, build_container):
 def test_container_with_progress(tmp_path, build_fake_container, progress, needle, forbidden):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    output = subprocess.check_output([
-        "podman", "run", "-t",
-        "--privileged",
+    output = subprocess.check_output(podman_run + [
+        "-t",
         "-v", f"{output_dir}:/output",
         build_fake_container,
         "build",
@@ -107,9 +103,7 @@ def test_container_cross_build(tmp_path, build_container, arch):
     os.makedirs("/var/cache/image-builder/store", exist_ok=True)
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    subprocess.check_call([
-        "podman", "run",
-        "--privileged",
+    subprocess.check_call(podman_run + [
         "-v", "/var/lib/containers/storage:/var/lib/containers/storage",
         "-v", "/var/cache/image-builder/store:/var/cache/image-builder/store",
         "-v", f"{output_dir}:/output",
@@ -130,9 +124,7 @@ def test_container_cross_build(tmp_path, build_container, arch):
 def test_container_manifest_seeded_is_the_same(build_container, use_seed_arg):
     manifests = set()
 
-    cmd = [
-        "podman", "run",
-        "--privileged",
+    cmd = podman_run + [
         build_container,
         "manifest",
         "--distro", "centos-9",
@@ -161,9 +153,7 @@ def test_container_manifest_seeded_is_the_same(build_container, use_seed_arg):
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
 def test_container_version_smoke(build_container):
-    output = subprocess.check_output([
-        "podman", "run",
-        "--privileged",
+    output = subprocess.check_output(podman_run + [
         build_container,
         "--version",
     ])
@@ -181,9 +171,7 @@ def test_container_builds_bootc(tmp_path, build_container):
 
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    subprocess.check_call([
-        "podman", "run",
-        "--privileged",
+    subprocess.check_call(podman_run + [
         "-v", f"{output_dir}:/output",
         build_container,
         "build",
@@ -203,9 +191,7 @@ def test_container_manifest_bootc_build_container(build_container):
     bootc_build_container_ref = "quay.io/centos-bootc/centos-bootc:stream10"
     subprocess.check_call(["podman", "pull", bootc_ref])
 
-    output = subprocess.check_output([
-        "podman", "run",
-        "--privileged",
+    output = subprocess.check_output(podman_run + [
         build_container,
         "manifest",
         "qcow2",
