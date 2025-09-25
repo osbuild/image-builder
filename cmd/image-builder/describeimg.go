@@ -80,7 +80,11 @@ func packageSetsFor(imgType distro.ImageType) (map[string]*packagesYAML, error) 
 
 	res := make(map[string]*packagesYAML)
 
-	for pipelineName, pkgSets := range manifest.GetPackageSetChains() {
+	pkgSetChains, err := manifest.GetPackageSetChains()
+	if err != nil {
+		return nil, err
+	}
+	for pipelineName, pkgSets := range pkgSetChains {
 		incM := map[string]bool{}
 		excM := map[string]bool{}
 		for _, pkgSet := range pkgSets {

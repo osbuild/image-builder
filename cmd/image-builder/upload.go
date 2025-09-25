@@ -49,7 +49,7 @@ func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	pbar.Start()
 	defer pbar.Finish()
 
-	return uploader.UploadAndRegister(r, osStderr)
+	return uploader.UploadAndRegister(r, 0, osStderr)
 }
 
 func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploader) error {
