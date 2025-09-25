@@ -1,3 +1,5 @@
+import random
+import string
 import subprocess
 import textwrap
 
@@ -15,13 +17,16 @@ def pytest_configure(config):
 def build_container_fixture():
     """Build a container from the Containerfile and returns the name"""
 
-    container_tag = "image-builder-test"
+    container_tag = "ibcli-test-" + "".join(random.choices(
+        string.ascii_lowercase + string.digits, k=4))
+
     subprocess.check_call([
         "podman", "build",
         "-f", "Containerfile",
         "-t", container_tag,
     ])
-    return container_tag
+    yield container_tag
+    subprocess.check_call(["podman", "rmi", container_tag])
 
 
 # XXX: copied from bib
@@ -52,10 +57,12 @@ def build_fake_container_fixture(tmpdir_factory, build_container):
     RUN chmod 755 /usr/bin/osbuild
     """), encoding="utf8")
 
-    container_tag = "bootc-image-builder-test-faked-osbuild"
+    container_tag = "ibcli-test-faked-osbuild-" + "".join(random.choices(
+        string.ascii_lowercase + string.digits, k=4))
     subprocess.check_call([
         "podman", "build",
         "-t", container_tag,
         tmp_path,
     ])
-    return container_tag
+    yield container_tag
+    subprocess.check_call(["podman", "rmi", container_tag])
