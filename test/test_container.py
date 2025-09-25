@@ -196,3 +196,36 @@ def test_container_builds_bootc(tmp_path, build_container):
     # XXX: ensure no other leftover dirs
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
+
+
+def test_container_manifest_bootc_build_container(build_container):
+    bootc_ref = "quay.io/centos-bootc/centos-bootc:stream9"
+    bootc_build_container_ref = "quay.io/centos-bootc/centos-bootc:stream10"
+    subprocess.check_call(["podman", "pull", bootc_ref])
+
+    output = subprocess.check_output([
+        "podman", "run",
+        "--privileged",
+        build_container,
+        "manifest",
+        "qcow2",
+        "--bootc-ref", bootc_ref,
+        "--bootc-build-ref", bootc_build_container_ref
+    ], text=True)
+    manifest = json.loads(output)
+    assert len(manifest["sources"]["org.osbuild.containers-storage"]["items"]) == 2
+    assert bootc_ref in output
+    assert bootc_build_container_ref in output
+    # build container is set correctly
+    build_pipeline = [p for p in manifest["pipelines"]
+                      if p["name"] == "build"][0]
+    cnt_deploy = [st for st in build_pipeline["stages"]
+                  if st["type"] == "org.osbuild.container-deploy"][0]
+    refs = cnt_deploy["inputs"]["images"]["references"]
+    assert refs.popitem()[1]["name"] == "quay.io/centos-bootc/centos-bootc:stream10"
+    # target is correct
+    img_pipeline = [p for p in manifest["pipelines"]
+                    if p["name"] == "image"][0]
+    cnt_deploy = [st for st in img_pipeline["stages"]
+                  if st["type"] == "org.osbuild.bootc.install-to-filesystem"][0]
+    assert cnt_deploy["options"]["target-imgref"] == "quay.io/centos-bootc/centos-bootc:stream9"
