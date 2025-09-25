@@ -189,6 +189,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	bootcDefaultFs, err := cmd.Flags().GetString("bootc-default-fs")
+	if err != nil {
+		return nil, err
+	}
 	var rpmDownloader osbuild.RpmDownloader
 	if useLibrepo {
 		rpmDownloader = osbuild.RpmDownloaderLibrepo
@@ -255,7 +259,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 
 	var img *imagefilter.Result
 	if bootcRef != "" {
-		distro, err := bootc.NewBootcDistro(bootcRef, nil)
+		distro, err := bootc.NewBootcDistro(bootcRef, &bootc.DistroOptions{DefaultFs: bootcDefaultFs})
 		if err != nil {
 			return nil, err
 		}
@@ -556,6 +560,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("bootc-ref", "", `bootc container ref`)
 	manifestCmd.Flags().String("bootc-build-ref", "", `bootc build container ref`)
 	manifestCmd.Flags().String("bootc-installer-payload-ref", "", `bootc installer payload ref`)
+	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
