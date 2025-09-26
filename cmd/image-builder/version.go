@@ -21,7 +21,7 @@ type versionDescription struct {
 	} `yaml:"image-builder"`
 }
 
-func readVersionFromBinary() *versionDescription {
+func readVersionInfo() *versionDescription {
 	// We'll be getting these values from the build info if they're available, otherwise
 	// they will always be set to unknown. Note that `version` is set globally so it can
 	// be defined by whatever is building this project.
@@ -59,7 +59,7 @@ func prettyVersion() string {
 	enc := yaml.NewEncoder(&b)
 	enc.SetIndent(2)
 
-	enc.Encode(readVersionFromBinary())
+	enc.Encode(readVersionInfo())
 
 	return b.String()
 }
