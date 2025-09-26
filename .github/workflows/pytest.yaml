@@ -1,4 +1,4 @@
-name: Integration tests
+name: Integration
 
 on:  # yamllint disable-line rule:truthy
   push:
@@ -10,6 +10,7 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   lint:
+    name: "Lint"
     runs-on: ubuntu-latest
     steps:
       - name: Update apt repositories
@@ -25,7 +26,37 @@ jobs:
       - name: Run linters
         run: make lint
 
+  manifest:
+    name: "Manifest"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/testdeps
+      - name: Install integration test env
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pytest golang
+      - name: Run integration tests via pytest
+        run: |
+          # use "-s" for now for easier debugging
+          sudo pytest -s -v test/test_manifest.py
   build:
+    name: "Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/testdeps
+      - name: Install integration test env
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pytest golang
+      - name: Run integration tests via pytest
+        run: |
+          # use "-s" for now for easier debugging
+          sudo pytest -s -v test/test_build.py
+
+  build-cross:
+    name: "Build (Cross-Architecture)"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -40,4 +71,19 @@ jobs:
       - name: Run integration tests via pytest
         run: |
           # use "-s" for now for easier debugging
-          sudo pytest -s -v
+          sudo pytest -s -v test/test_build_cross.py
+
+  smoke:
+    name: "Smoke"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/testdeps
+      - name: Install integration test env
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pytest golang
+      - name: Run integration tests via pytest
+        run: |
+          # use "-s" for now for easier debugging
+          sudo pytest -s -v test/test_smoke.py
