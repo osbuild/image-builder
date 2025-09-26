@@ -2,4 +2,5 @@
 disable=
     missing-module-docstring,
     missing-function-docstring,
+    duplicate-code,
     fixme
