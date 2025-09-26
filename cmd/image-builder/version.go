@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"runtime/debug"
 	"strings"
 
+	"github.com/osbuild/images/pkg/osbuild"
 	"gopkg.in/yaml.v3"
 )
 
@@ -16,7 +19,8 @@ type versionDescription struct {
 		Version      string `yaml:"version"`
 		Commit       string `yaml:"commit"`
 		Dependencies struct {
-			Images string `yaml:"images"`
+			Images  string `yaml:"images"`
+			OSBuild string `yaml:"osbuild"`
 		} `yaml:"dependencies"`
 	} `yaml:"image-builder"`
 }
@@ -28,8 +32,9 @@ func readVersionInfo() *versionDescription {
 	// they will always be set to unknown. Note that `version` is set globally so it can
 	// be defined by whatever is building this project.
 	vd.ImageBuilder.Commit = "unknown"
-	vd.ImageBuilder.Version = "unknown"
+	vd.ImageBuilder.Version = version
 	vd.ImageBuilder.Dependencies.Images = "unknown"
+	vd.ImageBuilder.Dependencies.OSBuild = "unknown"
 
 	if bi, ok := debug.ReadBuildInfo(); ok {
 		for _, bs := range bi.Settings {
@@ -45,6 +50,12 @@ func readVersionInfo() *versionDescription {
 			}
 		}
 	}
+
+	osbuildVersion, err := osbuild.OSBuildVersion()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to get osbuild version: %v\n", err)
+	}
+	vd.ImageBuilder.Dependencies.OSBuild = osbuildVersion
 
 	return vd
 }

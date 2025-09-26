@@ -163,6 +163,7 @@ def test_container_version_smoke(build_container):
     assert ver_yaml["image-builder"]["version"] != ""
     assert ver_yaml["image-builder"]["commit"] != ""
     assert ver_yaml["image-builder"]["dependencies"]["images"] != ""
+    assert ver_yaml["image-builder"]["dependencies"]["osbuild"] != ""
 
 
 def test_container_builds_bootc(tmp_path, build_container):
