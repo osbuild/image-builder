@@ -1,4 +1,4 @@
-name: Build & Deploy Container
+name: Container
 
 on:  # yamllint disable-line rule:truthy
   push:
@@ -10,7 +10,7 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   build-base:
-    name: Build & push image
+    name: Build & Push
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

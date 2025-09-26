@@ -1,4 +1,4 @@
-name: SPEC file check
+name: RPM
 
 on:  # yamllint disable-line rule:truthy
   pull_request:
@@ -10,7 +10,7 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   check-spec-images-deps:
-    name: "🔍 Check spec file osbuild/images dependencies"
+    name: "Check spec file osbuild/images dependencies"
     runs-on: ubuntu-latest
     container: registry.fedoraproject.org/fedora:latest
     env:
