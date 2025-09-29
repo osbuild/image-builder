@@ -54,7 +54,7 @@ func Load(path string) (*blueprint.Blueprint, error) {
 	default:
 		fp, err = os.Open(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot open blueprint file %q: %w", path, err)
 		}
 		defer fp.Close()
 	}
