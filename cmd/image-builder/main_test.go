@@ -986,15 +986,18 @@ func fakeDepsolve(cacheDir string, depsolveWarningsOutput io.Writer, packageSets
 	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
 
 	for name, pkgSetChain := range packageSets {
-		specSet := make([]rpmmd.PackageSpec, 0)
+		specSet := make(rpmmd.PackageList, 0)
 		for _, pkgSet := range pkgSetChain {
 			include := pkgSet.Include
 			slices.Sort(include)
 			for _, pkgName := range include {
 				checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(pkgName)))
-				spec := rpmmd.PackageSpec{
-					Name:     pkgName,
-					Checksum: "sha256:" + checksum,
+				spec := rpmmd.Package{
+					Name: pkgName,
+					Checksum: rpmmd.Checksum{
+						Type:  "sha256",
+						Value: checksum,
+					},
 				}
 				specSet = append(specSet, spec)
 			}
