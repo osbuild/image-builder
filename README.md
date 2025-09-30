@@ -15,7 +15,7 @@ $ sudo podman run --privileged \
 
 ## Installation
 
-You can install `image-builder` in Fedora from the repositories:
+You can install `image-builder` in Fedora and CentOS from the repositories:
 
 ```console
 $ dnf install image-builder
