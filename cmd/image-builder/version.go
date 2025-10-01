@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Usually set by whatever is building the binary with a `-x main.version=22`, for example
+// Usually set by whatever is building the binary with a `-X main.version=22`, for example
 // in `make build`.
 var version = "unknown"
 
