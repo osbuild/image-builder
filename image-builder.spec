@@ -7,7 +7,7 @@
 
 %global goipath         github.com/osbuild/image-builder-cli
 
-Version:        37
+Version:        38
 
 %gometa
 
