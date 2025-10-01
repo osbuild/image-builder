@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/cloud/libvirt"
+	"github.com/osbuild/images/pkg/cloud/openstack"
 	"github.com/osbuild/images/pkg/platform"
 )
 
@@ -31,6 +32,7 @@ var ErrUploadTypeUnsupported = errors.New("unsupported type")
 
 var awscloudNewUploader = awscloud.NewUploader
 var libvirtNewUploader = libvirt.NewUploader
+var openstackNewUploader = openstack.NewUploader
 
 func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	f, err := os.Open(imagePath)
@@ -74,6 +76,8 @@ func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, boot
 		return uploaderForCmdAWS(cmd, targetArch, bootMode)
 	case "libvirt":
 		return uploaderForLibvirt(cmd, targetArch, bootMode)
+	case "openstack":
+		return uploaderForCmdOpenstack(cmd, targetArch, bootMode)
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)
 	}
@@ -148,6 +152,26 @@ func uploaderForLibvirt(cmd *cobra.Command, targetArchStr string, bootMode *plat
 		return nil, err
 	}
 	return libvirtNewUploader(connection, pool, volume)
+}
+
+func uploaderForCmdOpenstack(cmd *cobra.Command, targetArchStr string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+	image, err := cmd.Flags().GetString("openstack-image")
+	if err != nil {
+		return nil, err
+	}
+	diskFormat, err := cmd.Flags().GetString("openstack-disk-format")
+	if err != nil {
+		return nil, err
+	}
+	containerFormat, err := cmd.Flags().GetString("openstack-container-format")
+	if err != nil {
+		return nil, err
+	}
+	opts := &openstack.UploaderOptions{
+		DiskFormat:      diskFormat,
+		ContainerFormat: containerFormat,
+	}
+	return openstackNewUploader(image, opts)
 }
 
 func detectArchFromImagePath(imagePath string) string {
