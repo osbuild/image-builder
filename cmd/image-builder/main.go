@@ -561,6 +561,9 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("openstack-image", "", "name for the uploaded image (only for type=openstack)")
 	uploadCmd.Flags().String("openstack-disk-format", "raw", "the disk format of a virtual machine image (only for type=openstack)")
 	uploadCmd.Flags().String("openstack-container-format", "bare", "this indicates if the image contains metadata about the VM (only for type=openstack)")
+	uploadCmd.Flags().String("ibmcloud-bucket", "", "target bucket name for storing the image (only for type=ibmcloud)")
+	uploadCmd.Flags().String("ibmcloud-region", "", "target region for IBM Cloud uploads (only for type=ibmcloud)")
+	uploadCmd.Flags().String("ibmcloud-image-name", "", "name for the uploaded image (only for type=ibmcloud)")
 	uploadCmd.Flags().String("arch", "", "upload for the given architecture")
 	rootCmd.AddCommand(uploadCmd)
 
