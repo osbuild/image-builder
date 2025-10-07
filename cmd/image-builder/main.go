@@ -215,6 +215,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	bootcInstallerPayloadRef, err := cmd.Flags().GetString("bootc-installer-payload-ref")
+	if err != nil {
+		return nil, err
+	}
 	// XXX: remove once https://github.com/osbuild/images/pull/1797
 	// and https://github.com/osbuild/bootc-image-builder/pull/1014
 	// are merged
@@ -284,16 +288,17 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	}
 
 	opts := &manifestOptions{
-		OutputDir:      outputDir,
-		OutputFilename: outputFilename,
-		BlueprintPath:  blueprintPath,
-		Ostree:         ostreeImgOpts,
-		BootcRef:       bootcRef,
-		RpmDownloader:  rpmDownloader,
-		WithSBOM:       withSBOM,
-		IgnoreWarnings: ignoreWarnings,
-		CustomSeed:     customSeed,
-		Subscription:   subscription,
+		OutputDir:                outputDir,
+		OutputFilename:           outputFilename,
+		BlueprintPath:            blueprintPath,
+		Ostree:                   ostreeImgOpts,
+		BootcRef:                 bootcRef,
+		BootcInstallerPayloadRef: bootcInstallerPayloadRef,
+		RpmDownloader:            rpmDownloader,
+		WithSBOM:                 withSBOM,
+		IgnoreWarnings:           ignoreWarnings,
+		CustomSeed:               customSeed,
+		Subscription:             subscription,
 
 		ForceRepos: forceRepos,
 	}
@@ -532,6 +537,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
 	manifestCmd.Flags().String("bootc-ref", "", `bootc container ref`)
 	manifestCmd.Flags().String("bootc-build-ref", "", `bootc build container ref`)
+	manifestCmd.Flags().String("bootc-installer-payload-ref", "", `bootc installer payload ref`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)

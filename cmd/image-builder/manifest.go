@@ -20,16 +20,17 @@ import (
 )
 
 type manifestOptions struct {
-	OutputDir      string
-	OutputFilename string
-	BlueprintPath  string
-	Ostree         *ostree.ImageOptions
-	BootcRef       string
-	Subscription   *subscription.ImageOptions
-	RpmDownloader  osbuild.RpmDownloader
-	WithSBOM       bool
-	IgnoreWarnings bool
-	CustomSeed     *int64
+	OutputDir                string
+	OutputFilename           string
+	BlueprintPath            string
+	Ostree                   *ostree.ImageOptions
+	BootcRef                 string
+	BootcInstallerPayloadRef string
+	Subscription             *subscription.ImageOptions
+	RpmDownloader            osbuild.RpmDownloader
+	WithSBOM                 bool
+	IgnoreWarnings           bool
+	CustomSeed               *int64
 
 	ForceRepos            []string
 	UseBootstrapContainer bool
@@ -102,6 +103,9 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 		Facts:        &facts.ImageOptions{APIType: facts.IBCLI_APITYPE},
 		OSTree:       opts.Ostree,
 		Subscription: opts.Subscription,
+		Bootc: &distro.BootcImageOptions{
+			InstallerPayloadRef: opts.BootcInstallerPayloadRef,
+		},
 	}
 
 	mf, err := mg.Generate(bp, img.ImgType, imgOpts)
