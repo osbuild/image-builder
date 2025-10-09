@@ -1,6 +1,7 @@
 import json
 import os
 import platform
+import re
 import subprocess
 
 import pytest
@@ -98,3 +99,51 @@ def test_manifest_bootc_build_container(build_container):
     cnt_deploy = [st for st in img_pipeline["stages"]
                   if st["type"] == "org.osbuild.bootc.install-to-filesystem"][0]
     assert cnt_deploy["options"]["target-imgref"] == "quay.io/centos-bootc/centos-bootc:stream9"
+
+
+def test_container_manifest_bootc_iso_smoke(build_container):
+    # Note that this is not a realistic ref, a generic bootc
+    # image does not contain anaconda so this won't produce a
+    # working installer. For the purpose of the test to validate
+    # that we get a manifest with the right refs its good enough.
+    bootc_ref = "quay.io/centos-bootc/centos-bootc:stream9"
+    bootc_payload_ref = "quay.io/centos-bootc/centos-bootc:stream10"
+    subprocess.check_call(["podman", "pull", bootc_ref])
+    subprocess.check_call(["podman", "pull", bootc_payload_ref])
+    output = subprocess.check_output(podman_run + [
+        build_container,
+        "manifest",
+        "bootc-installer",
+        "--bootc-ref", bootc_ref,
+        "--bootc-installer-payload-ref", bootc_payload_ref
+    ], text=True)
+    manifest = json.loads(output)
+    assert len(manifest["sources"]["org.osbuild.containers-storage"]["items"]) == 2
+    assert bootc_ref in output
+    assert bootc_payload_ref in output
+    # build pipeline uses bootc-ref
+    pipeline = [p for p in manifest["pipelines"]
+                if p["name"] == "build"][0]
+    cnt_deploy = [st for st in pipeline["stages"]
+                  if st["type"] == "org.osbuild.container-deploy"][0]
+    refs = cnt_deploy["inputs"]["images"]["references"]
+    assert refs.popitem()[1]["name"] == bootc_ref
+    # anaconda-tree uses bootc-ref too
+    pipeline = [p for p in manifest["pipelines"]
+                if p["name"] == "anaconda-tree"][0]
+    cnt_deploy = [st for st in pipeline["stages"]
+                  if st["type"] == "org.osbuild.container-deploy"][0]
+    refs = cnt_deploy["inputs"]["images"]["references"]
+    assert refs.popitem()[1]["name"] == bootc_ref
+    # the payload container is centos10
+    pipeline = [p for p in manifest["pipelines"]
+                if p["name"] == "bootiso-tree"][0]
+    skopeo_stage = [st for st in pipeline["stages"]
+                    if st["type"] == "org.osbuild.skopeo"][0]
+    refs = skopeo_stage["inputs"]["images"]["references"]
+    assert refs.popitem()[1]["name"] == bootc_payload_ref
+    kickstart_stage = [st for st in pipeline["stages"]
+                       if st["type"] == "org.osbuild.kickstart"][0]
+    assert re.match(
+        f'bootc switch .* registry {bootc_payload_ref}',
+        kickstart_stage["options"]["%post"][0]["commands"][0])
