@@ -6,7 +6,10 @@ import subprocess
 import pytest
 
 # put common podman run args in once place
-podman_run = ["podman", "run", "--rm", "--privileged"]
+podman_run = [
+    "podman", "run", "--rm", "--privileged",
+    "-v", "/var/lib/containers/storage:/var/lib/containers/storage",
+]
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
@@ -69,6 +72,7 @@ def test_manifest_bootc_build_container(build_container):
     bootc_ref = "quay.io/centos-bootc/centos-bootc:stream9"
     bootc_build_container_ref = "quay.io/centos-bootc/centos-bootc:stream10"
     subprocess.check_call(["podman", "pull", bootc_ref])
+    subprocess.check_call(["podman", "pull", bootc_build_container_ref])
 
     output = subprocess.check_output(podman_run + [
         build_container,
