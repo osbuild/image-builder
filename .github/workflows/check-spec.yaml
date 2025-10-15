@@ -2,11 +2,11 @@ name: RPM
 
 on:  # yamllint disable-line rule:truthy
   pull_request:
-    branches:
-      - "*"
+    branches: ["main"]
   push:
-    branches:
-      - main
+    branches: ["main"]
+  merge_group:
+    types: ["checks_requested"]
 
 jobs:
   check-spec-images-deps:
