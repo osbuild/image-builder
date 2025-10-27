@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/pkg/osbuild"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 // Usually set by whatever is building the binary with a `-X main.version=22`, for example

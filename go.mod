@@ -50,7 +50,6 @@ require (
 	golang.org/x/tools v0.46.0
 	google.golang.org/api v0.285.0
 	gopkg.in/ini.v1 v1.67.3
-	gopkg.in/yaml.v3 v3.0.1
 	libvirt.org/go/libvirt v1.12003.0
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -187,4 +186,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad // indirect
 	google.golang.org/grpc v1.81.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
