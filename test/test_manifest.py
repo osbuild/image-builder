@@ -147,3 +147,17 @@ def test_container_manifest_bootc_iso_smoke(build_container):
     assert re.match(
         f'bootc switch .* registry {bootc_payload_ref}',
         kickstart_stage["options"]["%post"][0]["commands"][0])
+
+
+def test_manifest_honors_rpmmd_cache(tmp_path, build_container):
+    rpmmd_cache = tmp_path / "rpmmd"
+    rpmmd_cache.mkdir()
+    subprocess.check_call(podman_run + [
+        "-v", f"{rpmmd_cache}:/rpmmd_cache",
+        build_container,
+        "manifest",
+        "--distro", "centos-9",
+        "minimal-raw",
+        "--rpmmd-cache", "/rpmmd_cache",
+    ], text=True)
+    assert len(list(rpmmd_cache.rglob("repomd.xml"))) > 0

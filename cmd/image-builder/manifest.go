@@ -31,6 +31,7 @@ type manifestOptions struct {
 	WithSBOM                 bool
 	IgnoreWarnings           bool
 	CustomSeed               *int64
+	RpmmdCacheDir            string
 
 	ForceRepos            []string
 	UseBootstrapContainer bool
@@ -63,13 +64,13 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 	if err != nil {
 		return err
 	}
-	// XXX: add --rpmmd/cachedir option like bib
 	manifestGenOpts := &manifestgen.Options{
 		DepsolveWarningsOutput: depsolveWarningsOutput,
 		RpmDownloader:          opts.RpmDownloader,
 		UseBootstrapContainer:  opts.UseBootstrapContainer,
 		CustomSeed:             opts.CustomSeed,
 		Depsolver:              manifestgenDepsolver,
+		Cachedir:               opts.RpmmdCacheDir,
 	}
 	if opts.WithSBOM {
 		outputDir := basenameFor(img, opts.OutputDir)
