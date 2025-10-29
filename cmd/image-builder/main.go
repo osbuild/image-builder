@@ -145,6 +145,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	rpmmdCacheDir, err := cmd.Flags().GetString("rpmmd-cache")
+	if err != nil {
+		return nil, err
+	}
 	extraRepos, err := cmd.Flags().GetStringArray("extra-repo")
 	if err != nil {
 		return nil, err
@@ -299,6 +303,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		IgnoreWarnings:           ignoreWarnings,
 		CustomSeed:               customSeed,
 		Subscription:             subscription,
+		RpmmdCacheDir:            rpmmdCacheDir,
 
 		ForceRepos: forceRepos,
 	}
@@ -542,6 +547,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
 	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
+	manifestCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
 	rootCmd.AddCommand(manifestCmd)
 
 	uploadCmd := &cobra.Command{
@@ -577,7 +583,6 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
-	// XXX: add --rpmmd cache too and put under /var/cache/image-builder/dnf
 	buildCmd.Flags().String("cache", "/var/cache/image-builder/store", `osbuild directory to cache intermediate build artifacts"`)
 	// XXX: add "--verbose" here, similar to how bib is doing this
 	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
