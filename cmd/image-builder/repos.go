@@ -11,11 +11,11 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-// defaultDataDirs contains the default search paths to look for
+// defaultRepoDirs contains the default search paths to look for
 // repository data. They contain a bunch of json files of the form
 // "$distro_$version".json (but that is an implementation detail that
 // the "images" library takes care of).
-var defaultDataDirs = []string{
+var defaultRepoDirs = []string{
 	"/etc/image-builder/repositories",
 	"/usr/share/image-builder/repositories",
 }
@@ -59,14 +59,14 @@ func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
 }
 
 func newRepoRegistryImpl(dataDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
-	var dataDirs []string
+	var repoDirs []string
 	if dataDir != "" {
-		dataDirs = []string{filepath.Join(dataDir, "repositories")}
+		repoDirs = []string{filepath.Join(dataDir, "repositories")}
 	} else {
-		dataDirs = defaultDataDirs
+		repoDirs = defaultRepoDirs
 	}
 
-	conf, err := reporegistry.LoadAllRepositories(dataDirs, []fs.FS{repos.FS})
+	conf, err := reporegistry.LoadAllRepositories(repoDirs, []fs.FS{repos.FS})
 	if err != nil {
 		return nil, err
 	}
