@@ -20,11 +20,6 @@ var defaultRepoDirs = []string{
 	"/usr/share/image-builder/repositories",
 }
 
-type repoConfig struct {
-	DataDir    string
-	ExtraRepos []string
-}
-
 func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
 	var repoConf []rpmmd.RepoConfig
 
