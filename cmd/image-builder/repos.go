@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/url"
+	"path/filepath"
 
 	"github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -60,7 +61,7 @@ func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
 func newRepoRegistryImpl(dataDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
 	var dataDirs []string
 	if dataDir != "" {
-		dataDirs = []string{dataDir}
+		dataDirs = []string{filepath.Join(dataDir, "repositories")}
 	} else {
 		dataDirs = defaultDataDirs
 	}
