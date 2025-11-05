@@ -15,7 +15,9 @@ jobs:
   build:
     name: "Build & Test"
     runs-on: ubuntu-latest
-    container: registry.fedoraproject.org/fedora:41
+    container:
+      image: registry.fedoraproject.org/fedora:41
+      options: --privileged
     env:
       # workaround for expired cert at source of indirect dependency
       # (go.opencensus.io/trace)
