@@ -164,3 +164,18 @@ bootc-image-builder no longer pulls images, make sure to pull it before running 
 
 	return nil
 }
+
+// IsContainer detects if we are running inside a container.
+func IsContainer() bool {
+	// We need to check for both podman and docker
+	// See https://github.com/containers/podman/issues/1583
+	if _, err := os.Stat("/run/.containerenv"); err == nil {
+		return true
+	}
+
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return true
+	}
+
+	return false
+}
