@@ -2,33 +2,33 @@
 
 After [installation](./00-installation.md) you probably want to use `image-builder`. A general workflow would be to find the image type you want to build and then build it.
 
-Let's take a look at the available `x86_64` image types for Fedora 42 and build one of them.
+Let's take a look at the available `x86_64` image types for Fedora 43 and build one of them.
 
 ```console
-$ image-builder list --filter arch:x86_64 --filter distro:fedora-42
-fedora-42 type:container arch:x86_64
-fedora-42 type:iot-bootable-container arch:x86_64
-fedora-42 type:iot-commit arch:x86_64
-fedora-42 type:iot-container arch:x86_64
-fedora-42 type:iot-installer arch:x86_64
-fedora-42 type:iot-qcow2 arch:x86_64
-fedora-42 type:iot-raw-xz arch:x86_64
-fedora-42 type:iot-simplified-installer arch:x86_64
-fedora-42 type:minimal-installer arch:x86_64
-fedora-42 type:minimal-raw-xz arch:x86_64
-fedora-42 type:minimal-raw-zst arch:x86_64
-fedora-42 type:server-ami arch:x86_64
-fedora-42 type:server-oci arch:x86_64
-fedora-42 type:server-openstack arch:x86_64
-fedora-42 type:server-ova arch:x86_64
-fedora-42 type:server-qcow2 arch:x86_64
-fedora-42 type:server-vagrant-libvirt arch:x86_64
-fedora-42 type:server-vagrant-virtualbox arch:x86_64
-fedora-42 type:server-vhd arch:x86_64
-fedora-42 type:server-vmdk arch:x86_64
-fedora-42 type:workstation-live-installer arch:x86_64
-fedora-42 type:wsl arch:x86_64
-$ sudo image-builder build --distro fedora-42 server-qcow2
+$ image-builder list --filter arch:x86_64 --filter distro:fedora-43
+fedora-43 type:container arch:x86_64
+fedora-43 type:iot-bootable-container arch:x86_64
+fedora-43 type:iot-commit arch:x86_64
+fedora-43 type:iot-container arch:x86_64
+fedora-43 type:iot-installer arch:x86_64
+fedora-43 type:iot-qcow2 arch:x86_64
+fedora-43 type:iot-raw-xz arch:x86_64
+fedora-43 type:iot-simplified-installer arch:x86_64
+fedora-43 type:minimal-installer arch:x86_64
+fedora-43 type:minimal-raw-xz arch:x86_64
+fedora-43 type:minimal-raw-zst arch:x86_64
+fedora-43 type:server-ami arch:x86_64
+fedora-43 type:server-oci arch:x86_64
+fedora-43 type:server-openstack arch:x86_64
+fedora-43 type:server-ova arch:x86_64
+fedora-43 type:server-qcow2 arch:x86_64
+fedora-43 type:server-vagrant-libvirt arch:x86_64
+fedora-43 type:server-vagrant-virtualbox arch:x86_64
+fedora-43 type:server-vhd arch:x86_64
+fedora-43 type:server-vmdk arch:x86_64
+fedora-43 type:workstation-live-installer arch:x86_64
+fedora-43 type:wsl arch:x86_64
+$ sudo image-builder build --distro fedora-43 server-qcow2
 # ...
 ```
 
@@ -69,7 +69,7 @@ $ image-builder list --format=json | jq '.[0]'
 To filter on a given distribution, one can use `--filter` with the `distro:` prefix:
 
 ```console
-$ image-builder list --filter distro:fedora-42
+$ image-builder list --filter distro:fedora-43
 # ... long list ...
 ```
 
@@ -95,7 +95,7 @@ $ image-builder list --filter arch:aarch64
 Filters can be combined to narrow the list further.
 
 ```console
-$ image-builder list --filter type:qcow2 --filter distro:fedora-42
+$ image-builder list --filter type:qcow2 --filter distro:fedora-43
 # ... list ...
 ```
 
@@ -104,7 +104,7 @@ $ image-builder list --filter type:qcow2 --filter distro:fedora-42
 The `build` command builds images of a given [image type](./10-faq.md#image-types), for example:
 
 ```console
-$ sudo image-builder build --distro fedora-42 minimal-raw-xz
+$ sudo image-builder build --distro fedora-43 minimal-raw-xz
 # ... progress ...
 ```
 
@@ -122,7 +122,7 @@ When passed `--arch` `image-builder` will try to do an experimental cross-archit
 Cross-architecture builds are much slower than being able to build on native hardware. However, if no native hardware is available they might be an acceptable compromise.
 
 ```console
-$ sudo image-builder build --distro fedora-42 --arch s390x server-qcow2
+$ sudo image-builder build --distro fedora-43 --arch s390x server-qcow2
 WARNING: using experimental cross-architecture building to build "s390x"
 # ... progress ...
 ```
@@ -243,6 +243,6 @@ enabled = ["nginx", "haproxy"]
 [[customizations.user]]
 name = "user"
 key = "ssh-ed25519 AAAAC..."
-$ sudo image-builder build --blueprint blueprint.toml --distro fedora-42 server-qcow2
+$ sudo image-builder build --blueprint blueprint.toml --distro fedora-43 server-qcow2
 # ...
 ```

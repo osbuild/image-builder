@@ -9,7 +9,7 @@ $ sudo podman run --privileged \
    -v ./output:/output \
    ghcr.io/osbuild/image-builder-cli:latest \
    build \
-   --distro fedora-41 \
+   --distro fedora-43 \
    minimal-raw
 ```
 
@@ -163,7 +163,7 @@ When `qemu-user-static` is installed images can be build for foreign
 architectures. To do this, pass `--arch`, e.g.:
 
 ```console
-$ sudo image-builder build --arch=riscv64 minimal-raw --distro fedora-41
+$ sudo image-builder build --arch=riscv64 minimal-raw --distro fedora-43
 ```
 building is about 8x-10x slower than native building but still fast
 enough to be usable.
@@ -215,7 +215,7 @@ centos-9 type:qcow2 arch:x86_64
 ```
 
 The following filters are currently supported, shell-style globbing is supported:
- * distro: the distro name (e.g. fedora-41)
+ * distro: the distro name (e.g. fedora-43)
  * arch: the architecture name (e.g. x86_64)
  * type: the image type name (e.g. qcow2)
  * bootmode: the bootmode (legacy, UEFI, hybrid)
@@ -296,7 +296,7 @@ option `--force-repo=file:///path/to/repos` can be used.
 
 Note that the repositories defined there will be used for all
 dependency solving and there is no safeguards, i.e. one can point to
-a fedora-42 repository url and try to build a centos-9 image type and
+a fedora-43 repository url and try to build a centos-9 image type and
 the system will happily try its best (and most likely fail). Use with
 caution.
 
@@ -318,7 +318,7 @@ A: The osbuild binary is used to actually build the images but beyond that
 
 Q: Can I have custom repository files?
 A: Sure! The repositories are encoded in json in "<distro>-<vesion>.json",
-   files, e.g. "fedora-41.json". See these [examples](https://github.com/osbuild/images/tree/main/data/repositories). Use the "--data-dir" switch and
+   files, e.g. "fedora-43.json". See these [examples](https://github.com/osbuild/images/tree/main/data/repositories). Use the "--data-dir" switch and
    place them under "repositories/name-version.json", e.g. for:
    "--data-dir ~/my-project --distro foo-1" a json file must be put under
    "~/my-project/repositories/foo-1.json.

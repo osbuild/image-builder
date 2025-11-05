@@ -9,7 +9,7 @@ Install `image-builder` with the following command:
 ```console
 $ sudo dnf install image-builder
 # ...
-$ sudo image-builder build --distro fedora-42 minimal-raw-xz
+$ sudo image-builder build --distro fedora-43 minimal-raw-xz
 # ...
 ```
 
@@ -22,13 +22,13 @@ $ sudo dnf copr enable @osbuild/image-builder
 # ...
 $ sudo dnf install image-builder
 # ...
-$ sudo image-builder build --distro fedora-42 minimal-raw-xz
+$ sudo image-builder build --distro fedora-43 minimal-raw-xz
 # ...
 ```
 
 ## Container
 
-We build a container for the `x86_64` and `aarch64` architectures directly from our `main` branch. We need to run a privileged container due to the way filesystems work in Linux. The below command will build a Fedora 41 Minimal Raw disk image and put it into the mounted output directory.
+We build a container for the `x86_64` and `aarch64` architectures directly from our `main` branch. We need to run a privileged container due to the way filesystems work in Linux. The below command will build a Fedora 43 Minimal Raw disk image and put it into the mounted output directory.
 
 ```console
 $ mkdir output
@@ -38,7 +38,7 @@ $ sudo podman run \
     -it \
     -v ./output:/output \
     ghcr.io/osbuild/image-builder-cli:latest \
-    build --distro fedora-42 minimal-raw-xz
+    build --distro fedora-43 minimal-raw-xz
 # ...
 ```
 
@@ -54,5 +54,5 @@ $ git clone github.com/osbuild/image-builder-cli
 $ cd image-builder-cli
 $ go build ./cmd/image-builder
 # ...
-$ sudo ./image-builder build --distro fedora-42 minimal-raw-xz
+$ sudo ./image-builder build --distro fedora-43 minimal-raw-xz
 ```

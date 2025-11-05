@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/fedora:42 AS builder
+FROM registry.fedoraproject.org/fedora:43 AS builder
 RUN dnf install -y git-core golang gpgme-devel libassuan-devel && mkdir -p /build/
 ARG GOPROXY=https://proxy.golang.org,direct
 RUN go env -w GOPROXY=$GOPROXY
@@ -11,7 +11,7 @@ WORKDIR /build
 # b) we don't really need it
 RUN CGO_ENABLED=0 go build -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper" ./cmd/image-builder
 
-FROM registry.fedoraproject.org/fedora:41
+FROM registry.fedoraproject.org/fedora:43
 
 # podman mount needs this
 RUN mkdir -p /etc/containers/networks
