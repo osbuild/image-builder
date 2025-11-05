@@ -24,8 +24,8 @@ def test_build_cross_builds(tmp_path, build_container, arch):
         "--progress=verbose",
         "--output-dir=/output",
         "container",
-        "--distro", "fedora-41",
+        "--distro", "fedora-43",
         # selecting a foreign arch here automatically triggers a cross-build
         f"--arch={arch}",
     ], text=True)
-    assert os.path.exists(output_dir / f"fedora-41-container-{arch}.tar")
+    assert os.path.exists(output_dir / f"fedora-43-container-{arch}.tar")
