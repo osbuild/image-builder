@@ -376,6 +376,13 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 	// XXX: check env here, i.e. if user is root and osbuild is installed
 
+	// Setup osbuild environment if running in a container
+	if setup.IsContainer() {
+		if err := setup.EnsureEnvironment(cacheDir); err != nil {
+			return fmt.Errorf("entrypoint setup failed: %w", err)
+		}
+	}
+
 	pbar, err := progressFromCmd(cmd)
 	if err != nil {
 		return err
@@ -624,14 +631,6 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 }
 
 func main() {
-	if setup.IsContainer() {
-		// TODO: respect the --cache flag
-		storePath := "/var/cache/image-builder/store"
-		if err := setup.EnsureEnvironment(storePath); err != nil {
-			log.Fatalf("entrypoint setup failed: %s\n", err)
-		}
-	}
-
 	if err := run(); err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
