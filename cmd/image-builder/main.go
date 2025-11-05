@@ -26,6 +26,7 @@ import (
 
 	"github.com/osbuild/image-builder-cli/internal/blueprintload"
 	"github.com/osbuild/image-builder-cli/internal/olog"
+	"github.com/osbuild/image-builder-cli/pkg/setup"
 )
 
 var (
@@ -623,6 +624,14 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 }
 
 func main() {
+	if setup.IsContainer() {
+		// TODO: respect the --cache flag
+		storePath := "/var/cache/image-builder/store"
+		if err := setup.EnsureEnvironment(storePath); err != nil {
+			log.Fatalf("entrypoint setup failed: %s\n", err)
+		}
+	}
+
 	if err := run(); err != nil {
 		log.Fatalf("error: %s\n", err)
 	}

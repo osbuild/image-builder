@@ -23,8 +23,7 @@ RUN dnf install -y dnf-plugins-core \
 
 COPY --from=builder /build/image-builder /usr/bin/
 
-COPY entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/image-builder"]
 VOLUME /output
 WORKDIR /output
 # XXX: add "store" flag like bib
