@@ -22,6 +22,8 @@ import (
 )
 
 type manifestOptions struct {
+	ManifestgenOptions manifestgen.Options
+
 	OutputDir                string
 	OutputFilename           string
 	BlueprintPath            string
@@ -32,11 +34,8 @@ type manifestOptions struct {
 	RpmDownloader            osbuild.RpmDownloader
 	WithSBOM                 bool
 	IgnoreWarnings           bool
-	CustomSeed               *int64
-	RpmmdCacheDir            string
 
-	ForceRepos            []string
-	UseBootstrapContainer bool
+	ForceRepos []string
 }
 
 func sbomWriter(outputDir, filename string, content io.Reader) error {
@@ -57,23 +56,13 @@ func sbomWriter(outputDir, filename string, content io.Reader) error {
 	return f.Sync()
 }
 
-// used in tests
-var manifestgenDepsolver manifestgen.DepsolveFunc
-
 // XXX: just return []byte instead of using output writer
-func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, depsolveWarningsOutput io.Writer, opts *manifestOptions) error {
+func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, opts *manifestOptions) error {
 	repos, err := newRepoRegistry(dataDir, extraRepos)
 	if err != nil {
 		return err
 	}
-	manifestGenOpts := &manifestgen.Options{
-		DepsolveWarningsOutput: depsolveWarningsOutput,
-		RpmDownloader:          opts.RpmDownloader,
-		UseBootstrapContainer:  opts.UseBootstrapContainer,
-		CustomSeed:             opts.CustomSeed,
-		Depsolve:               manifestgenDepsolver,
-		Cachedir:               opts.RpmmdCacheDir,
-	}
+	manifestGenOpts := &opts.ManifestgenOptions
 	if opts.WithSBOM {
 		outputDir := basenameFor(img, opts.OutputDir)
 		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {

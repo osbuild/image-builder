@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/distro/bootc"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 
@@ -137,6 +138,9 @@ func subscriptionImageOptions(cmd *cobra.Command) (*subscription.ImageOptions, e
 type cmdManifestWrapperOptions struct {
 	useBootstrapIfNeeded bool
 }
+
+// used in tests
+var manifestgenDepsolver manifestgen.DepsolveFunc
 
 func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
 	if wrapperOpts == nil {
@@ -304,27 +308,31 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	}
 
 	opts := &manifestOptions{
+		ManifestgenOptions: manifestgen.Options{
+			Cachedir:               rpmmdCacheDir,
+			CustomSeed:             customSeed,
+			RpmDownloader:          rpmDownloader,
+			DepsolveWarningsOutput: wd,
+			Depsolve:               manifestgenDepsolver,
+		},
 		OutputDir:                outputDir,
 		OutputFilename:           outputFilename,
 		BlueprintPath:            blueprintPath,
 		Ostree:                   ostreeImgOpts,
 		BootcRef:                 bootcRef,
 		BootcInstallerPayloadRef: bootcInstallerPayloadRef,
-		RpmDownloader:            rpmDownloader,
 		WithSBOM:                 withSBOM,
 		IgnoreWarnings:           ignoreWarnings,
-		CustomSeed:               customSeed,
 		Subscription:             subscription,
-		RpmmdCacheDir:            rpmmdCacheDir,
 
 		ForceRepos: forceRepos,
 	}
-	opts.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.ImgType.Arch().Name() != arch.Current().String())
-	if opts.UseBootstrapContainer {
+	opts.ManifestgenOptions.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.ImgType.Arch().Name() != arch.Current().String())
+	if opts.ManifestgenOptions.UseBootstrapContainer {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
 
-	err = generateManifest(dataDir, extraRepos, img, w, wd, opts)
+	err = generateManifest(dataDir, extraRepos, img, w, opts)
 	return img, err
 }
 
