@@ -255,7 +255,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 
 	var img *imagefilter.Result
 	if bootcRef != "" {
-		distro, err := bootc.NewBootcDistro(bootcRef)
+		distro, err := bootc.NewBootcDistro(bootcRef, nil)
 		if err != nil {
 			return nil, err
 		}
