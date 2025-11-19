@@ -3,7 +3,6 @@ package main_test
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,30 +19,6 @@ import (
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 	"github.com/osbuild/image-builder-cli/internal/testutil"
 )
-
-type fakeAwsUploader struct {
-	checkCalls int
-
-	uploadAndRegisterRead  bytes.Buffer
-	uploadAndRegisterCalls int
-	uploadAndRegisterErr   error
-}
-
-var _ = cloud.Uploader(&fakeAwsUploader{})
-
-func (fa *fakeAwsUploader) Check(status io.Writer) error {
-	fa.checkCalls++
-	return nil
-}
-
-func (fa *fakeAwsUploader) UploadAndRegister(r io.Reader, _ uint64, status io.Writer) error {
-	fa.uploadAndRegisterCalls++
-	_, err := io.Copy(&fa.uploadAndRegisterRead, r)
-	if err != nil {
-		panic(err)
-	}
-	return fa.uploadAndRegisterErr
-}
 
 func TestUploadWithAWSMock(t *testing.T) {
 	fakeDiskContent := "fake-raw-img"

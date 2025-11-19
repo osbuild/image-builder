@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -42,9 +41,6 @@ import (
 var (
 	osGetuid = os.Getuid
 	osGetgid = os.Getgid
-
-	osStdout = os.Stdout
-	osStderr = os.Stderr
 )
 
 func inContainerOrUnknown() bool {
@@ -66,7 +62,7 @@ func saveManifest(ms manifest.OSBuildManifest, fpath string) (err error) {
 	return os.WriteFile(fpath, b, 0644)
 }
 
-// manifestFromCobra generate an osbuild manifest from a cobra commandline.
+// bibManifestFromCobra generate an osbuild manifest from a cobra commandline.
 //
 // It takes an unstarted progres bar and will start it at the right
 // point (it cannot be started yet to avoid the "podman pull" progress
@@ -76,7 +72,7 @@ func saveManifest(ms manifest.OSBuildManifest, fpath string) (err error) {
 //
 // TODO: provide a podman progress reader to integrate the podman progress
 // into our progress.
-func manifestFromCobra(cmd *cobra.Command, args []string, pbar progress.ProgressBar) ([]byte, *mTLSConfig, error) {
+func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.ProgressBar) ([]byte, *mTLSConfig, error) {
 	cntArch := arch.Current()
 
 	imgref := args[0]
@@ -144,10 +140,10 @@ func manifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progress
 	// 1. the bootc disk manifests contains exports for all supported image types
 	// 2. the bootc legacy types (iso, anaconda-iso) always do a single build
 	imgType := imageTypes[0]
-	return manifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgType, rootFs, rpmCacheRoot, config, useLibrepo, cntArch)
+	return bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgType, rootFs, rpmCacheRoot, config, useLibrepo, cntArch)
 }
 
-func manifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeStr, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch) ([]byte, *mTLSConfig, error) {
+func bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeStr, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch) ([]byte, *mTLSConfig, error) {
 	distri, err := bootc.NewBootcDistro(imgref, &bootc.DistroOptions{
 		DefaultFs: rootFs,
 	})
@@ -215,7 +211,7 @@ func manifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeStr, 
 	return manifest, mTLS, nil
 }
 
-func cmdManifest(cmd *cobra.Command, args []string) error {
+func bibCmdManifest(cmd *cobra.Command, args []string) error {
 	pbar, err := progress.New("")
 	if err != nil {
 		// this should never happen
@@ -223,7 +219,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	}
 	defer pbar.Stop()
 
-	mf, _, err := manifestFromCobra(cmd, args, pbar)
+	mf, _, err := bibManifestFromCobra(cmd, args, pbar)
 	if err != nil {
 		return fmt.Errorf("cannot generate manifest: %w", err)
 	}
@@ -273,7 +269,7 @@ func handleAWSFlags(cmd *cobra.Command) (cloud.Uploader, error) {
 	return uploader, nil
 }
 
-func cmdBuild(cmd *cobra.Command, args []string) error {
+func bibCmdBuild(cmd *cobra.Command, args []string) error {
 	chown, _ := cmd.Flags().GetString("chown")
 	imgTypes, _ := cmd.Flags().GetStringArray("type")
 	osbuildStore, _ := cmd.Flags().GetString("store")
@@ -320,7 +316,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	manifest_fname := fmt.Sprintf("manifest-%s.json", strings.Join(imgTypes, "-"))
 	pbar.SetMessagef("Generating manifest %s", manifest_fname)
-	mf, mTLS, err := manifestFromCobra(cmd, args, pbar)
+	mf, mTLS, err := bibManifestFromCobra(cmd, args, pbar)
 	if err != nil {
 		return fmt.Errorf("cannot build manifest: %w", err)
 	}
@@ -400,7 +396,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 var rootLogLevel string
 
-func rootPreRunE(cmd *cobra.Command, _ []string) error {
+func bibRootPreRunE(cmd *cobra.Command, _ []string) error {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	progress, _ := cmd.Flags().GetString("progress")
 	switch {
@@ -424,7 +420,8 @@ func rootPreRunE(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func versionFromBuildInfo() (string, error) {
+// XXX: use prettyVersion()
+func bibVersionFromBuildInfo() (string, error) {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return "", fmt.Errorf("cannot read build info")
@@ -454,8 +451,8 @@ build_tainted: %v
 `, gitRev, buildTime, buildTainted), nil
 }
 
-func buildCobraCmdline() (*cobra.Command, error) {
-	version, err := versionFromBuildInfo()
+func bibBuildCobraCmdline() (*cobra.Command, error) {
+	version, err := bibVersionFromBuildInfo()
 	if err != nil {
 		return nil, err
 	}
@@ -463,7 +460,7 @@ func buildCobraCmdline() (*cobra.Command, error) {
 	rootCmd := &cobra.Command{
 		Use:               "bootc-image-builder",
 		Long:              "Create a bootable image from an ostree native container",
-		PersistentPreRunE: rootPreRunE,
+		PersistentPreRunE: bibRootPreRunE,
 		SilenceErrors:     true,
 		Version:           version,
 	}
@@ -480,7 +477,7 @@ func buildCobraCmdline() (*cobra.Command, error) {
 			"IMAGE_NAME: container image to build into a bootable image",
 		Args:                  cobra.ExactArgs(1),
 		DisableFlagsInUseLine: true,
-		RunE:                  cmdBuild,
+		RunE:                  bibCmdBuild,
 		SilenceUsage:          true,
 		Example: rootCmd.Use + " build quay.io/centos-bootc/centos-bootc:stream9\n" +
 			rootCmd.Use + " quay.io/centos-bootc/centos-bootc:stream9\n",
@@ -494,7 +491,7 @@ func buildCobraCmdline() (*cobra.Command, error) {
 		Short:                 "Only create the manifest but don't build the image.",
 		Args:                  cobra.ExactArgs(1),
 		DisableFlagsInUseLine: true,
-		RunE:                  cmdManifest,
+		RunE:                  bibCmdManifest,
 		SilenceUsage:          true,
 		Version:               rootCmd.Version,
 	}
@@ -583,17 +580,11 @@ func buildCobraCmdline() (*cobra.Command, error) {
 	return rootCmd, nil
 }
 
-func run() error {
-	rootCmd, err := buildCobraCmdline()
+func bibRun() error {
+	rootCmd, err := bibBuildCobraCmdline()
 	if err != nil {
 		return err
 	}
 
 	return rootCmd.Execute()
-}
-
-func main() {
-	if err := run(); err != nil {
-		log.Fatalf("error: %s", err)
-	}
 }

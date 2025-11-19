@@ -18,7 +18,7 @@ import (
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 
-	main "github.com/osbuild/image-builder-cli/cmd/bootc-image-builder"
+	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 )
 
 func TestCanChownInPathHappy(t *testing.T) {
@@ -57,7 +57,7 @@ func TestCanChownInPathCannotChange(t *testing.T) {
 
 func mockOsArgs(new []string) (restore func()) {
 	saved := os.Args
-	os.Args = append([]string{"argv0"}, new...)
+	os.Args = append([]string{"bootc-image-builder"}, new...)
 	return func() {
 		os.Args = saved
 	}

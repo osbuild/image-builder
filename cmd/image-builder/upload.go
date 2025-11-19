@@ -31,7 +31,6 @@ var ErrUploadConfigNotProvided = errors.New("missing all upload configuration")
 // ErrUploadTypeUnsupported is returned when the upload type is not supported
 var ErrUploadTypeUnsupported = errors.New("unsupported type")
 
-var awscloudNewUploader = awscloud.NewUploader
 var libvirtNewUploader = libvirt.NewUploader
 var openstackNewUploader = openstack.NewUploader
 var ibmNewUploader = ibmcloud.NewUploader
@@ -112,7 +111,7 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 			return nil, fmt.Errorf("Invalid tag format: %s (expected key=value)", tag)
 		}
 		slicedTags = append(slicedTags, awscloud.AWSTag{
-			Name: parts[0],
+			Name:  parts[0],
 			Value: parts[1],
 		})
 	}
