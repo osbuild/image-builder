@@ -41,3 +41,5 @@ loopback
 CDN
 Koji
 subcommand
+ostree
+buildroot

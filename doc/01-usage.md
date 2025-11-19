@@ -127,6 +127,28 @@ WARNING: using experimental cross-architecture building to build "s390x"
 # ... progress ...
 ```
 
+### ostree
+
+`image-builder` can also produce [ostree](https://ostreedev.github.io/ostree/)-based images. For an ostree-based image the system is usually not built from packages but directly from an ostree commit which needs to be passed as an argument. However, the buildroot that is set up is package based and influenced by the `--distro` argument, the same applies to the installer image types. For an installer image the installer is created from packages and contains the ostree commit to deploy onto a system.
+
+For example, to build a disk image from a [Fedora IoT](https://fedoraproject.org/iot/) ostree commit you can do the following:
+
+```
+$ sudo image-builder build --ostree-url https://d2ju0wfl996cmc.cloudfront.net/ --ostree-ref fedora/x86_64/stable/iot iot-raw-xz
+# ...
+```
+
+Image types that are ostree-based always need to be passed the `--ostree-url` and `--ostree-ref` arguments. When trying to build an ostree-based image without passing them an error is shown:
+
+```
+$ sudo image-builder build iot-raw-xz
+No distro name specified, selecting "fedora-43" based on host, use --distro to override
+[|] Manifest generation step
+Message: Building manifest for fedora-43-iot-raw-xz
+error: options validation failed for image type "iot-raw-xz": ostree.url: required
+$
+```
+
 ## `image-builder describe`
 
 The `describe` command outputs structured information about an image without building it. It lists the packages that would be used to build the images and the partition tables.
