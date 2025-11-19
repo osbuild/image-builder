@@ -34,10 +34,9 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 
+	"github.com/osbuild/image-builder-cli/internal/bibimg"
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/image-builder-cli/pkg/setup"
-
-	"github.com/osbuild/bootc-image-builder/bib/internal/imagetypes"
 )
 
 var (
@@ -125,7 +124,7 @@ func manifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progress
 		return nil, nil, fmt.Errorf("could not access container storage, did you forget -v /var/lib/containers/storage:/var/lib/containers/storage? (%w)", err)
 	}
 
-	imageTypes, err := imagetypes.New(imgTypes...)
+	imageTypes, err := bibimg.New(imgTypes...)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot detect build types %v: %w", imgTypes, err)
 	}
@@ -186,7 +185,7 @@ func manifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeStr, 
 			},
 		},
 		RpmDownloader: rpmDownloader,
-		Depsolver: func(cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string, solver *depsolvednf.Solver) (map[string]depsolvednf.DepsolveResult, error) {
+		Depsolver: func(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
 			depsolveResult, err = manifestgen.DefaultDepsolver(cacheDir, depsolveWarningsOutput, packageSets, d, arch, solver)
 			return depsolveResult, err
 		},
@@ -328,7 +327,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	pbar.SetMessagef("Done generating manifest")
 
 	// collect pipeline exports for each image type
-	imageTypes, err := imagetypes.New(imgTypes...)
+	imageTypes, err := bibimg.New(imgTypes...)
 	if err != nil {
 		return err
 	}
@@ -525,7 +524,7 @@ func buildCobraCmdline() (*cobra.Command, error) {
 	// XXX: add --bootc-installer-payload-ref as alias to make it
 	// cmdline compatible with ibcli(?)
 	manifestCmd.Flags().String("installer-payload-ref", "", "bootc installer payload ref")
-	manifestCmd.Flags().StringArray("type", []string{"qcow2"}, fmt.Sprintf("image types to build [%s]", imagetypes.Available()))
+	manifestCmd.Flags().StringArray("type", []string{"qcow2"}, fmt.Sprintf("image types to build [%s]", bibimg.Available()))
 	manifestCmd.Flags().Bool("local", true, "DEPRECATED: --local is now the default behavior, make sure to pull the container image before running bootc-image-builder")
 	if err := manifestCmd.Flags().MarkHidden("local"); err != nil {
 		return nil, fmt.Errorf("cannot hide 'local' :%w", err)

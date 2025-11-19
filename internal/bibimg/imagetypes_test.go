@@ -1,4 +1,4 @@
-package imagetypes_test
+package bibimg_test
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/bootc-image-builder/bib/internal/imagetypes"
+	"github.com/osbuild/image-builder-cli/internal/bibimg"
 )
 
 type testCase struct {
@@ -81,7 +81,7 @@ func TestImageTypes(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			it, err := imagetypes.New(tc.imageTypes...)
+			it, err := bibimg.New(tc.imageTypes...)
 			if tc.expectedErr != nil {
 				assert.Equal(t, err, tc.expectedErr)
 			} else {

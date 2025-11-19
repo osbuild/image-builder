@@ -1,4 +1,4 @@
-package imagetypes
+package bibimg
 
 import (
 	"fmt"
