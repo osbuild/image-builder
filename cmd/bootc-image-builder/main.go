@@ -380,7 +380,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 			switch imgType {
 			case "ami":
 				diskpath := filepath.Join(outputDir, exports[idx], "disk.raw")
-				if err := upload(uploader, diskpath, cmd.Flags()); err != nil {
+				if err := bibUpload(uploader, diskpath, cmd.Flags()); err != nil {
 					return fmt.Errorf("cannot upload AMI: %w", err)
 				}
 			default:
