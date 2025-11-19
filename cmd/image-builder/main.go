@@ -645,7 +645,15 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 }
 
 func main() {
-	if err := run(); err != nil {
+	var err error
+	// we are a multi-call binary and behave differently when
+	// called as "bootc-image-builder"
+	if strings.HasSuffix(os.Args[0], "bootc-image-builder") {
+		err = bibRun()
+	} else {
+		err = run()
+	}
+	if err != nil {
 		log.Fatalf("error: %s\n", err)
 	}
 }
