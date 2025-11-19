@@ -43,3 +43,6 @@ Koji
 subcommand
 ostree
 buildroot
+bootable
+filesystem
+Containerfile

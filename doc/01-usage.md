@@ -149,6 +149,103 @@ error: options validation failed for image type "iot-raw-xz": ostree.url: requir
 $
 ```
 
+### bootc
+
+`image-builder` supports building images from [bootable containers](https://docs.fedoraproject.org/en-US/bootc/getting-started/). Building bootc-based images works differently from `ostree`-based images and package-based images.
+
+When building a bootable container into an image we try to base everything on the container. Thus the distribution that is being built is not known; you cannot use the `--distro` argument in combination with `--bootc-*` arguments as it would do nothing.
+
+The container(s) used for the various `--bootc-*` arguments must be in container storage for the user you're running `image-builder` as before you start the build. This design choice was made due to the pulling of containers often needing additional authentication that `image-builder` cannot present the user with.
+
+```console
+$ sudo podman pull quay.io/centos-bootc/centos:stream10
+$ sudo image-builder build --bootc-ref quay.io/centos-bootc/centos:stream10 qcow2
+# ...
+```
+
+#### `bootc-build-ref`
+
+By default `image-builder` uses the container passed in `--bootc-ref` as the buildroot for the build. If your container does not contain the necessary tooling to turn it into other artifacts then you can explicitly pick a container to use as a buildroot with `--bootc-build-ref`.
+
+```console
+$ sudo podman pull quay.io/centos-bootc/centos:stream10
+$ sudo podman pull quay.io/toolbx-images/centos-toolbox:stream10
+$ sudo image-builder build --bootc-ref localhost/anaconda:latest --bootc-build-ref quay.io/toolbx-images/centos-toolbox:stream10 qcow2
+# ...
+```
+
+#### `bootc-installer-payload-ref`
+
+When `image-builder` builds an installer ISO there are two inputs. One is the installer (usually Anaconda) environment (passed as `--bootc-ref`) and the other is the bootable container that will be installed by the installer (passed as `--bootc-installer-payload-ref`). Both arguments are mandatory when building a `bootc-installer`.
+
+```console
+$ sudo podman pull quay.io/centos-bootc/centos:stream10
+$ sudo image-builder build --bootc-ref localhost/anaconda:latest --bootc-installer-payload-ref quay.io/centos-bootc/centos:stream10 bootc-installer
+# ...
+```
+
+Since there are no pre-provided installer container images at this moment, you can use a Containerfile similar to:
+
+```Dockerfile
+FROM your-favorite-bootc-container:latest
+RUN dnf install -y \
+     anaconda \
+     anaconda-install-env-deps \
+     anaconda-dracut \
+     dracut-config-generic \
+     dracut-network \
+     net-tools \
+     squashfs-tools \
+     grub2-efi-x64-cdboot \
+     python3-mako \
+     lorax-templates-* \
+     biosdevname \
+     prefixdevname \
+     && dnf clean all
+# shim-x64 is marked installed but the files are not in the expected
+# place for https://github.com/osbuild/osbuild/blob/v160/stages/org.osbuild.grub2.iso#L91, see
+# workaround via reinstall, we could add a config to the grub2.iso
+# stage to allow a different prefix that then would be used by
+# anaconda.
+# once https://github.com/osbuild/osbuild/pull/2202 is merged we
+# can update images/ to set the correct efi_src_dir and this can
+# be removed
+RUN dnf reinstall -y shim-x64
+# lorax wants to create a symlink in /mnt which points to /var/mnt
+# on bootc but /var/mnt does not exist on some images.
+#
+# If https://gitlab.com/fedora/bootc/base-images/-/merge_requests/294
+# gets merged this will be no longer needed
+RUN mkdir /var/mnt
+```
+
+To produce your own Anaconda-based installer.
+
+#### `bootc-default-fs`
+
+During the build of an image from a bootable container `image-builder` has to determine a partition table to use. For bootable containers we want the source of truth to be the container itself. The container usually contains (some) configuration to let image build tools such as `image-builder` know what to do.
+
+One of these bits of information is the filesystem to be used.
+
+Some containers do not contain this information. For example Fedora bootable containers do not specify the root filesystem they would like to use.
+
+When this happens you'll be presented with an error:
+
+```console
+$ sudo image-builder build --bootc-ref quay.io/fedora/fedora-bootc:rawhide qcow2
+WARNING: bootc support is experimental
+[|] Manifest generation step
+Message: Building manifest for bootc-based-qcow2
+error: no default fs set: mount "/boot" requires a filesystem but none set
+```
+
+In these cases it's up to the user to select a filesystem to use through the `--bootc-default-fs` argument:
+
+```console
+$ sudo image-builder build --bootc-ref quay.io/fedora/fedora-bootc:rawhide --bootc-default-fs ext4 qcow2
+# ...
+```
+
 ## `image-builder describe`
 
 The `describe` command outputs structured information about an image without building it. It lists the packages that would be used to build the images and the partition tables.
