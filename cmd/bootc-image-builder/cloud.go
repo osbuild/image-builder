@@ -11,7 +11,7 @@ import (
 	"github.com/osbuild/images/pkg/cloud"
 )
 
-func upload(uploader cloud.Uploader, path string, flags *pflag.FlagSet) error {
+func bibUpload(uploader cloud.Uploader, path string, flags *pflag.FlagSet) error {
 	progress, err := flags.GetString("progress")
 	if err != nil {
 		return err
