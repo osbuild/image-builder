@@ -155,7 +155,7 @@ $
 
 When building a bootable container into an image we try to base everything on the container. Thus the distribution that is being built is not known; you cannot use the `--distro` argument in combination with `--bootc-*` arguments as it would do nothing.
 
-The container(s) used for the various `--bootc-*` arguments must be in container storage for the user you're running `image-builder` as before you start the build. This design choice was made due to the pulling of containers often needing additional authentication that `image-builder` cannot present the user with.
+The container(s) used for the various `--bootc-*` arguments must be in the container storage of the user running `image-builder` before the start of the build. This avoids needing to configure `image-builder` with appropriate credentials or access rights for container registries.
 
 ```console
 $ sudo podman pull quay.io/centos-bootc/centos:stream10
