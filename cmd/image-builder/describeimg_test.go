@@ -59,8 +59,72 @@ packages:
       - selinux-policy-targeted
     exclude:
       - rng-tools
+blueprint:
+  supported_options:
+    - distro
+    - packages
+    - modules
+    - groups
+    - containers
+    - enabled_modules
+    - minimal
+    - customizations.dnf
+    - customizations.cacerts
+    - customizations.directories
+    - customizations.files
+    - customizations.firewall
+    - customizations.user
+    - customizations.sshkey
+    - customizations.group
+    - customizations.hostname
+    - customizations.kernel.name
+    - customizations.locale
+    - customizations.repositories
+    - customizations.rpm
+    - customizations.services
+    - customizations.timezone
+    - name
+    - version
+    - description
 `
 	assert.Equal(t, expectedOutput, buf.String())
+}
+
+func TestDescribeImageRequiredBlueprintOptions(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	res, err := main.GetOneImage("centos-9", "edge-simplified-installer", "x86_64", nil)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+	err = main.DescribeImage(res, &buf)
+	assert.NoError(t, err)
+
+	expectedSubstr := `
+blueprint:
+  supported_options:
+    - distro
+    - customizations.dnf
+    - customizations.installation_device
+    - customizations.filesystem
+    - customizations.disk
+    - customizations.fdo
+    - customizations.ignition
+    - customizations.kernel
+    - customizations.user
+    - customizations.sshkey
+    - customizations.group
+    - customizations.fips
+    - customizations.files
+    - customizations.directories
+    - name
+    - version
+    - description
+  required_options:
+    - customizations.installation_device
+`
+	assert.Contains(t, buf.String(), expectedSubstr)
 }
 
 func TestDescribeImageAll(t *testing.T) {
