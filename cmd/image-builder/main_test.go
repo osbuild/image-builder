@@ -387,9 +387,7 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	assert.Contains(t, fakeStdout.String(), `Image build successful, results:
-centos-9-qcow2-x86_64/centos-9-qcow2-x86_64.qcow2
-`)
+	assert.Contains(t, fakeStdout.String(), `Image build successful: centos-9-qcow2-x86_64/centos-9-qcow2-x86_64.qcow2`)
 
 	// ensure osbuild was run exactly one
 	require.Equal(t, 1, len(fakeOsbuildCmd.CallArgsList()))
