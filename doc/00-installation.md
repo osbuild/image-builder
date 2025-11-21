@@ -1,8 +1,8 @@
 # Installation
 
-`image-builder` packages are available in [Fedora](https://fedoraproject.org) ([package details](https://packages.fedoraproject.org/pkgs/image-builder/image-builder/)) and [CentOS](https://centos.org). You can also get a copy from other places listed here. After you have `image-builder` installed take a look at its [usage](./01-usage.md).
+`image-builder` packages are available in [Fedora](https://fedoraproject.org) ([package details](https://packages.fedoraproject.org/pkgs/image-builder/image-builder/)), [CentOS](https://centos.org), and [RHEL](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux) (starting from 9.7 and 10.1). You can also get a copy from other places listed here. After you have `image-builder` installed take a look at its [usage](./01-usage.md).
 
-## Fedora or CentOS
+## Fedora, CentOS, or RHEL
 
 Install `image-builder` with the following command:
 
