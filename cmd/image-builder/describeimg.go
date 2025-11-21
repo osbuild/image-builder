@@ -39,11 +39,17 @@ type describeImgYAML struct {
 	Packages         map[string]*packagesYAML `yaml:"packages"`
 
 	PartitionTable *disk.PartitionTable `yaml:"partition_table,omitempty"`
+
+	Blueprint blueprintYAML `yaml:"blueprint"`
 }
 
 type packagesYAML struct {
 	Include []string `yaml:"include"`
 	Exclude []string `yaml:"exclude"`
+}
+type blueprintYAML struct {
+	SupportedOptions []string `yaml:"supported_options,omitempty"`
+	RequiredOptions  []string `yaml:"required_options,omitempty"`
 }
 
 func dummyManifestFor(imgType distro.ImageType) (*manifest.Manifest, error) {
@@ -146,6 +152,10 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 		PayloadPipelines: m.PayloadPipelines(),
 		Packages:         pkgSets,
 		PartitionTable:   partTable,
+		Blueprint: blueprintYAML{
+			SupportedOptions: img.ImgType.SupportedBlueprintOptions(),
+			RequiredOptions:  img.ImgType.RequiredBlueprintOptions(),
+		},
 	}
 	// deliberately break the yaml until the feature is stable
 	fmt.Fprint(out, "@WARNING - the output format is not stable yet and may change\n")
