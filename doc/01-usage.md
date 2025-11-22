@@ -157,6 +157,8 @@ When building a bootable container into an image we try to base everything on th
 
 The container(s) used for the various `--bootc-*` arguments must be in the container storage of the user running `image-builder` before the start of the build. This avoids needing to configure `image-builder` with appropriate credentials or access rights for container registries.
 
+The most important argument is `--bootc-ref`, this is a [reference to the container](https://oras.land/docs/concepts/reference/) that contains the filesystem ending up in the image.
+
 ```console
 $ sudo podman pull quay.io/centos-bootc/centos:stream10
 $ sudo image-builder build --bootc-ref quay.io/centos-bootc/centos:stream10 qcow2
