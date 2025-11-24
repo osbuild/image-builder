@@ -69,7 +69,7 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 		RpmDownloader:          opts.RpmDownloader,
 		UseBootstrapContainer:  opts.UseBootstrapContainer,
 		CustomSeed:             opts.CustomSeed,
-		Depsolver:              manifestgenDepsolver,
+		Depsolve:               manifestgenDepsolver,
 		Cachedir:               opts.RpmmdCacheDir,
 	}
 	if opts.WithSBOM {

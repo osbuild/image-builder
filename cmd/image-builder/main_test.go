@@ -980,7 +980,7 @@ func TestBasenameFor(t *testing.T) {
 }
 
 // XXX: move into as manifestgen.FakeDepsolve
-func fakeDepsolve(cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
+func fakeDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
 	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
 
 	for name, pkgSetChain := range packageSets {
