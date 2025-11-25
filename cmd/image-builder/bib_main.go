@@ -185,6 +185,9 @@ func bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeSt
 			depsolveResult, err = manifestgen.DefaultDepsolver(cacheDir, depsolveWarningsOutput, packageSets, d, arch, solver)
 			return depsolveResult, err
 		},
+		// this turns (blueprint validation) warnings into
+		// warnings as they are visible to the user
+		WarningsOutput: os.Stderr,
 	})
 	if err != nil {
 		return nil, nil, err
