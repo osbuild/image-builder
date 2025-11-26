@@ -14,6 +14,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
@@ -65,7 +66,7 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	dataDir, err := cmd.Flags().GetString("data-dir")
+	dataDir, err := cmd.Flags().GetString("force-data-dir")
 	if err != nil {
 		return err
 	}
@@ -141,7 +142,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if wrapperOpts == nil {
 		wrapperOpts = &cmdManifestWrapperOptions{}
 	}
-	dataDir, err := cmd.Flags().GetString("data-dir")
+	dataDir, err := cmd.Flags().GetString("force-data-dir")
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +452,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	// XXX: boilderplate identical to cmdManifest() above
-	dataDir, err := cmd.Flags().GetString("data-dir")
+	dataDir, err := cmd.Flags().GetString("force-data-dir")
 	if err != nil {
 		return err
 	}
@@ -479,6 +480,16 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	}
 
 	return describeImage(res, osStdout)
+}
+
+func normalizeRootArgs(_ *pflag.FlagSet, name string) pflag.NormalizedName {
+	switch name {
+	case "data-dir":
+		name = "force-data-dir"
+		break
+	}
+
+	return pflag.NormalizedName(name)
 }
 
 func run() error {
@@ -511,10 +522,14 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	rootCmd.Flags().Bool("version", false, "Print version information and exit")
 	rootCmd.PersistentFlags().String("data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().MarkDeprecated("data-dir", `Use --force-data-dir instead`)
+	rootCmd.PersistentFlags().String("force-data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode (more logging on stderr and verbose progress)`)
+	rootCmd.PersistentFlags().SetNormalizeFunc(normalizeRootArgs)
+
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
 
