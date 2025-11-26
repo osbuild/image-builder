@@ -46,3 +46,6 @@ buildroot
 bootable
 filesystem
 Containerfile
+GPG
+Katello
+kickstart
