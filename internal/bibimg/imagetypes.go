@@ -15,7 +15,7 @@ type imageType struct {
 
 var supportedImageTypes = map[string]imageType{
 	// XXX: ideally we would look how to consolidate all
-	// knownledge about disk based image types into the images
+	// knowledge about disk based image types into the images
 	// library
 	"ami":             imageType{Export: "image"},
 	"qcow2":           imageType{Export: "qcow2"},
