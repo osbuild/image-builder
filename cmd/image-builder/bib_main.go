@@ -181,8 +181,8 @@ func bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeSt
 			},
 		},
 		RpmDownloader: rpmDownloader,
-		Depsolver: func(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
-			depsolveResult, err = manifestgen.DefaultDepsolver(cacheDir, depsolveWarningsOutput, packageSets, d, arch, solver)
+		Depsolve: func(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
+			depsolveResult, err = manifestgen.DefaultDepsolve(solver, cacheDir, depsolveWarningsOutput, packageSets, d, arch)
 			return depsolveResult, err
 		},
 		// this turns (blueprint validation) warnings into
