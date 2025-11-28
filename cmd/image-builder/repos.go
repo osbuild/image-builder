@@ -55,13 +55,16 @@ func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
 
 func newRepoRegistryImpl(dataDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
 	var repoDirs []string
+	var builtins []fs.FS
+
 	if dataDir != "" {
 		repoDirs = []string{filepath.Join(dataDir, "repositories")}
 	} else {
 		repoDirs = defaultRepoDirs
+		builtins = []fs.FS{repos.FS}
 	}
 
-	conf, err := reporegistry.LoadAllRepositories(repoDirs, []fs.FS{repos.FS})
+	conf, err := reporegistry.LoadAllRepositories(repoDirs, builtins)
 	if err != nil {
 		return nil, err
 	}
