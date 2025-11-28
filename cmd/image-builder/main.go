@@ -521,14 +521,14 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 
 	rootCmd.Flags().Bool("version", false, "Print version information and exit")
-	rootCmd.PersistentFlags().String("data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	var forceDataDir string
+	rootCmd.PersistentFlags().StringVar(&forceDataDir, "force-data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
+	rootCmd.PersistentFlags().StringVar(&forceDataDir, "data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().MarkDeprecated("data-dir", `Use --force-data-dir instead`)
-	rootCmd.PersistentFlags().String("force-data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode (more logging on stderr and verbose progress)`)
-	rootCmd.PersistentFlags().SetNormalizeFunc(normalizeRootArgs)
 
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
