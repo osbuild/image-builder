@@ -40,6 +40,35 @@ jobs:
         run: |
           # use "-s" for now for easier debugging
           sudo pytest -s -v test/test_manifest.py
+
+  # Run a separate test with subscription-manager so that we can
+  # ensure that rhel can be build from inside a container, its
+  # a bit tricky because podman-in-podman is fiddly and also because
+  # we need to test downloading the rpms, a manifest build is not enough
+  manifest-in-osbuild-container:
+    name: "RHEL tar build in container"
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run integration tests via pytest
+        env:
+          SUBSCRIPTION_ORG: ${{ secrets.SUBSCRIPTION_ORG }}
+          SUBSCRIPTION_ACTIVATION_KEY: ${{ secrets.SUBSCRIPTION_ACTIVATION_KEY }}
+        run: |
+          # workaround nested podman
+          mkdir -p /etc/containers
+          cat > /etc/containers/containers.conf <<EOF
+          [engine]
+          cgroup_manager = "cgroupfs"
+          [containers]
+          cgroups = "disabled"
+          EOF
+          dnf install -y python3-pytest python3-yaml podman subscription-manager
+          pytest -rs -v test/test_rhel.py
+
   build:
     name: "Build"
     runs-on: ubuntu-latest
