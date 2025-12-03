@@ -294,8 +294,8 @@ func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
 			`options validation failed for image type "iot-raw-xz": ostree.url: required`,
 		},
 		{
-			[]string{"server-qcow2", "--ostree-url=http://example.com/"},
-			`OSTree is not supported for "server-qcow2"`,
+			[]string{"generic-qcow2", "--ostree-url=http://example.com/"},
+			`OSTree is not supported for "generic-qcow2"`,
 		},
 	} {
 		args := append(baseArgs, tc.extraArgs...)

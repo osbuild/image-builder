@@ -216,7 +216,7 @@ func TestBuildAndUploadFedoraWithAWSMock(t *testing.T) {
 		"--aws-region=aws-region-1",
 		"--aws-bucket=aws-bucket-2",
 		"--aws-ami-name=aws-ami-3",
-		"server-ami",
+		"generic-ami",
 		"--distro=fedora-43",
 	})
 	defer restore()
