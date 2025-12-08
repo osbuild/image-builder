@@ -43,7 +43,7 @@ def build_container_fixture():
     subprocess.check_call([
         "podman", "build",
         "--cache-ttl=1h",
-        "-f", "Containerfile",
+        "-f", "Containerfile.bib",
         "-t", container_tag,
     ])
     return container_tag
