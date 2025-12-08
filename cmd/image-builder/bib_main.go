@@ -219,8 +219,6 @@ func bibCmdManifest(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var awscloudNewUploader = awscloud.NewUploader
-
 func handleAWSFlags(cmd *cobra.Command) (cloud.Uploader, error) {
 	imgTypes, _ := cmd.Flags().GetStringArray("type")
 	region, _ := cmd.Flags().GetString("aws-region")
