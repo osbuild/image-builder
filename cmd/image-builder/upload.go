@@ -31,9 +31,13 @@ var ErrUploadConfigNotProvided = errors.New("missing all upload configuration")
 // ErrUploadTypeUnsupported is returned when the upload type is not supported
 var ErrUploadTypeUnsupported = errors.New("unsupported type")
 
-var libvirtNewUploader = libvirt.NewUploader
-var openstackNewUploader = openstack.NewUploader
-var ibmNewUploader = ibmcloud.NewUploader
+// uploader constructors that are mocked in tests
+var (
+	awscloudNewUploader  = awscloud.NewUploader
+	libvirtNewUploader   = libvirt.NewUploader
+	openstackNewUploader = openstack.NewUploader
+	ibmNewUploader       = ibmcloud.NewUploader
+)
 
 func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	f, err := os.Open(imagePath)
