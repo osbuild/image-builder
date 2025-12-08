@@ -81,6 +81,7 @@ func setupCLI() *cobra.Command {
 
 func main() {
 	logrus.SetLevel(logrus.ErrorLevel)
+	fmt.Fprintln(os.Stderr, "WARNING: this command is deprecated, please consider using the --upload option instead")
 	cmd := setupCLI()
 	check(cmd.Execute())
 }
