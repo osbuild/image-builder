@@ -2,7 +2,6 @@ package main
 
 var (
 	CanChownInPath    = canChownInPath
-	CreateRand        = createRand
 	BuildCobraCmdline = bibBuildCobraCmdline
 	HandleAWSFlags    = handleAWSFlags
 )

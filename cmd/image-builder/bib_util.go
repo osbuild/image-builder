@@ -1,11 +1,7 @@
 package main
 
 import (
-	cryptorand "crypto/rand"
 	"fmt"
-	"math"
-	"math/big"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -62,15 +58,4 @@ func chownR(path string, chown string) error {
 		}
 		return err
 	})
-}
-
-func createRand() *rand.Rand {
-	seed, err := cryptorand.Int(cryptorand.Reader, big.NewInt(math.MaxInt64))
-	if err != nil {
-		panic("Cannot generate an RNG seed.")
-	}
-
-	// math/rand is good enough in this case
-	/* #nosec G404 */
-	return rand.New(rand.NewSource(seed.Int64()))
 }
