@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/pflag"
 	"golang.org/x/exp/slices"
 
-	"github.com/osbuild/blueprint/pkg/blueprint"
 	repos "github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bib/blueprintload"
@@ -42,7 +41,7 @@ var (
 	osGetgid = os.Getgid
 )
 
-func saveManifest(ms manifest.OSBuildManifest, fpath string) (err error) {
+func saveManifest(ms manifest.OSBuildManifest, fpath string) error {
 	b, err := json.MarshalIndent(ms, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal data for %q: %s", fpath, err.Error())
@@ -128,11 +127,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	// Note that we only need to pass a single imgType here into the manifest generation because:
 	// 1. the bootc disk manifests contains exports for all supported image types
 	// 2. the bootc legacy types (iso, anaconda-iso) always do a single build
-	imgType := imageTypes[0]
-	return bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgType, rootFs, rpmCacheRoot, config, useLibrepo, cntArch)
-}
-
-func bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeStr, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch) ([]byte, *mTLSConfig, error) {
+	imgTypeStr := imageTypes[0]
 	distri, err := bootc.NewBootcDistro(imgref, &bootc.DistroOptions{
 		DefaultFs: rootFs,
 	})
@@ -161,6 +156,7 @@ func bibManifestFromCobraFor(imgref, buildImgref, installerPayloadRef, imgTypeSt
 		rpmDownloader = osbuild.RpmDownloaderLibrepo
 	}
 	mg, err := manifestgen.New(repos, &manifestgen.Options{
+		Cachedir: rpmCacheRoot,
 		// XXX: hack to skip repo loading for the bootc image.
 		// We need to add a SkipRepositories or similar to
 		// manifestgen instead to make this clean
