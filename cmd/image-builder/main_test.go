@@ -123,6 +123,21 @@ func TestListImagesErrorsOnExtraArgs(t *testing.T) {
 	assert.EqualError(t, err, `unknown command "extra-arg" for "image-builder list"`)
 }
 
+func TestBootcAnacondaIsoNotSupportedForImageBuilder(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs(append([]string{"manifest"}, "anaconda-iso", "--bootc-ref=example.com/cnt"))
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.EqualError(t, err, `image type bootc "anaconda-iso" is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`)
+}
+
 func hasDepsolveDnf() bool {
 	// XXX: expose images/pkg/depsolve:findDepsolveDnf()
 	_, err := os.Stat("/usr/libexec/osbuild-depsolve-dnf")

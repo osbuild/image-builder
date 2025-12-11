@@ -259,6 +259,13 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 
 	var img *imagefilter.Result
 	if bootcRef != "" {
+		// The behavior of anaconda-iso without special mTLS setup is different
+		// from bib so instead of introducing subtle incompatibilities just error
+		// here
+		if imgTypeStr == "anaconda-iso" {
+			return nil, fmt.Errorf(`image type bootc "anaconda-iso" is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`)
+		}
+
 		distro, err := bootc.NewBootcDistro(bootcRef, &bootc.DistroOptions{DefaultFs: bootcDefaultFs})
 		if err != nil {
 			return nil, err
