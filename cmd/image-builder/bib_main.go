@@ -58,8 +58,14 @@ func saveManifest(ms manifest.OSBuildManifest, fpath string) error {
 // the progress bar (this function cannot know what else needs to happen
 // after manifest generation).
 //
-// TODO: provide a podman progress reader to integrate the podman progress
-// into our progress.
+// This code is very similar to main.go:cmdManifestWrapper (which is
+// sad), but consolidate is hard because:
+//  1. We need to support anaconda-iso here which means we need to provide a custom
+//     depsolve function to extract the mTLS config from the container image, this is
+//     something we consider legacy so ibcli:main.go does not have it
+//  2. The cobra options handling is different (but that could be consolidated)
+//  3. Blueprint validation is a warning by default for bib but an error for ibcli (could also be
+//     consolidated)
 func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.ProgressBar) ([]byte, *mTLSConfig, error) {
 	cntArch := arch.Current()
 
@@ -256,6 +262,17 @@ func handleAWSFlags(cmd *cobra.Command) (cloud.Uploader, error) {
 	return uploader, nil
 }
 
+// This is very similar to main.go:cmdBuild (which is sad), the differences that makes
+// merging them very hard are:
+//  1. We need to support anaconda-iso here which means we need to support writing a custom
+//     mTLS configuration (and cleaning up afterwards)
+//  2. The cobra options are different
+//  3. Multiple image types can be build in a single go (--type qcow2 --type raw) which is
+//     not supported by ibcli
+//  4. The produced artifacts are not renamed, they are exactly as they come out of the
+//     imgType.Export(), e.g. "bootiso.iso". ibcli will rename to $distro-$arch-$imgtype
+//     intead (but we cannot change the output of bib becaue e.g. podman desktop depends
+//     on it)
 func bibCmdBuild(cmd *cobra.Command, args []string) error {
 	chown, _ := cmd.Flags().GetString("chown")
 	imgTypes, _ := cmd.Flags().GetStringArray("type")
