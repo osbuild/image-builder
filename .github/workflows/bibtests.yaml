@@ -58,6 +58,12 @@ jobs:
       run: |
         df -h
         sudo du -sh * /var/tmp /tmp /var/lib/containers | sort -sh
+    - name: Free Disk Space
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+      with:
+        tool-cache: true
+        # The following line runs apt remove which is slow
+        large-packages: false
     - name: Workaround podman issues in GH actions
       run: |
         # see https://github.com/osbuild/bootc-image-builder/issues/446
