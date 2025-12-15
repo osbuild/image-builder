@@ -9,6 +9,8 @@ DISK_IMAGE_TYPES = ["qcow2", "raw", "vmdk", "vhd", "gce"]
 # supported images that can be booted in a cloud
 CLOUD_BOOT_IMAGE_TYPES = ["ami"]
 
+# pylint: disable=too-many-instance-attributes
+
 
 @dataclasses.dataclass
 class TestCase:

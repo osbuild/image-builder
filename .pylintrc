@@ -1,2 +1,3 @@
+# Note that there are additional pylintrc files in ./tools, ./test
 [FORMAT]
 max-line-length=120
