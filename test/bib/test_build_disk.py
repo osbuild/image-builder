@@ -223,7 +223,7 @@ def image_type_fixture(shared_tmpdir, build_container, request, force_aws_upload
 
     with build_images(shared_tmpdir, build_container,
                       request, force_aws_upload, gpg_conf, registry_conf) as build_results:
-        yield build_results[0]
+        return build_results[0]
 
 
 @pytest.fixture(name="images", scope="session")
@@ -236,7 +236,7 @@ def images_fixture(shared_tmpdir, build_container, request, force_aws_upload, gp
     testutil.pull_container(request.param.container_ref, request.param.target_arch)
     with build_images(shared_tmpdir, build_container,
                       request, force_aws_upload, gpg_conf, registry_conf) as build_results:
-        yield build_results
+        return build_results
 
 
 # XXX: refactor

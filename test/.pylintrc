@@ -1,6 +1,10 @@
 [MESSAGES CONTROL]
 disable=
+    missing-class-docstring,
     missing-module-docstring,
     missing-function-docstring,
     duplicate-code,
     fixme
+
+[FORMAT]
+max-line-length=120

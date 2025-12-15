@@ -31,15 +31,15 @@ repos:
     rev: v3.2.6
     hooks:
       - id: pylint
-        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest"]
+        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest", "vmtest @ git+https://github.com/osbuild/images.git"]
         files: ^(?!test/|tools/)
       - id: pylint
         name: pylint test/ directory
-        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest"]
+        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest", "vmtest @ git+https://github.com/osbuild/images.git"]
         args: ["--rcfile=test/.pylintrc"]
         files: ^test/
       - id: pylint
         name: pylint tools/ directory
-        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest"]
+        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest", "vmtest @ git+https://github.com/osbuild/images.git"]
         args: ["--rcfile=tools/.pylintrc"]
         files: ^tools/
