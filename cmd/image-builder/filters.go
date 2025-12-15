@@ -10,9 +10,9 @@ import (
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
-func newImageFilterDefault(dataDir string, extraRepos []string) (*imagefilter.ImageFilter, error) {
+func newImageFilterDefault(repoDir string, extraRepos []string) (*imagefilter.ImageFilter, error) {
 	fac := distrofactory.NewDefault()
-	repos, err := newRepoRegistry(dataDir, extraRepos)
+	repos, err := newRepoRegistry(repoDir, extraRepos)
 	if err != nil {
 		return nil, err
 	}
@@ -21,8 +21,9 @@ func newImageFilterDefault(dataDir string, extraRepos []string) (*imagefilter.Im
 }
 
 type repoOptions struct {
-	// DataDir contains the base dir for the repo definition search path
-	DataDir string
+	// RepoDir contains the base dir for the repo definition search path, it will also look
+	// in the `repositories` subdirectory to RepoDir
+	RepoDir string
 
 	// ExtraRepos contains extra baseURLs that get added to the depsolving
 	ExtraRepos []string
@@ -37,7 +38,7 @@ func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) 
 		repoOpts = &repoOptions{}
 	}
 
-	imageFilter, err := newImageFilterDefault(repoOpts.DataDir, repoOpts.ExtraRepos)
+	imageFilter, err := newImageFilterDefault(repoOpts.RepoDir, repoOpts.ExtraRepos)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func getAllImages(repoOpts *repoOptions, filterExprs ...string) ([]imagefilter.R
 		repoOpts = &repoOptions{}
 	}
 
-	imageFilter, err := newImageFilterDefault(repoOpts.DataDir, repoOpts.ExtraRepos)
+	imageFilter, err := newImageFilterDefault(repoOpts.RepoDir, repoOpts.ExtraRepos)
 	if err != nil {
 		return nil, err
 	}

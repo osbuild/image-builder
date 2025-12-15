@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/url"
+	"os"
 	"path/filepath"
 
 	"github.com/osbuild/images/data/repositories"
@@ -53,12 +54,18 @@ func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
 	return repoConf, nil
 }
 
-func newRepoRegistryImpl(dataDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
+func newRepoRegistryImpl(repoDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
 	var repoDirs []string
 	var builtins []fs.FS
 
-	if dataDir != "" {
-		repoDirs = []string{filepath.Join(dataDir, "repositories")}
+	if repoDir != "" {
+		withRepoSubdir := filepath.Join(repoDir, "repositories")
+		if _, err := os.Stat(withRepoSubdir); err == nil {
+			// we don't care about the error case here, we just want to know
+			// if it exists; not if we can't read it or other errors
+			fmt.Fprintf(os.Stderr, "WARNING: found a `repositories` subdirectory at '%s', in the future `image-builder` will not descend into this subdirectory to look for repository files. Please move any repository files directly into the directory '%s' and remove the `repositories` subdirectory to silence this warning.\n", withRepoSubdir, repoDir)
+		}
+		repoDirs = []string{withRepoSubdir, repoDir}
 	} else {
 		repoDirs = defaultRepoDirs
 		builtins = []fs.FS{repos.FS}

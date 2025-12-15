@@ -61,7 +61,7 @@ func TestNewRepoRegistryImplExtraReposGetAppended(t *testing.T) {
 	assert.Equal(t, repos[len(repos)-1].BaseURLs[0], "https://example.com/my/repo")
 }
 
-func TestNewRepoRegistryImplDatadir(t *testing.T) {
+func TestNewRepoRegistryImplRepodir(t *testing.T) {
 	// prereq test: no testdistro-1 in the default repos
 	registry, err := newRepoRegistryImpl("", nil)
 	require.NoError(t, err)
@@ -69,10 +69,10 @@ func TestNewRepoRegistryImplDatadir(t *testing.T) {
 	_, err = registry.DistroHasRepos("testdistro-1", "x86_64")
 	require.EqualError(t, err, `requested repository not found: for distribution "testdistro-1"`)
 
-	// create a custom datadir with testdistro-1.json, the basefilename
+	// create a custom repodir with testdistro-1.json, the basefilename
 	// must match a distro nameVer
-	dataDir := t.TempDir()
-	repoFile := filepath.Join(dataDir, "repositories", "testdistro-1.json")
+	repoDir := t.TempDir()
+	repoFile := filepath.Join(repoDir, "repositories", "testdistro-1.json")
 	err = os.Mkdir(filepath.Dir(repoFile), 0755)
 	require.NoError(t, err)
 	repoContents := `{
@@ -88,7 +88,40 @@ func TestNewRepoRegistryImplDatadir(t *testing.T) {
 	require.NoError(t, err)
 
 	// and ensure we have testdistro-1 now
-	registry, err = newRepoRegistryImpl(dataDir, nil)
+	registry, err = newRepoRegistryImpl(repoDir, nil)
+	require.NoError(t, err)
+	repos, err := registry.DistroHasRepos("testdistro-1", "x86_64")
+	require.NoError(t, err)
+	assert.Len(t, repos, 1)
+	assert.Equal(t, repos[0].Name, "testdistro-1-repo")
+}
+
+func TestNewRepoRegistryImplRepodirNoSubDir(t *testing.T) {
+	// prereq test: no testdistro-1 in the default repos
+	registry, err := newRepoRegistryImpl("", nil)
+	require.NoError(t, err)
+	assert.NotContains(t, registry.ListDistros(), "testdistro-1")
+	_, err = registry.DistroHasRepos("testdistro-1", "x86_64")
+	require.EqualError(t, err, `requested repository not found: for distribution "testdistro-1"`)
+
+	// create a custom repodir with testdistro-1.json, the basefilename
+	// must match a distro nameVer
+	repoDir := t.TempDir()
+	repoFile := filepath.Join(repoDir, "testdistro-1.json")
+	repoContents := `{
+	"x86_64": [
+		{
+			"name": "testdistro-1-repo",
+			"baseurl": "https://example.com/test/test/distro/1"
+		}
+	]
+}
+`
+	err = os.WriteFile(repoFile, []byte(repoContents), 0644)
+	require.NoError(t, err)
+
+	// and ensure we have testdistro-1 now
+	registry, err = newRepoRegistryImpl(repoDir, nil)
 	require.NoError(t, err)
 	repos, err := registry.DistroHasRepos("testdistro-1", "x86_64")
 	require.NoError(t, err)

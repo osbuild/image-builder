@@ -57,8 +57,8 @@ func sbomWriter(outputDir, filename string, content io.Reader) error {
 }
 
 // XXX: just return []byte instead of using output writer
-func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, opts *manifestOptions) error {
-	repos, err := newRepoRegistry(dataDir, extraRepos)
+func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, opts *manifestOptions) error {
+	repos, err := newRepoRegistry(repoDir, extraRepos)
 	if err != nil {
 		return err
 	}

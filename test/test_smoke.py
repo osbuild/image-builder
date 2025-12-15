@@ -142,7 +142,8 @@ def test_progress_smoke(tmp_path, build_fake_container, case: ProgressTestCase):
 def test_smoke_force_data_dir(tmp_path, build_container):
     """
     Ensure that when a data dir is passed through `--force-data-dir` that only
-    distributions with repository files inside that directory are available.
+    distributions with repository files inside that directory are available and
+    that warnings are emitted.
 
     Note that there's no 'negative' test case to this one, the default state of no
     data directory is already tested by the other smoke tests.
@@ -162,7 +163,43 @@ def test_smoke_force_data_dir(tmp_path, build_container):
         build_container,
         "--force-data-dir", "/data",
         "list",
-    ], text=True)
+    ], stderr=subprocess.STDOUT, text=True)
 
-    # ensure we only have lines containing `rhel-10.0`
+    lines = output.splitlines()
+
+    # assert that a warning is emitted (deprecated argument!)
+    assert "has been deprecated" in lines[0]
+
+    # assert that a warning is emitted (repositories subdirectory!)
+    assert "move any repository files" in lines[1]
+
+    # ensure the rest of the lines all contain `rhel-10.0`
+    assert all("rhel-10.0" in line for line in lines[2:])
+
+
+def test_smoke_force_repo_dir(tmp_path, build_container):
+    """
+    Ensure that when a repo dir is passed through `--force-repo-dir` that only
+    distributions with repository files inside that directory are available.
+
+    Note that there's no 'negative' test case to this one, the default state of no
+    data directory is already tested by the other smoke tests.
+    """
+
+    repodir = pathlib.Path(tmp_path)
+
+    (repodir / "rhel-10.0.json").write_text(json.dumps({
+        "x86_64": [
+            {"name": "test", "baseurl": "test"},
+        ],
+    }))
+
+    output = subprocess.check_output(podman_run + [
+        "-v", f"{tmp_path!s}:/data",
+        build_container,
+        "--force-repo-dir", "/data",
+        "list",
+    ], stderr=subprocess.STDOUT, text=True)
+
+    # ensure the rest of the lines all contain `rhel-10.0`
     assert all("rhel-10.0" in line for line in output.splitlines())
