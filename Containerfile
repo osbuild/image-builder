@@ -6,12 +6,12 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-# keep in sync with:
-# https://github.com/containers/podman/blob/2981262215f563461d449b9841741339f4d9a894/Makefile#L51
 # disable cgo as
 # a) gcc crashes on fedora41/arm64 regularly
 # b) we don't really need it
-RUN CGO_ENABLED=0 go build -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper" ./cmd/image-builder
+# Note that this cannot move into the makefile as for bib we want to build *with* cgo to have
+# the chmod/chown logic work as those need cgo/libnss (in the general case)
+RUN CGO_ENABLED=0 make build
 
 FROM registry.fedoraproject.org/fedora:43
 
@@ -23,7 +23,7 @@ RUN dnf install -y dnf-plugins-core \
     && dnf install -y libxcrypt-compat wget osbuild osbuild-ostree osbuild-depsolve-dnf osbuild-lvm2 openssl subscription-manager \
     && dnf clean all
 
-COPY --from=builder /build/image-builder /usr/bin/
+COPY --from=builder /build/bin/image-builder /usr/bin/
 
 ENTRYPOINT ["/usr/bin/image-builder"]
 VOLUME /output

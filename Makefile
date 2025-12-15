@@ -96,9 +96,18 @@ $(BUILDDIR)/%/:
 # They are not supported nor is their use recommended in scripts.
 #
 
+# keep in sync with:
+# https://github.com/containers/podman/blob/2981262215f563461d449b9841741339f4d9a894/Makefile#L51
+TAGS := containers_image_openpgp,exclude_graphdriver_btrfs,exclude_graphdriver_devicemapper
+
 .PHONY: build
 build: $(BUILDDIR)/bin/  ## build the binary from source
-	go build -ldflags="-X main.version=${VERSION}" -o $<image-builder ./cmd/image-builder/
+	go build -tags="$(TAGS)" -ldflags="-X main.version=${VERSION}" -o $<image-builder ./cmd/image-builder/
+	# Note that this is only needed for the bib container to detect if qemu-user is available
+	for arch in amd64 arm64; do \
+	    [ "$$arch" = "$$(go env GOARCH)" ] && continue; \
+	    GOARCH="$$arch" go build -ldflags="-s -w" -o ./bin/bib-canary-"$$arch" ./cmd/cross-arch/; \
+	done
 
 .PHONY: clean
 clean:  ## Remove all built binaries
