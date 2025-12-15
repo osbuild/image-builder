@@ -9,13 +9,7 @@ RUN cd /build/bib && go mod download
 COPY . /build
 WORKDIR /build
 # keep in sync with main Containerfile, this was part of bib:build.sh
-RUN go build -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper" ./cmd/image-builder
-# cross-arch canary builds for bib
-RUN for arch in amd64 arm64; do \
-    [ "$arch" = "$(go env GOARCH)" ] && continue; \
-    GOARCH="$arch" go build -ldflags="-s -w" -o ../bin/bib-canary-"$arch" ./cmd/cross-arch/; \
-    done
-
+RUN make build
 
 FROM registry.fedoraproject.org/fedora:43
 # Fast-track osbuild so we don't depend on the "slow" Fedora release process to implement new features in bib
@@ -25,7 +19,7 @@ RUN dnf install -y dnf-plugins-core \
     && dnf clean all
 
 # copy as bootc-image-builder
-COPY --from=builder /build/image-builder /usr/bin/bootc-image-builder
+COPY --from=builder /build/bin/image-builder /usr/bin/bootc-image-builder
 
 ENTRYPOINT ["/usr/bin/bootc-image-builder"]
 VOLUME /output
