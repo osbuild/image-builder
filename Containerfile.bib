@@ -1,6 +1,6 @@
-FROM registry.fedoraproject.org/fedora:42 AS builder
-RUN dnf install -y git-core golang gpgme-devel libassuan-devel && mkdir -p /build/bib
-COPY bib/go.mod bib/go.sum /build/bib/
+FROM registry.fedoraproject.org/fedora:43 AS builder
+RUN dnf install -y git-core golang gpgme-devel libassuan-devel libvirt-devel && mkdir -p /build/bib
+COPY go.mod go.sum /build/bib/
 ARG GOPROXY=https://proxy.golang.org,direct
 RUN go env -w GOPROXY=$GOPROXY
 RUN cd /build/bib && go mod download
@@ -8,15 +8,24 @@ RUN cd /build/bib && go mod download
 # will not be available when tests are run under tmt
 COPY . /build
 WORKDIR /build
-RUN ./build.sh
+# keep in sync with main Containerfile, this was part of bib:build.sh
+RUN go build -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper" ./cmd/image-builder
+# cross-arch canary builds for bib
+RUN for arch in amd64 arm64; do \
+    [ "$arch" = "$(go env GOARCH)" ] && continue; \
+    GOARCH="$arch" go build -ldflags="-s -w" -o ../bin/bib-canary-"$arch" ./cmd/cross-arch/; \
+    done
 
-FROM registry.fedoraproject.org/fedora:42
+
+FROM registry.fedoraproject.org/fedora:43
 # Fast-track osbuild so we don't depend on the "slow" Fedora release process to implement new features in bib
-COPY ./group_osbuild-osbuild-fedora.repo /etc/yum.repos.d/
-COPY ./package-requires.txt .
-RUN grep -vE '^#' package-requires.txt | xargs dnf install -y && rm -f package-requires.txt && dnf clean all
-COPY --from=builder /build/bin/* /usr/bin/
-COPY bib/data /usr/share/bootc-image-builder
+RUN dnf install -y dnf-plugins-core \
+    && dnf copr enable -y @osbuild/osbuild \
+    && dnf install -y libxcrypt-compat wget osbuild osbuild-ostree osbuild-depsolve-dnf osbuild-lvm2 openssl subscription-manager libvirt-libs \
+    && dnf clean all
+
+# copy as bootc-image-builder
+COPY --from=builder /build/image-builder /usr/bin/bootc-image-builder
 
 ENTRYPOINT ["/usr/bin/bootc-image-builder"]
 VOLUME /output
