@@ -49,9 +49,9 @@ func MockOsStderr(new io.Writer) (restore func()) {
 
 func MockNewRepoRegistry(f func() (*reporegistry.RepoRegistry, error)) (restore func()) {
 	saved := newRepoRegistry
-	newRepoRegistry = func(dataDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
-		if dataDir != "" {
-			panic(fmt.Sprintf("cannot use custom dataDir %v in mock", dataDir))
+	newRepoRegistry = func(repoDir string, extraRepos []string) (*reporegistry.RepoRegistry, error) {
+		if repoDir != "" {
+			panic(fmt.Sprintf("cannot use custom repoDir %v in mock", repoDir))
 		}
 		return f()
 	}
