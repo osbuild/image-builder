@@ -29,6 +29,15 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 )
 
+func assertJsonContains(t *testing.T, jsonInput, searchTerm string) {
+	t.Helper()
+
+	var compactJson bytes.Buffer
+	err := json.Compact(&compactJson, []byte(jsonInput))
+	require.NoError(t, err)
+	assert.Contains(t, compactJson.String(), searchTerm)
+}
+
 func TestListImagesNoArguments(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -194,15 +203,19 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 			defer restore()
 
 			err := main.Run()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Contains(t, pipelineNames, "qcow2")
 
+			// ensure the manifest is pretty printed
+			prettyHeader := "{\n    \"version\": \"2\""
+			assert.Equal(t, prettyHeader, fakeStdout.String()[:len(prettyHeader)])
+
 			// XXX: provide helpers in manifesttest to extract this in a nicer way
-			assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-			assert.Contains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+			assertJsonContains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
+			assertJsonContains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 
 			assert.Equal(t, strings.Contains(fakeStdout.String(), "org.osbuild.librepo"), useLibrepo)
 		})
@@ -283,7 +296,7 @@ func TestManifestIntegrationOstreeSmoke(t *testing.T) {
 	assert.Contains(t, pipelineNames, "ostree-deployment")
 
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
-	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.ostree.init-fs"`)
+	assertJsonContains(t, fakeStdout.String(), `{"type":"org.osbuild.ostree.init-fs"`)
 }
 
 func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
@@ -420,8 +433,8 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	manifest, err := os.ReadFile(fakeOsbuildCmd.Path() + ".stdin")
 	assert.NoError(t, err)
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
-	assert.Contains(t, string(manifest), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-	assert.Contains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+	assertJsonContains(t, string(manifest), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
+	assertJsonContains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 }
 
 func TestBuildIntegrationArgs(t *testing.T) {
@@ -817,8 +830,8 @@ func TestManifestExtraRepos(t *testing.T) {
 			require.NoError(t, err)
 
 			// our local repo got added
-			assert.Contains(t, fakeStdout.String(), `"path":"dummy-1.0.0-0.noarch.rpm"`)
-			assert.Contains(t, fakeStdout.String(), fmt.Sprintf(`"url":"file://%s"`, localRepoDir))
+			assertJsonContains(t, fakeStdout.String(), `"path":"dummy-1.0.0-0.noarch.rpm"`)
+			assertJsonContains(t, fakeStdout.String(), fmt.Sprintf(`"url":"file://%s"`, localRepoDir))
 		})
 	}
 }
@@ -1070,9 +1083,9 @@ func TestManifestIntegrationWithRegistrations(t *testing.T) {
 	assert.NoError(t, err)
 
 	// XXX: manifesttest really needs to grow more helpers
-	assert.Contains(t, fakeStdout.String(), `{"type":"org.osbuild.insights-client.config","options":{"config":{"proxy":"proxy_123"}}}`)
-	assert.Contains(t, fakeStdout.String(), `"type":"org.osbuild.systemd.unit.create","options":{"filename":"osbuild-subscription-register.service"`)
-	assert.Contains(t, fakeStdout.String(), `server_url_123`)
+	assertJsonContains(t, fakeStdout.String(), `{"type":"org.osbuild.insights-client.config","options":{"config":{"proxy":"proxy_123"}}}`)
+	assertJsonContains(t, fakeStdout.String(), `"type":"org.osbuild.systemd.unit.create","options":{"filename":"osbuild-subscription-register.service"`)
+	assertJsonContains(t, fakeStdout.String(), `server_url_123`)
 }
 
 func TestManifestIntegrationWarningsHandling(t *testing.T) {
