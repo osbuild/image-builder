@@ -12,28 +12,32 @@ The expected layout of the repository directory passed is as follows:
 
 ```
 repo
-├── rhel-10.0.json
-└── rhel-10.1.json
+├── rhel-10.0.yaml
+└── rhel-10.1.yaml
 ```
 
-The `.json` files contain the repositories that are used for each distribution and must match one of the distributions in the definitions. The format of these repository files is:
+The `.yaml` files contain the repositories that are used for each distribution and must match one of the distributions in the definitions. The format of these repository files is:
 
-```json
-{
-    "x86_64": [
-        {
-            "name": "BaseOS",
-            "baseurl": "https://some/base/url",
-            "gpgkey": "----BEGIN PGP PUBLIC KEY BLOCK-----\n...\n-----END PGP PUBLIC KEY BLOCK-----\n",
-            "check_gpg": true
-        },
-        { ... },
-        { ... }
-    ],
-    "aarch64": [
-    ]
-}
+```yaml
+x86_64:
+  - name: "BaseOS"
+    baseurl: "https://some/base/url"
+    gpgkey: |
+      ----BEGIN PGP PUBLIC KEY BLOCK-----
+      ...
+      -----END PGP PUBLIC KEY BLOCK-----
+    check_gpg: true
+aarch64:
+  - name: "BaseOS"
+    baseurl: "https://some/base/url"
+    gpgkey: |
+      ----BEGIN PGP PUBLIC KEY BLOCK-----
+      ...
+      -----END PGP PUBLIC KEY BLOCK-----
+    check_gpg: true
 ```
+
+Note that repository files were previously in the `json` format. It is still possible to have the contents as `rhel-10.json`. If both a `.json` and a `.yaml` file matching the same name are found then the `.json` file takes precedence.
 
 When `image-builder` is used with `force-repo-dir` only the repositories inside the passed repository directory are available. This implies that only distributions which have repositories defined are available. In the following command we have the contents of the above example(s) in our `./repo` directory.
 
