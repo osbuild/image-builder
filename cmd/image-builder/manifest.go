@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -113,7 +115,12 @@ func generateManifest(dataDir string, extraRepos []string, img *imagefilter.Resu
 	if err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(output, "%s\n", mf); err != nil {
+	var pretty bytes.Buffer
+	if err := json.Indent(&pretty, []byte(mf), "", "    "); err != nil {
+		return err
+	}
+
+	if _, err := fmt.Fprintf(output, "%s\n", pretty.String()); err != nil {
 		return err
 	}
 	return nil
