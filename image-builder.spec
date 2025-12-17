@@ -42,6 +42,8 @@ BuildRequires:  libvirt-devel
 %if 0%{?fedora}
 # Build requirements of 'github.com/containers/storage' package
 BuildRequires:  btrfs-progs-devel
+# for _tmpfilesdir macro
+BuildRequires:  systemd-rpm-macros
 # DO NOT REMOVE the BUNDLE_START and BUNDLE_END markers as they are used by 'tools/rpm_spec_add_provides_bundle.sh' to generate the Provides: bundled list
 # BUNDLE_START
 # BUNDLE_END
@@ -93,7 +95,9 @@ export LDFLAGS="${LDFLAGS} -X 'main.version=%{version}'"
 %install
 install -m 0755 -vd                                 %{buildroot}%{_bindir}
 install -m 0755 -vp %{gobuilddir}/bin/image-builder %{buildroot}%{_bindir}/
-
+# tmpfiles.d snippet
+install -m 0755 -vd                                 %{buildroot}%{_tmpfilesdir}
+install -m 0644 -vp data/tmpfiles.d/image-builder.conf %{buildroot}%{_tmpfilesdir}/image-builder.conf
 %check
 export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
@@ -110,6 +114,8 @@ cd $PWD/_build/src/%{goipath}
 %license LICENSE
 %doc README.md
 %{_bindir}/image-builder
+%{_tmpfilesdir}/image-builder.conf
+%ghost %dir /var/cache/image-builder
 
 %changelog
 # the changelog is distribution-specific, therefore there's just one entry
