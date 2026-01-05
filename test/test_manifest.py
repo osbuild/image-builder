@@ -146,7 +146,7 @@ def test_container_manifest_bootc_iso_smoke(build_container):
                        if st["type"] == "org.osbuild.kickstart"][0]
     assert re.match(
         f'bootc switch .* registry {bootc_payload_ref}',
-        kickstart_stage["options"]["%post"][0]["commands"][0])
+        kickstart_stage["options"]["%post"][0]["commands"][1])
 
 
 def test_manifest_honors_rpmmd_cache(tmp_path, build_container):
