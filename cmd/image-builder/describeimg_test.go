@@ -67,7 +67,6 @@ blueprint:
     - groups
     - containers
     - enabled_modules
-    - minimal
     - customizations.dnf
     - customizations.cacerts
     - customizations.directories

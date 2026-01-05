@@ -204,15 +204,14 @@ RUN dnf install -y \
      biosdevname \
      prefixdevname \
      && dnf clean all
-# shim-x64 is marked installed but the files are not in the expected
-# place for https://github.com/osbuild/osbuild/blob/v160/stages/org.osbuild.grub2.iso#L91, see
-# workaround via reinstall, we could add a config to the grub2.iso
-# stage to allow a different prefix that then would be used by
-# anaconda.
-# once https://github.com/osbuild/osbuild/pull/2202 is merged we
-# can update images/ to set the correct efi_src_dir and this can
-# be removed
-RUN dnf reinstall -y shim-x64
+
+# On Fedora 42 this is necessary to get files in the right places
+# RUN dnf reinstall -y shim-x64
+
+# On Fedora 43 and up this is necessary to get files in the right
+# places
+RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
+
 # lorax wants to create a symlink in /mnt which points to /var/mnt
 # on bootc but /var/mnt does not exist on some images.
 #
