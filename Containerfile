@@ -2,8 +2,10 @@ FROM registry.fedoraproject.org/fedora:43 AS builder
 RUN dnf install -y git-core golang gpgme-devel libassuan-devel && mkdir -p /build/
 ARG GOPROXY=https://proxy.golang.org,direct
 RUN go env -w GOPROXY=$GOPROXY
-COPY . /build
 WORKDIR /build
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
 # keep in sync with:
 # https://github.com/containers/podman/blob/2981262215f563461d449b9841741339f4d9a894/Makefile#L51
 # disable cgo as
