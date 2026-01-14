@@ -20,6 +20,7 @@ type OSBuildOptions struct {
 	StoreDir  string
 	OutputDir string
 	ExtraEnv  []string
+	InVm      []string
 
 	// BuildLog writes the osbuild output to the given writer
 	BuildLog io.Writer
@@ -64,6 +65,9 @@ func newOsbuildCmd(manifest []byte, exports []string, opts *OSBuildOptions) *exe
 	)
 	for _, export := range exports {
 		cmd.Args = append(cmd.Args, "--export", export)
+	}
+	for _, pipeline := range opts.InVm {
+		cmd.Args = append(cmd.Args, "--in-vm", pipeline)
 	}
 	cmd.Env = append(os.Environ(), opts.ExtraEnv...)
 	cmd.Stdin = bytes.NewBuffer(manifest)
