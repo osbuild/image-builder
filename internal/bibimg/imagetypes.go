@@ -28,6 +28,7 @@ var supportedImageTypes = map[string]imageType{
 	// the iso image types are RPM based and legacy/deprecated
 	"anaconda-iso": imageType{Export: "bootiso", ISO: true, Legacy: true},
 	"iso":          imageType{Export: "bootiso", ISO: true, Legacy: true},
+	"pxe-tar-xz":   imageType{Export: "xz"},
 }
 
 // Available() returns a comma-separated list of supported image types
