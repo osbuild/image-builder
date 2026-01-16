@@ -1,6 +1,7 @@
 import os
 import random
 import json
+import pathlib
 import platform
 import string
 import subprocess
@@ -174,6 +175,7 @@ def test_bootc_installer_iso_installs(tmp_path, build_container, container_ref):
     """), encoding="utf8")
     output_path = tmp_path / "output"
     output_path.mkdir()
+    pathlib.Path("/var/tmp/osbuild-test-store").mkdir(exist_ok=True, parents=True)
     with make_container(tmp_path) as container_tag:
         cmd = [
             *testutil.podman_run_common,
