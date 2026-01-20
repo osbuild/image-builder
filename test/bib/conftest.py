@@ -10,10 +10,18 @@ def pytest_addoption(parser):
                      help=("Force AWS upload when building AMI, failing if credentials are not set. "
                            "If not set, the upload will be performed only when credentials are available."))
 
+    parser.addoption("--keep-tmpdir", action="store_true", default=False,
+                     help="Keep the pxe tar tmpdir.")
+
 
 @pytest.fixture(name="force_aws_upload", scope="session")
 def force_aws_upload_fixture(request):
     return request.config.getoption("--force-aws-upload")
+
+
+@pytest.fixture(name="keep_tmpdir", scope="session")
+def keep_tmpdir_fixture(request):
+    return request.config.getoption("--keep-tmpdir")
 
 
 # see https://hackebrot.github.io/pytest-tricks/param_id_func/ and
