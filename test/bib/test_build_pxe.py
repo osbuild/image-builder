@@ -88,8 +88,8 @@ def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key
                         vm.start(use_ovmf=use_ovmf)
                         vm.run("true", user=username, password=password)
                         vm.run("mount", user="root", keyfile=ssh_key_path)
-#                        ret = vm.run(["bootc", "status"], user="root", keyfile=ssh_key_path)
-#                        assert f"image: {container_ref}" in ret.stdout
+                        ret = vm.run(["rpm-ostree", "status"], user="root", keyfile=ssh_key_path)
+                        assert container_ref in ret.stdout
         finally:
             http_server.shutdown()
 
@@ -177,7 +177,7 @@ def test_bootc_pxe_tar_xz(keep_tmpdir, tmp_path, build_container, container_ref)
         subprocess.check_call(cmd)
         assert os.path.exists(output_path / "xz" / "pxe.tar.xz")
         boot_qemu_pxe(platform.machine(), output_path / "xz" / "pxe.tar.xz",
-                      container_ref,
+                      container_tag,
                       username, password,
                       ssh_keyfile_private_path,
                       keep_tmpdir)
