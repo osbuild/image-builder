@@ -186,7 +186,7 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 		}
 		// forward to user
 		if st.Message != "" {
-			pb.SetMessagef(st.Message)
+			pb.SetMessagef("%s", st.Message)
 		}
 
 		// keep internal log for error reporting, forward to
