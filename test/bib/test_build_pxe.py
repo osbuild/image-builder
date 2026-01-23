@@ -49,7 +49,7 @@ def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key
         subprocess.check_call(
             ["tar", "-C", tmpdir, "-x", "-f", pxe_tar_path])
         subprocess.check_call(
-            "echo rootfs.img | cpio -c --quiet -L -o > rootfs.cpio", shell=True, cwd=tmpdir)
+            "echo rootfs.img | cpio -H newc --quiet -L -o > rootfs.cpio", shell=True, cwd=tmpdir)
         subprocess.check_call(
             "cat initrd.img rootfs.cpio > combined.img", shell=True, cwd=tmpdir)
 
@@ -157,6 +157,12 @@ def test_bootc_pxe_tar_xz(keep_tmpdir, tmp_path, build_container, container_ref)
     output_path.mkdir()
     pathlib.Path("/var/tmp/osbuild-test-store").mkdir(exist_ok=True, parents=True)
     with make_container(tmp_path) as container_tag:
+        # Get details about the build_container
+        cmd = [
+            "podman", "image", "inspect", container_tag
+        ]
+        subprocess.check_call(cmd)
+
         cmd = [
             *testutil.podman_run_common,
             "-v", f"{config_json_path}:/config.json:ro",
@@ -166,7 +172,6 @@ def test_bootc_pxe_tar_xz(keep_tmpdir, tmp_path, build_container, container_ref)
             build_container,
             "--type", "pxe-tar-xz",
             "--rootfs", "ext4",
-            "--installer-payload-ref", container_ref,
             f"localhost/{container_tag}",
         ]
         subprocess.check_call(cmd)
