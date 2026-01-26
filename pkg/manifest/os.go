@@ -173,7 +173,8 @@ type OSCustomizations struct {
 
 	CACerts []string
 
-	FIPS bool
+	FIPS     bool
+	Hostonly bool
 
 	// NoBLS configures the image bootloader with traditional menu entries
 	// instead of BLS. Required for legacy systems like RHEL 7.
@@ -827,12 +828,24 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		}
 		kernelOptions = append(kernelOptions, p.OSCustomizations.KernelOptionsAppend...)
 
+		dracutOptions := &osbuild.DracutStageOptions{
+			Kernel: []string{p.kernelVer},
+		}
+
+		if p.OSCustomizations.Hostonly {
+			dracutOptions.EarlyMicrocode = true
+			dracutOptions.Reproducible = true
+		}
+
 		if p.OSCustomizations.FIPS {
 			kernelOptions = append(kernelOptions, osbuild.GenFIPSKernelOptions(p.PartitionTable)...)
-			pipeline.AddStage(osbuild.NewDracutStage(&osbuild.DracutStageOptions{
-				Kernel:     []string{p.kernelVer},
-				AddModules: []string{"fips"},
-			}))
+			dracutOptions.AddModules = []string{"fips"}
+		}
+
+		// Only regenerate the initramfs if it should be hostonly or we're FIPS enabled
+		// options have been set previously if that's the case
+		if p.OSCustomizations.Hostonly || p.OSCustomizations.FIPS {
+			pipeline.AddStage(osbuild.NewDracutStage(dracutOptions))
 		}
 
 		fsCfgStages, err := filesystemConfigStages(pt, p.DiskCustomizations.MountConfiguration)

@@ -81,6 +81,10 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.ExcludeDocs = *imageConfig.ExcludeDocs
 	}
 
+	if imageConfig.Hostonly != nil {
+		osc.Hostonly = *imageConfig.Hostonly
+	}
+
 	if !t.ImageTypeYAML.BootISO {
 		// don't put users and groups in the payload of an installer
 		// add them via kickstart instead
