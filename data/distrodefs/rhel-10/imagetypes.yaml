@@ -956,13 +956,10 @@ image_types:
             - "python3-jsonschema"
             - "qemu-guest-agent"
             - "redhat-release"
-            - "redhat-release-eula"
             - "rsync"
             - "tar"
             - "tcpdump"
             - "tuned"
-          exclude:
-            - "dracut-config-rescue"
           conditions:
             "add subscription-manager-cockpit on rhel":
               when:
@@ -970,7 +967,22 @@ image_types:
               append:
                 include:
                   - "subscription-manager-cockpit"
-
+            "include dracut-config-rescue exclude redhat-release-eula on Oracle Linux":
+              when:
+                distro_name: "ol"
+              append:
+                include:
+                  - "dracut-config-rescue"
+                exclude:
+                  - "redhat-release-eula"
+            "include redhat-release-eula exclude dracut-config-rescue when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
+                exclude:
+                  - "dracut-config-rescue"
   qcow2: &qcow2
     name_aliases: ["guest-image"]
     filename: "disk.qcow2"
@@ -991,6 +1003,16 @@ image_types:
         image_format: "qcow2"
       - <<: *s390x_zipl_platform
         image_format: "qcow2"
+    platforms_override:
+      conditions:
+        "overriding supported platforms for oracle linux images":
+          when:
+            distro_name: "ol"
+          override:
+            - <<: *x86_64_bios_platform
+              image_format: "qcow2"
+            - <<: *aarch64_platform
+              image_format: "qcow2"
     image_config: &qcow2_image_config
       default_target: "multi-user.target"
       kernel_options: ["console=tty0", "console=ttyS0,115200n8"]
@@ -1026,7 +1048,6 @@ image_types:
             - "python3-jsonschema"
             - "qemu-guest-agent"
             - "redhat-release"
-            - "redhat-release-eula"
             - "rsync"
             - "system-reinstall-bootc"
             - "tar"
@@ -1075,6 +1096,18 @@ image_types:
                 include:
                   - "insights-client"
                   - "subscription-manager-cockpit"
+            "exclude redhat-release-eula on Oracle Linux":
+              when:
+                distro_name: "ol"
+              append:
+                exclude:
+                  - "redhat-release-eula"
+            "include redhat-release-eula when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -1394,6 +1427,14 @@ image_types:
       - arch: "aarch64"
       - arch: "ppc64le"
       - arch: "s390x"
+    platforms_override:
+      conditions:
+        "overriding supported platforms for oracle linux images":
+          when:
+            distro_name: "ol"
+          override:
+            - arch: "x86_64"
+            - arch: "aarch64"
     blueprint:
       supported_options:
         # We've never tested many options or customizations with this image type
@@ -1581,7 +1622,6 @@ image_types:
             - "langpacks-en"
             - "NetworkManager-cloud-setup"
             - "redhat-release"
-            - "redhat-release-eula"
             - "rsync"
             - "system-reinstall-bootc"
             - "tuned"
@@ -1625,6 +1665,12 @@ image_types:
               append:
                 include:
                   - "insights-client"
+            "include redhat-release-eula when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -2063,7 +2109,6 @@ image_types:
             - "prefixdevname"
             - "python3-pyatspi"
             - "rdma-core"
-            - "redhat-release-eula"
             - "rng-tools"
             - "rpcbind"
             - "rpm-ostree"
@@ -2102,6 +2147,24 @@ image_types:
               append:
                 include:
                   - "dmidecode"
+            "add Oracle Linux UEK kernel":
+              when:
+                distro_name: "ol"
+              append:
+                include:
+                  - "kernel-uek"
+            "add dracut-config-rescue for Oracle Linux installer":
+              when:
+                distro_name: "ol"
+              append:
+                include:
+                  - "dracut-config-rescue"
+            "include redhat-release-eula when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
     blueprint:
       supported_options:
         - "distro"
