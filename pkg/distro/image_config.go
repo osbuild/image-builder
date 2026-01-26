@@ -98,6 +98,7 @@ type ImageConfig struct {
 
 	Files       []*fsnode.File
 	Directories []*fsnode.Directory
+	Hostonly    *bool `yaml:"hostonly,omitempty"`
 
 	// KernelOptionsBootloader controls whether kernel command line options
 	// should be specified in the bootloader grubenv configuration. Otherwise
