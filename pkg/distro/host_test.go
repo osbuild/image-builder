@@ -81,6 +81,33 @@ func TestGetHostDistroNameKitten(t *testing.T) {
 	}
 }
 
+// Oracle Linux host distro names have the VERSION_ID minor number removed
+func TestGetHostDistroNameOracleLinux(t *testing.T) {
+	backup := getHostDistroNameTree
+	defer func() { getHostDistroNameTree = backup }()
+	getHostDistroNameTree = t.TempDir()
+
+	require.NoError(t, os.MkdirAll(path.Join(getHostDistroNameTree, "etc"), 0755))
+
+	var cases = []struct {
+		Input string
+		ID    string
+	}{
+		{"ID=ol\nVERSION_ID=9.7\n", "ol-9"},
+		{"ID=ol\nVERSION_ID=10.1\n", "ol-10"},
+	}
+
+	for _, c := range cases {
+		require.NoError(t,
+			os.WriteFile(path.Join(getHostDistroNameTree, "etc/os-release"), []byte(c.Input), 0600),
+		)
+
+		name, err := GetHostDistroName()
+		require.NoError(t, err)
+		require.Equal(t, c.ID, name)
+	}
+}
+
 func TestOSRelease(t *testing.T) {
 	var cases = []struct {
 		Input     string
