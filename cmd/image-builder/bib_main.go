@@ -290,7 +290,7 @@ func bibCmdBuild(cmd *cobra.Command, args []string) error {
 	case false:
 		fmt.Fprintf(os.Stderr, "WARNING: running outside a container, this is an unsupported configuration\n")
 	case true:
-		if err := setup.EnsureEnvironment(osbuildStore); err != nil {
+		if err := setup.EnsureEnvironment(osbuildStore, false); err != nil {
 			return fmt.Errorf("cannot ensure the environment: %w", err)
 		}
 	}

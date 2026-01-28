@@ -390,7 +390,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	// Setup osbuild environment if running in a container
 	if setup.IsContainer() {
-		if err := setup.EnsureEnvironment(cacheDir); err != nil {
+		if err := setup.EnsureEnvironment(cacheDir, false); err != nil {
 			return fmt.Errorf("entrypoint setup failed: %w", err)
 		}
 	}
