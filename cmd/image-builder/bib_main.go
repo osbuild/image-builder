@@ -282,7 +282,7 @@ func bibCmdBuild(cmd *cobra.Command, args []string) error {
 	progressType, _ := cmd.Flags().GetString("progress")
 
 	logrus.Debug("Validating environment")
-	if err := setup.Validate(targetArch); err != nil {
+	if err := setup.Validate(targetArch, false); err != nil {
 		return fmt.Errorf("cannot validate the setup: %w", err)
 	}
 	logrus.Debug("Ensuring environment setup")
