@@ -104,6 +104,10 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 	if err != nil {
 		return nil, err
 	}
+	profile, err := cmd.Flags().GetString("aws-profile")
+	if err != nil {
+		return nil, err
+	}
 	tags, err := cmd.Flags().GetStringArray("aws-tag")
 	if err != nil {
 		return nil, err
@@ -156,6 +160,7 @@ func uploaderForCmdAWS(cmd *cobra.Command, targetArchStr string, bootMode *platf
 		TargetArch: targetArch,
 		BootMode:   bootMode,
 		Tags:       slicedTags,
+		Profile:    profile,
 	}
 
 	return awscloudNewUploader(region, bucketName, amiName, opts)
