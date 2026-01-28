@@ -17,7 +17,7 @@ import (
 
 // EnsureEnvironment mutates external filesystem state as necessary
 // to run in a container environment.  This function is idempotent.
-func EnsureEnvironment(storePath string) error {
+func EnsureEnvironment(storePath string, inVm bool) error {
 	osbuildPath := "/usr/bin/osbuild"
 	if util.IsMountpoint(osbuildPath) {
 		return nil
@@ -63,9 +63,11 @@ func EnsureEnvironment(storePath string) error {
 	}
 
 	// Ensure we have devfs inside the container to get dynamic loop
-	// loop devices inside the container.
-	if err := util.RunCmdSync("mount", "-t", "devtmpfs", "devtmpfs", "/dev"); err != nil {
-		return err
+	// loop devices inside the container. (Not needed if in a vm)
+	if !inVm {
+		if err := util.RunCmdSync("mount", "-t", "devtmpfs", "devtmpfs", "/dev"); err != nil {
+			return err
+		}
 	}
 
 	// Create a bind mount into our target location; we can't copy it because
