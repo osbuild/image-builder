@@ -152,7 +152,25 @@ func validateCanRunTargetArch(targetArch string) error {
 }
 
 func ValidateHasContainerTags(imgref string) error {
-	output, err := exec.Command("podman", "image", "inspect", imgref, "--format", "{{.Labels}}").Output()
+	extraOpts := []string{}
+	if isRootless, _ := podmanutil.IsRootless(); isRootless {
+		// When running image-builder in a rootless container, its typically the case that /var/lib/containers/storage
+		// is a bind-mount of ~/.local/share/containers/storage, and we can't use this directly with podman
+		// because it will complain:
+		//     database static dir "~/.local/share/containers/storage/libpod" does not match our
+		//     static dir "/var/lib/containers/storage/libpod": database configuration mismatch
+		// To avoid this we use an empty graphroot, and point --imagestore at /var/lib/containers/storage.
+		// This means the database is in the right place, and we only look at the image layers in the real store.
+		extraOpts = append(extraOpts,
+			"--root=/run/osbuild/containers/store",
+			"--imagestore=/var/lib/containers/storage")
+	}
+
+	args := []string{"image", "inspect"}
+	args = append(args, extraOpts...)
+	args = append(args, imgref, "--format", "{{.Labels}}")
+
+	output, err := exec.Command("podman", args...).Output()
 	if err != nil {
 		return fmt.Errorf(`failed to inspect the image: %w
 bootc-image-builder no longer pulls images, make sure to pull it before running bootc-image-builder:
