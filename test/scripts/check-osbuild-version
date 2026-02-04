@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+# pylint: disable=invalid-name
+"""
+Check that installed osbuild packages meet the minimum version requirement.
+
+This script reads the minimum osbuild version from the vendored osbuild/images
+library and verifies that the installed osbuild and osbuild-depsolve-dnf packages
+meet this requirement.
+
+Prerequisites:
+- go mod vendor must have been run to populate the vendor directory
+- osbuild and osbuild-depsolve-dnf packages must be installed
+"""
+
+import os
+import re
+import subprocess
+import sys
+
+# Path to the minimum version file in the vendored osbuild/images
+MIN_VERSION_FILE = "vendor/github.com/osbuild/images/data/dependencies/osbuild"
+
+# Packages to check
+PACKAGES = ["osbuild", "osbuild-depsolve-dnf"]
+
+
+def read_min_version():
+    """Read the minimum osbuild version from the vendored images library."""
+    if not os.path.exists(MIN_VERSION_FILE):
+        print(f"ERROR: {MIN_VERSION_FILE} not found", file=sys.stderr)
+        print("Make sure to run 'go mod vendor' first.", file=sys.stderr)
+        sys.exit(1)
+
+    with open(MIN_VERSION_FILE, encoding="utf-8") as f:
+        version = f.read().strip()
+
+    if not version:
+        print(f"ERROR: {MIN_VERSION_FILE} is empty", file=sys.stderr)
+        sys.exit(1)
+
+    return version
+
+
+def get_installed_version(package):
+    """
+    Get the installed version of an RPM package.
+
+    Returns None if the package is not installed.
+    """
+    try:
+        result = subprocess.run(
+            ["rpm", "-q", "--queryformat", "%{VERSION}", package],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+
+def parse_version(version_str):
+    """
+    Parse a version string into a tuple of integers for comparison.
+
+    Handles versions like "129", "129.1", "129.1.2".
+    """
+    # Extract only the numeric parts (handle cases like "129~rc1")
+    match = re.match(r"^(\d+(?:\.\d+)*)", version_str)
+    if not match:
+        return (0,)
+
+    parts = match.group(1).split(".")
+    return tuple(int(p) for p in parts)
+
+
+def compare_versions(installed, minimum):
+    """
+    Compare two version strings.
+
+    Returns:
+        -1 if installed < minimum
+         0 if installed == minimum
+         1 if installed > minimum
+    """
+    installed_tuple = parse_version(installed)
+    minimum_tuple = parse_version(minimum)
+
+    # Pad shorter tuple with zeros for comparison
+    max_len = max(len(installed_tuple), len(minimum_tuple))
+    installed_padded = installed_tuple + (0,) * (max_len - len(installed_tuple))
+    minimum_padded = minimum_tuple + (0,) * (max_len - len(minimum_tuple))
+
+    if installed_padded < minimum_padded:
+        return -1
+    if installed_padded > minimum_padded:
+        return 1
+    return 0
+
+
+def main():
+    # Read minimum version
+    min_version = read_min_version()
+    print(f"Minimum required osbuild version: {min_version}")
+
+    errors = []
+
+    for package in PACKAGES:
+        installed_version = get_installed_version(package)
+
+        if installed_version is None:
+            errors.append(f"  {package}: NOT INSTALLED")
+            continue
+
+        cmp_result = compare_versions(installed_version, min_version)
+
+        if cmp_result < 0:
+            print(f"  {package}: {installed_version} < {min_version} (TOO OLD)")
+            errors.append(f"  {package}: {installed_version} < {min_version}")
+        else:
+            status = "==" if cmp_result == 0 else ">="
+            print(f"  {package}: {installed_version} {status} {min_version} (OK)")
+
+    if errors:
+        print("\n" + "=" * 60, file=sys.stderr)
+        print("ERROR: Installed osbuild packages do not meet minimum requirements", file=sys.stderr)
+        print("=" * 60, file=sys.stderr)
+        print(f"\nThe vendored osbuild/images library requires osbuild >= {min_version}", file=sys.stderr)
+        print("\nProblems found:", file=sys.stderr)
+        for error in errors:
+            print(error, file=sys.stderr)
+        print("\nTo fix this, pin a specific osbuild commit in Schutzfile", file=sys.stderr)
+        return 1
+
+    print("\nAll osbuild packages meet minimum version requirements.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

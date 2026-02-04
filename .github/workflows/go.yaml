@@ -24,6 +24,12 @@ jobs:
       GOPROXY: "https://proxy.golang.org,direct"
     steps:
       - uses: actions/checkout@v6
+      - name: Install Golang
+        run: dnf install -y golang
+      - name: Vendor Go dependencies
+        run: go mod vendor
+      - name: Setup osbuild repository
+        run: python3 test/scripts/setup-osbuild-repo
       - name: Install dependencies
         run: |
           # we have the same build-deps as the images library
@@ -31,6 +37,8 @@ jobs:
           curl -sL https://raw.githubusercontent.com/osbuild/images/refs/heads/main/test/scripts/install-dependencies | bash
           # we also need createrepo_c
           dnf install -y createrepo_c
+      - name: Check osbuild version
+        run: python3 test/scripts/check-osbuild-version
       - name: Build
         run: go build -v ./...
       - name: Test
