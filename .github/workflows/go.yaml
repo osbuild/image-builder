@@ -16,7 +16,7 @@ jobs:
     name: "Build & Test"
     runs-on: ubuntu-latest
     container:
-      image: registry.fedoraproject.org/fedora:41
+      image: registry.fedoraproject.org/fedora:43
       options: --privileged
     env:
       # workaround for expired cert at source of indirect dependency
