@@ -2,7 +2,6 @@ package main_test
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/images/pkg/osbuild/manifesttest"
 	"github.com/osbuild/images/pkg/rpmmd"
 	testrepos "github.com/osbuild/images/test/data/repositories"
@@ -1009,32 +1009,13 @@ func TestBasenameFor(t *testing.T) {
 
 // XXX: move into as manifestgen.FakeDepsolve
 func fakeDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
-	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
-
-	for name, pkgSetChain := range packageSets {
-		specSet := make(rpmmd.PackageList, 0)
-		for _, pkgSet := range pkgSetChain {
-			include := pkgSet.Include
-			slices.Sort(include)
-			for _, pkgName := range include {
-				checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(pkgName)))
-				spec := rpmmd.Package{
-					Name: pkgName,
-					Checksum: rpmmd.Checksum{
-						Type:  "sha256",
-						Value: checksum,
-					},
-				}
-				specSet = append(specSet, spec)
-			}
-
-			depsolvedSets[name] = depsolvednf.DepsolveResult{
-				Packages: specSet,
-				Repos:    pkgSet.Repositories,
-			}
-		}
+	if depsolveWarningsOutput != nil {
+		_, _ = depsolveWarningsOutput.Write([]byte(`fake depsolve output`))
 	}
-
+	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil, true)
+	if err != nil {
+		return nil, err
+	}
 	return depsolvedSets, nil
 }
 

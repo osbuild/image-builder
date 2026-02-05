@@ -3,7 +3,7 @@
 # required. So if this needs backport to places where there is no
 # recent osbuild available we could simply make --use-librepo false
 # and go back to 129.
-%global min_osbuild_version 170
+%global min_osbuild_version 171
 
 %global goipath         github.com/osbuild/image-builder-cli
 
