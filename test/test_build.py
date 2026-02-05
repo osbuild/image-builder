@@ -32,13 +32,13 @@ def test_build_builds_image(tmp_path, build_container, shared_store, use_librepo
         "-v", f"{shared_store}:{OSBUILD_STORE_CONTAINER_PATH}",
         build_container,
         "build",
-        "minimal-raw",
+        "qcow2",
         "--distro", "centos-9",
         f"--use-librepo={use_librepo}",
     ])
     arch = "x86_64"
-    basename = f"centos-9-minimal-raw-{arch}"
-    assert (output_dir / basename / f"{basename}.raw.xz").exists()
+    basename = f"centos-9-qcow2-{arch}"
+    assert (output_dir / basename / f"{basename}.qcow2").exists()
     # XXX: ensure no other leftover dirs
     dents = os.listdir(output_dir)
     assert len(dents) == 1, f"too many dentries in output dir: {dents}"
@@ -53,12 +53,12 @@ def test_build_build_generates_manifest(tmp_path, build_container, shared_store)
         "-v", f"{shared_store}:{OSBUILD_STORE_CONTAINER_PATH}",
         build_container,
         "build",
-        "minimal-raw",
+        "qcow2",
         "--distro", "centos-9",
         "--with-manifest",
     ], stdout=subprocess.DEVNULL)
     arch = platform.machine()
-    fn = f"centos-9-minimal-raw-{arch}/centos-9-minimal-raw-{arch}.osbuild-manifest.json"
+    fn = f"centos-9-qcow2-{arch}/centos-9-qcow2-{arch}.osbuild-manifest.json"
     image_manifest_path = output_dir / fn
     assert image_manifest_path.exists()
 
