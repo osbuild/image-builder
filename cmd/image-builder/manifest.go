@@ -34,6 +34,7 @@ type manifestOptions struct {
 	RpmDownloader            osbuild.RpmDownloader
 	WithSBOM                 bool
 	IgnoreWarnings           bool
+	Preview                  *bool
 
 	ForceRepos []string
 }
@@ -98,6 +99,7 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 		Bootc: &distro.BootcImageOptions{
 			InstallerPayloadRef: opts.BootcInstallerPayloadRef,
 		},
+		Preview: opts.Preview,
 	}
 
 	mf, err := mg.Generate(bp, img.ImgType, imgOpts)

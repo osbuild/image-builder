@@ -197,6 +197,18 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	var preview *bool
+	// Verify that the flag was actually passed. If it wasn't passed
+	// we keep our nil value so that images used the distro-defined
+	// value for preview. Otherwise use the provided value so the
+	// distro value gets overridden.
+	if cmd.Flags().Lookup("preview").Changed {
+		value, err := cmd.Flags().GetBool("preview")
+		if err != nil {
+			return nil, err
+		}
+		preview = &value
+	}
 	var rpmDownloader osbuild.RpmDownloader
 	if useLibrepo {
 		rpmDownloader = osbuild.RpmDownloaderLibrepo
@@ -324,6 +336,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		WithSBOM:                 withSBOM,
 		IgnoreWarnings:           ignoreWarnings,
 		Subscription:             subscription,
+		Preview:                  preview,
 
 		ForceRepos: forceRepos,
 	}
@@ -588,6 +601,8 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
 	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
 	manifestCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
+	manifestCmd.Flags().Bool("preview", true, `override distro default preview state if passed`)
+	manifestCmd.Flags().MarkHidden("preview")
 	rootCmd.AddCommand(manifestCmd)
 
 	uploadCmd := &cobra.Command{
