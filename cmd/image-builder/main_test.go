@@ -793,9 +793,9 @@ func TestManifestExtraRepos(t *testing.T) {
 	localRepoDir := filepath.Join(t.TempDir(), "repo")
 	err := os.MkdirAll(localRepoDir, 0755)
 	assert.NoError(t, err)
-	err = exec.Command("cp", "-a", "../../test/data/rpm/dummy-1.0.0-0.noarch.rpm", localRepoDir).Run()
+	err = exec.CommandContext(t.Context(), "cp", "-a", "../../test/data/rpm/dummy-1.0.0-0.noarch.rpm", localRepoDir).Run()
 	assert.NoError(t, err)
-	err = exec.Command("createrepo_c", localRepoDir).Run()
+	err = exec.CommandContext(t.Context(), "createrepo_c", localRepoDir).Run()
 	assert.NoError(t, err)
 
 	pkgHelloBlueprint := `
