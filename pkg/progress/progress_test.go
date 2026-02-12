@@ -14,7 +14,7 @@ import (
 func TestProgressNew(t *testing.T) {
 	for _, tc := range []struct {
 		typ         string
-		expected    interface{}
+		expected    any
 		expectedErr string
 	}{
 		{"term", &progress.TerminalProgressBar{}, ""},
@@ -127,7 +127,7 @@ func TestTermProgress(t *testing.T) {
 func TestProgressNewAutoselect(t *testing.T) {
 	for _, tc := range []struct {
 		onTerm   bool
-		expected interface{}
+		expected any
 	}{
 		{false, &progress.VerboseProgressBar{}},
 		{true, &progress.TerminalProgressBar{}},
