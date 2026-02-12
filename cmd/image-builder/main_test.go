@@ -75,7 +75,7 @@ func TestListImagesNoArgsOutputJSON(t *testing.T) {
 
 	// smoke test only, we expect valid json and at least the
 	// distro/arch/image_type keys in the json
-	var jo []map[string]interface{}
+	var jo []map[string]any
 	err = json.Unmarshal(fakeStdout.Bytes(), &jo)
 	assert.NoError(t, err)
 	res := jo[0]
