@@ -1,7 +1,8 @@
 package progress
 
 import (
-	"sort"
+	"cmp"
+	"slices"
 	"time"
 
 	"github.com/osbuild/images/pkg/osbuild"
@@ -33,8 +34,8 @@ func (s *osbuildStageMetrics) String() string {
 	}
 
 	// sort measurements by duration descending
-	sort.Slice(s.durations, func(i, j int) bool {
-		return s.durations[i].Duration > s.durations[j].Duration
+	slices.SortFunc(s.durations, func(a, b measurement) int {
+		return cmp.Compare(b.Duration, a.Duration)
 	})
 
 	result := "Metrics:\n"
