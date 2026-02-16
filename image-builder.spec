@@ -115,7 +115,7 @@ cd $PWD/_build/src/%{goipath}
 %doc README.md
 %{_bindir}/image-builder
 %{_tmpfilesdir}/image-builder.conf
-%ghost %dir /var/cache/image-builder
+%ghost %attr(0755, root, root) %dir /var/cache/image-builder
 
 %changelog
 # the changelog is distribution-specific, therefore there's just one entry
