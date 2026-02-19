@@ -310,7 +310,7 @@ func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
 	baseArgs := []string{
 		"manifest",
 		"--arch=x86_64",
-		"--distro=fedora-43",
+		"--distro=centos-9",
 	}
 
 	for _, tc := range []struct {
@@ -318,12 +318,12 @@ func TestManifestIntegrationOstreeSmokeErrors(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			[]string{"iot-raw-xz"},
-			`options validation failed for image type "iot-raw-xz": ostree.url: required`,
+			[]string{"edge-ami"},
+			`options validation failed for image type "edge-ami": ostree.url: required, there is no default available`,
 		},
 		{
-			[]string{"generic-qcow2", "--ostree-url=http://example.com/"},
-			`OSTree is not supported for "generic-qcow2"`,
+			[]string{"qcow2", "--ostree-url=http://example.com/"},
+			`OSTree is not supported for "qcow2"`,
 		},
 	} {
 		args := append(baseArgs, tc.extraArgs...)

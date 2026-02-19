@@ -18,8 +18,9 @@ import (
 
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/customizations/subscription"
-	"github.com/osbuild/images/pkg/distro/bootc"
+	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -281,13 +282,23 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		if imgTypeStr == "anaconda-iso" {
 			return nil, fmt.Errorf(`image type bootc "anaconda-iso" is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`)
 		}
-
-		distro, err := bootc.NewBootcDistro(bootcRef, &bootc.DistroOptions{DefaultFs: bootcDefaultFs})
+		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef)
+		if err != nil {
+			return nil, err
+		}
+		if bootcDefaultFs != "" {
+			bootcInfo.DefaultRootFs = bootcDefaultFs
+		}
+		distro, err := generic.NewBootc("bootc", bootcInfo)
 		if err != nil {
 			return nil, err
 		}
 		if bootcBuildRef != "" {
-			if err := distro.SetBuildContainer(bootcBuildRef); err != nil {
+			buildBootcInfo, err := bootc.ResolveBootcInfo(bootcBuildRef)
+			if err != nil {
+				return nil, err
+			}
+			if err := distro.SetBuildContainer(buildBootcInfo); err != nil {
 				return nil, err
 			}
 		}
