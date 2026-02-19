@@ -19,11 +19,12 @@ import (
 	repos "github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bib/blueprintload"
+	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/bootc"
+	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/manifestgen"
@@ -134,14 +135,25 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	// 1. the bootc disk manifests contains exports for all supported image types
 	// 2. the bootc legacy types (iso, anaconda-iso) always do a single build
 	imgTypeStr := imageTypes[0]
-	distri, err := bootc.NewBootcDistro(imgref, &bootc.DistroOptions{
-		DefaultFs: rootFs,
-	})
+	bootcInfo, err := bootc.ResolveBootcInfo(imgref)
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := distri.SetBuildContainer(buildImgref); err != nil {
+	if rootFs != "" {
+		bootcInfo.DefaultRootFs = rootFs
+	}
+	distri, err := generic.NewBootc("bootc", bootcInfo)
+	if err != nil {
 		return nil, nil, err
+	}
+	if buildImgref != "" {
+		buildBootcInfo, err := bootc.ResolveBootcInfo(buildImgref)
+		if err != nil {
+			return nil, nil, err
+		}
+		if err := distri.SetBuildContainer(buildBootcInfo); err != nil {
+			return nil, nil, err
+		}
 	}
 	archi, err := distri.GetArch(cntArch.String())
 	if err != nil {
