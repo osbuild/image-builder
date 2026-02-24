@@ -23,6 +23,7 @@ import (
 	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/manifestgen"
+	ilog "github.com/osbuild/images/pkg/olog"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 
@@ -682,8 +683,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 	if verbose {
 		olog.SetDefault(log.New(os.Stderr, "", 0))
-		// XXX: add once images has olog support
-		//images_log.SetDefault(log.New(os.Stderr, "", 0))
+		ilog.SetDefault(log.New(os.Stderr, "", 0))
 	}
 
 	return rootCmd.Execute()
