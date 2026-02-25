@@ -246,6 +246,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	bootcOmitDefaultKernelArgs, err := cmd.Flags().GetBool("bootc-no-default-kernel-args")
+	if err != nil {
+		return nil, err
+	}
 	// XXX: remove once https://github.com/osbuild/images/pull/1797
 	// and https://github.com/osbuild/bootc-image-builder/pull/1014
 	// are merged
@@ -339,16 +343,17 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 			DepsolveWarningsOutput: wd,
 			Depsolve:               manifestgenDepsolver,
 		},
-		OutputDir:                outputDir,
-		OutputFilename:           outputFilename,
-		BlueprintPath:            blueprintPath,
-		Ostree:                   ostreeImgOpts,
-		BootcRef:                 bootcRef,
-		BootcInstallerPayloadRef: bootcInstallerPayloadRef,
-		WithSBOM:                 withSBOM,
-		IgnoreWarnings:           ignoreWarnings,
-		Subscription:             subscription,
-		Preview:                  preview,
+		OutputDir:                  outputDir,
+		OutputFilename:             outputFilename,
+		BlueprintPath:              blueprintPath,
+		Ostree:                     ostreeImgOpts,
+		BootcRef:                   bootcRef,
+		BootcInstallerPayloadRef:   bootcInstallerPayloadRef,
+		BootcOmitDefaultKernelArgs: bootcOmitDefaultKernelArgs,
+		WithSBOM:                   withSBOM,
+		IgnoreWarnings:             ignoreWarnings,
+		Subscription:               subscription,
+		Preview:                    preview,
 
 		ForceRepos: forceRepos,
 	}
@@ -608,6 +613,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("bootc-build-ref", "", `bootc build container ref`)
 	manifestCmd.Flags().String("bootc-installer-payload-ref", "", `bootc installer payload ref`)
 	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
+	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
