@@ -24,17 +24,18 @@ import (
 type manifestOptions struct {
 	ManifestgenOptions manifestgen.Options
 
-	OutputDir                string
-	OutputFilename           string
-	BlueprintPath            string
-	Ostree                   *ostree.ImageOptions
-	BootcRef                 string
-	BootcInstallerPayloadRef string
-	Subscription             *subscription.ImageOptions
-	RpmDownloader            osbuild.RpmDownloader
-	WithSBOM                 bool
-	IgnoreWarnings           bool
-	Preview                  *bool
+	OutputDir                  string
+	OutputFilename             string
+	BlueprintPath              string
+	Ostree                     *ostree.ImageOptions
+	BootcRef                   string
+	BootcInstallerPayloadRef   string
+	BootcOmitDefaultKernelArgs bool
+	Subscription               *subscription.ImageOptions
+	RpmDownloader              osbuild.RpmDownloader
+	WithSBOM                   bool
+	IgnoreWarnings             bool
+	Preview                    *bool
 
 	ForceRepos []string
 }
@@ -97,7 +98,8 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 		OSTree:       opts.Ostree,
 		Subscription: opts.Subscription,
 		Bootc: &distro.BootcImageOptions{
-			InstallerPayloadRef: opts.BootcInstallerPayloadRef,
+			InstallerPayloadRef:   opts.BootcInstallerPayloadRef,
+			OmitDefaultKernelArgs: opts.BootcOmitDefaultKernelArgs,
 		},
 		Preview: opts.Preview,
 	}
