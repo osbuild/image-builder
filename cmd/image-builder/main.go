@@ -299,7 +299,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 			return nil, err
 		}
 		if bootcBuildRef != "" {
-			buildBootcInfo, err := bootc.ResolveBootcInfo(bootcBuildRef)
+			buildBootcInfo, err := bootc.ResolveBootcBuildInfo(bootcBuildRef)
 			if err != nil {
 				return nil, err
 			}
