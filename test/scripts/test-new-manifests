@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""
+Generate manifests for a given distribution and architecture, compare them against the CI build cache, and build and
+test any images that don't have cached builds.
+"""
+import argparse
+import os
+from tempfile import TemporaryDirectory
+
+import imgtestlib as testlib
+
+
+def generate_manifests(outputdir, distro, arch):
+    """
+    Generate all manifest using the default config list and return a dictionary mapping each manifest file to the
+    manifest data and its ID.
+    """
+    target = arch
+    distros = None
+    if distro:
+        target = distro + "/" + arch
+        distros = [distro]
+
+    testlib.print_section_start("generate-all-manifests",
+                                f"🗒️ Generating all manifests using the default config list for {target}")
+    err = testlib.gen_manifests(outputdir, arches=[arch], distros=distros)
+
+    # print stderr in case there were errors or warnings about skipped configurations
+    # but filter out the annoying ones
+    stderr = err.decode().splitlines()
+    for line in stderr:
+        if "No match for group package" in line:
+            continue
+        if "Failed to load consumer certs" in line:
+            continue
+        print(line)
+
+    print("✅ Manifest generation done!\n")
+    manifests = testlib.read_manifests(outputdir)
+    testlib.print_section_end("generate-all-manifests")
+    return manifests
+
+
+def build_new_images(build_requests):
+    print(f"Building {len(build_requests)} new images")
+    for build in build_requests:
+        distro = build["distro"]
+        arch = build["arch"]
+        image_type = build["image-type"]
+        config = build["config"]
+
+        config_name = config["name"]
+
+        config_path = os.path.join(testlib.CONFIGS_PATH, config_name+".json")
+        testlib.build_image(distro, arch, image_type, config_path)
+
+        build_name = testlib.gen_build_name(distro, arch, image_type, config_name)
+        image_search_path = os.path.join("build", build_name)
+        testlib.boot_image(image_search_path, config_path)
+        testlib.upload_results(distro, arch, image_type, config_path)
+
+    print("✅ DONE!")
+
+
+def main():
+    default_arch = os.uname().machine
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--distro", type=str, required=True, help="distribution for which to build images")
+    parser.add_argument("--arch", type=str, default=default_arch,
+                        help="architecture for which to build images (defaults to host architecture)")
+    args = parser.parse_args()
+
+    distro = args.distro
+    arch = args.arch
+
+    testlib.check_config_names()
+
+    with TemporaryDirectory() as manifest_dir:
+        manifests = generate_manifests(manifest_dir, distro, arch)
+        build_requests = testlib.filter_builds(manifests, distro=distro, arch=arch)
+
+    if len(build_requests) == 0:
+        print("⚫ No manifest changes detected. Exiting.")
+        return
+
+    build_new_images(build_requests)
+
+
+if __name__ == "__main__":
+    main()
