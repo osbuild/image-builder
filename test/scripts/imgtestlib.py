@@ -315,7 +315,8 @@ def build_image(distro, arch, image_type, config_path):
 
     config_name = config["name"]
 
-    print(f"👷 Building image {distro}/{image_type} using config {config_path}")
+    log_section_name = f"build_{distro}_{image_type}_{config_name}"
+    print_section_start(log_section_name, f"👷 Building image {distro}/{image_type} using config {config_path}")
 
     # print the config for logging
     print(json.dumps(config, indent=2))
@@ -356,6 +357,7 @@ def build_image(distro, arch, image_type, config_path):
         "runner-distro": distro_version,
     }
     write_build_info(build_dir, build_info)
+    print_section_end(log_section_name)
 
 
 # pylint: disable=too-many-return-statements
@@ -485,7 +487,7 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
     """
     Returns a list of build requests for the manifests that have no matching config in the test build cache.
     """
-    print(f"⚙️ Filtering {len(manifests)} build configurations")
+    print_section_start("filter-build-configs", f"⚙️ Filtering {len(manifests)} build configurations")
     dl_root_path = os.path.join(TEST_CACHE_ROOT, "s3configs", "builds")
     dl_path = os.path.join(dl_root_path, gen_build_info_dir_path_prefix(distro, arch))
     os.makedirs(dl_path, exist_ok=True)
@@ -536,6 +538,7 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
         print("⚠️ Errors:")
         print("\n".join(errors))
 
+    print_section_end("filter-build-configs")
     return build_requests
 
 
@@ -799,3 +802,38 @@ def touch_s3(distro, arch, manifest_id, osbuild_ref=None, runner_distro=None):
     print(f"⌚ Updating timestamps for {s3url} ({now})")
     cmd = ["aws", "s3", "cp", "--recursive", "--metadata", f"touched={now}", s3url, s3url]
     runcmd_nc(cmd)
+
+
+def running_in_gitlab():
+    """
+    Returns true if running in GitLab CI.
+    """
+    return os.environ.get("GITLAB_CI")
+
+
+def print_section_start(name: str, msg: str = ""):
+    """
+    Prints a section header with a timestamp for logging output during tests.
+    If running in GitLab CI, it also creates a collapsible section.
+
+    https://docs.gitlab.com/ci/jobs/job_logs/#custom-collapsible-sections
+    """
+    now = datetime.now()
+    if running_in_gitlab():
+        print(f"\033[0Ksection_start:{int(now.timestamp())}:{name}[collapsed=true]\r\033[0K{msg}")
+        return
+
+    # custom line for non CI runs
+    isonow = now.isoformat()
+    print(f":: [{isonow}] {msg} ({name})")
+
+
+def print_section_end(name: str):
+    now = datetime.now()
+    if running_in_gitlab():
+        print(f"\033[0Ksection_end:{int(now.timestamp())}:{name}\r\033[0K")
+        return
+
+    # custom line for non CI runs
+    isonow = now.isoformat()
+    print(f":: [{isonow}] Done ({name})")
