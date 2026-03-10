@@ -25,7 +25,16 @@ As this project is under development right now we provide up-to-date
 development snapshots of the main branch through COPR:
 
 ```console
+$ dnf copr enable @osbuild/osbuild
 $ dnf copr enable @osbuild/image-builder
+$ dnf install image-builder
+```
+
+On RHEL systems, pass the platform argument:
+
+```console
+$ dnf copr enable @osbuild/osbuild rhel-10-x86_64
+$ dnf copr enable @osbuild/image-builder rhel-10-x86_64
 $ dnf install image-builder
 ```
 
