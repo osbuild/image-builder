@@ -9,6 +9,7 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/distro_test_common"
 	"github.com/osbuild/images/pkg/distro/generic"
@@ -666,4 +667,19 @@ func TestRhel9_DistroFactory(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRhel9_PodmanDefaultNetBackendIsSet(t *testing.T) {
+	d := generic.DistroFactory("rhel-94")
+	require.NotNil(t, d)
+
+	a, err := d.GetArch("x86_64")
+	require.NoError(t, err)
+
+	it, err := a.GetImageType("qcow2")
+	require.NoError(t, err)
+
+	cfg := it.(*generic.ImageType).GetDefaultImageConfig()
+	require.NotNil(t, cfg.PodmanDefaultNetBackend, "RHEL 9 should set PodmanDefaultNetBackend to work around the cni fallback")
+	assert.Equal(t, container.NetworkBackendNetavark, *cfg.PodmanDefaultNetBackend)
 }

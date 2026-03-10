@@ -14,6 +14,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -700,6 +701,76 @@ image_types:
 		Timezone: common.ToPtr("OverrideTZ"),
 		Users:    []users.User{{Name: "testuser"}},
 	})
+}
+
+func TestDefsDistroImageConfigPodmanDefaultNetBackend(t *testing.T) {
+	netavark := container.NetworkBackendNetavark
+
+	fakeImageTypeYaml := `
+image_types:
+  test_type:
+    filename: foo
+`
+	tests := []struct {
+		name       string
+		distroYaml string
+		expected   *container.NetworkBackend
+		nilImgCfg  bool
+	}{
+		{
+			name: "podman_default_net_backend is loaded",
+			distroYaml: `
+distros:
+  - name: test-distro-1
+    vendor: test-vendor
+    defs_path: test-distro-1/
+    image_config:
+      default:
+        podman_default_net_backend: "netavark"
+`,
+			expected: &netavark,
+		},
+		{
+			name: "podman_default_net_backend absent is nil",
+			distroYaml: `
+distros:
+  - name: test-distro-1
+    vendor: test-vendor
+    defs_path: test-distro-1/
+    image_config:
+      default:
+        locale: "C.UTF-8"
+`,
+			expected: nil,
+		},
+		{
+			name: "no image_config at all",
+			distroYaml: `
+distros:
+  - name: test-distro-1
+    vendor: test-vendor
+    defs_path: test-distro-1/
+`,
+			nilImgCfg: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			baseDir := makeFakeDistrosYAML(t, tt.distroYaml, fakeImageTypeYaml)
+			restore := defs.MockDataFS(baseDir)
+			t.Cleanup(restore)
+
+			dist, err := defs.NewDistroYAML("test-distro-1")
+			require.NoError(t, err)
+			if tt.nilImgCfg {
+				assert.Nil(t, dist.ImageConfig())
+			} else {
+				require.NotNil(t, dist.ImageConfig())
+				assert.Equal(t, tt.expected, dist.ImageConfig().PodmanDefaultNetBackend)
+			}
+		})
+	}
 }
 
 func TestDefsPartitionTableErrorsNotForImageType(t *testing.T) {

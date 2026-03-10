@@ -775,3 +775,18 @@ func TestFedoraDistroBootstrapRef(t *testing.T) {
 		}
 	}
 }
+
+func TestFedora_PodmanDefaultNetBackendIsNil(t *testing.T) {
+	for _, d := range fedoraFamilyDistros {
+		t.Run(d.Name(), func(t *testing.T) {
+			a, err := d.GetArch("x86_64")
+			require.NoError(t, err)
+
+			it, err := a.GetImageType("qcow2")
+			require.NoError(t, err)
+
+			cfg := it.(*generic.ImageType).GetDefaultImageConfig()
+			assert.Nil(t, cfg.PodmanDefaultNetBackend, "Fedora should not set PodmanDefaultNetBackend")
+		})
+	}
+}
