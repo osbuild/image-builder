@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/oci"
 	"github.com/osbuild/images/pkg/customizations/ostreeserver"
@@ -153,6 +154,15 @@ type ImageConfig struct {
 	// /usr/lib/ostree-boot into bootupd-compatible update metadata.
 	// Only set this to true if the bootupd package is available in the image.
 	BootupdGenMetadata *bool `yaml:"bootupd_gen_metadata,omitempty"`
+
+	// PodmanDefaultNetBackend sets the default network backend for Podman.
+	// The value is written to /var/lib/containers/storage/defaultNetworkBackend
+	// only when the image embeds container images.
+	//
+	// Certain versions of Podman fall back to 'cni' when they find existing
+	// containers in the storage, assuming a migration from an older version.
+	// This option prevents that behavior.
+	PodmanDefaultNetBackend *container.NetworkBackend `yaml:"podman_default_net_backend,omitempty"`
 }
 
 // shallowMerge creates a new struct by merging a child and a parent.
