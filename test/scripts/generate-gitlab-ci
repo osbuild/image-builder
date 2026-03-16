@@ -67,10 +67,6 @@ GEN_TEMPLATE = """
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - {cache}
 """
 
 TRIGGER_TEMPLATE = """
@@ -102,10 +98,6 @@ OSTREE_GEN_TEMPLATE = """
       - build-configs
   needs:
     - "image-build-trigger: [{distro}, {arch}]"
-  cache:
-    key: testcache
-    paths:
-      - {cache}
 """
 
 OSTREE_TRIGGER_TEMPLATE = """
@@ -152,8 +144,6 @@ def main():
     images = testlib.list_images(arches=ARCHITECTURES)
     combos = set()
 
-    cache = testlib.TEST_CACHE_ROOT
-
     gen_stage = []
     trigger_stage = []
     ostree_gen_stage = []
@@ -167,14 +157,12 @@ def main():
         gen_stage.append(GEN_TEMPLATE.format(
             distro=img["distro"],
             arch=img["arch"],
-            runner=RUNNER,
-            cache=cache))
+            runner=RUNNER))
 
         trigger_stage.append(TRIGGER_TEMPLATE.format(
             distro=img["distro"],
             arch=img["arch"],
-            runner=RUNNER,
-            cache=cache))
+            runner=RUNNER))
 
         for ostree_distro_prefix in OSTREE_DISTROS:
             if img["distro"].startswith(ostree_distro_prefix):
@@ -185,14 +173,12 @@ def main():
         ostree_gen_stage.append(OSTREE_GEN_TEMPLATE.format(
             distro=img["distro"],
             arch=img["arch"],
-            runner=RUNNER,
-            cache=cache))
+            runner=RUNNER))
 
         ostree_trigger_stage.append(OSTREE_TRIGGER_TEMPLATE.format(
             distro=img["distro"],
             arch=img["arch"],
-            runner=RUNNER,
-            cache=cache))
+            runner=RUNNER))
 
     man_only_images = testlib.list_images(arches=MANIFEST_ONLY_ARCHES)
     man_gen_stage = []
