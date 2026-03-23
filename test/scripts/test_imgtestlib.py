@@ -114,8 +114,8 @@ def test_read_seed():
     ),
 ))
 def test_gen_build_info_dir_path_prefix(kwargs, expected):
-    with patch("imgtestlib.get_host_distro", return_value="fedora-999"), \
-         patch("imgtestlib.get_osbuild_commit", return_value="abcdef123456"):
+    with patch("imgtestlib.imgtestlib.get_host_distro", return_value="fedora-999"), \
+         patch("imgtestlib.imgtestlib.get_osbuild_commit", return_value="abcdef123456"):
         assert testlib.gen_build_info_dir_path_prefix(**kwargs) == expected
 
 
@@ -201,8 +201,8 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
     ),
 ))
 def test_gen_build_info_s3_dir_path(kwargs, expected):
-    with patch("imgtestlib.get_host_distro", return_value="fedora-999"), \
-         patch("imgtestlib.get_osbuild_commit", return_value="abcdef123456"):
+    with patch("imgtestlib.imgtestlib.get_host_distro", return_value="fedora-999"), \
+         patch("imgtestlib.imgtestlib.get_osbuild_commit", return_value="abcdef123456"):
         assert testlib.gen_build_info_s3_dir_path(**kwargs) == expected
 
 
