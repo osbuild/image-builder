@@ -1,0 +1,585 @@
+import contextlib
+import json
+import os
+import pathlib
+import random
+import shutil
+import signal
+import string
+import subprocess
+import textwrap
+import uuid
+from tempfile import TemporaryDirectory
+from typing import Generator
+
+from vmtest.util import get_free_port
+from vmtest.vm import QEMU
+
+from .run import runcmd, runcmd_nc
+from .testenv import get_bib_ref
+
+BASE_TEST_EXEC = "check-host-config-"  # + arch
+WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
+# We need up to 15 minutes for full Anaconda ISO installations
+# But in some cases the CI systems are even slower, so use 1800s
+ISO_BOOT_TIMEOUT = 1800
+
+REGISTRY = "registry.gitlab.com/redhat/services/products/image-builder/ci/images"
+
+# image types that can be boot tested
+# Keep in sync with test/scripts/boot-image which has the same checks again
+CAN_BOOT_TEST = {
+    "*": [
+        "ami",
+        "ec2",
+        "ec2-ha",
+        "ec2-sap",
+        "edge-ami",
+        "iot-bootable-container",
+        "vhd",
+        "cloud-ec2",
+    ],
+    "x86_64": [
+        "image-installer", "minimal-installer", "network-installer",
+        "qcow2", "generic-qcow2", "cloud-qcow2",
+        "wsl", "generic-wsl",
+    ]
+}
+
+
+def get_aws_config():
+    return {
+        "key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
+        "secret_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+        "bucket": os.environ.get("AWS_BUCKET"),
+        "region": os.environ.get("AWS_REGION")
+    }
+
+
+def get_azure_config():
+    return {
+        "subscription": os.environ.get("AZURE_SUBSCRIPTION"),
+        "tenant": os.environ.get("AZURE_TENANT"),
+        "client_id": os.environ.get("AZURE_CLIENT_ID"),
+        "client_secret": os.environ.get("AZURE_CLIENT_SECRET"),
+        "resource_group": os.environ.get("AZURE_RESOURCE_GROUP"),
+        "windows_snapshot": os.environ.get("AZURE_WINDOWS_SNAPSHOT"),
+        "windows_ssh_privkey": os.environ.get("AZURE_WINDOWS_SSH_PRIVKEY"),
+    }
+
+
+@contextlib.contextmanager
+def create_ssh_key(privkey_file=None, key_type=None):
+    with TemporaryDirectory() as tmpdir:
+        keypath = os.path.join(tmpdir, "testkey")
+        ci_priv_key = os.environ.get("CI_PRIV_SSH_KEY")
+        if privkey_file is not None:
+            shutil.copyfile(privkey_file, keypath)
+            os.chmod(keypath, 0o600)
+
+            cmd = ["ssh-keygen", "-y", "-f", keypath]
+            out, _ = runcmd(cmd)
+            pubkey = out.decode()
+            with open(keypath + ".pub", "w", encoding="utf-8") as pubkeyfile:
+                pubkeyfile.write(pubkey)
+        elif not key_type and ci_priv_key:
+            # running in CI: use key from env
+            with open(keypath, "w", encoding="utf-8") as keyfile:
+                keyfile.write(ci_priv_key + "\n")
+            os.chmod(keypath, 0o600)
+
+            # get public key from priv key and write it out
+            cmd = ["ssh-keygen", "-y", "-f", keypath]
+            out, _ = runcmd(cmd)
+            pubkey = out.decode()
+            with open(keypath + ".pub", "w", encoding="utf-8") as pubkeyfile:
+                pubkeyfile.write(pubkey)
+        elif key_type == "rsa":
+            cmd = ["ssh-keygen", "-t", "rsa", "-b", "2048", "-m", "pem", "-N", "", "-f", keypath]
+            runcmd_nc(cmd)
+        else:
+            # create an ssh key pair with empty password
+            cmd = ["ssh-keygen", "-t", "ecdsa", "-b", "256", "-m", "pem", "-N", "", "-f", keypath]
+            runcmd_nc(cmd)
+
+        yield keypath, keypath + ".pub"
+
+
+@contextlib.contextmanager
+def ensure_uncompressed(filepath):
+    """
+    If the file at the given path is compressed, decompress it and return the new file path.
+    """
+    base, ext = os.path.splitext(filepath)
+    if ext == ".xz":
+        print(f"Uncompressing {filepath}")
+        # needs to run as root to set perms and ownership on uncompressed file
+        runcmd_nc(["sudo", "unxz", "--verbose", "--keep", filepath])
+        yield base
+        # cleanup when done so the uncompressed file doesn't get uploaded to the build cache
+        os.unlink(base)
+
+    else:
+        # we only do xz for now so it must be raw: return as is and hope for the best
+        yield filepath
+
+
+@contextlib.contextmanager
+def make_cloud_init_iso(pubkey_path) -> Generator:
+    ssh_key = pathlib.Path(pubkey_path).read_text(encoding="utf8").strip()
+    with TemporaryDirectory() as tmpdir:
+        user_data = pathlib.Path(tmpdir) / "user-data.yaml"
+        user_data_content = textwrap.dedent(f"""\
+        #cloud-config
+        users:
+          - name: root
+            ssh_authorized_keys:
+              - {ssh_key}
+          - name: osbuild
+            groups: [wheel]
+            sudo: ALL=(ALL) NOPASSWD:ALL
+            ssh_authorized_keys:
+              - {ssh_key}
+        """)
+        user_data.write_text(user_data_content)
+        meta_data = pathlib.Path(tmpdir) / "meta-data"
+        meta_data.write_text('{"instance-id": "i-1234567890abcdef0"}')
+        iso_path = pathlib.Path(tmpdir) / "cloud-init.iso"
+        subprocess.check_call(
+            ["cloud-localds", os.fspath(iso_path), user_data.name, meta_data.name],
+            cwd=tmpdir,
+        )
+        yield iso_path
+
+
+def arch_to_goarch(arch):
+    """
+    Convert architecture string to GOARCH format.
+    """
+    mapping = {
+        "x86_64": "amd64",
+        "aarch64": "arm64",
+    }
+    goarch = mapping.get(arch.lower())
+    if goarch is None:
+        return arch
+    return goarch
+
+
+def make_check_host_config(arch):
+    goarch = arch_to_goarch(arch)
+    # build without CGO so no dependencies are needed
+    cmd = ["go", "build", "-o", "check-host-config-" + arch,
+           "./cmd/check-host-config"]
+    tags = [
+        "containers_image_openpgp",
+        "exclude_graphdriver_btrfs",
+        "exclude_graphdriver_devicemapper",
+        "exclude_graphdriver_overlay",
+    ]
+    runcmd_nc(
+        cmd,
+        extra_env={
+            "GOARCH": goarch,
+            "CGO_ENABLED": "0",
+            "GOFLAGS": "-tags=" + ",".join(tags),
+        },
+    )
+
+
+class CannotRunQemuTest(Exception):
+    def __init__(self, skip_reason):
+        super().__init__(skip_reason)
+        self.skip_reason = skip_reason
+
+
+class MissingBootImplementation(Exception):
+    def __init__(self, skip_reason):
+        super().__init__(skip_reason)
+        self.skip_reason = skip_reason
+
+
+def qemu_cmd_scp_and_run(vm, cmd, privkey_path):
+    # This is similar to what the other runners are doing but
+    # it would be nice to find a better way, e.g. create a
+    # bundle or compsoe a single script with the config
+    # build-in/appended
+    for arg in cmd:
+        if os.path.exists(arg):
+            vm.scp(arg, "/tmp/", user="osbuild", keyfile=privkey_path)
+    vmcmd = ["/tmp/" + os.path.basename(arg) for arg in cmd]
+    return vm.run(vmcmd, user="osbuild", keyfile=privkey_path)
+
+
+def boot_qemu(arch, image_path, config_file, keep_booted=False):
+    cmd = [BASE_TEST_EXEC+arch, config_file]
+    make_check_host_config(arch)
+    with contextlib.ExitStack() as cm:
+        uncompressed_image_path = cm.enter_context(ensure_uncompressed(image_path))
+        (privkey_path, pubkey_path) = cm.enter_context(create_ssh_key())
+        cloud_init_iso = cm.enter_context(make_cloud_init_iso(pubkey_path))
+        with QEMU(uncompressed_image_path, arch=arch, cdrom=cloud_init_iso) as vm:
+            try:
+                qemu_cmd_scp_and_run(vm, cmd, privkey_path)
+            finally:
+                if keep_booted:
+                    print("***********************************")
+                    print(f"keeping the image {image_path} booted as requested, press enter or ctrl-c to stop")
+                    print("to connect run:")
+                    print(
+                        f"ssh -i {privkey_path} -p {vm.ssh_port} -o UserKnownHostsFile=/dev/null "
+                        "-o StrictHostKeyChecking=no osbuild@localhost")
+                    signal.pause()
+
+
+def boot_qemu_iso_no_unattended_support(arch, installer_iso_path, config_file):
+    # this is for ISOs that have no "unattneded" support in their blueprint,
+    # manually create one and modify the ISO
+    rootpw = "".join(
+        random.choices(string.ascii_uppercase + string.digits, k=18))
+    rhsm = ""
+    rhsm_unregister = ""
+    # this is too crude, use "distro" from info file
+    if "rhel" in installer_iso_path:
+        org_id = os.getenv("SUBSCRIPTION_ORG")
+        activation_key = os.getenv("SUBSCRIPTION_ACTIVATION_KEY")
+        if not org_id or not activation_key:
+            raise CannotRunQemuTest("rhel unattended tests need SUBSCRIPTION_ORG and SUBSCRIPTION_ACTIVATION_KEY env")
+        rhsm = f'rhsm --organization="{org_id}" --activation-key="{activation_key}"'
+        rhsm_unregister = textwrap.dedent("""\
+        # ensure we unregister after the install again, no need to keep the system registered
+        # and show up in the inventory
+        subscription-manager unregister
+        """)
+    with contextlib.ExitStack() as cm:
+        tmpdir = cm.enter_context(TemporaryDirectory(dir="/var/tmp"))
+        (privkey_path, pubkey_path) = cm.enter_context(create_ssh_key())
+        pubkey = pathlib.Path(pubkey_path).read_text("utf8").strip()
+        unattended_ks = pathlib.Path(tmpdir) / "ks.cfg"
+        unattended_ks.write_text(textwrap.dedent(f"""\
+        text --non-interactive
+        zerombr
+        clearpart --all --initlabel
+        autopart --type=plain
+        network --activate --onboot=on
+        reboot --eject
+        user --name=osbuild --group=wheel --shell=/bin/bash
+        sshkey --username=osbuild "{pubkey}"
+        rootpw {rootpw}
+        {rhsm}
+        eula --agree
+        # better debug for the sshd failure
+        bootloader --append="console=ttyS0 systemd.journald.forward_to_console=1"
+        %post
+        # workaround for centos-10 as it fails to start here and that causes issue
+        # with out "check-host-config.sh" that expects a non-degraded boot
+        systemctl mask mcelog.service || true
+        {rhsm_unregister}
+        %end
+        """))
+        new_installer_iso_path = pathlib.Path(tmpdir) / os.path.basename(installer_iso_path)
+        subprocess.check_call(
+            ["sudo", "mkksiso",
+             # Note that we could add:
+             #    systemd.journald.forward_to_console=1
+             # here as well but it produces extrem amounts of logs
+             # that exceeds the gitlab limit
+             "-c", "console=ttyS0",
+             "--ks", os.fspath(unattended_ks),
+             os.fspath(installer_iso_path), new_installer_iso_path])
+        return _boot_qemu_iso(arch, new_installer_iso_path, config_file, privkey_path)
+
+
+def boot_qemu_iso(arch, installer_iso_path, config_file):
+    # We can only test the unattended-iso as the other configs require
+    # interactive setup of the installer which we do not support in this
+    # test-runner.
+    with contextlib.ExitStack() as cm:
+        # The "unattended-iso" has the CI ssh key, so if we are running
+        # in CI we can actually do a real image test. Sadly not locally
+        # because we have no way to log into the installed disk in this
+        # case, the CI ssh key is secret.
+        privkey_path = None
+        if os.environ.get("CI_PRIV_SSH_KEY"):
+            (privkey_path, _) = cm.enter_context(create_ssh_key())
+        return _boot_qemu_iso(arch, installer_iso_path, config_file, privkey_path)
+
+
+def _boot_qemu_iso(arch, installer_iso_path, config_file, privkey_path):
+    cmd = [BASE_TEST_EXEC+arch, config_file]
+    make_check_host_config(arch)
+    # we should pass console=ttyS0 to instaler os that we see install
+    # progress on the serial console, in the meantime for interactive use
+    # one cans set the OSBUILD_TEST_QEMU_GUI=1 environment
+    with contextlib.ExitStack() as cm:
+        # we need /var/tmp here as /tmp might be on a (small) tmpfs
+        tmpdir = cm.enter_context(TemporaryDirectory(dir="/var/tmp"))
+        # create an (empty) target disk, truncate ensures its sparse
+        # so it will not take up real disk space until things are
+        # written to it
+        test_disk_path = pathlib.Path(tmpdir) / "disk.img"
+        with open(test_disk_path, "w", encoding="utf8") as fp:
+            fp.truncate(20_000_000_000)
+        # boot from installer to install to test disk, anaconda will
+        # reboot automatically for the unattended-iso config.
+        with QEMU(test_disk_path, cdrom=installer_iso_path) as vm:
+            vm.start(wait_event="qmp:RESET", snapshot=False, use_ovmf=True, timeout_sec=ISO_BOOT_TIMEOUT)
+            vm.force_stop()
+        # now boot test disk and wait for ssh to come up as a minimal boot test
+        with QEMU(test_disk_path, arch=arch) as vm:
+            vm.start(use_ovmf=True)
+            vm.wait_ssh_ready()
+            if privkey_path:
+                qemu_cmd_scp_and_run(vm, cmd, privkey_path)
+
+
+def boot_qemu_pxe(arch, pxe_tar_path):
+    with contextlib.ExitStack() as cm:
+        # unpack the tar and create a combined image
+        tmpdir = cm.enter_context(TemporaryDirectory(dir="/var/tmp"))
+        subprocess.check_call(
+            ["tar", "-C", tmpdir, "-x", "-f", pxe_tar_path])
+        subprocess.check_call(
+            "echo rootfs.img | cpio -H newc --quiet -L -o > rootfs.cpio", shell=True, cwd=tmpdir)
+        subprocess.check_call(
+            "cat initrd.img rootfs.cpio > combined.img", shell=True, cwd=tmpdir)
+
+        # Start an HTTP server to serve the rootfs.img and terminate it after the test.
+        # Explicitly terminate the HTTP server to avoid blocking on wait(), this cannot
+        # be done with a context manager for subprocesses.
+        http_port = get_free_port()
+        http_server = subprocess.Popen(  # pylint: disable=consider-using-with
+            ["python3", "-m", "http.server", f"{http_port}"],
+            cwd=tmpdir,
+            # prevent blocking output
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        try:
+            # test disk is unused for live OS
+            test_disk_path = pathlib.Path(tmpdir) / "disk.img"
+            with open(test_disk_path, "w", encoding="utf-8") as fp:
+                fp.truncate(0)
+
+            # test both the combined and HTTP rootfs variants
+            for use_ovmf in [False, True]:
+                for root_arg, initrd_file in [
+                    ("live:/rootfs.img", "combined.img"),
+                    (f"live:http://10.0.2.2:{http_port}/rootfs.img", "initrd.img")
+                ]:
+                    append_arg = (
+                        f"rd.live.image root={root_arg} console=ttyS0 "
+                        f"systemd.debug-shell=ttyS0 "
+                        f"systemd.mask=serial-getty@ttyS0.service "
+                        f"systemd.unit=reboot.target"
+                    )
+                    extra_args = [
+                        "-kernel", str(pathlib.Path(tmpdir) / "vmlinuz"),
+                        "-initrd", str(pathlib.Path(tmpdir) / initrd_file),
+                        "-append", append_arg
+                    ]
+
+                    with QEMU(test_disk_path, memory="3000", arch=arch, extra_args=extra_args) as vm:
+                        # Wait for QMP RESET event instead of SSH since PXE images don't have SSH.
+                        # The systemd.unit=reboot.target will cause a reboot, triggering the RESET event.
+                        vm.start(wait_event="qmp:RESET", snapshot=False, use_ovmf=use_ovmf)
+                        # There is really very little in the rootfs.img (i.e. no ssh, cloud-init
+                        # or other things that open ports or dnf) and we can only control it via the
+                        # kernel commandline. So via the "systemd.unit=reboot.target" kernel commandline
+                        # above we boot and then force a reboot right away as our test. This is not great
+                        # but the best we can do right now. Other options:
+                        # 1. have a blueprint with sshd-server so that we can check for ssh port
+                        # 2. modify vm.py to be able to talk directly to the serial console
+                        #    and then run commands directly via that
+                        vm.force_stop()
+        finally:
+            http_server.terminate()
+            http_server.wait()
+
+
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def cmd_boot_aws(arch, image_name, privkey, pubkey, image_path, script_cmd):
+    make_check_host_config(arch)
+    aws_config = get_aws_config()
+    cmd = ["go", "run", "./cmd/boot-aws", "run",
+           "--access-key-id", aws_config["key_id"],
+           "--secret-access-key", aws_config["secret_key"],
+           "--region", aws_config["region"],
+           "--bucket", aws_config["bucket"],
+           "--arch", arch,
+           "--ami-name", image_name,
+           "--s3-key", f"images/boot/{image_name}",
+           "--username", "osbuild",
+           "--ssh-privkey", privkey,
+           "--ssh-pubkey", pubkey,
+           image_path, *script_cmd]
+    runcmd_nc(cmd)
+
+
+def boot_ami(distro, arch, image_type, image_path, config):
+    cmd = [BASE_TEST_EXEC+arch, config]
+    make_check_host_config(arch)
+    with ensure_uncompressed(image_path) as raw_image_path:
+        with create_ssh_key() as (privkey, pubkey):
+            image_name = f"image-boot-test-{distro}-{arch}-{image_type}-" + str(uuid.uuid4())
+            cmd_boot_aws(arch, image_name, privkey, pubkey, raw_image_path, cmd)
+
+
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def boot_container(distro, arch, image_type, image_path, manifest_id, host_config):
+    """
+    Use bootc-image-builder to build an AMI and boot it.
+    """
+    # push container to registry so we can build it with BIB
+    # remove when BIB can pull from containers-storage: https://github.com/osbuild/bootc-image-builder/pull/120
+    container_name = f"iot-bootable-container:{distro}-{arch}-{manifest_id}"
+    cmd = ["./tools/ci/push-container.sh", image_path, container_name]
+    runcmd_nc(cmd)
+    container_ref = f"{REGISTRY}/{container_name}"
+
+    with TemporaryDirectory() as tmpdir:
+        with create_ssh_key() as (privkey_file, pubkey_file):
+            with open(pubkey_file, encoding="utf-8") as pubkey_fp:
+                pubkey = pubkey_fp.read()
+
+            # write a config to create a user
+            config_file = os.path.join(tmpdir, "config.json")
+            with open(config_file, "w", encoding="utf-8") as cfg_fp:
+                config = {
+                    "blueprint": {
+                        "customizations": {
+                            "user": [
+                                {
+                                    "name": "osbuild",
+                                    "key": pubkey,
+                                    "groups": [
+                                        "wheel"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+                json.dump(config, cfg_fp)
+
+            # build an AMI
+            cmd = ["sudo", "podman", "run",
+                   "--rm", "-it",
+                   "--privileged",
+                   "--pull=newer",
+                   "--security-opt", "label=type:unconfined_t",
+                   "-v", f"{tmpdir}:/output",
+                   "-v", f"{config_file}:/config.json",
+                   get_bib_ref(),
+                   "--type=ami",
+                   "--config=/config.json",
+                   container_ref]
+            runcmd_nc(cmd)
+
+            # boot it
+            image_name = f"image-boot-test-{distro}-{arch}-{image_type}-" + str(uuid.uuid4())
+
+            # Build artifacts are owned by root. Make them world accessible.
+            runcmd(["sudo", "chmod", "a+rwX", "-R", tmpdir])
+            raw_image_path = f"{tmpdir}/image/disk.raw"
+            cmd_boot_aws(arch, image_name, privkey_file, pubkey_file, raw_image_path,
+                         [BASE_TEST_EXEC+arch, host_config])
+
+
+def boot_vhd(distro, arch, image_path, config):
+    cmd = [BASE_TEST_EXEC+arch, config]
+    make_check_host_config(arch)
+    with ensure_uncompressed(image_path) as raw_image_path:
+        with create_ssh_key(key_type="rsa") as (privkey, pubkey):
+            # a lot of resources have <=64 character naming constraint
+            name = f"{distro}-" + str(uuid.uuid4())
+
+            az_config = get_azure_config()
+            cmd = ["go", "run", "./cmd/boot-azure", "run",
+                   "--subscription", az_config["subscription"],
+                   "--tenant", az_config["tenant"],
+                   "--client-id", az_config["client_id"],
+                   "--client-secret", az_config["client_secret"],
+                   "--resource-group", az_config["resource_group"],
+                   "--username", "osbuild",
+                   "--ssh-privkey", privkey,
+                   "--ssh-pubkey", pubkey,
+                   "--vm-name", name,
+                   "--arch", arch,
+                   "--image-name", name,
+                   raw_image_path, *cmd]
+            runcmd_nc(cmd)
+
+
+def boot_wsl(distro, arch, image_path, config):
+    with ensure_uncompressed(image_path) as raw_image_path:
+        cmd = [WSL_TEST_SCRIPT, raw_image_path, BASE_TEST_EXEC+arch, config]
+        make_check_host_config(arch)
+        az_config = get_azure_config()
+        with create_ssh_key(privkey_file=az_config["windows_ssh_privkey"]) as (privkey, pubkey):
+            # a lot of resources have <=64 character naming constraint
+            name = f"{distro}-" + str(uuid.uuid4())
+
+            cmd = ["go", "run", "./cmd/boot-azure", "run",
+                   "--subscription", az_config["subscription"],
+                   "--tenant", az_config["tenant"],
+                   "--client-id", az_config["client_id"],
+                   "--client-secret", az_config["client_secret"],
+                   "--resource-group", az_config["resource_group"],
+                   "--snapshot", az_config["windows_snapshot"],
+                   "--username", "azureuser",
+                   "--ssh-privkey", privkey,
+                   "--ssh-pubkey", pubkey,
+                   "--vm-name", name,
+                   "--arch", arch,
+                   "--size", "Standard_D2as_v5",
+                   raw_image_path, *cmd]
+            runcmd_nc(cmd)
+
+
+# pylint: disable=too-many-return-statements,too-many-arguments,too-many-positional-arguments
+def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, blueprint):
+    if image_type not in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
+        return False
+
+    if image_type in ["image-installer", "minimal-installer"]:
+        if not blueprint.get("customizations", {}).get("installer", {}).get("unattended"):
+            print("  not bootable: only unattended installers are supported")
+            return False
+
+    if image_type in ["network-installer", "everything-network-installer", "server-network-installer"]:
+        if distro in ["rhel-10.1", "rhel-10.2"]:
+            print("  not bootable: rhel network-installer tests have incomplete repos in nightly snapshot"
+                  "and won't install")
+            return False
+        if distro.startswith("fedora"):
+            print("  not bootable: fedora network-installer crashes in sshd,"
+                  "see https://bugzilla.redhat.com/show_bug.cgi?id=2415883")
+            return False
+        if distro == "centos-9":
+            print("  not bootable: centos-9 will not start an install and waits on source selection")
+            return False
+        if distro.startswith("rhel-9"):
+            print("  not bootable: rhel-9 will not start an install and waits on source selection")
+            return False
+
+    if image_type in ["qcow2", "generic-qcow2", "cloud-qcow2", "image-installer", "minimal-installer",
+                      "network-installer", "everything-network-installer"]:
+        if blueprint.get("customizations", {}).get("fips") and distro.startswith("fedora"):
+            print("  not bootable: fips on fedora is unstable, fails with e.g. dracut:"
+                  "FATAL: FIPS integrity test failed")
+            return False
+        # Note that this needs adjustment when we switch to librepo
+        urls = [src["url"] for src in manifest_data["sources"]["org.osbuild.curl"]["items"].values()]
+        if not any("ssh-server" in url for url in urls):
+            # This can happen e.g. when an image is build with the "minimal: true" customization.
+            # We could use guestfs to inject keys, see PR#1995
+            print(f"  not bootable: ssh-server not found in manifest {manifest_fname} ({arch} {image_type})")
+            return False
+        # We need jq in the image many images do not have it
+        # (e.g. centos-9/rhel-9 with releasever config) so skip those too
+        if not any("jq" in url for url in urls):
+            print(f"  not bootable: jq not found in {manifest_fname} ({arch} {image_type})")
+            return False
+
+    return True
