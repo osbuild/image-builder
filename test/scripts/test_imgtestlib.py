@@ -114,8 +114,9 @@ def test_read_seed():
     ),
 ))
 def test_gen_build_info_dir_path_prefix(kwargs, expected):
-    with patch("imgtestlib.imgtestlib.get_host_distro", return_value="fedora-999"), \
-         patch("imgtestlib.imgtestlib.get_osbuild_commit", return_value="abcdef123456"):
+    # we need to patch the functions that were imported into the cache namespace, not the originals in .testenv
+    with patch("imgtestlib.cache.get_host_distro", return_value="fedora-999"), \
+         patch("imgtestlib.cache.get_osbuild_commit", return_value="abcdef123456"):
         assert testlib.gen_build_info_dir_path_prefix(**kwargs) == expected
 
 
@@ -128,8 +129,8 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "arch": "aarch64",
             "manifest_id": "abc123"
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + \
-            "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/aarch64/manifest-id-abc123/",
+        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/aarch64/manifest-id-abc123/",
     ),
     (
         {
@@ -138,8 +139,8 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "distro": "fedora-41",
             "arch": "aarch64",
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + \
-            "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/aarch64/",
+        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/aarch64/",
     ),
     (
         {
@@ -147,16 +148,16 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "runner_distro": "fedora-41",
             "distro": "fedora-41",
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + \
-            "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/",
+        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/",
     ),
     (
         {
             "osbuild_ref": "abcdef123456",
             "runner_distro": "fedora-41",
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + \
-            "/osbuild-ref-abcdef123456/runner-fedora-41/",
+        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        "/osbuild-ref-abcdef123456/runner-fedora-41/",
     ),
     # Optional arg 'distro' not specified, thus following optional args 'arch' and 'manifest_id' are ignored
     (
@@ -166,8 +167,8 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "arch": "aarch64",
             "manifest_id": "abc123"
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + \
-            "/osbuild-ref-abcdef123456/runner-fedora-41/",
+        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        "/osbuild-ref-abcdef123456/runner-fedora-41/",
     ),
     # Optional arg 'arch' not specified, thus following optional arg 'manifest_id' is ignored
     (
@@ -177,8 +178,8 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "distro": "fedora-41",
             "manifest_id": "abc123"
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + \
-            "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/",
+        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/",
     ),
     # default osbuild_ref
     (
@@ -201,8 +202,9 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
     ),
 ))
 def test_gen_build_info_s3_dir_path(kwargs, expected):
-    with patch("imgtestlib.imgtestlib.get_host_distro", return_value="fedora-999"), \
-         patch("imgtestlib.imgtestlib.get_osbuild_commit", return_value="abcdef123456"):
+    # we need to patch the functions that were imported into the cache namespace, not the originals in .testenv
+    with patch("imgtestlib.cache.get_host_distro", return_value="fedora-999"), \
+         patch("imgtestlib.cache.get_osbuild_commit", return_value="abcdef123456"):
         assert testlib.gen_build_info_s3_dir_path(**kwargs) == expected
 
 
