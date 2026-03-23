@@ -124,8 +124,9 @@ def list_images(distros=None, arches=None, images=None):
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def dl_build_cache(
-        destination, distro: Optional[str]=None, arch: Optional[str]=None, osbuild_ref: Optional[str]=None,
-        runner_distro: Optional[str]=None, manifest_id: Optional[str]=None, include_only: Optional[List[str]]=None):
+        destination, distro: Optional[str] = None, arch: Optional[str] = None, osbuild_ref: Optional[str] = None,
+        runner_distro: Optional[str] = None, manifest_id: Optional[str] = None,
+        include_only: Optional[List[str]] = None):
     """
     Downloads image build cache files from the s3 bucket.
 
@@ -309,7 +310,7 @@ def _is_bootc_manifest(manifest_data):
 
 # pylint: disable=too-many-return-statements,too-many-branches
 def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, blueprint):
-    if not image_type in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
+    if image_type not in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
         return False
 
     if image_type in ["image-installer", "minimal-installer"]:
@@ -637,6 +638,7 @@ def skopeo_inspect_id(image_name: str, arch: str) -> str:
     # don't error out, just return an empty string and let the caller handle it
     return ""
 
+
 def get_tag_for(runner):
     if runner.startswith("aws/"):
         return "terraform"
@@ -644,6 +646,7 @@ def get_tag_for(runner):
         return "terraform/openstack"
 
     raise ValueError(f"Unknown runner: {runner}")
+
 
 def get_ci_runner_for(arch, image_type):
     with open(SCHUTZFILE, encoding="utf-8") as schutzfile:
