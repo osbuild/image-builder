@@ -1,0 +1,343 @@
+#!/usr/bin/env python3
+"""
+Generate the ostree manifests (configs with ostree dependencies) for a given distribution and architecture, compare them
+against the CI build cache, and build and test any images that don't have cached builds.
+"""
+import argparse
+import fnmatch
+import json
+import os
+from contextlib import contextmanager
+from tempfile import NamedTemporaryFile, TemporaryDirectory
+
+import imgtestlib as testlib
+
+
+def read_config_list():
+    with open(testlib.CONFIG_LIST, "r", encoding="utf-8") as config_list_file:
+        return json.load(config_list_file)
+
+
+def matches(name: str, filters: list[str]) -> bool:
+    return any(fnmatch.fnmatch(name, i) for i in filters)
+
+
+def configs_with_deps(configs, distro=None, arch=None):
+    """
+    Return a config list with only the config files that have dependencies.
+    Filter on distro and arch if specified.
+    """
+    with_deps = []
+    config_list_dir = os.path.abspath(os.path.dirname(testlib.CONFIG_LIST))
+    for item in configs:
+        path = item["path"]
+        filters = item["filters"]
+        # load config and check if it requires an ostree commit
+        config_path = os.path.join(config_list_dir, path)
+        with open(config_path, "r", encoding="utf-8") as config_file:
+            data = json.load(config_file)
+        if not data.get("depends"):
+            continue
+
+        # filter on distro and arch
+        distro_filters = filters.get("distros", [])
+        if distro_filters and distro and not matches(distro, distro_filters):
+            continue
+        arch_filters = filters.get("arches", [])
+        if arch_filters and arch and not matches(arch, arch_filters):
+            continue
+
+        with_deps.append({"path": config_path, "filters": filters})
+
+    return with_deps
+
+
+def gen_dependency_manifests(config_list, distro, arch, outputdir):
+    """
+    Generate manifests for the dependencies of the configs in config list (ostree container manifests that serve as the
+    payload for ostree-based disk imasges and installers. The function generates a temporary config list that maps each
+    config that appears in a dependency to the dependency image type and runs gen-manifests with that config list.
+
+    Returns a dictionary mapping manifest file name (without path) to the manifest data and its ID.
+    """
+    target = arch
+    distros = None
+    if distro:
+        target = distro + "/" + arch
+        distros = [distro]
+
+    print(f"🗒️ Generating manifests for dependencies for {target}")
+    dep_config_list: list = []  # config list for the dependencies
+    gen_image_types = set()  # set of all the image types to generate manifests for
+
+    # generate a config list for the dependencies
+    for item in config_list:
+        config_path = item["path"]
+        with open(config_path, encoding="utf-8") as config_file:
+            cfg = json.load(config_file)
+
+        dep = cfg["depends"]
+        image_type = dep["image-type"]
+
+        # dependency config path can be relative to config_path: make it absolute
+        configs_dir = os.path.abspath(os.path.dirname(config_path))
+        dep_config_path = os.path.join(configs_dir, dep["config"])
+
+        dep_config_list.append({"path": dep_config_path, "filters": {"image-types": [image_type]}})
+        gen_image_types.add(image_type)
+
+    # write dependency configs to temporary file and use as input to gen-manifests
+    with NamedTemporaryFile(mode="w") as tmpfile:
+        json.dump(dep_config_list, tmpfile)
+        tmpfile.flush()
+        err = testlib.gen_manifests(outputdir, config_list=tmpfile.name,
+                                    distros=distros, arches=[arch], images=gen_image_types)
+    # print stderr in case there were errors or warnings about skipped configurations
+    # but filter out the annoying ones
+    stderr = err.decode().splitlines()
+    for line in stderr:
+        if "No match for group package" in line:
+            continue
+        if "Failed to load consumer certs" in line:
+            continue
+        print(line)
+
+    print("✅ Manifest generation done!\n")
+    return testlib.read_manifests(outputdir)
+
+
+def gen_image_manifests(config_list, configs, distro, arch, outputdir):
+    """
+    Write the config list and configs to a temporary directory and generate the corresponding manifests in the output
+    directory. The manifest generation skips any distro + arch + image-type configuration that isn't covered by the
+    config list.
+
+    Returns a dictionary mapping manifest file name (without path) to the manifest data and its ID.
+    """
+    target = arch
+    distros = None
+    if distro:
+        target = distro + "/" + arch
+        distros = [distro]
+
+    print(f"🗒️ Generating manifests for ostree-based images for {target}")
+    with TemporaryDirectory() as tmpdir:
+        # write each config to a separate file
+        for config in configs.values():
+            with open(os.path.join(tmpdir, config["name"] + ".json"), "w", encoding="utf-8") as config_file:
+                json.dump(config, config_file)
+
+        # write config list in the same dir
+        config_list_path = os.path.join(tmpdir, "config-list.json")
+        with open(config_list_path, "w", encoding="utf-8") as config_list_file:
+            json.dump(config_list, config_list_file)
+
+        err = testlib.gen_manifests(outputdir, config_list=config_list_path,
+                                    arches=[arch], distros=distros, commits=True, skip_no_config=True)
+
+    # print stderr in case there were errors or warnings about skipped configurations
+    # but filter out the annoying ones
+    stderr = err.decode().splitlines()
+    for line in stderr:
+        if "No match for group package" in line:
+            continue
+        if "Failed to load consumer certs" in line:
+            continue
+        print(line)
+
+    print("✅ Manifest generation done!\n")
+    return testlib.read_manifests(outputdir)
+
+
+def default_ref(distro, arch):
+    name, version = distro.split("-")
+    if name == "rhel":
+        # we use dots in our RHEL versions now
+        version, *_ = version.split(".")
+        product = "edge"
+    elif name == "fedora":
+        product = "iot"
+    elif name == "centos":
+        product = "edge"
+    else:
+        raise ValueError(f"unknown distro name {name}")
+
+    return f"{name}/{version}/{arch}/{product}"     # pylint: disable=possibly-used-before-assignment
+
+
+@contextmanager
+def setup_dependencies(manifests, config_list, distro, arch):
+    # pylint: disable=too-many-statements
+    """
+    For each config in the config list, list all image configurations (distro, arch, image type) that it applies to and
+    use the manifests to find the corresponding manifest IDs. Pull and run the corresponding dependency container from
+    the registry and write a new config (and config list) that replaces the ostree options with the container URL and
+    port.
+    The config list and configs that function yields can be used to generate manifests with ostree commits resolved.
+    The containers are stopped when the context exits.
+    """
+    container_ids = []
+    new_config_list: list = []
+    new_configs = {}
+    container_configs = {}
+
+    container_ports: dict[str, int] = {}
+    for item in config_list:
+        config_path = item["path"]
+        filters = item["filters"]
+        with open(config_path, encoding="utf-8") as config_file:
+            config_data = json.load(config_file)
+        config_name = config_data["name"]
+
+        # dependency config path is relative to config file
+        dep_config_path = os.path.join(os.path.dirname(config_path), config_data["depends"]["config"])
+        with open(dep_config_path, encoding="utf-8") as dep_config_file:
+            dep_config_data = json.load(dep_config_file)
+        dep_config_name = dep_config_data["name"]
+        dep_image_type = config_data["depends"]["image-type"]
+
+        # get all image configurations that this config applies to
+        distros = filters.get("distros")
+        if distro:
+            distros = [distro]
+        arches = [arch]
+        image_configs = testlib.list_images(distros=distros, arches=arches, images=filters.get("image-types"))
+
+        distros_to_skip = []
+        for skip in filters.get("skip-distros", []):
+            distros_to_skip.append(skip["name"])
+        for image_config in image_configs:
+            ic_distro = image_config["distro"]
+            if ic_distro in distros_to_skip:
+                distro = image_config["distro"]
+                arch = image_config["arch"]
+                image_type = image_config["image-type"]
+                print(f"Skipping {distro} {arch} {image_type}: distro found in skip list")
+                continue
+            ic_arch = image_config["arch"]
+            ic_image_type = image_config["image-type"]
+            dep_build_name = testlib.gen_build_name(ic_distro, ic_arch, dep_image_type, dep_config_name)
+            manifest_id = manifests[dep_build_name + ".json"]["id"]
+            container_s3_prefix = testlib.gen_build_info_s3_dir_path(distro, arch, manifest_id)
+            container_s3_path = os.path.join(container_s3_prefix, "container", "container.tar")
+
+            # start each container once on an incremental port
+            port = container_ports.get(container_s3_path)
+            if not port:
+                # Pulling and launching the container will fail if the specific container config was never built.  This
+                # can happen if a dependency is specified that does not exist in the config-list.
+                port = 42000 + len(container_ports)
+                container_ports[container_s3_path] = port
+
+            # modify image config with container address and ref
+            config_name = config_data["name"]
+            config_name = f"{config_name}-{port}"
+            # get the ref from the current config, or compute the default if unset
+            ref = config_data.get("options", {}).get("ostree", {}).get("ref", default_ref(ic_distro, ic_arch))
+            new_config = {
+                "name": config_name,
+                "options": {
+                    "ostree": {
+                        "url": f"http://localhost:{port}/repo",
+                        "ref": ref,
+                    }
+                },
+                "blueprint": config_data.get("blueprint"),
+            }
+            new_configs[config_name] = new_config
+
+            container_configs[config_name] = {
+                "s3path": container_s3_path,
+                "port": port,
+            }
+
+            config_fname = config_name + ".json"
+            new_config_list.append({
+                "path": config_fname,
+                "filters": {
+                    "distros": [ic_distro],
+                    "arches": [ic_arch],
+                    "image-types": [ic_image_type],
+                },
+            })
+
+    try:
+        for container_s3_path, port in container_ports.items():
+            with TemporaryDirectory() as container_dir:
+                print(f"⬇️ Downloading container archive from {container_s3_path}")
+                container_archive = os.path.join(container_dir, "container.tar")
+                testlib.runcmd_nc(["aws", "s3", "cp", "--no-progress", container_s3_path, container_archive])
+                print(f"📦 Starting container oci-archive:{container_archive} {port}")
+                # Running podman as root is not necessary, but currently it's failing with permission errors.
+                # Run it with sudo for now until we figure out the issue.
+                cont_id, _ = testlib.runcmd(["sudo", "podman", "run", "-d", "--rm", f"-p{port}:8080",
+                                             f"oci-archive:{container_archive}"])
+                container_ids.append(cont_id.strip().decode())
+
+        yield new_config_list, new_configs
+    finally:
+        if container_ids:
+            print("📦 Stopping containers")
+            out, _ = testlib.runcmd(["sudo", "podman", "stop", *container_ids])
+            print(out.decode())
+
+
+def build_new_images(build_requests):
+    print(f"Building {len(build_requests)} new images")
+    for build in build_requests:
+        distro = build["distro"]
+        arch = build["arch"]
+        image_type = build["image-type"]
+        config = build["config"]
+
+        config_name = config["name"]
+
+        # The configs for these builds are generated dynamically because they depend on the local container.
+        # Write the config to a file for each build.
+        with TemporaryDirectory() as config_dir:
+            config_path = os.path.join(config_dir, config_name+".json")
+            with open(config_path, "w", encoding="utf-8") as config_file:
+                json.dump(config, config_file)
+            testlib.build_image(distro, arch, image_type, config_path)
+
+            build_name = testlib.gen_build_name(distro, arch, image_type, config_name)
+            image_search_path = os.path.join("build", build_name)
+            testlib.boot_image(image_search_path, config_path)
+            testlib.upload_results(distro, arch, image_type, config_path)
+
+    print("✅ DONE!")
+
+
+def main():
+    default_arch = os.uname().machine
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--distro", type=str, required=True, help="distribution for which to build images")
+    parser.add_argument("--arch", type=str, default=default_arch,
+                        help="architecture for which to build images (defaults to host architecture)")
+    args = parser.parse_args()
+
+    distro = args.distro
+    arch = args.arch
+
+    testlib.check_config_names()
+
+    config_list = configs_with_deps(read_config_list(), distro, arch)  # filtered config list: only configs with deps
+
+    with TemporaryDirectory() as cache_root:
+        dep_manifest_dir = os.path.join(cache_root, "dependencies")
+        dep_manifests = gen_dependency_manifests(config_list, distro, arch, dep_manifest_dir)
+
+        with setup_dependencies(dep_manifests, config_list, distro, arch) as (pull_config_list, pull_configs):
+            manifest_dir = os.path.join(cache_root, "manifests")
+            manifests = gen_image_manifests(pull_config_list, pull_configs, distro, arch, manifest_dir)
+            build_requests = testlib.filter_builds(manifests, distro=distro, arch=arch, skip_ostree_pull=False)
+
+            if len(build_requests) == 0:
+                print("⚫ No manifest changes detected. Exiting.")
+                return
+
+            build_new_images(build_requests)
+
+
+if __name__ == "__main__":
+    main()
