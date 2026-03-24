@@ -415,13 +415,21 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	runInVm, err := cmd.Flags().GetBool("in-vm")
+	if err != nil {
+		return err
+	}
 	// XXX: check env here, i.e. if user is root and osbuild is installed
 
 	// Setup osbuild environment if running in a container
 	if setup.IsContainer() {
-		if err := setup.EnsureEnvironment(cacheDir, false); err != nil {
+		if err := setup.EnsureEnvironment(cacheDir, runInVm); err != nil {
 			return fmt.Errorf("entrypoint setup failed: %w", err)
 		}
+	}
+
+	if runInVm && !setup.IsContainer() {
+		return fmt.Errorf("running in VM outside container is not supported yet")
 	}
 
 	pbar, err := progressFromCmd(cmd)
@@ -474,6 +482,9 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		WriteManifest:  withManifest,
 		WriteBuildlog:  withBuildlog,
 		Metrics:        withMetrics,
+	}
+	if runInVm {
+		buildOpts.InVm = []string{"image"}
 	}
 	pbar.SetPulseMsgf("Image building step")
 	imagePath, err := buildImage(pbar, res, mf.Bytes(), buildOpts)
@@ -663,6 +674,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
 	buildCmd.Flags().Bool("with-metrics", false, `print timing information at the end of the build`)
 	buildCmd.Flags().String("output-name", "", "set specific output basename")
+	buildCmd.Flags().Bool("in-vm", false, `run the osbuild pipeline in a virtual machine`)
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
 	// add after the rest of the uploadCmd flag set is added to avoid
@@ -681,6 +693,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 	describeImgCmd.Flags().String("arch", "", `use the different architecture`)
 	describeImgCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
+	describeImgCmd.Flags().Bool("in-vm", false, `run container in a virtual machine`)
 
 	rootCmd.AddCommand(describeImgCmd)
 
