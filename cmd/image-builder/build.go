@@ -14,6 +14,7 @@ type buildOptions struct {
 	OutputDir      string
 	StoreDir       string
 	OutputBasename string
+	InVm           []string
 
 	WriteManifest bool
 	WriteBuildlog bool
@@ -40,6 +41,7 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		StoreDir:  opts.StoreDir,
 		OutputDir: opts.OutputDir,
 		Metrics:   opts.Metrics,
+		InVm:      opts.InVm,
 	}
 	if opts.WriteBuildlog {
 		if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
