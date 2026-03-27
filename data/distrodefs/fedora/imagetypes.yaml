@@ -297,7 +297,6 @@
 
   kernel_options:
     generic_kernel_options: &generic_kernel_options
-      - "no_timer_check"
       - "console=tty1"
       - "console=ttyS0,115200n8"
       - "earlyprintk=ttyS0"
