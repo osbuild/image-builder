@@ -3572,7 +3572,6 @@ image_types:
       supported_options:
         - "distro"
         - "customizations.fips"
-        - "customizations.locale"
 
   "pxe-tar-xz":
     filename: "pxe.tar.xz"

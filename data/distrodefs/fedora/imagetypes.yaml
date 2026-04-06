@@ -2551,7 +2551,6 @@ image_types:
         - "customizations.group"
         - "customizations.installer"
         - "customizations.kernel.append"
-        - "customizations.locale"
         - "customizations.user"
 
   "server-network-installer":
