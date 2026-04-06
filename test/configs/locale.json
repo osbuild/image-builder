@@ -1,0 +1,15 @@
+{
+  "name": "locale",
+  "blueprint": {
+    "name": "locale",
+    "description": "Locale only to test network installers",
+    "version": "1.0",
+    "customizations": {
+      "locale": {
+        "languages": [
+          "en_US.UTF-8"
+        ]
+      }
+    }
+  }
+}

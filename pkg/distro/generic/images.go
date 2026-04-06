@@ -1310,40 +1310,22 @@ func networkInstallerImage(t *imageType,
 
 	var err error
 	img.Kickstart, err = kickstart.New(customizations)
-
 	if err != nil {
 		return nil, err
 	}
-
-	// So this is slightly funky. Normally we set these kickstart options based on the
-	// OSCustomizations. I've explicitly chosen not to do that because the values in
-	// OSCustomizations can come either from the image config *or* from the blueprint.
-	// Since OSCustomizations *always* contains values we cannot determine based on it
-	// if we want a kickstart or not.
-
-	// With the duplication below we only add a kickstart if the user actually provided
-	// values through the blueprint instead of always.
-	language, keyboard := customizations.GetPrimaryLocale()
-
-	if language != nil {
-		img.Language = *language
-		img.Kickstart.Language = language
-	}
-
-	if keyboard != nil {
-		img.Kickstart.Keyboard = keyboard
-	}
-
-	timezone, _ := customizations.GetTimezoneSettings()
-	if timezone != nil {
-		img.Kickstart.Timezone = timezone
-	}
+	// NOTE: The network installer only supports adding users and groups
 
 	// If we have an empty kickstart options we don't want to put it on
 	// the image at all as an empty kickstart will create an empty kickstart
 	// file. In the netinst case we want *no* kickstart file at all.
 	if img.Kickstart.IsZero() {
 		img.Kickstart = nil
+	}
+
+	language, _ := customizations.GetPrimaryLocale()
+
+	if language != nil {
+		img.Language = *language
 	}
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]

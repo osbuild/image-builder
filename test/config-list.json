@@ -805,5 +805,31 @@
         "generic-ami"
       ]
     }
+  },
+  {
+    "path": "./configs/locale.json",
+    "filters": {
+      "distros": [
+        "rhel-10*",
+        "rhel-9*",
+        "rhel-8*",
+        "centos*"
+      ],
+      "image-types": [
+          "network-installer"
+      ]
+    }
+  },
+  {
+    "path": "./configs/locale.json",
+    "filters": {
+      "distros": [
+        "fedora*"
+      ],
+      "image-types": [
+          "everything-network-installer",
+          "server-network-installer"
+      ]
+    }
   }
 ]
