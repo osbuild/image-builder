@@ -1,7 +1,7 @@
 {
-  "name": "f42-x86-cuda-drivers",
+  "name": "f43-x86-cuda-drivers",
   "blueprint": {
-    "name": "f42-x86-cuda-drivers",
+    "name": "f43-x86-cuda-drivers",
     "description": "Verifies that the cuda-drivers package, which uses %pretrans scripts, can be installed correctly.",
     "version": "1.0",
     "packages": [
@@ -16,7 +16,7 @@
   "custom_repos": [
     {
       "name": "cuda-drivers",
-      "baseurls": ["https://developer.download.nvidia.com/compute/cuda/repos/fedora42/x86_64/"]
+      "baseurls": ["https://developer.download.nvidia.com/compute/cuda/repos/fedora43/x86_64/"]
     }
   ]
 }
