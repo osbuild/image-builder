@@ -388,7 +388,6 @@
           - "qed-firmware"
           - "realtek-firmware"
           - "tiwilink-firmware"
-          - "zd1211-firmware"
       build_packages:
         booting:
           - "shim-ia32"
@@ -397,6 +396,12 @@
       bootloader: "grub2"
       extra_uefi_architectures:
         - "ia32"
+    x86_64_installer_platform_compat: &x86_64_installer_platform_compat
+      <<: *x86_64_installer_platform
+      packages:
+        <<: *x86_64_installer_platform_packages
+        compat:
+          - "zd1211-firmware"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
@@ -413,7 +418,7 @@
     aarch64_installer_platform: &aarch64_installer_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
-      packages:
+      packages: &aarch64_installer_platform_packages
         <<: *aarch64_uefi_platform_packages
         booting:
           - "arm-image-installer"
@@ -442,8 +447,13 @@
           - "qed-firmware"
           - "realtek-firmware"
           - "tiwilink-firmware"
-          - "zd1211-firmware"
       bootloader: "grub2"
+    aarch64_installer_platform_compat: &aarch64_installer_platform_compat
+      <<: *aarch64_installer_platform
+      packages:
+        <<: *aarch64_installer_platform_packages
+        compat:
+          - "zd1211-firmware"
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bios_platform: "powerpc-ieee1275"
@@ -463,7 +473,7 @@
     ppc64le_installer_platform: &ppc64le_installer_platform
       <<: *ppc64le_bios_platform
       image_format: "qcow2"
-      packages:
+      packages: &ppc64le_installer_platform_packages
         <<: *ppc64le_bios_platform_packages
         booting:
           - "lsvpd"
@@ -489,6 +499,11 @@
           - "qed-firmware"
           - "realtek-firmware"
           - "tiwilink-firmware"
+    ppc64le_installer_platform_compat: &ppc64le_installer_platform_compat
+      <<: *ppc64le_installer_platform
+      packages:
+        <<: *ppc64le_installer_platform_packages
+        compat:
           - "zd1211-firmware"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
@@ -1234,6 +1249,15 @@
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
+
     blueprint:
       supported_options:
         - "distro"
@@ -1530,6 +1554,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     package_sets:
       os:
         - include:
@@ -1672,6 +1704,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
 
   "iot-raw-xz":
     <<: *rpm_ostree_imgtype_common
@@ -2055,6 +2095,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     blueprint:
       supported_options:
         - "distro"
@@ -2125,6 +2173,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     blueprint:
       supported_options:
         - "distro"
@@ -2167,6 +2223,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     package_sets:
       os:
         - *minimal_raw_pkgset
@@ -2544,6 +2608,16 @@ image_types:
       - *aarch64_installer_platform
       - *ppc64le_installer_platform
       - *s390x_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
+            - *ppc64le_installer_platform_compat
+            - *s390x_installer_platform
     blueprint:
       supported_options:
         - "distro"
