@@ -1,6 +1,7 @@
 package generic
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/defs"
 )
@@ -105,4 +107,30 @@ func TestInstallerCustomizationsOverridePreview(t *testing.T) {
 		assert.Equal(t, tc.expected, isc.Preview)
 	}
 
+}
+
+func TestReplaceBasictemplate(t *testing.T) {
+	for _, tc := range []struct {
+		input    string
+		arch     arch.Arch
+		expected string
+	}{
+		{
+			input:    "$arch",
+			arch:     arch.ARCH_X86_64,
+			expected: arch.ARCH_X86_64.String(),
+		},
+		{
+			input:    "foo/$arch/bar",
+			arch:     arch.ARCH_AARCH64,
+			expected: fmt.Sprintf("foo/%s/bar", arch.ARCH_AARCH64.String()),
+		},
+		{
+			input:    "foo",
+			arch:     arch.ARCH_AARCH64,
+			expected: "foo",
+		},
+	} {
+		assert.Equal(t, replaceBasicTemplate(tc.input, tc.arch), tc.expected)
+	}
 }
