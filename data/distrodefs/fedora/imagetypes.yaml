@@ -284,12 +284,6 @@
             - dmidecode
 
   cloud_init_services: &cloud_init_services
-    - "cloud-init.service"
-    - "cloud-config.service"
-    - "cloud-final.service"
-    - "cloud-init-local.service"
-
-  cloud_init_services_f43plus: &cloud_init_services_f43plus
     - "cloud-init-network.service"
     - "cloud-config.service"
     - "cloud-final.service"
@@ -611,25 +605,8 @@
         - "NetworkManager.service"
         - "firewalld.service"
         - "sshd.service"
-        - "greenboot-grub2-set-counter"
-        - "greenboot-grub2-set-success"
         - "greenboot-healthcheck"
-        - "greenboot-rpm-ostree-grub2-check-fallback"
-        - "greenboot-status"
-        - "greenboot-task-runner"
-        - "redboot-auto-reboot"
-        - "redboot-task-runner"
       kernel_options: *ostree_deployment_kernel_options
-      conditions:
-        "f43 uses new greenboot":
-          when:
-            version_greater_or_equal: "43"
-          shallow_merge:
-            enabled_services:
-              - "NetworkManager.service"
-              - "firewalld.service"
-              - "sshd.service"
-              - "greenboot-healthcheck"
 
     iot: &image_config_iot
       <<: *image_config_iot_enabled_services
@@ -1197,6 +1174,8 @@
             - "console=tty1"
             - "console=ttyS0,115200n8"
             - "systemd.firstboot=off"
+          enabled_services:
+            *cloud_init_services
         blueprint:
           supported_options: *supported_options_disk
         platforms:
@@ -1320,19 +1299,8 @@ image_types:
     exports: ["archive"]
     required_partition_sizes: *default_required_dir_sizes
     image_config: &image_config_vagrant
-      conditions:
-        "f42 and below cloud init service names":
-          when:
-            version_less_than: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services
-        "f43 and above new cloud init service names":
-          when:
-            version_greater_or_equal: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services_f43plus
+      enabled_services:
+        *cloud_init_services
       default_target: "multi-user.target"
       kernel_options: *generic_kernel_options
       users:
@@ -1384,19 +1352,8 @@ image_types:
     image_config: &image_config_qcow2
       default_target: "multi-user.target"
       kernel_options: *generic_kernel_options
-      conditions:
-        "f42 and below cloud init service names":
-          when:
-            version_less_than: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services
-        "f43 and above new cloud init service names":
-          when:
-            version_greater_or_equal: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services_f43plus
+      enabled_services:
+        *cloud_init_services
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -1487,19 +1444,8 @@ image_types:
         image_format: "vmdk"
     image_config:
       locale: "en_US.UTF-8"
-      conditions:
-        "f42 and below cloud init service names":
-          when:
-            version_less_than: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services
-        "f43 and above new cloud init service names":
-          when:
-            version_greater_or_equal: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services_f43plus
+      enabled_services:
+        *cloud_init_services
       kernel_options: *generic_kernel_options
     partition_table:
       <<: *default_partition_tables
@@ -1607,6 +1553,7 @@ image_types:
             - "dracut-network"
             - "e2fsprogs"
             - "efibootmgr"
+            - "filesystem"
             - "fdo-client"
             - "fdo-owner-cli"
             - "fedora-iot-config"
@@ -1672,18 +1619,6 @@ image_types:
             - "xz"
             - "zram-generator"
           conditions:
-            "f42 and below uses basesystem":
-              when:
-                version_less_than: "43"
-              append:
-                include:
-                  - "basesystem"
-            "f43+ needs the filesystem pkg":
-              when:
-                version_greater_or_equal: "43"
-              append:
-                include:
-                  - "filesystem"
             "f44 does not have ssh-key-dir":
               when:
                 version_less_than: "44"
@@ -1992,12 +1927,6 @@ image_types:
       - *riscv64_uefi_platform
     disk_config:
       mount_configuration: "units"
-      conditions:
-        "f42 and below was quite different":
-          when:
-            version_less_than: "43"
-          shallow_merge:
-            mount_configuration: "fstab"
     image_config:
       # NOTE: initial-setup doesn't allow a system to be reconfigured
       # NOTE: if certain files are already configured (locale, users,
@@ -2022,19 +1951,6 @@ image_types:
         - "sshd.service"
       kernel_options:
         - "rw"
-      conditions:
-        "f42 and below was quite different":
-          when:
-            version_less_than: "43"
-          shallow_merge:
-            install_weak_deps: true
-            enabled_services:
-              - "NetworkManager.service"
-              - "initial-setup.service"
-              - "sshd.service"
-              - "firewalld.service"
-            kernel_options:
-              - "ro"
     partition_table:
       <<: *minimal_raw_partition_tables
     package_sets:
@@ -2054,13 +1970,7 @@ image_types:
             - "realtek-firmware"
           exclude:
             - "dracut-config-rescue"
-          conditions:
-            "no firewalld on f43+":
-              when:
-                version_greater_or_equal: "43"
-              append:
-                exclude:
-                  - "firewalld"
+            - "firewalld"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -2157,6 +2067,7 @@ image_types:
             - "anaconda-install-env-deps"
             - "anaconda-live"
             - "anaconda-dracut"
+            - "anaconda-webui"
             - "dracut-live"
             - "glibc-all-langpacks"
             - "kernel"
@@ -2175,15 +2086,6 @@ image_types:
             - "gfs2-utils"
             - "reiserfs-utils"
             - "sdubby"
-          conditions:
-            "include anaconda webui in 43+":
-              when:
-                version_greater_or_equal: "43"
-              append:
-                # XXX: this was VERSION_RAWHIDE, if we need this again lets add
-                # "alias" to defs.DistroYAML
-                include:
-                  - "anaconda-webui"
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
@@ -2376,31 +2278,11 @@ image_types:
       - arch: "x86_64"
     image_config:
       <<: *image_config_container
-      conditions:
-        "on f42 and below we use cloud-init instead of wsl-setup":
-          when:
-            version_less_than: "42"
-          shallow_merge:
-            wsl:
-              config:
-                boot_systemd: true
-            cloud_init:
-              - filename: "99_wsl.cfg"
-                config:
-                  datasource_list:
-                    - "WSL"
-                    - "None"
-                  network:
-                    config: "disabled"
-        # https://github.com/microsoft/WSL/issues/13207
-        "work around WSL not reading /etc/locale.conf":
-          when:
-            version_greater_or_equal: "43"
-          shallow_merge:
-            files:
-              - path: "/etc/default/locale"
-                data: |
-                  LANG=C.UTF-8
+      # https://github.com/microsoft/WSL/issues/13207
+      files:
+        - path: "/etc/default/locale"
+          data: |
+            LANG=C.UTF-8
     package_sets:
       os:
         - include:
@@ -2727,21 +2609,7 @@ image_types:
     filename: "disk.qcow2"
     mime_type: "application/x-qemu-disk"
     exports: ["qcow2"]
-    image_config:
-      <<: *cloud_base_image_config
-      conditions:
-        "f42 and below cloud init service names":
-          when:
-            version_less_than: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services
-        "f43 and above new cloud init service names":
-          when:
-            version_greater_or_equal: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services_f43plus
+    image_config: *cloud_base_image_config
     package_sets:
       os:
         - *cloud_core_pkgset
@@ -2763,21 +2631,7 @@ image_types:
     compression: "xz"
     mime_type: "application/xz"
     exports: ["xz"]
-    image_config:
-      <<: *cloud_base_image_config
-      conditions:
-        "f42 and below cloud init service names":
-          when:
-            version_less_than: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services
-        "f43 and above new cloud init service names":
-          when:
-            version_greater_or_equal: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services_f43plus
+    image_config: *cloud_base_image_config
     package_sets:
       os:
         - *cloud_core_pkgset
@@ -2791,21 +2645,7 @@ image_types:
     filename: "disk.vhd"
     mime_type: "application/x-vhd"
     exports: ["vpc"]  # XXX Should be .vhd.xz
-    image_config:
-      <<: *cloud_base_image_config
-      conditions:
-        "f42 and below cloud init service names":
-          when:
-            version_less_than: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services
-        "f43 and above new cloud init service names":
-          when:
-            version_greater_or_equal: "43"
-          shallow_merge:
-            enabled_services:
-              *cloud_init_services_f43plus
+    image_config: *cloud_base_image_config
     package_sets:
       os:
         - *cloud_core_pkgset
@@ -2841,7 +2681,9 @@ image_types:
         image_format: "gce"
       - <<: *aarch64_platform
         image_format: "gce"
-    image_config: *cloud_base_image_config
+    image_config:
+      <<: *cloud_base_image_config
+      enabled_services: []
 
   "bootc-rpm-installer":
     # Note that this image type is partial and only used by
