@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/bootc"
@@ -536,7 +537,8 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 				}
 
 				for _, reference := range bpFlatpak.References {
-					ref, err := flatpak.NewReferenceFromString(reference)
+					tpl := replaceBasicTemplate(reference, t.arch.arch)
+					ref, err := flatpak.NewReferenceFromString(tpl)
 					if err != nil {
 						return isc, err
 					}
@@ -1464,4 +1466,12 @@ func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultURL, defaultRe
 		Ref:  ref,
 		RHSM: rhsm,
 	}, nil
+}
+
+// replace basic variables that might come from blueprint(s), these are not intended to be
+// used elsewhere and are thus called only in specific places
+// concretely this is because we need to template the flatpak references coming from pungi
+// configs. they're currently only applied there; other places will need further discussion
+func replaceBasicTemplate(input string, architecture arch.Arch) string {
+	return strings.ReplaceAll(input, "$arch", architecture.String())
 }
