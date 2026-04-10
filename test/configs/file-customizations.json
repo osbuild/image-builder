@@ -4,11 +4,6 @@
     "name": "file-customizations",
     "description": "Simple blueprint with directory and file customizations. jq is added for the check-host-config script.",
     "version": "1.0",
-    "packages": [
-      {
-        "name": "jq"
-      }
-    ],
     "customizations": {
       "directories": [
         {

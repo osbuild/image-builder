@@ -1,0 +1,4 @@
+# Collapse by default on GitHub
+test/data/manifest-checksums/** linguist-generated
+
+go.sum linguist-generated

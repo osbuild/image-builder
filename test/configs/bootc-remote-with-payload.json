@@ -1,0 +1,14 @@
+{
+  "name": "bootc-remote-with-payload",
+  "blueprint": {
+    "name": "bootc-remote-with-payload",
+    "description": "Blueprint for bootc-installer with payload container and remote container source.",
+    "version": "1.0"
+  },
+  "options": {
+    "bootc": {
+      "installer_payload_ref": "payload-container-fake-ref",
+      "use_remote_container_source": true
+    }
+  }
+}

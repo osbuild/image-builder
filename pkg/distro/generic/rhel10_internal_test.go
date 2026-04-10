@@ -26,7 +26,7 @@ func TestRH10DistroFactory(t *testing.T) {
 		},
 		{
 			strID:    "rhel-10.0",
-			expected: common.Must(newDistro("rhel-10.0")),
+			expected: common.Must(New("rhel-10.0")),
 		},
 		{
 			strID:    "rhel-103",
@@ -34,7 +34,7 @@ func TestRH10DistroFactory(t *testing.T) {
 		},
 		{
 			strID:    "rhel-10.3",
-			expected: common.Must(newDistro("rhel-10.3")),
+			expected: common.Must(New("rhel-10.3")),
 		},
 		{
 			strID:    "rhel-1010",
@@ -42,11 +42,11 @@ func TestRH10DistroFactory(t *testing.T) {
 		},
 		{
 			strID:    "rhel-10.10",
-			expected: common.Must(newDistro("rhel-10.10")),
+			expected: common.Must(New("rhel-10.10")),
 		},
 		{
 			strID:    "centos-10",
-			expected: common.Must(newDistro("centos-10")),
+			expected: common.Must(New("centos-10")),
 		},
 	}
 
@@ -94,7 +94,7 @@ func TestRhel10_NoBootPartition(t *testing.T) {
 func TestESP(t *testing.T) {
 	var distros []distro.Distro
 	for _, distroName := range []string{"rhel-10.0", "centos-10"} {
-		distros = append(distros, common.Must(newDistro(distroName)))
+		distros = append(distros, common.Must(New(distroName)))
 	}
 
 	distro_test_common.TestESP(t, distros, func(i distro.ImageType) (*disk.PartitionTable, error) {

@@ -21,7 +21,7 @@ func TestSimplifiedInstallerDracut(t *testing.T) {
 	img := image.NewOSTreeSimplifiedInstaller(testPlatform, "filename", ostreeDiskImage, "")
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	testModules := []string{"test-module"}
 	testDrivers := []string{"test-driver"}

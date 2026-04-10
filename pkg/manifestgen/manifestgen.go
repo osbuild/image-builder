@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -39,8 +40,13 @@ var (
 // Options contains the optional settings for the manifest generation.
 // For unset values defaults will be used.
 type Options struct {
+	// Cachedir specified the rpmmd cache directory (rpm metadata)
+	// If unset a default based on the xdgCacheHome is used
+	// (e.g. /root/.cache/osbuild-store)
 	Cachedir string
 
+	// RpmDownloader allows to switch between the librepo and
+	// libcurl download backends.
 	RpmDownloader osbuild.RpmDownloader
 
 	// SBOMWriter will be called for each generated SBOM the
@@ -71,6 +77,7 @@ type Options struct {
 	Depsolve          DepsolveFunc
 	ContainerResolver ContainerResolverFunc
 	CommitResolver    CommitResolverFunc
+	FlatpakResolver   FlatpakResolverFunc
 
 	// Use the a bootstrap container to buildroot (useful for e.g.
 	// cross-arch or cross-distro builds)
@@ -85,6 +92,7 @@ type Generator struct {
 	depsolve               DepsolveFunc
 	containerResolver      ContainerResolverFunc
 	commitResolver         CommitResolverFunc
+	flatpakResolver        FlatpakResolverFunc
 	sbomWriter             SBOMWriterFunc
 	warningsOutput         io.Writer
 	depsolveWarningsOutput io.Writer
@@ -123,10 +131,15 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		mg.depsolve = DefaultDepsolve
 	}
 	if mg.containerResolver == nil {
-		mg.containerResolver = DefaultContainerResolver
+		mg.containerResolver = func(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
+			return container.NewBlockingResolver(archName).ResolveAll(containerSources)
+		}
 	}
 	if mg.commitResolver == nil {
-		mg.commitResolver = DefaultCommitResolver
+		mg.commitResolver = ostree.ResolveAll
+	}
+	if mg.flatpakResolver == nil {
+		mg.flatpakResolver = flatpak.ResolveAll
 	}
 	if mg.cacheDir == "" {
 		xdgCacheHomeDir, err := xdgCacheHome()
@@ -217,10 +230,17 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 	if err != nil {
 		return nil, err
 	}
+
+	flatpakSpecs, err := mg.flatpakResolver(preManifest.GetFlatpakSourceSpecs())
+	if err != nil {
+		return nil, err
+	}
+
 	opts := &manifest.SerializeOptions{
 		RpmDownloader: mg.rpmDownloader,
 	}
-	mf, err := preManifest.Serialize(depsolved, containerSpecs, commitSpecs, opts)
+
+	mf, err := preManifest.Serialize(depsolved, containerSpecs, commitSpecs, flatpakSpecs, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -280,66 +300,13 @@ func DefaultDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarnin
 		solver.Stderr = depsolveWarningsOutput
 	}
 
-	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
-	for name, pkgSet := range packageSets {
-		// Always generate Spdx SBOMs for now, this makes the
-		// default depsolve slightly slower but it means we
-		// need no extra argument here to select the SBOM
-		// type. Once we have more types than Spdx of course
-		// we need to add a option to select the type.
-		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeSpdx)
-		if err != nil {
-			return nil, fmt.Errorf("error depsolving: %w", err)
-		}
-		depsolvedSets[name] = *res
-	}
-	return depsolvedSets, nil
-}
-
-func resolveContainers(containers []container.SourceSpec, archName string) ([]container.Spec, error) {
-	resolver := container.NewBlockingResolver(archName)
-
-	for _, c := range containers {
-		resolver.Add(c)
-	}
-
-	return resolver.Finish()
-}
-
-// DefaultContainersResolve provides a default implementation for
-// container resolving.
-// It should rarely be necessary to use it directly and will be used
-// by default by manifestgen (unless overriden)
-func DefaultContainerResolver(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
-	containerSpecs := make(map[string][]container.Spec, len(containerSources))
-	for plName, sourceSpecs := range containerSources {
-		specs, err := resolveContainers(sourceSpecs, archName)
-		if err != nil {
-			return nil, fmt.Errorf("error container resolving: %w", err)
-		}
-		containerSpecs[plName] = specs
-	}
-	return containerSpecs, nil
-}
-
-// DefaultCommitResolver provides a default implementation for
-// ostree commit resolving.
-// It should rarely be necessary to use it directly and will be used
-// by default by manifestgen (unless overriden)
-func DefaultCommitResolver(commitSources map[string][]ostree.SourceSpec) (map[string][]ostree.CommitSpec, error) {
-	commits := make(map[string][]ostree.CommitSpec, len(commitSources))
-	for name, commitSources := range commitSources {
-		commitSpecs := make([]ostree.CommitSpec, len(commitSources))
-		for idx, commitSource := range commitSources {
-			var err error
-			commitSpecs[idx], err = ostree.Resolve(commitSource)
-			if err != nil {
-				return nil, fmt.Errorf("error ostree commit resolving: %w", err)
-			}
-		}
-		commits[name] = commitSpecs
-	}
-	return commits, nil
+	// Always generate Spdx SBOMs for now, this makes the
+	// default depsolve slightly slower but it means we
+	// need no extra argument here to select the SBOM
+	// type. Once we have more types than Spdx of course
+	// we need to add a option to select the type.
+	solver.SetSBOMType(sbom.StandardTypeSpdx)
+	return solver.DepsolveAll(packageSets)
 }
 
 type (
@@ -348,6 +315,8 @@ type (
 	ContainerResolverFunc func(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error)
 
 	CommitResolverFunc func(commitSources map[string][]ostree.SourceSpec) (map[string][]ostree.CommitSpec, error)
+
+	FlatpakResolverFunc func(flatpakSources map[string][]flatpak.SourceSpec) (map[string][]flatpak.Spec, error)
 
 	SBOMWriterFunc func(filename string, content io.Reader, docType sbom.StandardType) error
 )

@@ -2,7 +2,7 @@ package generic_test
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,80 +37,80 @@ func TestFedoraFilenameFromType(t *testing.T) {
 	}
 	tests := []testCfg{
 		{
-			name: "server-ami",
-			args: args{"server-ami"},
+			name: "generic-ami",
+			args: args{"generic-ami"},
 			want: wantResult{
 				filename: "image.raw",
 				mimeType: "application/octet-stream",
 			},
 		},
 		{
-			name: "server-qcow2",
-			args: args{"server-qcow2"},
+			name: "generic-qcow2",
+			args: args{"generic-qcow2"},
 			want: wantResult{
 				filename: "disk.qcow2",
 				mimeType: "application/x-qemu-disk",
 			},
 		},
 		{
-			name: "server-vagrant-libvirt",
-			args: args{"server-vagrant-libvirt"},
+			name: "generic-vagrant-libvirt",
+			args: args{"generic-vagrant-libvirt"},
 			want: wantResult{
 				filename: "vagrant-libvirt.box",
 				mimeType: "application/x-tar",
 			},
 		},
 		{
-			name: "server-vagrant-virtualbox",
-			args: args{"server-vagrant-virtualbox"},
+			name: "generic-vagrant-virtualbox",
+			args: args{"generic-vagrant-virtualbox"},
 			want: wantResult{
 				filename: "vagrant-virtualbox.box",
 				mimeType: "application/x-tar",
 			},
 		},
 		{
-			name: "server-openstack",
-			args: args{"server-openstack"},
+			name: "generic-openstack",
+			args: args{"generic-openstack"},
 			want: wantResult{
 				filename: "disk.qcow2",
 				mimeType: "application/x-qemu-disk",
 			},
 		},
 		{
-			name: "server-vhd",
-			args: args{"server-vhd"},
+			name: "generic-vhd",
+			args: args{"generic-vhd"},
 			want: wantResult{
 				filename: "disk.vhd",
 				mimeType: "application/x-vhd",
 			},
 		},
 		{
-			name: "server-vmdk",
-			args: args{"server-vmdk"},
+			name: "generic-vmdk",
+			args: args{"generic-vmdk"},
 			want: wantResult{
 				filename: "disk.vmdk",
 				mimeType: "application/x-vmdk",
 			},
 		},
 		{
-			name: "server-ova",
-			args: args{"server-ova"},
+			name: "generic-ova",
+			args: args{"generic-ova"},
 			want: wantResult{
 				filename: "image.ova",
 				mimeType: "application/ovf",
 			},
 		},
 		{
-			name: "container",
-			args: args{"container"},
+			name: "generic-container",
+			args: args{"generic-container"},
 			want: wantResult{
 				filename: "container.tar",
 				mimeType: "application/x-tar",
 			},
 		},
 		{
-			name: "wsl",
-			args: args{"wsl"},
+			name: "generic-wsl",
+			args: args{"generic-wsl"},
 			want: wantResult{
 				filename: "image.wsl",
 				mimeType: "application/x-tar",
@@ -330,7 +330,7 @@ func TestFedoraImageType_Name(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
-				"server-ami",
+				"generic-ami",
 				"minimal-installer",
 				"iot-commit",
 				"iot-container",
@@ -340,15 +340,23 @@ func TestFedoraImageType_Name(t *testing.T) {
 				"workstation-live-installer",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
-				"server-oci",
-				"server-openstack",
-				"server-ova",
+				"generic-oci",
+				"generic-openstack",
+				"generic-ova",
+				"generic-qcow2",
+				"generic-vhd",
+				"generic-vmdk",
+				"generic-vagrant-libvirt",
+				"generic-vagrant-virtualbox",
+				"generic-wsl",
 				"server-qcow2",
-				"server-vhd",
-				"server-vmdk",
-				"server-vagrant-libvirt",
-				"server-vagrant-virtualbox",
-				"wsl",
+				"kinoite-installer",
+				"kinoite-qcow2",
+				"silverblue-installer",
+				"silverblue-qcow2",
+				"sway-atomic-installer",
+				"budgie-atomic-installer",
+				"cosmic-atomic-installer",
 			},
 			verTypes: map[string][]string{
 				"40": {
@@ -364,7 +372,7 @@ func TestFedoraImageType_Name(t *testing.T) {
 		{
 			arch: "aarch64",
 			imgNames: []string{
-				"server-ami",
+				"generic-ami",
 				"minimal-installer",
 				"iot-commit",
 				"iot-container",
@@ -373,10 +381,18 @@ func TestFedoraImageType_Name(t *testing.T) {
 				"iot-raw-xz",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
-				"server-oci",
-				"server-openstack",
+				"generic-oci",
+				"generic-openstack",
+				"generic-qcow2",
+				"generic-vagrant-libvirt",
 				"server-qcow2",
-				"server-vagrant-libvirt",
+				"kinoite-installer",
+				"kinoite-qcow2",
+				"silverblue-installer",
+				"silverblue-qcow2",
+				"sway-atomic-installer",
+				"budgie-atomic-installer",
+				"cosmic-atomic-installer",
 			},
 			verTypes: map[string][]string{
 				"40": {
@@ -492,8 +508,8 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
-				"server-ami",
-				"container",
+				"generic-ami",
+				"generic-container",
 				"minimal-installer",
 				"iot-commit",
 				"iot-container",
@@ -503,26 +519,39 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"workstation-live-installer",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
-				"server-oci",
-				"server-openstack",
-				"server-ova",
+				"generic-oci",
+				"generic-openstack",
+				"generic-ova",
+				"generic-qcow2",
+				"generic-vhd",
+				"generic-vmdk",
+				"generic-vagrant-libvirt",
+				"generic-vagrant-virtualbox",
+				"generic-wsl",
 				"server-qcow2",
-				"server-vhd",
-				"server-vmdk",
-				"server-vagrant-libvirt",
-				"server-vagrant-virtualbox",
-				"wsl",
+				"cloud-azure",
+				"cloud-ec2",
+				"cloud-gce",
+				"cloud-qcow2",
 				"iot-bootable-container",
 				"iot-simplified-installer",
 				"everything-network-installer",
+				"server-network-installer",
 				"pxe-tar-xz",
+				"kinoite-installer",
+				"kinoite-qcow2",
+				"silverblue-installer",
+				"silverblue-qcow2",
+				"sway-atomic-installer",
+				"budgie-atomic-installer",
+				"cosmic-atomic-installer",
 			},
 		},
 		{
 			arch: "aarch64",
 			imgNames: []string{
-				"server-ami",
-				"container",
+				"generic-ami",
+				"generic-container",
 				"minimal-installer",
 				"iot-commit",
 				"iot-container",
@@ -532,36 +561,57 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"workstation-live-installer",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
-				"server-oci",
-				"server-openstack",
+				"generic-oci",
+				"generic-openstack",
+				"generic-qcow2",
+				"generic-vagrant-libvirt",
 				"server-qcow2",
-				"server-vagrant-libvirt",
+				"cloud-azure",
+				"cloud-ec2",
+				"cloud-gce",
+				"cloud-qcow2",
 				"iot-bootable-container",
 				"iot-simplified-installer",
 				"everything-network-installer",
+				"server-network-installer",
 				"pxe-tar-xz",
+				"kinoite-installer",
+				"kinoite-qcow2",
+				"silverblue-installer",
+				"silverblue-qcow2",
+				"sway-atomic-installer",
+				"budgie-atomic-installer",
+				"cosmic-atomic-installer",
 			},
 		},
 		{
 			arch: "ppc64le",
 			imgNames: []string{
-				"container",
+				"generic-container",
+				"generic-qcow2",
 				"server-qcow2",
+				"cloud-qcow2",
 				"iot-bootable-container",
+				"everything-network-installer",
+				"server-network-installer",
 			},
 		},
 		{
 			arch: "s390x",
 			imgNames: []string{
-				"container",
+				"generic-container",
+				"generic-qcow2",
+				"everything-network-installer",
+				"server-network-installer",
 				"server-qcow2",
+				"cloud-qcow2",
 				"iot-bootable-container",
 			},
 		},
 		{
 			arch: "riscv64",
 			imgNames: []string{
-				"container",
+				"generic-container",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
 			},
@@ -579,8 +629,8 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				expectedImageTypes = append(expectedImageTypes, mapping.imgNames...)
 				expectedImageTypes = append(expectedImageTypes, mapping.verTypes[dist.Releasever()]...)
 
-				sort.Strings(expectedImageTypes)
-				sort.Strings(imageTypes)
+				slices.Sort(expectedImageTypes)
+				slices.Sort(imageTypes)
 				require.Equal(t, expectedImageTypes, imageTypes, "extra images for arch %v", arch.Name())
 			}
 		})
@@ -699,15 +749,19 @@ func TestFedoraESP(t *testing.T) {
 func TestFedoraDistroBootstrapRef(t *testing.T) {
 	for _, fedoraDistro := range fedoraFamilyDistros {
 		for _, archName := range fedoraDistro.ListArches() {
-			arch, err := fedoraDistro.GetArch(archName)
+			distroArch, err := fedoraDistro.GetArch(archName)
 			require.NoError(t, err)
-			for _, imgTypeName := range arch.ListImageTypes() {
-				imgType, err := arch.GetImageType(imgTypeName)
+			for _, imgTypeName := range distroArch.ListImageTypes() {
+				imgType, err := distroArch.GetImageType(imgTypeName)
 				require.NoError(t, err)
-				if arch.Name() == "riscv64" {
-					require.Equal(t, "ghcr.io/mvo5/fedora-buildroot:"+fedoraDistro.OsVersion(), generic.BootstrapContainerFor(imgType))
+				if distroArch.Name() == "riscv64" {
+					bootstrapRef, err := imgType.Arch().Distro().BootstrapContainer(distroArch.Name())
+					require.NoError(t, err)
+					require.Equal(t, "ghcr.io/mvo5/fedora-buildroot:"+fedoraDistro.OsVersion(), bootstrapRef)
 				} else {
-					require.Equal(t, "registry.fedoraproject.org/fedora-toolbox:"+fedoraDistro.OsVersion(), generic.BootstrapContainerFor(imgType))
+					bootstrapRef, err := imgType.Arch().Distro().BootstrapContainer(distroArch.Name())
+					require.NoError(t, err)
+					require.Equal(t, "registry.fedoraproject.org/fedora-toolbox:"+fedoraDistro.OsVersion(), bootstrapRef)
 				}
 			}
 		}

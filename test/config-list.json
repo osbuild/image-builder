@@ -11,7 +11,9 @@
       ],
       "image-types": [
         "ami",
-        "server-ami"
+        "generic-ami",
+        "generic-qcow2",
+        "server-qcow2"
       ]
     }
   },
@@ -21,12 +23,10 @@
       "distros": [
         "rhel-9.4",
         "rhel-8.10",
-        "centos*",
-        "fedora*"
+        "centos*"
       ],
       "image-types": [
-        "qcow2",
-        "server-qcow2"
+        "qcow2"
       ]
     }
   },
@@ -42,7 +42,7 @@
       ],
       "image-types": [
         "ami",
-        "server-ami"
+        "generic-ami"
       ]
     }
   },
@@ -173,14 +173,15 @@
     }
   },
   {
-    "path": "./configs/jq-only.json",
+    "path": "./configs/empty.json",
     "filters": {
       "arches": [],
       "distros": [
         "rhel-8*",
         "rhel-9*",
         "rhel-10*",
-        "centos-*"
+        "centos-*",
+        "fedora-*"
       ],
       "image-types": [
         "ami",
@@ -193,6 +194,7 @@
         "container",
         "ec2",
         "ec2-ha",
+        "ec2-cvm",
         "edge-container",
         "gce",
         "gce-rhui",
@@ -209,7 +211,11 @@
         "vagrant-libvirt",
         "vagrant-virtualbox",
         "vmdk",
-        "wsl"
+        "wsl",
+        "cloud-qcow2",
+        "cloud-ec2",
+        "cloud-azure",
+        "cloud-gce"
       ]
     }
   },
@@ -236,24 +242,26 @@
         "fedora-*"
       ],
       "image-types": [
-        "container",
-        "server-ami",
+        "generic-container",
+        "generic-ami",
         "minimal-installer",
         "workstation-live-installer",
         "minimal-raw-xz",
         "minimal-raw-zst",
-        "server-oci",
-        "server-openstack",
-        "server-ova",
+        "generic-oci",
+        "generic-openstack",
+        "generic-ova",
+        "generic-qcow2",
+        "generic-vhd",
+        "generic-vmdk",
+        "generic-vagrant-libvirt",
+        "generic-vagrant-virtualbox",
+        "generic-wsl",
         "server-qcow2",
-        "server-vhd",
-        "server-vmdk",
-        "server-vagrant-libvirt",
-        "server-vagrant-virtualbox",
-        "wsl",
         "iot-bootable-container",
         "iot-container",
         "everything-network-installer",
+        "server-network-installer",
         "pxe-tar-xz"
       ]
     }
@@ -280,7 +288,14 @@
       "image-types": [
         "iot-installer",
         "iot-qcow2",
-        "iot-raw-xz"
+        "iot-raw-xz",
+        "kinoite-installer",
+        "kinoite-qcow2",
+        "silverblue-installer",
+        "silverblue-qcow2",
+        "sway-atomic-installer",
+        "budgie-atomic-installer",
+        "cosmic-atomic-installer"
       ]
     }
   },
@@ -288,7 +303,9 @@
     "path": "./configs/iot-ostree-pull-user.json",
     "filters": {
       "image-types": [
-        "iot-qcow2"
+        "iot-qcow2",
+        "kinoite-qcow2",
+        "silverblue-qcow2"
       ]
     }
   },
@@ -301,39 +318,17 @@
     }
   },
   {
-    "path": "./configs/minimal-pkgs.json",
-    "filters": {
-      "distros": [
-        "fedora*"
-      ],
-      "image-types": [
-        "server-qcow2"
-      ]
-    }
-  },
-  {
-    "path": "./configs/minimal.json",
-    "filters": {
-      "distros": [
-        "fedora*"
-      ],
-      "image-types": [
-        "server-qcow2"
-      ]
-    }
-  },
-  {
     "path": "./configs/oscap-generic.json",
     "filters": {
       "distros": [
         "rhel-9.2",
         "rhel-8.8",
         "rhel-8.10",
-        "centos-9",
-        "fedora*"
+        "centos-9"
       ],
       "image-types": [
         "qcow2",
+        "generic-qcow2",
         "server-qcow2"
       ]
     }
@@ -484,7 +479,9 @@
     "path": "./configs/import-rpm-gpg-keys-from-tree-fedora.json",
     "filters": {
       "image-types": [
-        "server-qcow2"
+        "generic-qcow2",
+        "server-qcow2",
+        "cloud-qcow2"
       ],
       "distros": [
         "fedora*"
@@ -509,7 +506,7 @@
     "filters": {
       "image-types": [
         "ami",
-        "server-ami"
+        "generic-ami"
       ],
       "distros": [
         "centos-10",
@@ -538,7 +535,7 @@
     "path": "./configs/partitioning-btrfs.json",
     "filters": {
       "image-types": [
-        "server-ami"
+        "generic-ami"
       ],
       "distros": [
         "fedora*"
@@ -564,7 +561,7 @@
     "filters": {
       "image-types": [
         "ami",
-        "server-ami"
+        "generic-ami"
       ],
       "distros": [
         "centos-10",
@@ -681,13 +678,14 @@
     }
   },
   {
-    "path": "./configs/jq-only.json",
+    "path": "./configs/empty.json",
     "filters": {
       "distros": [
         "rhel-8*",
         "rhel-9.6",
         "rhel-9.7",
         "rhel-9.8",
+        "rhel-9.9",
         "rhel-10*",
         "centos-*"
       ],
@@ -711,10 +709,66 @@
     }
   },
   {
-    "path": "./configs/empty.json",
+    "path": "./configs/bootc-empty.json",
     "filters": {
       "distros": [
         "bootc-*"
+      ],
+      "image-types": [
+        "qcow2",
+        "ami",
+        "raw",
+        "gce",
+        "vhd",
+        "vmdk",
+        "ova",
+        "anaconda-iso",
+        "bootc-generic-iso",
+        "pxe-tar-xz"
+      ]
+    }
+  },
+  {
+    "path": "./configs/bootc-with-payload.json",
+    "filters": {
+      "distros": [
+        "bootc-*"
+      ],
+      "image-types": [
+        "bootc-installer",
+        "bootc-generic-iso"
+      ]
+    }
+  },
+  {
+    "path": "./configs/bootc-remote-empty.json",
+    "filters": {
+      "distros": [
+        "bootc-*"
+      ],
+      "image-types": [
+        "qcow2",
+        "ami",
+        "raw",
+        "gce",
+        "vhd",
+        "vmdk",
+        "ova",
+        "anaconda-iso",
+        "bootc-generic-iso",
+        "pxe-tar-xz"
+      ]
+    }
+  },
+  {
+    "path": "./configs/bootc-remote-with-payload.json",
+    "filters": {
+      "distros": [
+        "bootc-*"
+      ],
+      "image-types": [
+        "bootc-installer",
+        "bootc-generic-iso"
       ]
     }
   },
@@ -735,6 +789,20 @@
       ],
       "image-types": [
         "qcow2"
+      ]
+    }
+  },
+  {
+    "path": "./configs/f42-x86-cuda-drivers.json",
+    "filters": {
+      "distros": [
+        "fedora-42"
+      ],
+      "arches": [
+        "x86_64"
+      ],
+      "image-types": [
+        "generic-ami"
       ]
     }
   }

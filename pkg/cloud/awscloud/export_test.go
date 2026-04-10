@@ -24,7 +24,7 @@ func NewAWSForTest(ec2cli EC2Client, s3cli S3Client, upldr S3Uploader, sign S3Pr
 	}
 }
 
-func MockNewAwsClient(f func(string) (awsClient, error)) (restore func()) {
+func MockNewAwsClient(f func(string, string) (awsClient, error)) (restore func()) {
 	saved := newAwsClient
 	newAwsClient = f
 	return func() {

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # we need qemu-kvm here but libvirt-devel pulls this in
 dnf -y install \
     awscli2 \
@@ -11,6 +13,7 @@ dnf -y install \
     go \
     gpgme-devel \
     krb5-devel \
+    lorax \
     osbuild \
     osbuild-depsolve-dnf \
     osbuild-luks2 \
@@ -20,9 +23,16 @@ dnf -y install \
     podman \
     python3 \
     python3-pip \
+    python3-pytest \
+    python3-boto3 \
+    python3-qemu-qmp \
+    python3-scp \
     yamllint \
     xz
 
-# we need this for the qemu boot tests and for any python tests but
-# could skip it for other testing.
+# We need this for the qemu boot tests and for any python tests but
+# could skip it for other testing. This can be removed once we figure
+# out why it actually does not work:
+#
+#   https://github.com/osbuild/images/issues/2288
 pip install .

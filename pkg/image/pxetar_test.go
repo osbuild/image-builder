@@ -30,35 +30,46 @@ func TestPXETarNoCustomizations(t *testing.T) {
 	_, err := img.InstantiateManifest(&mf, nil, &runner.Fedora{}, rng)
 	require.NoError(t, err)
 
-	// Fake packages to keep serialization happy
-	packages := map[string]depsolvednf.DepsolveResult{
+	// Fake package sets to keep serialization happy
+	repo := rpmmd.RepoConfig{Id: "dummy-repo-id"}
+	pkgSets := map[string]depsolvednf.DepsolveResult{
 		"build": {
-			Packages: rpmmd.PackageList{
+			Transactions: depsolvednf.TransactionList{
 				{
-					Name: "coreutils",
-					Checksum: rpmmd.Checksum{
-						Type:  "sha256",
-						Value: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+					{
+						Name: "coreutils",
+						Checksum: rpmmd.Checksum{
+							Type:  "sha256",
+							Value: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						},
+						RemoteLocations: []string{"https://example.com/coreutils"},
+						RepoID:          repo.Id,
+						Repo:            &repo,
 					},
-					RemoteLocations: []string{"https://example.com/coreutils"},
 				},
 			},
+			Repos: []rpmmd.RepoConfig{repo},
 		},
 		"os": {
-			Packages: rpmmd.PackageList{
+			Transactions: depsolvednf.TransactionList{
 				{
-					Name: "kernel",
-					Checksum: rpmmd.Checksum{
-						Type:  "sha256",
-						Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+					{
+						Name: "kernel",
+						Checksum: rpmmd.Checksum{
+							Type:  "sha256",
+							Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+						},
+						RemoteLocations: []string{"https://example.com/kernel"},
+						RepoID:          repo.Id,
+						Repo:            &repo,
 					},
-					RemoteLocations: []string{"https://example.com/kernel"},
 				},
 			},
+			Repos: []rpmmd.RepoConfig{repo},
 		},
 	}
 
-	osbm, err := mf.Serialize(packages, nil, nil, nil)
+	osbm, err := mf.Serialize(pkgSets, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// find the tar stage in the tar pipeline

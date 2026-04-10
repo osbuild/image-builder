@@ -217,7 +217,7 @@
       "x86_64 specific dracut conf":
         when:
           arch: "x86_64"
-        shallow_merge: &ami_image_config_cond_x86_64
+        shallow_merge:
           dracut_conf:
             - *sgdisk_dracut_conf
             - filename: "ec2.conf"
@@ -927,14 +927,13 @@
           - "s390utils-base"
 
   default_installer_config: &default_installer_config
-    enabled_anaconda_modules: &install_config_enabled_anaconda_modules
+    enabled_anaconda_modules:
       - "org.fedoraproject.Anaconda.Modules.Network"
       - "org.fedoraproject.Anaconda.Modules.Payloads"
       - "org.fedoraproject.Anaconda.Modules.Storage"
     additional_dracut_modules:
       - "ifcfg"
     default_menu: 1
-    iso_rootfs_type: "squashfs-ext4"
     lorax_template_package: lorax-templates-rhel
     lorax_templates:
       - path: 80-rhel/runtime-postinstall.tmpl
@@ -942,23 +941,24 @@
         after_dracut: true
     lorax_logos_package: redhat-logos
     lorax_release_package: redhat-release
+    install_weak_deps: true
+
+  default_iso_config: &default_iso_config
+    rootfs_type: "squashfs-ext4"
     conditions:
       "x86_64 uses syslinux":
         when:
           arch: "x86_64"
         shallow_merge:
-          iso_boot_type: "syslinux"
+          boot_type: "syslinux"
 
   partitioning:
     ids:
       - &prep_partition_dosid "41"
-      - &filesystem_linux_dosid "83"
-      - &fat16_bdosid "06"
     guids:
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
-      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
 
     partitions:
@@ -1011,7 +1011,7 @@
           - *default_partition_table_part_bios
           - *default_partition_table_part_efi
           - *default_partition_table_part_root
-      aarch64: &default_partition_table_aarch64
+      aarch64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
@@ -1089,7 +1089,7 @@
                 fstab_options: "defaults"
                 fstab_freq: 0
                 fstab_passno: 0
-      aarch64: &edge_base_partition_table_aarch64
+      aarch64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
@@ -1256,7 +1256,6 @@
       - "groups"
       - "enabled_modules"
       - "containers"
-      - "minimal"
       - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.disk"
@@ -1278,6 +1277,7 @@
       - "customizations.services"
       - "customizations.timezone"
       - "customizations.rhsm"
+      - "customizations.sshd"
 
     # options supported by base ostree image types (commit and container)
     supported_options_ostree_commit: &supported_options_ostree_commit
@@ -1286,7 +1286,6 @@
       - "modules"
       - "groups"
       - "enabled_modules"
-      - "minimal"
       - "containers"
       - "customizations.dnf"
       - "customizations.directories"
@@ -1326,26 +1325,11 @@
       port: &ostree_server_port "8080"
       config_path: &ostree_server_config_path "/etc/nginx.conf"
 
+    ostree_edge: &ostree_edge
+      name: "rhel-edge"
+      remote_name: "rhel-edge"
+      ref: &ostree_edge_ref "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/edge"
 
-image_config:
-  default:
-    default_kernel: "kernel"
-    default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
-    install_weak_deps: true
-    kernel_options_bootloader: true
-    locale: "en_US.UTF-8"
-    permissive_rhc: false
-    sysconfig:
-      networking: true
-      no_zero_conf: true
-    timezone: "America/New_York"
-    update_default_kernel: true
-  conditions:
-    "centos has a different oscap path":
-      when:
-        distro_name: "centos"
-      shallow_merge:
-        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-centos8-ds.xml"
 
 image_types:
   # XXX: not a real pkgset but the "os" pipeline pkgset for image-installer
@@ -1435,7 +1419,8 @@ image_types:
     partition_tables_override:
       <<: *ec2_partition_tables_override
     image_config: *ami_image_config
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   ec2: &ec2
     <<: *ami
@@ -1462,7 +1447,8 @@ image_types:
               append:
                 include:
                   - "redhat-cloud-client-configuration"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   "ec2-ha":
     <<: *ec2
@@ -1491,7 +1477,8 @@ image_types:
             - "alsa-lib"
           conditions:
             <<: *conditions_rh_cloud_client
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   "ec2-sap":
     <<: *ec2
@@ -1547,7 +1534,8 @@ image_types:
               append:
                 include:
                   - "rh-amazon-rhui-client-sap-bundle"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   qcow2: &qcow2
     name_aliases: ["guest-image"]
@@ -1594,10 +1582,11 @@ image_types:
                     enabled: false
     partition_table:
       <<: *default_partition_tables
-    package_sets: &qcow2_pkgset
+    package_sets:
       os:
         - *qcow2_common_pkgset
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   vhd:
     name_aliases: ["azure"]
@@ -1753,12 +1742,13 @@ image_types:
     package_sets:
       os:
         - *azure_common_pkgset
-        - &azure_pkgset
+        -
           include:
             - "firewalld"
           exclude:
             - "alsa-lib"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   "azure-rhui": &azure_rhui
     filename: "disk.vhd.xz"
@@ -1809,7 +1799,8 @@ image_types:
             - "alsa-lib"
     partition_table:
       <<: *azure_rhui_partition_tables
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   "azure-sap-rhui":
     <<: *azure_rhui
@@ -1839,7 +1830,8 @@ image_types:
               append:
                 include:
                   - "rhui-azure-rhel8-sap-ha"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   "azure-eap7-rhui":
     <<: *azure_rhui
@@ -1913,15 +1905,14 @@ image_types:
                   - "python3-html5lib"
     # the azure-eap7-rhui image type is internal only and generally is never
     # build with customizations, but let's treat it like a regular disk image
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   "image-installer":
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
     bootable: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
     image_func: "image_installer"
@@ -1930,6 +1921,7 @@ image_types:
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     platforms:
       # TODO: Use x86_64_installer_platform for all anaconda images
       - <<: *x86_64_bios_platform
@@ -1955,34 +1947,34 @@ image_types:
         - *installer_pkgset
         - *anaconda_pkgset
         - *anaconda_boot_pkgset
-    supported_blueprint_options:
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "containers"
-      - "minimal"
-      - "customizations.installer"
-      - "customizations.cacerts"
-      - "customizations.dnf"
-      - "customizations.directories"
-      - "customizations.files"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.fips"
-      - "customizations.timezone"
-      - "customizations.hostname"
-      - "customizations.kernel.name"
-      - "customizations.locale"
-      - "customizations.openscap"
-      - "customizations.repositories"
-      - "customizations.rpm"
-      - "customizations.services"
-      - "customizations.rhsm"
-      - "customizations.kernel.append"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "packages"
+        - "modules"
+        - "groups"
+        - "enabled_modules"
+        - "containers"
+        - "customizations.installer"
+        - "customizations.cacerts"
+        - "customizations.dnf"
+        - "customizations.directories"
+        - "customizations.files"
+        - "customizations.firewall"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.fips"
+        - "customizations.timezone"
+        - "customizations.hostname"
+        - "customizations.kernel.name"
+        - "customizations.locale"
+        - "customizations.openscap"
+        - "customizations.repositories"
+        - "customizations.rpm"
+        - "customizations.services"
+        - "customizations.rhsm"
+        - "customizations.kernel.append"
 
   tar:
     filename: "root.tar.xz"
@@ -2001,44 +1993,46 @@ image_types:
             - "selinux-policy-targeted"
           exclude:
             - "rng-tools"
-    supported_blueprint_options:
-      # We've never tested many options or customizations with this image type
-      # and we also never restricted any, but it uses the OS pipeline, so it
-      # should support most standard/basic customizations
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "containers"
-      - "enabled_modules"
-      - "minimal"
-      - "customizations.dnf"
-      - "customizations.cacerts"
-      - "customizations.directories"
-      - "customizations.files"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.hostname"
-      - "customizations.kernel.name"
-      - "customizations.locale"
-      - "customizations.repositories"
-      - "customizations.rpm"
-      - "customizations.services"
-      - "customizations.timezone"
-      - "customizations.rhsm"
+    blueprint:
+      supported_options:
+        # We've never tested many options or customizations with this image type
+        # and we also never restricted any, but it uses the OS pipeline, so it
+        # should support most standard/basic customizations
+        - "distro"
+        - "packages"
+        - "modules"
+        - "groups"
+        - "containers"
+        - "enabled_modules"
+        - "customizations.dnf"
+        - "customizations.cacerts"
+        - "customizations.directories"
+        - "customizations.files"
+        - "customizations.firewall"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.hostname"
+        - "customizations.kernel.name"
+        - "customizations.locale"
+        - "customizations.repositories"
+        - "customizations.rpm"
+        - "customizations.services"
+        - "customizations.timezone"
+        - "customizations.rhsm"
 
-  "edge-commit": &edge_commit
+  "edge-commit":
     name_aliases: ["rhel-edge-commit"]
     filename: "commit.tar"
     mime_type: "application/x-tar"
     rpm_ostree: true
-    image_func: "iot_commit"
+    image_func: "ostree_commit"
     exports: ["commit-archive"]
     platforms:
       - *x86_64_bios_platform
       - *aarch64_platform
+    ostree:
+      ref: *ostree_edge_ref
     image_config: &edge_commit_image_config
       install_weak_deps: true
       enabled_services: &enabled_services_edge
@@ -2155,7 +2149,7 @@ image_types:
             - "xz"
           exclude:
             - "rng-tools"
-          conditions: &conditions_pkgsets_edge_commit
+          conditions:
             "x86_64 specific packages for edge-commit":
               when:
                 arch: "x86_64"
@@ -2205,7 +2199,8 @@ image_types:
                   - "fdo-owner-cli"
                   - "greenboot-default-health-checks"
                   - "sos"
-    supported_blueprint_options: *supported_options_ostree_commit
+    blueprint:
+      supported_options: *supported_options_ostree_commit
 
   "edge-installer":
     name_aliases: ["rhel-edge-installer"]
@@ -2213,20 +2208,20 @@ image_types:
     mime_type: "application/x-iso9660-image"
     rpm_ostree: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
-    image_func: "iot_installer"
+    image_func: "ostree_installer"
     iso_label: "edge"
     variant: "edge"
     ostree:
-      name: "rhel-edge"
+      <<: *ostree_edge
+      remote_name: ""
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
       <<: *default_installer_config
       default_menu: 0
+    iso_config: *default_iso_config
     platforms:
       - *x86_64_uefi_platform
       - *aarch64_platform
@@ -2242,15 +2237,16 @@ image_types:
         - *installer_pkgset
         - *anaconda_pkgset
         - *anaconda_boot_pkgset
-    supported_blueprint_options:
-      - "distro"
-      - "customizations.installer"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.fips"
-      - "customizations.timezone"
-      - "customizations.locale"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.installer"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.fips"
+        - "customizations.timezone"
+        - "customizations.locale"
 
   # XXX: only available for rhel-8.6+, this is not possible to limit right now
   "edge-raw-image":
@@ -2261,10 +2257,8 @@ image_types:
     default_size: "10 GiB"
     rpm_ostree: true
     bootable: true
-    image_func: "iot"
-    ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+    image_func: "ostree_disk"
+    ostree: *ostree_edge
     use_ostree_remotes: true
     exports: ["xz"]
     platforms:
@@ -2283,7 +2277,8 @@ image_types:
     supported_partitioning_modes:
       - ""  # default partitioning mode is supported (in original go based code)
       - "raw"
-    supported_blueprint_options: *supported_options_ostree_disk
+    blueprint:
+      supported_options: *supported_options_ostree_disk
 
   "edge-simplified-installer":
     filename: "simplified-installer.iso"
@@ -2291,17 +2286,13 @@ image_types:
     rpm_ostree: true
     bootable: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
     default_size: "10 GiB"
-    image_func: "iot_simplified_installer"
+    image_func: "ostree_simplified_installer"
     iso_label: "edge"
     variant: "edge"
-    ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+    ostree: *ostree_edge
     # XXX: find better name
     use_ostree_remotes: true
     exports: ["bootiso"]
@@ -2310,6 +2301,7 @@ image_types:
       additional_dracut_modules:
         - "prefixdevname"
         - "prefixdevname-tools"
+    iso_config: *default_iso_config
     platforms:
       - <<: *x86_64_uefi_platform
       - <<: *aarch64_platform
@@ -2385,35 +2377,38 @@ image_types:
                 arch: "aarch64"
               append:
                 <<: *edge_commit_aarch64_pkgset
-    supported_blueprint_options:
-      - "distro"
-      - "customizations.installation_device"
-      - "customizations.filesystem"
-      - "customizations.disk"
-      - "customizations.fdo"
-      - "customizations.ignition"
-      - "customizations.kernel"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.fips"
-      - "customizations.files"
-      - "customizations.directories"
-      - "customizations.dnf"
-    required_blueprint_options:
-      - "customizations.installation_device"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.installation_device"
+        - "customizations.filesystem"
+        - "customizations.disk"
+        - "customizations.fdo"
+        - "customizations.ignition"
+        - "customizations.kernel"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.fips"
+        - "customizations.files"
+        - "customizations.directories"
+        - "customizations.dnf"
+      required_options:
+        - "customizations.installation_device"
 
   "edge-container":
     name_aliases: ["rhel-edge-container"]
     filename: "container.tar"
     mime_type: "application/x-tar"
     rpm_ostree: true
-    image_func: "iot_container"
+    image_func: "ostree_container"
     exports: ["container"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - *x86_64_bios_platform
       - *aarch64_platform
+    ostree:
+      ref: *ostree_edge_ref
     image_config:
       <<: *edge_commit_image_config
       ostree_server: *ostree_server
@@ -2428,7 +2423,8 @@ image_types:
     package_sets:
       os:
         - *edge_commit_pkgset
-    supported_blueprint_options: *supported_options_ostree_commit
+    blueprint:
+      supported_options: *supported_options_ostree_commit
 
   vmdk: &vmdk
     name_aliases: ["vsphere"]
@@ -2448,7 +2444,7 @@ image_types:
         - "net.ifnames=0"
     partition_table:
       <<: *default_partition_tables
-    package_sets: &vmdk_pkgsets
+    package_sets:
       os:
         - include:
             - "@core"
@@ -2461,7 +2457,8 @@ image_types:
           exclude:
             - "dracut-config-rescue"
             - "rng-tools"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   ova:
     <<: *vmdk
@@ -2472,7 +2469,8 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "ova"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   gce: &gce
     # this image type is set to `gcp` in image-builder-crc
@@ -2575,7 +2573,8 @@ image_types:
     package_sets:
       os:
         - *gce_common_pkgset
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   "gce-rhui":
     <<: *gce
@@ -2602,7 +2601,8 @@ image_types:
         - *gce_common_pkgset
         - include:
             - "google-rhui-client-rhel8"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   oci:
     <<: *qcow2
@@ -2613,7 +2613,8 @@ image_types:
       - <<: *x86_64_bios_platform
         image_format: "qcow2"
         qcow2_compat: "0.10"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   openstack:
     <<: *qcow2
@@ -2645,7 +2646,8 @@ image_types:
           exclude:
             - "dracut-config-rescue"
             - "rng-tools"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   wsl:
     filename: "image.wsl"
@@ -2767,27 +2769,27 @@ image_types:
             - "unbound-libs"
             - "xkeyboard-config"
             - "xz"
-    supported_blueprint_options:
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "minimal"
-      - "containers"
-      - "customizations.dnf"
-      - "customizations.directories"
-      - "customizations.files"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.hostname"
-      - "customizations.locale"
-      - "customizations.repositories"
-      - "customizations.services"
-      - "customizations.timezone"
-      - "customizations.rhsm"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "packages"
+        - "modules"
+        - "groups"
+        - "enabled_modules"
+        - "containers"
+        - "customizations.dnf"
+        - "customizations.directories"
+        - "customizations.files"
+        - "customizations.firewall"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.hostname"
+        - "customizations.locale"
+        - "customizations.repositories"
+        - "customizations.services"
+        - "customizations.timezone"
+        - "customizations.rhsm"
 
   "minimal-raw":
     filename: "disk.raw.xz"
@@ -2832,7 +2834,8 @@ image_types:
             - "NetworkManager-wifi"
             - "iwl7260-firmware"
             - "iwl3160-firmware"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   # Based on lorax runtime-install.tmpl
   "network-installer":
@@ -2846,6 +2849,7 @@ image_types:
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     image_config:
       locale: "en_US.UTF-8"
     platforms:
@@ -2973,7 +2977,8 @@ image_types:
             - "hexedit"
             - "sg3_utils"
             - "perl-interpreter"
-    supported_blueprint_options:
-      - "distro"
-      - "customizations.fips"
-      - "customizations.locale"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.fips"
+        - "customizations.locale"

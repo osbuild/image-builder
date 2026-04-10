@@ -33,6 +33,17 @@ func TestDataSizeToUint64(t *testing.T) {
 		{"123 mb", false, 0},
 		{"123 PB", false, 0},
 		{"123 PiB", false, 0},
+		{"123.45", true, 123},
+		{"1.0", true, 1},
+		{"123.00", true, 123},
+		{"1.5 GiB", true, 1610612736},
+		{"1.5 GB", true, 1500000000},
+		{"0.5 MiB", true, 512 * 1024},
+		{"0.5 MB", true, 500000},
+		{"1.5", true, 2},             // rounds 1.5 -> 2
+		{"1.4", true, 1},             // rounds 1.4 -> 1
+		{"0.3 GiB", true, 322122547}, // 322122547.2 -> 322122547
+		{"1.0000000596046448 MiB", true, 1048576},
 	}
 
 	for _, c := range cases {
@@ -41,7 +52,21 @@ func TestDataSizeToUint64(t *testing.T) {
 			require.Nil(t, err)
 			assert.EqualValues(t, c.output, result)
 		} else {
-			assert.NotNil(t, err)
+			require.Error(t, err)
 		}
 	}
+}
+
+func TestParseNegativeSizeError(t *testing.T) {
+	_, err := datasizes.Parse("-1 MiB")
+	assert.ErrorContains(t, err, "the size string is not a valid positive float number: -1")
+
+	_, err = datasizes.Parse("-1 MB")
+	assert.ErrorContains(t, err, "the size string is not a valid positive float number: -1")
+
+	_, err = datasizes.Parse("-1.00 MB")
+	assert.ErrorContains(t, err, "the size string is not a valid positive float number: -1.00")
+
+	_, err = datasizes.Parse("-1.0000000596046448 MiB")
+	assert.ErrorContains(t, err, "the size string is not a valid positive float number: -1.0000000596046448")
 }

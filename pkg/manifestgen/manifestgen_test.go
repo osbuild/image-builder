@@ -3,9 +3,9 @@ package manifestgen_test
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/imagefilter"
 	"github.com/osbuild/images/pkg/manifestgen"
+	"github.com/osbuild/images/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/osbuild/manifesttest"
 	"github.com/osbuild/images/pkg/ostree"
@@ -72,14 +73,22 @@ func TestManifestGeneratorDepsolve(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, []string{"build", "os", "image", "qcow2"}, pipelineNames)
 
-			// we expect at least a "kernel" package in the manifest,
-			// sadly the test distro does not really generate much here so we
-			// need to use this as a canary that resolving happend
-			// XXX: add testhelper to manifesttest for this
-			expectedSha256 := sha256For("kernel")
-			assert.Contains(t, string(osbuildManifest), expectedSha256)
-
-			assert.Equal(t, strings.Contains(string(osbuildManifest), "org.osbuild.librepo"), useLibrepo)
+			// Verify depsolving produced source items
+			if useLibrepo {
+				// Librepo uses Location field for path
+				// Format: "sources":{... "org.osbuild.librepo":{... "items":{... "sha256:...":{"path":"packages/...","mirror":"..."}}}
+				sourcesPattern := regexp.MustCompile(
+					`"sources":\{"org\.osbuild\.librepo":\{"items":\{"sha256:[a-f0-9]{64}":\{"path":"packages/[^"]+\.rpm","mirror":"[^"]+"\}`)
+				assert.Regexp(t, sourcesPattern, string(osbuildManifest))
+				assert.NotContains(t, string(osbuildManifest), "org.osbuild.curl")
+			} else {
+				// Curl uses RemoteLocations for URL
+				// Format: "sources":{... "org.osbuild.curl":{... "items":{... "sha256:...":{"url":"https://..."}}}
+				sourcesPattern := regexp.MustCompile(
+					`"sources":\{"org\.osbuild\.curl":\{"items":\{"sha256:[a-f0-9]{64}":\{"url":"https://[^"]+/packages/[^"]+\.rpm"\}`)
+				assert.Regexp(t, sourcesPattern, string(osbuildManifest))
+				assert.NotContains(t, string(osbuildManifest), "org.osbuild.librepo")
+			}
 		})
 	}
 }
@@ -119,43 +128,19 @@ func TestManifestGeneratorWithOstreeCommit(t *testing.T) {
 
 	// XXX: add testhelper to manifesttest for this
 	assert.Contains(t, string(osbuildManifest), `{"url":"resolved-url-for-centos/9/x86_64/edge"}`)
-	// we expect at least a "glibc" package in the manifest,
-	// sadly the test distro does not really generate much here so we
-	// need to use this as a canary that resolving happend
-	// XXX: add testhelper to manifesttest for this
-	expectedSha256 := sha256For("glibc")
-	assert.Contains(t, string(osbuildManifest), expectedSha256)
+	// Test that depsolving happened by checking that sources contain curl items with sha256 checksums and URLs
+	sourcesPattern := regexp.MustCompile(
+		`"sources":\{"org\.osbuild\.curl":\{"items":\{"sha256:[a-f0-9]{64}":\{"url":"https://[^"]+/packages/[^"]+\.rpm"\}`)
+	assert.Regexp(t, sourcesPattern, string(osbuildManifest))
 }
 
 func fakeDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
-	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
 	if depsolveWarningsOutput != nil {
 		_, _ = depsolveWarningsOutput.Write([]byte(`fake depsolve output`))
 	}
-	for name, pkgSets := range packageSets {
-		repoId := fmt.Sprintf("repo_id_%s", name)
-		var resolvedSet depsolvednf.DepsolveResult
-		for _, pkgSet := range pkgSets {
-			for _, pkgName := range pkgSet.Include {
-				resolvedSet.Packages = append(resolvedSet.Packages, rpmmd.Package{
-					Name:            pkgName,
-					Checksum:        rpmmd.Checksum{Type: "sha256", Value: sha256For(pkgName)},
-					Location:        fmt.Sprintf("path/%s.rpm", pkgName),
-					RepoID:          repoId,
-					RemoteLocations: []string{fmt.Sprintf("%s/%s.rpm", pkgSet.Repositories[0].BaseURLs[0], pkgName)},
-				})
-				resolvedSet.Repos = append(resolvedSet.Repos, rpmmd.RepoConfig{
-					Id:       repoId,
-					Metalink: "https://example.com/metalink",
-				})
-				doc, err := sbom.NewDocument(sbom.StandardTypeSpdx, json.RawMessage(fmt.Sprintf(`{"sbom-for":"%s"}`, name)))
-				if err != nil {
-					return nil, err
-				}
-				resolvedSet.SBOM = doc
-			}
-		}
-		depsolvedSets[name] = resolvedSet
+	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil, true)
+	if err != nil {
+		return nil, err
 	}
 	return depsolvedSets, nil
 }
@@ -379,9 +364,9 @@ func TestManifestGeneratorOverrideRepos(t *testing.T) {
 			osbuildManifest, err := mg.Generate(&bp, res[0].ImgType, nil)
 			assert.NoError(t, err)
 			if withOverrideRepos {
-				assert.Contains(t, string(osbuildManifest), "http://example.com/overriden-repo/kernel.rpm")
+				assert.Contains(t, string(osbuildManifest), "http://example.com/overriden-repo/")
 			} else {
-				assert.NotContains(t, string(osbuildManifest), "http://example.com/overriden-repo/kernel.rpm")
+				assert.NotContains(t, string(osbuildManifest), "http://example.com/overriden-repo/")
 			}
 		})
 	}

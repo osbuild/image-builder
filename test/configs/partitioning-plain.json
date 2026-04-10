@@ -2,11 +2,6 @@
   "name": "partitioning-plain",
   "blueprint": {
     "description": "Disk customizations with plain partitioning.",
-    "packages": [
-      {
-        "name": "jq"
-      }
-    ],
     "customizations": {
       "disk": {
         "partitions": [

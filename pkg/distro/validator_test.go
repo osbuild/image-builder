@@ -290,8 +290,7 @@ func fullBlueprint() blueprint.Blueprint {
 				StoragePath: common.ToPtr("/usr/share/my-containers"),
 			},
 		},
-		Distro:  "fedora-99",
-		Minimal: true,
+		Distro: "fedora-99",
 	}
 }
 
@@ -393,7 +392,6 @@ func allOptionStrings() []string {
 		"distro",
 		"enabled_modules",
 		"groups",
-		"minimal",
 		"modules",
 		"packages",
 	}
@@ -515,7 +513,6 @@ func TestValidateConfig(t *testing.T) {
 				"distro",
 				"enabled_modules",
 				"groups",
-				"minimal",
 				"modules",
 				"packages",
 			},

@@ -22,7 +22,8 @@ type BootcDiskImage struct {
 	BuildContainerSource *container.SourceSpec
 
 	// Customizations
-	OSCustomizations manifest.OSCustomizations
+	OSCustomizations   manifest.OSCustomizations
+	DiskCustomizations manifest.DiskCustomizations
 }
 
 func NewBootcDiskImage(platform platform.Platform, filename string, container container.SourceSpec, buildContainer container.SourceSpec) *BootcDiskImage {
@@ -30,7 +31,7 @@ func NewBootcDiskImage(platform platform.Platform, filename string, container co
 		Base:                 NewBase("bootc-raw-image", platform, filename),
 		ContainerSource:      &container,
 		BuildContainerSource: &buildContainer,
-		OSCustomizations: manifest.OSCustomizations{
+		DiskCustomizations: manifest.DiskCustomizations{
 			MountConfiguration: osbuild.MOUNT_CONFIGURATION_UNITS, // default use mount units for bootc disk images
 		},
 	}
@@ -41,9 +42,9 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	runner runner.Runner,
 	rng *rand.Rand) error {
 
-	policy := img.OSCustomizations.SELinux
+	buildPolicy := img.OSCustomizations.SELinux
 	if img.OSCustomizations.BuildSELinux != "" {
-		policy = img.OSCustomizations.BuildSELinux
+		buildPolicy = img.OSCustomizations.BuildSELinux
 	}
 
 	var copyFilesFrom map[string][]string
@@ -79,7 +80,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 			&manifest.BuildOptions{
 				PipelineName:       pipelineName,
 				ContainerBuildable: true,
-				SELinuxPolicy:      policy,
+				SELinuxPolicy:      img.OSCustomizations.SELinux,
 				EnsureDirs:         ensureDirs,
 			})
 		targetBuildPipeline.Checkpoint()
@@ -91,7 +92,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	buildPipeline := manifest.NewBuildFromContainer(m, runner, buildContainers,
 		&manifest.BuildOptions{
 			ContainerBuildable: true,
-			SELinuxPolicy:      policy,
+			SELinuxPolicy:      buildPolicy,
 			CopyFilesFrom:      copyFilesFrom,
 			EnsureDirs:         ensureDirs,
 		})
@@ -107,13 +108,8 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 		rawImage.SourcePipeline = customSourcePipeline
 	}
 	rawImage.PartitionTable = img.PartitionTable
-	rawImage.Users = img.OSCustomizations.Users
-	rawImage.Groups = img.OSCustomizations.Groups
-	rawImage.Files = img.OSCustomizations.Files
-	rawImage.Directories = img.OSCustomizations.Directories
-	rawImage.KernelOptionsAppend = img.OSCustomizations.KernelOptionsAppend
-	rawImage.SELinux = img.OSCustomizations.SELinux
-	rawImage.MountConfiguration = img.OSCustomizations.MountConfiguration
+	rawImage.OSCustomizations = img.OSCustomizations
+	rawImage.DiskCustomizations = img.DiskCustomizations
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on

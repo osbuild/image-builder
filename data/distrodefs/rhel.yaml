@@ -9,7 +9,6 @@ distros:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/10/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-10
     iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
@@ -31,6 +30,7 @@ distros:
           - azure-sapapps-rhui
           - ec2-sap
           - ec2-ha
+          - ec2-cvm
       "some image types are non-rhel-only":
         when:
           distro_name: "rhel"
@@ -38,6 +38,12 @@ distros:
           - azure
           - container
           - container-minimal
+      "handle PQC for rhel only":
+        when:
+          distro_name: "rhel"
+        tweaks:
+          rpmkeys:
+            ignore_build_import_failures: true
     # rhel & centos share the same list of allowed profiles so a
     # single allow list can be used
     oscap_profiles_allowlist: &oscap_profile_allowlist_rhel_10
@@ -45,6 +51,7 @@ distros:
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_minimal"
+      - "xccdf_org.ssgproject.content_profile_bsi"
       - "xccdf_org.ssgproject.content_profile_cis"
       - "xccdf_org.ssgproject.content_profile_cis_server_l1"
       - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
@@ -63,14 +70,38 @@ distros:
       aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+    image_config:
+      default:
+        default_kernel: "kernel"
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml"
+        install_weak_deps: true
+        locale: "C.UTF-8"
+        permissive_rhc: true
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+        timezone: "UTC"
+        update_default_kernel: true
+      conditions:
+        "centos oscap datastream path":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml"
 
   - <<: *rhel10
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
     match: 'almalinux-10\.[0-9]{1,2}'
     product: "AlmaLinux"
     vendor: "almalinux"
-    ostree_ref_tmpl: "almalinux/10/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
+
+  - <<: *rhel10
+    name: "rocky-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'rocky-10\.[0-9]{1,2}'
+    product: "Rocky Linux"
+    vendor: "rocky"
+    iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
 
   - &centos10
     <<: *rhel10
@@ -81,7 +112,6 @@ distros:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "centos"
-    ostree_ref_tmpl: "rhel/10/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-10
     iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
@@ -104,7 +134,6 @@ distros:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "almalinux"
-    ostree_ref_tmpl: "almalinux/10/%s/edge"
 
   - &rhel9
     name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
@@ -116,7 +145,6 @@ distros:
     release_version: 9
     module_platform_id: "platform:el9"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/9/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-9
     iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
@@ -131,6 +159,7 @@ distros:
           - azure-sapapps-rhui
           - ec2-sap
           - ec2-ha
+          - ec2-cvm
       "some image types are non-rhel-only":
         when:
           distro_name: "rhel"
@@ -143,6 +172,15 @@ distros:
           version_less_than: "9.6"
         ignore_image_types:
           - "azure-cvm"
+          - "ec2-cvm"
+      "handle PQC for rhel only":
+        when:
+          distro_name: "rhel"
+          version_greater_or_equal: "9.7"
+        tweaks:
+          rpmkeys:
+            binary_path: "/usr/lib/pqrpm/bin/rpmkeys"
+            ignore_build_import_failures: true
     runner:
       name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
       build_packages: &rhel9_runner_build_packages
@@ -179,13 +217,38 @@ distros:
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
 
+    image_config:
+      default:
+        default_kernel: "kernel"
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
+        install_weak_deps: true
+        locale: "C.UTF-8"
+        permissive_rhc: true
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+        timezone: "America/New_York"
+        update_default_kernel: true
+      conditions:
+        "oscap needs a differnt path on centos":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
+
   - <<: *rhel9
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
     match: 'almalinux-9\.[0-9]{1,2}'
     product: "AlmaLinux"
     vendor: "almalinux"
-    ostree_ref_tmpl: "almalinux/9/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
+
+  - <<: *rhel9
+    name: "rocky-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'rocky-9\.[0-9]{1,2}'
+    product: "Rocky Linux"
+    vendor: "rocky"
+    iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
 
   - &centos9
     <<: *rhel9
@@ -194,7 +257,6 @@ distros:
     product: "CentOS Stream"
     os_version: "9-stream"
     vendor: "centos"
-    ostree_ref_tmpl: "centos/9/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-9
     iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
@@ -220,7 +282,6 @@ distros:
     release_version: 8
     module_platform_id: "platform:el8"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/8/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-8
     iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
@@ -243,6 +304,15 @@ distros:
         ignore_image_types:
           - "azure-rhui"
           - "vhd"
+      "some image types are rhel-only":
+        when:
+          not_distro_name: "rhel"
+        ignore_image_types:
+          - azure-eap7-rhui
+          - azure-rhui
+          - ec2-sap
+          - ec2-ha
+          - gce-rhui
     runner:
       name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
       build_packages: &rhel8_runner_build_packages
@@ -281,13 +351,39 @@ distros:
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
 
+    image_config:
+      default:
+        default_kernel: "kernel"
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
+        install_weak_deps: true
+        kernel_options_bootloader: true
+        locale: "en_US.UTF-8"
+        permissive_rhc: false
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+        timezone: "America/New_York"
+        update_default_kernel: true
+      conditions:
+        "centos has a different oscap path":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-centos8-ds.xml"
+
   - <<: *rhel8
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
     match: 'almalinux-8\.[0-9]{1,2}'
     product: "AlmaLinux"
     vendor: "almalinux"
-    ostree_ref_tmpl: "almalinux/8/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
+
+  - <<: *rhel8
+    name: "rocky-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'rocky-8\.[0-9]{1,2}'
+    product: "Rocky Linux"
+    vendor: "rocky"
+    iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
 
   - &centos8
     <<: *rhel8
@@ -318,7 +414,6 @@ distros:
     release_version: 7
     module_platform_id: "platform:el7"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/7/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-7
     runner:
@@ -335,6 +430,22 @@ distros:
       x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+    image_config:
+      default:
+        timezone: "America/New_York"
+        locale: "en_US.UTF-8"
+        gpgkey_files:
+          - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+          create_default_network_scripts: true
+        default_kernel: "kernel"
+        update_default_kernel: true
+        kernel_options_bootloader: true
+        # RHEL 7 grub does not support BLS
+        no_bls: true
+        install_weak_deps: true
 
   # Note that this will not be visible by default because we do not
   # ship with a reporegistry that contains repositories for it. It

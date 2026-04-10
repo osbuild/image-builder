@@ -63,6 +63,51 @@ func TestBlockingResolver(t *testing.T) {
 	assert.ElementsMatch(t, have, want)
 }
 
+func TestBlockingResolverResolveAll(t *testing.T) {
+	assert := assert.New(t)
+	registry := testregistry.New()
+	defer registry.Close()
+	repo := registry.AddRepo("library/osbuild")
+	ref := registry.GetRef("library/osbuild")
+
+	sources := make(map[string][]container.SourceSpec, 2)
+	expected := make(map[string][]container.Spec, 2)
+	for _, name := range []string{"pipeline-one", "pipeline-two"} {
+		for idx := 0; idx < 10; idx++ {
+			checksum := repo.AddImage(
+				[]testregistry.Blob{testregistry.NewDataBlobFromBase64(testregistry.RootLayer)},
+				[]string{"amd64", "ppc64le"},
+				fmt.Sprintf("image %s %d", name, idx),
+				time.Time{})
+
+			tag := fmt.Sprintf("%s%d", name, idx)
+			repo.AddTag(checksum, tag)
+
+			plSources := sources[name]
+			refTag := fmt.Sprintf("%s:%s", ref, tag)
+			sources[name] = append(plSources, container.SourceSpec{
+				Source:    refTag,
+				Name:      "",
+				Digest:    common.ToPtr(""),
+				TLSVerify: common.ToPtr(false),
+				Local:     false,
+			})
+
+			expSpec, err := registry.Resolve(refTag, arch.ARCH_X86_64)
+			assert.NoError(err)
+			expSpecs := expected[name]
+			expected[name] = append(expSpecs, expSpec)
+		}
+	}
+
+	resolver := container.NewBlockingResolver("amd64")
+
+	have, err := resolver.ResolveAll(sources)
+	assert.NoError(err)
+	assert.NotNil(have)
+	assert.Equal(have, expected)
+}
+
 func TestBlockingResolverFail(t *testing.T) {
 	resolver := container.NewBlockingResolver("amd64")
 

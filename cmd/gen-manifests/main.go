@@ -27,15 +27,15 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bib/osinfo"
+	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/bootc"
-	"github.com/osbuild/images/pkg/distro/defs"
+	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/experimentalflags"
+	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rhsm/facts"
@@ -235,19 +235,36 @@ func makeManifestJob(
 	content map[string]bool,
 	metadata bool,
 	tmpdirRoot string,
+	bootcRemote bool,
+	bootcInstallerRef string,
 ) manifestJob {
 	name := bc.Name
 	distroName := distribution.Name()
 	filename := fmt.Sprintf("%s-%s-%s-%s.json", u(distroName), u(archName), u(imgType.Name()), u(name))
 	cacheDir := filepath.Join(cacheRoot, archName+distribution.Name())
 
-	// ensure that each file has a unique seed based on filename
-	seedArg, err := cmdutil.SeedArgFor(bc, imgType.Name(), distribution.Name(), archName)
+	// ensure that each distro/arch has a unique seed, we do not include the image type name here to
+	// avoid checksum changes when just the name changes (but no content changes)
+	seedArg, err := cmdutil.SeedArgFor(bc, distribution.Name(), archName)
 	if err != nil {
 		panic(err)
 	}
 
 	options := bc.Options
+	if bootcRemote || bootcInstallerRef != "" {
+		if options.Bootc == nil {
+			options.Bootc = &distro.BootcImageOptions{}
+		} else {
+			bootcOpts := *options.Bootc
+			options.Bootc = &bootcOpts
+		}
+		if bootcRemote {
+			options.Bootc.UseRemoteContainerSource = true
+		}
+		if bootcInstallerRef != "" {
+			options.Bootc.InstallerPayloadRef = bootcInstallerRef
+		}
+	}
 
 	var bp blueprint.Blueprint
 	if bc.Blueprint != nil {
@@ -273,6 +290,12 @@ func makeManifestJob(
 		APIType: facts.TEST_APITYPE,
 	}
 
+	// Extend the repositories with the custom repositories from the build config
+	allRepos := slices.Clone(repos)
+	if len(bc.CustomRepos) > 0 {
+		allRepos = append(allRepos, bc.CustomRepos...)
+	}
+
 	job := func(msgq chan string) (err error) {
 		defer func() {
 			msg := fmt.Sprintf("Finished job %s", filename)
@@ -291,7 +314,7 @@ func makeManifestJob(
 		}()
 		msgq <- fmt.Sprintf("Starting job %s", filename)
 
-		manifest, _, err := imgType.Manifest(&bp, options, repos, &seedArg)
+		manifest, _, err := imgType.Manifest(&bp, options, allRepos, &seedArg)
 		if err != nil {
 			err = fmt.Errorf("[%s] failed: %s", filename, err)
 			return
@@ -300,24 +323,28 @@ func makeManifestJob(
 		var depsolvedSets map[string]depsolvednf.DepsolveResult
 		if content["packages"] {
 			solver := depsolvednf.NewSolver(distribution.ModulePlatformID(), distribution.Releasever(), archName, distribution.Name(), cacheDir)
-			depsolvedSets, err = manifestgen.DefaultDepsolve(solver, cacheDir, os.Stderr, common.Must(manifest.GetPackageSetChains()), distribution, archName)
+			depsolvedSets, err = solver.DepsolveAll(common.Must(manifest.GetPackageSetChains()))
 			if err != nil {
 				err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
 				return
 			}
 			for plName, depsolved := range depsolvedSets {
-				if depsolved.Packages == nil {
-					err = fmt.Errorf("[%s] nil package specs in %v", filename, plName)
+				if len(depsolved.Transactions.AllPackages()) == 0 {
+					err = fmt.Errorf("[%s] no packages in the depsolve result for %v", filename, plName)
 					return
 				}
 			}
 		} else {
-			depsolvedSets = manifestmock.Depsolve(common.Must(manifest.GetPackageSetChains()), repos, archName)
+			depsolvedSets, err = manifestmock.Depsolve(common.Must(manifest.GetPackageSetChains()), archName, bc, false)
+			if err != nil {
+				err = fmt.Errorf("[%s] manifestmock depsolve failed: %s", filename, err.Error())
+				return
+			}
 		}
 
 		var containerSpecs map[string][]container.Spec
 		if content["containers"] {
-			containerSpecs, err = manifestgen.DefaultContainerResolver(manifest.GetContainerSourceSpecs(), archName)
+			containerSpecs, err = container.NewResolver(archName).ResolveAll(manifest.GetContainerSourceSpecs())
 			if err != nil {
 				return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
 			}
@@ -327,7 +354,7 @@ func makeManifestJob(
 
 		var commitSpecs map[string][]ostree.CommitSpec
 		if content["commits"] {
-			commitSpecs, err = manifestgen.DefaultCommitResolver(manifest.GetOSTreeSourceSpecs())
+			commitSpecs, err = ostree.ResolveAll(manifest.GetOSTreeSourceSpecs())
 			if err != nil {
 				return fmt.Errorf("[%s] ostree commit resolution failed: %s", filename, err.Error())
 			}
@@ -335,7 +362,17 @@ func makeManifestJob(
 			commitSpecs = manifestmock.ResolveCommits(manifest.GetOSTreeSourceSpecs())
 		}
 
-		mf, err := manifest.Serialize(depsolvedSets, containerSpecs, commitSpecs, nil)
+		var flatpakSpecs map[string][]flatpak.Spec
+		if content["flatpaks"] {
+			flatpakSpecs, err = flatpak.ResolveAll(manifest.GetFlatpakSourceSpecs())
+			if err != nil {
+				return fmt.Errorf("[%s] flatpak resolution failed: %s", filename, err.Error())
+			}
+		} else {
+			flatpakSpecs = manifestmock.ResolveFlatpaks(manifest.GetFlatpakSourceSpecs())
+		}
+
+		mf, err := manifest.Serialize(depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, nil)
 		if err != nil {
 			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
 		}
@@ -344,21 +381,21 @@ func makeManifestJob(
 			Distro:       distribution.Name(),
 			Arch:         archName,
 			ImageType:    imgType.Name(),
-			Repositories: repos,
+			Repositories: allRepos,
 			Config:       bc,
 		}
-		err = save(mf, depsolvedSets, containerSpecs, commitSpecs, request, path, filename, metadata)
+		err = save(mf, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, path, filename, metadata)
 		return
 	}
 	return job
 }
 
-func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.DepsolveResult, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, cr buildRequest, path, filename string, metadata bool) error {
-	var data interface{}
+func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.DepsolveResult, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, flatpaks map[string][]flatpak.Spec, cr buildRequest, path, filename string, metadata bool) error {
+	var data any
 	if metadata {
 		rpmmds := make(map[string]rpmmd.PackageList)
 		for plName, res := range depsolved {
-			rpmmds[plName] = res.Packages
+			rpmmds[plName] = res.Transactions.AllPackages()
 		}
 		data = struct {
 			BuidRequest   buildRequest                   `json:"build-request"`
@@ -366,9 +403,10 @@ func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.Depsolve
 			RPMMD         map[string]rpmmd.PackageList   `json:"rpmmd"`
 			Containers    map[string][]container.Spec    `json:"containers,omitempty"`
 			OSTreeCommits map[string][]ostree.CommitSpec `json:"ostree-commits,omitempty"`
+			Flatpaks      map[string][]flatpak.Spec      `json:"flatpaks,omitempty"`
 			NoImageInfo   bool                           `json:"no-image-info"`
 		}{
-			cr, ms, rpmmds, containers, commits, true,
+			cr, ms, rpmmds, containers, commits, flatpaks, true,
 		}
 	} else {
 		data = ms
@@ -410,10 +448,11 @@ func main() {
 	flag.BoolVar(&buildconfigAllowUnknown, "buildconfig-allow-unknown", false, "allow unknown keys in buildconfig")
 
 	// content args
-	var packages, containers, commits, fakeBootc bool
+	var packages, containers, commits, flatpaks, fakeBootc bool
 	flag.BoolVar(&packages, "packages", true, "depsolve package sets")
 	flag.BoolVar(&containers, "containers", true, "resolve container checksums")
 	flag.BoolVar(&commits, "commits", false, "resolve ostree commit IDs")
+	flag.BoolVar(&flatpaks, "flatpaks", false, "resolve flatpak checksums")
 	flag.BoolVar(&fakeBootc, "fake-bootc", false, "create fake bootc containers based on test/bootc-fake-containers.yaml")
 
 	// manifest selection args
@@ -421,7 +460,17 @@ func main() {
 	flag.Var(&arches, "arches", "comma-separated list of architectures (globs supported)")
 	flag.Var(&distros, "distros", "comma-separated list of distributions (globs supported)")
 	flag.Var(&imgTypes, "types", "comma-separated list of image types (globs supported)")
-	flag.Var(&bootcRefs, "bootc-refs", "comma-separated list of bootc-refs")
+	flag.Var(&bootcRefs, "bootc-refs", "comma-separated list of bootc container refs to generate manifests for (format: ref or ref#build-ref)")
+
+	// bootc options
+	var bootcRemote bool
+	flag.BoolVar(&bootcRemote, "bootc-remote", false, "generate bootc manifests with org.osbuild.skopeo sources instead of containers-storage")
+	var bootcInstallerRef string
+	flag.StringVar(&bootcInstallerRef, "bootc-installer-ref", "", "override the installer payload container ref for bootc-installer manifests")
+
+	// dry-run
+	var dryRun bool
+	flag.BoolVar(&dryRun, "dry-run", false, "print what manifests would be generated")
 
 	flag.Parse()
 
@@ -437,12 +486,13 @@ func main() {
 		"packages":   packages,
 		"containers": containers,
 		"commits":    commits,
+		"flatpaks":   flatpaks,
 	}
 
 	var configs *BuildConfigs
 	opts := &buildconfig.Options{AllowUnknownFields: buildconfigAllowUnknown}
 	if configPath != "" {
-		fmt.Println("'-config' was provided, thus ignoring '-config-list' option")
+		fmt.Fprintln(os.Stderr, "'-config' was provided, thus ignoring '-config-list' option")
 		configs = loadImgConfig(configPath, opts)
 	} else {
 		configs = loadConfigList(configMapPath, opts)
@@ -459,7 +509,7 @@ func main() {
 	tmpdirRoot := filepath.Join(os.TempDir(), "gen-manifests-tmpdir")
 	defer os.RemoveAll(tmpdirRoot)
 
-	fmt.Println("Collecting jobs")
+	fmt.Fprintln(os.Stderr, "Collecting jobs")
 
 	distros, invalidDistros := distros.ResolveArgValues(testedRepoRegistry.ListDistros())
 	if len(invalidDistros) > 0 {
@@ -502,7 +552,7 @@ func main() {
 				if len(repos) == 0 {
 					fmt.Printf("no repositories defined for %s/%s/%s\n", distroName, archName, imgTypeName)
 					if skipNorepos {
-						fmt.Println("Skipping")
+						fmt.Fprintln(os.Stderr, "Skipping")
 						continue
 					}
 					panic("no repositories found, pass --skip-norepos to skip")
@@ -522,36 +572,48 @@ func main() {
 						continue
 					}
 
-					job := makeManifestJob(itConfig, imgType, distribution, repos, archName, cacheRoot, outputDir, contentResolve, metadata, tmpdirRoot)
-					jobs = append(jobs, job)
+					if dryRun {
+						fmt.Printf("%s,%s,%s,%s\n", distribution.Name(), archName, imgType.Name(), itConfig.Name)
+					} else {
+						job := makeManifestJob(itConfig, imgType, distribution, repos, archName, cacheRoot, outputDir, contentResolve, metadata, tmpdirRoot, false, "")
+						jobs = append(jobs, job)
+					}
 				}
 			}
 		}
 	}
+
 	for _, bootcRefTuple := range bootcRefs {
 		l := strings.SplitN(bootcRefTuple, "#", 2)
 		bootcRef := l[0]
-		var buildBootcRef string
-		if len(l) > 1 {
-			buildBootcRef = l[1]
-		}
 
-		distribution, err := bootc.NewBootcDistro(bootcRef, nil)
-		if err != nil && errors.Is(err, defs.ErrNoDefaultFs) {
-			// XXX: consider making this configurable but for now
-			// we just need diffable manifests
-			distribution, err = bootc.NewBootcDistro(bootcRef, &bootc.DistroOptions{
-				DefaultFs: "ext4",
-			})
-		}
+		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef)
 		if err != nil {
 			panic(err)
 		}
-		if buildBootcRef != "" {
-			if err := distribution.SetBuildContainer(buildBootcRef); err != nil {
+		// consider making this configurable but for now we just need
+		// diffable manifests
+		if bootcInfo.DefaultRootFs == "" {
+			bootcInfo.DefaultRootFs = "ext4"
+		}
+
+		distribution, err := generic.NewBootc("bootc", bootcInfo)
+		if err != nil {
+			panic(err)
+		}
+
+		var buildBootcRef string
+		if len(l) > 1 {
+			buildBootcRef = l[1]
+			buildBootcInfo, err := bootc.ResolveBootcBuildInfo(buildBootcRef)
+			if err != nil {
+				panic(err)
+			}
+			if err := distribution.SetBuildContainer(buildBootcInfo); err != nil {
 				panic(err)
 			}
 		}
+
 		for _, archName := range arches {
 			archi, err := distribution.GetArch(archName)
 			if err != nil {
@@ -576,9 +638,13 @@ func main() {
 						continue
 					}
 
-					var repos []rpmmd.RepoConfig
-					job := makeManifestJob(itConfig, imgType, distribution, repos, archName, cacheRoot, outputDir, contentResolve, metadata, tmpdirRoot)
-					jobs = append(jobs, job)
+					if dryRun {
+						fmt.Printf("%s,%s,%s,%s\n", distribution.Name(), archName, imgType.Name(), itConfig.Name)
+					} else {
+						var repos []rpmmd.RepoConfig
+						job := makeManifestJob(itConfig, imgType, distribution, repos, archName, cacheRoot, outputDir, contentResolve, metadata, tmpdirRoot, bootcRemote, bootcInstallerRef)
+						jobs = append(jobs, job)
+					}
 				}
 			}
 		}
@@ -598,9 +664,8 @@ func main() {
 			ImageRef      string      `yaml:"image_ref"`
 			ImageTypes    []string    `yaml:"image_types"`
 
-			BuildContainerRef   string      `yaml:"build_container_ref"`
-			BuildContainerInfo  osinfo.Info `yaml:"build_container_info"`
-			PayloadContainerRef string      `yaml:"payload_container_ref"`
+			BuildContainerRef  string      `yaml:"build_container_ref"`
+			BuildContainerInfo osinfo.Info `yaml:"build_container_info"`
 		}
 		type fakeContainersYAML struct {
 			Containers []fakeBootcContainerYAML
@@ -612,7 +677,14 @@ func main() {
 			panic(err)
 		}
 		for _, fakeBootcCnt := range fakeContainers.Containers {
-			distribution, err := bootc.NewBootcDistroForTesting(fakeBootcCnt.Arch.String(), &fakeBootcCnt.Info, fakeBootcCnt.ImageRef, fakeBootcCnt.DefaultFs, fakeBootcCnt.ContainerSize)
+			fakeBootcInfo := &bootc.Info{
+				Imgref:        fakeBootcCnt.ImageRef,
+				OSInfo:        &fakeBootcCnt.Info,
+				Arch:          fakeBootcCnt.Arch.String(),
+				DefaultRootFs: fakeBootcCnt.DefaultFs,
+				Size:          fakeBootcCnt.ContainerSize,
+			}
+			distribution, err := generic.NewBootc("bootc", fakeBootcInfo)
 			if err != nil {
 				panic(err)
 			}
@@ -630,7 +702,12 @@ func main() {
 					}
 
 					if fakeBootcCnt.BuildContainerRef != "" {
-						if err := distribution.SetBuildContainerForTesting(fakeBootcCnt.BuildContainerRef, &fakeBootcCnt.BuildContainerInfo); err != nil {
+						buildContainerInfo := &bootc.Info{
+							Imgref: fakeBootcCnt.BuildContainerRef,
+							OSInfo: &fakeBootcCnt.BuildContainerInfo,
+							Arch:   fakeBootcInfo.Arch,
+						}
+						if err := distribution.SetBuildContainer(buildContainerInfo); err != nil {
 							panic(err)
 						}
 					}
@@ -652,14 +729,9 @@ func main() {
 							fmt.Printf("Skipping %s for %s/%s (reason: %v)\n", itConfig.Name, imgTypeName, distribution.Name(), reason)
 							continue
 						}
-						if fakeBootcCnt.PayloadContainerRef != "" {
-							itConfig.Options.Bootc = &distro.BootcImageOptions{
-								InstallerPayloadRef: fakeBootcCnt.PayloadContainerRef,
-							}
-						}
 
 						var repos []rpmmd.RepoConfig
-						job := makeManifestJob(itConfig, imgType, distribution, repos, archName, cacheRoot, outputDir, contentResolve, metadata, tmpdirRoot)
+						job := makeManifestJob(itConfig, imgType, distribution, repos, archName, cacheRoot, outputDir, contentResolve, metadata, tmpdirRoot, bootcRemote, bootcInstallerRef)
 						jobs = append(jobs, job)
 					}
 				}
@@ -668,17 +740,17 @@ func main() {
 	}
 
 	nJobs := len(jobs)
-	fmt.Printf("Collected %d jobs\n", nJobs)
+	fmt.Fprintf(os.Stderr, "Collected %d jobs\n", nJobs)
 
 	// nolint:gosec
 	wq := newWorkerQueue(uint32(nWorkers), uint32(nJobs))
 	wq.start()
-	fmt.Printf("Initialised %d workers\n", nWorkers)
-	fmt.Printf("Submitting %d jobs... ", nJobs)
+	fmt.Fprintf(os.Stderr, "Initialised %d workers\n", nWorkers)
+	fmt.Fprintf(os.Stderr, "Submitting %d jobs... ", nJobs)
 	for _, j := range jobs {
 		wq.submitJob(j)
 	}
-	fmt.Println("done")
+	fmt.Fprintln(os.Stderr, "done")
 	errs := wq.wait()
 	exit := 0
 	if nErrs := len(errs); nErrs > 0 {
@@ -696,6 +768,6 @@ func main() {
 		}
 		exit = 1
 	}
-	fmt.Printf("RPM metadata cache kept in %s\n", cacheRoot)
+	fmt.Fprintf(os.Stderr, "RPM metadata cache kept in %s\n", cacheRoot)
 	os.Exit(exit)
 }

@@ -28,7 +28,7 @@ func TestErofStageJsonMinimal(t *testing.T) {
         }
 }`
 
-	opts := &osbuild.ErofsStageOptions{
+	opts := osbuild.ErofsStageOptions{
 		Filename: "foo.ero",
 	}
 	stage := osbuild.NewErofsStage(opts, "input-pipeline")
@@ -53,6 +53,7 @@ func TestErofStageJsonFull(t *testing.T) {
         },
         "options": {
                 "filename": "foo.ero",
+                "source": "mount://-/",
                 "exclude_paths": [
                         "boot/efi/.*",
                         "boot/initramfs-.*"
@@ -69,8 +70,9 @@ func TestErofStageJsonFull(t *testing.T) {
         }
 }`
 
-	opts := &osbuild.ErofsStageOptions{
+	opts := osbuild.ErofsStageOptions{
 		Filename: "foo.ero",
+		Source:   "mount://-/",
 		ExcludePaths: []string{
 			"boot/efi/.*",
 			"boot/initramfs-.*",

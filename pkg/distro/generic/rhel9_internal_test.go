@@ -78,31 +78,31 @@ func TestRhel9_DistroFactory(t *testing.T) {
 	testCases := []testCase{
 		{
 			strID:    "rhel-90",
-			expected: common.Must(newDistro("rhel-9.0")),
+			expected: common.Must(New("rhel-9.0")),
 		},
 		{
 			strID:    "rhel-9.0",
-			expected: common.Must(newDistro("rhel-9.0")),
+			expected: common.Must(New("rhel-9.0")),
 		},
 		{
 			strID:    "rhel-93",
-			expected: common.Must(newDistro("rhel-9.3")),
+			expected: common.Must(New("rhel-9.3")),
 		},
 		{
 			strID:    "rhel-9.3",
-			expected: common.Must(newDistro("rhel-9.3")),
+			expected: common.Must(New("rhel-9.3")),
 		},
 		{
 			strID:    "rhel-910",
-			expected: common.Must(newDistro("rhel-9.10")),
+			expected: common.Must(New("rhel-9.10")),
 		},
 		{
 			strID:    "rhel-9.10",
-			expected: common.Must(newDistro("rhel-9.10")),
+			expected: common.Must(New("rhel-9.10")),
 		},
 		{
 			strID:    "centos-9",
-			expected: common.Must(newDistro("centos-9")),
+			expected: common.Must(New("centos-9")),
 		},
 		{
 			strID:    "centos-9.0",

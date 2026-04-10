@@ -22,6 +22,7 @@ func getConfPaths(t *testing.T) []string {
 	confPaths := []string{
 		"./test/confpaths/priority1/repositories",
 		"./test/confpaths/priority2/repositories",
+		"./test/confpaths/priority3/repositories",
 	}
 	var absConfPaths []string
 
@@ -62,6 +63,16 @@ func TestLoadRepositoriesExisting(t *testing.T) {
 			want: map[string][]string{
 				test_distro.TestArchName:  {"fedora-34-p2", "updates-34-p2"},
 				test_distro.TestArch2Name: {"fedora-34-p2", "updates-34-p2"},
+			},
+		},
+		{
+			name: "single distro definition but its yaml",
+			args: args{
+				distro: "fedora-35",
+			},
+			want: map[string][]string{
+				test_distro.TestArchName:  {"fedora-35-p3", "updates-35-p3"},
+				test_distro.TestArch2Name: {"fedora-35-p3", "updates-35-p3"},
 			},
 		},
 	}
@@ -152,6 +163,36 @@ func Test_LoadAllRepositories(t *testing.T) {
 				{
 					Name:     "updates-34-p2",
 					BaseURLs: []string{"https://example.com/updates-34-p2/test_arch2"},
+					GPGKeys:  []string{"FAKE-GPG-KEY"},
+					CheckGPG: common.ToPtr(true),
+				},
+			},
+		},
+		"fedora-35": {
+			test_distro.TestArchName: {
+				{
+					Name:     "fedora-35-p3",
+					BaseURLs: []string{"https://example.com/fedora-35-p3/test_arch"},
+					GPGKeys:  []string{"FAKE-GPG-KEY"},
+					CheckGPG: common.ToPtr(true),
+				},
+				{
+					Name:     "updates-35-p3",
+					BaseURLs: []string{"https://example.com/updates-35-p3/test_arch"},
+					GPGKeys:  []string{"FAKE-GPG-KEY"},
+					CheckGPG: common.ToPtr(true),
+				},
+			},
+			test_distro.TestArch2Name: {
+				{
+					Name:     "fedora-35-p3",
+					BaseURLs: []string{"https://example.com/fedora-35-p3/test_arch2"},
+					GPGKeys:  []string{"FAKE-GPG-KEY"},
+					CheckGPG: common.ToPtr(true),
+				},
+				{
+					Name:     "updates-35-p3",
+					BaseURLs: []string{"https://example.com/updates-35-p3/test_arch2"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -354,6 +395,6 @@ func TestLoadRepositoriesError(t *testing.T) {
 		assert.NoError(reposFile.Close())
 
 		_, err = LoadAllRepositories([]string{reposDir}, nil)
-		assert.ErrorContains(err, "failed to load repositories: invalid character '<' looking for beginning of value")
+		assert.ErrorContains(err, "cannot unmarshal !!str")
 	})
 }

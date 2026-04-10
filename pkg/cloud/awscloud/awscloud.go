@@ -107,10 +107,16 @@ func NewFromFile(filename string, region string) (*AWS, error) {
 
 // Initialize a new AWS object from defaults.
 // Looks for env variables, shared credential file, and EC2 Instance Roles.
-func NewDefault(region string) (*AWS, error) {
+func NewDefault(region string, profile string) (*AWS, error) {
+	optionFuncs := []func(*config.LoadOptions) error{
+		config.WithRegion(region),
+	}
+	if profile != "" {
+		optionFuncs = append(optionFuncs, config.WithSharedConfigProfile(profile))
+	}
 	cfg, err := config.LoadDefaultConfig(
 		context.TODO(),
-		config.WithRegion(region),
+		optionFuncs...,
 	)
 	if err != nil {
 		return nil, err

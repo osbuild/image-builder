@@ -26,7 +26,7 @@ func TestNewGCETarPipeline(t *testing.T) {
 		buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 		buildPipeline.Checkpoint()
 
-		imgPipeline := manifest.NewRawImage(buildPipeline, nil)
+		imgPipeline := manifest.NewRawImage(buildPipeline, nil, manifest.DiskCustomizations{})
 		imgPipeline.SetFilename(tc.imgFilename)
 
 		tar := newGCETarPipelineForImg(buildPipeline, imgPipeline, "my-test")

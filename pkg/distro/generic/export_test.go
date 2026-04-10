@@ -16,10 +16,6 @@ func GetPartitionTable(it distro.ImageType) (*disk.PartitionTable, error) {
 	return it.(*imageType).getPartitionTable(&blueprint.Customizations{}, distro.ImageOptions{}, rng)
 }
 
-func BootstrapContainerFor(it distro.ImageType) string {
-	return bootstrapContainerFor(it.(*imageType))
-}
-
 type (
 	ImageType    = imageType
 	Distribution = distribution

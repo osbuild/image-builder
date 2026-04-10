@@ -87,31 +87,31 @@ func TestRH8_DistroFactory(t *testing.T) {
 	testCases := []testCase{
 		{
 			strID:    "rhel-8.0",
-			expected: common.Must(newDistro("rhel-8.0")),
+			expected: common.Must(New("rhel-8.0")),
 		},
 		{
 			strID:    "rhel-80",
-			expected: common.Must(newDistro("rhel-8.0")),
+			expected: common.Must(New("rhel-8.0")),
 		},
 		{
 			strID:    "rhel-8.4",
-			expected: common.Must(newDistro("rhel-8.4")),
+			expected: common.Must(New("rhel-8.4")),
 		},
 		{
 			strID:    "rhel-84",
-			expected: common.Must(newDistro("rhel-8.4")),
+			expected: common.Must(New("rhel-8.4")),
 		},
 		{
 			strID:    "rhel-8.10",
-			expected: common.Must(newDistro("rhel-8.10")),
+			expected: common.Must(New("rhel-8.10")),
 		},
 		{
 			strID:    "rhel-810",
-			expected: common.Must(newDistro("rhel-8.10")),
+			expected: common.Must(New("rhel-8.10")),
 		},
 		{
 			strID:    "centos-8",
-			expected: common.Must(newDistro("centos-8")),
+			expected: common.Must(New("centos-8")),
 		},
 		{
 			strID:    "centos-8.4",

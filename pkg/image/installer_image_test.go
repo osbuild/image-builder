@@ -21,44 +21,61 @@ import (
 )
 
 func mockPackageSets() map[string]depsolvednf.DepsolveResult {
-	return map[string]depsolvednf.DepsolveResult{
+	repo := rpmmd.RepoConfig{Id: "dummy-repo-id"}
+	pkgSets := map[string]depsolvednf.DepsolveResult{
 		"build": {
-			Packages: rpmmd.PackageList{
+			Transactions: depsolvednf.TransactionList{
 				{
-					Name: "coreutils",
-					Checksum: rpmmd.Checksum{
-						Type:  "sha256",
-						Value: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+					{
+						Name: "coreutils",
+						Checksum: rpmmd.Checksum{
+							Type:  "sha256",
+							Value: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+						},
+						RemoteLocations: []string{"https://example.com/coreutils"},
+						RepoID:          repo.Id,
+						Repo:            &repo,
 					},
-					RemoteLocations: []string{"https://example.com/coreutils"},
 				},
 			},
+			Repos: []rpmmd.RepoConfig{repo},
 		},
 		"os": {
-			Packages: rpmmd.PackageList{
+			Transactions: depsolvednf.TransactionList{
 				{
-					Name: "kernel",
-					Checksum: rpmmd.Checksum{
-						Type:  "sha256",
-						Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+					{
+						Name: "kernel",
+						Checksum: rpmmd.Checksum{
+							Type:  "sha256",
+							Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+						},
+						RemoteLocations: []string{"https://example.com/kernel"},
+						RepoID:          repo.Id,
+						Repo:            &repo,
 					},
-					RemoteLocations: []string{"https://example.com/kernel"},
 				},
 			},
+			Repos: []rpmmd.RepoConfig{repo},
 		},
 		"anaconda-tree": {
-			Packages: rpmmd.PackageList{
+			Transactions: depsolvednf.TransactionList{
 				{
-					Name: "kernel",
-					Checksum: rpmmd.Checksum{
-						Type:  "sha256",
-						Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+					{
+						Name: "kernel",
+						Checksum: rpmmd.Checksum{
+							Type:  "sha256",
+							Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+						},
+						RemoteLocations: []string{"https://example.com/kernel"},
+						RepoID:          repo.Id,
+						Repo:            &repo,
 					},
-					RemoteLocations: []string{"https://example.com/kernel"},
 				},
 			},
+			Repos: []rpmmd.RepoConfig{repo},
 		},
 	}
+	return pkgSets
 }
 
 func mockContainerSpecs() map[string][]container.Spec {
@@ -99,24 +116,24 @@ const (
 )
 
 func TestContainerInstallerUnsetKSOptions(t *testing.T) {
-	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 	assert.NotNil(t, img)
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), mockContainerSpecs(), nil)
 	assert.Contains(t, mfs, fmt.Sprintf(`"inst.ks=hd:LABEL=%s:/osbuild.ks"`, isolabel))
 }
 
 func TestContainerInstallerUnsetKSPath(t *testing.T) {
-	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 	assert.NotNil(t, img)
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 	// set empty kickstart options (no path)
 	img.Kickstart = &kickstart.Options{}
 
@@ -125,12 +142,12 @@ func TestContainerInstallerUnsetKSPath(t *testing.T) {
 }
 
 func TestContainerInstallerSetKSPath(t *testing.T) {
-	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 	assert.NotNil(t, img)
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 	img.Kickstart = &kickstart.Options{
 		Path: "/test.ks",
 	}
@@ -141,12 +158,12 @@ func TestContainerInstallerSetKSPath(t *testing.T) {
 }
 
 func TestContainerInstallerExt4Rootfs(t *testing.T) {
-	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 	assert.NotNil(t, img)
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), mockContainerSpecs(), nil)
 
@@ -156,13 +173,13 @@ func TestContainerInstallerExt4Rootfs(t *testing.T) {
 }
 
 func TestContainerInstallerSquashfsRootfs(t *testing.T) {
-	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 	assert.NotNil(t, img)
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
-	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
+	img.ISOCustomizations.Label = isolabel
+	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), mockContainerSpecs(), nil)
 
@@ -177,7 +194,7 @@ func TestOSTreeInstallerUnsetKSPath(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 	img.Kickstart = &kickstart.Options{
 		// the ostree options must be non-nil
 		OSTree: &kickstart.OSTree{},
@@ -193,7 +210,7 @@ func TestOSTreeInstallerSetKSPath(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 	img.Kickstart = &kickstart.Options{
 		// the ostree options must be non-nil
 		OSTree: &kickstart.OSTree{},
@@ -211,7 +228,7 @@ func TestOSTreeInstallerExt4Rootfs(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 	img.Kickstart = &kickstart.Options{
 		// the ostree options must be non-nil
 		OSTree: &kickstart.OSTree{},
@@ -230,8 +247,8 @@ func TestOSTreeInstallerSquashfsRootfs(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
-	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
+	img.ISOCustomizations.Label = isolabel
+	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
 	img.Kickstart = &kickstart.Options{
 		// the ostree options must be non-nil
 		OSTree: &kickstart.OSTree{},
@@ -250,7 +267,7 @@ func TestTarInstallerUnsetKSOptions(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
 
@@ -264,7 +281,7 @@ func TestTarInstallerUnsetKSPath(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 	img.Kickstart = &kickstart.Options{}
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
@@ -279,7 +296,7 @@ func TestTarInstallerSetKSPath(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 	img.Kickstart = &kickstart.Options{
 		Path: "/test.ks",
 	}
@@ -297,7 +314,7 @@ func TestTarInstallerExt4Rootfs(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
 	// Confirm that it includes the rootfs-image pipeline that makes the ext4 rootfs
@@ -311,8 +328,8 @@ func TestTarInstallerSquashfsRootfs(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
-	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
+	img.ISOCustomizations.Label = isolabel
+	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
 	// Confirm that it does not include rootfs-image pipeline
@@ -326,7 +343,7 @@ func TestLiveInstallerExt4Rootfs(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
 	// Confirm that it includes the rootfs-image pipeline that makes the ext4 rootfs
@@ -340,8 +357,8 @@ func TestLiveInstallerSquashfsRootfs(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
-	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
+	img.ISOCustomizations.Label = isolabel
+	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
 	// Confirm that it does not include rootfs-image pipeline
@@ -360,7 +377,7 @@ func instantiateAndSerialize(t *testing.T, img image.ImageKind, depsolved map[st
 	assert.NoError(t, err)
 
 	fmt.Printf("Serializing with commits: %+v\n", commits)
-	mfs, err := mf.Serialize(depsolved, containers, commits, nil)
+	mfs, err := mf.Serialize(depsolved, containers, commits, nil, nil)
 	assert.NoError(t, err)
 
 	return string(mfs)
@@ -375,7 +392,7 @@ func instantiateAndSerialize(t *testing.T, img image.ImageKind, depsolved map[st
 
 func TestContainerInstallerPanics(t *testing.T) {
 	assert := assert.New(t)
-	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 	assert.PanicsWithError("org.osbuild.grub2.iso: product.name option is required", func() { instantiateAndSerialize(t, img, mockPackageSets(), mockContainerSpecs(), nil) })
 	img.InstallerCustomizations.Product = product
 	assert.PanicsWithError("org.osbuild.grub2.iso: product.version option is required", func() { instantiateAndSerialize(t, img, mockPackageSets(), mockContainerSpecs(), nil) })
@@ -486,10 +503,10 @@ func TestContainerInstallerModules(t *testing.T) {
 		// Remove this when we drop support for RHEL 8.
 		for _, legacy := range []bool{true, false} {
 			t.Run(name, func(t *testing.T) {
-				img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+				img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 				img.InstallerCustomizations.Product = product
 				img.InstallerCustomizations.OSVersion = osversion
-				img.InstallerCustomizations.ISOLabel = isolabel
+				img.ISOCustomizations.Label = isolabel
 
 				img.InstallerCustomizations.UseLegacyAnacondaConfig = legacy
 				img.InstallerCustomizations.EnabledAnacondaModules = tc.enable
@@ -515,7 +532,7 @@ func TestOSTreeInstallerModules(t *testing.T) {
 				img := image.NewAnacondaOSTreeInstaller(testPlatform, "filename", ostree.SourceSpec{})
 				img.InstallerCustomizations.Product = product
 				img.InstallerCustomizations.OSVersion = osversion
-				img.InstallerCustomizations.ISOLabel = isolabel
+				img.ISOCustomizations.Label = isolabel
 				img.Kickstart = &kickstart.Options{
 					// the ostree options must be non-nil
 					OSTree: &kickstart.OSTree{},
@@ -545,7 +562,7 @@ func TestTarInstallerModules(t *testing.T) {
 				img := image.NewAnacondaTarInstaller(testPlatform, "filename")
 				img.InstallerCustomizations.Product = product
 				img.InstallerCustomizations.OSVersion = osversion
-				img.InstallerCustomizations.ISOLabel = isolabel
+				img.ISOCustomizations.Label = isolabel
 				img.InstallerCustomizations.UseLegacyAnacondaConfig = legacy
 				img.InstallerCustomizations.EnabledAnacondaModules = tc.enable
 				img.InstallerCustomizations.DisabledAnacondaModules = tc.disable
@@ -582,12 +599,12 @@ func TestInstallerLocales(t *testing.T) {
 
 	for input, expected := range locales {
 		{ // Container
-			img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+			img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 			assert.NotNil(t, img)
 
 			img.InstallerCustomizations.Product = product
 			img.InstallerCustomizations.OSVersion = osversion
-			img.InstallerCustomizations.ISOLabel = isolabel
+			img.ISOCustomizations.Label = isolabel
 			img.Locale = input
 
 			mfs := instantiateAndSerialize(t, img, mockPackageSets(), mockContainerSpecs(), nil)
@@ -602,7 +619,7 @@ func TestInstallerLocales(t *testing.T) {
 
 			img.InstallerCustomizations.Product = product
 			img.InstallerCustomizations.OSVersion = osversion
-			img.InstallerCustomizations.ISOLabel = isolabel
+			img.ISOCustomizations.Label = isolabel
 			img.Kickstart = &kickstart.Options{
 				// the ostree options must be non-nil
 				OSTree: &kickstart.OSTree{},
@@ -621,7 +638,7 @@ func TestInstallerLocales(t *testing.T) {
 
 			img.InstallerCustomizations.Product = product
 			img.InstallerCustomizations.OSVersion = osversion
-			img.InstallerCustomizations.ISOLabel = isolabel
+			img.ISOCustomizations.Label = isolabel
 			img.OSCustomizations.Language = input
 
 			mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
@@ -636,7 +653,7 @@ func TestInstallerLocales(t *testing.T) {
 
 			img.InstallerCustomizations.Product = product
 			img.InstallerCustomizations.OSVersion = osversion
-			img.InstallerCustomizations.ISOLabel = isolabel
+			img.ISOCustomizations.Label = isolabel
 			img.Language = input
 
 			mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
@@ -651,7 +668,7 @@ func TestInstallerLocales(t *testing.T) {
 
 			img.InstallerCustomizations.Product = product
 			img.InstallerCustomizations.OSVersion = osversion
-			img.InstallerCustomizations.ISOLabel = isolabel
+			img.ISOCustomizations.Label = isolabel
 			img.Locale = input
 
 			mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
@@ -713,10 +730,10 @@ func findGrub2IsoStageOptions(t *testing.T, mf manifest.OSBuildManifest, pipelin
 }
 
 func TestContainerInstallerDracut(t *testing.T) {
-	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{}, "")
+	img := image.NewAnacondaContainerInstallerLegacy(testPlatform, "filename", container.SourceSpec{})
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	testModules := []string{"test-module"}
 	testDrivers := []string{"test-driver"}
@@ -740,7 +757,7 @@ func TestOSTreeInstallerDracut(t *testing.T) {
 	img := image.NewAnacondaOSTreeInstaller(testPlatform, "filename", ostree.SourceSpec{})
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	img.Kickstart = &kickstart.Options{
 		// the ostree options must be non-nil
@@ -769,7 +786,7 @@ func TestTarInstallerDracut(t *testing.T) {
 	img := image.NewAnacondaTarInstaller(testPlatform, "filename")
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	testModules := []string{"test-module"}
 	testDrivers := []string{"test-driver"}
@@ -793,7 +810,7 @@ func TestTarInstallerKernelOpts(t *testing.T) {
 	img := image.NewAnacondaTarInstaller(testPlatform, "filename")
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	testOpts := []string{"foo=1", "bar=2"}
 
@@ -814,7 +831,7 @@ func TestNetInstallerExt4Rootfs(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
 	// Confirm that it includes the rootfs-image pipeline that makes the ext4 rootfs
@@ -828,8 +845,8 @@ func TestNetInstallerSquashfsRootfs(t *testing.T) {
 
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
-	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
+	img.ISOCustomizations.Label = isolabel
+	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
 
 	mfs := instantiateAndSerialize(t, img, mockPackageSets(), nil, nil)
 	// Confirm that it does not include rootfs-image pipeline
@@ -841,7 +858,7 @@ func TestNetInstallerDracut(t *testing.T) {
 	img := image.NewAnacondaNetInstaller(testPlatform, "filename")
 	img.InstallerCustomizations.Product = product
 	img.InstallerCustomizations.OSVersion = osversion
-	img.InstallerCustomizations.ISOLabel = isolabel
+	img.ISOCustomizations.Label = isolabel
 	testModules := []string{"test-module"}
 	testDrivers := []string{"test-driver"}
 

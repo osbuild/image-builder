@@ -62,7 +62,7 @@ func makeContainerfile(t *testing.T, buildDir string, extraFiles map[string]stri
 FROM scratch
 COPY etc /etc
 COPY usr/bin /usr/bin
-COPY usr/lib/bootc/install /usr/lib/bootc/install 
+COPY usr/lib/bootc/install /usr/lib/bootc/install
 `
 	for path, content := range extraFiles {
 		fakeBootcCnt += fmt.Sprintf("COPY %s %s\n", path[1:], path)
@@ -91,7 +91,7 @@ func makeFakeContainerImage(t *testing.T, buildDir, purpose string) string {
 	require.NoError(t, err, string(output))
 	// add cleanup
 	t.Cleanup(func() {
-		output, err := exec.Command("podman", "image", "rm", imgTag).CombinedOutput()
+		output, err := exec.Command("podman", "image", "rm", "--force", imgTag).CombinedOutput()
 		assert.NoError(t, err, string(output))
 	})
 
@@ -103,7 +103,6 @@ func NewFakeContainer(t *testing.T, purpose string, extraFiles map[string]string
 
 	buildDir := t.TempDir()
 
-	// XXX: allow adding test specific content
 	makeContainerfile(t, buildDir, extraFiles)
 	makeFakeBinaries(t, buildDir)
 	// XXX: make os-release content configurable

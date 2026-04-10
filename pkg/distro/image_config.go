@@ -139,10 +139,6 @@ type ImageConfig struct {
 	// to be triggered in systemd
 	MachineIdUninitialized *bool `yaml:"machine_id_uninitialized,omitempty"`
 
-	// MountUnits creates systemd .mount units to describe the filesystem
-	// instead of writing to /etc/fstab
-	MountUnits *bool `yaml:"mount_units,omitempty"`
-
 	// Indicates if rhc should be set to permissive when creating the registration script
 	PermissiveRHC *bool `yaml:"permissive_rhc,omitempty"`
 

@@ -27,6 +27,8 @@ func TestPlatformYamlSmoke(t *testing.T) {
             - grub2-pc-as-bp
         boot_files:
           - ["/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"]
+        extra_uefi_architectures:
+          - "ia32"
 `)
 	var pc platform.Data
 	err := yaml.Unmarshal(inputYAML, &pc)
@@ -46,7 +48,8 @@ func TestPlatformYamlSmoke(t *testing.T) {
 		BootFiles: [][2]string{
 			{"/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"},
 		},
-		FIPSMenu: false,
+		FIPSMenu:               false,
+		ExtraUEFIArchitectures: []string{"ia32"},
 	}
 	assert.Equal(t, expected, pc)
 }

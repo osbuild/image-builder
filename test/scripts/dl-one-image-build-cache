@@ -66,6 +66,7 @@ def main():
         sys.exit(1)
 
     print("✅ Successfully downloaded the image build cache")
+    testlib.touch_s3(distro, arch, manifest_id, osbuild_ref, runner_distro)
 
 
 if __name__ == "__main__":

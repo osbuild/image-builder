@@ -1,6 +1,7 @@
 package manifestmock_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -76,70 +77,267 @@ func TestResolveCommits_Smoke(t *testing.T) {
 }
 
 func TestDepsolve_EmptyInput(t *testing.T) {
-	result := manifestmock.Depsolve(nil, nil, "x86_64")
+	result, err := manifestmock.Depsolve(nil, "x86_64", nil, false)
+	assert.NoError(t, err)
 	assert.Equal(t, map[string]depsolvednf.DepsolveResult{}, result)
 
-	result = manifestmock.Depsolve(map[string][]rpmmd.PackageSet{}, []rpmmd.RepoConfig{}, "x86_64")
+	result, err = manifestmock.Depsolve(map[string][]rpmmd.PackageSet{}, "x86_64", nil, false)
+	assert.NoError(t, err)
 	assert.Equal(t, map[string]depsolvednf.DepsolveResult{}, result)
 }
 
 func TestDepsolve_Smoke(t *testing.T) {
+	baseosRepo := rpmmd.RepoConfig{
+		Id:       "baseos",
+		Name:     "baseos",
+		BaseURLs: []string{"https://example.com/baseos"},
+	}
+	appstreamRepo := rpmmd.RepoConfig{
+		Id:       "appstream",
+		Name:     "appstream",
+		BaseURLs: []string{"https://example.com/appstream"},
+	}
+	userRepo := rpmmd.RepoConfig{
+		Id:       "user",
+		Name:     "user",
+		BaseURLs: []string{"https://example.com/user"},
+	}
+	baseRepos := []rpmmd.RepoConfig{appstreamRepo, baseosRepo}
+	allRepos := slices.Concat(baseRepos, []rpmmd.RepoConfig{userRepo})
+
 	packageSets := map[string][]rpmmd.PackageSet{
 		"build": {
 			{
-				Include:         []string{"inc1"},
-				Exclude:         []string{"exc1"},
-				Repositories:    []rpmmd.RepoConfig{{Name: "repo1"}},
+				Include:         []string{"build-inc1", "dnf"},
+				Exclude:         []string{"build-exc1"},
+				Repositories:    baseRepos,
 				InstallWeakDeps: true,
 			},
 		},
-	}
-	repos := []rpmmd.RepoConfig{
-		{
-			Name:     "repo1",
-			BaseURLs: []string{"https://example.com/foo"},
+		"os": {
+			{
+				Include:         []string{"os-inc1", "dnf"},
+				Exclude:         []string{"os-exc1"},
+				Repositories:    baseRepos,
+				InstallWeakDeps: true,
+			},
+			{
+				Include:         []string{"os-inc2", "dnf"},
+				Exclude:         []string{"os-exc2"},
+				Repositories:    allRepos,
+				InstallWeakDeps: false,
+			},
 		},
 	}
+
 	arch := "x86_64"
-	result := manifestmock.Depsolve(packageSets, repos, arch)
+	result, err := manifestmock.Depsolve(packageSets, arch, nil, false)
+	assert.NoError(t, err)
 	assert.Equal(t, map[string]depsolvednf.DepsolveResult{
 		"build": depsolvednf.DepsolveResult{
-			Packages: rpmmd.PackageList{
+			Transactions: depsolvednf.TransactionList{
 				{
-					Name:            "inc1",
-					Epoch:           0,
-					Version:         "6",
-					Release:         "2.fk1",
-					Arch:            "x86_64",
-					RemoteLocations: []string{"https://example.com/repo/packages/inc1"},
-					Checksum:        rpmmd.Checksum{Type: "sha256", Value: "ff49f5b2f0aded095860d2c231ace1047a84b11f55c10640c57ad62e1a51504f"},
-				},
-				{
-					Name:            "exclude:exc1",
-					Epoch:           0,
-					Version:         "0",
-					Release:         "0",
-					Arch:            "noarch",
-					RemoteLocations: []string{"https://example.com/repo/packages/exclude:exc1"},
-					Checksum:        rpmmd.Checksum{Type: "sha256", Value: "ea431ebfa6a382e01751570ebfef3db0b8038f63a5dd63941ab6f624a40243c2"},
-				}, {
-					Name:            "build:transaction-0-repos:repo1-weak",
-					Epoch:           0,
-					Arch:            "noarch",
-					RemoteLocations: []string{"https://example.com/repo/packages/build:transaction-0-repos:repo1-weak"},
-					Checksum:        rpmmd.Checksum{Type: "sha256", Value: "9df9e587e73cd4526ea565f0d05e077cefbd5f55e314862ac844a232f0d718c0"},
-				}, {
-					Name:            "https://example.com/passed-arch:x86_64/passed-repo:/foo",
-					RemoteLocations: []string{"https://example.com/passed-arch:x86_64/passed-repo:/foo"},
-					Checksum:        rpmmd.Checksum{Type: "sha256", Value: "63c9a60a4f279e4825c170c3cd893560716635f84a9a71fb262a6206d59ca74d"},
+					{
+						Name:            "build-inc1",
+						Version:         "1",
+						Release:         "3.pkgset~build^trans~0",
+						Arch:            "x86_64",
+						Location:        "packages/build-inc1-0:1-3.pkgset~build^trans~0.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/baseos/packages/build-inc1-0:1-3.pkgset~build^trans~0.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "efd4f3331ab734995ccbd2fa9d16ee989b17b8160e7f79baf23118b19849c027"},
+						RepoID:          baseosRepo.Id,
+						Repo:            &baseosRepo,
+					},
+					{
+						Name:            "dnf",
+						Version:         "3",
+						Release:         "7.pkgset~build^trans~0",
+						Arch:            "x86_64",
+						Location:        "packages/dnf-0:3-7.pkgset~build^trans~0.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/appstream/packages/dnf-0:3-7.pkgset~build^trans~0.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "ba61ee16bedef613c9779ecc5d40be8304ece49473923c828082ab5c48dcf8ee"},
+						RepoID:          appstreamRepo.Id,
+						Repo:            &appstreamRepo,
+					},
+					{
+						Name:            "exclude:build-exc1",
+						Version:         "1",
+						Release:         "8.pkgset~build^trans~0",
+						Arch:            "x86_64",
+						Location:        "packages/exclude:build-exc1-0:1-8.pkgset~build^trans~0.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/baseos/packages/exclude:build-exc1-0:1-8.pkgset~build^trans~0.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "75dacb0c543a006c4ba5f339dbbd2e53006a7f918079b4f5e5fdb683aa395ab7"},
+						RepoID:          baseosRepo.Id,
+						Repo:            &baseosRepo,
+					},
+					{
+						Name:            "https://example.com/passed-arch:x86_64/passed-repo:/appstream",
+						Version:         "2",
+						Release:         "1.fk1",
+						Arch:            "x86_64",
+						Location:        "passed-arch:x86_64/passed-repo:/appstream",
+						RemoteLocations: []string{"https://example.com/passed-arch:x86_64/passed-repo:/appstream"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "e795634c003b026414b3299574c7b847d9168280e8d2bbdbe3e881cbed194c9d"},
+						RepoID:          appstreamRepo.Id,
+						Repo:            &appstreamRepo,
+					},
+					{
+						Name:            "https://example.com/passed-arch:x86_64/passed-repo:/baseos",
+						Version:         "6",
+						Release:         "0.fk1",
+						Arch:            "x86_64",
+						Location:        "passed-arch:x86_64/passed-repo:/baseos",
+						RemoteLocations: []string{"https://example.com/passed-arch:x86_64/passed-repo:/baseos"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "3cdb35e9d0c01e60bc3362af2544e8b46429c3b1d5177579a0bec588ac65e707"},
+						RepoID:          baseosRepo.Id,
+						Repo:            &baseosRepo,
+					},
+					{
+						Name:            "pkgset:build_trans:0_repos:appstream+baseos+weak",
+						Version:         "2",
+						Release:         "8.fk1",
+						Arch:            "x86_64",
+						Location:        "packages/pkgset:build_trans:0_repos:appstream+baseos+weak-0:2-8.fk1.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/appstream/packages/pkgset:build_trans:0_repos:appstream+baseos+weak-0:2-8.fk1.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "856ccc87e01cd2c6ad3a72c6168f8f0b149e28e8bc1b9eb5e52e7d7a3e57e7d8"},
+						RepoID:          baseRepos[0].Id,
+						Repo:            &baseRepos[0],
+						Files:           []string{"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release"},
+					},
 				},
 			},
-			Repos: []rpmmd.RepoConfig{
+			Repos: baseRepos,
+		},
+		"os": depsolvednf.DepsolveResult{
+			Transactions: depsolvednf.TransactionList{
 				{
-					Name:     "repo1",
-					BaseURLs: []string{"https://example.com/foo"},
+					{
+						Name:            "dnf",
+						Version:         "0",
+						Release:         "5.pkgset~os^trans~0",
+						Arch:            "x86_64",
+						Location:        "packages/dnf-0:0-5.pkgset~os^trans~0.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/appstream/packages/dnf-0:0-5.pkgset~os^trans~0.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "22c603fbf9285e567b76ea505f365da7d013cc48174b494e40a5032e153291ac"},
+						RepoID:          appstreamRepo.Id,
+						Repo:            &appstreamRepo,
+					},
+					{
+						Name:            "exclude:os-exc1",
+						Version:         "1",
+						Release:         "5.pkgset~os^trans~0",
+						Arch:            "x86_64",
+						Location:        "packages/exclude:os-exc1-0:1-5.pkgset~os^trans~0.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/appstream/packages/exclude:os-exc1-0:1-5.pkgset~os^trans~0.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "d292792edfe3ffd70bd96aae58368cf64607fd8ca5d989df23138bacba271a8d"},
+						RepoID:          appstreamRepo.Id,
+						Repo:            &appstreamRepo,
+					},
+					{
+						Name:            "https://example.com/passed-arch:x86_64/passed-repo:/appstream",
+						Version:         "2",
+						Release:         "1.fk1",
+						Arch:            "x86_64",
+						Location:        "passed-arch:x86_64/passed-repo:/appstream",
+						RemoteLocations: []string{"https://example.com/passed-arch:x86_64/passed-repo:/appstream"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "e795634c003b026414b3299574c7b847d9168280e8d2bbdbe3e881cbed194c9d"},
+						RepoID:          appstreamRepo.Id,
+						Repo:            &appstreamRepo,
+					},
+					{
+						Name:            "https://example.com/passed-arch:x86_64/passed-repo:/baseos",
+						Version:         "6",
+						Release:         "0.fk1",
+						Arch:            "x86_64",
+						Location:        "passed-arch:x86_64/passed-repo:/baseos",
+						RemoteLocations: []string{"https://example.com/passed-arch:x86_64/passed-repo:/baseos"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "3cdb35e9d0c01e60bc3362af2544e8b46429c3b1d5177579a0bec588ac65e707"},
+						RepoID:          baseosRepo.Id,
+						Repo:            &baseosRepo,
+					},
+					{
+						Name:            "os-inc1",
+						Version:         "3",
+						Release:         "7.pkgset~os^trans~0",
+						Arch:            "x86_64",
+						Location:        "packages/os-inc1-0:3-7.pkgset~os^trans~0.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/appstream/packages/os-inc1-0:3-7.pkgset~os^trans~0.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "540bb70a104b25dce75c51363eadbdb9c0ed0387467fa2ee28fec5c3103b7f0a"},
+						RepoID:          appstreamRepo.Id,
+						Repo:            &appstreamRepo,
+					},
+					{
+						Name:            "pkgset:os_trans:0_repos:appstream+baseos+weak",
+						Version:         "1",
+						Release:         "2.fk1",
+						Arch:            "x86_64",
+						Location:        "packages/pkgset:os_trans:0_repos:appstream+baseos+weak-0:1-2.fk1.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/appstream/packages/pkgset:os_trans:0_repos:appstream+baseos+weak-0:1-2.fk1.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "d87ebe584488771c23c9304d4c7f11f33eb67ab9aa0494b416e010dab3213bf9"},
+						RepoID:          appstreamRepo.Id,
+						Repo:            &appstreamRepo,
+						Files:           []string{"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release"},
+					},
+				},
+				{
+					{
+						Name:            "dnf",
+						Version:         "3",
+						Release:         "1.pkgset~os^trans~1",
+						Arch:            "x86_64",
+						Location:        "packages/dnf-0:3-1.pkgset~os^trans~1.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/baseos/packages/dnf-0:3-1.pkgset~os^trans~1.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "5d182a7a8683bbc8e3f64a2d9d9547de758e7ff9d98cdebdcac97c62d4912602"},
+						RepoID:          baseosRepo.Id,
+						Repo:            &baseosRepo,
+					},
+					{
+						Name:            "exclude:os-exc2",
+						Version:         "1",
+						Release:         "2.pkgset~os^trans~1",
+						Arch:            "x86_64",
+						Location:        "packages/exclude:os-exc2-0:1-2.pkgset~os^trans~1.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/user/packages/exclude:os-exc2-0:1-2.pkgset~os^trans~1.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "780cae4f0a0ccba5ba6ecb647e03d7dd1d38cd1c5843e67b00432d5c478d6018"},
+						RepoID:          userRepo.Id,
+						Repo:            &userRepo,
+					},
+					{
+						Name:            "https://example.com/passed-arch:x86_64/passed-repo:/user",
+						Version:         "3",
+						Release:         "0.fk1",
+						Arch:            "x86_64",
+						Location:        "passed-arch:x86_64/passed-repo:/user",
+						RemoteLocations: []string{"https://example.com/passed-arch:x86_64/passed-repo:/user"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "0c676fb4e895762dc80cd8abadec73e49970317f281ad5b94b93df9afdcad4e9"},
+						RepoID:          userRepo.Id,
+						Repo:            &userRepo,
+					},
+					{
+						Name:            "os-inc2",
+						Version:         "2",
+						Release:         "0.pkgset~os^trans~1",
+						Arch:            "x86_64",
+						Location:        "packages/os-inc2-0:2-0.pkgset~os^trans~1.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/user/packages/os-inc2-0:2-0.pkgset~os^trans~1.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "fc429287a10941ecc73ad362fa2e0cf97226613de5206025f92f6fd5da24fd73"},
+						RepoID:          userRepo.Id,
+						Repo:            &userRepo,
+					},
+					{
+						Name:            "pkgset:os_trans:1_repos:appstream+baseos+user",
+						Version:         "2",
+						Release:         "7.fk1",
+						Arch:            "x86_64",
+						Location:        "packages/pkgset:os_trans:1_repos:appstream+baseos+user-0:2-7.fk1.x86_64.rpm",
+						RemoteLocations: []string{"https://example.com/appstream/packages/pkgset:os_trans:1_repos:appstream+baseos+user-0:2-7.fk1.x86_64.rpm"},
+						Checksum:        rpmmd.Checksum{Type: "sha256", Value: "84f3c5f75b9d53fbb9bec083bf3b149daae1daa750ccf3b75d984f9f32510218"},
+						RepoID:          appstreamRepo.Id,
+						Repo:            &appstreamRepo,
+					},
 				},
 			},
+			Repos: allRepos,
 		},
 	}, result)
 }

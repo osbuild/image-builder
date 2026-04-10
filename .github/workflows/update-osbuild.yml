@@ -11,41 +11,45 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   update-and-push:
     runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
     steps:
-      - name: Apt update
-        run: sudo apt update
+      - name: Clone
+        # This workflow can be started from a branch, but we always want to
+        # work on main to update the osbuild ref.
+        # WARNING: This means the update-schutzfile-script below will always be
+        # run from the main branch.
+        run: |
+          git clone --depth=1 --branch main https://github.com/$GITHUB_REPOSITORY ./src
 
-      - name: Check out main
-        uses: actions/checkout@v5
-        with:
-          path: images
-          ref: main
+      - name: User config
+        working-directory: ./src
+        run: |
+          git config user.name "schutzbot"
+          git config user.email "schutzbot@gmail.com"
 
       - name: Update Schutzfile
-        working-directory: ./images
+        working-directory: ./src
         env:
+          # GITHUB_TOKEN is required by the script
+          # TODO: change it to read GH_TOKEN for consistency with gh cli
           GITHUB_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
-        # this also creates github_pr_body.txt
+        # script also creates github_pr_body.txt
         run: |
           ./test/scripts/update-schutzfile-osbuild
 
       - name: Open PR
-        working-directory: ./images
-        env:
-          GITHUB_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+        working-directory: ./src
         run: |
           if git diff --exit-code; then echo "No changes"; exit 0; fi
-          git config --unset-all http.https://github.com/.extraheader
-          git config user.name "schutzbot"
-          git config user.email "schutzbot@gmail.com"
           branch="schutzfile-osbuild-$(date -I)"
           git checkout -b "${branch}"
           git add Schutzfile
           git commit -m "schutzfile: Update osbuild dependency commit ID"
-          git push -f https://"$GITHUB_TOKEN"@github.com/schutzbot/images.git
+          remote="https://oauth2:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}"
+          git push -f "${remote}" "${branch}"
           gh pr create \
-            -t "Update osbuild dependency commit ID to latest" \
-            -F "github_pr_body.txt" \
-            --repo "osbuild/images" \
+            --title "Update osbuild dependency commit ID" \
+            --body-file "github_pr_body.txt" \
             --base "main" \
-            --head "schutzbot:${branch}"
+            --head "${branch}"

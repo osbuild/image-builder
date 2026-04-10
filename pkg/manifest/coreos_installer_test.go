@@ -28,17 +28,21 @@ func newCoreOSInstaller() *CoreOSInstaller {
 }
 
 func TestCoreOSInstallerDracutModulesAndDrivers(t *testing.T) {
-	pkgs := rpmmd.PackageList{
+	transactions := depsolvednf.TransactionList{
 		{
-			Name:     "kernel",
-			Checksum: rpmmd.Checksum{Type: "sha256", Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+			{
+				Name:     "kernel",
+				Checksum: rpmmd.Checksum{Type: "sha256", Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+				RepoID:   "dummy-repo-id",
+				Repo:     &rpmmd.RepoConfig{Id: "dummy-repo-id"},
+			},
 		},
 	}
 
 	coiPipeline := newCoreOSInstaller()
 	coiPipeline.AdditionalDracutModules = []string{"test-module"}
 	coiPipeline.AdditionalDrivers = []string{"test-driver"}
-	err := coiPipeline.serializeStart(Inputs{Depsolved: depsolvednf.DepsolveResult{Packages: pkgs}})
+	err := coiPipeline.serializeStart(Inputs{Depsolved: depsolvednf.DepsolveResult{Transactions: transactions}})
 	require.NoError(t, err)
 	pipeline, err := coiPipeline.serialize()
 	require.NoError(t, err)

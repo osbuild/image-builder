@@ -24,6 +24,7 @@ type OSTreeSimplifiedInstaller struct {
 	OSCustomizations        manifest.OSCustomizations
 	Environment             environment.Environment
 	InstallerCustomizations manifest.InstallerCustomizations
+	ISOCustomizations       manifest.ISOCustomizations
 
 	ExtraBasePackages rpmmd.PackageSet
 
@@ -56,7 +57,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, img.BuildOptions)
 	buildPipeline.Checkpoint()
 
 	imageFilename := "image.raw.xz"
@@ -82,26 +83,22 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline.Variant = img.InstallerCustomizations.Variant
 	coiPipeline.AdditionalDracutModules = img.InstallerCustomizations.AdditionalDracutModules
 	coiPipeline.AdditionalDrivers = img.InstallerCustomizations.AdditionalDrivers
+	coiPipeline.RPMKeysBinary = img.OSCustomizations.RPMKeysBinary
 
-	var isoLabel string
-
-	if len(img.InstallerCustomizations.ISOLabel) > 0 {
-		isoLabel = img.InstallerCustomizations.ISOLabel
-	} else {
-		// TODO: replace isoLabelTmpl with more high-level properties
-		isoLabel = fmt.Sprintf(img.ISOLabelTmpl, img.platform.GetArch())
+	if len(img.ISOCustomizations.Label) == 0 {
+		img.ISOCustomizations.Label = fmt.Sprintf(img.ISOLabelTmpl, img.platform.GetArch())
 	}
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
 	bootTreePipeline.Platform = img.platform
 	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = isoLabel
+	bootTreePipeline.ISOLabel = img.ISOCustomizations.Label
 
 	// kernel options for EFI boot tree grub stage
 	kernelOpts := []string{
 		"rd.neednet=1",
 		"coreos.inst.crypt_root=1",
-		"coreos.inst.isoroot=" + isoLabel,
+		"coreos.inst.isoroot=" + img.ISOCustomizations.Label,
 		"coreos.inst.install_dev=" + img.installDevice,
 		fmt.Sprintf("coreos.inst.image_file=/run/media/iso/%s", imageFilename),
 		"coreos.inst.insecure",
@@ -145,10 +142,10 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.PayloadPath = fmt.Sprintf("/%s", imageFilename)
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
-	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, isoLabel)
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOCustomizations)
 	isoPipeline.SetFilename(img.filename)
 	if isoLinuxEnabled {
-		isoPipeline.ISOBoot = manifest.SyslinuxISOBoot
+		img.ISOCustomizations.BootType = manifest.SyslinuxISOBoot
 	}
 
 	artifact := isoPipeline.Export()

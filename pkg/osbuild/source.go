@@ -7,18 +7,20 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
+	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/hashutil"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // RpmDownloader specifies what backend to use for rpm downloads
-// Note that the librepo backend requires a newer osbuild.
+// Note that the librepo backend requires osbuild v138 from
+// 2025-01-15.
 type RpmDownloader uint64
 
 const (
-	RpmDownloaderCurl    = iota
-	RpmDownloaderLibrepo = iota
+	RpmDownloaderCurl = iota
+	RpmDownloaderLibrepo
 )
 
 // SourceInputs contains the inputs to generate osbuild.Sources
@@ -28,6 +30,7 @@ type SourceInputs struct {
 	Depsolved  depsolvednf.DepsolveResult
 	Containers []container.Spec
 	Commits    []ostree.CommitSpec
+	Flatpaks   []flatpak.Spec
 	// InlineData contans the inline data for fsnode.Files
 	InlineData []string
 	// FileRefs contains the references of paths/urls for fsnode.Files
@@ -111,13 +114,13 @@ func GenSources(inputs SourceInputs, rpmDownloader RpmDownloader) (Sources, erro
 	sources := Sources{}
 
 	// collect rpm package sources
-	if len(inputs.Depsolved.Packages) > 0 {
+	if len(inputs.Depsolved.Transactions.AllPackages()) > 0 {
 		var err error
 		switch rpmDownloader {
 		case RpmDownloaderCurl:
-			err = sources.addPackagesCurl(inputs.Depsolved.Packages)
+			err = sources.addPackagesCurl(inputs.Depsolved.Transactions.AllPackages())
 		case RpmDownloaderLibrepo:
-			err = sources.addPackagesLibrepo(inputs.Depsolved.Packages, inputs.Depsolved.Repos)
+			err = sources.addPackagesLibrepo(inputs.Depsolved.Transactions.AllPackages(), inputs.Depsolved.Repos)
 		default:
 			err = fmt.Errorf("unknown rpm downloader %v", rpmDownloader)
 		}
@@ -127,9 +130,18 @@ func GenSources(inputs SourceInputs, rpmDownloader RpmDownloader) (Sources, erro
 	}
 
 	// collect ostree commit sources
-	if len(inputs.Commits) > 0 {
+	if len(inputs.Commits) > 0 || len(inputs.Flatpaks) > 0 {
+		commits := inputs.Commits
+
+		// flatpaks might be commits, any that are we add to a copy of our inputs.Commits
+		for _, f := range inputs.Flatpaks {
+			if f.CommitSpec != nil {
+				commits = append(commits, *f.CommitSpec)
+			}
+		}
+
 		ostree := NewOSTreeSource()
-		for _, commit := range inputs.Commits {
+		for _, commit := range commits {
 			ostree.AddItem(commit)
 		}
 		if len(ostree.Items) > 0 {
@@ -147,12 +159,22 @@ func GenSources(inputs SourceInputs, rpmDownloader RpmDownloader) (Sources, erro
 		sources[SourceNameInline] = ils
 	}
 
-	// collect skopeo and local container sources
-	if len(inputs.Containers) > 0 {
+	// collect skopeo and local container sources, these might include flatpak sources
+	// that are OCI based
+	if len(inputs.Containers) > 0 || len(inputs.Flatpaks) > 0 {
+		containers := inputs.Containers
+
+		// flatpaks might be containers, any that are we add to a copy of our inputs.Containers
+		for _, f := range inputs.Flatpaks {
+			if f.ContainerSpec != nil {
+				containers = append(containers, *f.ContainerSpec)
+			}
+		}
+
 		skopeo := NewSkopeoSource()
 		skopeoIndex := NewSkopeoIndexSource()
 		localContainers := NewContainersStorageSource()
-		for _, c := range inputs.Containers {
+		for _, c := range containers {
 			if c.LocalStorage {
 				localContainers.AddItem(c.ImageID)
 			} else {
@@ -163,6 +185,7 @@ func GenSources(inputs SourceInputs, rpmDownloader RpmDownloader) (Sources, erro
 				}
 			}
 		}
+
 		if len(skopeo.Items) > 0 {
 			sources[SourceNameSkopeo] = skopeo
 		}

@@ -7,7 +7,7 @@ help:
 	@awk 'match($$0, /^([a-zA-Z_\/-]+):.*?## (.*)$$/, m) {printf "  \033[36m%-30s\033[0m %s\n", m[1], m[2]}' $(MAKEFILE_LIST) | sort
 
 BASE_CONTAINER_IMAGE_NAME?=registry.fedoraproject.org/fedora
-BASE_CONTAINER_IMAGE_TAG?=40
+BASE_CONTAINER_IMAGE_TAG?=43
 BASE_CONTAINER_IMAGE?=${BASE_CONTAINER_IMAGE_NAME}:${BASE_CONTAINER_IMAGE_TAG}
 
 CONTAINERFILE=Containerfile
@@ -23,7 +23,7 @@ container_built_$(CONTAINER_IMAGE).info: $(CONTAINERFILE) Schutzfile test/ go.mo
 
 .PHONY: gh-action-test
 gh-action-test: container_built_$(CONTAINER_IMAGE).info ## run all tests in a container (see BASE_CONTAINER_IMAGE_* in Makefile)
-	podman run -v .:/app:z --rm -t $(CONTAINER_IMAGE) make test
+	podman run -v .:/app:z --rm -e OSBUILD_TEST_CONTAINER=true -t $(CONTAINER_IMAGE) make test
 
 .PHONY: test
 test: ## run all tests locally
@@ -36,6 +36,13 @@ test: ## run all tests locally
 	go test -race ./pkg/depsolvednf/... -force-dnf
 	# ensure our tags are consistent
 	go run github.com/mvo5/vet-tagseq/cmd/tagseq@latest ./...
+
+.PHONY: host-check-test
+host-check-test: container_built_$(CONTAINER_IMAGE).info ## run all host checks in a container
+	CGO_ENABLED=0 go test -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper exclude_graphdriver_overlay" \
+		-c -o check-host-config.test ./cmd/check-host-config
+	podman run -v .:/app:z --rm --user root -e OSBUILD_TEST_CONTAINER=true -t $(CONTAINER_IMAGE) \
+		/app/check-host-config.test -test.v -test.run ^TestSmokeAll$$
 
 clean: ## remove all build files
 	rm -f container_built*.info

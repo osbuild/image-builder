@@ -10,9 +10,6 @@
       },
       {
         "name": "openscap-utils"
-      },
-      {
-        "name": "jq"
       }
     ],
     "customizations": {
@@ -29,6 +26,11 @@
             "mount_option_dev_shm_nodev"
           ]
         }
+      },
+      "services": {
+        "masked": [
+          "sssd.service"
+        ]
       }
     }
   }

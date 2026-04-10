@@ -2,7 +2,7 @@ package imagefilter_test
 
 import (
 	"bytes"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 
@@ -114,7 +114,7 @@ func TestSupportedOutputFormats(t *testing.T) {
 	assert.Contains(t, formatters, "json")
 	assert.Contains(t, formatters, "shell")
 	assert.Contains(t, formatters, "short")
-	assert.True(t, sort.StringsAreSorted(formatters))
+	assert.True(t, slices.IsSorted(formatters))
 }
 
 func TestResultsFormatterError(t *testing.T) {

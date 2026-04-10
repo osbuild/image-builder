@@ -443,3 +443,54 @@ func TestGenBootupdDevicesMountsLVM_NotMountableLV(t *testing.T) {
 	require.Error(t, err)
 	require.Regexp(t, `expected LV payload .* to be mountable or swap, got \*disk.LUKSContainer`, err.Error())
 }
+
+func TestGenBootupdDevicesMountsSectorSize(t *testing.T) {
+	type testCase struct {
+		ptSectorSize  uint64
+		expectedNil   bool
+		expectedValue uint64
+	}
+
+	testCases := map[string]testCase{
+		"default-sector-size": {
+			ptSectorSize: 0,
+			expectedNil:  true,
+		},
+		"sector-size-512": {
+			ptSectorSize:  512,
+			expectedNil:   false,
+			expectedValue: 512,
+		},
+		"sector-size-4096": {
+			ptSectorSize:  4096,
+			expectedNil:   false,
+			expectedValue: 4096,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			filename := "fake-disk.img"
+			pf := &platform.Data{
+				Arch:       arch.ARCH_X86_64,
+				UEFIVendor: "test",
+			}
+
+			fakePt := testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
+			fakePt.SectorSize = tc.ptSectorSize
+
+			devices, _, err := osbuild.GenBootupdDevicesMounts(filename, fakePt, pf)
+			require.Nil(t, err)
+
+			diskDevice := devices["disk"]
+			loopbackOpts := diskDevice.Options.(*osbuild.LoopbackDeviceOptions)
+
+			if tc.expectedNil {
+				assert.Nil(t, loopbackOpts.SectorSize)
+			} else {
+				assert.NotNil(t, loopbackOpts.SectorSize)
+				assert.Equal(t, tc.expectedValue, *loopbackOpts.SectorSize)
+			}
+		})
+	}
+}

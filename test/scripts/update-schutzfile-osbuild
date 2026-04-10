@@ -22,6 +22,16 @@ def osbuild_main_commit_id():
         sys.exit(1)
 
     data = json.loads(body)
+    if "[skip ci]" in data["commit"]["message"]:
+        # Post-release version bump commits contain the message [skip ci] which skips running CI. These commits do not
+        # have RPMs associated with them, so they shouldn't be used to downstream testing. Use the parent commit ID if
+        # we detect [skip ci] in the commit message on main.
+        # Our commit history is linear, so we can safely assume that there is only one parent.
+        # Also, there should never be two [skip ci] commits in a row, so we don't need to verify the commit message of
+        # the parent.
+        print("[skip ci] found in main commit message. Using parent.")
+        return data["parents"][0]["sha"]
+
     return data["sha"]
 
 

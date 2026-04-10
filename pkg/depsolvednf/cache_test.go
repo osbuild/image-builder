@@ -4,7 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -366,7 +366,7 @@ func TestCleanupOldCacheDirs(t *testing.T) {
 		createTestCache(filepath.Join(testCacheRoot, name), cfg)
 		distros = append(distros, name)
 	}
-	sort.Strings(distros)
+	slices.Sort(distros)
 
 	// Add the content of the 'fake-real' cache to the top directory
 	// this will be used to simulate an old cache without distro subdirs

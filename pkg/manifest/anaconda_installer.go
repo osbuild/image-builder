@@ -4,14 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
-	"github.com/osbuild/images/pkg/customizations/users"
+	"github.com/osbuild/images/pkg/depsolvednf"
+	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -37,6 +40,9 @@ type AnacondaInstaller struct {
 	// InstallerCustomizations to apply to the installer pipeline(s)
 	InstallerCustomizations InstallerCustomizations
 
+	// ISOCustomizations to apply to the ISO pipeline(s)
+	ISOCustomizations ISOCustomizations
+
 	// Packages to install and/or exclude in addition to the ones required by the
 	// pipeline.
 	ExtraPackages   []string
@@ -50,11 +56,14 @@ type AnacondaInstaller struct {
 	// the naming of network devices on the target system.
 	Biosdevname bool
 
-	platform     platform.Platform
-	repos        []rpmmd.RepoConfig
-	packageSpecs rpmmd.PackageList
-	kernelName   string
-	kernelVer    string
+	platform platform.Platform
+	// depsolveRepos holds the repository configuration used by
+	// getPackageSetChain() for depsolving. After depsolving, use
+	// depsolveResult.Repos which contains only repos that provided packages.
+	depsolveRepos  []rpmmd.RepoConfig
+	depsolveResult *depsolvednf.DepsolveResult
+	kernelName     string
+	kernelVer      string
 
 	// some images (like bootc installers) know their path in
 	// advance
@@ -69,15 +78,6 @@ type AnacondaInstaller struct {
 	BootcLivefsContainer      *container.SourceSpec
 	bootcLivefsContainerSpecs []container.Spec
 
-	// Interactive defaults is a kickstart stage that can be provided, it
-	// will be written to /usr/share/anaconda/interactive-defaults
-	InteractiveDefaults *AnacondaInteractiveDefaults
-
-	// Kickstart options that will be written to the interactive defaults
-	// kickstart file. Currently only supports Users and Groups. Other
-	// properties are ignored.
-	InteractiveDefaultsKickstart *kickstart.Options
-
 	Files []*fsnode.File
 
 	// SELinux policy, when set it enables the labeling of the installer
@@ -88,6 +88,25 @@ type AnacondaInstaller struct {
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
 	Locale string
+
+	// Payload specific fields, these are both here and in the iso tree because
+	// it is possible to toggle where these end up. Perhaps they should move
+	// into customizations?
+
+	// Note that initially we only put OSTree commits here as that's what we
+	// need directly; container installers should move to different image types
+	// that don't need this anymore and the image installer can be a separate
+	// follow-up if ever needed to reduce its size since it might get deprecated?
+	PayloadRemoveSignatures bool
+
+	OSTreeCommitSource *ostree.SourceSpec
+	ostreeCommitSpec   *ostree.CommitSpec
+
+	Kickstart *kickstart.Options
+
+	// Potential flatpaks to embed, the flatpak sources come from the
+	// customizations
+	flatpakSpecs []flatpak.Spec
 }
 
 func NewAnacondaInstaller(installerType AnacondaInstallerType,
@@ -96,15 +115,17 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 	repos []rpmmd.RepoConfig,
 	kernelName string,
 	instCust InstallerCustomizations,
+	isoCust ISOCustomizations,
 ) *AnacondaInstaller {
 	name := "anaconda-tree"
 	p := &AnacondaInstaller{
 		Base:                    NewBase(name, buildPipeline),
 		Type:                    installerType,
 		platform:                platform,
-		repos:                   filterRepos(repos, name),
+		depsolveRepos:           filterRepos(repos, name),
 		kernelName:              kernelName,
 		InstallerCustomizations: instCust,
+		ISOCustomizations:       isoCust,
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -113,29 +134,48 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 // TODO: refactor - what is required to boot and what to build, and
 // do they all belong in this pipeline?
 func (p *AnacondaInstaller) anacondaBootPackageSet() ([]string, error) {
-	packages := []string{
-		"grub2-tools",
-		"grub2-tools-extra",
-		"grub2-tools-minimal",
-		"efibootmgr",
-	}
+	var packages []string
 
 	switch p.platform.GetArch() {
 	case arch.ARCH_X86_64:
 		packages = append(packages,
+			"grub2-tools",
+			"grub2-tools-extra",
+			"grub2-tools-minimal",
+			"efibootmgr",
 			"grub2-efi-x64",
 			"grub2-efi-x64-cdboot",
 			"grub2-pc",
 			"grub2-pc-modules",
 			"shim-x64",
-			"syslinux",
-			"syslinux-nonlinux",
 		)
+
+		if p.ISOCustomizations.BootType == SyslinuxISOBoot {
+			packages = append(packages,
+				"syslinux",
+				"syslinux-nonlinux",
+			)
+		}
 	case arch.ARCH_AARCH64:
 		packages = append(packages,
+			"grub2-tools",
+			"grub2-tools-extra",
+			"grub2-tools-minimal",
+			"efibootmgr",
 			"grub2-efi-aa64-cdboot",
 			"grub2-efi-aa64",
 			"shim-aa64",
+		)
+	case arch.ARCH_PPC64LE:
+		packages = append(packages,
+			"grub2-tools",
+			"grub2-tools-extra",
+			"grub2-tools-minimal",
+		)
+
+	case arch.ARCH_S390X:
+		packages = append(packages,
+			"s390utils-core",
 		)
 	default:
 		return nil, fmt.Errorf("unsupported arch: %s", p.platform.GetArch())
@@ -149,6 +189,21 @@ func (p *AnacondaInstaller) getContainerSources() []container.SourceSpec {
 		return nil
 	}
 	return []container.SourceSpec{*p.BootcLivefsContainer}
+}
+
+func (p *AnacondaInstaller) getOSTreeCommitSources() []ostree.SourceSpec {
+	if p.OSTreeCommitSource == nil {
+		return nil
+	}
+
+	return []ostree.SourceSpec{*p.OSTreeCommitSource}
+}
+
+func (p *AnacondaInstaller) getOSTreeCommits() []ostree.CommitSpec {
+	if p.ostreeCommitSpec == nil {
+		return nil
+	}
+	return []ostree.CommitSpec{*p.ostreeCommitSpec}
 }
 
 func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
@@ -175,6 +230,18 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
 
 	if p.SELinux != "" {
 		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.SELinux))
+	}
+
+	if p.InstallerCustomizations.RPMKeysBinary != "" {
+		packages = append(packages, "pqrpm")
+	}
+
+	if p.OSTreeCommitSource != nil {
+		packages = append(packages, "rpm-ostree")
+	}
+
+	if len(p.InstallerCustomizations.Flatpaks) > 0 {
+		packages = append(packages, "flatpak")
 	}
 
 	return packages, nil
@@ -213,41 +280,68 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, erro
 		{
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
-			Repositories:    append(p.repos, p.ExtraRepos...),
-			InstallWeakDeps: true,
+			Repositories:    slices.Concat(p.depsolveRepos, p.ExtraRepos),
+			InstallWeakDeps: p.InstallerCustomizations.InstallWeakDeps,
 		},
 	}, nil
 }
 
 func (p *AnacondaInstaller) getPackageSpecs() rpmmd.PackageList {
-	return p.packageSpecs
+	if p.depsolveResult == nil {
+		return nil
+	}
+	return p.depsolveResult.Transactions.AllPackages()
 }
 
 func (p *AnacondaInstaller) serializeStart(inputs Inputs) error {
-	if len(p.packageSpecs) > 0 && len(p.bootcLivefsContainerSpecs) > 0 {
+	if p.depsolveResult != nil && len(p.bootcLivefsContainerSpecs) > 0 {
 		return errors.New("AnacondaInstaller: double call to serializeStart()")
 	}
-	p.packageSpecs = inputs.Depsolved.Packages
+	p.depsolveResult = &inputs.Depsolved
 	// bootc-installers will get the kernelVer via introspection
-	if len(p.packageSpecs) > 0 && p.kernelName != "" {
-		kernelPkg, err := p.packageSpecs.Package(p.kernelName)
+	if len(p.depsolveResult.Transactions) > 0 && p.kernelName != "" {
+		kernelPkg, err := p.depsolveResult.Transactions.FindPackage(p.kernelName)
 		if err != nil {
 			return fmt.Errorf("AnacondaInstaller: %w", err)
 		}
 		p.kernelVer = kernelPkg.EVRA()
 	}
-	p.repos = append(p.repos, inputs.Depsolved.Repos...)
 	p.bootcLivefsContainerSpecs = inputs.Containers
+
+	hasRPMs := len(p.depsolveResult.Transactions) > 0
+	hasContainers := len(p.bootcLivefsContainerSpecs) > 0
+	if hasRPMs && hasContainers {
+		return errors.New("AnacondaInstaller: using packages and containers at the same time is not allowed")
+	}
+	if !hasRPMs && !hasContainers {
+		return errors.New("AnacondaInstaller: need either repos (for RPM install) or a bootc container source")
+	}
+
+	// commits are separate from the above checks as they're not mutually exclusive
+	if len(inputs.Commits) > 1 {
+		return errors.New("AnacondaInstaller: pipeline supports at most one ostree commit")
+	}
+
+	if len(inputs.Commits) > 0 {
+		p.ostreeCommitSpec = &inputs.Commits[0]
+	}
+
+	if len(inputs.Flatpaks) > 0 {
+		p.flatpakSpecs = inputs.Flatpaks
+	}
+
 	return nil
 }
 
 func (p *AnacondaInstaller) serializeEnd() {
-	if len(p.packageSpecs) == 0 && len(p.bootcLivefsContainerSpecs) == 0 {
+	if p.depsolveResult == nil && len(p.bootcLivefsContainerSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.kernelVer = ""
-	p.packageSpecs = nil
+	p.depsolveResult = nil
 	p.bootcLivefsContainerSpecs = nil
+	p.ostreeCommitSpec = nil
+	p.flatpakSpecs = nil
 }
 
 func installerRootUser() osbuild.UsersStageOptionsUser {
@@ -257,11 +351,8 @@ func installerRootUser() osbuild.UsersStageOptionsUser {
 }
 
 func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
-	if len(p.packageSpecs) == 0 && len(p.bootcLivefsContainerSpecs) == 0 {
+	if p.depsolveResult == nil && len(p.bootcLivefsContainerSpecs) == 0 {
 		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: serialization not started")
-	}
-	if len(p.packageSpecs) > 0 && len(p.bootcLivefsContainerSpecs) > 0 {
-		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: using packages and containers at the same time is n")
 	}
 
 	pipeline, err := p.Base.serialize()
@@ -269,14 +360,24 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	if len(p.packageSpecs) > 0 {
-		options := osbuild.NewRPMStageOptions(p.repos)
+	if len(p.depsolveResult.Transactions) > 0 {
+		baseOptions := osbuild.RPMStageOptions{}
 		// Documentation is only installed on live installer images
 		if p.Type != AnacondaInstallerTypeLive {
-			options.Exclude = &osbuild.Exclude{Docs: true}
+			baseOptions.Exclude = &osbuild.Exclude{Docs: true}
 		}
 
-		pipeline.AddStage(osbuild.NewRPMStage(options, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+		if p.InstallerCustomizations.RPMKeysBinary != "" {
+			baseOptions.RPMKeys = &osbuild.RPMKeys{
+				BinPath: p.InstallerCustomizations.RPMKeysBinary,
+			}
+		}
+
+		rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, &baseOptions)
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+		pipeline.AddStages(rpmStages...)
 	} else {
 		image := osbuild.NewContainersInputForSingleSource(p.bootcLivefsContainerSpecs[0])
 		stage, err := osbuild.NewContainerDeployStage(image, &osbuild.ContainerDeployOptions{RemoveSignatures: true})
@@ -284,6 +385,45 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 			return pipeline, err
 		}
 		pipeline.AddStage(stage)
+	}
+
+	if p.Type == AnacondaInstallerTypePayload {
+		// If we're a payload installer, and the payload should be in the compressed read only filesystem then
+		// we should be including the payload right here. Otherwise the payload is included in the Anaconda ISO
+		// tree pipeline.
+		if p.InstallerCustomizations.Payload.Location == PAYLOAD_LOCATION_ROOTFS {
+			if p.ostreeCommitSpec != nil {
+				ostreeCommitStages, err := p.ostreeCommitStages()
+				if err != nil {
+					return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree commit stages: %w", err)
+				}
+				pipeline.AddStages(ostreeCommitStages...)
+			}
+		}
+
+		// If the payload kickstart is in interactive defaults we need to write it here instead of in the Anaconda
+		// ISO tree pipeline, a similar check exists on the other side. Note that we always write an *empty*
+		if p.InstallerCustomizations.Payload.Kickstart == PAYLOAD_KICKSTART_INTERACTIVE_DEFAULTS {
+			if p.ostreeCommitSpec != nil {
+				kickstartStages, err := p.ostreeKickstartStages()
+				if err != nil {
+					return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree kickstart stages: %w", err)
+				}
+
+				pipeline.AddStages(kickstartStages...)
+			}
+		}
+
+		// Flatpaks are currently setup only to be supported on the RPM ostree payload in Anaconda; thus we
+		// need to only do this if we actually have an ostree payload. In the future we might be able to
+		// support this on more payload installer variants.
+		if p.ostreeCommitSpec != nil && len(p.flatpakSpecs) > 0 {
+			flatpakStages, err := p.flatpakStages()
+			if err != nil {
+				return osbuild.Pipeline{}, fmt.Errorf("cannot create flatpak stages: %w", err)
+			}
+			pipeline.AddStages(flatpakStages...)
+		}
 	}
 
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
@@ -305,10 +445,7 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 	// being serialized
 	switch p.Type {
 	case AnacondaInstallerTypeLive:
-		if p.InteractiveDefaultsKickstart != nil && (len(p.InteractiveDefaultsKickstart.Users) != 0 || len(p.InteractiveDefaultsKickstart.Groups) != 0) {
-			return osbuild.Pipeline{}, fmt.Errorf("anaconda installer type live does not support users and groups customization")
-		}
-		if p.InteractiveDefaults != nil {
+		if p.Kickstart != nil {
 			return osbuild.Pipeline{}, fmt.Errorf("anaconda installer type live does not support interactive defaults")
 		}
 		liveStages, err := p.liveStages()
@@ -327,6 +464,82 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 	}
 
 	return pipeline, nil
+}
+
+func (p *AnacondaInstaller) ostreeCommitStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	// set up the payload ostree repo, if the commit is embedded here (on the anaconda tree)
+	// itself then we want to have a bare repository so the files are uncompressed, this lets
+	// erofs or squashfs be efficient, saving us ~500-750 MiB on the rootfs size
+	stages = append(stages, osbuild.NewOSTreeInitStage(
+		&osbuild.OSTreeInitStageOptions{
+			Path: p.InstallerCustomizations.Payload.Path,
+			Mode: osbuild.ModeBareUser,
+		},
+	))
+	stages = append(stages, osbuild.NewOSTreePullStage(
+		&osbuild.OSTreePullStageOptions{Repo: p.InstallerCustomizations.Payload.Path},
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
+	))
+
+	return stages, nil
+}
+
+func (p *AnacondaInstaller) ostreeKickstartStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	// Configure the kickstart file with the payload and any user options
+	kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeCommit(
+		p.Kickstart.Path,
+		nil,
+		nil,
+		makeISORootfsPath(p.InstallerCustomizations.Payload.Path),
+		p.ostreeCommitSpec.Ref,
+		p.Kickstart.OSTree.Remote,
+		p.Kickstart.OSTree.OSName)
+
+	if err != nil {
+		return stages, err
+	}
+
+	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
+
+	return stages, nil
+}
+
+func (p *AnacondaInstaller) flatpakStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	// set up the flatpak ostree repo
+	stages = append(stages, osbuild.NewOSTreeInitStage(
+		// the repository gets put into a squashfs or erofs filesystem, this means it good for the files to not
+		// be compressed; hence we pick the *bare* mode
+		&osbuild.OSTreeInitStageOptions{
+			Path: "/flatpak/repo",
+			Mode: osbuild.ModeBareUser,
+		},
+	))
+
+	for idx, flatpakSpec := range p.flatpakSpecs {
+		if flatpakSpec.ContainerSpec != nil {
+			image := osbuild.NewContainersInputForSingleSource(*p.flatpakSpecs[idx].ContainerSpec)
+			stage, err := osbuild.NewFlatpakBuildImportOCIStage(
+				&osbuild.FlatpakBuildImportOCIStageOptions{
+					Repository: "tree:///flatpak/repo",
+				},
+				&osbuild.FlatpakBuildImportOCIStageInputs{Containers: image},
+			)
+			if err != nil {
+				return nil, err
+			}
+			stages = append(stages, stage)
+		}
+		// when other remote types are added to flatpaks we'll expand here to embed ostree commits
+		// as well into the repository
+	}
+
+	return stages, nil
 }
 
 // payloadStages creates the stages needed to boot Anaconda
@@ -424,27 +637,6 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 	// that isn't an empty string
 	if p.SELinux != "" {
 		return nil, fmt.Errorf("payload installers do not support SELinux policies (got policy %q)", p.SELinux)
-	}
-
-	if p.InteractiveDefaults != nil {
-		var ksUsers []users.User
-		var ksGroups []users.Group
-		if p.InteractiveDefaultsKickstart != nil {
-			ksUsers = p.InteractiveDefaultsKickstart.Users
-			ksGroups = p.InteractiveDefaultsKickstart.Groups
-		}
-		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
-			osbuild.KickstartPathInteractiveDefaults,
-			ksUsers,
-			ksGroups,
-			p.InteractiveDefaults.TarPath,
-		)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to create kickstart stage options for interactive defaults: %w", err)
-		}
-
-		stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
 	}
 
 	return stages, nil
@@ -567,18 +759,6 @@ func (p *AnacondaInstaller) Platform() platform.Platform {
 	return p.platform
 }
 
-type AnacondaInteractiveDefaults struct {
-	TarPath string
-}
-
-func NewAnacondaInteractiveDefaults(tarPath string) *AnacondaInteractiveDefaults {
-	i := &AnacondaInteractiveDefaults{
-		TarPath: tarPath,
-	}
-
-	return i
-}
-
 func (p *AnacondaInstaller) getInline() []string {
 	inlineData := []string{}
 
@@ -588,4 +768,12 @@ func (p *AnacondaInstaller) getInline() []string {
 	}
 
 	return inlineData
+}
+
+func (p *AnacondaInstaller) getFlatpakSpecs() []flatpak.Spec {
+	return p.flatpakSpecs
+}
+
+func (p *AnacondaInstaller) getFlatpakSources() []flatpak.SourceSpec {
+	return p.InstallerCustomizations.Flatpaks
 }

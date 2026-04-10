@@ -1,5 +1,10 @@
 # osbuild/images testing information
 
+The "images" project contains many integration tests that are defined in this directory
+and are run via the gitlab CI.
+
+## Core files/directories
+
 [./test/configs/](./configs/) contains configuration files for building images for testing. The files are used by the following tools:
 
 - [./cmd/build](../cmd/build) takes a config file as argument to build an image.  For example:
@@ -20,6 +25,76 @@ The config list is also used in CI to dynamically generate test builds using the
     - The following are defined in an object keyed by a distro name (e.g. `fedora-41`). The distribution name and version must match the version of the CI runners.
     - `dependencies.osbuild.commit`: the version of osbuild to use, as a commit ID. This must be a commit that was successfully built in osbuild's CI, so that RPMs will be available. It is used by [./test/scripts/setup-osbuild-repo](./scripts/setup-osbuild-repo).
     - `repos`: the repository configurations to use on the runners to install packages such as build dependencies and test tools.
+
+## Manually image testing
+
+While most of this document describes our automatic setup, here are some useful tips if manual
+testing/inspection of images is required.
+
+Install required packages:
+dnf install -y cloud-utils-cloud-localds gpgme-devel btrfs-progs-devel krb5-devel
+
+To build an image just run `build-image`, then it can be booted with `boot-image` and the
+switch `--keep-booted` will keep it around for inspection via ssh (not all image types support
+this yet). E.g.:
+```console
+$ ./test/scripts/build-image centos-10 qcow2 ./test/configs/empty.json
+$ ./test/scripts/boot-image --keep-booted ./build/centos_10-x86_64-qcow2-empty/ ./test/configs/empty.json
+...
+***********************************
+keeping the image build/centos_10-x86_64-qcow2-empty/qcow2/disk.qcow2 booted as requested, press enter or ctrl-c to stop
+to connect run:
+ssh -i /tmp/tmpg56bxqko/testkey -p 52387 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no osbuild@localhost
+```
+The ssh command can just be copy/pasted and gives access to the vm running the image. The
+`check-host-config` binary and configuration will be availabe inside /tmp to inspect/run.
+
+If qemu-user-static/qemu-system-$arch is installed `build-image --arch <arch>` is also supported,
+e.g. `build-image --arch ppc64le centos-10 qcow2 ./test/configs/empty.json` will create a
+ppc64le qcow2 image. The `boot-image` script will auto-detect the architecture and boot the
+vm accordingly.
+
+
+## Running image build tests locally
+
+Some image build tests are available to run locally via qemu. The easiest way to discover them is to 
+run:
+```console
+$ sudo pytest --collect-only ./test/test_build_integration.py
+```
+This wil give a list of tests and their distro/arch/image-type permuations. Currently there are
+two tests: 
+1. Build the artifact (usually a disk image but can be a container)
+2. Build the image and boot test it
+
+With:
+```console
+$ sudo pytest --collect-only ./test/test_build_integration.py::test_build_only
+$ sudo pytest --collect-only ./test/test_build_integration.py::test_build_and_boot
+```
+it is easy to see which combinations are boot tested and which are build only.
+
+The usual commands from pytest are available, so to e.g. filter for all centos-10 tests
+the commandline is:
+```console
+$ sudo pytest --collect-only ./test/test_build_integration.py -k centos-10
+...
+<Dir images>
+  <Dir test>
+    <Module test_build_integration.py>
+      <Function test_build_only[centos-10-x86_64-ova-jq-only]>
+	  ...
+      <Function test_build_and_boot[centos-10-x86_64-qcow2-jq-only]>
+```
+
+Running a specific test is also straightforward this way:
+```console
+$ sudo pytest -s -v ./test/test_build_integration.py::test_build_and_boot[centos-10-x86_64-qcow2-jq-only]
+```
+
+Note that some tests require AWS or similar credentials/secrets but all qcow2 or installer
+tests will run without extra configuration. Also note that the pytests are a thin wrapper
+around the gen-manifests/build-image/boot-image commands that are explained in detail below.
 
 ## Image build tests in GitLab CI
 

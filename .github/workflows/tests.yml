@@ -37,12 +37,13 @@ jobs:
       GOPROXY: "https://proxy.golang.org|direct"
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
 
       - name: Install python3
-        # The Fedora 41 container doesn't have python3 installed by default
+        # The Fedora container doesn't have python3 installed by default
         run: dnf -y install python3
 
       - name: Set up repository for pinned osbuild commit
@@ -72,16 +73,17 @@ jobs:
       GOPROXY: "https://proxy.golang.org|direct"
 
     steps:
-      - name: Set up Go 1.23
+      - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: "1.23"
+          go-version: "1.24.12"
         id: go
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
 
       - name: Apt update
         run: sudo apt update
@@ -97,10 +99,10 @@ jobs:
         run: sudo go test ./pkg/container/... --force-local-resolver
 
       - name: Run unit tests for bib container
-        run: sudo go test ./pkg/bib/container/... --fail-if-podman-missing
+        run: sudo go test ./pkg/bootc/... --fail-if-podman-missing
 
       - name: Run tests for bootc container
-        run: sudo go test ./pkg/distro/bootc/...
+        run: sudo go test ./pkg/distro/bootc/... ./pkg/distro/generic/...
 
   unit-tests-cs:
     strategy:
@@ -129,9 +131,10 @@ jobs:
         run: dnf config-manager --set-enabled crb
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
 
       - name: Set up repository for pinned osbuild commit
         run: ./test/scripts/setup-osbuild-repo
@@ -156,16 +159,17 @@ jobs:
       # (go.opencensus.io/trace)
       GOPROXY: "https://proxy.golang.org|direct"
     steps:
-      - name: Set up Go 1.23
+      - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: "1.23"
+          go-version: "1.24.12"
         id: go
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
 
       - name: Apt update
         run: sudo apt update
@@ -184,7 +188,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.3
+          version: v2.8
           args: --verbose --timeout 5m0s
 
   shellcheck:
@@ -195,9 +199,10 @@ jobs:
       # (go.opencensus.io/trace)
       GOPROXY: "https://proxy.golang.org|direct"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
         with:
@@ -218,17 +223,18 @@ jobs:
       image: registry.fedoraproject.org/fedora:latest
     steps:
 
-      - name: Install build and test dependencies
-        run: dnf -y install python3-pytest podman skopeo go btrfs-progs-devel device-mapper-devel gpgme-devel
-
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
+
+      - name: Install build and test dependencies
+        run: ./test/scripts/install-dependencies
 
       - name: Testing imgtestlib and test scripts
         run: |
-          python3 -m pytest -v
+          python3 -m pytest -v -k "not images_integration"
 
   python-lint:
     name: "🐍 Lint (test scripts)"
@@ -241,17 +247,19 @@ jobs:
       image: registry.fedoraproject.org/fedora:latest
     steps:
 
-      - name: Install build and test dependencies
-        run: dnf -y install python3-pylint git-core grep python3-pytest python3-pip
-
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
+
+      - name: Install build and test dependencies
+        run: |
+          ./test/scripts/install-dependencies
+          dnf -y install python3-pylint
 
       - name: Analysing the code with pylint
         run: |
-          pip install .
           python3 -m pylint --version
           python3 -m pylint $(grep -l "/usr/bin/env python3" -r test/scripts) test/scripts/*.py
 
@@ -260,9 +268,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
 
       - name: Install checkers
         run: |
@@ -277,3 +286,55 @@ jobs:
         # yq will catch issues that yamllint will not, like duplicate anchros
         run: |
           find . "(" -iname "*.yaml" -or -iname "*.yml" ")" -exec yq . {} \+ > /dev/null
+
+  cross-arch-integration-test:
+    strategy:
+      matrix:
+        arch:
+          - ppc64le
+          - s390x
+      fail-fast: false  # if one fails, keep the other(s) running
+    name: "Cross-arch qemu based image build/boot smoke test"
+    runs-on: ubuntu-24.04
+    env:
+      # workaround for expired cert at source of indirect dependency
+      # (go.opencensus.io/trace)
+      GOPROXY: "https://proxy.golang.org|direct"
+      GOFLAGS: "-buildvcs=false"
+    container:
+      image: registry.fedoraproject.org/fedora:latest
+      options: "--privileged"
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v6
+        with:
+          set-safe-directory: true
+
+      - name: Install python3
+        # The Fedora container doesn't have python3 installed by default
+        run: dnf -y install python3
+
+      - name: Setup repository for pinned osbuild commit
+        run: ./test/scripts/setup-osbuild-repo
+
+      - name: Install osbuild dependencies
+        run: dnf -y install osbuild osbuild-depsolve-dnf
+
+      - name: Install build and test dependencies
+        run: ./test/scripts/install-dependencies
+
+      - name: Manually start qemu-user-static
+        run: |
+          # mostly for debugging
+          mount | grep binfmt_misc || true
+          ls /proc/sys/fs/binfmt_misc/
+          sudo mount -t binfmt_misc none /proc/sys/fs/binfmt_misc
+          ls /proc/sys/fs/binfmt_misc/
+          sudo SYSTEMD_LOG_LEVEL=debug /usr/lib/systemd/systemd-binfmt
+          ls /proc/sys/fs/binfmt_misc/
+          sudo SYSTEMD_LOG_LEVEL=debug /usr/lib/systemd/systemd-binfmt /usr/lib/binfmt.d/qemu-*.conf
+          ls /proc/sys/fs/binfmt_misc/
+
+      - name: Cross arch integration test
+        run: |
+          sudo -E pytest -rs -k ${{ matrix.arch }} -s -v ./test/test_cross_arch_integration.py

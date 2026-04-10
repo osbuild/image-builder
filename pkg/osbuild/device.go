@@ -1,9 +1,10 @@
 package osbuild
 
 import (
+	"cmp"
 	"fmt"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/osbuild/images/pkg/disk"
@@ -195,11 +196,15 @@ func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[str
 			if pt == nil {
 				panic("path does not contain partition table; this is a programming error")
 			}
+			var sectorSize *uint64
+			if pt.SectorSize != 0 {
+				sectorSize = &pt.SectorSize
+			}
 			lbopt := LoopbackDeviceOptions{
 				Filename:   filename,
 				Start:      pt.BytesToSectors(e.Start),
 				Size:       pt.BytesToSectors(e.Size.Uint64()),
-				SectorSize: nil,
+				SectorSize: sectorSize,
 				Lock:       lockLoopback,
 			}
 			name := deviceName(e.Payload)
@@ -318,8 +323,8 @@ func GenMountsDevicesFromPT(filename string, pt *disk.PartitionTable) (string, [
 	// - a parent directory should be always before its children:
 	//   / < /boot
 	// - the order of siblings doesn't matter
-	sort.Slice(mounts, func(i, j int) bool {
-		return mounts[i].Target < mounts[j].Target
+	slices.SortFunc(mounts, func(a, b Mount) int {
+		return cmp.Compare(a.Target, b.Target)
 	})
 
 	if fsRootMntName == "" {

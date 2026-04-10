@@ -41,9 +41,10 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 	}
 
 	if (t.BootISO || t.Bootable) && t.RPMOSTree {
-		// ostree-based ISOs require a URL from which to pull a payload commit
-		if options.OSTree == nil || options.OSTree.URL == "" {
-			return warnings, fmt.Errorf("options validation failed for image type %q: ostree.url: required", t.Name())
+		// ostree-based ISOs require a URL from which to pull a payload commit, this can either be a default URL or one
+		// supplied through options
+		if t.OSTreeURL() == "" && (options.OSTree == nil || options.OSTree.URL == "") {
+			return warnings, fmt.Errorf("options validation failed for image type %q: ostree.url: required, there is no default available", t.Name())
 		}
 	}
 
@@ -67,11 +68,15 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		}
 	}
 
-	if customizations.GetIgnition() != nil {
-		if customizations.GetIgnition().Embedded != nil && customizations.GetIgnition().FirstBoot != nil {
+	ignitionCustomization, err := customizations.GetIgnition()
+	if err != nil {
+		return warnings, err
+	}
+	if ignitionCustomization != nil {
+		if ignitionCustomization.Embedded != nil && ignitionCustomization.FirstBoot != nil {
 			return warnings, fmt.Errorf("%s: customizations.ignition.embedded cannot be used with customizations.ignition.firstboot", errPrefix)
 		}
-		if customizations.GetIgnition().FirstBoot != nil && customizations.GetIgnition().FirstBoot.ProvisioningURL == "" {
+		if ignitionCustomization.FirstBoot != nil && ignitionCustomization.FirstBoot.ProvisioningURL == "" {
 			return warnings, fmt.Errorf("%s: customizations.ignition.firstboot requires customizations.ignition.firstboot.provisioning_url", errPrefix)
 		}
 	}
@@ -96,7 +101,8 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
-		supported := oscap.IsProfileAllowed(osc.ProfileID, t.arch.distro.DistroYAML.OscapProfilesAllowList)
+		d := t.arch.distro.(*distribution)
+		supported := oscap.IsProfileAllowed(osc.ProfileID, d.DistroYAML.OscapProfilesAllowList)
 		if !supported {
 			return warnings, fmt.Errorf("%s: customizations.openscap.profile_id: unsupported profile %s", errPrefix, osc.ProfileID)
 		}
@@ -142,13 +148,20 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		warnings = append(warnings, fmt.Sprintln(common.FIPSEnabledImageWarning))
 	}
 
+	// check if group customizations are valid
+	if _, err := customizations.GetGroups(); err != nil {
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
+	}
+
 	instCust, err := customizations.GetInstaller()
 	if err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
-	if instCust != nil && instCust.Kickstart != nil && len(instCust.Kickstart.Contents) > 0 &&
-		(customizations.GetUsers() != nil || customizations.GetGroups() != nil) {
-		return warnings, fmt.Errorf("%s: customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group", errPrefix)
+	if instCust != nil && instCust.Kickstart != nil && len(instCust.Kickstart.Contents) > 0 {
+		groups, _ := customizations.GetGroups() // group customization errors are checked above
+		if customizations.GetUsers() != nil || groups != nil {
+			return warnings, fmt.Errorf("%s: customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group", errPrefix)
+		}
 	}
 	return warnings, nil
 }

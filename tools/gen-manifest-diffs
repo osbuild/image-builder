@@ -49,6 +49,7 @@ def run_gen_manifests(images_dir, output_dir):
         "-packages=false",
         "-metadata=false",
         "-containers=false",
+        "-flatpaks=false",
         "-arches", ",".join(arches),
         "-fake-bootc=true",
         "-output", output_dir,

@@ -1,6 +1,6 @@
 module github.com/osbuild/images
 
-go 1.23.9
+go 1.24.12
 
 require (
 	cloud.google.com/go/compute v1.45.0
@@ -24,6 +24,7 @@ require (
 	github.com/containers/image/v5 v5.36.1
 	github.com/containers/storage v1.59.1
 	github.com/gobwas/glob v0.2.3
+	github.com/gocomply/scap v0.1.3
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/gophercloud/gophercloud/v2 v2.8.0
@@ -33,8 +34,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
-	github.com/osbuild/blueprint v1.16.0
-	github.com/sirupsen/logrus v1.9.3
+	github.com/osbuild/blueprint v1.29.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7
 	github.com/stretchr/testify v1.11.1
@@ -165,6 +165,7 @@ require (
 	github.com/sigstore/fulcio v1.6.6 // indirect
 	github.com/sigstore/protobuf-specs v0.4.1 // indirect
 	github.com/sigstore/sigstore v1.9.5 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smallstep/pkcs7 v0.1.1 // indirect
 	github.com/sony/gobreaker v0.4.2-0.20210216022020-dd874f9dd33b // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect

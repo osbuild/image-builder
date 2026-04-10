@@ -36,5 +36,123 @@ the initrd and the root filesystem.
 
 ## Create a combined image
 
-    echo rootfs.img | cpio -c --quiet -L -o > rootfs.cpio
+    echo rootfs.img | cpio -H newc --quiet -L -o > rootfs.cpio
     cat initrd.img rootfs.cpio > combined.img
+
+# bootc
+
+You can create a bootc based PXE system using the 'pxe-tar-xz' image type with
+the bootc image builder. But there are a few requirement to take into account.
+The container that you use has a few requirements:
+
+* Be based on a bootc container, eg. quay.io/centos-bootc/centos-bootc:stream10
+* Include the dracut-live and squashfs-tools packages
+* Configure dracut to add the dmsquash-live module
+* Configure ostree to not use composefs
+* Rebuild the initramfs so that it includes the dmsquash-live module
+
+## Sample bootc container
+
+This is a simple example using the `image-builder` cmdline tool and a local install of podman.
+
+Save this in `Containerfile`:
+
+```
+FROM quay.io/centos-bootc/centos-bootc:stream10
+RUN dnf -y install dracut-live squashfs-tools && dnf clean all
+# Override using composefs for ostree (it is incompatible with the squashfs rootfs)
+RUN cat <<EOF > /usr/lib/ostree/prepare-root.conf
+[composefs]
+enabled = no
+[sysroot]
+readonly = true
+EOF
+
+# Include the dmsquash-live module in the initramfs
+RUN cat <<EOF > /usr/lib/dracut/dracut.conf.d/40-pxe.conf
+compress="xz"
+add_dracutmodules+=" qemu qemu-net livenet dmsquash-live "
+early_microcode="no"
+EOF
+
+# Rebuild the initrd
+RUN set -xe; kver=$(ls /usr/lib/modules); env DRACUT_NO_XATTR=1 dracut -vf /usr/lib/modules/$kver/initramfs.img "$kver"
+
+# Mask services that aren't compatible with running from the rootfs
+RUN systemctl mask bootc-generic-growpart.service bootc-publish-rhsm-facts.service
+RUN bootc container lint
+```
+
+Build this container using podman:
+
+```
+podman build -f ./Containerfile -t bootc-dracut
+```
+
+Run `image-builder` to create the tar:
+
+```
+image-builder build --bootc-ref localhost/bootc-dracut:latest pxe-tar-xz
+```
+
+If your container is on a remote system replace the
+`localhost/bootc-dracut:latest` with the right url.
+
+The resulting tar is the same as for the package based `pxe-tar-xz`, the only
+difference is that the `grub.cfg` also has `ostree=...` added to the kernel
+cmdline. And the rootfs.img is an ostree system instead of package based.
+
+# Troubleshooting
+
+You can inspect the container you built by running bash:
+
+```
+podman run --rm -it localhost/bootc-dracut:latest /usr/bin/bash
+```
+
+Check the contents of `/usr/lib/ostree/prepare-root.conf` and
+`/usr/lib/dracut/dracut.conf.d/40-pxe.conf` to make sure they were created
+correctly. You can also run `lsinitrd --mod /usr/lib/modules/*/initramfs.img`
+to check to make sure the new initramfs contains the dmsquash-live and ostree
+modules.
+
+## No grub menu
+
+Make sure the grub.cfg is next to grubx64.efi -- the simplest layout is to put
+BOOTX64.EFI, grubx64.efi, grub.cfg at the root of the directory your tftp
+server points to.
+
+## Fails to load the rootfs.img
+
+If you get an error like:
+
+[FAILED] Failed to start initrd-switch-root.service - Switch Root.
+
+Make sure the initramfs includes the dmsquash-live module.
+
+If you see curl stuck in a loop trying to download the rootfs.img, possibly
+with errors that look like:
+
+Warning: failed to download live image: error 253
+
+Make sure the rootfs.img is in the location specified by `root=live:...` in
+grub.cfg, it can be helpful check the logs of whatever http server you are
+using to serve up the files to make sure the request matches the expected
+location.
+
+## Fails to mount the OSTree root
+
+If you get an error like:
+
+ostree-prepare-root[848]: ostree-prepare-root: Couldn't find specified OSTree root
+
+Double check the grub.cfg matches the rootfs.img (ie. came from the same tar
+file).  The `ostree=...` entry in grub.cfg must point to the path in the
+rootfs.img, and the build process sets this uuid from the ostree directory so a
+mismatch is usually because the rootfs.img doesn't match the grub.cfg
+
+Or if the error looks like:
+
+ostree-prepare-root: Failed to mount composefs: composefs: failed to mount: Input/output error
+
+Check the prepare-root.conf file to make sure composefs has been disabled.

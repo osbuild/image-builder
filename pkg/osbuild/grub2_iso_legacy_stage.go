@@ -4,7 +4,15 @@ import "fmt"
 
 const grub2isoLegacyStageType = "org.osbuild.grub2.iso.legacy"
 
+type Grub2ISOLegacyCustomEntryOptions struct {
+	Name   string `json:"name"`
+	Linux  string `json:"linux"`
+	Initrd string `json:"initrd"`
+}
+
 type Grub2ISOLegacyStageOptions struct {
+	Grub2Dir string `json:"grub2dir,omitempty"`
+
 	Product Product `json:"product"`
 
 	Kernel ISOKernel `json:"kernel"`
@@ -12,6 +20,16 @@ type Grub2ISOLegacyStageOptions struct {
 	ISOLabel string `json:"isolabel"`
 
 	FIPS bool `json:"fips,omitempty"`
+
+	Troubleshooting bool `json:"troubleshooting"`
+
+	Test bool `json:"test"`
+
+	Install bool `json:"install"`
+
+	Custom []Grub2ISOLegacyCustomEntryOptions `json:"custom,omitempty"`
+
+	Platform string `json:"platform,omitempty"`
 
 	Config *Grub2Config `json:"config,omitempty"`
 }

@@ -33,7 +33,7 @@ fi
 # Save stderr to reduce noise as well and print it only if the run fails.
 echo "Generating mock manifests"
 if ! "${tmpdir}/bin/gen-manifests" \
-    --packages=false --containers=false --commits=false \
+    --packages=false --containers=false --commits=false --flatpaks=false \
     --metadata=false \
     --fake-bootc=true \
     --arches "x86_64,aarch64,ppc64le,s390x" \

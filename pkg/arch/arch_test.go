@@ -17,6 +17,14 @@ func TestCurrentArchAMD64(t *testing.T) {
 	assert.True(t, IsX86_64())
 }
 
+func TestCurrentArchARM(t *testing.T) {
+	origRuntimeGOARCH := runtimeGOARCH
+	defer func() { runtimeGOARCH = origRuntimeGOARCH }()
+	runtimeGOARCH = "arm"
+	assert.Equal(t, "arm", Current().String())
+	assert.True(t, IsArm())
+}
+
 func TestCurrentArchARM64(t *testing.T) {
 	origRuntimeGOARCH := runtimeGOARCH
 	defer func() { runtimeGOARCH = origRuntimeGOARCH }()
@@ -62,6 +70,8 @@ func TestFromStringUnsupported(t *testing.T) {
 }
 
 func TestFromString(t *testing.T) {
+	assert.Equal(t, ARCH_ARM, common.Must(FromString("arm")))
+	assert.Equal(t, ARCH_ARM, common.Must(FromString("armv7")))
 	assert.Equal(t, ARCH_AARCH64, common.Must(FromString("arm64")))
 	assert.Equal(t, ARCH_AARCH64, common.Must(FromString("aarch64")))
 	assert.Equal(t, ARCH_X86_64, common.Must(FromString("amd64")))
@@ -76,6 +86,7 @@ func TestUnmarshal(t *testing.T) {
 		inp      string
 		expected Arch
 	}{
+		{"arch: arm", ARCH_ARM},
 		{"arch: arm64", ARCH_AARCH64},
 		{"arch: amd64", ARCH_X86_64},
 		{"arch: s390x", ARCH_S390X},

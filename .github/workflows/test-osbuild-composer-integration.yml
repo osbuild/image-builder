@@ -74,17 +74,19 @@ jobs:
         run: dnf -y install krb5-devel gcc git-core go gpgme-devel osbuild-depsolve-dnf btrfs-progs-devel device-mapper-devel jq
 
       - name: Check out osbuild-composer main branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: osbuild-composer
           repository: osbuild/osbuild-composer
           ref: main
+          set-safe-directory: true
 
       - name: Check out osbuild/images for the PR
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: images
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
 
       - name: Mark the working directory as safe for git
         run: git config --global --add safe.directory "$(pwd)"
@@ -141,7 +143,7 @@ jobs:
     needs: unit-tests-osbuild-composer
     steps:
       - name: Add comment (breakage)
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         if: needs.unit-tests-osbuild-composer.outputs.base_test == 1  &&  needs.unit-tests-osbuild-composer.outputs.pr_test == 0
         with:
           repo-token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
@@ -152,7 +154,7 @@ jobs:
             This is simply a notice. It will not block this PR from being merged.
 
       - name: Update comment (fixed)
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         if: needs.unit-tests-osbuild-composer.outputs.pr_test == 1
         with:
           repo-token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
@@ -186,17 +188,19 @@ jobs:
         run: dnf -y install krb5-devel gcc git-core go gpgme-devel osbuild-depsolve-dnf btrfs-progs-devel device-mapper-devel jq
 
       - name: Check out image-builder-cli main branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: image-builder-cli
           repository: osbuild/image-builder-cli
           ref: main
+          set-safe-directory: true
 
       - name: Check out osbuild/images for the PR
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: images
           ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
 
       - name: Mark the working directory as safe for git
         run: git config --global --add safe.directory "$(pwd)"
@@ -253,7 +257,7 @@ jobs:
     needs: unit-tests-ib-cli
     steps:
       - name: Add comment (breakage)
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         if: needs.unit-tests-ib-cli.outputs.base_test == 1  &&  needs.unit-tests-ib-cli.outputs.pr_test == 0
         with:
           repo-token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
@@ -264,7 +268,7 @@ jobs:
             This is simply a notice. It will not block this PR from being merged.
 
       - name: Update comment (fixed)
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         if: needs.unit-tests-ib-cli.outputs.pr_test == 1
         with:
           repo-token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}

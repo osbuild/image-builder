@@ -2,7 +2,7 @@
   "name": "oscap-generic",
   "blueprint": {
     "name": "oscap-generic",
-    "description": "Almost full (disk) blueprint with additional openscap options.",
+    "description": "Almost full (disk) blueprint with additional openscap options.\nService sssd is masked because it does not start on some versions: https://access.redhat.com/solutions/7017538",
     "version": "1.0",
     "packages": [
       {
@@ -12,6 +12,9 @@
       {
         "name": "bluez",
         "version": "*"
+      },
+      {
+        "name": "xmlstarlet"
       }
     ],
     "modules": [],
@@ -82,6 +85,9 @@
         ],
         "disabled": [
           "bluetooth.service"
+        ],
+        "masked": [
+          "sssd.service"
         ]
       },
       "filesystem": [

@@ -40,7 +40,14 @@ def main():
 
     s3url = testlib.gen_build_info_s3_dir_path(distro, arch, manifest_id)
 
-    print(f"⬆️ Uploading {build_dir} to {s3url}")
+    # It can happen that the upload fails before finishing. This can cause problems with inconsistent cache state if,
+    # for example, the info.json file is uploaded but the manifest or image is not. Since the info.json is the important
+    # file for identifying if a build was successful, let's upload everything else first, without info.json, and then
+    # upload the info.json separately as a final step.
+    print(f"⬆️ Uploading {build_dir} to {s3url} (without info)")
+    testlib.runcmd_nc(["aws", "s3", "cp", "--no-progress", "--acl=private", "--recursive", "--exclude=info.json",
+                       build_dir+"/", s3url])
+    print(f"⬆️ Uploading info.json to {s3url}")
     testlib.runcmd_nc(["aws", "s3", "cp", "--no-progress", "--acl=private", "--recursive", build_dir+"/", s3url])
     print("✅ DONE!!")
 

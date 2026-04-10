@@ -17,7 +17,7 @@ func TestNewVagrantMacAddress(t *testing.T) {
 	build := manifest.NewBuild(&mani, runner, nil, nil)
 
 	// setup
-	rawImage := manifest.NewRawImage(build, nil)
+	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
 
 	// create a new random instance to use so we get the same "random" mac address each
 	// time we run this test

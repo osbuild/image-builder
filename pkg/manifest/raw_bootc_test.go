@@ -61,8 +61,8 @@ func TestRawBootcImageSerialize(t *testing.T) {
 
 	rawBootcPipeline := manifest.NewRawBootcImage(build, containers, pf)
 	rawBootcPipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
-	rawBootcPipeline.Users = []users.User{{Name: "root", Key: common.ToPtr("some-ssh-key")}}
-	rawBootcPipeline.KernelOptionsAppend = []string{"karg1", "karg2"}
+	rawBootcPipeline.OSCustomizations.Users = []users.User{{Name: "root", Key: common.ToPtr("some-ssh-key")}}
+	rawBootcPipeline.OSCustomizations.KernelOptionsAppend = []string{"karg1", "karg2"}
 
 	err := rawBootcPipeline.SerializeStart(manifest.Inputs{Containers: []container.Spec{{Source: "foo"}}})
 	assert.NoError(t, err)
@@ -137,7 +137,7 @@ func TestRawBootcImageSerializeCreateUsersOptions(t *testing.T) {
 		{[]users.User{{Name: "foo"}}, true},
 		{[]users.User{{Name: "root"}, {Name: "foo"}}, true},
 	} {
-		rawBootcPipeline.Users = tc.users
+		rawBootcPipeline.OSCustomizations.Users = tc.users
 
 		pipeline, err := rawBootcPipeline.Serialize()
 		assert.NoError(t, err)
@@ -181,7 +181,7 @@ func TestRawBootcImageSerializeMkdirOptions(t *testing.T) {
 			},
 		},
 	} {
-		rawBootcPipeline.Users = tc.users
+		rawBootcPipeline.OSCustomizations.Users = tc.users
 
 		pipeline, err := rawBootcPipeline.Serialize()
 		assert.NoError(t, err)
@@ -210,7 +210,7 @@ func TestRawBootcImageSerializeCreateGroupOptions(t *testing.T) {
 		{[]users.Group{{Name: "foo"}}, true},
 		{[]users.Group{{Name: "root"}, {Name: "foo"}}, true},
 	} {
-		rawBootcPipeline.Groups = tc.groups
+		rawBootcPipeline.OSCustomizations.Groups = tc.groups
 
 		pipeline, err := rawBootcPipeline.Serialize()
 		assert.NoError(t, err)
@@ -255,8 +255,8 @@ func TestRawBootcImageSerializeCustomizationGenCorrectStages(t *testing.T) {
 		{[]users.User{{Name: "foo"}}, nil, "targeted", []string{"org.osbuild.mkdir", "org.osbuild.users", "org.osbuild.selinux"}},
 		{[]users.User{{Name: "foo"}}, []users.Group{{Name: "bar"}}, "targeted", []string{"org.osbuild.mkdir", "org.osbuild.users", "org.osbuild.users", "org.osbuild.selinux"}},
 	} {
-		rawBootcPipeline.Users = tc.users
-		rawBootcPipeline.SELinux = tc.SELinux
+		rawBootcPipeline.OSCustomizations.Users = tc.users
+		rawBootcPipeline.OSCustomizations.SELinux = tc.SELinux
 
 		pipeline, err := rawBootcPipeline.Serialize()
 		assert.NoError(t, err)
@@ -318,9 +318,9 @@ func TestRawBootcImageSerializeCreateFilesDirs(t *testing.T) {
 	} {
 		tcName := fmt.Sprintf("files:%v,dirs:%v", len(tc.files), len(tc.dirs))
 		t.Run(tcName, func(t *testing.T) {
-			rawBootcPipeline.SELinux = "/path/to/selinux"
-			rawBootcPipeline.Directories = tc.dirs
-			rawBootcPipeline.Files = tc.files
+			rawBootcPipeline.OSCustomizations.SELinux = "/path/to/selinux"
+			rawBootcPipeline.OSCustomizations.Directories = tc.dirs
+			rawBootcPipeline.OSCustomizations.Files = tc.files
 
 			pipeline, err := rawBootcPipeline.Serialize()
 			assert.NoError(t, err)
@@ -363,8 +363,8 @@ func TestRawBootcImageSerializeCreateFilesDirs(t *testing.T) {
 func TestRawBootcPipelineFSTabStage(t *testing.T) {
 	pipeline := makeFakeRawBootcPipeline()
 
-	pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot/efi") // PT requires /boot/efi
-	pipeline.MountConfiguration = osbuild.MOUNT_CONFIGURATION_FSTAB             // set it explicitly just to be sure
+	pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot/efi")        // PT requires /boot/efi
+	pipeline.DiskCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_FSTAB // set it explicitly just to be sure
 
 	checkStagesForFSTab(t, common.Must(pipeline.Serialize()).Stages)
 }
@@ -374,7 +374,7 @@ func TestRawBootcPipelineMountUnitStages(t *testing.T) {
 
 	expectedUnits := []string{"-.mount", "home.mount", "boot-efi.mount"}
 	pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/home", "/boot/efi")
-	pipeline.MountConfiguration = osbuild.MOUNT_CONFIGURATION_UNITS
+	pipeline.DiskCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_UNITS
 
 	checkStagesForMountUnits(t, common.Must(pipeline.Serialize()).Stages, expectedUnits)
 }
@@ -383,7 +383,29 @@ func TestRawBootcPipelineNoMountsStages(t *testing.T) {
 	pipeline := makeFakeRawBootcPipeline()
 
 	pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/home", "/boot/efi")
-	pipeline.MountConfiguration = osbuild.MOUNT_CONFIGURATION_NONE
+	pipeline.DiskCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_NONE
 
 	checkStagesForNoMounts(t, common.Must(pipeline.Serialize()).Stages)
+}
+
+func TestRawBootcPXE(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+	rawBootcPipeline.KernelVersion = "5.14.0-611.4.1.el9_7.x86_64"
+	rawBootcPipeline.LiveBoot = true
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+
+	// Check for mkdir stages
+	mkdirStages := findStages("org.osbuild.mkdir", pipeline.Stages)
+	require.Greater(t, len(mkdirStages), 0)
+	var mkdirPaths []string
+	for _, s := range mkdirStages {
+		opts := s.Options.(*osbuild.MkdirStageOptions)
+		for _, p := range opts.Paths {
+			mkdirPaths = append(mkdirPaths, p.Path)
+		}
+	}
+	assert.Contains(t, mkdirPaths, "/usr")
+	assert.Contains(t, mkdirPaths, "/proc")
 }

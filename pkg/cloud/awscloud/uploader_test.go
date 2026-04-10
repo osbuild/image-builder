@@ -82,7 +82,7 @@ func TestUploaderCheckHappy(t *testing.T) {
 		buckets:               []string{"bucket"},
 		checkBucketPermission: true,
 	}
-	restore := awscloud.MockNewAwsClient(func(string) (awscloud.AwsClient, error) {
+	restore := awscloud.MockNewAwsClient(func(string, string) (awscloud.AwsClient, error) {
 		return fa, nil
 	})
 	defer restore()
@@ -147,7 +147,7 @@ func TestUploaderUploadHappy(t *testing.T) {
 				registerImageId:    "image-id",
 				registerSnapshotId: "snapshot-id",
 			}
-			restore := awscloud.MockNewAwsClient(func(string) (awscloud.AwsClient, error) {
+			restore := awscloud.MockNewAwsClient(func(string, string) (awscloud.AwsClient, error) {
 				return fa, nil
 			})
 			defer restore()
@@ -183,7 +183,7 @@ func TestUploaderUploadButRegisterError(t *testing.T) {
 		},
 		registerErr: fmt.Errorf("fake-register-err"),
 	}
-	restore := awscloud.MockNewAwsClient(func(string) (awscloud.AwsClient, error) {
+	restore := awscloud.MockNewAwsClient(func(string, string) (awscloud.AwsClient, error) {
 		return fa, nil
 	})
 	defer restore()
@@ -214,7 +214,7 @@ func TestUploaderUploadButRegisterErrorAndDeleteError(t *testing.T) {
 		registerErr:     fmt.Errorf("fake-register-err"),
 		deleteObjectErr: fmt.Errorf("fake-delete-object-err"),
 	}
-	restore := awscloud.MockNewAwsClient(func(string) (awscloud.AwsClient, error) {
+	restore := awscloud.MockNewAwsClient(func(string, string) (awscloud.AwsClient, error) {
 		return fa, nil
 	})
 	defer restore()

@@ -14,11 +14,11 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 )
 
-func writeOSRelease(root, id, versionID, name, platformID, variantID, idLike string) error {
+func writeOSRelease(t *testing.T, root, id, versionID, name, platformID, variantID, idLike string) {
+	t.Helper()
+
 	err := os.MkdirAll(path.Join(root, "etc"), 0755)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	var buf string
 	if id != "" {
@@ -40,23 +40,25 @@ func writeOSRelease(root, id, versionID, name, platformID, variantID, idLike str
 		buf += "ID_LIKE=" + idLike + "\n"
 	}
 
-	return os.WriteFile(path.Join(root, "etc/os-release"), []byte(buf), 0644)
+	err = os.WriteFile(path.Join(root, "etc/os-release"), []byte(buf), 0644)
+	require.NoError(t, err)
 }
 
-func createBootupdEFI(root, uefiVendor string) error {
+func createBootupdEFI(t *testing.T, root, uefiVendor string) {
+	t.Helper()
+
 	err := os.MkdirAll(path.Join(root, "usr/lib/bootupd/updates/EFI/BOOT"), 0755)
-	if err != nil {
-		return err
-	}
-	return os.Mkdir(path.Join(root, "usr/lib/bootupd/updates/EFI", uefiVendor), 0755)
+	require.NoError(t, err)
+	err = os.Mkdir(path.Join(root, "usr/lib/bootupd/updates/EFI", uefiVendor), 0755)
+	require.NoError(t, err)
 }
 
-func createImageCustomization(root, custType string) error {
+func createImageCustomization(t *testing.T, root, custType string) {
+	t.Helper()
+
 	bibDir := path.Join(root, "usr/lib/bootc-image-builder/")
 	err := os.MkdirAll(bibDir, 0755)
-	if err != nil {
-		return err
-	}
+	require.NoError(t, err)
 
 	var buf string
 	var filename string
@@ -91,10 +93,11 @@ part_type = "01234567-89ab-cdef-0123-456789abcdef"
 		buf = "{"
 		filename = "config.json"
 	default:
-		return fmt.Errorf("unsupported customization type %s", custType)
+		t.Errorf("unsupported customization type %s", custType)
 	}
 
-	return os.WriteFile(path.Join(bibDir, filename), []byte(buf), 0644)
+	err = os.WriteFile(path.Join(bibDir, filename), []byte(buf), 0644)
+	require.NoError(t, err)
 }
 
 func TestLoadInfo(t *testing.T) {
@@ -126,13 +129,13 @@ func TestLoadInfo(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			root := t.TempDir()
-			require.NoError(t, writeOSRelease(root, c.id, c.versionID, c.name, c.platformID, c.variantID, c.idLike))
+			writeOSRelease(t, root, c.id, c.versionID, c.name, c.platformID, c.variantID, c.idLike)
 			if c.uefiVendor != "" {
-				require.NoError(t, createBootupdEFI(root, c.uefiVendor))
+				createBootupdEFI(t, root, c.uefiVendor)
 
 			}
 			if c.custType != "" {
-				require.NoError(t, createImageCustomization(root, c.custType))
+				createImageCustomization(t, root, c.custType)
 
 			}
 
@@ -232,39 +235,165 @@ partition_table:
       type: *bios_boot_partition_guid
 `
 
-func createPartitionTable(root, fakePartitionTableYAML string) error {
-	dst := path.Join(root, "/usr/lib/bootc-image-builder/disk.yaml")
-	if err := os.MkdirAll(path.Dir(dst), 0755); err != nil {
-		return err
-	}
-	return os.WriteFile(dst, []byte(fakePartitionTableYAML), 0644)
+func createPartitionTable(t *testing.T, root, fakePartitionTableYAML string, dest string) {
+	t.Helper()
+
+	dst := path.Join(root, dest)
+	err := os.MkdirAll(path.Dir(dst), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(dst, []byte(fakePartitionTableYAML), 0644)
+	require.NoError(t, err)
 }
 
 func TestLoadInfoPartitionTableHappy(t *testing.T) {
-	root := t.TempDir()
-	require.NoError(t, writeOSRelease(root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos"))
-	require.NoError(t, createPartitionTable(root, fakePartitionTableYAML))
+	dests := []string{
+		"/usr/lib/bootc-image-builder/disk.yaml",
+		"/usr/lib/image-builder/bootc/disk.yaml",
+	}
 
-	info, err := Load(root)
-	require.NoError(t, err)
-	assert.Equal(t, &disk.PartitionTable{
-		Type: disk.PT_GPT,
-		Partitions: []disk.Partition{
-			{
-				Bootable: true,
-				Size:     1 * datasizes.MiB,
-				Type:     "21686148-6449-6E6F-744E-656564454649",
-				UUID:     "2866630c-0c7e-469c-bc82-c458e3fd6223",
+	for _, dest := range dests {
+		root := t.TempDir()
+		writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+		createPartitionTable(t, root, fakePartitionTableYAML, dest)
+
+		info, err := Load(root)
+		require.NoError(t, err)
+		assert.Equal(t, &disk.PartitionTable{
+			Type: disk.PT_GPT,
+			Partitions: []disk.Partition{
+				{
+					Bootable: true,
+					Size:     1 * datasizes.MiB,
+					Type:     "21686148-6449-6E6F-744E-656564454649",
+					UUID:     "2866630c-0c7e-469c-bc82-c458e3fd6223",
+				},
 			},
-		},
-	}, info.PartitionTable)
+		}, info.PartitionTable)
+	}
 }
 
 func TestLoadInfoPartitionTableSad(t *testing.T) {
 	root := t.TempDir()
-	require.NoError(t, writeOSRelease(root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos"))
-	require.NoError(t, createPartitionTable(root, "@invalidYAML"))
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+	createPartitionTable(t, root, "@invalidYAML", "/usr/lib/bootc-image-builder/disk.yaml")
 
 	_, err := Load(root)
 	assert.EqualError(t, err, fmt.Sprintf(`cannot parse disk definitions from "%s/usr/lib/bootc-image-builder/disk.yaml": yaml: found character that cannot start any token`, root))
+}
+
+var fakeISOYAML = `
+label: "My-ISO"
+kernel_args:
+- "root=live:CDLABEL=My-ISO"
+- "foo"
+grub2:
+  default: 5
+  timeout: 30
+  entries:
+    - name: "My First Entry"
+      linux: "/foo"
+      initrd: "/bar"
+    - name: "My Second Entry"
+      linux: "/bar"
+      initrd: "/foo"
+`
+
+func createISO(t *testing.T, root, fakeISOYAML string, dest string) {
+	t.Helper()
+
+	dst := path.Join(root, dest)
+	err := os.MkdirAll(path.Dir(dst), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(dst, []byte(fakeISOYAML), 0644)
+	require.NoError(t, err)
+}
+
+func TestLoadInfoISOHappy(t *testing.T) {
+	dests := []string{
+		"/usr/lib/bootc-image-builder/iso.yaml",
+		"/usr/lib/image-builder/bootc/iso.yaml",
+	}
+
+	for _, dest := range dests {
+		root := t.TempDir()
+		writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+		createISO(t, root, fakeISOYAML, dest)
+
+		info, err := Load(root)
+		require.NoError(t, err)
+
+		assert.Equal(t, "My-ISO", info.ISOInfo.Label)
+		assert.Equal(t, []string{"root=live:CDLABEL=My-ISO", "foo"}, info.ISOInfo.KernelArgs)
+
+		assert.Equal(t, 30, *info.ISOInfo.Grub2.Timeout)
+		assert.Equal(t, 5, *info.ISOInfo.Grub2.Default)
+
+		assert.Equal(t, 2, len(info.ISOInfo.Grub2.Entries))
+
+		assert.Equal(t, "My First Entry", info.ISOInfo.Grub2.Entries[0].Name)
+		assert.Equal(t, "/foo", info.ISOInfo.Grub2.Entries[0].Linux)
+		assert.Equal(t, "/bar", info.ISOInfo.Grub2.Entries[0].Initrd)
+
+		assert.Equal(t, "My Second Entry", info.ISOInfo.Grub2.Entries[1].Name)
+		assert.Equal(t, "/bar", info.ISOInfo.Grub2.Entries[1].Linux)
+		assert.Equal(t, "/foo", info.ISOInfo.Grub2.Entries[1].Initrd)
+	}
+}
+
+func TestLoadInfoISOSad(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+	createISO(t, root, "@invalidYAML", "/usr/lib/bootc-image-builder/iso.yaml")
+
+	_, err := Load(root)
+	assert.EqualError(t, err, fmt.Sprintf(`cannot parse iso definitions from "%s/usr/lib/bootc-image-builder/iso.yaml": yaml: found character that cannot start any token`, root))
+}
+
+func TestLoadInfoUEFIVendorSearchPath(t *testing.T) {
+	root := t.TempDir()
+
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+	err := os.MkdirAll(path.Join(root, "usr/lib/efi/shim/1.64/EFI/fedora"), 0755)
+	assert.NoError(t, err)
+
+	info, err := Load(root)
+	assert.NoError(t, err)
+	assert.Equal(t, "fedora", info.UEFIVendor)
+}
+
+func TestHasModules(t *testing.T) {
+	type testCase struct {
+		desc    string
+		info    Info
+		modules []string
+		result  bool
+		err     error
+	}
+
+	cases := []testCase{
+		{"both empty", Info{}, []string{}, true, nil},
+		{"empty initrd",
+			Info{},
+			[]string{"livenet"},
+			false, fmt.Errorf("The initrd module list is empty")},
+		{"empty request",
+			Info{InitrdModules: []string{"livenet"}},
+			[]string{},
+			true, nil},
+		{"missing module",
+			Info{InitrdModules: []string{"qemu", "livenet"}},
+			[]string{"livenet", "dmsquash-live"},
+			false, nil},
+		{"modules ok",
+			Info{InitrdModules: []string{"qemu", "livenet", "dmsquash-live"}},
+			[]string{"livenet", "dmsquash-live"},
+			true, nil},
+	}
+	for _, c := range cases {
+		t.Run(c.desc, func(t *testing.T) {
+			r, err := c.info.HasModules(c.modules)
+			assert.Equal(t, c.result, r)
+			assert.Equal(t, err, c.err)
+		})
+	}
 }

@@ -1,0 +1,20 @@
+---
+test_arch:
+  - name: "fedora-35-p3"
+    baseurl: "https://example.com/fedora-35-p3/test_arch"
+    gpgkey: "FAKE-GPG-KEY"
+    check_gpg: true
+  - name: "updates-35-p3"
+    baseurl: "https://example.com/updates-35-p3/test_arch"
+    gpgkey: "FAKE-GPG-KEY"
+    check_gpg: true
+
+test_arch2:
+  - name: "fedora-35-p3"
+    baseurl: "https://example.com/fedora-35-p3/test_arch2"
+    gpgkey: "FAKE-GPG-KEY"
+    check_gpg: true
+  - name: "updates-35-p3"
+    baseurl: "https://example.com/updates-35-p3/test_arch2"
+    gpgkey: "FAKE-GPG-KEY"
+    check_gpg: true

@@ -47,15 +47,10 @@
             - "insights-client"
 
   partitioning:
-    ids:
-      - &prep_partition_dosid "41"
-      - &filesystem_linux_dosid "83"
-      - &fat16_bdosid "06"
     guids:
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
-      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
 
     default_partition_tables: &default_partition_tables
@@ -67,7 +62,7 @@
             size: "1 MiB"
             bootable: true
             type: *bios_boot_partition_guid
-          - &default_partition_table_part_efi
+          -
             size: "200 MiB"
             type: *efi_system_partition_guid
             payload_type: "filesystem"
@@ -78,7 +73,7 @@
               fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
               fstab_freq: 0
               fstab_passno: 2
-          - &default_partition_table_part_boot
+          -
             size: "500 MiB"
             type: *filesystem_data_guid
             payload_type: "filesystem"
@@ -89,7 +84,7 @@
               fstab_options: "defaults"
               fstab_freq: 0
               fstab_passno: 0
-          - &default_partition_table_part_root
+          -
             size: "2 GiB"
             type: *filesystem_data_guid
             payload_type: "filesystem"
@@ -118,7 +113,7 @@
         type: "gpt"
         size: "64 GiB"
         partitions:
-          - &azure_rhui_part_boot_efi
+          -
             size: 524_288_000   # 500 * datasizes.MebiByte
             type: *efi_system_partition_guid
             payload_type: "filesystem"
@@ -128,7 +123,7 @@
               fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
               fstab_freq: 0
               fstab_passno: 2
-          - &azure_rhui_part_boot
+          -
             size: "500 MiB"
             type: *filesystem_data_guid
             payload_type: "filesystem"
@@ -141,7 +136,7 @@
           - size: "2 MiB"
             bootable: true
             type: *bios_boot_partition_guid
-          - &azure_rhui_part_lvm
+          -
             type: *lvm_partition_guid
             payload_type: "lvm"
             payload:
@@ -215,47 +210,31 @@
           - "efibootmgr"
           - "grub2-efi-x64"
           - "shim-x64"
-  supported_blueprint_options: &supported_blueprint_options
-    - "distro"
-    - "packages"
-    - "modules"
-    - "groups"
-    - "minimal"
-    - "customizations.cacerts"
-    - "customizations.directories"
-    - "customizations.disk"
-    - "customizations.files"
-    - "customizations.filesystem"
-    - "customizations.partitioning_mode"
-    - "customizations.fips"
-    - "customizations.firewall"
-    - "customizations.user"
-    - "customizations.sshkey"
-    - "customizations.group"
-    - "customizations.hostname"
-    - "customizations.kernel"
-    - "customizations.locale"
-    - "customizations.repositories"
-    - "customizations.rpm"
-    - "customizations.services"
-    - "customizations.timezone"
-
-image_config:
-  default:
-    timezone: "America/New_York"
-    locale: "en_US.UTF-8"
-    gpgkey_files:
-      - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
-    sysconfig:
-      networking: true
-      no_zero_conf: true
-      create_default_network_scripts: true
-    default_kernel: "kernel"
-    update_default_kernel: true
-    kernel_options_bootloader: true
-    # RHEL 7 grub does not support BLS
-    no_bls: true
-    install_weak_deps: true
+  blueprint:
+    supported_options: &supported_blueprint_options
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.files"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.sshd"
 
 image_types:
   "azure-rhui":
@@ -271,6 +250,8 @@ image_types:
     platforms:
       - <<: *x86_64_uefi_vendor_platform
         image_format: "vhd"
+    disk_config:
+      partitioning_tool: "sgdisk"
     image_config:
       timezone: "Etc/UTC"
       locale: "en_US.UTF-8"
@@ -407,13 +388,13 @@ image_types:
         - "earlyprintk=ttyS0"
         - "rootdelay=300"
         - "scsi_mod.use_blk_mq=y"
-    disk_image_part_tool: sgdisk
     partition_table:
       <<: *azure_rhui_partition_tables
     package_sets:
       os:
         - *azure_rhui_common_pkgset
-    supported_blueprint_options: *supported_blueprint_options
+    blueprint:
+      supported_options: *supported_blueprint_options
 
   ec2:
     filename: "image.raw.xz"
@@ -427,6 +408,8 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "raw"
+    disk_config:
+      partitioning_tool: "sgdisk"
     image_config:
       files:
         # systemd-firstboot on el7 does not support --keymap option
@@ -512,7 +495,6 @@ image_types:
         - "nvme_core.io_timeout=4294967295"
         - "crashkernel=auto"
         - "LANG=en_US.UTF-8"
-    disk_image_part_tool: "sgdisk"
     partition_table:
       <<: *ec2_partition_tables
     package_sets:
@@ -567,7 +549,8 @@ image_types:
             # so we can't exclude it.
             # - "linux-firmware"
             - "firewalld"
-    supported_blueprint_options: *supported_blueprint_options
+    blueprint:
+      supported_options: *supported_blueprint_options
 
   qcow2:
     filename: "disk.qcow2"
@@ -577,11 +560,12 @@ image_types:
     image_func: "disk"
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
-    disk_image_part_tool: sgdisk
     platforms:
       - <<: *x86_64_uefi_vendor_platform
         image_format: "qcow2"
         qcow2_compat: "0.10"
+    disk_config:
+      partitioning_tool: "sgdisk"
     image_config:
       default_target: "multi-user.target"
       selinux_force_relabel: true
@@ -656,4 +640,5 @@ image_types:
             - "libertas-usb8388-firmware"
           conditions:
             <<: *conditions_for_insights_client
-    supported_blueprint_options: *supported_blueprint_options
+    blueprint:
+      supported_options: *supported_blueprint_options

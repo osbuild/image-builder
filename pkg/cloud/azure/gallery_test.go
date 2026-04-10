@@ -1,7 +1,6 @@
 package azure_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
@@ -16,7 +15,7 @@ func TestRegisterGalleryImage(t *testing.T) {
 	azm := newAZ()
 
 	gi, err := azm.az.RegisterGalleryImage(
-		context.Background(),
+		t.Context(),
 		"rg",
 		"storacc",
 		"storcontainer",
@@ -101,7 +100,7 @@ func TestRegisterGalleryImage(t *testing.T) {
 		},
 	}, azm.givm.createOrUpdate[0].version)
 
-	err = azm.az.DeleteGalleryImage(context.Background(), gi)
+	err = azm.az.DeleteGalleryImage(t.Context(), gi)
 	require.NoError(t, err)
 
 	require.Len(t, azm.givm.delete, 1)

@@ -78,7 +78,8 @@ func TestSubscriptionManagerCommands(t *testing.T) {
 	pipeline, err := os.Serialize()
 	assert.NoError(t, err)
 	CheckSystemdStageOptions(t, pipeline.Stages, []string{
-		`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --serverurl 'subscription.rhsm.redhat.com' --baseurl 'http://cdn.redhat.com/'`,
+		"/usr/sbin/subscription-manager config --server.hostname 'subscription.rhsm.redhat.com'",
+		`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --baseurl 'http://cdn.redhat.com/'`,
 	})
 }
 
@@ -94,7 +95,8 @@ func TestSubscriptionManagerInsightsCommands(t *testing.T) {
 	pipeline, err := os.Serialize()
 	assert.NoError(t, err)
 	CheckSystemdStageOptions(t, pipeline.Stages, []string{
-		`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --serverurl 'subscription.rhsm.redhat.com' --baseurl 'http://cdn.redhat.com/'`,
+		"/usr/sbin/subscription-manager config --server.hostname 'subscription.rhsm.redhat.com'",
+		`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --baseurl 'http://cdn.redhat.com/'`,
 		"/usr/bin/insights-client --register",
 	})
 }
@@ -113,7 +115,8 @@ func TestRhcInsightsCommands(t *testing.T) {
 	pipeline, err := os.Serialize()
 	assert.NoError(t, err)
 	CheckSystemdStageOptions(t, pipeline.Stages, []string{
-		`/usr/bin/rhc connect --organization="${ORG_ID}" --activation-key="${ACTIVATION_KEY}" --server 'subscription.rhsm.redhat.com'`,
+		"/usr/sbin/subscription-manager config --server.hostname 'subscription.rhsm.redhat.com'",
+		`/usr/bin/rhc connect --organization="${ORG_ID}" --activation-key="${ACTIVATION_KEY}"`,
 		"/usr/sbin/semanage permissive --add rhcd_t",
 	})
 }
@@ -259,8 +262,15 @@ func TestModularityIncludesConfigStage(t *testing.T) {
 
 	inputs := manifest.Inputs{
 		Depsolved: depsolvednf.DepsolveResult{
-			Packages: []rpmmd.Package{
-				{Name: "pkg1", Checksum: rpmmd.Checksum{Type: "sha1", Value: "c02524e2bd19490f2a7167958f792262754c5f46"}},
+			Transactions: depsolvednf.TransactionList{
+				{
+					{
+						Name:     "pkg1",
+						Checksum: rpmmd.Checksum{Type: "sha1", Value: "c02524e2bd19490f2a71677958f792262754c5f46"},
+						RepoID:   "dummy-repo-id",
+						Repo:     &rpmmd.RepoConfig{Id: "dummy-repo-id"},
+					},
+				},
 			},
 			Modules: []rpmmd.ModuleSpec{
 				{
@@ -338,8 +348,8 @@ func checkStagesForNoMounts(t *testing.T, stages []*osbuild.Stage) {
 func TestOSPipelineFStabStage(t *testing.T) {
 	os := manifest.NewTestOS()
 
-	os.PartitionTable = testdisk.MakeFakePartitionTable("/")                   // PT specifics don't matter
-	os.OSCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_FSTAB // set it explicitly just to be sure
+	os.PartitionTable = testdisk.MakeFakePartitionTable("/")                     // PT specifics don't matter
+	os.DiskCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_FSTAB // set it explicitly just to be sure
 
 	checkStagesForFSTab(t, common.Must(os.Serialize()).Stages)
 }
@@ -349,7 +359,7 @@ func TestOSPipelineMountUnitStages(t *testing.T) {
 
 	expectedUnits := []string{"-.mount", "home.mount"}
 	os.PartitionTable = testdisk.MakeFakePartitionTable("/", "/home")
-	os.OSCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_UNITS
+	os.DiskCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_UNITS
 
 	checkStagesForMountUnits(t, common.Must(os.Serialize()).Stages, expectedUnits)
 }
@@ -358,7 +368,7 @@ func TestOSPipelineMountNoneStages(t *testing.T) {
 	os := manifest.NewTestOS()
 
 	os.PartitionTable = testdisk.MakeFakePartitionTable("/", "/home")
-	os.OSCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_NONE
+	os.DiskCustomizations.MountConfiguration = osbuild.MOUNT_CONFIGURATION_NONE
 
 	checkStagesForNoMounts(t, common.Must(os.Serialize()).Stages)
 }
@@ -443,6 +453,30 @@ func TestRpmlang(t *testing.T) {
 	}, st.Options)
 }
 
+func TestRpmKeys(t *testing.T) {
+	os := manifest.NewTestOS()
+
+	pipeline, err := os.Serialize()
+	assert.NoError(t, err)
+
+	st := findStage("org.osbuild.rpm", pipeline.Stages)
+	require.NotNil(t, st)
+	assert.Equal(t, &osbuild.RPMStageOptions{}, st.Options)
+
+	os = manifest.NewTestOS()
+	os.OSCustomizations.RPMKeysBinary = "chickens"
+	pipeline, err = os.Serialize()
+	assert.NoError(t, err)
+
+	st = findStage("org.osbuild.rpm", pipeline.Stages)
+	require.NotNil(t, st)
+	assert.Equal(t, &osbuild.RPMStageOptions{
+		RPMKeys: &osbuild.RPMKeys{
+			BinPath: "chickens",
+		},
+	}, st.Options)
+}
+
 func TestAddInlineOS(t *testing.T) {
 	os := manifest.NewTestOS()
 
@@ -524,34 +558,44 @@ func TestHMACStageInclusion(t *testing.T) {
 	pt := testdisk.TestPartitionTables()["plain"]
 
 	t.Run("add-hmac-stage", func(t *testing.T) {
+		repo := rpmmd.RepoConfig{Id: "dummy-repo-id"}
 		inputs := manifest.Inputs{
 			Depsolved: depsolvednf.DepsolveResult{
-				Packages: []rpmmd.Package{
+				Transactions: depsolvednf.TransactionList{
 					{
-						Name:     "test-kernel",
-						Epoch:    0,
-						Version:  "13.3",
-						Release:  "7.el9",
-						Arch:     "x86_64",
-						Checksum: rpmmd.Checksum{Type: "sha256", Value: "7777777777777777777777777777777777777777777777777777777777777777"},
-					},
-					{
-						Name:     "uki-direct",
-						Epoch:    0,
-						Version:  "24.11",
-						Release:  "1.el9",
-						Arch:     "noarch",
-						Checksum: rpmmd.Checksum{Type: "sha256", Value: "c6ade8aef0282a228e1011f4f4b7efe41c035f6e635feb27082ac36cb1a1384b"},
-					},
-					{
-						Name:     "shim-x64",
-						Epoch:    0,
-						Version:  "15.8",
-						Release:  "3",
-						Arch:     "x86_64",
-						Checksum: rpmmd.Checksum{Type: "sha256", Value: "aae94b3b8451ef28b02594d9abca5979e153c14f4db25283b011403fa92254fd"},
+						{
+							Name:     "test-kernel",
+							Epoch:    0,
+							Version:  "13.3",
+							Release:  "7.el9",
+							Arch:     "x86_64",
+							Checksum: rpmmd.Checksum{Type: "sha256", Value: "7777777777777777777777777777777777777777777777777777777777777777"},
+							RepoID:   repo.Id,
+							Repo:     &repo,
+						},
+						{
+							Name:     "uki-direct",
+							Epoch:    0,
+							Version:  "24.11",
+							Release:  "1.el9",
+							Arch:     "noarch",
+							Checksum: rpmmd.Checksum{Type: "sha256", Value: "c6ade8aef0282a228e1011f4f4b7efe41c035f6e635feb27082ac36cb1a1384b"},
+							RepoID:   repo.Id,
+							Repo:     &repo,
+						},
+						{
+							Name:     "shim-x64",
+							Epoch:    0,
+							Version:  "15.8",
+							Release:  "3",
+							Arch:     "x86_64",
+							Checksum: rpmmd.Checksum{Type: "sha256", Value: "aae94b3b8451ef28b02594d9abca5979e153c14f4db25283b011403fa92254fd"},
+							RepoID:   repo.Id,
+							Repo:     &repo,
+						},
 					},
 				},
+				Repos: []rpmmd.RepoConfig{repo},
 			},
 		}
 
@@ -581,32 +625,41 @@ func TestHMACStageInclusion(t *testing.T) {
 	})
 
 	t.Run("no-hmac-stage", func(t *testing.T) {
+		repo := rpmmd.RepoConfig{Id: "dummy-repo-id"}
 		inputs := manifest.Inputs{
 			Depsolved: depsolvednf.DepsolveResult{
-				Packages: []rpmmd.Package{
+				Transactions: depsolvednf.TransactionList{
 					{
-						Name:     "test-kernel",
-						Epoch:    0,
-						Version:  "13.3",
-						Release:  "7.el9",
-						Arch:     "x86_64",
-						Checksum: rpmmd.Checksum{Type: "sha256", Value: "7777777777777777777777777777777777777777777777777777777777777777"},
-					},
-					{
-						Name:     "uki-direct",
-						Epoch:    0,
-						Version:  "25.11",
-						Release:  "1.el9",
-						Arch:     "noarch",
-						Checksum: rpmmd.Checksum{Type: "sha256", Value: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
-					},
-					{
-						Name:     "shim-x64",
-						Epoch:    0,
-						Version:  "15.8",
-						Release:  "3",
-						Arch:     "x86_64",
-						Checksum: rpmmd.Checksum{Type: "sha256", Value: "aae94b3b8451ef28b02594d9abca5979e153c14f4db25283b011403fa92254fd"},
+						{
+							Name:     "test-kernel",
+							Epoch:    0,
+							Version:  "13.3",
+							Release:  "7.el9",
+							Arch:     "x86_64",
+							Checksum: rpmmd.Checksum{Type: "sha256", Value: "7777777777777777777777777777777777777777777777777777777777777777"},
+							RepoID:   repo.Id,
+							Repo:     &repo,
+						},
+						{
+							Name:     "uki-direct",
+							Epoch:    0,
+							Version:  "25.11",
+							Release:  "1.el9",
+							Arch:     "noarch",
+							Checksum: rpmmd.Checksum{Type: "sha256", Value: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+							RepoID:   repo.Id,
+							Repo:     &repo,
+						},
+						{
+							Name:     "shim-x64",
+							Epoch:    0,
+							Version:  "15.8",
+							Release:  "3",
+							Arch:     "x86_64",
+							Checksum: rpmmd.Checksum{Type: "sha256", Value: "aae94b3b8451ef28b02594d9abca5979e153c14f4db25283b011403fa92254fd"},
+							RepoID:   repo.Id,
+							Repo:     &repo,
+						},
 					},
 				},
 			},
@@ -652,50 +705,64 @@ func TestShimVersionLock(t *testing.T) {
 	// mark the shim-x64 package for version locking
 	os.OSCustomizations.VersionlockPackages = []string{"shim-x64"}
 
+	repo := rpmmd.RepoConfig{Id: "dummy-repo-id"}
 	inputs := manifest.Inputs{
 		Depsolved: depsolvednf.DepsolveResult{
-			Packages: []rpmmd.Package{
+			Transactions: depsolvednf.TransactionList{
 				{
-					Name:     "test-kernel",
-					Epoch:    0,
-					Version:  "13.3",
-					Release:  "7.el9",
-					Arch:     "x86_64",
-					Checksum: rpmmd.Checksum{Type: "sha256", Value: "7777777777777777777777777777777777777777777777777777777777777777"},
-				},
-				{
-					Name:     "uki-direct",
-					Epoch:    0,
-					Version:  "25.11",
-					Release:  "1.el9",
-					Arch:     "noarch",
-					Checksum: rpmmd.Checksum{Type: "sha256", Value: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
-				},
-				{
-					Name:     "shim-x64",
-					Epoch:    0,
-					Version:  "15.8",
-					Release:  "3",
-					Arch:     "x86_64",
-					Checksum: rpmmd.Checksum{Type: "sha256", Value: "aae94b3b8451ef28b02594d9abca5979e153c14f4db25283b011403fa92254fd"},
-				},
-				{
-					Name:     "dnf",
-					Epoch:    0,
-					Version:  "4.14.0",
-					Release:  "29.el9",
-					Arch:     "noarch",
-					Checksum: rpmmd.Checksum{Type: "sha256", Value: "72874726d1a16651933e382a4f4683046efd4b278830ad564932ce481ab8b9eb"},
-				},
-				{
-					Name:     "python3-dnf-plugin-versionlock",
-					Epoch:    0,
-					Version:  "4.3.0",
-					Release:  "21.el9",
-					Arch:     "noarch",
-					Checksum: rpmmd.Checksum{Type: "sha256", Value: "e14c57f7d0011ea378e4319bbc523000d0e7be4d35b6af7177aa6246c5aaa9ef"},
+					{
+						Name:     "test-kernel",
+						Epoch:    0,
+						Version:  "13.3",
+						Release:  "7.el9",
+						Arch:     "x86_64",
+						Checksum: rpmmd.Checksum{Type: "sha256", Value: "7777777777777777777777777777777777777777777777777777777777777777"},
+						RepoID:   repo.Id,
+						Repo:     &repo,
+					},
+					{
+						Name:     "uki-direct",
+						Epoch:    0,
+						Version:  "25.11",
+						Release:  "1.el9",
+						Arch:     "noarch",
+						Checksum: rpmmd.Checksum{Type: "sha256", Value: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+						RepoID:   repo.Id,
+						Repo:     &repo,
+					},
+					{
+						Name:     "shim-x64",
+						Epoch:    0,
+						Version:  "15.8",
+						Release:  "3",
+						Arch:     "x86_64",
+						Checksum: rpmmd.Checksum{Type: "sha256", Value: "aae94b3b8451ef28b02594d9abca5979e153c14f4db25283b011403fa92254fd"},
+						RepoID:   repo.Id,
+						Repo:     &repo,
+					},
+					{
+						Name:     "dnf",
+						Epoch:    0,
+						Version:  "4.14.0",
+						Release:  "29.el9",
+						Arch:     "noarch",
+						Checksum: rpmmd.Checksum{Type: "sha256", Value: "72874726d1a16651933e382a4f4683046efd4b278830ad564932ce481ab8b9eb"},
+						RepoID:   repo.Id,
+						Repo:     &repo,
+					},
+					{
+						Name:     "python3-dnf-plugin-versionlock",
+						Epoch:    0,
+						Version:  "4.3.0",
+						Release:  "21.el9",
+						Arch:     "noarch",
+						Checksum: rpmmd.Checksum{Type: "sha256", Value: "e14c57f7d0011ea378e4319bbc523000d0e7be4d35b6af7177aa6246c5aaa9ef"},
+						RepoID:   repo.Id,
+						Repo:     &repo,
+					},
 				},
 			},
+			Repos: []rpmmd.RepoConfig{repo},
 		},
 	}
 
@@ -707,4 +774,106 @@ func TestShimVersionLock(t *testing.T) {
 	stageOptions := versionlockStage.Options.(*osbuild.DNF4VersionlockOptions)
 
 	assert.Equal(t, []string{"shim-x64-0:15.8-3"}, stageOptions.Add)
+}
+
+func TestOSPackageSetChainStructure(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		customizations       manifest.OSCustomizations
+		expectedChainInclude [][]string
+	}{
+		{
+			name: "no customization packages - one package set",
+			customizations: manifest.OSCustomizations{
+				BasePackages: []string{"bash", "coreutils"},
+			},
+			expectedChainInclude: [][]string{
+				{"bash", "coreutils"},
+			},
+		},
+		{
+			name: "no customization packages with blueprint packages - two package sets",
+			customizations: manifest.OSCustomizations{
+				BasePackages:      []string{"bash", "coreutils"},
+				BlueprintPackages: []string{"vim", "tmux"},
+			},
+			expectedChainInclude: [][]string{
+				{"bash", "coreutils"},
+				{"vim", "tmux"},
+			},
+		},
+		{
+			name: "with SELinux customization - two package sets",
+			customizations: manifest.OSCustomizations{
+				BasePackages: []string{"bash", "coreutils"},
+				SELinux:      "targeted",
+			},
+			expectedChainInclude: [][]string{
+				{"bash", "coreutils"},
+				{"selinux-policy-targeted"},
+			},
+		},
+		{
+			name: "with blueprint packages - three package sets",
+			customizations: manifest.OSCustomizations{
+				BasePackages:      []string{"bash", "coreutils"},
+				SELinux:           "targeted",
+				BlueprintPackages: []string{"vim", "tmux"},
+			},
+			expectedChainInclude: [][]string{
+				{"bash", "coreutils"},
+				{"selinux-policy-targeted"},
+				{"vim", "tmux"},
+			},
+		},
+		{
+			name: "subscription customization",
+			customizations: manifest.OSCustomizations{
+				BasePackages: []string{"bash"},
+				Subscription: &subscription.ImageOptions{Organization: "123", ActivationKey: "key"},
+			},
+			expectedChainInclude: [][]string{
+				{"bash"},
+				{"subscription-manager"},
+			},
+		},
+		{
+			name: "chrony config customization",
+			customizations: manifest.OSCustomizations{
+				BasePackages: []string{"bash"},
+				ChronyConfig: &osbuild.ChronyStageOptions{},
+			},
+			expectedChainInclude: [][]string{
+				{"bash"},
+				{"chrony"},
+			},
+		},
+		{
+			name: "firewall config customization",
+			customizations: manifest.OSCustomizations{
+				BasePackages: []string{"bash"},
+				Firewall:     &osbuild.FirewallStageOptions{},
+			},
+			expectedChainInclude: [][]string{
+				{"bash"},
+				{"firewalld"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			os := manifest.NewTestOS()
+			os.OSCustomizations = tc.customizations
+
+			pkgSetChain, err := os.GetPackageSetChain(manifest.DISTRO_NULL)
+			require.NoError(t, err)
+			require.Len(t, pkgSetChain, len(tc.expectedChainInclude))
+
+			for idx, expectedPkgs := range tc.expectedChainInclude {
+				assert.ElementsMatch(t, expectedPkgs, pkgSetChain[idx].Include,
+					"package set %d Include mismatch", idx)
+			}
+		})
+	}
 }

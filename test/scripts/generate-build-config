@@ -14,9 +14,11 @@ build/{distro}/{arch}/{image_type}/{config_name}:
     - sudo ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
     - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"
-    - ./test/scripts/boot-image "{image_path}"
-    - ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"
+    - ./test/scripts/boot-image "{image_path}" "{config}"
+    - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"
   extends: .terraform
+  tags:
+    - {tag}
   variables:
     RUNNER: {runner}-{arch}
     INTERNAL_NETWORK: "{internal}"
@@ -64,9 +66,12 @@ def generate_configs(build_requests, pipeline_file):
         build_name = testlib.gen_build_name(distro, arch, image_type, config_name)
         image_path = f"./build/{build_name}"
 
+        runner = testlib.get_ci_runner_for(arch, image_type)
+        tag = testlib.get_tag_for(runner)
+
         config_path = os.path.join(testlib.CONFIGS_PATH, config_name+".json")
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
-                                                runner=testlib.get_ci_runner_for(arch, image_type),
+                                                runner=runner, tag=tag,
                                                 config_name=config_name, config=config_path,
                                                 internal="true" if "rhel" in distro else "false",
                                                 image_path=image_path))

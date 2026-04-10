@@ -68,10 +68,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [centos-10, x86_64]":
@@ -87,10 +83,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [centos-9, aarch64]":
@@ -106,10 +98,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [centos-9, x86_64]":
@@ -125,10 +113,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [fedora-42, aarch64]":
@@ -144,10 +128,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [fedora-42, x86_64]":
@@ -163,10 +143,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [fedora-43, aarch64]":
@@ -182,10 +158,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [fedora-43, x86_64]":
@@ -201,10 +173,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [fedora-44, aarch64]":
@@ -220,10 +188,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [fedora-44, x86_64]":
@@ -239,10 +203,36 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
+
+
+"generate-build-config: [fedora-45, aarch64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-aarch64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro fedora-45 --arch aarch64 build-config.yml
+  artifacts:
     paths:
-      - .cache/osbuild-images
+      - build-config.yml
+
+
+"generate-build-config: [fedora-45, x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro fedora-45 --arch x86_64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
 
 
 "generate-build-config: [rhel-10.0, aarch64]":
@@ -258,10 +248,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-10.0, x86_64]":
@@ -277,10 +263,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-10.1, aarch64]":
@@ -296,10 +278,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-10.1, x86_64]":
@@ -315,10 +293,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-10.2, aarch64]":
@@ -334,10 +308,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-10.2, x86_64]":
@@ -353,10 +323,36 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
+
+
+"generate-build-config: [rhel-10.3, aarch64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-aarch64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro rhel-10.3 --arch aarch64 build-config.yml
+  artifacts:
     paths:
-      - .cache/osbuild-images
+      - build-config.yml
+
+
+"generate-build-config: [rhel-10.3, x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro rhel-10.3 --arch x86_64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
 
 
 "generate-build-config: [rhel-7.9, x86_64]":
@@ -372,10 +368,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-8.10, aarch64]":
@@ -391,10 +383,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-8.10, x86_64]":
@@ -410,10 +398,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-8.4, aarch64]":
@@ -429,10 +413,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-8.4, x86_64]":
@@ -448,10 +428,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-8.6, aarch64]":
@@ -467,10 +443,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-8.6, x86_64]":
@@ -486,10 +458,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-8.8, aarch64]":
@@ -505,10 +473,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-8.8, x86_64]":
@@ -524,10 +488,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.0, aarch64]":
@@ -543,10 +503,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.0, x86_64]":
@@ -562,10 +518,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.2, aarch64]":
@@ -581,10 +533,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.2, x86_64]":
@@ -600,10 +548,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.4, aarch64]":
@@ -619,10 +563,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.4, x86_64]":
@@ -638,10 +578,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.6, aarch64]":
@@ -657,10 +593,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.6, x86_64]":
@@ -676,10 +608,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.7, aarch64]":
@@ -695,10 +623,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.7, x86_64]":
@@ -714,10 +638,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.8, aarch64]":
@@ -733,10 +653,6 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-build-config: [rhel-9.8, x86_64]":
@@ -752,10 +668,36 @@ fail:
   artifacts:
     paths:
       - build-config.yml
-  cache:
-    key: testcache
+
+
+"generate-build-config: [rhel-9.9, aarch64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-aarch64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro rhel-9.9 --arch aarch64 build-config.yml
+  artifacts:
     paths:
-      - .cache/osbuild-images
+      - build-config.yml
+
+
+"generate-build-config: [rhel-9.9, x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro rhel-9.9 --arch x86_64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
 
 "image-build-trigger: [centos-10, aarch64]":
   stage: build
@@ -867,6 +809,28 @@ fail:
     - "generate-build-config: [fedora-44, x86_64]"
 
 
+"image-build-trigger: [fedora-45, aarch64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [fedora-45, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [fedora-45, aarch64]"
+
+
+"image-build-trigger: [fedora-45, x86_64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [fedora-45, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [fedora-45, x86_64]"
+
+
 "image-build-trigger: [rhel-10.0, aarch64]":
   stage: build
   trigger:
@@ -931,6 +895,28 @@ fail:
     strategy: depend
   needs:
     - "generate-build-config: [rhel-10.2, x86_64]"
+
+
+"image-build-trigger: [rhel-10.3, aarch64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [rhel-10.3, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [rhel-10.3, aarch64]"
+
+
+"image-build-trigger: [rhel-10.3, x86_64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [rhel-10.3, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [rhel-10.3, x86_64]"
 
 
 "image-build-trigger: [rhel-7.9, x86_64]":
@@ -1163,6 +1149,28 @@ fail:
   needs:
     - "generate-build-config: [rhel-9.8, x86_64]"
 
+
+"image-build-trigger: [rhel-9.9, aarch64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [rhel-9.9, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [rhel-9.9, aarch64]"
+
+
+"image-build-trigger: [rhel-9.9, x86_64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [rhel-9.9, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [rhel-9.9, x86_64]"
+
 "generate-ostree-build-config: [centos-9, aarch64]":
   stage: ostree-gen
   extends: .terraform
@@ -1179,10 +1187,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [centos-9, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [centos-9, x86_64]":
@@ -1201,10 +1205,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [centos-9, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [fedora-42, aarch64]":
@@ -1223,10 +1223,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [fedora-42, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [fedora-42, x86_64]":
@@ -1245,10 +1241,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [fedora-42, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [fedora-43, aarch64]":
@@ -1267,10 +1259,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [fedora-43, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [fedora-43, x86_64]":
@@ -1289,10 +1277,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [fedora-43, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [fedora-44, aarch64]":
@@ -1311,10 +1295,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [fedora-44, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [fedora-44, x86_64]":
@@ -1333,10 +1313,42 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [fedora-44, x86_64]"
-  cache:
-    key: testcache
+
+
+"generate-ostree-build-config: [fedora-45, aarch64]":
+  stage: ostree-gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-aarch64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-ostree-build-config --distro fedora-45 --arch aarch64 build-config.yml build-configs
+  artifacts:
     paths:
-      - .cache/osbuild-images
+      - build-config.yml
+      - build-configs
+  needs:
+    - "image-build-trigger: [fedora-45, aarch64]"
+
+
+"generate-ostree-build-config: [fedora-45, x86_64]":
+  stage: ostree-gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-ostree-build-config --distro fedora-45 --arch x86_64 build-config.yml build-configs
+  artifacts:
+    paths:
+      - build-config.yml
+      - build-configs
+  needs:
+    - "image-build-trigger: [fedora-45, x86_64]"
 
 
 "generate-ostree-build-config: [rhel-8.10, aarch64]":
@@ -1355,10 +1367,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-8.10, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-8.10, x86_64]":
@@ -1377,10 +1385,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-8.10, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-8.4, aarch64]":
@@ -1399,10 +1403,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-8.4, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-8.4, x86_64]":
@@ -1421,10 +1421,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-8.4, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-8.6, aarch64]":
@@ -1443,10 +1439,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-8.6, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-8.6, x86_64]":
@@ -1465,10 +1457,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-8.6, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-8.8, aarch64]":
@@ -1487,10 +1475,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-8.8, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-8.8, x86_64]":
@@ -1509,10 +1493,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-8.8, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.0, aarch64]":
@@ -1531,10 +1511,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.0, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.0, x86_64]":
@@ -1553,10 +1529,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.0, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.2, aarch64]":
@@ -1575,10 +1547,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.2, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.2, x86_64]":
@@ -1597,10 +1565,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.2, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.4, aarch64]":
@@ -1619,10 +1583,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.4, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.4, x86_64]":
@@ -1641,10 +1601,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.4, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.6, aarch64]":
@@ -1663,10 +1619,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.6, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.6, x86_64]":
@@ -1685,10 +1637,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.6, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.7, aarch64]":
@@ -1707,10 +1655,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.7, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.7, x86_64]":
@@ -1729,10 +1673,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.7, x86_64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.8, aarch64]":
@@ -1751,10 +1691,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.8, aarch64]"
-  cache:
-    key: testcache
-    paths:
-      - .cache/osbuild-images
 
 
 "generate-ostree-build-config: [rhel-9.8, x86_64]":
@@ -1773,10 +1709,42 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [rhel-9.8, x86_64]"
-  cache:
-    key: testcache
+
+
+"generate-ostree-build-config: [rhel-9.9, aarch64]":
+  stage: ostree-gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-aarch64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-ostree-build-config --distro rhel-9.9 --arch aarch64 build-config.yml build-configs
+  artifacts:
     paths:
-      - .cache/osbuild-images
+      - build-config.yml
+      - build-configs
+  needs:
+    - "image-build-trigger: [rhel-9.9, aarch64]"
+
+
+"generate-ostree-build-config: [rhel-9.9, x86_64]":
+  stage: ostree-gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-ostree-build-config --distro rhel-9.9 --arch x86_64 build-config.yml build-configs
+  artifacts:
+    paths:
+      - build-config.yml
+      - build-configs
+  needs:
+    - "image-build-trigger: [rhel-9.9, x86_64]"
 
 "image-build-ostree-trigger: [centos-9, aarch64]":
   stage: ostree-build
@@ -1864,6 +1832,28 @@ fail:
     strategy: depend
   needs:
     - "generate-ostree-build-config: [fedora-44, x86_64]"
+
+
+"image-build-ostree-trigger: [fedora-45, aarch64]":
+  stage: ostree-build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-ostree-build-config: [fedora-45, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-ostree-build-config: [fedora-45, aarch64]"
+
+
+"image-build-ostree-trigger: [fedora-45, x86_64]":
+  stage: ostree-build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-ostree-build-config: [fedora-45, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-ostree-build-config: [fedora-45, x86_64]"
 
 
 "image-build-ostree-trigger: [rhel-8.10, aarch64]":
@@ -2085,6 +2075,28 @@ fail:
   needs:
     - "generate-ostree-build-config: [rhel-9.8, x86_64]"
 
+
+"image-build-ostree-trigger: [rhel-9.9, aarch64]":
+  stage: ostree-build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-ostree-build-config: [rhel-9.9, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-ostree-build-config: [rhel-9.9, aarch64]"
+
+
+"image-build-ostree-trigger: [rhel-9.9, x86_64]":
+  stage: ostree-build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-ostree-build-config: [rhel-9.9, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-ostree-build-config: [rhel-9.9, x86_64]"
+
 "generate-manifests: [centos-10, ppc64le]":
   stage: gen
   extends: .terraform
@@ -2285,6 +2297,46 @@ fail:
       done
 
 
+"generate-manifests: [fedora-45, ppc64le]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - echo "GOPROXY=$GOPROXY"
+    - go run ./cmd/gen-manifests --arches ppc64le --distros fedora-45 --workers 10 --metadata=false --output ./manifests
+    - for manifest in ./manifests/*; do
+        if osbuild --inspect $manifest > output; then
+          echo "$manifest OK";
+        else
+          cat output;
+        fi;
+      done
+
+
+"generate-manifests: [fedora-45, s390x]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - echo "GOPROXY=$GOPROXY"
+    - go run ./cmd/gen-manifests --arches s390x --distros fedora-45 --workers 10 --metadata=false --output ./manifests
+    - for manifest in ./manifests/*; do
+        if osbuild --inspect $manifest > output; then
+          echo "$manifest OK";
+        else
+          cat output;
+        fi;
+      done
+
+
 "generate-manifests: [rhel-10.0, ppc64le]":
   stage: gen
   extends: .terraform
@@ -2396,6 +2448,46 @@ fail:
     - sudo ./test/scripts/install-dependencies
     - echo "GOPROXY=$GOPROXY"
     - go run ./cmd/gen-manifests --arches s390x --distros rhel-10.2 --workers 10 --metadata=false --output ./manifests
+    - for manifest in ./manifests/*; do
+        if osbuild --inspect $manifest > output; then
+          echo "$manifest OK";
+        else
+          cat output;
+        fi;
+      done
+
+
+"generate-manifests: [rhel-10.3, ppc64le]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - echo "GOPROXY=$GOPROXY"
+    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.3 --workers 10 --metadata=false --output ./manifests
+    - for manifest in ./manifests/*; do
+        if osbuild --inspect $manifest > output; then
+          echo "$manifest OK";
+        else
+          cat output;
+        fi;
+      done
+
+
+"generate-manifests: [rhel-10.3, s390x]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - echo "GOPROXY=$GOPROXY"
+    - go run ./cmd/gen-manifests --arches s390x --distros rhel-10.3 --workers 10 --metadata=false --output ./manifests
     - for manifest in ./manifests/*; do
         if osbuild --inspect $manifest > output; then
           echo "$manifest OK";
@@ -2796,6 +2888,46 @@ fail:
     - sudo ./test/scripts/install-dependencies
     - echo "GOPROXY=$GOPROXY"
     - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.8 --workers 10 --metadata=false --output ./manifests
+    - for manifest in ./manifests/*; do
+        if osbuild --inspect $manifest > output; then
+          echo "$manifest OK";
+        else
+          cat output;
+        fi;
+      done
+
+
+"generate-manifests: [rhel-9.9, ppc64le]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - echo "GOPROXY=$GOPROXY"
+    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.9 --workers 10 --metadata=false --output ./manifests
+    - for manifest in ./manifests/*; do
+        if osbuild --inspect $manifest > output; then
+          echo "$manifest OK";
+        else
+          cat output;
+        fi;
+      done
+
+
+"generate-manifests: [rhel-9.9, s390x]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - echo "GOPROXY=$GOPROXY"
+    - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.9 --workers 10 --metadata=false --output ./manifests
     - for manifest in ./manifests/*; do
         if osbuild --inspect $manifest > output; then
           echo "$manifest OK";

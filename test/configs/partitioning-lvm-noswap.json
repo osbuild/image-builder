@@ -4,11 +4,6 @@
     "name": "partitioning-lvm",
     "description": "Disk customizations to create an LVM volume group with logical volumes and a plain data partition (variant without swap).",
     "version": "1.0",
-    "packages": [
-      {
-        "name": "jq"
-      }
-    ],
     "customizations": {
       "disk": {
         "type": "gpt",

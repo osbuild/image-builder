@@ -102,8 +102,6 @@ type Package struct {
 	Files []string
 
 	// Repodata
-	// RPM package baseurl from repodata
-	BaseURL string
 	// RPM package relative path/location from repodata
 	Location string
 	// RPM package remote location where the package can be download from
@@ -115,8 +113,10 @@ type Package struct {
 	HeaderChecksum Checksum
 
 	// Repository ID this package belongs to
-	// XXX: We should should eventually hold a reference to the RepoConfig
+	// TODO: Deprecated: use Repo instead
 	RepoID string
+	// Direct reference to the repository configuration this package belongs to
+	Repo *RepoConfig
 
 	// Resolved reason why a package was / would be installed.
 	Reason string
@@ -127,6 +127,12 @@ type Package struct {
 	IgnoreSSL bool
 }
 
+// FullNEVRA returns the package's Name-Epoch:Version-Release.Arch string.
+// Epoch is never omitted.
+func (p Package) FullNEVRA() string {
+	return fmt.Sprintf("%s-%d:%s-%s.%s", p.Name, p.Epoch, p.Version, p.Release, p.Arch)
+}
+
 // EVRA returns the package's Epoch:Version-Release.Arch string.
 // If the package Epoch is 0, it is omitted and only Version-Release.Arch is returned.
 func (p Package) EVRA() string {
@@ -134,6 +140,11 @@ func (p Package) EVRA() string {
 		return fmt.Sprintf("%s-%s.%s", p.Version, p.Release, p.Arch)
 	}
 	return fmt.Sprintf("%d:%s-%s.%s", p.Epoch, p.Version, p.Release, p.Arch)
+}
+
+// NVR returns the package's Name-Version-Release string.
+func (p Package) NVR() string {
+	return fmt.Sprintf("%s-%s-%s", p.Name, p.Version, p.Release)
 }
 
 type PackageList []Package

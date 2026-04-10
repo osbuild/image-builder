@@ -16,7 +16,7 @@ func TestGzipSerialize(t *testing.T) {
 	build := manifest.NewBuild(&mani, runner, nil, nil)
 
 	// setup
-	rawImage := manifest.NewRawImage(build, nil)
+	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
 	gzipPipeline := manifest.NewGzip(build, rawImage)
 	gzipPipeline.SetFilename("filename.gz")
 

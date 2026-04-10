@@ -272,3 +272,52 @@ func Test_deviceName(t *testing.T) {
 		})
 	}
 }
+
+func TestMountsDeviceFromPtSectorSize(t *testing.T) {
+	type testCase struct {
+		ptSectorSize  uint64
+		expectedNil   bool
+		expectedValue uint64
+	}
+
+	testCases := map[string]testCase{
+		"default-sector-size": {
+			ptSectorSize: 0,
+			expectedNil:  true,
+		},
+		"sector-size-512": {
+			ptSectorSize:  512,
+			expectedNil:   false,
+			expectedValue: 512,
+		},
+		"sector-size-4096": {
+			ptSectorSize:  4096,
+			expectedNil:   false,
+			expectedValue: 4096,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			filename := "fake-disk.img"
+			fakePt := testdisk.MakeFakePartitionTable("/", "/boot")
+			fakePt.SectorSize = tc.ptSectorSize
+
+			_, _, devices, err := GenMountsDevicesFromPT(filename, fakePt)
+			require.Nil(t, err)
+
+			// Check that all loopback devices have the correct SectorSize
+			for deviceName, device := range devices {
+				assert.Equal(t, "org.osbuild.loopback", device.Type)
+				loopbackOpts := device.Options.(*LoopbackDeviceOptions)
+
+				if tc.expectedNil {
+					assert.Nil(t, loopbackOpts.SectorSize, "SectorSize should be nil for device %s", deviceName)
+				} else {
+					assert.NotNil(t, loopbackOpts.SectorSize, "SectorSize should not be nil for device %s", deviceName)
+					assert.Equal(t, tc.expectedValue, *loopbackOpts.SectorSize, "SectorSize mismatch for device %s", deviceName)
+				}
+			}
+		})
+	}
+}

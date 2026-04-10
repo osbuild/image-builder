@@ -22,15 +22,10 @@
       "/": "1 GiB"
       "/usr": "2 GiB"
   partitioning:
-    ids:
-      - &prep_partition_dosid "41"
-      - &filesystem_linux_dosid "83"
-      - &fat16_bdosid "06"
     guids:
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
-      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &prep_partition_guid "9E1A2D38-C612-4316-AA26-8B49521E5A8B"
 
   partition_tables:
@@ -38,7 +33,7 @@
       x86_64:
         type: "gpt"
         partitions:
-          - &default_partition_table_part_bios
+          -
             size: "1 MiB"
             bootable: true
             type: *bios_boot_partition_guid
@@ -65,11 +60,11 @@
             size: "2 GiB"
             type: *filesystem_data_guid
             payload_type: "filesystem"
-            payload: &default_partition_table_part_root_payload
+            payload:
               label: "root"
               mountpoint: "/"
               fstab_options: "ro"
-      aarch64: &default_partition_table_aarch64
+      aarch64:
         type: "gpt"
         partitions:
           - *default_partition_table_part_efi
@@ -89,6 +84,29 @@
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
 
+  supported_options_lists:
+    supported_options_disk: &supported_options_disk
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.files"
+      - "customizations.group"
+      - "customizations.ignition"
+      - "customizations.kernel.append"
+      - "customizations.user"
+      - "customizations.sshd"
+    supported_options_iso: &supported_options_iso
+      - "customizations.fips"
+      - "customizations.group"
+      - "customizations.installer"
+      - "customizations.kernel.append"
+      - "customizations.user"
+    supported_options_pxe: &supported_options_pxe
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.user"
+      - "customizations.group"
+      - "customizations.kernel.append"
+
 image_types:
   "raw": &raw_image_type
     filename: "disk.raw"
@@ -101,13 +119,8 @@ image_types:
     partition_table: *default_bootc_partition_table
     image_config:
       kernel_options: *bootc_kernel_options
-    supported_blueprint_options:
-      - "customizations.directories"
-      - "customizations.disk"
-      - "customizations.files"
-      - "customizations.user"
-      - "customizations.group"
-      - "customizations.kernel.append"
+    blueprint:
+      supported_options: *supported_options_disk
 
   "ami":
     <<: *raw_image_type
@@ -149,6 +162,24 @@ image_types:
     exports: ["bootiso"]
     filename: "install.iso"
     boot_iso: true
+    image_func: "bootc_iso"
+    blueprint:
+      supported_options: *supported_options_iso
+
+  # This is meant as a fully generic ISO created from a container image.
+  # The goal is that as much as possible is configurable from the container
+  # image. Additionally, the image type is not tied to anaconda as
+  # bootc-installer is. This allows users to create a very customized ISOs.
+  # TODO: Discuss names of container-based isos: anaconda-iso,
+  # bootc-generic-iso and bootc-installer are all confusing.
+  bootc-generic-iso:
+    mime_type: "application/x-iso9660-image"
+    exports: ["bootiso"]
+    filename: "install.iso"
+    boot_iso: true
+    image_func: "bootc_generic_iso"
+    blueprint:
+      supported_options: *supported_options_iso
 
   # this image type is special (in many ways) and all is a bit ugly:
   # - we want to get rid of it (here for compat with bib)
@@ -161,7 +192,20 @@ image_types:
     exports: ["bootiso"]
     filename: "install.iso"
     boot_iso: true
+    image_func: "bootc_legacy_iso"
+    blueprint:
+      supported_options: *supported_options_iso
 
   # XXX: ideally we would use name_aliases but the loader lib
   # does not not fully support this yet
   iso: *anaconda_iso
+
+  "pxe-tar-xz":
+    <<: *raw_image_type
+    filename: "pxe.tar.xz"
+    mime_type: "application/x-tar"
+    compression: "xz"
+    image_func: "pxe_tar"
+    exports: ["xz"]
+    blueprint:
+      supported_options: *supported_options_pxe

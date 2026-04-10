@@ -1,10 +1,11 @@
 package disk
 
 import (
+	"cmp"
 	"fmt"
 	"math/rand"
 	"path/filepath"
-	"sort"
+	"slices"
 
 	"github.com/google/uuid"
 
@@ -648,6 +649,28 @@ func (pt *PartitionTable) FindMountable(mountpoint string) Mountable {
 	if len(path) == 0 {
 		return nil
 	}
+
+	// first path element is guaranteed to be Mountable
+	return path[0].(Mountable)
+}
+
+// FindMountableOnPlain returns the Mountable entity with the given mountpoint in
+// PartitionTable if it is directly located on a plain partition. Returns nil if no
+// Entity on a plain partition has the target as a Mountpoint.
+func (pt *PartitionTable) FindMountableOnPlain(mountpoint string) Mountable {
+	path := entityPath(pt, mountpoint)
+
+	// Make sure that the entity actually has a parent
+	if len(path) < 2 {
+		return nil
+	}
+
+	parent := path[1]
+
+	if _, ok := parent.(*Partition); !ok {
+		return nil
+	}
+
 	// first path element is guaranteed to be Mountable
 	return path[0].(Mountable)
 }
@@ -1400,6 +1423,10 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 		pt.StartOffset = Offset(customizations.StartOffset)
 	}
 
+	if customizations.SectorSize > 0 {
+		pt.SectorSize = customizations.SectorSize
+	}
+
 	// TODO: make blueprint MinSize of type datatypes.Size too
 	pt.relayout(datasizes.Size(customizations.MinSize))
 	pt.GenerateUUIDs(rng)
@@ -1420,10 +1447,9 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 // sortPartitions reorders the partitions in the table based on their start
 // sector.
 func (pt *PartitionTable) sortPartitions() {
-	sort.Slice(pt.Partitions, func(i, j int) bool {
-		return pt.Partitions[i].Start < pt.Partitions[j].Start
+	slices.SortFunc(pt.Partitions, func(a, b Partition) int {
+		return cmp.Compare(a.Start, b.Start)
 	})
-
 }
 
 func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomization, options *CustomPartitionTableOptions) error {
@@ -1643,12 +1669,24 @@ func needsBoot(disk *blueprint.DiskCustomization) bool {
 			}
 		case "btrfs":
 			foundBtrfsOrLVM = true
-			// check if any of the subvols is root
+
+			// check if any of the subvols is root and no subvol is boot
+			hasRoot := false
+			hasBoot := false
+
 			for _, subvol := range part.Subvolumes {
 				if subvol.Mountpoint == "/" {
-					return true
+					hasRoot = true
+				}
+				if subvol.Mountpoint == "/boot" {
+					hasBoot = true
 				}
 			}
+
+			if hasRoot {
+				return !hasBoot
+			}
+
 		default:
 			// NOTE: invalid types should be validated elsewhere
 		}

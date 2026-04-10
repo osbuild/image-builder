@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/images/pkg/disk"
 )
 
 func TestNewSfdiskStage(t *testing.T) {
@@ -61,6 +63,33 @@ func TestNewSfdiskStageInvalid(t *testing.T) {
 
 	device := NewLoopbackDevice(&LoopbackDeviceOptions{Filename: "disk.raw"})
 
+	assert.Panics(t, func() {
+		NewSfdiskStage(&options, device)
+	})
+}
+
+func TestNewSfdiskStageExtended(t *testing.T) {
+	partition := SfdiskPartition{
+		// doesn't really matter
+	}
+	extended := SfdiskPartition{
+		Type: disk.ExtendedPartitionDOSID,
+	}
+
+	options := SfdiskStageOptions{
+		Label:      "dos",
+		UUID:       "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Partitions: []SfdiskPartition{partition, partition, partition, extended, partition}, // 5 partitions, one is extended
+	}
+
+	device := NewLoopbackDevice(&LoopbackDeviceOptions{Filename: "disk.raw"})
+
+	assert.NotPanics(t, func() {
+		NewSfdiskStage(&options, device)
+	})
+
+	// Test with extended partition outside the first 4 slots (should fail)
+	options.Partitions = []SfdiskPartition{partition, partition, partition, partition, extended}
 	assert.Panics(t, func() {
 		NewSfdiskStage(&options, device)
 	})

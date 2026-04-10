@@ -64,15 +64,20 @@ def validate_build_config(config_list):
 
 
 def filter_bootc(orig_config_list):
-    """ returns a copy of the config_list without booc distros """
+    """ returns a copy of the config_list without bootc distros """
     config_list = copy.deepcopy(orig_config_list)
+    filtered_list = []
     for item in config_list:
         filters = item["filters"]
         if distros := filters.get("distros"):
             filters["distros"] = [
                 d for d in distros if not d.startswith("bootc-")]
+            # Skip configs that only targeted bootc distros
+            if not filters["distros"]:
+                continue
+        filtered_list.append(item)
 
-    return config_list
+    return filtered_list
 
 
 def main():

@@ -1,10 +1,12 @@
 package container
 
 import (
+	"cmp"
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
+	"time"
 )
 
 type resolveResult struct {
@@ -15,13 +17,14 @@ type resolveResult struct {
 type Resolver interface {
 	Add(spec SourceSpec)
 	Finish() ([]Spec, error)
+
+	Resolve(spec SourceSpec) (Spec, error)
+	ResolveAll(sources map[string][]SourceSpec) (map[string][]Spec, error)
 }
 
 type asyncResolver struct {
 	jobs  int
 	queue chan resolveResult
-
-	ctx context.Context
 
 	Arch         string
 	AuthFilePath string
@@ -42,7 +45,6 @@ func NewResolver(arch string) *asyncResolver {
 	// NOTE: this should return the Resolver interface, but osbuild-composer
 	// sets the AuthFilePath and for now we don't want to break the API.
 	return &asyncResolver{
-		ctx:   context.Background(),
 		queue: make(chan resolveResult, 2),
 		Arch:  arch,
 
@@ -66,7 +68,9 @@ func (r *asyncResolver) Add(spec SourceSpec) {
 	}
 
 	go func() {
-		spec, err := client.Resolve(r.ctx, spec.Name, spec.Local)
+		ctx, cancelTimeout := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancelTimeout()
+		spec, err := client.Resolve(ctx, spec.Name, spec.Local)
 		if err != nil {
 			err = fmt.Errorf("'%s': %w", spec.Source, err)
 		}
@@ -75,7 +79,6 @@ func (r *asyncResolver) Add(spec SourceSpec) {
 }
 
 func (r *asyncResolver) Finish() ([]Spec, error) {
-
 	specs := make([]Spec, 0, r.jobs)
 	errs := make([]string, 0, r.jobs)
 	for r.jobs > 0 {
@@ -95,9 +98,40 @@ func (r *asyncResolver) Finish() ([]Spec, error) {
 	}
 
 	// Return a stable result, sorted by Digest
-	sort.Slice(specs, func(i, j int) bool { return specs[i].Digest < specs[j].Digest })
+	slices.SortFunc(specs, func(a, b Spec) int { return cmp.Compare(a.Digest, b.Digest) })
 
 	return specs, nil
+}
+
+func (r *asyncResolver) Resolve(spec SourceSpec) (Spec, error) {
+	r.Add(spec)
+	resSlice, err := r.Finish()
+	if err != nil {
+		return Spec{}, err
+	}
+
+	if len(resSlice) != 1 {
+		return Spec{}, fmt.Errorf("unexpected results in container resolver: expected 1 but received %d", len(resSlice))
+	}
+
+	return resSlice[0], nil
+}
+
+func (r *asyncResolver) ResolveAll(sources map[string][]SourceSpec) (map[string][]Spec, error) {
+	containers := make(map[string][]Spec, len(sources))
+	for name, srcList := range sources {
+		containerSpecs := make([]Spec, len(srcList))
+		for idx, src := range srcList {
+			res, err := r.Resolve(src)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve container: %w", err)
+			}
+			containerSpecs[idx] = res
+		}
+		containers[name] = containerSpecs
+	}
+
+	return containers, nil
 }
 
 type blockingResolver struct {
@@ -120,19 +154,7 @@ func NewBlockingResolver(arch string) Resolver {
 }
 
 func (r *blockingResolver) Add(src SourceSpec) {
-	client, err := r.newClient(src.Source)
-	if err != nil {
-		r.results = append(r.results, resolveResult{err: err})
-		return
-	}
-
-	client.SetTLSVerify(src.TLSVerify)
-	client.SetArchitectureChoice(r.Arch)
-	if r.AuthFilePath != "" {
-		client.SetAuthFilePath(r.AuthFilePath)
-	}
-
-	spec, err := client.Resolve(context.TODO(), src.Name, src.Local)
+	spec, err := r.Resolve(src)
 	if err != nil {
 		err = fmt.Errorf("'%s': %w", src.Source, err)
 	}
@@ -156,7 +178,43 @@ func (r *blockingResolver) Finish() ([]Spec, error) {
 	}
 
 	// Return a stable result, sorted by Digest
-	sort.Slice(specs, func(i, j int) bool { return specs[i].Digest < specs[j].Digest })
+	slices.SortFunc(specs, func(a, b Spec) int { return cmp.Compare(a.Digest, b.Digest) })
 
 	return specs, nil
+}
+
+func (r *blockingResolver) Resolve(source SourceSpec) (Spec, error) {
+	client, err := r.newClient(source.Source)
+	if err != nil {
+		return Spec{}, err
+	}
+
+	client.SetTLSVerify(source.TLSVerify)
+	client.SetArchitectureChoice(r.Arch)
+	if r.AuthFilePath != "" {
+		client.SetAuthFilePath(r.AuthFilePath)
+	}
+
+	ctx, cancelTimeout := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancelTimeout()
+	return client.Resolve(ctx, source.Name, source.Local)
+}
+
+// ResolveAll calls [Resolve] with each container source spec in the map and
+// returns a map of results with the corresponding keys as the input argument.
+func (r *blockingResolver) ResolveAll(sources map[string][]SourceSpec) (map[string][]Spec, error) {
+	containers := make(map[string][]Spec, len(sources))
+	for name, srcList := range sources {
+		containerSpecs := make([]Spec, len(srcList))
+		for idx, src := range srcList {
+			res, err := r.Resolve(src)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve container: %w", err)
+			}
+			containerSpecs[idx] = res
+		}
+		containers[name] = containerSpecs
+	}
+
+	return containers, nil
 }

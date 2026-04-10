@@ -1,0 +1,13 @@
+{
+  "name": "bootc-with-payload",
+  "blueprint": {
+    "name": "bootc-with-payload",
+    "description": "Blueprint for bootc-installer with payload container.",
+    "version": "1.0"
+  },
+  "options": {
+    "bootc": {
+      "installer_payload_ref": "payload-container-fake-ref"
+    }
+  }
+}

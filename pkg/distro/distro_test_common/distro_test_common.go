@@ -22,7 +22,7 @@ func isOSTree(imgType distro.ImageType) bool {
 }
 
 func isUbi(imgType distro.ImageType) bool {
-	return imgType.Name() == "wsl" || imgType.Name() == "server-wsl"
+	return imgType.Name() == "wsl" || imgType.Name() == "generic-wsl"
 }
 
 var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt", "kernel-uki-virt"}
@@ -88,13 +88,21 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 		"iot-qcow2":                 true,
 		"iot-raw-xz":                true,
 		"iot-simplified-installer":  true,
+		"kinoite-installer":         true,
+		"kinoite-qcow2":             true,
+		"silverblue-installer":      true,
+		"silverblue-qcow2":          true,
+		"sway-atomic-installer":     true,
+		"budgie-atomic-installer":   true,
+		"cosmic-atomic-installer":   true,
 
 		// the tar image type is a minimal image type which is not expected to
 		// be usable without a blueprint (see commit 83a63aaf172f556f6176e6099ffaa2b5357b58f5).
 		"tar": true,
 
 		// containers don't have kernels
-		"container": true,
+		"container":         true,
+		"generic-container": true,
 
 		// image installer on Fedora doesn't support kernel customizations
 		// on RHEL we support kernel name
@@ -187,6 +195,13 @@ func TestDistro_OSTreeOptions(t *testing.T, d distro.Distro) {
 		"iot-ami":                   true,
 		"iot-installer":             true,
 		"iot-simplified-installer":  true,
+		"kinoite-installer":         true,
+		"kinoite-qcow2":             true,
+		"silverblue-installer":      true,
+		"silverblue-qcow2":          true,
+		"sway-atomic-installer":     true,
+		"budgie-atomic-installer":   true,
+		"cosmic-atomic-installer":   true,
 	}
 
 	assert := assert.New(t)

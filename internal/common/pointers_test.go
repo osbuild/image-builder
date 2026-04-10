@@ -25,6 +25,30 @@ func TestToPtr(t *testing.T) {
 
 }
 
+func TestClonePtr(t *testing.T) {
+	t.Run("nil pointer returns nil", func(t *testing.T) {
+		var p *int
+		result := ClonePtr(p)
+		assert.Nil(t, result)
+	})
+
+	t.Run("non-nil pointer returns independent copy", func(t *testing.T) {
+		original := 42
+		p := &original
+		result := ClonePtr(p)
+
+		// Should have same value
+		assert.Equal(t, 42, *result)
+
+		// Should be different pointer
+		assert.NotSame(t, p, result)
+
+		// Modifying original should not affect clone
+		original = 100
+		assert.Equal(t, 42, *result)
+	})
+}
+
 func TestValueOrEmpty(t *testing.T) {
 	var ptrInt *int
 	valueInt := ValueOrEmpty(ptrInt)

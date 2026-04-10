@@ -26,11 +26,12 @@ func u(s string) string {
 
 func run() error {
 	// common args
-	var outputDir, osbuildStore, rpmCacheRoot, repositories string
+	var outputDir, osbuildStore, rpmCacheRoot, repositories, archName string
 	flag.StringVar(&outputDir, "output", ".", "artifact output directory")
 	flag.StringVar(&osbuildStore, "store", ".osbuild", "osbuild store for intermediate pipeline trees")
 	flag.StringVar(&rpmCacheRoot, "rpmmd", "/tmp/rpmmd", "rpm metadata cache directory")
 	flag.StringVar(&repositories, "repositories", "test/data/repositories", "path to repository file or directory")
+	flag.StringVar(&archName, "arch", "", "target architecture")
 
 	// osbuild checkpoint arg
 	var checkpoints cmdutil.MultiValue
@@ -49,6 +50,15 @@ func run() error {
 		os.Exit(1)
 	}
 
+	// NOTE: Check the minimum osbuild version before doing anything else.
+	// Building the manifest would fail, but we need to depsolve the packages
+	// also with the minimum osbuild version. Although the depsolve may fail
+	// with an error, it is for the best to fail with the version mismatch
+	// error.
+	if err := osbuild.CheckMinimumOSBuildVersion(); err != nil {
+		return err
+	}
+
 	distroFac := distrofactory.NewDefault()
 	config, err := buildconfig.New(configFile, nil)
 	if err != nil {
@@ -64,8 +74,10 @@ func run() error {
 		return fmt.Errorf("invalid or unsupported distribution: %q", distroName)
 	}
 
-	archName := arch.Current().String()
-	arch, err := distribution.GetArch(archName)
+	if archName == "" {
+		archName = arch.Current().String()
+	}
+	archi, err := distribution.GetArch(archName)
 	if err != nil {
 		return fmt.Errorf("invalid arch name %q for distro %q: %w", archName, distroName, err)
 	}
@@ -76,13 +88,15 @@ func run() error {
 		return fmt.Errorf("failed to create target directory: %w", err)
 	}
 
-	imgType, err := arch.GetImageType(imgTypeName)
+	imgType, err := archi.GetImageType(imgTypeName)
 	if err != nil {
 		return fmt.Errorf("invalid image type %q for distro %q and arch %q: %w", imgTypeName, distroName, archName, err)
 	}
 
-	var reporeg *reporegistry.RepoRegistry
-	var overrideRepos []rpmmd.RepoConfig
+	// NOTE: we always put the repositories to be used into the allRepos slice, instead of passing the
+	// RepoRegistry to the manifestgen. The reason is that the manifestgen API is too clunky to easily
+	// extend the repos list with custom repositories.
+	var allRepos []rpmmd.RepoConfig
 	if st, err := os.Stat(repositories); err == nil && !st.IsDir() {
 		// anything that is not a dir is tried to be loaded as a file
 		// to allow "-repositories <arbitrarily-named-file>.json"
@@ -90,24 +104,37 @@ func run() error {
 		if err != nil {
 			return fmt.Errorf("failed to load repositories from %q: %w", repositories, err)
 		}
-		overrideRepos = repoConfig[archName]
+		allRepos = repoConfig[archName]
 	} else {
-		reporeg, err = reporegistry.New([]string{repositories}, nil)
+		reporeg, err := reporegistry.New([]string{repositories}, nil)
 		if err != nil {
 			return fmt.Errorf("failed to load repositories from %q: %w", repositories, err)
 		}
+		allRepos, err = reporeg.ReposByImageTypeName(distribution.Name(), archName, imgTypeName)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to get repositories for %s/%s/%s: %w", distribution.Name(), archName, imgTypeName, err)
+		}
 	}
-	seedArg, err := cmdutil.SeedArgFor(config, imgType.Name(), distribution.Name(), archName)
+	seedArg, err := cmdutil.SeedArgFor(config, distribution.Name(), archName)
 	if err != nil {
 		return err
+	}
+
+	// Extend the repositories with the custom repositories from the build config
+	if len(config.CustomRepos) > 0 {
+		allRepos = append(allRepos, config.CustomRepos...)
 	}
 
 	fmt.Printf("Generating manifest for %s: ", config.Name)
 	manifestOpts := manifestgen.Options{
 		Cachedir:       filepath.Join(rpmCacheRoot, archName+distribution.Name()),
 		WarningsOutput: os.Stderr,
-		OverrideRepos:  overrideRepos,
+		OverrideRepos:  allRepos,
 		CustomSeed:     &seedArg,
+	}
+	if archName != arch.Current().String() {
+		manifestOpts.UseBootstrapContainer = true
 	}
 	// add RHSM fact to detect changes
 	config.Options.Facts = &facts.ImageOptions{
@@ -117,7 +144,7 @@ func run() error {
 		config.Blueprint = &blueprint.Blueprint{}
 	}
 
-	mg, err := manifestgen.New(reporeg, &manifestOpts)
+	mg, err := manifestgen.New(nil, &manifestOpts)
 	if err != nil {
 		return fmt.Errorf("[ERROR] manifest generator creation failed: %w", err)
 	}

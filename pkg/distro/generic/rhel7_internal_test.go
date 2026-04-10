@@ -13,7 +13,7 @@ import (
 func TestRhel7_ESP(t *testing.T) {
 	var distros []distro.Distro
 	for _, distroName := range []string{"rhel-7.9"} {
-		distros = append(distros, common.Must(newDistro(distroName)))
+		distros = append(distros, common.Must(New(distroName)))
 	}
 
 	distro_test_common.TestESP(t, distros, func(i distro.ImageType) (*disk.PartitionTable, error) {

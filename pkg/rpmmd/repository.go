@@ -7,12 +7,16 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"go.yaml.in/yaml/v3"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 // repository is the presentation of a on-disk repository json file
 type repository struct {
 	Name           string   `json:"name"`
-	BaseURL        string   `json:"baseurl,omitempty"`
+	BaseURL        []string `json:"baseurl,omitempty"`
 	Metalink       string   `json:"metalink,omitempty"`
 	MirrorList     string   `json:"mirrorlist,omitempty"`
 	GPGKey         string   `json:"gpgkey,omitempty"`
@@ -24,6 +28,42 @@ type repository struct {
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 	PackageSets    []string `json:"package_sets,omitempty"`
+}
+
+func (r *repository) UnmarshalJSON(data []byte) (err error) {
+	type repoAlias repository
+	var raw struct {
+		repoAlias
+		BaseURL interface{} `json:"baseurl,omitempty"`
+	}
+
+	if err = json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*r = repository(raw.repoAlias)
+
+	switch v := raw.BaseURL.(type) {
+	case string:
+		r.BaseURL = []string{v}
+	case []interface{}:
+		for _, u := range v {
+			s, ok := u.(string)
+			if !ok {
+				return fmt.Errorf("unexpected non-string value %v in baseurl list", u)
+			}
+			r.BaseURL = append(r.BaseURL, s)
+		}
+	case nil:
+		// BaseURL not present, do nothing
+	default:
+		return fmt.Errorf("unexpected type for baseurl: %T", v)
+	}
+
+	return nil
+}
+
+func (r *repository) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(r, unmarshal)
 }
 
 type RepoConfig struct {
@@ -101,7 +141,7 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 	var reposMap map[string][]repository
 	repoConfigs := make(map[string][]RepoConfig)
 
-	err := json.NewDecoder(r).Decode(&reposMap)
+	err := yaml.NewDecoder(r).Decode(&reposMap)
 	if err != nil {
 		return nil, err
 	}
@@ -109,10 +149,6 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 	for arch, repos := range reposMap {
 		for idx := range repos {
 			repo := repos[idx]
-			var urls []string
-			if repo.BaseURL != "" {
-				urls = []string{repo.BaseURL}
-			}
 			var keys []string
 			if repo.GPGKey != "" {
 				keys = []string{repo.GPGKey}
@@ -122,7 +158,7 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 			}
 			config := RepoConfig{
 				Name:           repo.Name,
-				BaseURLs:       urls,
+				BaseURLs:       repo.BaseURL,
 				Metalink:       repo.Metalink,
 				MirrorList:     repo.MirrorList,
 				GPGKeys:        keys,

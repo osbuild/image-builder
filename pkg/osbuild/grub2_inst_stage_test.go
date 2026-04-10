@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/images/pkg/disk"
 )
 
 func TestNewGrub2InstStage(t *testing.T) {
@@ -117,4 +119,64 @@ func TestMarshalGrub2InstStageISO9660(t *testing.T) {
 	stage := NewGrub2InstStage(options)
 	_, err := json.Marshal(stage)
 	assert.NoError(t, err)
+}
+
+func TestNewGrub2InstStageOptionSectorSize(t *testing.T) {
+	type testCase struct {
+		ptSectorSize  uint64
+		expectedNil   bool
+		expectedValue uint64
+	}
+
+	testCases := map[string]testCase{
+		"default-sector-size": {
+			ptSectorSize: 0,
+			expectedNil:  true,
+		},
+		"sector-size-512": {
+			ptSectorSize:  512,
+			expectedNil:   false,
+			expectedValue: 512,
+		},
+		"sector-size-4096": {
+			ptSectorSize:  4096,
+			expectedNil:   false,
+			expectedValue: 4096,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			// Create a minimal PartitionTable with a BIOS boot partition and /boot
+			pt := &disk.PartitionTable{
+				Type:       disk.PT_GPT,
+				SectorSize: tc.ptSectorSize,
+				Partitions: []disk.Partition{
+					{
+						Start:    1 * datasizes.MiB,
+						Size:     datasizes.MiB,
+						Type:     disk.BIOSBootPartitionGUID,
+						Bootable: false,
+					},
+					{
+						Start: 2 * datasizes.MiB,
+						Size:  500 * datasizes.MiB,
+						Payload: &disk.Filesystem{
+							Type:       "ext4",
+							Mountpoint: "/boot",
+						},
+					},
+				},
+			}
+
+			options := NewGrub2InstStageOption("image.raw", pt, "i386-pc")
+
+			if tc.expectedNil {
+				assert.Nil(t, options.SectorSize)
+			} else {
+				assert.NotNil(t, options.SectorSize)
+				assert.Equal(t, tc.expectedValue, *options.SectorSize)
+			}
+		})
+	}
 }

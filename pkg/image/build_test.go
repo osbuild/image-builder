@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild/manifesttest"
@@ -20,14 +19,6 @@ var (
 		Type:  "sha256",
 		Value: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
 	}
-	fakeDepsolve = map[string]depsolvednf.DepsolveResult{
-		"build": depsolvednf.DepsolveResult{
-			Packages: rpmmd.PackageList{
-				{Name: "foo", Checksum: fakeDigest, RemoteLocations: []string{"https://example.com/foo"}},
-			},
-		},
-	}
-
 	fakeCntDigest = fakeDigest.String()
 	fakeCntSpecs  = map[string][]container.Spec{
 		"bootstrap-buildroot": []container.Spec{{Source: "some-src", Digest: fakeCntDigest, ImageID: fakeCntDigest}},
@@ -56,7 +47,7 @@ func TestNewBuildWithExperimentalOverride(t *testing.T) {
 			buildIf := image.AddBuildBootstrapPipelines(&mf, runner, nil, nil)
 			require.NotNil(t, buildIf)
 
-			b, err := mf.Serialize(fakeDepsolve, fakeCntSpecs, nil, nil)
+			b, err := mf.Serialize(nil, fakeCntSpecs, nil, nil, nil)
 			assert.NoError(t, err)
 			pipelines, err := manifesttest.PipelineNamesFrom(b)
 			assert.NoError(t, err)

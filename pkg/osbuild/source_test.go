@@ -246,26 +246,27 @@ func TestGenSourcesWithSkopeoIndex(t *testing.T) {
 }
 
 // TODO: move into a common "rpmtest" package
+var fakeRepo = rpmmd.RepoConfig{
+	Id:       "repo_id_metalink",
+	Metalink: "http://example.com/metalink",
+}
+
 var opensslPkg = rpmmd.Package{
 	Name:            "openssl-libs",
 	RemoteLocations: []string{"https://example.com/repo/Packages/openssl-libs-3.0.1-5.el9.x86_64.rpm"},
 	Checksum:        rpmmd.Checksum{Type: "sha256", Value: "fcf2515ec9115551c99d552da721803ecbca23b7ae5a974309975000e8bef666"},
 	Location:        "Packages/openssl-libs-3.0.1-5.el9.x86_64.rpm",
-	RepoID:          "repo_id_metalink",
-}
-
-var fakeRepos = []rpmmd.RepoConfig{
-	{
-		Id:       "repo_id_metalink",
-		Metalink: "http://example.com/metalink",
-	},
+	RepoID:          fakeRepo.Id,
+	Repo:            &fakeRepo,
 }
 
 func TestGenSourcesRpmDefaultRpmDownloaderIsCurl(t *testing.T) {
 	inputs := SourceInputs{
 		Depsolved: depsolvednf.DepsolveResult{
-			Packages: rpmmd.PackageList{opensslPkg},
-			Repos:    fakeRepos,
+			Transactions: depsolvednf.TransactionList{
+				{opensslPkg},
+			},
+			Repos: []rpmmd.RepoConfig{fakeRepo},
 		},
 	}
 	var defaultRpmDownloader RpmDownloader
@@ -279,8 +280,10 @@ func TestGenSourcesRpmDefaultRpmDownloaderIsCurl(t *testing.T) {
 func TestGenSourcesRpmWithLibcurl(t *testing.T) {
 	inputs := SourceInputs{
 		Depsolved: depsolvednf.DepsolveResult{
-			Packages: rpmmd.PackageList{opensslPkg},
-			Repos:    fakeRepos,
+			Transactions: depsolvednf.TransactionList{
+				{opensslPkg},
+			},
+			Repos: []rpmmd.RepoConfig{fakeRepo},
 		},
 	}
 	sources, err := GenSources(inputs, RpmDownloaderCurl)
@@ -302,8 +305,10 @@ func TestGenSourcesRpmWithLibcurl(t *testing.T) {
 func TestGenSourcesRpmWithLibrepo(t *testing.T) {
 	inputs := SourceInputs{
 		Depsolved: depsolvednf.DepsolveResult{
-			Packages: rpmmd.PackageList{opensslPkg},
-			Repos:    fakeRepos,
+			Transactions: depsolvednf.TransactionList{
+				{opensslPkg},
+			},
+			Repos: []rpmmd.RepoConfig{fakeRepo},
 		},
 	}
 	sources, err := GenSources(inputs, RpmDownloaderLibrepo)
@@ -334,8 +339,10 @@ func TestGenSourcesRpmWithLibrepo(t *testing.T) {
 func TestGenSourcesRpmBad(t *testing.T) {
 	inputs := SourceInputs{
 		Depsolved: depsolvednf.DepsolveResult{
-			Packages: rpmmd.PackageList{opensslPkg},
-			Repos:    fakeRepos,
+			Transactions: depsolvednf.TransactionList{
+				{opensslPkg},
+			},
+			Repos: []rpmmd.RepoConfig{fakeRepo},
 		},
 	}
 	_, err := GenSources(inputs, 99)

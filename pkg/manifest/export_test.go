@@ -75,14 +75,29 @@ func GetInline(p Pipeline) []string {
 }
 
 func (p *OS) Serialize() (osbuild.Pipeline, error) {
-	repos := []rpmmd.RepoConfig{}
-	packages := rpmmd.PackageList{
-		{Name: "pkg1", Checksum: rpmmd.Checksum{Type: "sha1", Value: "c02524e2bd19490f2a7167958f792262754c5f46"}},
+	repo := rpmmd.RepoConfig{Id: "dummy-repo-id"}
+	transaction := depsolvednf.TransactionList{
+		{
+			{
+				Name:     "pkg1",
+				Checksum: rpmmd.Checksum{Type: "sha256", Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+				RepoID:   repo.Id,
+				Repo:     &repo,
+			},
+		},
+		{
+			{
+				Name:     "pkg2",
+				Checksum: rpmmd.Checksum{Type: "sha256", Value: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+				RepoID:   repo.Id,
+				Repo:     &repo,
+			},
+		},
 	}
 	err := p.serializeStart(Inputs{
 		Depsolved: depsolvednf.DepsolveResult{
-			Packages: packages,
-			Repos:    repos,
+			Transactions: transaction,
+			Repos:        []rpmmd.RepoConfig{repo},
 		},
 	})
 	if err != nil {

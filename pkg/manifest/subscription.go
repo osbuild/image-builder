@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -128,10 +129,25 @@ func subscriptionService(
 	}
 
 	var commands []string
+	if subscriptionOptions.ServerUrl != "" {
+		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.hostname %s", shutil.Quote(subscriptionOptions.ServerUrl)))
+	}
+	if subscriptionOptions.Proxy != "" {
+		scheme, hostname, port, err := parseProxyUrl(subscriptionOptions.Proxy)
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("invalid proxy url: %v", err)
+		}
+		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_scheme %s", shutil.Quote(scheme)))
+		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_hostname %s", shutil.Quote(hostname)))
+		if port != "" {
+			commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_port %s", shutil.Quote(port)))
+		}
+	}
+
 	if subscriptionOptions.Rhc {
 		var curlToAssociateSystem string
 		// Use rhc for registration instead of subscription manager
-		rhcConnect := fmt.Sprintf(`/usr/bin/rhc connect --organization="${ORG_ID}" --activation-key="${ACTIVATION_KEY}" --server %s`, shutil.Quote(subscriptionOptions.ServerUrl))
+		rhcConnect := `/usr/bin/rhc connect --organization="${ORG_ID}" --activation-key="${ACTIVATION_KEY}"`
 		if subscriptionOptions.TemplateUUID != "" {
 			curlToAssociateSystem = getCurlToAssociateSystem(subscriptionOptions)
 		} else if subscriptionOptions.TemplateName != "" {
@@ -156,7 +172,7 @@ func subscriptionService(
 			files = append(files, icFile)
 		}
 	} else {
-		commands = []string{fmt.Sprintf(`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --serverurl %s --baseurl %s`, shutil.Quote(subscriptionOptions.ServerUrl), shutil.Quote(subscriptionOptions.BaseUrl))}
+		commands = append(commands, fmt.Sprintf(`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --baseurl %s`, shutil.Quote(subscriptionOptions.BaseUrl)))
 
 		// Insights is optional when using subscription-manager
 		if subscriptionOptions.Insights {
@@ -177,6 +193,14 @@ func subscriptionService(
 			}
 		}
 	}
+	// Enable content sets if specified
+	if len(subscriptionOptions.ContentSets) > 0 {
+		contentSetsCmd := "/usr/sbin/subscription-manager repos"
+		for _, contentSet := range subscriptionOptions.ContentSets {
+			contentSetsCmd += fmt.Sprintf(" --enable=%s", shutil.Quote(contentSet))
+		}
+		commands = append(commands, contentSetsCmd)
+	}
 
 	commands = append(commands, fmt.Sprintf("/usr/bin/rm %s", shutil.Quote(subkeyFilepath)))
 
@@ -190,7 +214,12 @@ func subscriptionService(
 				Description:         "First-boot service for registering with Red Hat subscription manager and/or insights",
 				ConditionPathExists: []string{subkeyFilepath},
 				Wants:               []string{"network-online.target"},
-				After:               []string{"network-online.target"},
+				After: []string{
+					// The selinux-autorelabel reboot was killing rhc mid-execution,
+					// causing partial rhsm registration without insights enrollment.
+					"selinux-autorelabel.service",
+					"network-online.target",
+				},
 			},
 			Service: &osbuild.ServiceSection{
 				Type:            osbuild.OneshotServiceType,
@@ -257,6 +286,20 @@ ExecStartPre=
 [Install]
 WantedBy=multi-user.target
 `
+}
+
+// Parses a proxy url in formats  host:port * scheme://host:port
+// Defaults to http if scheme is not specified
+// Port may be blank
+func parseProxyUrl(proxyUrl string) (scheme, hostname, port string, err error) {
+	if !strings.Contains(proxyUrl, "://") {
+		proxyUrl = fmt.Sprintf("http://%s", proxyUrl)
+	}
+	proxyUri, err := url.Parse(proxyUrl)
+	if err != nil {
+		return scheme, hostname, port, fmt.Errorf("invalid proxy URI: %s", proxyUrl)
+	}
+	return proxyUri.Scheme, proxyUri.Hostname(), proxyUri.Port(), nil
 }
 
 func getCurlToAssociateSystem(subscriptionOptions subscription.ImageOptions) string {

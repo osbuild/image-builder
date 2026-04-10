@@ -12,6 +12,7 @@ def main():
     parser.add_argument("distro", type=str, default=None, help="distro for the image to boot test")
     parser.add_argument("image_type", type=str, default=None, help="type of the image to boot test")
     parser.add_argument("config", type=str, help="config used to build the image")
+    parser.add_argument("--arch", default="", type=str, help="target arch of the image")
 
     args = parser.parse_args()
     distro = args.distro
@@ -30,6 +31,10 @@ def main():
 
     cmd = ["sudo", "-E", "./bin/build", "--output", "./build",
            "--distro", distro, "--type", image_type, "--config", config_path]
+    arch = os.uname().machine
+    if args.arch:
+        arch = args.arch
+        cmd += ["--arch", args.arch]
     testlib.runcmd_nc(cmd, extra_env=testlib.rng_seed_env())
 
     print("✅ Build finished!!")
@@ -37,7 +42,6 @@ def main():
     # Build artifacts are owned by root. Make them world accessible.
     testlib.runcmd(["sudo", "chmod", "a+rwX", "-R", "./build"])
 
-    arch = os.uname().machine
     build_dir = os.path.join("build", testlib.gen_build_name(distro, arch, image_type, config_name))
     manifest_path = os.path.join(build_dir, "manifest.json")
     with open(manifest_path, "r", encoding="utf-8") as manifest_fp:

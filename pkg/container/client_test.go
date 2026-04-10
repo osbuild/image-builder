@@ -1,7 +1,6 @@
 package container_test
 
 import (
-	"context"
 	"os"
 	"testing"
 	"time"
@@ -35,7 +34,7 @@ func TestClientResolve(t *testing.T) {
 
 	client.SkipTLSVerify()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	client.SetArchitectureChoice("amd64")
 	spec, err := client.Resolve(ctx, "", false)

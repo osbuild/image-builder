@@ -41,7 +41,7 @@ func (lu *libvirtUploader) UploadAndRegister(r io.Reader, uploadSize uint64, sta
 	}
 	defer conn.Close()
 
-	pool, err := conn.LookupStoragePoolByName("default")
+	pool, err := conn.LookupStoragePoolByName(lu.pool)
 	if err != nil {
 		return fmt.Errorf("Failed to find storage pool: %w", err)
 	}

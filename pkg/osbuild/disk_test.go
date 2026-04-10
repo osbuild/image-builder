@@ -323,3 +323,52 @@ func TestGenImageKernelOptionsMountUnitsLVMWithUsr(t *testing.T) {
 	assert.Contains(cmdline, "mount.usr=UUID="+uuids["/usr"])
 	assert.Contains(cmdline, "mount.usrfstype=xfs")
 }
+
+func TestGenImagePrepareStagesSectorSize(t *testing.T) {
+	type testCase struct {
+		ptSectorSize  uint64
+		expectedNil   bool
+		expectedValue uint64
+	}
+
+	testCases := map[string]testCase{
+		"default-sector-size": {
+			ptSectorSize: 0,
+			expectedNil:  true,
+		},
+		"sector-size-512": {
+			ptSectorSize:  512,
+			expectedNil:   false,
+			expectedValue: 512,
+		},
+		"sector-size-4096": {
+			ptSectorSize:  4096,
+			expectedNil:   false,
+			expectedValue: 4096,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			pt := testdisk.MakeFakeBtrfsPartitionTable("/", "/boot")
+			pt.SectorSize = tc.ptSectorSize
+
+			filename := "image.raw"
+			stages := GenImagePrepareStages(pt, filename, PTSfdisk, "build")
+
+			// The second stage should be sfdisk with the loopback device
+			sfdiskStage := stages[1]
+			assert.Equal(t, "org.osbuild.sfdisk", sfdiskStage.Type)
+
+			loopbackDevice := sfdiskStage.Devices["device"]
+			loopbackOpts := loopbackDevice.Options.(*LoopbackDeviceOptions)
+
+			if tc.expectedNil {
+				assert.Nil(t, loopbackOpts.SectorSize)
+			} else {
+				assert.NotNil(t, loopbackOpts.SectorSize)
+				assert.Equal(t, tc.expectedValue, *loopbackOpts.SectorSize)
+			}
+		})
+	}
+}

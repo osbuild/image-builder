@@ -1,7 +1,7 @@
 package generic_test
 
 import (
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -262,6 +262,7 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 				"azure-sap-rhui",
 				"azure-sapapps-rhui",
 				"ec2",
+				"ec2-cvm",
 				"ec2-ha",
 				"ec2-sap",
 				"vagrant-libvirt",
@@ -288,6 +289,7 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "ppc64le",
 			imgNames: []string{
+				"network-installer",
 				"qcow2",
 				"tar",
 			},
@@ -295,6 +297,7 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "s390x",
 			imgNames: []string{
+				"network-installer",
 				"qcow2",
 				"tar",
 			},
@@ -314,8 +317,8 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 					expectedImageTypes = append(expectedImageTypes, mapping.rhelAdditionalImageTypes...)
 				}
 
-				sort.Strings(expectedImageTypes)
-				sort.Strings(imageTypes)
+				slices.Sort(expectedImageTypes)
+				slices.Sort(imageTypes)
 				require.Equal(t, expectedImageTypes, imageTypes)
 			}
 		})

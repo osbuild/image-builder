@@ -16,8 +16,8 @@ build/{distro}/{arch}/{image_type}/{config_name}:
     - {dl_container}
     - {start_container}
     - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"
-    - ./test/scripts/boot-image "{image_path}"
-    - ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"
+    - ./test/scripts/boot-image "{image_path}" "{config}"
+    - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"
   extends: .terraform
   variables:
     RUNNER: {runner}-{arch}

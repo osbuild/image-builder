@@ -10,6 +10,15 @@ type XorrisofsStageOptions struct {
 	// System ID to set
 	SysID string `json:"sysid,omitempty"`
 
+	// Publisher to set
+	Pub string `json:"pub,omitempty"`
+
+	// Application ID to set
+	AppID string `json:"appid,omitempty"`
+
+	// Preparer to set
+	Prep string `json:"prep,omitempty"`
+
 	Boot *XorrisofsBoot `json:"boot,omitempty"`
 
 	EFI string `json:"efi,omitempty"`
@@ -24,6 +33,26 @@ type XorrisofsStageOptions struct {
 	// This will cause the created iso to use grub2 instead of syslinux/isolinux
 	// when booting on BIOS systems.
 	Grub2MBR string `json:"grub2mbr,omitempty"`
+
+	// Excludes are paths to exclude from the Rock Ridge ISO filesystem; they are
+	// shell globs and if no `/` is included then the leaf (or basename) of the
+	// file is used.
+	Exclude []string `json:"exclude,omitempty"`
+
+	// Generate rationalized Rock Ridge directory information
+	RationalRock bool `json:"rational_rock,omitempty"`
+
+	// Allow Untranslated filenames
+	UntranslatedFilenames bool `json:"untranslated_filenames,omitempty"`
+
+	// Allow full 31 character filenames for ISO9660 names
+	FullFilenames bool `json:"full_filenames,omitempty"`
+
+	// Volume set ID
+	VolSet string `json:"volset,omitempty"`
+
+	// Mark the ISO image as MBR partition of type 0x96
+	CHRPBoot bool `json:"chrp_boot,omitempty"`
 }
 
 type XorrisofsBoot struct {
@@ -31,6 +60,8 @@ type XorrisofsBoot struct {
 	Image string `json:"image"`
 	// Path to the boot catalog file (on the ISO)
 	Catalog string `json:"catalog"`
+	// Skip adding -boot-info-table and --grub2-info-table when true
+	NoBootInfo bool `json:"nobootinfo,omitempty"`
 }
 
 func (XorrisofsStageOptions) isStageOptions() {}

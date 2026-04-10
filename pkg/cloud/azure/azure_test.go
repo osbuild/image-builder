@@ -1,7 +1,6 @@
 package azure_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
@@ -66,7 +65,7 @@ func newAZ() azm {
 func TestGetResourceNameByTag(t *testing.T) {
 	azm := newAZ()
 
-	res, err := azm.az.GetResourceNameByTag(context.Background(), "rg", azure.Tag{
+	res, err := azm.az.GetResourceNameByTag(t.Context(), "rg", azure.Tag{
 		Name:  "tag name",
 		Value: "tag value",
 	})
@@ -80,7 +79,7 @@ func TestGetResourceNameByTag(t *testing.T) {
 
 func TestCreateStorageAccount(t *testing.T) {
 	azm := newAZ()
-	err := azm.az.CreateStorageAccount(context.Background(), "rg", "name", "loc", azure.Tag{
+	err := azm.az.CreateStorageAccount(t.Context(), "rg", "name", "loc", azure.Tag{
 		Name:  "tag name",
 		Value: "tag value",
 	})
@@ -97,7 +96,7 @@ func TestCreateStorageAccount(t *testing.T) {
 
 func TestCreateStorageAccountEmptyLocation(t *testing.T) {
 	azm := newAZ()
-	err := azm.az.CreateStorageAccount(context.Background(), "rg", "name", "", azure.Tag{
+	err := azm.az.CreateStorageAccount(t.Context(), "rg", "name", "", azure.Tag{
 		Name:  "tag name",
 		Value: "tag value",
 	})
@@ -116,7 +115,7 @@ func TestCreateStorageAccountEmptyLocation(t *testing.T) {
 
 func TestGetResourceGroups(t *testing.T) {
 	azm := newAZ()
-	group, err := azm.az.GetResourceGroupLocation(context.Background(), "group-test")
+	group, err := azm.az.GetResourceGroupLocation(t.Context(), "group-test")
 	require.NoError(t, err)
 	require.Equal(t, "test-universe", group)
 
@@ -127,7 +126,7 @@ func TestGetResourceGroups(t *testing.T) {
 
 func TestGetStorageAccountKey(t *testing.T) {
 	azm := newAZ()
-	acc, err := azm.az.GetStorageAccountKey(context.Background(), "rg", "storacc")
+	acc, err := azm.az.GetStorageAccountKey(t.Context(), "rg", "storacc")
 	require.NoError(t, err)
 	require.Equal(t, "real key", acc)
 
@@ -138,7 +137,7 @@ func TestGetStorageAccountKey(t *testing.T) {
 
 func TestRegisterImage(t *testing.T) {
 	azm := newAZ()
-	err := azm.az.RegisterImage(context.Background(), "rg", "storacc", "storcontainer", "blobname", "imgname", "", azure.HyperVGenV2)
+	err := azm.az.RegisterImage(t.Context(), "rg", "storacc", "storcontainer", "blobname", "imgname", "", azure.HyperVGenV2)
 	require.NoError(t, err)
 
 	// resolving the empty location
@@ -165,7 +164,7 @@ func TestRegisterImage(t *testing.T) {
 
 func TestDeleteImage(t *testing.T) {
 	azm := newAZ()
-	err := azm.az.DeleteImage(context.Background(), "rg", "imgname")
+	err := azm.az.DeleteImage(t.Context(), "rg", "imgname")
 	require.NoError(t, err)
 
 	require.Len(t, azm.im.delete, 1)

@@ -1,0 +1,16 @@
+{
+  "name": "bootc-remote-empty",
+  "blueprint": {
+    "name": "bootc-remote-empty",
+    "description": "Blueprint for testing bootc empty image type with remote container source.",
+    "version": "1.0"
+  },
+  "options": {
+    "bootc": {
+      "use_remote_container_source": true
+    }
+  },
+  "solver": {
+    "use_root_dir": true
+  }
+}

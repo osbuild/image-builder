@@ -16,7 +16,7 @@ func TestTarSerialize(t *testing.T) {
 	build := manifest.NewBuild(&mani, runner, nil, nil)
 
 	// setup
-	rawImage := manifest.NewRawImage(build, nil)
+	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
 	tarPipeline := manifest.NewTar(build, rawImage, "tar-pipeline")
 	tarPipeline.SetFilename("filename.tar")
 	tarPipeline.Transform = "s/foo/bar"

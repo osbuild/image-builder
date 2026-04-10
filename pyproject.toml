@@ -1,14 +1,21 @@
+# Note that this is pyproject file is here only for the vmtest utils.
+
 [tool.autopep8]
 max_line_length = 120
 
-[project]
-name = "images"
-version = "0.1.0"
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
+[project]
+name = "vmtest"
+version = "0.1.0"
 dependencies = [
-    "vmtest @ git+https://github.com/osbuild/bootc-image-builder.git",
+  "boto3==1.33.13",
+  "qmp==1.1.0",
+  "scp==0.15.0",
 ]
 
-[tool.setuptools]
-packages = []
-py-modules = []
+[tool.setuptools.packages.find]
+where = ["test/scripts"]
+include = ["vmtest"]

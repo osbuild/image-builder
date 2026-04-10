@@ -16,7 +16,7 @@ func TestZstdSerialize(t *testing.T) {
 	build := manifest.NewBuild(&mani, runner, nil, nil)
 
 	// setup
-	rawImage := manifest.NewRawImage(build, nil)
+	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
 	zstdPipeline := manifest.NewZstd(build, rawImage)
 	zstdPipeline.SetFilename("filename.zst")
 

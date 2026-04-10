@@ -1,7 +1,6 @@
 package azure_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
@@ -16,7 +15,7 @@ func TestCreateLinuxVM(t *testing.T) {
 	azm := newAZ()
 
 	vm, err := azm.az.CreateVM(
-		context.Background(),
+		t.Context(),
 		"rg",
 		azure.VMOptions{
 			Name:   "vm-name",
@@ -187,7 +186,7 @@ func TestCreateLinuxVM(t *testing.T) {
 	require.Equal(t, "vm-name-disk", vm.DiskName)
 	require.Empty(t, vm.DiskID)
 
-	require.NoError(t, azm.az.DestroyVM(context.Background(), vm))
+	require.NoError(t, azm.az.DestroyVM(t.Context(), vm))
 	require.Len(t, azm.vmm.delete, 1)
 	require.Equal(t, vmDeleteArgs{
 		rg:   "rg",
@@ -236,7 +235,7 @@ func TestCreateWindowsVM(t *testing.T) {
 	azm := newAZ()
 
 	vm, err := azm.az.CreateVM(
-		context.Background(),
+		t.Context(),
 		"rg",
 		azure.VMOptions{
 			Name:     "vm-name",
@@ -308,7 +307,7 @@ func TestCreateVMError(t *testing.T) {
 	azm := newAZ()
 
 	_, err := azm.az.CreateVM(
-		context.Background(),
+		t.Context(),
 		"rg",
 		azure.VMOptions{
 			Name:     "vm-name",

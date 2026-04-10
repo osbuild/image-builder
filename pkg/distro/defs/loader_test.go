@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
@@ -69,6 +70,46 @@ distros:
 		err = os.MkdirAll(filepath.Dir(p), 0755)
 		assert.NoError(t, err)
 		err = os.WriteFile(p, []byte(`---`+"\n"+imgTypesContent), 0644)
+		assert.NoError(t, err)
+	}
+
+	return tmpdir
+}
+
+func makeFakeDistrosWithImageYAMLFiles(t *testing.T, distrosContent string, defsFiles map[string]string) string {
+	t.Helper()
+
+	if distrosContent == "" {
+		distrosContent = `
+distros:
+ - name: test-distro-1
+   vendor: test-vendor
+   defs_path: test-distro-1/
+`
+	}
+
+	tmpdir := t.TempDir()
+	distrosPath := filepath.Join(tmpdir, "distros.yaml")
+	err := os.WriteFile(distrosPath, []byte(distrosContent), 0644)
+	assert.NoError(t, err)
+
+	var di struct {
+		Distros []defs.DistroYAML `yaml:"distros"`
+	}
+	err = yaml.Unmarshal([]byte(distrosContent), &di)
+	assert.NoError(t, err)
+	require.NotEmpty(t, di.Distros)
+
+	for _, d := range di.Distros {
+		p := filepath.Join(tmpdir, d.DefsPath)
+		err = os.MkdirAll(p, 0755)
+		assert.NoError(t, err)
+	}
+
+	defsBase := filepath.Join(tmpdir, di.Distros[0].DefsPath)
+	for name, content := range defsFiles {
+		p := filepath.Join(defsBase, name)
+		err = os.WriteFile(p, []byte(content), 0644)
 		assert.NoError(t, err)
 	}
 
@@ -626,31 +667,38 @@ image_types:
 
 func TestDefsDistroImageConfig(t *testing.T) {
 	fakeDistroYaml := `
-image_config:
-  default:
-    locale: "C.UTF-8"
-    timezone: "DefaultTZ"
-    users:
-      - name: testuser
-  conditions:
-    "some description":
-      when:
-        distro_name: "test-distro"
-      shallow_merge:
+distros:
+  - name: test-distro-1
+    vendor: test-vendor
+    defs_path: test-distro-1/
+    image_config:
+      default:
+        locale: "C.UTF-8"
         timezone: "OverrideTZ"
+        users:
+          - name: testuser
+      conditions:
+        "centos oscap datastream path":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            timezone: "OverrideTZ"
+`
 
+	fakeImageTypeYaml := `
 image_types:
   test_type:
     filename: foo
 `
-	makeTestImageType(t, fakeDistroYaml)
-
+	baseDir := makeFakeDistrosYAML(t, fakeDistroYaml, fakeImageTypeYaml)
+	restore := defs.MockDataFS(baseDir)
+	defer restore()
 	dist, err := defs.NewDistroYAML("test-distro-1")
 	assert.NoError(t, err)
 	assert.Equal(t, dist.ImageConfig(), &distro.ImageConfig{
 		Locale:   common.ToPtr("C.UTF-8"),
 		Timezone: common.ToPtr("OverrideTZ"),
-		Users:    []users.User{users.User{Name: "testuser"}},
+		Users:    []users.User{{Name: "testuser"}},
 	})
 }
 
@@ -807,6 +855,56 @@ image_types:
 	require.ErrorContains(t, err, `cannot execute template for "vendor" field (is it set?)`)
 }
 
+var fakeDistroYamlISOConf = `
+image_types:
+  test_type:
+    iso_config:
+      rootfs_type: "squashfs"
+`
+
+func TestImageTypeISOConfig(t *testing.T) {
+	it := makeTestImageType(t, fakeDistroYamlISOConf)
+
+	installerConfig := it.ISOConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	assert.Equal(t, &distro.ISOConfig{
+		RootfsType: common.ToPtr(manifest.SquashfsRootfs),
+	}, installerConfig)
+}
+
+var fakeDistroYamlISOConfErofs = `
+image_types:
+  test_type:
+    iso_config:
+      rootfs_type: "erofs"
+      erofs_options:
+        compression:
+          method: "zstd"
+          level: 8
+        options:
+          - "all-fragments"
+          - "dedupe"
+        cluster-size: 262144
+`
+
+func TestImageTypeISOConfigErofs(t *testing.T) {
+	it := makeTestImageType(t, fakeDistroYamlISOConfErofs)
+
+	installerConfig := it.ISOConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	clusterSize := 262144
+	compressionLevel := 8
+	assert.Equal(t, &distro.ISOConfig{
+		RootfsType: common.ToPtr(manifest.ErofsRootfs),
+		ErofsOptions: &osbuild.ErofsStageOptions{
+			Compression: &osbuild.ErofsCompression{
+				Method: "zstd",
+				Level:  &compressionLevel,
+			},
+			ExtendedOptions: []string{"all-fragments", "dedupe"},
+			ClusterSize:     &clusterSize,
+		},
+	}, installerConfig)
+}
+
 var fakeDistroYamlInstallerConf = `
 image_types:
   test_type:
@@ -816,19 +914,38 @@ image_types:
       additional_drivers:
         - base-drv1
       default_menu: 1
-      iso_rootfs_type: "squashfs"
 `
 
 func TestImageTypeInstallerConfig(t *testing.T) {
 	it := makeTestImageType(t, fakeDistroYamlInstallerConf)
 
-	installerConfig := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	installerConfig, err := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	require.NoError(t, err)
 	assert.Equal(t, &distro.InstallerConfig{
 		AdditionalDracutModules: []string{"base-dracut-mod1"},
 		AdditionalDrivers:       []string{"base-drv1"},
 		DefaultMenu:             common.ToPtr(1),
-		ISORootfsType:           common.ToPtr(manifest.SquashfsRootfs),
 	}, installerConfig)
+}
+
+var fakeDistroYamlInstallerConfError = `
+image_types:
+  test_type:
+    installer_config:
+      flatpaks:
+        - registry:
+            url: oci+https://registry.fedora-project.org
+            remote_name: fedora
+          references:
+            - ""
+`
+
+func TestImageTypeInstallerConfigError(t *testing.T) {
+	it := makeTestImageType(t, fakeDistroYamlInstallerConfError)
+
+	_, err := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "empty flatpak ref after expansion")
 }
 
 func TestImageTypeInstallerConfigMergeVerLT(t *testing.T) {
@@ -844,12 +961,12 @@ func TestImageTypeInstallerConfigMergeVerLT(t *testing.T) {
 `
 	it := makeTestImageType(t, fakeDistroYaml)
 
-	installerConfig := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	installerConfig, err := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	require.NoError(t, err)
 	assert.Equal(t, &distro.InstallerConfig{
-		// AdditionalDrivers,ISOrootfsType merged from parent
+		// AdditionalDrivers merged from parent
 		AdditionalDrivers:       []string{"base-drv1"},
 		DefaultMenu:             common.ToPtr(2),
-		ISORootfsType:           common.ToPtr(manifest.SquashfsRootfs),
 		AdditionalDracutModules: []string{"override-dracut-mod1"},
 	}, installerConfig)
 }
@@ -868,13 +985,12 @@ func TestImageTypeInstallerConfigMergeDistroName(t *testing.T) {
 `
 	it := makeTestImageType(t, fakeDistroYaml)
 
-	installerConfig := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	installerConfig, err := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	require.NoError(t, err)
 	assert.Equal(t, &distro.InstallerConfig{
 		AdditionalDracutModules: []string{"override-dracut-mod1"},
 		AdditionalDrivers:       []string{"override-drv1"},
 		DefaultMenu:             common.ToPtr(1),
-		// ISORootfsType merged from parent
-		ISORootfsType: common.ToPtr(manifest.SquashfsRootfs),
 	}, installerConfig)
 }
 
@@ -890,13 +1006,13 @@ func TestImageTypeInstallerConfigMergeArch(t *testing.T) {
 `
 	it := makeTestImageType(t, fakeDistroYaml)
 
-	installerConfig := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	installerConfig, err := it.InstallerConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "test_arch")
+	require.NoError(t, err)
 	assert.Equal(t, &distro.InstallerConfig{
 		AdditionalDrivers: []string{"override-drv1"},
 		// AdditionalDracutModules,ISORootfsType merged from parent
 		AdditionalDracutModules: []string{"base-dracut-mod1"},
 		DefaultMenu:             common.ToPtr(1),
-		ISORootfsType:           common.ToPtr(manifest.SquashfsRootfs),
 	}, installerConfig)
 }
 
@@ -909,7 +1025,6 @@ distros:
     release_version: 43
     module_platform_id: platform:f43
     product: "Fedora"
-    ostree_ref_tmpl: "fedora/43/%s/iot"
     defs_path: fedora
     iso_label_tmpl: "{{.Product}}-ISO"
     runner: &fedora_runner
@@ -928,7 +1043,6 @@ distros:
     os_version: "{{.MajorVersion}}"
     release_version: "{{.MajorVersion}}"
     module_platform_id: "platform:f{{.MajorVersion}}"
-    ostree_ref_tmpl: "fedora/{{.MajorVersion}}/%s/iot"
     runner:
       <<: *fedora_runner
       name: org.osbuild.fedora{{.MajorVersion}}
@@ -941,7 +1055,6 @@ distros:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "centos"
-    ostree_ref_tmpl: "centos/10/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-10
 
@@ -952,9 +1065,12 @@ distros:
     release_version: "{{.MajorVersion}}"
     module_platform_id: "platform:el{{.MajorVersion}}"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/{{.MajorVersion}}/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-10
+    tweaks:
+      rpmkeys:
+        binary_path: "/chickens"
+        ignore_build_import_failures: true
 `
 
 func TestDistrosLoadingExact(t *testing.T) {
@@ -971,7 +1087,6 @@ func TestDistrosLoadingExact(t *testing.T) {
 		ReleaseVersion:   "43",
 		ModulePlatformID: "platform:f43",
 		Product:          "Fedora",
-		OSTreeRefTmpl:    "fedora/43/%s/iot",
 		DefsPath:         "fedora",
 		ISOLabelTmpl:     "{{.Product}}-ISO",
 		Runner: runner.RunnerConf{
@@ -996,7 +1111,6 @@ func TestDistrosLoadingExact(t *testing.T) {
 		ReleaseVersion:   "10",
 		ModulePlatformID: "platform:el10",
 		Product:          "CentOS Stream",
-		OSTreeRefTmpl:    "centos/10/%s/edge",
 		DefsPath:         "rhel-10",
 		DefaultFSType:    disk.FS_XFS,
 		ID:               distro.ID{Name: "centos", MajorVersion: 10, MinorVersion: -1},
@@ -1018,10 +1132,15 @@ func TestDistrosLoadingFactoryCompat(t *testing.T) {
 		ReleaseVersion:   "10",
 		ModulePlatformID: "platform:el10",
 		Product:          "Red Hat Enterprise Linux",
-		OSTreeRefTmpl:    "rhel/10/%s/edge",
 		DefsPath:         "rhel-10",
 		DefaultFSType:    disk.FS_XFS,
 		ID:               distro.ID{Name: "rhel", MajorVersion: 10, MinorVersion: 1},
+		Tweaks: &distro.Tweaks{
+			RPMKeys: &distro.RPMKeysTweaks{
+				BinPath:                   "/chickens",
+				IgnoreBuildImportFailures: true,
+			},
+		},
 	})
 
 	dist, err = defs.NewDistroYAML("fedora-40")
@@ -1033,7 +1152,6 @@ func TestDistrosLoadingFactoryCompat(t *testing.T) {
 		ReleaseVersion:   "40",
 		ModulePlatformID: "platform:f40",
 		Product:          "Fedora",
-		OSTreeRefTmpl:    "fedora/40/%s/iot",
 		DefsPath:         "fedora",
 		ISOLabelTmpl:     "{{.Product}}-ISO",
 		Runner: runner.RunnerConf{
@@ -1229,6 +1347,172 @@ image_types:
 	assert.EqualError(t, err, `platform conditionals for image type "test_type" should match only once but matched 2 times`)
 }
 
+func TestLoadImageTypesMergesMultipleYAMLFiles(t *testing.T) {
+	common := `
+.common:
+  shared_pkgset: &shared_pkgset
+    include:
+      - qemu-guest-agent
+    exclude:
+      - dracut-config-rescue
+`
+	fakeImageTypesYaml1 := `
+image_types:
+  "ec2":
+    filename: "image.raw.xz"
+    image_func: "disk"
+    package_sets:
+      os:
+        - *shared_pkgset
+        - include:
+            - "@core"
+            - "bash-completion"
+            - "grubby"
+            - "fwupd-efi"
+`
+	fakeImageTypesYaml2 := `
+image_types:
+  "iot":
+    filename: "image.qcow2"
+    image_func: disk
+    package_sets:
+      os:
+        - *shared_pkgset
+        - include:
+            - "acl"
+            - "bootc"
+            - "bootupd"
+            - "container-selinux"
+            - "crun"
+            - "cryptsetup"
+            - "dnf"
+          exclude:
+            - "initial-setup-gui"
+`
+	baseDir := makeFakeDistrosWithImageYAMLFiles(t, "", map[string]string{
+		"_common.yaml": common,
+		"cloud.yaml":   fakeImageTypesYaml1,
+		"iot.yaml":     fakeImageTypesYaml2,
+	})
+	restore := defs.MockDataFS(baseDir)
+	t.Cleanup(restore)
+
+	d, err := defs.LoadDistroWithoutImageTypes("test-distro-1")
+	require.NoError(t, err)
+	err = d.LoadImageTypes()
+	require.NoError(t, err)
+
+	imageTypes := d.ImageTypes()
+	require.Len(t, imageTypes, 2)
+	assert.Equal(t, "image.raw.xz", imageTypes["ec2"].Filename)
+	assert.Equal(t, "image.qcow2", imageTypes["iot"].Filename)
+
+	ec2Img := imageTypes["ec2"]
+	ec2OS := (&ec2Img).PackageSets(d.ID, "x86_64")["os"]
+	assert.Equal(t, []string{"@core", "bash-completion", "fwupd-efi", "grubby", "qemu-guest-agent"}, ec2OS.Include)
+	assert.Equal(t, []string{"dracut-config-rescue"}, ec2OS.Exclude)
+
+	iotImg := imageTypes["iot"]
+	iotOS := (&iotImg).PackageSets(d.ID, "x86_64")["os"]
+	assert.Equal(t, []string{"acl", "bootc", "bootupd", "container-selinux", "crun", "cryptsetup", "dnf", "qemu-guest-agent"}, iotOS.Include)
+	assert.Equal(t, []string{"dracut-config-rescue", "initial-setup-gui"}, iotOS.Exclude)
+}
+
+func TestLoadImageTypesDuplicateImageTypeError(t *testing.T) {
+	dup := `
+image_types:
+  "ec2":
+    filename: "image.raw.xz"
+    image_func: "disk"
+    package_sets:
+      os:
+        - include:
+            - "@core"
+            - "bash-completion"
+            - "grubby"
+            - "fwupd-efi"
+          exclude:
+            - "dracut-config-rescue"
+`
+	baseDir := makeFakeDistrosWithImageYAMLFiles(t, "", map[string]string{
+		"cloud.yaml":  dup,
+		"cloud2.yaml": dup,
+	})
+	restore := defs.MockDataFS(baseDir)
+	t.Cleanup(restore)
+
+	d, err := defs.LoadDistroWithoutImageTypes("test-distro-1")
+	require.NoError(t, err)
+	err = d.LoadImageTypes()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `duplicate image type ec2 found`)
+}
+
+func TestLoadImageTypesPrependsCommonYAML(t *testing.T) {
+	common := `
+.common:
+  cloud_core_pkgset: &cloud_core_pkgset
+    include:
+      - qemu-guest-agent
+    exclude:
+      - dracut-config-rescue
+`
+	cloud := `
+image_types:
+  "ec2":
+    filename: "image.raw.xz"
+    image_func: "disk"
+    package_sets:
+      os:
+        - *cloud_core_pkgset
+        - include:
+            - "@core"
+            - "bash-completion"
+            - "grubby"
+            - "fwupd-efi"
+`
+	baseDir := makeFakeDistrosWithImageYAMLFiles(t, "", map[string]string{
+		"_common.yaml": common,
+		"main.yaml":    cloud,
+	})
+	restore := defs.MockDataFS(baseDir)
+	t.Cleanup(restore)
+
+	d, err := defs.LoadDistroWithoutImageTypes("test-distro-1")
+	require.NoError(t, err)
+	require.NoError(t, d.LoadImageTypes())
+
+	imageType, ok := d.ImageTypes()["ec2"]
+	require.True(t, ok)
+	osSet := imageType.PackageSets(d.ID, "x86_64")["os"]
+	assert.Equal(t, []string{"@core", "bash-completion", "fwupd-efi", "grubby", "qemu-guest-agent"}, osSet.Include)
+	assert.Equal(t, []string{"dracut-config-rescue"}, osSet.Exclude)
+}
+
+func TestLoadImageTypesInvalidYAMLReturnsError(t *testing.T) {
+	baseDir := makeFakeDistrosWithImageYAMLFiles(t, "", map[string]string{
+		"broken.yaml": "image_types: [some invalid structure is living here",
+	})
+	restore := defs.MockDataFS(baseDir)
+	t.Cleanup(restore)
+
+	d, err := defs.LoadDistroWithoutImageTypes("test-distro-1")
+	require.NoError(t, err)
+	err = d.LoadImageTypes()
+	require.Error(t, err)
+}
+
+func TestLoadImageTypesWithNoImageTypesLeavesImageTypesUnset(t *testing.T) {
+	baseDir := makeFakeDistrosWithImageYAMLFiles(t, "", map[string]string{})
+	restore := defs.MockDataFS(baseDir)
+	t.Cleanup(restore)
+
+	d, err := defs.LoadDistroWithoutImageTypes("test-distro-1")
+	require.NoError(t, err)
+	require.NoError(t, d.LoadImageTypes())
+	assert.Nil(t, d.ImageTypes())
+}
+
 func TestDistrosLoadingMatchTransforms(t *testing.T) {
 	fakeDistrosYAML := `
 distros:
@@ -1237,6 +1521,7 @@ distros:
     os_version: "{{.MajorVersion}}.{{.MinorVersion}}"
     release_version: "{{.MajorVersion}}"
     module_platform_id: "platform:el{{.MajorVersion}}"
+    defs_path: rhel-8
 `
 	baseDir := makeFakeDistrosYAML(t, fakeDistrosYAML, "")
 	restore := defs.MockDataFS(baseDir)
@@ -1262,6 +1547,7 @@ distros:
 			OsVersion:        tc.expectedOsVersion,
 			ReleaseVersion:   "8",
 			ModulePlatformID: "platform:el8",
+			DefsPath:         "rhel-8",
 			ID:               *common.Must(distro.ParseID(tc.expectedDistroNameVer)),
 		})
 	}

@@ -21,8 +21,8 @@ func TestNewKickstart(t *testing.T) {
 	testCases := map[string]testCase{
 		"empty": {
 			expOptions: &kickstart.Options{
-				Users:  []users.User{},
-				Groups: []users.Group{},
+				Users:  nil,
+				Groups: nil,
 			},
 		},
 
@@ -91,8 +91,8 @@ func TestNewKickstart(t *testing.T) {
 			},
 
 			expOptions: &kickstart.Options{
-				Users:  []users.User{},
-				Groups: []users.Group{},
+				Users:  nil,
+				Groups: nil,
 				UserFile: &kickstart.File{
 					Contents: "echo 'Hello!!'",
 				},
@@ -107,8 +107,8 @@ func TestNewKickstart(t *testing.T) {
 			},
 
 			expOptions: &kickstart.Options{
-				Users:      []users.User{},
-				Groups:     []users.Group{},
+				Users:      nil,
+				Groups:     nil,
 				Unattended: true,
 			},
 		},
@@ -156,4 +156,11 @@ func TestNewKickstart(t *testing.T) {
 			assert.Equal(tc.expOptions, options)
 		})
 	}
+}
+
+func TestIsZeroKickstart(t *testing.T) {
+	emptyKickstart, err := kickstart.New(&blueprint.Customizations{})
+
+	assert.NoError(t, err)
+	assert.Equal(t, true, emptyKickstart.IsZero())
 }

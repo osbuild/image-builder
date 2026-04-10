@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/manifest"
@@ -15,6 +16,27 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
+
+var dummyDepsolveResult = depsolvednf.DepsolveResult{
+	Transactions: depsolvednf.TransactionList{
+		{
+			{
+				Name: "kernel",
+				Checksum: rpmmd.Checksum{
+					Type:  "sha256",
+					Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+				},
+				RepoID: "dummy-repo-id",
+				Repo:   &rpmmd.RepoConfig{Id: "dummy-repo-id"},
+			},
+		},
+	},
+	Repos: []rpmmd.RepoConfig{
+		{
+			Id: "dummy-repo-id",
+		},
+	},
+}
 
 func newAnacondaInstaller() *manifest.AnacondaInstaller {
 	m := &manifest.Manifest{}
@@ -33,20 +55,12 @@ func newAnacondaInstaller() *manifest.AnacondaInstaller {
 		OSVersion: osversion,
 		Preview:   preview,
 	}
-	installer := manifest.NewAnacondaInstaller(manifest.AnacondaInstallerTypePayload, build, x86plat, nil, "kernel", instCust)
+	isoCust := manifest.ISOCustomizations{}
+	installer := manifest.NewAnacondaInstaller(manifest.AnacondaInstallerTypePayload, build, x86plat, nil, "kernel", instCust, isoCust)
 	return installer
 }
 
 func TestAnacondaInstallerModules(t *testing.T) {
-	pkgs := rpmmd.PackageList{
-		{
-			Name: "kernel",
-			Checksum: rpmmd.Checksum{
-				Type:  "sha256",
-				Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-			},
-		},
-	}
 	type testCase struct {
 		enable   []string
 		disable  []string
@@ -95,7 +109,7 @@ func TestAnacondaInstallerModules(t *testing.T) {
 				installerPipeline.InstallerCustomizations.UseLegacyAnacondaConfig = legacy
 				installerPipeline.InstallerCustomizations.EnabledAnacondaModules = tc.enable
 				installerPipeline.InstallerCustomizations.DisabledAnacondaModules = tc.disable
-				pipeline, err := manifest.SerializeWith(installerPipeline, manifest.Inputs{Depsolved: depsolvednf.DepsolveResult{Packages: pkgs}})
+				pipeline, err := manifest.SerializeWith(installerPipeline, manifest.Inputs{Depsolved: dummyDepsolveResult})
 				require.NoError(err)
 				require.NotNil(pipeline)
 				require.NotNil(pipeline.Stages)
@@ -121,16 +135,6 @@ func TestAnacondaInstallerModules(t *testing.T) {
 }
 
 func TestISOLocale(t *testing.T) {
-	pkgs := rpmmd.PackageList{
-		{
-			Name: "kernel",
-			Checksum: rpmmd.Checksum{
-				Type:  "sha256",
-				Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-			},
-		},
-	}
-
 	locales := map[string]string{
 		// input: expected
 		"C.UTF-8":     "C.UTF-8",
@@ -144,7 +148,7 @@ func TestISOLocale(t *testing.T) {
 			require := require.New(t)
 			installerPipeline := newAnacondaInstaller()
 			installerPipeline.Locale = input
-			pipeline, err := manifest.SerializeWith(installerPipeline, manifest.Inputs{Depsolved: depsolvednf.DepsolveResult{Packages: pkgs}})
+			pipeline, err := manifest.SerializeWith(installerPipeline, manifest.Inputs{Depsolved: dummyDepsolveResult})
 			require.NoError(err)
 			require.NotNil(pipeline)
 			require.NotNil(pipeline.Stages)
@@ -163,21 +167,12 @@ func TestISOLocale(t *testing.T) {
 }
 
 func TestAnacondaInstallerDracutModulesAndDrivers(t *testing.T) {
-	pkgs := rpmmd.PackageList{
-		{
-			Name: "kernel",
-			Checksum: rpmmd.Checksum{
-				Type:  "sha256",
-				Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-			},
-		},
-	}
 	require := require.New(t)
 
 	installerPipeline := newAnacondaInstaller()
 	installerPipeline.InstallerCustomizations.AdditionalDracutModules = []string{"test-module"}
 	installerPipeline.InstallerCustomizations.AdditionalDrivers = []string{"test-driver"}
-	pipeline, err := manifest.SerializeWith(installerPipeline, manifest.Inputs{Depsolved: depsolvednf.DepsolveResult{Packages: pkgs}})
+	pipeline, err := manifest.SerializeWith(installerPipeline, manifest.Inputs{Depsolved: dummyDepsolveResult})
 	require.NoError(err)
 	require.NotNil(pipeline)
 	require.NotNil(pipeline.Stages)
@@ -195,15 +190,6 @@ func TestAnacondaInstallerDracutModulesAndDrivers(t *testing.T) {
 }
 
 func TestAnacondaInstallerConfigLorax(t *testing.T) {
-	pkgs := rpmmd.PackageList{
-		{
-			Name: "kernel",
-			Checksum: rpmmd.Checksum{
-				Type:  "sha256",
-				Value: "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-			},
-		},
-	}
 	require := require.New(t)
 
 	installerPipeline := newAnacondaInstaller()
@@ -213,7 +199,7 @@ func TestAnacondaInstallerConfigLorax(t *testing.T) {
 	installerPipeline.InstallerCustomizations.LoraxTemplates = []manifest.InstallerLoraxTemplate{
 		manifest.InstallerLoraxTemplate{Path: "99-generic/runtime-postinstall.tmpl"},
 	}
-	pipeline, err := manifest.SerializeWith(installerPipeline, manifest.Inputs{Depsolved: depsolvednf.DepsolveResult{Packages: pkgs}})
+	pipeline, err := manifest.SerializeWith(installerPipeline, manifest.Inputs{Depsolved: dummyDepsolveResult})
 	require.NoError(err)
 	require.NotNil(pipeline)
 	require.NotNil(pipeline.Stages)
@@ -229,4 +215,22 @@ func TestAnacondaInstallerConfigLorax(t *testing.T) {
 	assert.Equal(t, stageOptions[0].Path, "99-generic/runtime-postinstall.tmpl")
 	assert.Equal(t, stageOptions[0].Branding.Logos, "fedora-logos")
 	assert.Equal(t, stageOptions[0].Branding.Logos, "fedora-logos")
+}
+
+// TestAnacondaInstallerBootcSerialize verifies that AnacondaInstaller correctly
+// handles the bootc installer case where containers are provided but packages
+// are empty. Bootc installers get the kernel version via introspection, so
+// serialization should succeed even when kernelName is set but no packages
+// are provided.
+func TestAnacondaInstallerBootcSerialize(t *testing.T) {
+	installer := newAnacondaInstaller() // This sets kernelName to "kernel"
+
+	// Serialize with containers but NO packages (bootc mode)
+	containerSpec := container.Spec{Source: "quay.io/example/bootc-image:latest"}
+	_, err := manifest.SerializeWith(installer, manifest.Inputs{
+		Containers: []container.Spec{containerSpec},
+		// Depsolved is intentionally empty - no packages for bootc installers
+	})
+
+	assert.NoError(t, err)
 }

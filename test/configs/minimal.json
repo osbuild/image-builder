@@ -1,9 +1,0 @@
-{
-  "name": "minimal",
-  "blueprint": {
-    "name": "minimal",
-    "description": "Simple blueprint that enables the (experimental) minimal feature, which reduces the OS package list to the essentials.",
-    "version": "1.0",
-    "minimal": true
-  }
-}

@@ -10,9 +10,6 @@
       },
       {
         "name": "openscap-utils"
-      },
-      {
-        "name": "jq"
       }
     ],
     "customizations": {
@@ -22,6 +19,11 @@
           "data": "{\"profiles\":[{\"id\":\"cis\",\"base_profile_id\":\"cis\",\"rules\":{\"partition_var_log\":{\"evaluate\":true},\"rpm_verify_hashes\":{\"evaluate\":false},\"rpm_verify_permisions\":{\"evaluate\":false},\"grub2_password\":{\"evaluate\":false},\"grub2_uefi_password\":{\"evaluate\":false},\"partition_for_dev_shm\":{\"evaluate\":false},\"mount_option_dev_shm_nosuid\":{\"evaluate\":false},\"mount_option_dev_shm_noexec\":{\"evaluate\":false},\"mount_option_dev_shm_nodev\":{\"evaluate\":false}}}]}"
         }
       ],
+      "services": {
+        "masked": [
+          "sssd.service"
+        ]
+      },
       "openscap": {
         "profile_id": "xccdf_org.ssgproject.content_profile_cis",
         "datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml",

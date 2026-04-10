@@ -2,7 +2,7 @@ package koji
 
 import (
 	"encoding/json"
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -125,7 +125,7 @@ func TestRPMDeduplication(t *testing.T) {
 			names[idx] = rpm.Name
 		}
 
-		sort.Strings(names)
+		slices.Sort(names)
 		return names
 	}
 

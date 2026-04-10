@@ -26,14 +26,14 @@ func TestCheckOptions(t *testing.T) {
 	testCases := map[string]testCase{
 		"f42/ami-ok": {
 			distro:  "fedora-42",
-			it:      "server-ami",
+			it:      "generic-ami",
 			bp:      blueprint.Blueprint{},
 			options: distro.ImageOptions{},
 			expErr:  "",
 		},
 		"f42/ami-installer-error": {
 			distro: "fedora-42",
-			it:     "server-ami",
+			it:     "generic-ami",
 			bp: blueprint.Blueprint{
 				Customizations: &blueprint.Customizations{
 					Installer: &blueprint.InstallerCustomization{
@@ -41,22 +41,17 @@ func TestCheckOptions(t *testing.T) {
 					},
 				},
 			},
-			expErr: "blueprint validation failed for image type \"server-ami\": customizations.installer: not supported",
+			expErr: "blueprint validation failed for image type \"generic-ami\": customizations.installer: not supported",
 		},
 		"f42/ami-ostree-error": {
 			distro: "fedora-42",
-			it:     "server-ami",
+			it:     "generic-ami",
 			options: distro.ImageOptions{
 				OSTree: &ostree.ImageOptions{
 					URL: "https://example.org/repo",
 				},
 			},
-			expErr: "OSTree is not supported for \"server-ami\"",
-		},
-		"f42/ostree-installer-requires-ostree-url": {
-			distro: "fedora-42",
-			it:     "iot-installer",
-			expErr: "options validation failed for image type \"iot-installer\": ostree.url: required",
+			expErr: "OSTree is not supported for \"generic-ami\"",
 		},
 		"f42/ostree-disk-supported": {
 			distro: "fedora-42",
@@ -518,22 +513,11 @@ func TestCheckOptions(t *testing.T) {
 					},
 				},
 			},
-			expErr: "blueprint validation failed for image type \"server-vhd\": customizations.openscap.profile_id: required when using customizations.openscap",
-		},
-
-		"f42/ostree-disk-requires-ostree-url": {
-			distro: "fedora-42",
-			it:     "iot-qcow2",
-			expErr: "options validation failed for image type \"iot-qcow2\": ostree.url: required",
-		},
-		"f42/ostree-disk2-requires-ostree-url": {
-			distro: "fedora-42",
-			it:     "iot-raw-xz",
-			expErr: "options validation failed for image type \"iot-raw-xz\": ostree.url: required",
+			expErr: "blueprint validation failed for image type \"generic-vhd\": customizations.openscap.profile_id: required when using customizations.openscap",
 		},
 		"f42/disk-and-filesystems": {
 			distro: "fedora-42",
-			it:     "server-qcow2",
+			it:     "generic-qcow2",
 			bp: blueprint.Blueprint{
 				Customizations: &blueprint.Customizations{
 					Filesystem: []blueprint.FilesystemCustomization{
@@ -556,11 +540,11 @@ func TestCheckOptions(t *testing.T) {
 					},
 				},
 			},
-			expErr: "blueprint validation failed for image type \"server-qcow2\": customizations.disk cannot be used with customizations.filesystem",
+			expErr: "blueprint validation failed for image type \"generic-qcow2\": customizations.disk cannot be used with customizations.filesystem",
 		},
 		"f42/bad-filesystem-mountpoint": {
 			distro: "fedora-42",
-			it:     "server-qcow2",
+			it:     "generic-qcow2",
 			bp: blueprint.Blueprint{
 				Customizations: &blueprint.Customizations{
 					Filesystem: []blueprint.FilesystemCustomization{
@@ -571,11 +555,11 @@ func TestCheckOptions(t *testing.T) {
 					},
 				},
 			},
-			expErr: "blueprint validation failed for image type \"server-qcow2\": The following custom mountpoints are not supported [\"/etc\"]",
+			expErr: "blueprint validation failed for image type \"generic-qcow2\": The following custom mountpoints are not supported [\"/etc\"]",
 		},
 		"f42/bad-disk-mountpoint": {
 			distro: "fedora-42",
-			it:     "server-qcow2",
+			it:     "generic-qcow2",
 			bp: blueprint.Blueprint{
 				Customizations: &blueprint.Customizations{
 					Disk: &blueprint.DiskCustomization{
@@ -591,11 +575,11 @@ func TestCheckOptions(t *testing.T) {
 					},
 				},
 			},
-			expErr: "blueprint validation failed for image type \"server-qcow2\": The following errors occurred while setting up custom mountpoints:\npath \"/etc\" is not allowed",
+			expErr: "blueprint validation failed for image type \"generic-qcow2\": The following errors occurred while setting up custom mountpoints:\npath \"/etc\" is not allowed",
 		},
 		"f42/two-lvm+btrfs": {
 			distro: "fedora-42",
-			it:     "server-qcow2",
+			it:     "generic-qcow2",
 			bp: blueprint.Blueprint{
 				Customizations: &blueprint.Customizations{
 					Disk: &blueprint.DiskCustomization{
@@ -629,7 +613,7 @@ func TestCheckOptions(t *testing.T) {
 					},
 				},
 			},
-			expErr: "blueprint validation failed for image type \"server-qcow2\": btrfs and lvm partitioning cannot be combined",
+			expErr: "blueprint validation failed for image type \"generic-qcow2\": btrfs and lvm partitioning cannot be combined",
 		},
 
 		"r8/ami-ok": {
@@ -664,7 +648,7 @@ func TestCheckOptions(t *testing.T) {
 		"r8/ostree-installer-requires-ostree-url": {
 			distro: "rhel-8.10",
 			it:     "edge-installer",
-			expErr: "options validation failed for image type \"edge-installer\": ostree.url: required",
+			expErr: "options validation failed for image type \"edge-installer\": ostree.url: required, there is no default available",
 		},
 		"r8/ostree-disk-supported": {
 			distro: "rhel-8.10",
@@ -961,7 +945,7 @@ func TestCheckOptions(t *testing.T) {
 		"r8/ostree-disk-requires-ostree-url": {
 			distro: "rhel-8.10",
 			it:     "edge-raw-image",
-			expErr: "options validation failed for image type \"edge-raw-image\": ostree.url: required",
+			expErr: "options validation failed for image type \"edge-raw-image\": ostree.url: required, there is no default available",
 		},
 
 		"r8/ostree-no-containers": {
@@ -1159,7 +1143,7 @@ func TestCheckOptions(t *testing.T) {
 		"r9/ostree-installer-requires-ostree-url": {
 			distro: "rhel-9.7",
 			it:     "edge-installer",
-			expErr: "options validation failed for image type \"edge-installer\": ostree.url: required",
+			expErr: "options validation failed for image type \"edge-installer\": ostree.url: required, there is no default available",
 		},
 		"r9/ostree-disk-supported": {
 			distro: "rhel-9.7",
@@ -1592,12 +1576,12 @@ func TestCheckOptions(t *testing.T) {
 		"r9/ostree-disk-requires-ostree-url": {
 			distro: "rhel-9.7",
 			it:     "edge-vsphere",
-			expErr: "options validation failed for image type \"edge-vsphere\": ostree.url: required",
+			expErr: "options validation failed for image type \"edge-vsphere\": ostree.url: required, there is no default available",
 		},
 		"r9/ostree-disk2-requires-ostree-url": {
 			distro: "rhel-9.7",
 			it:     "edge-ami",
-			expErr: "options validation failed for image type \"edge-ami\": ostree.url: required",
+			expErr: "options validation failed for image type \"edge-ami\": ostree.url: required, there is no default available",
 		},
 
 		"r9/ostree-mountpoints-not-supported": {

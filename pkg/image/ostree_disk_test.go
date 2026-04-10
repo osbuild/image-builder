@@ -34,12 +34,13 @@ func TestOSTreeDiskImageManifestSetsContainerBuildable(t *testing.T) {
 
 	for _, containerBuildable := range []bool{true, false} {
 		buildOpts = nil
-
 		mf := manifest.New()
 		img := image.NewOSTreeDiskImageFromContainer(testPlatform, "filename", containerSource, ref)
 		require.NotNil(t, img)
+		img.BuildOptions = &manifest.BuildOptions{
+			ContainerBuildable: containerBuildable,
+		}
 		img.OSName = "osname"
-		img.ContainerBuildable = containerBuildable
 
 		_, err := img.InstantiateManifest(&mf, repos, r, rng)
 		require.Nil(t, err)

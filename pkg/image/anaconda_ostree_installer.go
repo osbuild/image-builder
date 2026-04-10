@@ -7,7 +7,6 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
-	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/manifest"
@@ -20,15 +19,12 @@ import (
 
 type AnacondaOSTreeInstaller struct {
 	Base
-	InstallerCustomizations manifest.InstallerCustomizations
-	ExtraBasePackages       rpmmd.PackageSet
+	AnacondaInstallerBase
 
-	Kickstart *kickstart.Options
+	ExtraBasePackages rpmmd.PackageSet
 
 	// Subscription options to include
 	Subscription *subscription.ImageOptions
-
-	RootfsCompression string
 
 	Commit ostree.SourceSpec
 
@@ -48,8 +44,24 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, img.BuildOptions)
 	buildPipeline.Checkpoint()
+
+	img.InstallerCustomizations.Payload.Path = "/ostree/repo"
+
+	// ostree options can be in either kickstart but should be in at least one
+	if (img.Kickstart == nil || img.Kickstart.OSTree == nil) && (img.InteractiveDefaultsKickstart == nil || img.InteractiveDefaultsKickstart.OSTree == nil) {
+		return nil, fmt.Errorf("kickstart options not set for ostree installer")
+	}
+
+	// set the default paths for these kickstarts
+	if img.Kickstart != nil && img.Kickstart.Path == "" {
+		img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	}
+
+	if img.InteractiveDefaultsKickstart != nil && img.InteractiveDefaultsKickstart.Path == "" {
+		img.InteractiveDefaultsKickstart.Path = osbuild.KickstartPathInteractiveDefaults
+	}
 
 	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
@@ -58,17 +70,22 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		repos,
 		"kernel",
 		img.InstallerCustomizations,
+		img.ISOCustomizations,
 	)
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
-	if img.Kickstart != nil {
-		anacondaPipeline.InteractiveDefaultsKickstart = &kickstart.Options{
-			Users:  img.Kickstart.Users,
-			Groups: img.Kickstart.Groups,
-		}
+
+	if img.InteractiveDefaultsKickstart != nil {
+		anacondaPipeline.Kickstart = img.InteractiveDefaultsKickstart
 	}
+
 	anacondaPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
+
+	if img.InstallerCustomizations.Payload.Location == manifest.PAYLOAD_LOCATION_ROOTFS {
+		anacondaPipeline.OSTreeCommitSource = &img.Commit
+	}
+
 	anacondaPipeline.Checkpoint()
 
 	if anacondaPipeline.InstallerCustomizations.FIPS {
@@ -81,31 +98,27 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Locale = img.Locale
 
 	var rootfsImagePipeline *manifest.ISORootfsImg
-	switch img.InstallerCustomizations.ISORootfsType {
+	switch img.ISOCustomizations.RootfsType {
 	case manifest.SquashfsExt4Rootfs:
 		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
 		rootfsImagePipeline.Size = 4 * datasizes.GibiByte
 	default:
 	}
 
-	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
-	bootTreePipeline.Platform = img.platform
-	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = img.InstallerCustomizations.ISOLabel
-	bootTreePipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label)}
 
-	if img.Kickstart == nil || img.Kickstart.OSTree == nil {
-		return nil, fmt.Errorf("kickstart options not set for ostree installer")
+	if img.Kickstart != nil {
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path))
 	}
-	if img.Kickstart.Path == "" {
-		img.Kickstart.Path = osbuild.KickstartPathOSBuild
-	}
-	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path)}
+
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		kernelOpts = append(kernelOpts, "fips=1")
 	}
+
 	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
-	bootTreePipeline.KernelOpts = kernelOpts
+
+	// Setup the bootloaders
+	bootloaders := img.Bootloaders(buildPipeline, img.platform, kernelOpts)
 
 	var subscriptionPipeline *manifest.Subscription
 	if img.Subscription != nil {
@@ -113,25 +126,24 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		subscriptionPipeline = manifest.NewSubscription(buildPipeline, img.Subscription)
 	}
 
-	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
-	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
-	isoTreePipeline.Release = img.InstallerCustomizations.Release
-	isoTreePipeline.Kickstart = img.Kickstart
-	isoTreePipeline.RootfsCompression = img.RootfsCompression
-	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(
+		buildPipeline,
+		anacondaPipeline,
+		rootfsImagePipeline,
+		bootloaders,
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
 
-	isoTreePipeline.PayloadPath = "/ostree/repo"
-
-	isoTreePipeline.OSTreeCommitSource = &img.Commit
-	isoTreePipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
-	if anacondaPipeline.InstallerCustomizations.FIPS {
-		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
+	if img.InstallerCustomizations.Payload.Location == manifest.PAYLOAD_LOCATION_ISO {
+		isoTreePipeline.OSTreeCommitSource = &img.Commit
 	}
+
 	isoTreePipeline.SubscriptionPipeline = subscriptionPipeline
 
-	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.InstallerCustomizations.ISOLabel)
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOCustomizations)
 	isoPipeline.SetFilename(img.filename)
-	isoPipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
 	artifact := isoPipeline.Export()
 
 	return artifact, nil

@@ -44,11 +44,9 @@ containers:
   - <<: *default_fake_container
     image_types: ["bootc-installer"]
     arch: x86_64
-    payload_container_ref: "payload-container-fake-ref"
   - <<: *default_fake_container
     image_types: ["bootc-installer"]
     arch: aarch64
-    payload_container_ref: "payload-container-fake-ref"
 
   # test rpm based ISO installer
   - <<: *default_fake_container
@@ -90,3 +88,17 @@ containers:
         name: "Fedora 42"
         id: "fedora"
         versionid: "42"
+
+  # test bootc-generic-iso
+  - <<: *default_fake_container
+    image_types: ["bootc-generic-iso"]
+    arch: x86_64
+    info:
+      <<: *default_info
+      uefi_vendor: "uefi-vendor-x86_64"
+  - <<: *default_fake_container
+    image_types: ["bootc-generic-iso"]
+    arch: aarch64
+    info:
+      <<: *default_info
+      uefi_vendor: "uefi-vendor-aarch64"

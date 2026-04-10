@@ -15,9 +15,10 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/flatpak"
+	"github.com/osbuild/images/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rpmmd"
 	testrepos "github.com/osbuild/images/test/data/repositories"
@@ -82,15 +83,16 @@ func TestImageTypePipelineNames(t *testing.T) {
 						Customizations: customizations,
 					}
 					options := distro.ImageOptions{}
-					// this repo's gpg keys should get included in the os
-					// pipeline's rpm stage
+					// This base repo's GPG keys should get included in the
+					// OS pipeline's RPM stage since packages are resolved
+					// from it. The repo has no PackageSets filter, so it
+					// applies to all package sets.
 					repos := []rpmmd.RepoConfig{
 						{
-							Name:        "payload",
-							BaseURLs:    []string{"http://payload.example.com"},
-							PackageSets: imageType.PayloadPackageSets(),
-							GPGKeys:     []string{"payload-gpg-key"},
-							CheckGPG:    common.ToPtr(true),
+							Name:     "baseos",
+							BaseURLs: []string{"http://baseos.example.com"},
+							GPGKeys:  []string{"baseos-gpg-key"},
+							CheckGPG: common.ToPtr(true),
 						},
 					}
 					seed := int64(0)
@@ -106,6 +108,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 					assert.NoError(err)
 
 					containers := make(map[string][]container.Spec, 0)
+					flatpaks := make(map[string][]flatpak.Spec, 0)
 
 					// Pipelines that require content (packages, ostree
 					// commits) will fail if none are defined. OS pipelines
@@ -115,61 +118,8 @@ func TestImageTypePipelineNames(t *testing.T) {
 					// Serialize().
 					packageSets, err := m.GetPackageSetChains()
 					assert.NoError(err)
-					depsolvedSets := make(map[string]depsolvednf.DepsolveResult, len(packageSets))
-					for name, sets := range packageSets {
-						packages := make(rpmmd.PackageList, 0)
-						for _, set := range sets {
-							for idx, pkginc := range set.Include {
-								packages = append(packages, rpmmd.Package{
-									Name: pkginc,
-									// for most packages, the version is not
-									// required, but for some (e.g. uki-direct
-									// in images with UKI) it needs to be a
-									// valid version string that can be parsed
-									// by the version package.
-									Version: "0.0",
-									// the exact checksum doesn't matter as
-									// long as it's a valid 256 bit hex number
-									Checksum: rpmmd.Checksum{
-										Type:  "sha256",
-										Value: fmt.Sprintf("%064x", idx),
-									},
-									RemoteLocations: []string{fmt.Sprintf("https://example.com/%s", pkginc)},
-								})
-							}
-						}
-
-						depsolvedSets[name] = depsolvednf.DepsolveResult{
-							Packages: packages,
-						}
-					}
-
-					// Some parts of the manifest generation for certain image types require specific packages. Add them here.
-					// azure-cvm requires dnf and python3-dnf-plugin-versionlock in the OS pipeline
-					osPkgs := depsolvedSets["os"]
-					osPkgs.Packages = append(osPkgs.Packages,
-						rpmmd.Package{
-							Name:    "dnf",
-							Version: "4",
-							Checksum: rpmmd.Checksum{
-								Type:  "sha256",
-								Value: fmt.Sprintf("%064x", len(osPkgs.Packages)),
-							},
-							RemoteLocations: []string{"https://example.com/dnf"},
-						},
-					)
-					osPkgs.Packages = append(osPkgs.Packages,
-						rpmmd.Package{
-							Name:    "python3-dnf-plugin-versionlock",
-							Version: "3",
-							Checksum: rpmmd.Checksum{
-								Type:  "sha256",
-								Value: fmt.Sprintf("%064x", len(osPkgs.Packages)),
-							},
-							RemoteLocations: []string{"https://example.com/python3-dnf-plugin-versionlock"},
-						},
-					)
-					depsolvedSets["os"] = osPkgs
+					depsolvedSets, err := manifestmock.Depsolve(packageSets, archName, nil, false)
+					assert.NoError(err)
 
 					ostreeSources := m.GetOSTreeSourceSpecs()
 					commits := make(map[string][]ostree.CommitSpec, len(ostreeSources))
@@ -185,7 +135,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 						commits[name] = commitSpecs
 					}
 
-					mf, err := m.Serialize(depsolvedSets, containers, commits, nil)
+					mf, err := m.Serialize(depsolvedSets, containers, commits, flatpaks, nil)
 					assert.NoError(err)
 					pm := new(manifest)
 					err = json.Unmarshal(mf, pm)
@@ -496,9 +446,33 @@ func TestPipelineRepositories(t *testing.T) {
 							if len(tCase.result["*"]) > 0 {
 								globals = tCase.result["*"][0]
 							}
+
+							// NOTE: Image types that don't use any customizations in their base
+							// definition do not install any customization packages (e.g., SELinux
+							// policy, subscription-manager, etc.). As a result, they have only 2
+							// package sets in the OS chain (base packages and blueprint packages).
+							// Other image types have 3. These are typically minimal/container
+							// image types.
+							// NOTE: This list must be updated when new image types are added that
+							// don't use any customizations in their base definition.
+							noCustomizationPkgsImageTypes := []string{
+								"container",
+								"container-minimal",
+								"generic-container",
+								"wsl",
+								"generic-wsl",
+							}
+
 							for psName, psChain := range packageSets {
 								// test run in parallel but expChain is mutated during the test so we need a clone
 								expChain := slices.Clone(tCase.result[psName])
+
+								// Adjust expected chain for image types without any customization packages
+								if psName == "os" && len(expChain) == 3 && slices.Contains(noCustomizationPkgsImageTypes, imageTypeName) {
+									// Remove the middle entry (customization packages) from expected chain
+									expChain = []stringSet{expChain[0], expChain[2]}
+								}
+
 								if len(expChain) > 0 {
 									// if we specified an expected chain it should match the returned.
 									if len(expChain) != len(psChain) {
@@ -605,6 +579,11 @@ func TestDistro_ManifestFIPSWarning(t *testing.T) {
 		"iot-raw-xz",
 		"iot-simplified-installer",
 		"iot-qcow2",
+		"kinoite-installer",
+		"silverblue-installer",
+		"sway-atomic-installer",
+		"budgie-atomic-installer",
+		"cosmic-atomic-installer",
 	}
 
 	distroFactory := distrofactory.NewDefault()
@@ -714,6 +693,41 @@ func TestOSTreeOptionsErrorForNonOSTreeImgTypes(t *testing.T) {
 					}
 				})
 			}
+		}
+	}
+}
+
+func TestGetImageTypes(t *testing.T) {
+	assert := assert.New(t)
+	distroFactory := distrofactory.NewDefault()
+	assert.NotNil(distroFactory)
+
+	distros := listTestedDistros(t)
+	assert.NotEmpty(distros)
+
+	for _, distroName := range distros {
+		d := distroFactory.GetDistro(distroName)
+		assert.NotNil(d)
+
+		arches := d.ListArches()
+		assert.NotEmpty(arches)
+
+		for _, archName := range arches {
+			imageTypes, err := distro.GetImageTypes(d, archName)
+			assert.Nil(err)
+			assert.NotEmpty(imageTypes)
+
+			arch, err := d.GetArch(archName)
+			assert.Nil(err)
+
+			expectedNames := arch.ListImageTypes()
+			assert.Len(imageTypes, len(expectedNames))
+
+			for i, imageType := range imageTypes {
+				assert.Equal(expectedNames[i], imageType.Name())
+				assert.Equal(arch, imageType.Arch())
+			}
+
 		}
 	}
 }

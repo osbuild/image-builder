@@ -51,6 +51,15 @@ func TestRHSMFactsStageJson(t *testing.T) {
 			},
 			JsonString: fmt.Sprintf(`{"facts":{"image-builder.osbuild-composer.api-type":"%s","image-builder.insights.compliance-profile-id":"%s","image-builder.insights.compliance-policy-id":"%s"}}`, "test-api", "test-profile-id", "test-compliance-policy-id"),
 		},
+		{
+			Options: RHSMFactsStageOptions{
+				Facts: RHSMFacts{
+					ApiType:     "test-api",
+					BlueprintID: "123e4567-e89b-12d3-a456-426655440000",
+				},
+			},
+			JsonString: fmt.Sprintf(`{"facts":{"image-builder.osbuild-composer.api-type":"%s","image-builder.blueprint-id":"%s"}}`, "test-api", "123e4567-e89b-12d3-a456-426655440000"),
+		},
 	}
 	for _, test := range tests {
 		marshaledJson, err := json.Marshal(test.Options)

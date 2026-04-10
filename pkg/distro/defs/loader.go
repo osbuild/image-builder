@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"text/template"
 
 	"go.yaml.in/yaml/v3"
@@ -26,7 +26,6 @@ import (
 	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/olog"
-	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
@@ -78,7 +77,6 @@ type DistroYAML struct {
 	ReleaseVersion   string            `yaml:"release_version"`
 	ModulePlatformID string            `yaml:"module_platform_id"`
 	Product          string            `yaml:"product"`
-	OSTreeRefTmpl    string            `yaml:"ostree_ref_tmpl"`
 	Runner           runner.RunnerConf `yaml:"runner"`
 
 	// ISOLabelTmpl can contain {{.Product}},{{.OsVersion}},{{.Arch}},{{.ISOLabel}}
@@ -97,9 +95,9 @@ type DistroYAML struct {
 
 	imageTypes map[string]ImageTypeYAML
 	// distro wide default image config
-	imageConfig *distro.ImageConfig `yaml:"default"`
+	DistroImageConfig *distroImageConfig `yaml:"image_config,omitempty"`
 
-	// ignore the given image types
+	// ignore the given image types & override tweaks
 	Conditions map[string]distroConditions `yaml:"conditions"`
 
 	// XXX: remove this in favor of a better abstraction, this
@@ -110,6 +108,8 @@ type DistroYAML struct {
 
 	// set by the loader
 	ID distro.ID
+
+	Tweaks *distro.Tweaks `yaml:"tweaks"`
 }
 
 func (d *DistroYAML) ImageTypes() map[string]ImageTypeYAML {
@@ -120,7 +120,10 @@ func (d *DistroYAML) ImageTypes() map[string]ImageTypeYAML {
 //
 // Each ImageType gets this as their default ImageConfig.
 func (d *DistroYAML) ImageConfig() *distro.ImageConfig {
-	return d.imageConfig
+	if d.DistroImageConfig != nil {
+		return d.DistroImageConfig.For(d.ID)
+	}
+	return nil
 }
 
 func (d *DistroYAML) SkipImageType(imgTypeName, archName string) bool {
@@ -151,7 +154,6 @@ func (d *DistroYAML) runTemplates(id distro.ID) error {
 	d.Name = subs(d.Name)
 	d.OsVersion = subs(d.OsVersion)
 	d.ReleaseVersion = subs(d.ReleaseVersion)
-	d.OSTreeRefTmpl = subs(d.OSTreeRefTmpl)
 	d.ModulePlatformID = subs(d.ModulePlatformID)
 	d.Runner.Name = subs(d.Runner.Name)
 	for a := range d.BootstrapContainers {
@@ -159,6 +161,16 @@ func (d *DistroYAML) runTemplates(id distro.ID) error {
 	}
 
 	return errors.Join(errs...)
+}
+
+func (d *DistroYAML) GetTweaks() *distro.Tweaks {
+	tweaks := d.Tweaks
+	for _, cond := range d.Conditions {
+		if cond.When.Eval(d.ID, "") {
+			tweaks = tweaks.InheritFrom(cond.Tweaks)
+		}
+	}
+	return tweaks
 }
 
 // Load all YAML files directly in the root of the definitions filesystem. Each
@@ -259,22 +271,56 @@ func LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error) {
 }
 
 func (d *DistroYAML) LoadImageTypes() error {
-	f, err := dataFS().Open(filepath.Join(d.DefsPath, "imagetypes.yaml"))
+	configs, err := loadImageTypeConfigs(d)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	return mergeImageTypeConfigs(d, configs)
+}
 
-	var toplevel imageTypesYAML
-	decoder := yaml.NewDecoder(f)
-	decoder.KnownFields(true)
-	if err := decoder.Decode(&toplevel); err != nil {
-		return err
+func loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
+	files, err := fs.Glob(dataFS(), filepath.Join(d.DefsPath, "[^_]*.yaml"))
+	if err != nil {
+		return nil, err
 	}
-	if len(toplevel.ImageTypes) > 0 {
-		d.imageTypes = make(map[string]ImageTypeYAML, len(toplevel.ImageTypes))
-		for name := range toplevel.ImageTypes {
-			v := toplevel.ImageTypes[name]
+
+	commonPath := filepath.Join(d.DefsPath, "_common.yaml")
+	commonContent, _ := fs.ReadFile(dataFS(), commonPath)
+
+	configs := make([]imageTypesYAML, 0, len(files))
+	for _, fileName := range files {
+		f, err := dataFS().Open(fileName)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		var reader io.Reader = f
+		if len(commonContent) > 0 {
+			reader = io.MultiReader(bytes.NewReader(commonContent), f)
+		}
+
+		var toplevel imageTypesYAML
+		decoder := yaml.NewDecoder(reader)
+		decoder.KnownFields(true)
+		decodeErr := decoder.Decode(&toplevel)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+
+		configs = append(configs, toplevel)
+	}
+
+	return configs, nil
+}
+
+func mergeImageTypeConfigs(d *DistroYAML, configs []imageTypesYAML) error {
+	imageTypes := make(map[string]ImageTypeYAML)
+	for _, cfg := range configs {
+		for name, v := range cfg.ImageTypes {
+			if _, exists := imageTypes[name]; exists {
+				return fmt.Errorf("duplicate image type %s found", name)
+			}
 			v.name = name
 			if err := v.runTemplates(d); err != nil {
 				return err
@@ -283,10 +329,14 @@ func (d *DistroYAML) LoadImageTypes() error {
 				return err
 			}
 
-			d.imageTypes[name] = v
+			imageTypes[name] = v
 		}
 	}
-	d.imageConfig = toplevel.ImageConfig.For(d.ID)
+
+	if len(imageTypes) > 0 {
+		d.imageTypes = imageTypes
+	}
+
 	return nil
 }
 
@@ -294,9 +344,8 @@ func (d *DistroYAML) LoadImageTypes() error {
 // family. Note that multiple distros may use the same image types,
 // e.g. centos/rhel
 type imageTypesYAML struct {
-	ImageConfig distroImageConfig        `yaml:"image_config,omitempty"`
-	ImageTypes  map[string]ImageTypeYAML `yaml:"image_types"`
-	Common      map[string]any           `yaml:".common,omitempty"`
+	ImageTypes map[string]ImageTypeYAML `yaml:"image_types"`
+	Common     map[string]any           `yaml:".common,omitempty"`
 }
 
 type distroImageConfig struct {
@@ -364,6 +413,7 @@ type distroImageConfigConditions struct {
 type distroConditions struct {
 	When             *whenCondition `yaml:"when"`
 	IgnoreImageTypes []string       `yaml:"ignore_image_types"`
+	Tweaks           *distro.Tweaks `yaml:"tweaks"`
 }
 
 type ImageTypeYAML struct {
@@ -385,6 +435,8 @@ type ImageTypeYAML struct {
 
 	ImageConfigYAML     imageConfig     `yaml:"image_config,omitempty"`
 	InstallerConfigYAML installerConfig `yaml:"installer_config,omitempty"`
+	ISOConfigYAML       isoConfig       `yaml:"iso_config,omitempty"`
+	DiskConfigYAML      diskConfig      `yaml:"disk_config,omitempty"`
 
 	Filename    string                      `yaml:"filename"`
 	MimeType    string                      `yaml:"mime_type"`
@@ -392,9 +444,7 @@ type ImageTypeYAML struct {
 	Environment environment.EnvironmentConf `yaml:"environment"`
 	Bootable    bool                        `yaml:"bootable"`
 
-	BootISO bool `yaml:"boot_iso"`
-	// XXX merge with BootISO above, controls if grub2 or syslinux are used for ISO boots
-	UseSyslinux             bool `yaml:"use_syslinux"`
+	BootISO                 bool `yaml:"boot_iso"`
 	UseLegacyAnacondaConfig bool `yaml:"use_legacy_anaconda_config"`
 
 	ISOLabel string `yaml:"iso_label"`
@@ -406,6 +456,8 @@ type ImageTypeYAML struct {
 	OSTree struct {
 		Name       string `yaml:"name"`
 		RemoteName string `yaml:"remote_name"`
+		Ref        string `yaml:"ref"`
+		URL        string `yaml:"url"`
 	} `yaml:"ostree"`
 	// XXX: rhel-8 uses this
 	UseOstreeRemotes bool `yaml:"use_ostree_remotes"`
@@ -423,15 +475,14 @@ type ImageTypeYAML struct {
 
 	InstallWeakDeps *bool `yaml:"install_weak_deps"`
 
-	// for RHEL7 compat
-	// TODO: determine a better place for these options, but for now they are here
-	DiskImagePartTool     *osbuild.PartTool `yaml:"disk_image_part_tool"`
-	DiskImageVPCForceSize *bool             `yaml:"disk_image_vpc_force_size"`
+	DiskImageVPCForceSize *bool `yaml:"disk_image_vpc_force_size"`
 
 	SupportedPartitioningModes []partition.PartitioningMode `yaml:"supported_partitioning_modes"`
 
-	SupportedBlueprintOptions []string `yaml:"supported_blueprint_options"`
-	RequiredBlueprintOptions  []string `yaml:"required_blueprint_options"`
+	Blueprint struct {
+		SupportedOptions []string `yaml:"supported_options"`
+		RequiredOptions  []string `yaml:"required_options"`
+	} `yaml:"blueprint"`
 
 	// name is set by the loader
 	name string
@@ -574,9 +625,29 @@ type installerConfig struct {
 	Conditions              map[string]*conditionsInstallerConf `yaml:"conditions,omitempty"`
 }
 
+type isoConfig struct {
+	*distro.ISOConfig `yaml:",inline"`
+	Conditions        map[string]*conditionsISOConf `yaml:"conditions,omitempty"`
+}
+
+type diskConfig struct {
+	*distro.DiskConfig `yaml:",inline"`
+	Conditions         map[string]*conditionsDiskConf `yaml:"conditions,omitempty"`
+}
+
 type conditionsInstallerConf struct {
 	When         whenCondition           `yaml:"when,omitempty"`
 	ShallowMerge *distro.InstallerConfig `yaml:"shallow_merge,omitempty"`
+}
+
+type conditionsISOConf struct {
+	When         whenCondition     `yaml:"when,omitempty"`
+	ShallowMerge *distro.ISOConfig `yaml:"shallow_merge,omitempty"`
+}
+
+type conditionsDiskConf struct {
+	When         whenCondition      `yaml:"when,omitempty"`
+	ShallowMerge *distro.DiskConfig `yaml:"shallow_merge,omitempty"`
 }
 
 type packageSet struct {
@@ -643,8 +714,8 @@ func (imgType *ImageTypeYAML) PackageSets(id distro.ID, archName string) map[str
 			}
 		}
 		// mostly for tests
-		sort.Strings(rpmmdPkgSet.Include)
-		sort.Strings(rpmmdPkgSet.Exclude)
+		slices.Sort(rpmmdPkgSet.Include)
+		slices.Sort(rpmmdPkgSet.Exclude)
 		res[key] = rpmmdPkgSet
 	}
 
@@ -688,7 +759,7 @@ func (imgType *ImageTypeYAML) ImageConfig(id distro.ID, archName string) *distro
 // InstallerConfig returns the InstallerConfig for the given imgType
 // Note that on conditions the InstallerConfig is fully replaced, do
 // any merging in YAML
-func (imgType *ImageTypeYAML) InstallerConfig(id distro.ID, archName string) *distro.InstallerConfig {
+func (imgType *ImageTypeYAML) InstallerConfig(id distro.ID, archName string) (*distro.InstallerConfig, error) {
 	installerConfig := imgType.InstallerConfigYAML.InstallerConfig
 	for _, cond := range imgType.InstallerConfigYAML.Conditions {
 		if cond.When.Eval(id, archName) {
@@ -696,5 +767,39 @@ func (imgType *ImageTypeYAML) InstallerConfig(id distro.ID, archName string) *di
 		}
 	}
 
-	return installerConfig
+	if installerConfig != nil {
+		if err := installerConfig.ExpandTemplates(id, archName); err != nil {
+			return nil, err
+		}
+	}
+
+	return installerConfig, nil
+}
+
+// ISOConfig returns the ISOConfig for the given imgType
+// Note that on conditions the ISOConfig is fully replaced, do
+// any merging in YAML
+func (imgType *ImageTypeYAML) ISOConfig(id distro.ID, archName string) *distro.ISOConfig {
+	isoConfig := imgType.ISOConfigYAML.ISOConfig
+	for _, cond := range imgType.ISOConfigYAML.Conditions {
+		if cond.When.Eval(id, archName) {
+			isoConfig = cond.ShallowMerge.InheritFrom(isoConfig)
+		}
+	}
+
+	return isoConfig
+}
+
+// DiskConfig returns the DiskConfig for the given imgType
+// Note that on conditions the DiskConfig is fully replaced, do
+// any merging in YAML
+func (imgType *ImageTypeYAML) DiskConfig(id distro.ID, archName string) *distro.DiskConfig {
+	diskConfig := imgType.DiskConfigYAML.DiskConfig
+	for _, cond := range imgType.DiskConfigYAML.Conditions {
+		if cond.When.Eval(id, archName) {
+			diskConfig = cond.ShallowMerge.InheritFrom(diskConfig)
+		}
+	}
+
+	return diskConfig
 }

@@ -58,6 +58,7 @@ func TestSquashfsStageJsonFull(t *testing.T) {
   },
   "options": {
     "filename": "disk.img",
+    "source": "mount://-/",
     "exclude_paths": [
       "boot/efi/.*",
       "boot/initramfs-.*"
@@ -83,6 +84,7 @@ func TestSquashfsStageJsonFull(t *testing.T) {
 			"boot/efi/.*",
 			"boot/initramfs-.*",
 		},
+		Source: "mount://-/",
 	}
 	stage := osbuild.NewSquashfsStage(opts, "input-pipeline")
 	require.NotNil(t, stage)

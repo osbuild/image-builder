@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
@@ -22,38 +24,66 @@ func TestBuildContainerBuildableNo(t *testing.T) {
 	build := buildIf.(*BuildrootFromPackages)
 	require.NotNil(t, build)
 
-	for _, tc := range []struct {
-		packageSpec           rpmmd.PackageList
+	testCases := []struct {
+		depsolveResult        *depsolvednf.DepsolveResult
 		containerBuildable    bool
 		expectedSELinuxLabels map[string]string
 	}{
 		// no pkgs means no selinux labels (container build or not)
 		{
-			rpmmd.PackageList{},
+			&depsolvednf.DepsolveResult{
+				Transactions: depsolvednf.TransactionList{},
+				Repos:        repos,
+			},
 			false,
 			map[string]string{},
 		},
 		{
-			rpmmd.PackageList{},
+			&depsolvednf.DepsolveResult{
+				Transactions: depsolvednf.TransactionList{},
+				Repos:        repos,
+			},
 			true,
 			map[string]string{},
 		},
 		{
-			rpmmd.PackageList{{Name: "coreutils"}},
+			&depsolvednf.DepsolveResult{
+				Transactions: depsolvednf.TransactionList{
+					{
+						{Name: "coreutils"},
+					},
+				},
+				Repos: repos,
+			},
 			false,
 			map[string]string{
 				"/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
 			},
 		},
 		{
-			rpmmd.PackageList{{Name: "tar"}},
+			&depsolvednf.DepsolveResult{
+				Transactions: depsolvednf.TransactionList{
+					{
+						{Name: "tar"},
+					},
+				},
+				Repos: repos,
+			},
 			false,
 			map[string]string{
 				"/usr/bin/tar": "system_u:object_r:install_exec_t:s0",
 			},
 		},
 		{
-			rpmmd.PackageList{{Name: "coreutils"}, {Name: "tar"}},
+			&depsolvednf.DepsolveResult{
+				Transactions: depsolvednf.TransactionList{
+					{
+						{Name: "coreutils"},
+						{Name: "tar"},
+					},
+				},
+				Repos: repos,
+			},
 			false,
 			map[string]string{
 				"/usr/bin/cp":  "system_u:object_r:install_exec_t:s0",
@@ -61,7 +91,14 @@ func TestBuildContainerBuildableNo(t *testing.T) {
 			},
 		},
 		{
-			rpmmd.PackageList{{Name: "coreutils"}},
+			&depsolvednf.DepsolveResult{
+				Transactions: depsolvednf.TransactionList{
+					{
+						{Name: "coreutils"},
+					},
+				},
+				Repos: repos,
+			},
 			true,
 			map[string]string{
 				"/usr/bin/cp":     "system_u:object_r:install_exec_t:s0",
@@ -70,7 +107,15 @@ func TestBuildContainerBuildableNo(t *testing.T) {
 			},
 		},
 		{
-			rpmmd.PackageList{{Name: "coreutils"}, {Name: "tar"}},
+			&depsolvednf.DepsolveResult{
+				Transactions: depsolvednf.TransactionList{
+					{
+						{Name: "coreutils"},
+						{Name: "tar"},
+					},
+				},
+				Repos: repos,
+			},
 			true,
 			map[string]string{
 				"/usr/bin/cp":     "system_u:object_r:install_exec_t:s0",
@@ -79,12 +124,16 @@ func TestBuildContainerBuildableNo(t *testing.T) {
 				"/usr/bin/tar":    "system_u:object_r:install_exec_t:s0",
 			},
 		},
-	} {
-		build.packageSpecs = tc.packageSpec
-		build.containerBuildable = tc.containerBuildable
+	}
 
-		labels := build.getSELinuxLabels()
-		require.Equal(t, labels, tc.expectedSELinuxLabels)
+	for idx, tc := range testCases {
+		t.Run(fmt.Sprintf("test case %d", idx), func(t *testing.T) {
+			build.depsolveResult = tc.depsolveResult
+			build.containerBuildable = tc.containerBuildable
+
+			labels := build.getSELinuxLabels()
+			require.Equal(t, labels, tc.expectedSELinuxLabels)
+		})
 	}
 }
 
@@ -161,9 +210,20 @@ func TestNewBuildOptionDisableSELinux(t *testing.T) {
 		buildIf := NewBuild(&mf, runner, nil, opts)
 		require.NotNil(t, buildIf)
 		build := buildIf.(*BuildrootFromPackages)
+		repo := rpmmd.RepoConfig{
+			Id:       "test",
+			BaseURLs: []string{"https://example.com/test"},
+		}
 
-		build.packageSpecs = rpmmd.PackageList{
-			{Name: "foo", Checksum: rpmmd.Checksum{Type: "sha256", Value: strings.Repeat("x", 32)}},
+		build.depsolveResult = &depsolvednf.DepsolveResult{
+			Transactions: depsolvednf.TransactionList{
+				{{
+					Name:     "foo",
+					Repo:     &repo,
+					Checksum: rpmmd.Checksum{Type: "sha256", Value: strings.Repeat("x", 32)},
+				}},
+			},
+			Repos: []rpmmd.RepoConfig{repo},
 		}
 		osbuildPipeline, err := build.serialize()
 		require.NoError(t, err)
@@ -192,11 +252,22 @@ func TestNewBuildOptionSELinuxPolicyBuildrootFromPackages(t *testing.T) {
 		opts := &BuildOptions{
 			SELinuxPolicy: tc.policy,
 		}
-		buildIf := NewBuild(&mf, runner, nil, opts)
+		repo := rpmmd.RepoConfig{
+			Id:       "test",
+			BaseURLs: []string{"https://example.com/test"},
+		}
+		buildIf := NewBuild(&mf, runner, []rpmmd.RepoConfig{repo}, opts)
 		require.NotNil(t, buildIf)
 		build := buildIf.(*BuildrootFromPackages)
-		build.packageSpecs = rpmmd.PackageList{
-			{Name: "foo", Checksum: rpmmd.Checksum{Type: "sha256", Value: strings.Repeat("x", 32)}},
+		build.depsolveResult = &depsolvednf.DepsolveResult{
+			Transactions: depsolvednf.TransactionList{
+				{{
+					Name:     "foo",
+					Repo:     &repo,
+					Checksum: rpmmd.Checksum{Type: "sha256", Value: strings.Repeat("x", 32)},
+				}},
+			},
+			Repos: []rpmmd.RepoConfig{repo},
 		}
 		osbuildPipeline, err := build.serialize()
 		require.NoError(t, err)

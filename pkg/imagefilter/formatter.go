@@ -5,12 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"sort"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/osbuild/images/pkg/distrosort"
-	// we cannot use "maps" yet, as it needs go1.23
-	"golang.org/x/exp/maps"
 )
 
 // OutputFormat contains the valid output formats for formatting results
@@ -39,9 +38,7 @@ var supportedFormatters = map[string]ResultsFormatter{
 
 // SupportedOutputFormats returns a list of supported output formats
 func SupportedOutputFormats() []string {
-	keys := maps.Keys(supportedFormatters)
-	sort.Strings(keys)
-	return keys
+	return slices.Sorted(maps.Keys(supportedFormatters))
 }
 
 // NewResultsFormatter will create a formatter based on the given format.
@@ -127,12 +124,12 @@ func (*textShortResultsFormatter) Output(w io.Writer, all []Result) error {
 		for t := range outputMap[distro] {
 			types = append(types, t)
 		}
-		sort.Strings(types)
+		slices.Sort(types)
 
 		var typeArchPairs []string
 		for _, t := range types {
 			arches := outputMap[distro][t]
-			sort.Strings(arches)
+			slices.Sort(arches)
 			typeArchPairs = append(typeArchPairs, fmt.Sprintf("%s: %s", t, strings.Join(arches, ", ")))
 		}
 

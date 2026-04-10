@@ -1,0 +1,11 @@
+{
+  "name": "bootc-empty",
+  "blueprint": {
+    "name": "bootc-empty",
+    "description": "Blueprint for testing bootc empty image type.",
+    "version": "1.0"
+  },
+  "solver": {
+    "use_root_dir": true
+  }
+}
