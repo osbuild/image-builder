@@ -1269,21 +1269,26 @@
         - "customizations.timezone"
         - "customizations.locale"
 
-  atomic_disk_common: &atomic_qcow2_common
+  atomic_disk_common: &atomic_disk_common
     <<: *rpm_ostree_imgtype_common
-    filename: "image.qcow2"
-    mime_type: "application/x-qemu-disk"
     default_size: "10 GiB"
     bootable: true
     image_func: "ostree_disk"
     ostree: *ostree_atomic
-    exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
     image_config:
       kernel_options: *ostree_deployment_kernel_options
       ignition_platform: "qemu"
     partition_table:
       <<: *iot_base_partition_tables
+    blueprint:
+      supported_options: *supported_options_ostree_disk
+
+  atomic_qcow2_common: &atomic_qcow2_common
+    <<: *atomic_disk_common
+    filename: "image.qcow2"
+    mime_type: "application/x-qemu-disk"
+    exports: ["qcow2"]
     platforms:
       - <<: *x86_64_uefi_platform
         image_format: "qcow2"
@@ -1292,11 +1297,9 @@
       - <<: *aarch64_platform
         image_format: "qcow2"
         qcow2_compat: "1.1"
-    blueprint:
-      supported_options: *supported_options_ostree_disk
 
   atomic_raw_common: &atomic_raw_common
-    <<: *atomic_qcow2_common
+    <<: *atomic_disk_common
     filename: "image.raw.xz"
     compression: "xz"
     mime_type: "application/xz"
