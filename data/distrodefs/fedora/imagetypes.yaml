@@ -1295,6 +1295,18 @@
     blueprint:
       supported_options: *supported_options_ostree_disk
 
+  atomic_raw_common: &atomic_raw_common
+    <<: *atomic_qcow2_common
+    filename: "image.raw.xz"
+    compression: "xz"
+    mime_type: "application/xz"
+    exports: ["xz"]
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
+
 image_types:
   "generic-vagrant-libvirt": &generic_vagrant_libvirt
     filename: "vagrant-libvirt.box"
@@ -3125,8 +3137,22 @@ image_types:
       <<: *ostree_atomic
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
 
+  "kinoite-raw-xz":
+    <<: *atomic_raw_common
+    variant: "Kinoite"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
+
   "silverblue-qcow2":
     <<: *atomic_qcow2_common
+    variant: "Kinoite"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
+
+  "silverblue-raw-xz":
+    <<: *atomic_raw_common
     variant: "Kinoite"
     ostree:
       <<: *ostree_atomic

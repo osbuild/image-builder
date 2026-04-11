@@ -291,8 +291,10 @@
         "iot-raw-xz",
         "kinoite-installer",
         "kinoite-qcow2",
+        "kinoite-raw-xz",
         "silverblue-installer",
         "silverblue-qcow2",
+        "silverblue-raw-xz",
         "sway-atomic-installer",
         "budgie-atomic-installer",
         "cosmic-atomic-installer"
