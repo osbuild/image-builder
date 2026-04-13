@@ -307,8 +307,7 @@
       - "rw"
       - "coreos.no_persist_ip"
 
-  rpm_ostree_imgtype_common: &rpm_ostree_imgtype_common
-    rpm_ostree: true
+  ostree_imgtype_common: &ostree_imgtype_common
     supported_partitioning_modes:
       - ""  # empty string means default partitioning mode
       - "auto-lvm"
@@ -1218,7 +1217,7 @@
     url: "mirrorlist=https://ostree.fedoraproject.org/mirrorlist"
 
   atomic_installer_common: &atomic_installer_common
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
     boot_iso: true
@@ -1270,7 +1269,7 @@
         - "customizations.locale"
 
   atomic_disk_common: &atomic_disk_common
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     default_size: "10 GiB"
     bootable: true
     image_func: "ostree_disk"
@@ -1539,7 +1538,7 @@ image_types:
   # NOTE: keep in sync with official fedora-iot definitions:
   # https://pagure.io/fedora-iot/ostree/blob/main/f/fedora-iot-base.yaml
   "iot-commit": &iot_commit
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     name_aliases: ["fedora-iot-commit"]
     filename: "commit.tar"
     mime_type: "application/x-tar"
@@ -1729,7 +1728,7 @@ image_types:
             - *aarch64_installer_platform_compat
 
   "iot-raw-xz":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     name_aliases: ["iot-raw-image", "fedora-iot-raw-image"]
     filename: "image.raw.xz"
     compression: "xz"
@@ -1789,7 +1788,7 @@ image_types:
       supported_options: *supported_options_ostree_disk
 
   "iot-qcow2":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     name_aliases: ["iot-qcow2-image"]
     filename: "image.qcow2"
     mime_type: "application/x-qemu-disk"
@@ -1816,7 +1815,7 @@ image_types:
       supported_options: *supported_options_ostree_disk
 
   "iot-bootable-container":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     filename: "iot-bootable-container.tar"
     mime_type: "application/x-tar"
     image_func: "bootable_container"
@@ -2073,7 +2072,7 @@ image_types:
     exports: ["zstd"]
 
   "iot-installer":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     name_aliases: ["fedora-iot-installer"]
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
@@ -2451,7 +2450,7 @@ image_types:
       supported_options: *supported_options_container
 
   "iot-simplified-installer":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     filename: "simplified-installer.iso"
     mime_type: "application/x-iso9660-image"
     bootable: true

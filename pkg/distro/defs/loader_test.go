@@ -789,7 +789,6 @@ image_types:
       services: ["cloud-init.service"]
     bootable: true
     boot_iso: true
-    rpm_ostree: false
     iso_label: "Workstation"
     default_size: 5_368_709_120  # 5 * datasizes.GibiByte
     image_func: "disk"
@@ -821,7 +820,7 @@ image_types:
 	assert.Equal(t, []string{"cloud-init.service"}, imgType.Environment.GetServices())
 	assert.Equal(t, true, imgType.Bootable)
 	assert.Equal(t, true, imgType.BootISO)
-	assert.Equal(t, false, imgType.RPMOSTree)
+	assert.Equal(t, false, imgType.IsOSTreeBasedImageType())
 	assert.Equal(t, "Workstation", imgType.ISOLabel)
 	assert.Equal(t, datasizes.Size(5*datasizes.GibiByte), imgType.DefaultSize)
 	assert.Equal(t, "disk", imgType.Image)
@@ -836,6 +835,19 @@ image_types:
 			UEFIVendor:   "test-vendor",
 		},
 	}, imgType.InternalPlatforms)
+}
+
+func TestHIsOSTreeBasedImageType(t *testing.T) {
+	var empty defs.ImageTypeYAML
+	assert.False(t, empty.IsOSTreeBasedImageType())
+
+	withRef := defs.ImageTypeYAML{}
+	withRef.OSTree.Ref = "fedora/x86_64/iot"
+	assert.True(t, withRef.IsOSTreeBasedImageType())
+
+	withURL := defs.ImageTypeYAML{}
+	withURL.OSTree.URL = "https://example.com/repo"
+	assert.True(t, withURL.IsOSTreeBasedImageType())
 }
 
 func TestImageTypesUEFIVendorErrorWhenEmpty(t *testing.T) {

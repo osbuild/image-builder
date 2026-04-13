@@ -42,7 +42,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc := manifest.OSCustomizations{}
 
 	imageConfig := t.getDefaultImageConfig()
-	if t.ImageTypeYAML.Bootable || t.ImageTypeYAML.RPMOSTree {
+	if t.ImageTypeYAML.Bootable || t.ImageTypeYAML.IsOSTreeBasedImageType() {
 		// TODO: for now the only image types that define a default kernel are
 		// ones that use UKIs and don't allow overriding, so this works.
 		// However, if we ever need to specify default kernels for image types
@@ -209,7 +209,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	// deployment, rather than the commit. Therefore the containers need to be
 	// stored in a different location, like `/usr/share`, and the container
 	// storage engine configured accordingly.
-	if t.ImageTypeYAML.RPMOSTree && len(containers) > 0 {
+	if t.ImageTypeYAML.IsOSTreeBasedImageType() && len(containers) > 0 {
 		storagePath := "/usr/share/containers/storage"
 		osc.ContainersStorage = &storagePath
 	}
@@ -247,7 +247,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	}
 
 	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
-		if t.ImageTypeYAML.RPMOSTree {
+		if t.ImageTypeYAML.IsOSTreeBasedImageType() {
 			panic("unexpected oscap options for ostree image type")
 		}
 
@@ -649,7 +649,7 @@ func ostreeDeploymentCustomizations(
 	t *imageType,
 	c *blueprint.Customizations) (manifest.OSTreeDeploymentCustomizations, error) {
 
-	if !t.ImageTypeYAML.RPMOSTree || !t.ImageTypeYAML.Bootable {
+	if !t.ImageTypeYAML.IsOSTreeBasedImageType() || !t.ImageTypeYAML.Bootable {
 		return manifest.OSTreeDeploymentCustomizations{}, fmt.Errorf("ostree deployment customizations are only supported for bootable rpm-ostree images")
 	}
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
