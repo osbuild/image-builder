@@ -3149,14 +3149,14 @@ image_types:
 
   "silverblue-qcow2":
     <<: *atomic_qcow2_common
-    variant: "Kinoite"
+    variant: "Silverblue"
     ostree:
       <<: *ostree_atomic
-      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/silverblue"
 
   "silverblue-raw-xz":
     <<: *atomic_raw_common
-    variant: "Kinoite"
+    variant: "Silverblue"
     ostree:
       <<: *ostree_atomic
-      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/silverblue"
