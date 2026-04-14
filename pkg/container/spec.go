@@ -1,9 +1,6 @@
 package container
 
 import (
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/opencontainers/go-digest"
-
 	"github.com/osbuild/images/pkg/arch"
 )
 
@@ -25,17 +22,15 @@ type Spec struct {
 }
 
 // NewSpec creates a new Spec from the essential information.
-// It also converts is the transition point from container
-// specific types (digest.Digest) to generic types (string).
-func NewSpec(source reference.Named, digest, imageID digest.Digest, tlsVerify *bool, listDigest string, localName string, localStorage bool) Spec {
+func NewSpec(source string, digest, imageID string, tlsVerify *bool, listDigest string, localName string, localStorage bool) Spec {
 	if localName == "" {
-		localName = source.String()
+		localName = source
 	}
 	return Spec{
-		Source:       source.Name(),
-		Digest:       digest.String(),
+		Source:       source,
+		Digest:       digest,
 		TLSVerify:    tlsVerify,
-		ImageID:      imageID.String(),
+		ImageID:      imageID,
 		LocalName:    localName,
 		ListDigest:   listDigest,
 		LocalStorage: localStorage,
