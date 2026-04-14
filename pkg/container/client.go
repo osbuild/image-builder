@@ -569,10 +569,14 @@ func (cl *Client) Resolve(ctx context.Context, name string, local bool) (Spec, e
 		return Spec{}, err
 	}
 
+	if name == "" {
+		name = cl.Target.String()
+	}
+
 	spec := NewSpec(
-		cl.Target,
-		ids.Manifest,
-		ids.Config,
+		cl.Target.Name(),
+		ids.Manifest.String(),
+		ids.Config.String(),
 		cl.GetTLSVerify(),
 		ids.ListManifest.String(),
 		name,
