@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/platform"
 )
 
 // A RawImage represents a raw image file which can be booted in a
@@ -111,6 +112,27 @@ func (p *RawImage) serialize() (osbuild.Pipeline, error) {
 		if grubLegacy := p.treePipeline.platform.GetBIOSPlatform(); grubLegacy != "" {
 			pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(p.Filename(), pt, grubLegacy)))
 		}
+	}
+
+	if p.treePipeline.platform.GetBootloader() == platform.BOOTLOADER_SYSTEMD {
+		_, bootctlDevices, bootctlMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename(), pt)
+
+		opts := &osbuild.BootctlInstallRootStageOptions{
+			Root: "mount://-/",
+		}
+
+		// ESP is required
+		espMountpoint, err := findESPMountpoint(p.treePipeline.PartitionTable)
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+		opts.ESPPath = espMountpoint
+
+		// XBOOTLDR is optional so we don't need to check the error, if there's
+		// an error it's empty and the stage options will omit it
+		opts.BootPath, _ = findXBootLDRMountpoint(p.treePipeline.PartitionTable)
+
+		pipeline.AddStage(osbuild.NewBootctlInstallRootStage(opts, bootctlDevices, bootctlMounts))
 	}
 
 	return pipeline, nil

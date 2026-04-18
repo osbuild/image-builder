@@ -568,13 +568,38 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	}
 	baseRPMOptions.InstallLangs = p.OSCustomizations.InstallLangs
 
-	if p.platform.GetBootloader() == platform.BOOTLOADER_UKI && p.PartitionTable != nil {
+	bootloader := p.platform.GetBootloader()
+
+	if bootloader == platform.BOOTLOADER_UKI && p.PartitionTable != nil {
 		espMountpoint, err := findESPMountpoint(p.PartitionTable)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}
 		baseRPMOptions.KernelInstallEnv = &osbuild.KernelInstallEnv{
 			BootRoot: espMountpoint,
+		}
+	}
+
+	if bootloader == platform.BOOTLOADER_SYSTEMD && p.PartitionTable != nil {
+		// ESP is required
+		espMountpoint, err := findESPMountpoint(p.PartitionTable)
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+
+		// XBOOTLDR is optional
+		xbootldrMountpoint, err := findXBootLDRMountpoint(p.PartitionTable)
+		if err != nil {
+			xbootldrMountpoint = ""
+		}
+
+		bootRoot := espMountpoint
+		if xbootldrMountpoint != "" {
+			bootRoot = xbootldrMountpoint
+		}
+
+		baseRPMOptions.KernelInstallEnv = &osbuild.KernelInstallEnv{
+			BootRoot: bootRoot,
 		}
 	}
 
@@ -585,12 +610,18 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	pipeline.AddStages(rpmStages...)
 
 	if !p.OSCustomizations.NoBLS {
+		fixBLSOptions := &osbuild.FixBLSStageOptions{}
+
 		// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-		if p.PartitionTable == nil || p.PartitionTable.FindMountableOnPlain("/boot") == nil {
-			pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
-		} else {
-			pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.ToPtr("")}))
+		if p.PartitionTable != nil && p.PartitionTable.FindMountableOnPlain("/boot") != nil {
+			fixBLSOptions.Prefix = common.ToPtr("")
 		}
+
+		if bootloader == platform.BOOTLOADER_SYSTEMD {
+			fixBLSOptions.RequireBootPrefix = common.ToPtr(false)
+		}
+
+		pipeline.AddStage(osbuild.NewFixBLSStage(fixBLSOptions))
 	}
 
 	if len(p.containerSpecs) > 0 {
@@ -1181,6 +1212,27 @@ func findESPMountpoint(pt *disk.PartitionTable) (string, error) {
 	}
 
 	return espMountpoint, nil
+}
+
+func findXBootLDRMountpoint(pt *disk.PartitionTable) (string, error) {
+	xbootldrMountpoint := ""
+	_ = pt.ForEachMountable(func(mnt disk.Mountable, path []disk.Entity) error {
+		parent := path[1]
+		if partition, ok := parent.(*disk.Partition); ok {
+			if partition.Type != disk.XBootLDRPartitionGUID {
+				return nil
+			}
+
+			xbootldrMountpoint = mnt.GetMountpoint()
+		}
+		return nil
+	})
+
+	if xbootldrMountpoint == "" {
+		return "", fmt.Errorf("failed to find mountpoint for XBOOTLDR when generating boot CSV file")
+	}
+
+	return xbootldrMountpoint, nil
 }
 
 // The 99-uki-uefi-setup.install script, prior to v25.3 of the uki-direct
