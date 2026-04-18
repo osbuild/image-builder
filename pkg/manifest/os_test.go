@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/depsolvednf"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -875,5 +876,114 @@ func TestOSPackageSetChainStructure(t *testing.T) {
 					"package set %d Include mismatch", idx)
 			}
 		})
+	}
+}
+
+func makeSystemdBootPartitionTable() *disk.PartitionTable {
+	return &disk.PartitionTable{
+		Type: disk.PT_GPT,
+		Partitions: []disk.Partition{
+			{
+				Size: 200 * testdisk.MiB,
+				Type: disk.EFISystemPartitionGUID,
+				Payload: &disk.Filesystem{
+					Type:       "vfat",
+					Mountpoint: "/boot/efi",
+				},
+			},
+			{
+				Type: disk.FilesystemDataGUID,
+				Payload: &disk.Filesystem{
+					Type:       "ext4",
+					Mountpoint: "/",
+				},
+			},
+		},
+	}
+}
+
+func makeSystemdBootPartitionTableWithXBootLDR() *disk.PartitionTable {
+	return &disk.PartitionTable{
+		Type: disk.PT_GPT,
+		Partitions: []disk.Partition{
+			{
+				Size: 200 * testdisk.MiB,
+				Type: disk.EFISystemPartitionGUID,
+				Payload: &disk.Filesystem{
+					Type:       "vfat",
+					Mountpoint: "/boot/efi",
+				},
+			},
+			{
+				Size: 500 * testdisk.MiB,
+				Type: disk.XBootLDRPartitionGUID,
+				Payload: &disk.Filesystem{
+					Type:       "ext4",
+					Mountpoint: "/boot",
+				},
+			},
+			{
+				Type: disk.FilesystemDataGUID,
+				Payload: &disk.Filesystem{
+					Type:       "ext4",
+					Mountpoint: "/",
+				},
+			},
+		},
+	}
+}
+
+func TestOSPipelineSystemdBootFixBLS(t *testing.T) {
+	os := manifest.NewTestOSWithPlatform(&platform.Data{
+		Arch:       arch.ARCH_X86_64,
+		Bootloader: platform.BOOTLOADER_SYSTEMD,
+	})
+	os.PartitionTable = makeSystemdBootPartitionTable()
+
+	pipeline, err := os.Serialize()
+	require.NoError(t, err)
+
+	st := findStage("org.osbuild.fix-bls", pipeline.Stages)
+	require.NotNil(t, st)
+	opts := st.Options.(*osbuild.FixBLSStageOptions)
+	require.NotNil(t, opts.RequireBootPrefix)
+	assert.Equal(t, false, *opts.RequireBootPrefix)
+}
+
+func TestOSPipelineSystemdBootKernelInstallEnv(t *testing.T) {
+	os := manifest.NewTestOSWithPlatform(&platform.Data{
+		Arch:       arch.ARCH_X86_64,
+		Bootloader: platform.BOOTLOADER_SYSTEMD,
+	})
+	os.PartitionTable = makeSystemdBootPartitionTable()
+
+	pipeline, err := os.Serialize()
+	require.NoError(t, err)
+
+	rpmStages := findStages("org.osbuild.rpm", pipeline.Stages)
+	require.NotEmpty(t, rpmStages)
+	for _, st := range rpmStages {
+		opts := st.Options.(*osbuild.RPMStageOptions)
+		require.NotNil(t, opts.KernelInstallEnv)
+		assert.Equal(t, "/boot/efi", opts.KernelInstallEnv.BootRoot)
+	}
+}
+
+func TestOSPipelineSystemdBootKernelInstallEnvXBootLDR(t *testing.T) {
+	os := manifest.NewTestOSWithPlatform(&platform.Data{
+		Arch:       arch.ARCH_X86_64,
+		Bootloader: platform.BOOTLOADER_SYSTEMD,
+	})
+	os.PartitionTable = makeSystemdBootPartitionTableWithXBootLDR()
+
+	pipeline, err := os.Serialize()
+	require.NoError(t, err)
+
+	rpmStages := findStages("org.osbuild.rpm", pipeline.Stages)
+	require.NotEmpty(t, rpmStages)
+	for _, st := range rpmStages {
+		opts := st.Options.(*osbuild.RPMStageOptions)
+		require.NotNil(t, opts.KernelInstallEnv)
+		assert.Equal(t, "/boot", opts.KernelInstallEnv.BootRoot)
 	}
 }

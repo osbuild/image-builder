@@ -31,19 +31,20 @@ func (p *OS) AddStagesForAllFilesAndInlineData(pipeline *osbuild.Pipeline, files
 // TODO: make all tests external and define this only in the manifest_test
 // package.
 func NewTestOS() *OS {
+	return NewTestOSWithPlatform(&platform.Data{
+		Arch:         arch.ARCH_X86_64,
+		BIOSPlatform: "i386-pc",
+	})
+}
+
+func NewTestOSWithPlatform(pf *platform.Data) *OS {
 	repos := []rpmmd.RepoConfig{}
 	m := New()
 	runner := &runner.Fedora{Version: 38}
 	build := NewBuild(&m, runner, repos, nil)
 	build.Checkpoint()
 
-	// create an x86_64 platform with bios boot
-	platform := &platform.Data{
-		Arch:         arch.ARCH_X86_64,
-		BIOSPlatform: "i386-pc",
-	}
-
-	os := NewOS(build, platform, repos)
+	os := NewOS(build, pf, repos)
 
 	return os
 }
