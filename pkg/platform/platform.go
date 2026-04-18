@@ -31,7 +31,29 @@ const ( // bootloader enum
 	BOOTLOADER_GRUB2
 	BOOTLOADER_ZIPL
 	BOOTLOADER_UKI
+	BOOTLOADER_SYSTEMD
 )
+
+func (b Bootloader) String() string {
+	switch b {
+	case BOOTLOADER_NONE:
+		return "none"
+	case BOOTLOADER_GRUB2:
+		return "grub2"
+	case BOOTLOADER_ZIPL:
+		return "zipl"
+	case BOOTLOADER_UKI:
+		return "uki"
+	case BOOTLOADER_SYSTEMD:
+		return "systemd"
+	default:
+		panic(fmt.Errorf("unknown bootloader %d", b))
+	}
+}
+
+func (b Bootloader) MarshalJSON() ([]byte, error) {
+	return json.Marshal(b.String())
+}
 
 func (b *Bootloader) UnmarshalJSON(data []byte) (err error) {
 	var s string
@@ -55,6 +77,8 @@ func FromString(b string) (Bootloader, error) {
 		return BOOTLOADER_ZIPL, nil
 	case "uki":
 		return BOOTLOADER_UKI, nil
+	case "systemd":
+		return BOOTLOADER_SYSTEMD, nil
 	case "", "none":
 		return BOOTLOADER_NONE, nil
 	default:
