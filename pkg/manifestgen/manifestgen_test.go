@@ -3,6 +3,7 @@ package manifestgen_test
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -265,6 +266,43 @@ func TestManifestGeneratorDepsolveWithSbomWriter(t *testing.T) {
 		"centos-9-qcow2-x86_64.image-os.spdx.json":        `{"sbom-for":"os"}`,
 	}
 	assert.Equal(t, expected, generatedSboms)
+}
+
+func TestManifestGeneratorWithRPMListWriter(t *testing.T) {
+	repos, err := testrepos.New()
+	assert.NoError(t, err)
+	fac := distrofactory.NewDefault()
+
+	filter, err := imagefilter.New(fac, repos)
+	assert.NoError(t, err)
+	res, err := filter.Filter("distro:centos-9", "type:qcow2", "arch:x86_64")
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(res))
+
+	generated := map[string]string{}
+	opts := &manifestgen.Options{
+		Depsolve:          fakeDepsolve,
+		CommitResolver:    panicCommitResolver,
+		ContainerResolver: panicContainerResolver,
+		RPMListWriter: func(filename string, content io.Reader) error {
+			b, err := io.ReadAll(content)
+			assert.NoError(t, err)
+			generated[filename] = strings.TrimSpace(string(b))
+			return nil
+		},
+	}
+	mg, err := manifestgen.New(repos, opts)
+	assert.NoError(t, err)
+	assert.NotNil(t, mg)
+	var bp blueprint.Blueprint
+	_, err = mg.Generate(&bp, res[0].ImgType, nil)
+	require.NoError(t, err)
+
+	assert.Contains(t, generated, "rpmlist.json")
+	require.Len(t, generated, 1)
+	var rows []json.RawMessage
+	require.NoError(t, json.Unmarshal([]byte(generated["rpmlist.json"]), &rows))
+	assert.NotEmpty(t, rows)
 }
 
 func TestManifestGeneratorSeed(t *testing.T) {

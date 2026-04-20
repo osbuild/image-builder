@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
+	"github.com/osbuild/images/pkg/rpmlist"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
 )
@@ -82,6 +83,8 @@ type Options struct {
 	// Use the a bootstrap container to buildroot (useful for e.g.
 	// cross-arch or cross-distro builds)
 	UseBootstrapContainer bool
+
+	RPMListWriter RPMListWriterFunc
 }
 
 // Generator can generate an osbuild manifest from a given repository
@@ -105,6 +108,7 @@ type Generator struct {
 	overrideRepos []rpmmd.RepoConfig
 
 	useBootstrapContainer bool
+	rpmlistWriter         RPMListWriterFunc
 }
 
 // New will create a new manifest generator
@@ -126,6 +130,7 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		customSeed:             opts.CustomSeed,
 		overrideRepos:          opts.OverrideRepos,
 		useBootstrapContainer:  opts.UseBootstrapContainer,
+		rpmlistWriter:          opts.RPMListWriter,
 	}
 	if mg.depsolve == nil {
 		mg.depsolve = DefaultDepsolve
@@ -245,7 +250,8 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 		return nil, err
 	}
 
-	if mg.sbomWriter != nil {
+	if mg.sbomWriter != nil || mg.rpmlistWriter != nil {
+		uniquePackages := make(map[string]rpmmd.Package)
 		// XXX: this is very similar to
 		// osbuild-composer:jobimpl-osbuild.go, see if code
 		// can be shared
@@ -259,20 +265,56 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 			}
 			// XXX: sync with image-builder-cli:build.go name generation - can we have a shared helper?
 			imageName := fmt.Sprintf("%s-%s-%s", dist.Name(), imgType.Name(), a.Name())
-			sbomDocOutputFilename := fmt.Sprintf("%s.%s-%s.%s", imageName, pipelinePurpose, plName, defaultSBOMExt)
-
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			if err := enc.Encode(depsolvedPipeline.SBOM.Document); err != nil {
-				return nil, err
+			if mg.sbomWriter != nil {
+				sbomDocOutputFilename := fmt.Sprintf("%s.%s-%s.%s", imageName, pipelinePurpose, plName, defaultSBOMExt)
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				if err := enc.Encode(depsolvedPipeline.SBOM.Document); err != nil {
+					return nil, err
+				}
+				if err := mg.sbomWriter(sbomDocOutputFilename, &buf, depsolvedPipeline.SBOM.DocType); err != nil {
+					return nil, err
+				}
 			}
-			if err := mg.sbomWriter(sbomDocOutputFilename, &buf, depsolvedPipeline.SBOM.DocType); err != nil {
+
+			if mg.rpmlistWriter != nil && pipelinePurpose == "image" {
+				addUniquePackagesFromPipeline(uniquePackages, depsolvedPipeline)
+			}
+		}
+
+		if mg.rpmlistWriter != nil {
+			if err := writeRPMList(mg.rpmlistWriter, uniquePackages); err != nil {
 				return nil, err
 			}
 		}
 	}
 
 	return mf, nil
+}
+
+func addUniquePackagesFromPipeline(unique map[string]rpmmd.Package, pipeline depsolvednf.DepsolveResult) {
+	for _, pkg := range pipeline.Transactions.AllPackages() {
+		var key string
+		key = pkg.Checksum.Value
+		if pkg.Checksum.Value == "" {
+			key = fmt.Sprintf("%s-%s-%s.%s", pkg.Name, pkg.Version, pkg.Release, pkg.Arch)
+		}
+		if _, exists := unique[key]; !exists {
+			unique[key] = pkg
+		}
+	}
+}
+
+func writeRPMList(writer RPMListWriterFunc, unique map[string]rpmmd.Package) error {
+	var packages rpmmd.PackageList
+	for _, pkg := range unique {
+		packages = append(packages, pkg)
+	}
+	rpmListJSON, err := rpmlist.EncodePackages(packages)
+	if err != nil {
+		return err
+	}
+	return writer("rpmlist.json", rpmListJSON)
 }
 
 func xdgCacheHome() (string, error) {
@@ -319,4 +361,6 @@ type (
 	FlatpakResolverFunc func(flatpakSources map[string][]flatpak.SourceSpec) (map[string][]flatpak.Spec, error)
 
 	SBOMWriterFunc func(filename string, content io.Reader, docType sbom.StandardType) error
+
+	RPMListWriterFunc func(filename string, content io.Reader) error
 )
