@@ -179,6 +179,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	withRPMList, err := cmd.Flags().GetBool("with-rpmlist")
+	if err != nil {
+		return nil, err
+	}
 	ignoreWarnings, err := cmd.Flags().GetBool("ignore-warnings")
 	if err != nil {
 		return nil, err
@@ -351,6 +355,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		BootcInstallerPayloadRef:   bootcInstallerPayloadRef,
 		BootcOmitDefaultKernelArgs: bootcOmitDefaultKernelArgs,
 		WithSBOM:                   withSBOM,
+		WithRPMList:                withRPMList,
 		IgnoreWarnings:             ignoreWarnings,
 		Subscription:               subscription,
 		Preview:                    preview,
@@ -627,6 +632,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
+	manifestCmd.Flags().Bool("with-rpmlist", false, `export RPM list as JSON`)
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
 	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
 	manifestCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
