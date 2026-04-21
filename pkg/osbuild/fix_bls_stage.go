@@ -7,9 +7,15 @@ package osbuild
 // file-system partition. If `/boot` is on a separate partition, the correct
 // path would be `/loader/.../` The `prefix` can be used to adjust for that.
 // By default it is `/boot`, i.e. assumes `/boot` is on the root file-system.
+// RequireBootPrefix controls whether the fix-bls stage expects a path prefix
+// before /boot in BLS entries. When nil (the default), the stage assumes a
+// prefix is present (i.e. the traditional grub2 layout). Set to false for
+// systemd-boot where 90-loaderentry writes paths starting at /boot with no
+// leading prefix.
 type FixBLSStageOptions struct {
 	// Prefix defaults to "/boot" if not provided
-	Prefix *string `json:"prefix,omitempty"`
+	Prefix            *string `json:"prefix,omitempty"`
+	RequireBootPrefix *bool   `json:"require_boot_prefix,omitempty"`
 }
 
 func (FixBLSStageOptions) isStageOptions() {}
