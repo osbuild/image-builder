@@ -20,6 +20,15 @@
         "name": "core"
       }
     ],
+    "containers": [
+      {
+        "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+      },
+      {
+        "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
+        "name": "manifest-list-test:v1"
+      }
+    ],
     "customizations": {
       "hostname": "my-host",
       "kernel": {
