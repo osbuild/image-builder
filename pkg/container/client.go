@@ -4,6 +4,7 @@ package container
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -458,6 +459,55 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 	}
 
 	return r, nil
+}
+
+func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.Digest, local bool) (RawManifest, error) {
+	if local {
+		return RawManifest{}, fmt.Errorf("resolving local manifests is not yet supported")
+	}
+
+	target := cl.Target.String()
+	if instanceDigest != "" {
+		// to resolve the config for a specific instance, we need to drop the
+		// tag or any other digest and replace it with the instance digest
+
+		if atidx := strings.LastIndex(target, "@"); atidx >= 0 { // check for @ digest suffix
+			target = target[:atidx]
+		} else if colidx := strings.LastIndex(target, ":"); colidx >= 0 { // check for : tag suffix
+			target = target[:colidx]
+		}
+		target = fmt.Sprintf("%s@%s", target, instanceDigest.String())
+	}
+
+	data, err := cl.skopeoInspect("docker://" + target)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	schemaMediaType := struct {
+		SchemaVersion int    `json:"schemaVersion"`
+		MediaType     string `json:"mediaType"`
+	}{}
+
+	if err := json.Unmarshal(data, &schemaMediaType); err != nil {
+		return RawManifest{}, err
+	}
+
+	if schemaMediaType.SchemaVersion != 2 {
+		return RawManifest{}, fmt.Errorf("unknown schema version: %d", schemaMediaType.SchemaVersion)
+	}
+
+	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	r := RawManifest{
+		Data:     data,
+		MimeType: schemaMediaType.MediaType,
+		Arch:     a,
+	}
+	return r, err
 }
 
 type manifestList interface {
