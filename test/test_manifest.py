@@ -37,6 +37,28 @@ def test_manifest_generates_sbom(tmp_path, build_container):
     assert "glibc" in [s["name"] for s in sbom_json["packages"]], f"missing glibc in {sbom_json}"
 
 
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_manifest_generates_rpmlist(tmp_path, build_container):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    subprocess.check_call(podman_run + [
+        "-v", f"{output_dir}:/output",
+        build_container,
+        "manifest",
+        "minimal-raw",
+        "--distro", "centos-9",
+        "--with-rpmlist",
+    ], stdout=subprocess.DEVNULL)
+    arch = platform.machine()
+    fn = f"centos-9-minimal-raw-{arch}/centos-9-minimal-raw-{arch}.rpmlist.json"
+    rpmlist_path = output_dir / fn
+    assert rpmlist_path.exists()
+    rpmlist = json.loads(rpmlist_path.read_text())
+    assert isinstance(rpmlist, list)
+    names = [p["name"] for p in rpmlist]
+    assert "glibc" in names, f"missing glibc in {rpmlist_path}"
+
+
 @pytest.mark.parametrize("use_seed_arg", [False, True])
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
 def test_manifest_seeded_is_the_same(build_container, use_seed_arg):

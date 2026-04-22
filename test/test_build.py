@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 import platform
@@ -61,6 +62,29 @@ def test_build_build_generates_manifest(tmp_path, build_container, shared_store)
     fn = f"centos-9-qcow2-{arch}/centos-9-qcow2-{arch}.osbuild-manifest.json"
     image_manifest_path = output_dir / fn
     assert image_manifest_path.exists()
+
+
+@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+def test_build_generates_rpmlist(tmp_path, build_container, shared_store):
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    subprocess.check_call(podman_run + [
+        "-v", f"{output_dir}:/output",
+        "-v", f"{shared_store}:{OSBUILD_STORE_CONTAINER_PATH}",
+        build_container,
+        "build",
+        "qcow2",
+        "--distro", "centos-9",
+        "--with-rpmlist",
+    ], stdout=subprocess.DEVNULL)
+    arch = platform.machine()
+    fn = f"centos-9-qcow2-{arch}/centos-9-qcow2-{arch}.rpmlist.json"
+    rpmlist_path = output_dir / fn
+    assert rpmlist_path.exists()
+    rpmlist = json.loads(rpmlist_path.read_text())
+    assert isinstance(rpmlist, list)
+    names = [p["name"] for p in rpmlist]
+    assert "glibc" in names, f"missing glibc in {rpmlist_path}"
 
 
 # pylint: disable=too-many-arguments

@@ -34,13 +34,14 @@ type manifestOptions struct {
 	Subscription               *subscription.ImageOptions
 	RpmDownloader              osbuild.RpmDownloader
 	WithSBOM                   bool
+	WithRPMList                bool
 	IgnoreWarnings             bool
 	Preview                    *bool
 
 	ForceRepos []string
 }
 
-func sbomWriter(outputDir, filename string, content io.Reader) error {
+func fileWriter(outputDir, filename string, content io.Reader) error {
 	p := filepath.Join(outputDir, filename)
 	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
 		return err
@@ -69,7 +70,7 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 		outputDir := basenameFor(img, opts.OutputDir)
 		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
 			filename = fmt.Sprintf("%s.%s", basenameFor(img, opts.OutputFilename), strings.SplitN(filename, ".", 2)[1])
-			return sbomWriter(outputDir, filename, content)
+			return fileWriter(outputDir, filename, content)
 		}
 	}
 	if len(opts.ForceRepos) > 0 {
@@ -81,6 +82,14 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 	}
 	if opts.IgnoreWarnings {
 		manifestGenOpts.WarningsOutput = os.Stderr
+	}
+
+	if opts.WithRPMList {
+		outputDir := basenameFor(img, opts.OutputDir)
+		manifestGenOpts.RPMListWriter = func(filename string, content io.Reader) error {
+			filename = fmt.Sprintf("%s.%s", basenameFor(img, opts.OutputFilename), filename)
+			return fileWriter(outputDir, filename, content)
+		}
 	}
 
 	mg, err := manifestgen.New(repos, manifestGenOpts)
