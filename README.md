@@ -303,10 +303,11 @@ repositories).
 To completely replace the default base repositories during a build the
 option `--force-repo=file:///path/to/repos` can be used.
 
-When replacing repositories with Katello/Satellite kickstart trees, make sure
-to use HTTP URL instead of HTTPS because there is no entitlement certificate
-available during the build. Also, keep in mind that GPG check is disabled when
-overriding base repositories. To use GPG, use `--data-dir` instead.
+When replacing repositories with Katello/Satellite kickstart trees, the host
+system must be subscribed in order to access repositories. Unsubscribed hosts
+can still access kickstart repositories published over HTTP. Keep in mind that
+GPG check is disabled when overriding base repositories. To use GPG, use
+`--data-dir` instead.
 
 Note that the repositories defined there will be used for all
 dependency solving and there is no safeguards, i.e. one can point to
