@@ -255,7 +255,7 @@ class QEMU(VM):
         return qemu_cmdline
 
     # XXX: move args to init() so that __enter__ can use them?
-    def start(self, wait_event="ssh", snapshot=True, use_ovmf=False, timeout_sec=120):
+    def start(self, wait_event="ssh", snapshot=True, use_ovmf=False, timeout_sec=1800):
         if self.running():
             return
         self._ssh_port = get_free_port()
