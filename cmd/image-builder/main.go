@@ -592,6 +592,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 			// support lazy version strings and we need to call "osbuild" subprocess
 			// to get its version.
 			if versionFlag, err := cmd.Flags().GetBool("version"); err == nil && versionFlag {
+				fmt.Fprintln(cmd.ErrOrStderr(), `Flag --version has been deprecated, use "image-builder version" instead`)
 				fmt.Fprint(cmd.OutOrStdout(), prettyVersion())
 			} else {
 				cmd.Help()
@@ -599,7 +600,8 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		},
 	}
 
-	rootCmd.Flags().Bool("version", false, "Print version information and exit")
+	rootCmd.Flags().Bool("version", false, "Print version information and exit (deprecated: use \"image-builder version\" instead)")
+	rootCmd.Flags().MarkHidden("version")
 	var forceRepoDir string
 	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "force-repo-dir", "", "Override the default repository search path for custom repository files")
 	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "force-data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
