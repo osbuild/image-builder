@@ -729,6 +729,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	describeImgCmd.Flags().Bool("in-vm", false, `run container in a virtual machine`)
 
 	rootCmd.AddCommand(describeImgCmd)
+	addDocCmd(rootCmd)
 
 	verbose, err := rootCmd.PersistentFlags().GetBool("verbose")
 	if err != nil {
