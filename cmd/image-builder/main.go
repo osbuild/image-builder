@@ -60,6 +60,22 @@ func basenameFor(img *imagefilter.Result, userBasename string) string {
 	return fmt.Sprintf("%s-%s-%s", distro.Name(), img.ImgType.Name(), arch.Name())
 }
 
+func cmdVersion(cmd *cobra.Command, args []string) error {
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+	switch format {
+	case "", "yaml":
+		fmt.Fprint(cmd.OutOrStdout(), prettyVersion())
+	case "json":
+		fmt.Fprint(cmd.OutOrStdout(), jsonVersion())
+	default:
+		return fmt.Errorf("unsupported format %q, supported formats: yaml, json", format)
+	}
+	return nil
+}
+
 func cmdListImages(cmd *cobra.Command, args []string) error {
 	filter, err := cmd.Flags().GetStringArray("filter")
 	if err != nil {
@@ -576,7 +592,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 			// support lazy version strings and we need to call "osbuild" subprocess
 			// to get its version.
 			if versionFlag, err := cmd.Flags().GetBool("version"); err == nil && versionFlag {
-				fmt.Print(prettyVersion())
+				fmt.Fprint(cmd.OutOrStdout(), prettyVersion())
 			} else {
 				cmd.Help()
 			}
@@ -609,6 +625,15 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	listCmd.Flags().StringArray("filter", nil, `Filter distributions by a specific criteria (e.g. "type:iot*")`)
 	listCmd.Flags().String("format", "", "Output in a specific format (text, json)")
 	rootCmd.AddCommand(listCmd)
+
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print version information",
+		RunE:  cmdVersion,
+		Args:  cobra.NoArgs,
+	}
+	versionCmd.Flags().String("format", "", "Output in a specific format (yaml, json)")
+	rootCmd.AddCommand(versionCmd)
 
 	manifestCmd := &cobra.Command{
 		Use:          "manifest <image-type>",
