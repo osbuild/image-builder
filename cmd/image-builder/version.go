@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -16,13 +17,13 @@ var version = "unknown"
 
 type versionDescription struct {
 	ImageBuilder struct {
-		Version      string `yaml:"version"`
-		Commit       string `yaml:"commit"`
+		Version      string `yaml:"version" json:"version"`
+		Commit       string `yaml:"commit" json:"commit"`
 		Dependencies struct {
-			Images  string `yaml:"images"`
-			OSBuild string `yaml:"osbuild"`
-		} `yaml:"dependencies"`
-	} `yaml:"image-builder"`
+			Images  string `yaml:"images" json:"images"`
+			OSBuild string `yaml:"osbuild" json:"osbuild"`
+		} `yaml:"dependencies" json:"dependencies"`
+	} `yaml:"image-builder" json:"image-builder"`
 }
 
 func readVersionInfo() *versionDescription {
@@ -69,4 +70,12 @@ func prettyVersion() string {
 	enc.Encode(readVersionInfo())
 
 	return b.String()
+}
+
+func jsonVersion() string {
+	b, err := json.MarshalIndent(readVersionInfo(), "", "  ")
+	if err != nil {
+		return fmt.Sprintf(`{"error": "%s"}`, err)
+	}
+	return string(b) + "\n"
 }
