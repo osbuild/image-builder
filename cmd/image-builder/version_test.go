@@ -11,12 +11,16 @@ import (
 	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
 )
 
-func TestVersionFlag(t *testing.T) {
+func TestVersionFlagDeprecated(t *testing.T) {
 	restore := main.MockOsArgs([]string{"--version"})
 	defer restore()
 
 	var fakeStdout bytes.Buffer
 	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	var fakeStderr bytes.Buffer
+	restore = main.MockOsStderr(&fakeStderr)
 	defer restore()
 
 	err := main.Run()
@@ -27,6 +31,9 @@ func TestVersionFlag(t *testing.T) {
 	assert.Contains(t, output, "version:")
 	assert.Contains(t, output, "commit:")
 	assert.Contains(t, output, "dependencies:")
+	assert.NotContains(t, output, "deprecated")
+
+	assert.Contains(t, fakeStderr.String(), "deprecated")
 }
 
 func TestVersionSubcommandYAML(t *testing.T) {
