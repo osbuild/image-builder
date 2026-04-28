@@ -261,6 +261,25 @@ $ image-builder list --format=json
 ]
 ```
 
+### Version information
+
+To show version information about the installed `image-builder`:
+```console
+$ image-builder version
+image-builder:
+  version: 0.5
+  commit: abc123
+  dependencies:
+    images: v0.100.0
+    osbuild: "105"
+```
+
+The output format can be changed with `--format`, supported formats are `yaml` (default) and `json`:
+```console
+$ image-builder version --format=json | jq '.["image-builder"].version'
+"0.5"
+```
+
 ## Modifying the set of used repositories
 
 There are various ways to add extra repositories or override the default

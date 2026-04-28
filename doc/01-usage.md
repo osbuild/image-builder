@@ -341,6 +341,36 @@ $ image-builder manifest --arch aarch64 minimal-raw-xz
 # ... output ...
 ```
 
+## `image-builder version`
+
+The `version` command prints version information about the `image-builder` binary including its dependencies.
+
+```console
+$ image-builder version
+image-builder:
+  version: 0.5
+  commit: abc123
+  dependencies:
+    images: v0.100.0
+    osbuild: "105"
+```
+
+The output format can be changed with `--format`. Available formats are `yaml` (default) and `json`:
+
+```console
+$ image-builder version --format=json
+{
+  "image-builder": {
+    "version": "0.5",
+    "commit": "abc123",
+    "dependencies": {
+      "images": "v0.100.0",
+      "osbuild": "105"
+    }
+  }
+}
+```
+
 ## Blueprints
 
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we could build the `qcow2` we built above with some customizations applied.
