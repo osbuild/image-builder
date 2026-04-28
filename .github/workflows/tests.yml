@@ -19,13 +19,12 @@ jobs:
       matrix:
         fedora_version:
           - name: previous
-            version: 42
-          - name: current
             version: 43
-            # Enable this when we get osbuild rpm builds for Fedora 44
-            # - name: rawhide
-            #   version: rawhide
-            #   continue-on-error: true
+          - name: current
+            version: 44
+          - name: rawhide
+            version: rawhide
+            continue-on-error: true
       fail-fast: false  # if one fails, keep the other(s) running
     name: "🛃 Unit tests (Fedora ${{ matrix.fedora_version.name }})"
     runs-on: ubuntu-24.04

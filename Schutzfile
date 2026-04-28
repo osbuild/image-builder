@@ -34,42 +34,6 @@
       }
     }
   },
-  "fedora-42": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "31bf3c482238aa4cd3c57be6cf6b3a731788a9f0"
-      }
-    },
-    "repos": [
-      {
-        "file": "/etc/yum.repos.d/fedora.repo",
-        "x86_64": [
-          {
-            "title": "fedora",
-            "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f42/f42-x86_64-fedora-20250512"
-          },
-          {
-            "title": "fedora-updates",
-            "name": "fedora-updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f42/f42-x86_64-updates-released-20260426"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "fedora",
-            "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f42/f42-aarch64-fedora-20250512"
-          },
-          {
-            "title": "fedora-updates",
-            "name": "fedora-updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f42/f42-aarch64-updates-released-20260426"
-          }
-        ]
-      }
-    ]
-  },
   "fedora-43": {
     "dependencies": {
       "osbuild": {
@@ -78,6 +42,13 @@
     }
   },
   "fedora-44": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "31bf3c482238aa4cd3c57be6cf6b3a731788a9f0"
+      }
+    }
+  },
+  "fedora-45": {
     "dependencies": {
       "osbuild": {
         "commit": "31bf3c482238aa4cd3c57be6cf6b3a731788a9f0"
