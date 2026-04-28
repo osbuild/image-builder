@@ -109,9 +109,14 @@ build: $(BUILDDIR)/bin/  ## build the binary from source
 	    GOARCH="$$arch" go build -ldflags="-s -w" -o ./bin/bib-canary-"$$arch" ./cmd/cross-arch/; \
 	done
 
+.PHONY: man
+man: build $(BUILDDIR)/man/man1/  ## Generate man pages
+	$(BUILDDIR)/bin/image-builder doc $(BUILDDIR)/man/man1/
+
 .PHONY: clean
 clean:  ## Remove all built binaries
 	rm -rf $(BUILDDIR)/bin/
+	rm -rf $(BUILDDIR)/man/
 	rm -rf $(CURDIR)/rpmbuild
 	rm -rf $(CURDIR)/release_artifacts
 

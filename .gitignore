@@ -33,3 +33,4 @@ __pycache__
 *.tar.bz2
 recording-*.cast.json
 /image-builder
+man
