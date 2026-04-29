@@ -41,6 +41,45 @@ func (a Arch) String() string {
 	}
 }
 
+func (a Arch) GoArch() string {
+	switch a {
+	case ARCH_ARM:
+		return "arm"
+	case ARCH_AARCH64:
+		return "arm64"
+	case ARCH_PPC64LE:
+		return "ppc64le"
+	case ARCH_S390X:
+		return "s390x"
+	case ARCH_X86_64:
+		return "amd64"
+	case ARCH_RISCV64:
+		return "riscv64"
+	default:
+		panic("invalid architecture")
+	}
+}
+
+func (a Arch) GoVariant() string {
+	// TODO: make ARCH_ constants map to different variants
+	switch a {
+	case ARCH_ARM:
+		return "v7"
+	case ARCH_AARCH64:
+		fallthrough
+	case ARCH_PPC64LE:
+		fallthrough
+	case ARCH_S390X:
+		fallthrough
+	case ARCH_X86_64:
+		fallthrough
+	case ARCH_RISCV64:
+		return ""
+	default:
+		panic("invalid architecture")
+	}
+}
+
 func (a *Arch) UnmarshalJSON(data []byte) (err error) {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {

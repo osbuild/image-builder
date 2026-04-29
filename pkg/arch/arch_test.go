@@ -14,6 +14,7 @@ func TestCurrentArchAMD64(t *testing.T) {
 	defer func() { runtimeGOARCH = origRuntimeGOARCH }()
 	runtimeGOARCH = "amd64"
 	assert.Equal(t, "x86_64", Current().String())
+	assert.Equal(t, runtimeGOARCH, Current().GoArch())
 	assert.True(t, IsX86_64())
 }
 
@@ -22,6 +23,7 @@ func TestCurrentArchARM(t *testing.T) {
 	defer func() { runtimeGOARCH = origRuntimeGOARCH }()
 	runtimeGOARCH = "arm"
 	assert.Equal(t, "arm", Current().String())
+	assert.Equal(t, runtimeGOARCH, Current().GoArch())
 	assert.True(t, IsArm())
 }
 
@@ -30,6 +32,7 @@ func TestCurrentArchARM64(t *testing.T) {
 	defer func() { runtimeGOARCH = origRuntimeGOARCH }()
 	runtimeGOARCH = "arm64"
 	assert.Equal(t, "aarch64", Current().String())
+	assert.Equal(t, runtimeGOARCH, Current().GoArch())
 	assert.True(t, IsAarch64())
 }
 
@@ -38,6 +41,7 @@ func TestCurrentArchPPC64LE(t *testing.T) {
 	defer func() { runtimeGOARCH = origRuntimeGOARCH }()
 	runtimeGOARCH = "ppc64le"
 	assert.Equal(t, "ppc64le", Current().String())
+	assert.Equal(t, runtimeGOARCH, Current().GoArch())
 	assert.True(t, IsPPC())
 }
 
@@ -46,6 +50,7 @@ func TestCurrentArchS390X(t *testing.T) {
 	defer func() { runtimeGOARCH = origRuntimeGOARCH }()
 	runtimeGOARCH = "s390x"
 	assert.Equal(t, "s390x", Current().String())
+	assert.Equal(t, runtimeGOARCH, Current().GoArch())
 	assert.True(t, IsS390x())
 }
 
@@ -54,6 +59,7 @@ func TestCurrentArchRiscv64(t *testing.T) {
 	defer func() { runtimeGOARCH = origRuntimeGOARCH }()
 	runtimeGOARCH = "riscv64"
 	assert.Equal(t, "riscv64", Current().String())
+	assert.Equal(t, runtimeGOARCH, Current().GoArch())
 	assert.True(t, IsRISCV64())
 }
 
