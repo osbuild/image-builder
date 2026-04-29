@@ -45,7 +45,8 @@ func (p *OCIContainer) serialize() (osbuild.Pipeline, error) {
 	}
 
 	options := &osbuild.OCIArchiveStageOptions{
-		Architecture: p.treePipeline.Platform().GetArch().String(),
+		Architecture: p.treePipeline.Platform().GetArch().GoArch(),
+		Variant:      p.treePipeline.Platform().GetArch().GoVariant(),
 		Filename:     p.Filename(),
 		Config:       p.OCIContainerCustomizations.OCIArchiveConfig,
 	}

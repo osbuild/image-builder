@@ -14,6 +14,9 @@ type OCIArchiveStageOptions struct {
 	// The CPU architecture of the image
 	Architecture string `json:"architecture"`
 
+	// The CPU architecture variant of the image
+	Variant string `json:"variant,omitempty"`
+
 	// Resulting image filename
 	Filename string `json:"filename"`
 
