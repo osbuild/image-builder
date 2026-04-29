@@ -90,15 +90,15 @@ GOTAGS="exclude_graphdriver_btrfs"
 %endif
 
 export LDFLAGS="${LDFLAGS} -X 'main.version=%{version}'"
-%gobuild ${GOTAGS:+-tags=$GOTAGS} -o %{gobuilddir}/bin/image-builder %{goipath}/cmd/image-builder
+%gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/image-builder %{goipath}/cmd/image-builder
 
 # Generate man pages
 mkdir -p man/man1
-%{gobuilddir}/bin/image-builder doc man/man1/
+_bin/image-builder doc man/man1/
 
 %install
 install -m 0755 -vd                                 %{buildroot}%{_bindir}
-install -m 0755 -vp %{gobuilddir}/bin/image-builder %{buildroot}%{_bindir}/
+install -m 0755 -vp _bin/image-builder              %{buildroot}%{_bindir}/
 # tmpfiles.d snippet
 install -m 0755 -vd                                 %{buildroot}%{_tmpfilesdir}
 install -m 0644 -vp data/tmpfiles.d/image-builder.conf %{buildroot}%{_tmpfilesdir}/image-builder.conf
