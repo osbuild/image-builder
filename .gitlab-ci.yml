@@ -115,6 +115,36 @@ fail:
       - build-config.yml
 
 
+"generate-build-config: [eln-11, aarch64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-aarch64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro eln-11 --arch aarch64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
+
+
+"generate-build-config: [eln-11, x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro eln-11 --arch x86_64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
+
+
 "generate-build-config: [fedora-42, aarch64]":
   stage: gen
   extends: .terraform
@@ -741,6 +771,28 @@ fail:
     strategy: depend
   needs:
     - "generate-build-config: [centos-9, x86_64]"
+
+
+"image-build-trigger: [eln-11, aarch64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [eln-11, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [eln-11, aarch64]"
+
+
+"image-build-trigger: [eln-11, x86_64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [eln-11, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [eln-11, x86_64]"
 
 
 "image-build-trigger: [fedora-42, aarch64]":
@@ -2168,6 +2220,46 @@ fail:
     - sudo ./test/scripts/install-dependencies
     - echo "GOPROXY=$GOPROXY"
     - go run ./cmd/gen-manifests --arches s390x --distros centos-9 --workers 10 --metadata=false --output ./manifests
+    - for manifest in ./manifests/*; do
+        if osbuild --inspect $manifest > output; then
+          echo "$manifest OK";
+        else
+          cat output;
+        fi;
+      done
+
+
+"generate-manifests: [eln-11, ppc64le]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - echo "GOPROXY=$GOPROXY"
+    - go run ./cmd/gen-manifests --arches ppc64le --distros eln-11 --workers 10 --metadata=false --output ./manifests
+    - for manifest in ./manifests/*; do
+        if osbuild --inspect $manifest > output; then
+          echo "$manifest OK";
+        else
+          cat output;
+        fi;
+      done
+
+
+"generate-manifests: [eln-11, s390x]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - echo "GOPROXY=$GOPROXY"
+    - go run ./cmd/gen-manifests --arches s390x --distros eln-11 --workers 10 --metadata=false --output ./manifests
     - for manifest in ./manifests/*; do
         if osbuild --inspect $manifest > output; then
           echo "$manifest OK";

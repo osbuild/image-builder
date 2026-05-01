@@ -7,7 +7,8 @@
         "rhel-9*",
         "rhel-8*",
         "centos*",
-        "fedora*"
+        "fedora*",
+        "eln*"
       ],
       "image-types": [
         "ami",
@@ -38,7 +39,8 @@
         "rhel-9.6",
         "rhel-10.0",
         "centos*",
-        "fedora*"
+        "fedora*",
+        "eln*"
       ],
       "image-types": [
         "ami",
@@ -65,7 +67,8 @@
         "rhel-8.8",
         "rhel-8.10",
         "rhel-9.*",
-        "rhel-10.*"
+        "rhel-10.*",
+        "eln*"
       ],
       "image-types": [
         "ec2-sap"
@@ -181,7 +184,8 @@
         "rhel-9*",
         "rhel-10*",
         "centos-*",
-        "fedora-*"
+        "fedora-*",
+        "eln*"
       ],
       "image-types": [
         "ami",
@@ -225,7 +229,8 @@
       "arches": [],
       "distros": [
         "rhel-*",
-        "centos-*"
+        "centos-*",
+        "eln-*"
       ],
       "image-types": [
         "network-installer",
@@ -515,7 +520,8 @@
         "centos-9",
         "fedora*",
         "rhel-10*",
-        "rhel-9*"
+        "rhel-9*",
+        "eln*"
       ]
     }
   },
@@ -570,7 +576,8 @@
         "centos-9",
         "fedora*",
         "rhel-10*",
-        "rhel-9*"
+        "rhel-9*",
+        "eln*"
       ]
     }
   },
@@ -725,7 +732,8 @@
         "rhel-9.8",
         "rhel-9.9",
         "rhel-10*",
-        "centos-*"
+        "centos-*",
+        "eln*"
       ],
       "arches": [],
       "image-types": [
@@ -851,7 +859,8 @@
         "rhel-10*",
         "rhel-9*",
         "rhel-8*",
-        "centos*"
+        "centos*",
+        "eln*"
       ],
       "image-types": [
         "network-installer"
