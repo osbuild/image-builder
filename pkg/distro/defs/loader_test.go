@@ -1360,8 +1360,8 @@ image_types:
 }
 
 func TestLoadImageTypesMergesMultipleYAMLFiles(t *testing.T) {
-	common := `
-.common:
+	shared := `
+.shared:
   shared_pkgset: &shared_pkgset
     include:
       - qemu-guest-agent
@@ -1402,7 +1402,7 @@ image_types:
             - "initial-setup-gui"
 `
 	baseDir := makeFakeDistrosWithImageYAMLFiles(t, "", map[string]string{
-		"_common.yaml": common,
+		"_shared.yaml": shared,
 		"cloud.yaml":   fakeImageTypesYaml1,
 		"iot.yaml":     fakeImageTypesYaml2,
 	})
@@ -1461,8 +1461,8 @@ image_types:
 }
 
 func TestLoadImageTypesPrependsCommonYAML(t *testing.T) {
-	common := `
-.common:
+	shared := `
+.shared:
   cloud_core_pkgset: &cloud_core_pkgset
     include:
       - qemu-guest-agent
@@ -1484,7 +1484,7 @@ image_types:
             - "fwupd-efi"
 `
 	baseDir := makeFakeDistrosWithImageYAMLFiles(t, "", map[string]string{
-		"_common.yaml": common,
+		"_shared.yaml": shared,
 		"main.yaml":    cloud,
 	})
 	restore := defs.MockDataFS(baseDir)
