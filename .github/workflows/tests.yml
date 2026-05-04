@@ -302,7 +302,7 @@ jobs:
       GOPROXY: "https://proxy.golang.org|direct"
       GOFLAGS: "-buildvcs=false"
     container:
-      image: registry.fedoraproject.org/fedora:latest
+      image: registry.fedoraproject.org/fedora:43
       options: "--privileged"
     steps:
       - name: Check out code into the Go module directory
