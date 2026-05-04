@@ -278,14 +278,9 @@ jobs:
           sudo apt update
           sudo apt install -y yamllint yq
 
-      - name: YAML Lint
+      - name: Check YAML
         run: |
-          find . "(" -iname "*.yaml" -or -iname "*.yml" ")" -exec yamllint --strict {} \+
-
-      - name: Check YAML definitions with yq
-        # yq will catch issues that yamllint will not, like duplicate anchros
-        run: |
-          find . "(" -iname "*.yaml" -or -iname "*.yml" ")" -exec yq . {} \+ > /dev/null
+          tools/yaml-lint.sh
 
   cross-arch-integration-test:
     strategy:
