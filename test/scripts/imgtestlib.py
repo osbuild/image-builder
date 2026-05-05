@@ -289,7 +289,22 @@ def read_manifests(path):
     return manifests
 
 
-# pylint: disable=too-many-return-statements
+def _is_bootc_manifest(manifest_data):
+    """
+    Check if the manifest is a bootc manifest by looking for the
+    `org.osbuild.bootc.install-to-filesystem` stage in any of the pipelines
+    other than the build pipeline.
+    """
+    for pipeline in manifest_data.get("pipelines", []):
+        if pipeline.get("name") == "build":
+            continue
+        for stage in pipeline.get("stages", []):
+            if stage.get("type") == "org.osbuild.bootc.install-to-filesystem":
+                return True
+    return False
+
+
+# pylint: disable=too-many-return-statements,too-many-branches
 def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, blueprint):
     if not image_type in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
         return False
@@ -321,18 +336,19 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
             print("  not bootable: fips on fedora is unstable, fails with e.g. dracut:"
                   "FATAL: FIPS integrity test failed")
             return False
-        # Note that this needs adjustment when we switch to librepo
-        urls = [src["url"] for src in manifest_data["sources"]["org.osbuild.curl"]["items"].values()]
-        if not any("ssh-server" in url for url in urls):
-            # This can happen e.g. when an image is build with the "minimal: true" customization.
-            # We could use guestfs to inject keys, see PR#1995
-            print(f"  not bootable: ssh-server not found in manifest {manifest_fname} ({arch} {image_type})")
-            return False
-        # We need jq in the image many images do not have it
-        # (e.g. centos-9/rhel-9 with releasever config) so skip those too
-        if not any("jq" in url for url in urls):
-            print(f"  not bootable: jq not found in {manifest_fname} ({arch} {image_type})")
-            return False
+        if not image_type.startswith("bootc-") and not _is_bootc_manifest(manifest_data):
+            # Note that this needs adjustment when we switch to librepo
+            urls = [src["url"] for src in manifest_data["sources"]["org.osbuild.curl"]["items"].values()]
+            if not any("ssh-server" in url for url in urls):
+                # This can happen e.g. when an image is build with the "minimal: true" customization.
+                # We could use guestfs to inject keys, see PR#1995
+                print(f"  not bootable: ssh-server not found in manifest {manifest_fname} ({arch} {image_type})")
+                return False
+            # We need jq in the image many images do not have it
+            # (e.g. centos-9/rhel-9 with releasever config) so skip those too
+            if not any("jq" in url for url in urls):
+                print(f"  not bootable: jq not found in {manifest_fname} ({arch} {image_type})")
+                return False
 
     return True
 
