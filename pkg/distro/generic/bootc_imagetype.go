@@ -37,7 +37,8 @@ var _ = distro.ImageType(&bootcImageType{})
 type bootcImageType struct {
 	defs.ImageTypeYAML
 
-	arch *architecture
+	arch     *architecture
+	isoLabel string
 }
 
 func (t *bootcImageType) Name() string {
@@ -65,7 +66,7 @@ func (t *bootcImageType) OSTreeRef() string {
 }
 
 func (t *bootcImageType) ISOLabel() (string, error) {
-	return "", nil
+	return t.isoLabel, nil
 }
 
 func (t *bootcImageType) Size(size uint64) uint64 {
@@ -172,7 +173,7 @@ func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, opti
 	case "bootc_iso":
 		return t.manifestForISO(bp, options, rng)
 	case "bootc_generic_iso":
-		return t.manifestForGenericISO(options, rng)
+		return t.manifestForGenericISO(bp, options, rng)
 	case "bootc_disk":
 		return t.manifestForDisk(bp, options, rng)
 	case "pxe_tar":
@@ -469,10 +470,30 @@ func (t *bootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 	return &mf, nil, err
 }
 
-func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+func (t *bootcImageType) manifestForGenericISO(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
 	bd := t.arch.distro.(*BootcDistro)
 	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
+	}
+	if bd.sourceInfo == nil {
+		return nil, nil, fmt.Errorf("internal error: Missing sourceInfo")
+	}
+
+	// The bootc initramfs requires the dmsquash-live and ostree modules in order to boot
+	// check for them here so that we can tell the user instead of failing to boot
+	ok, err := bd.sourceInfo.HasModules([]string{"ostree", "dmsquash-live", "livenet"})
+	if err != nil {
+		return nil, nil, fmt.Errorf("internal error: %w", err)
+	}
+	if !ok {
+		return nil, nil, fmt.Errorf("bootc container initramfs requires ostree, dmsquash-live and livenet modules")
+	}
+
+	// Set the iso label, must be done before calling isoCustomizations
+	if label := bd.sourceInfo.ISOInfo.Label; label != "" {
+		t.isoLabel = label
+	} else {
+		t.isoLabel = bootc.LabelForISO(&bd.sourceInfo.OSRelease, t.arch.Name())
 	}
 
 	local := t.useLocalStorage(options)
@@ -486,57 +507,99 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 	platformi.ImageFormat = platform.FORMAT_ISO
 
 	img := image.NewContainerBasedIso(platformi, t.Filename(), containerSource, nil)
-	if options.Bootc != nil && options.Bootc.InstallerPayloadRef != "" {
-		img.PayloadContainer = &container.SourceSpec{
-			Source: options.Bootc.InstallerPayloadRef,
-			Name:   options.Bootc.InstallerPayloadRef,
-			Local:  local,
-		}
-	}
-	img.RootfsCompression = "zstd"
-	img.RootfsType = manifest.SquashfsRootfs
-	img.RootfsExcludes = []string{
-		"boot/efi/.*",
-		"boot/grub2/.*",
-		"boot/config-.*",
-		"boot/initramfs-.*",
-		"boot/loader/.*",
-		"boot/symvers-.*",
-		"boot/System.map-.*",
-		"usr/lib/sysimage/rpm/.*",
-		"var/lib/rpm/.*",
-		"var/lib/yum/.*",
-		"var/lib/dnf/.*",
+	var customizations *blueprint.Customizations
+	if bp != nil {
+		customizations = bp.Customizations
 	}
 
+	// NOTE: Only the / partition is needed since the final result is compressed
+	//       filesystem. But the intermediate bootc filesystem install needs a size
+	//       and partitions.
+	rootfsMinSize := max(bd.rootfsMinSize, options.Size)
+	pt, err := t.genPartitionTable(customizations, rootfsMinSize, rng)
+	if err != nil {
+		return nil, nil, err
+	}
+	img.PartitionTable = pt
+
+	// Setup OSCustomizations
+	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
+	groups, err := customizations.GetGroups()
+	if err != nil {
+		return nil, nil, err
+	}
+	img.OSCustomizations.Groups = users.GroupsFromBP(groups)
+	img.OSCustomizations.SELinux = bd.sourceInfo.SELinuxPolicy
+	img.OSCustomizations.BuildSELinux = img.OSCustomizations.SELinux
+
+	if bd.sourceInfo != nil && bd.sourceInfo.MountConfiguration != nil {
+		img.DiskCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
+	}
+
+	imageConfig := t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name())
+	if imageConfig != nil {
+		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
+	}
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		img.OSCustomizations.KernelOptionsAppend = append(img.OSCustomizations.KernelOptionsAppend, kopts.Append)
+	}
+
+	// Check Directory/File Customizations are valid
+	dc := customizations.GetDirectories()
+	fc := customizations.GetFiles()
+	if err := blueprint.ValidateDirFileCustomizations(dc, fc); err != nil {
+		return nil, nil, err
+	}
+	if err := blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
+		return nil, nil, err
+	}
+	if err := blueprint.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
+		return nil, nil, err
+	}
+	img.OSCustomizations.Files, err = blueprint.FileCustomizationsToFsNodeFiles(fc)
+	if err != nil {
+		return nil, nil, err
+	}
+	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
+	if err != nil {
+		return nil, nil, err
+	}
 	// Potentially KernelInfo is nil when we couldn't read it from the container; handle that so
 	// we don't panic
 	if bd.sourceInfo.KernelInfo == nil {
 		return nil, nil, fmt.Errorf("could not read kernel info from container")
 	}
 
-	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", bd.sourceInfo.KernelInfo.Version)
-	img.InitramfsPath = fmt.Sprintf("lib/modules/%s/initramfs.img", bd.sourceInfo.KernelInfo.Version)
-	img.Product = bd.sourceInfo.OSRelease.Name
-	img.Version = bd.sourceInfo.OSRelease.VersionID
-	img.Release = bd.sourceInfo.OSRelease.VersionID
+	img.KernelVersion = bd.sourceInfo.KernelInfo.Version // needed by BootcRootFS
+
+	if options.Bootc != nil && options.Bootc.InstallerPayloadRef != "" {
+		return nil, nil, fmt.Errorf("bootc installer payload is not supported on generic-iso")
+	}
+
+	// Setup the iso customizations from the YAML
+	img.ISOCustomizations, err = isoCustomizations(t, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	img.InstallerCustomizations = manifest.InstallerCustomizations{
+		Product:   bd.sourceInfo.OSRelease.Name,
+		OSVersion: bd.sourceInfo.OSRelease.VersionID,
+		Release:   bd.sourceInfo.OSRelease.VersionID,
+	}
 
 	isoi := bd.sourceInfo.ISOInfo
-
-	if isoi.Label != "" {
-		img.ISOLabel = isoi.Label
-	} else {
-		img.ISOLabel = bootc.LabelForISO(&bd.sourceInfo.OSRelease, t.arch.Name())
+	if isoi.Grub2.Default != nil {
+		// TODO This really belongs in ISOCustomization
+		img.InstallerCustomizations.DefaultMenu = *isoi.Grub2.Default
 	}
+	// TODO -- add timeout to one of the customizations
+	// img.Grub2MenuTimeout = isoi.Grub2.Timeout
 
 	if len(isoi.KernelArgs) > 0 {
 		img.KernelOpts = isoi.KernelArgs
 	}
 
-	img.Grub2MenuDefault = isoi.Grub2.Default
-	img.Grub2MenuTimeout = isoi.Grub2.Timeout
 	img.Grub2MenuEntries = []manifest.ISOGrub2MenuEntry{}
-
 	for _, entry := range isoi.Grub2.Entries {
 		img.Grub2MenuEntries = append(img.Grub2MenuEntries, manifest.ISOGrub2MenuEntry{
 			Name:   entry.Name,
