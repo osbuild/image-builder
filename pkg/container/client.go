@@ -3,11 +3,13 @@
 package container
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -498,7 +500,11 @@ func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.D
 func (cl *Client) getLocalManifestSkopeo(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
 	target := cl.Target.String()
 	if instanceDigest != "" {
-		return RawManifest{}, fmt.Errorf("resolving local manifest from an instance digest is not yet supported")
+		imageId, err := cl.getLocalImageID(instanceDigest.String())
+		if err != nil {
+			return RawManifest{}, err
+		}
+		target = fmt.Sprintf("@%s", imageId)
 	}
 	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+/run/containers/storage]%s", cl.store, target))
 	if err != nil {
@@ -653,6 +659,46 @@ func (cl *Client) Resolve(ctx context.Context, name string, local bool) (Spec, e
 	}
 
 	return spec, nil
+}
+
+func (cl *Client) getLocalImageID(digest string) (string, error) {
+	// TODO: consider dropping this functionality altogether
+	//
+	// This function is only useful if:
+	//  - There is a manifest list in the local store.  This occurs after
+	//  building multi-arch images locally.
+	//  - The user doesn't know the image ID.
+	//
+	// If a user tries to resolve an image in the local storage using the name
+	// of a manifest list, we can return an error suggesting that they can look
+	// up the image ID and use that instead.
+	store := cl.store
+
+	cmd := exec.Command("podman", "--root", store, "image", "ls", "--format=json")
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("command failed: %s: %w", strings.Join(cmd.Args, " "), err)
+	}
+
+	// parse output into a minimal struct with just the info we need
+	imageList := []struct {
+		ID     string `json:"Id"`
+		Digest string `json:"Digest"`
+	}{}
+	if err := json.Unmarshal(stdout.Bytes(), &imageList); err != nil {
+		return "", fmt.Errorf("failed to parse podman image list: %w", err)
+	}
+
+	// iterate images and find the image ID with a digest that matches the one we want
+	for _, image := range imageList {
+		if image.Digest == digest {
+			return image.ID, nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find image with digest %q in local store: %s", digest, store)
 }
 
 // nameFromRef removes the tag or image ID suffixes from a container ref and
