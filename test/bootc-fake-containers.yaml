@@ -11,6 +11,10 @@ containers:
         versionid: "1"
       kernel_info:
         version: 6.6
+      initrd_modules:
+        - ostree
+        - livenet
+        - dmsquash-live
     default_fs: "ext4"
     container_size: 10_000_000_000
   - <<: *default_fake_container
