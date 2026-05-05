@@ -178,7 +178,7 @@ $ sudo image-builder build --bootc-ref localhost/anaconda:latest --bootc-build-r
 
 #### `bootc-installer-payload-ref`
 
-When `image-builder` builds an installer ISO there are two inputs. One is the installer (usually Anaconda) environment (passed as `--bootc-ref`) and the other is the bootable container that will be installed by the installer (passed as `--bootc-installer-payload-ref`). Both arguments are mandatory when building a `bootc-installer`. To do this you'll need to provide your own installer image. For information about building your own installers read the [advanced bootc section on installers](./20-advanced/20-bootc/10-installers.md).
+When `image-builder` builds an installer ISO there are two inputs. One is the installer (usually Anaconda) environment (passed as `--bootc-ref`) and the other is the bootable container that will be installed by the installer (passed as `--bootc-installer-payload-ref`). Both arguments are mandatory when building a `bootc-installer`. To do this you'll need to provide your own installer image. For information about building your own installers read the [advanced bootc section on installers](./20-advanced/20-bootc/10-isos.md).
 
 ```console
 $ sudo podman pull quay.io/centos-bootc/centos:stream10
