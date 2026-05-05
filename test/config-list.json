@@ -757,8 +757,7 @@
         "bootc-*"
       ],
       "image-types": [
-        "bootc-installer",
-        "bootc-generic-iso"
+        "bootc-installer"
       ]
     }
   },
@@ -809,8 +808,7 @@
         "bootc-*"
       ],
       "image-types": [
-        "bootc-installer",
-        "bootc-generic-iso"
+        "bootc-installer"
       ]
     }
   },
