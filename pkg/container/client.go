@@ -162,6 +162,9 @@ func NewClient(target string) (*Client, error) {
 		store:  "/var/lib/containers/storage",
 	}
 
+	// default to the host architecture
+	client.SetArchitectureChoice(arch.Current().String())
+
 	return &client, nil
 }
 
