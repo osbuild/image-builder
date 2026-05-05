@@ -741,7 +741,7 @@ var isoContainers = map[string][]container.Spec{
 	"build": {
 		containerSpec,
 	},
-	"os-tree": {
+	"image": {
 		containerSpec,
 	},
 }
@@ -1040,12 +1040,15 @@ func TestBootcIsoManifestSerialization(t *testing.T) {
 	assert.NoError(t, err)
 
 	manifestJson, err := mf.Serialize(nil, isoContainers, nil, nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	expStages := map[string][]string{
-		"build":   {"org.osbuild.container-deploy"},
-		"os-tree": {"org.osbuild.container-deploy"},
-		"bootiso": {"org.osbuild.xorrisofs"},
+		"build":        {"org.osbuild.container-deploy"},
+		"image":        {"org.osbuild.bootc.install-to-filesystem"},
+		"bootc-rootfs": {"org.osbuild.erofs"},
+		"efiboot-tree": {"org.osbuild.grub2.iso"},
+		"bootiso-tree": {"org.osbuild.ostree.grub2"},
+		"bootiso":      {"org.osbuild.xorrisofs"},
 	}
 	assert.NoError(t, checkStages(manifestJson, expStages, nil))
 }
@@ -1066,8 +1069,11 @@ func TestContainerSourceLocality(t *testing.T) {
 				// definition via newDistroYAMLFrom() to find installer
 				// packages. The generic test distro doesn't carry real OS
 				// release data, so this image type cannot be tested here.
-				if imgTypeName == "anaconda-iso" || imgTypeName == "iso" {
+				switch imgTypeName {
+				case "anaconda-iso", "iso":
 					t.Skipf("skipping %s: legacy ISO requires real distro definitions not available in the test distro", imgTypeName)
+				case "bootc-generic-iso":
+					t.Skipf("skipping %s: installer payload not supported ", imgTypeName)
 				}
 
 				imgOptions := distro.ImageOptions{
