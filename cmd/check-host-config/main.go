@@ -83,6 +83,8 @@ func runChecks(checks []check.RegisteredCheck, config *buildconfig.BuildConfig, 
 			err = check.Skip("no blueprint")
 		case meta.RequiresCustomizations && (config == nil || config.Blueprint == nil || config.Blueprint.Customizations == nil):
 			err = check.Skip("no customizations")
+		case meta.RequiresBootc && (config == nil || config.Options.Bootc == nil):
+			err = check.Skip("not a bootc image")
 		default:
 			err = chk.Func(meta, config)
 		}
