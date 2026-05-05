@@ -17,7 +17,6 @@ import (
 	_ "github.com/containers/image/v5/docker/archive"
 	_ "github.com/containers/image/v5/oci/archive"
 	_ "github.com/containers/image/v5/oci/layout"
-	"github.com/containers/storage"
 	"golang.org/x/sys/unix"
 
 	"github.com/containers/common/pkg/retry"
@@ -27,7 +26,6 @@ import (
 	"github.com/containers/image/v5/manifest"
 	"github.com/containers/image/v5/signature"
 	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/image/v5/types"
 	"github.com/opencontainers/go-digest"
 
@@ -353,122 +351,12 @@ func (m RawManifest) Digest() (digest.Digest, error) {
 	return manifest.Digest(m.Data)
 }
 
-func (cl *Client) getImageRef(id string, local bool) (types.ImageReference, error) {
+// GetManifest fetches the raw manifest data from the server or local storage.
+// If digest is not empty it will retrieve the manifest for the image that
+// matches the digest.
+func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest, local bool) (RawManifest, error) {
 	if local {
-		imageName := cl.Target.String()
-		if id != "" {
-			imageName = id
-		}
-		options := fmt.Sprintf("containers-storage:[overlay@%s+/run/containers/storage]%s", cl.store, imageName)
-		return alltransports.ParseImageName(options)
-	}
-
-	return docker.NewReference(cl.Target)
-}
-
-func (cl *Client) resolveContainerImageArch(ctx context.Context, ref types.ImageReference) (*arch.Arch, error) {
-	img, err := ref.NewImage(ctx, cl.sysCtx)
-	if err != nil {
-		return nil, err
-	}
-	defer img.Close()
-	info, err := img.Inspect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	a, err := arch.FromString(info.Architecture)
-	return &a, err
-}
-
-func (cl *Client) getLocalImageIDFromDigest(instance digest.Digest) (string, error) {
-	store, err := storage.GetStore(storage.StoreOptions{GraphRoot: cl.store})
-	if err != nil {
-		return "", err
-	}
-	images, err := store.ImagesByDigest(instance)
-	if err != nil {
-		return "", err
-	}
-	if len(images) == 0 {
-		return "", fmt.Errorf("Unable to find image id for digest: %v", instance)
-	}
-	// the `ImagesByDigest` function always returns a list
-	// of images. The list could be larger than 1 in the case
-	// since it searches all stores for the matching digest,
-	// so it is okay to return the first item.
-	return images[0].ID, nil
-}
-
-// GetManifest fetches the raw manifest data from the server. If digest is not empty
-// it will override any given tag for the Client's Target.
-func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest, local bool) (r RawManifest, err error) {
-	var localId string
-	var overrideDigest *digest.Digest
-
-	if instanceDigest != "" {
-		if local {
-			localId, err = cl.getLocalImageIDFromDigest(instanceDigest)
-			if err != nil {
-				return RawManifest{}, err
-			}
-		} else {
-			// We can pass the instance digest, if it is nil, then this is the primary manifest.
-			// If it is not nil, then this is the instance digest and the primary manifest is a
-			// manifest list. The `GetManifest` call will then retrieve the manifest for the
-			// desired instance, see:
-			// https://github.com/containers/image/blob/cdb2f596a95018444f4dee0993e321d3d8bc328d/types/types.go#L252C2-L253C121
-			overrideDigest = &instanceDigest
-		}
-	}
-
-	ref, err := cl.getImageRef(localId, local)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	src, err := ref.NewImageSource(ctx, cl.sysCtx)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	defer func() {
-		if e := src.Close(); e != nil {
-			err = fmt.Errorf("could not close image: %w", e)
-		}
-	}()
-
-	retryOpts := retry.RetryOptions{
-		MaxRetry: cl.MaxRetries,
-	}
-
-	if err = retry.RetryIfNecessary(ctx, func() error {
-		r.Data, r.MimeType, err = src.GetManifest(ctx, overrideDigest)
-		if err != nil {
-			return err
-		}
-
-		// getting the container image arch doesn't work with local manifest lists
-		if local && (r.MimeType == imgspecv1.MediaTypeImageIndex || r.MimeType == manifest.DockerV2ListMediaType) {
-			return nil
-		}
-
-		imageArch, err := cl.resolveContainerImageArch(ctx, ref)
-		if err != nil {
-			return err
-		}
-		r.Arch = *imageArch
-
-		return nil
-	}, &retryOpts); err != nil {
-		return RawManifest{}, err
-	}
-
-	return r, nil
-}
-
-func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.Digest, local bool) (RawManifest, error) {
-	if local {
-		return cl.getLocalManifestSkopeo(ctx, instanceDigest)
+		return cl.getLocalManifest(ctx, instanceDigest)
 	}
 
 	target := cl.Target.String()
@@ -500,7 +388,7 @@ func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.D
 	return r, err
 }
 
-func (cl *Client) getLocalManifestSkopeo(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
+func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
 	target := cl.Target.String()
 	if instanceDigest != "" {
 		imageId, err := cl.getLocalImageID(instanceDigest.String())
