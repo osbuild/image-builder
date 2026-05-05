@@ -463,7 +463,7 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 
 func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.Digest, local bool) (RawManifest, error) {
 	if local {
-		return RawManifest{}, fmt.Errorf("resolving local manifests is not yet supported")
+		return cl.getLocalManifestSkopeo(ctx, instanceDigest)
 	}
 
 	target := cl.Target.String()
@@ -473,6 +473,34 @@ func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.D
 	}
 
 	data, err := cl.skopeoInspect("docker://" + target)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	mime, err := parseMediaType(data)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	r := RawManifest{
+		Data:     data,
+		MimeType: mime,
+		Arch:     a,
+	}
+	return r, err
+}
+
+func (cl *Client) getLocalManifestSkopeo(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
+	target := cl.Target.String()
+	if instanceDigest != "" {
+		return RawManifest{}, fmt.Errorf("resolving local manifest from an instance digest is not yet supported")
+	}
+	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+/run/containers/storage]%s", cl.store, target))
 	if err != nil {
 		return RawManifest{}, err
 	}
