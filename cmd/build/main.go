@@ -12,6 +12,9 @@ import (
 	"github.com/osbuild/images/internal/buildconfig"
 	"github.com/osbuild/images/internal/cmdutil"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/bootc"
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -43,11 +46,31 @@ func run() error {
 	flag.StringVar(&imgTypeName, "type", "", "image type name (required)")
 	flag.StringVar(&configFile, "config", "", "build config file (required)")
 
+	// bootc args
+	var bootcRef, bootcBuildRef string
+	var bootcRemote bool
+	flag.StringVar(&bootcRef, "bootc-ref", "", "bootc container image ref (e.g., localhost/bootc-foundry/stream10-qcow2:latest)")
+	flag.StringVar(&bootcBuildRef, "bootc-build-ref", "", "separate build container image ref")
+	flag.BoolVar(&bootcRemote, "bootc-remote", false, "use org.osbuild.skopeo sources instead of containers-storage")
+
 	flag.Parse()
 
-	if distroName == "" || imgTypeName == "" || configFile == "" {
+	if imgTypeName == "" || configFile == "" {
 		flag.Usage()
 		os.Exit(1)
+	}
+	if distroName == "" && bootcRef == "" {
+		fmt.Fprintf(os.Stderr, "error: either -distro or -bootc-ref is required\n")
+		flag.Usage()
+		os.Exit(1)
+	}
+	if distroName != "" && bootcRef != "" {
+		fmt.Fprintf(os.Stderr, "error: -distro and -bootc-ref are mutually exclusive\n")
+		flag.Usage()
+		os.Exit(1)
+	}
+	if bootcRef != "" && repositories != "test/data/repositories" {
+		fmt.Fprintf(os.Stderr, "warning: -repositories is ignored when -bootc-ref is used\n")
 	}
 
 	// NOTE: Check the minimum osbuild version before doing anything else.
@@ -59,7 +82,6 @@ func run() error {
 		return err
 	}
 
-	distroFac := distrofactory.NewDefault()
 	config, err := buildconfig.New(configFile, nil)
 	if err != nil {
 		return err
@@ -69,20 +91,57 @@ func run() error {
 		return fmt.Errorf("failed to create target directory: %w", err)
 	}
 
-	distribution := distroFac.GetDistro(distroName)
-	if distribution == nil {
-		return fmt.Errorf("invalid or unsupported distribution: %q", distroName)
+	var distribution distro.Distro
+	if bootcRef != "" {
+		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef)
+		if err != nil {
+			return fmt.Errorf("failed to resolve bootc container info: %w", err)
+		}
+
+		bootcDistro, err := generic.NewBootc("bootc", bootcInfo)
+		if err != nil {
+			return fmt.Errorf("failed to create bootc distro: %w", err)
+		}
+
+		if bootcBuildRef != "" {
+			buildInfo, err := bootc.ResolveBootcBuildInfo(bootcBuildRef)
+			if err != nil {
+				return fmt.Errorf("failed to resolve bootc build container info: %w", err)
+			}
+			if err := bootcDistro.SetBuildContainer(buildInfo); err != nil {
+				return fmt.Errorf("failed to set build container: %w", err)
+			}
+		}
+
+		distribution = bootcDistro
+
+		if archName == "" {
+			// NOTE: bootcInfo.Arch contains the Docker/OCI arch name (e.g. "amd64"),
+			// which must be normalized to the standard name used by the images library
+			// (e.g. "x86_64") to match the BootcDistro's internal arch map keys.
+			a, err := arch.FromString(bootcInfo.Arch)
+			if err != nil {
+				return fmt.Errorf("unsupported container architecture %q: %w", bootcInfo.Arch, err)
+			}
+			archName = a.String()
+		}
+	} else {
+		distroFac := distrofactory.NewDefault()
+		distribution = distroFac.GetDistro(distroName)
+		if distribution == nil {
+			return fmt.Errorf("invalid or unsupported distribution: %q", distroName)
+		}
+		if archName == "" {
+			archName = arch.Current().String()
+		}
 	}
 
-	if archName == "" {
-		archName = arch.Current().String()
-	}
 	archi, err := distribution.GetArch(archName)
 	if err != nil {
-		return fmt.Errorf("invalid arch name %q for distro %q: %w", archName, distroName, err)
+		return fmt.Errorf("invalid arch name %q for distro %q: %w", archName, distribution.Name(), err)
 	}
 
-	buildName := fmt.Sprintf("%s-%s-%s-%s", u(distroName), u(archName), u(imgTypeName), u(config.Name))
+	buildName := fmt.Sprintf("%s-%s-%s-%s", u(distribution.Name()), u(archName), u(imgTypeName), u(config.Name))
 	buildDir := filepath.Join(outputDir, buildName)
 	if err := os.MkdirAll(buildDir, 0777); err != nil {
 		return fmt.Errorf("failed to create target directory: %w", err)
@@ -90,30 +149,32 @@ func run() error {
 
 	imgType, err := archi.GetImageType(imgTypeName)
 	if err != nil {
-		return fmt.Errorf("invalid image type %q for distro %q and arch %q: %w", imgTypeName, distroName, archName, err)
+		return fmt.Errorf("invalid image type %q for distro %q and arch %q: %w", imgTypeName, distribution.Name(), archName, err)
 	}
 
 	// NOTE: we always put the repositories to be used into the allRepos slice, instead of passing the
 	// RepoRegistry to the manifestgen. The reason is that the manifestgen API is too clunky to easily
 	// extend the repos list with custom repositories.
-	var allRepos []rpmmd.RepoConfig
-	if st, err := os.Stat(repositories); err == nil && !st.IsDir() {
-		// anything that is not a dir is tried to be loaded as a file
-		// to allow "-repositories <arbitrarily-named-file>.json"
-		repoConfig, err := rpmmd.LoadRepositoriesFromFile(repositories)
-		if err != nil {
-			return fmt.Errorf("failed to load repositories from %q: %w", repositories, err)
-		}
-		allRepos = repoConfig[archName]
-	} else {
-		reporeg, err := reporegistry.New([]string{repositories}, nil)
-		if err != nil {
-			return fmt.Errorf("failed to load repositories from %q: %w", repositories, err)
-		}
-		allRepos, err = reporeg.ReposByImageTypeName(distribution.Name(), archName, imgTypeName)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to get repositories for %s/%s/%s: %w", distribution.Name(), archName, imgTypeName, err)
+	allRepos := []rpmmd.RepoConfig{}
+	if bootcRef == "" {
+		if st, err := os.Stat(repositories); err == nil && !st.IsDir() {
+			// anything that is not a dir is tried to be loaded as a file
+			// to allow "-repositories <arbitrarily-named-file>.json"
+			repoConfig, err := rpmmd.LoadRepositoriesFromFile(repositories)
+			if err != nil {
+				return fmt.Errorf("failed to load repositories from %q: %w", repositories, err)
+			}
+			allRepos = repoConfig[archName]
+		} else {
+			reporeg, err := reporegistry.New([]string{repositories}, nil)
+			if err != nil {
+				return fmt.Errorf("failed to load repositories from %q: %w", repositories, err)
+			}
+			allRepos, err = reporeg.ReposByImageTypeName(distribution.Name(), archName, imgTypeName)
+			if err != nil {
+				return fmt.Errorf(
+					"failed to get repositories for %s/%s/%s: %w", distribution.Name(), archName, imgTypeName, err)
+			}
 		}
 	}
 	seedArg, err := cmdutil.SeedArgFor(config, distribution.Name(), archName)
@@ -142,6 +203,15 @@ func run() error {
 	}
 	if config.Blueprint == nil {
 		config.Blueprint = &blueprint.Blueprint{}
+	}
+
+	if bootcRef != "" {
+		if config.Options.Bootc == nil {
+			config.Options.Bootc = &distro.BootcImageOptions{}
+		}
+		if bootcRemote {
+			config.Options.Bootc.UseRemoteContainerSource = true
+		}
 	}
 
 	mg, err := manifestgen.New(nil, &manifestOpts)
