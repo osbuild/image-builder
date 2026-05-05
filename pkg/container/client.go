@@ -468,15 +468,8 @@ func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.D
 
 	target := cl.Target.String()
 	if instanceDigest != "" {
-		// to resolve the config for a specific instance, we need to drop the
-		// tag or any other digest and replace it with the instance digest
-
-		if atidx := strings.LastIndex(target, "@"); atidx >= 0 { // check for @ digest suffix
-			target = target[:atidx]
-		} else if colidx := strings.LastIndex(target, ":"); colidx >= 0 { // check for : tag suffix
-			target = target[:colidx]
-		}
-		target = fmt.Sprintf("%s@%s", target, instanceDigest.String())
+		// resolve config for specific instance
+		target = fmt.Sprintf("%s@%s", nameFromRef(target), instanceDigest.String())
 	}
 
 	data, err := cl.skopeoInspect("docker://" + target)
@@ -484,17 +477,9 @@ func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.D
 		return RawManifest{}, err
 	}
 
-	schemaMediaType := struct {
-		SchemaVersion int    `json:"schemaVersion"`
-		MediaType     string `json:"mediaType"`
-	}{}
-
-	if err := json.Unmarshal(data, &schemaMediaType); err != nil {
+	mime, err := parseMediaType(data)
+	if err != nil {
 		return RawManifest{}, err
-	}
-
-	if schemaMediaType.SchemaVersion != 2 {
-		return RawManifest{}, fmt.Errorf("unknown schema version: %d", schemaMediaType.SchemaVersion)
 	}
 
 	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
@@ -504,7 +489,7 @@ func (cl *Client) GetManifestSkopeo(ctx context.Context, instanceDigest digest.D
 
 	r := RawManifest{
 		Data:     data,
-		MimeType: schemaMediaType.MediaType,
+		MimeType: mime,
 		Arch:     a,
 	}
 	return r, err
@@ -640,4 +625,37 @@ func (cl *Client) Resolve(ctx context.Context, name string, local bool) (Spec, e
 	}
 
 	return spec, nil
+}
+
+// nameFromRef removes the tag or image ID suffixes from a container ref and
+// returns the bare name.
+func nameFromRef(ref string) string {
+	// check for @ digest suffix
+	if atidx := strings.LastIndex(ref, "@"); atidx >= 0 {
+		return ref[:atidx]
+	}
+
+	// check for : tag suffix
+	if colidx := strings.LastIndex(ref, ":"); colidx >= 0 {
+		return ref[:colidx]
+	}
+
+	return ref
+}
+
+func parseMediaType(raw []byte) (string, error) {
+	p := struct {
+		SchemaVersion int    `json:"schemaVersion"`
+		MediaType     string `json:"mediaType"`
+	}{}
+
+	if err := json.Unmarshal(raw, &p); err != nil {
+		return "", err
+	}
+
+	if p.SchemaVersion != 2 {
+		return "", fmt.Errorf("unknown schema version: %d", p.SchemaVersion)
+	}
+
+	return p.MediaType, nil
 }
