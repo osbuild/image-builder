@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/cmd/check-host-config/check"
 	"github.com/osbuild/images/internal/buildconfig"
+	"github.com/osbuild/images/pkg/distro"
 )
 
 func TestShouldRunOn(t *testing.T) {
@@ -97,6 +98,58 @@ func TestShouldRunOn(t *testing.T) {
 			got := shouldRunOn(tt.osRelease, tt.runOn)
 			if got != tt.want {
 				t.Errorf("shouldRunOn() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRunChecks_RequiresBootc(t *testing.T) {
+	tests := []struct {
+		name         string
+		config       *buildconfig.BuildConfig
+		wantCheckRan bool
+	}{
+		{
+			name:         "skip when config is nil",
+			config:       nil,
+			wantCheckRan: false,
+		},
+		{
+			name: "skip when Options.Bootc is nil",
+			config: &buildconfig.BuildConfig{
+				Blueprint: &blueprint.Blueprint{},
+			},
+			wantCheckRan: false,
+		},
+		{
+			name: "run when Options.Bootc is set",
+			config: &buildconfig.BuildConfig{
+				Blueprint: &blueprint.Blueprint{},
+				Options: distro.ImageOptions{
+					Bootc: &distro.BootcImageOptions{},
+				},
+			},
+			wantCheckRan: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			checkRan := false
+			dummyCheck := check.RegisteredCheck{
+				Meta: &check.Metadata{
+					Name:          "test-bootc-check",
+					RequiresBootc: true,
+				},
+				Func: func(meta *check.Metadata, config *buildconfig.BuildConfig) error {
+					checkRan = true
+					return nil
+				},
+			}
+
+			runChecks([]check.RegisteredCheck{dummyCheck}, tt.config, nil, true)
+			if checkRan != tt.wantCheckRan {
+				t.Errorf("check ran = %v, want %v", checkRan, tt.wantCheckRan)
 			}
 		})
 	}
