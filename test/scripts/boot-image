@@ -546,7 +546,7 @@ def main():
         # initial-setup and this blocks the boot.
         case "qcow2" | "generic-qcow2" | "cloud-qcow2":
             boot_qemu(arch, image_path, build_config_path, keep_booted=args.keep_booted)
-        case "image-installer" | "minimal-installer":
+        case "image-installer" | "minimal-installer" | "bootc-generic-iso":
             boot_qemu_iso(arch, image_path, build_config_path)
         case "network-installer" | "everything-network-installer":
             boot_qemu_iso_no_unattended_support(arch, image_path, build_config_path)
