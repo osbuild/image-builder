@@ -536,7 +536,7 @@ def get_bib_ref():
     with open(SCHUTZFILE, encoding="utf-8") as schutzfile:
         data = json.load(schutzfile)
 
-    return data.get("common", {}).get("bootc-image-builder", {}).get("ref", None)
+    return data.get("common", {}).get("dependencies", {}).get("bootc-image-builder", {}).get("ref", None)
 
 
 def rng_seed_env():

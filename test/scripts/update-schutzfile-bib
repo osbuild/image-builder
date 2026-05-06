@@ -21,7 +21,7 @@ def main():
     with open(testlib.SCHUTZFILE, encoding="utf-8") as schutzfile:
         data = json.load(schutzfile)
 
-    data["common"]["bootc-image-builder"]["ref"] = new_ref
+    data["common"]["dependencies"]["bootc-image-builder"]["ref"] = new_ref
     with open(testlib.SCHUTZFILE, "w", encoding="utf-8") as schutzfile:
         json.dump(data, schutzfile, indent=2)
 
