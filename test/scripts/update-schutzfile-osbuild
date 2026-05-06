@@ -42,10 +42,9 @@ def update_osbuild_commit_ids(new):
     unique_changes = []
 
     for distro in data.keys():
-        if distro == "common":
+        old = data[distro].get("dependencies", {}).get("osbuild", {}).get("commit")
+        if old is None:
             continue
-
-        old = data[distro].get("dependencies", {}).get("osbuild", {}).get("commit", "main")
         change = f"Changes: https://github.com/osbuild/osbuild/compare/{old}...{new}"
         if change not in unique_changes:
             unique_changes.append(change)

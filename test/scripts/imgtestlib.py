@@ -519,13 +519,16 @@ def get_host_distro():
 
 def get_osbuild_commit(distro_version):
     """
-    Get the osbuild commit defined in the Schutzfile for the host distro.
+    Get the osbuild commit defined in the Schutzfile for the host distro or common.
     If not set, returns None.
     """
     with open(SCHUTZFILE, encoding="utf-8") as schutzfile:
         data = json.load(schutzfile)
 
-    return data.get(distro_version, {}).get("dependencies", {}).get("osbuild", {}).get("commit", None)
+    commit = data.get(distro_version, {}).get("dependencies", {}).get("osbuild", {}).get("commit", None)
+    if commit is None:
+        commit = data.get("common", {}).get("dependencies", {}).get("osbuild", {}).get("commit", None)
+    return commit
 
 
 def get_bib_ref():
