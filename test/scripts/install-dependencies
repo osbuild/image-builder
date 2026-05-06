@@ -35,4 +35,5 @@ dnf -y install \
 # out why it actually does not work:
 #
 #   https://github.com/osbuild/images/issues/2288
-pip install .
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+pip install "${SCRIPT_DIR}/../.."
