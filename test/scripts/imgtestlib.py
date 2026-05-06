@@ -17,7 +17,8 @@ S3_PREFIX = "images/builds"
 
 REGISTRY = "registry.gitlab.com/redhat/services/products/image-builder/ci/images"
 
-SCHUTZFILE = "Schutzfile"
+# Path to the Schutzfile relative to the root of the repository
+SCHUTZFILE = str(pathlib.Path(__file__).resolve().parents[2] / "Schutzfile")
 OS_RELEASE_FILE = "/etc/os-release"
 
 # image types that can be boot tested
