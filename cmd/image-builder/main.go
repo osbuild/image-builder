@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	"strings"
 	"syscall"
@@ -36,6 +37,25 @@ var (
 	osStdout io.Writer = os.Stdout
 	osStderr io.Writer = os.Stderr
 )
+
+// defaultCacheDir returns the default cache directory for osbuild
+// intermediate build artifacts. When running as root it uses the
+// system-wide /var/cache path. When running as a non-root user it
+// follows the XDG Base Directory specification and falls back to
+// ~/.cache.
+func defaultCacheDir() string {
+	if os.Getuid() == 0 {
+		return "/var/cache/image-builder/store"
+	}
+	if cacheHome := os.Getenv("XDG_CACHE_HOME"); cacheHome != "" {
+		return filepath.Join(cacheHome, "image-builder", "store")
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "/var/cache/image-builder/store"
+	}
+	return filepath.Join(home, ".cache", "image-builder", "store")
+}
 
 // basenameFor returns the basename for directory and filenames
 // for the given imageType. This can be user overriden via userBasename.
@@ -434,7 +454,11 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	// XXX: check env here, i.e. if user is root and osbuild is installed
+	// Fail early if the cache directory is not writable, instead of
+	// waiting for osbuild to fail after slow manifest generation.
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return fmt.Errorf("cannot create cache directory %q: %w\nHint: use --cache to specify a writable path", cacheDir, err)
+	}
 
 	// Setup osbuild environment if running in a container
 	if setup.IsContainer() {
@@ -697,7 +721,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
-	buildCmd.Flags().String("cache", "/var/cache/image-builder/store", `osbuild directory to cache intermediate build artifacts"`)
+	buildCmd.Flags().String("cache", defaultCacheDir(), `osbuild directory to cache intermediate build artifacts"`)
 	// XXX: add "--verbose" here, similar to how bib is doing this
 	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
 	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")

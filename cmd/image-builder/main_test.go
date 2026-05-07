@@ -1115,3 +1115,29 @@ customizations.FIPS = true
 		})
 	}
 }
+
+func TestDefaultCacheDirAsRoot(t *testing.T) {
+	if os.Getuid() != 0 {
+		t.Skip("test requires running as root")
+	}
+	assert.Equal(t, "/var/cache/image-builder/store", main.DefaultCacheDir())
+}
+
+func TestDefaultCacheDirNonRootXDG(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("test requires running as non-root")
+	}
+	t.Setenv("XDG_CACHE_HOME", "/tmp/test-xdg-cache")
+	assert.Equal(t, "/tmp/test-xdg-cache/image-builder/store", main.DefaultCacheDir())
+}
+
+func TestDefaultCacheDirNonRootFallback(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("test requires running as non-root")
+	}
+	t.Setenv("XDG_CACHE_HOME", "")
+	home, err := os.UserHomeDir()
+	require.NoError(t, err)
+	expected := filepath.Join(home, ".cache", "image-builder", "store")
+	assert.Equal(t, expected, main.DefaultCacheDir())
+}
