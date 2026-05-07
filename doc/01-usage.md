@@ -198,7 +198,6 @@ When this happens you'll be presented with an error:
 
 ```console
 $ sudo image-builder build --bootc-ref quay.io/fedora/fedora-bootc:rawhide qcow2
-WARNING: bootc support is experimental
 [|] Manifest generation step
 Message: Building manifest for bootc-based-qcow2
 error: no default fs set: mount "/boot" requires a filesystem but none set
