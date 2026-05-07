@@ -19,6 +19,7 @@ var (
 	DescribeImage   = describeImage
 	ProgressFromCmd = progressFromCmd
 	BasenameFor     = basenameFor
+	DefaultCacheDir = defaultCacheDir
 )
 
 type DescribeImgYAML describeImgYAML
