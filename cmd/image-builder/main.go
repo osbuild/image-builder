@@ -655,6 +655,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().MarkHidden("use-librepo")
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("with-rpmlist", false, `export RPM list as JSON`)
+	manifestCmd.Flags().MarkHidden("with-rpmlist")
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
 	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
 	manifestCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
