@@ -652,6 +652,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
 	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
+	manifestCmd.Flags().MarkHidden("use-librepo")
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("with-rpmlist", false, `export RPM list as JSON`)
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
