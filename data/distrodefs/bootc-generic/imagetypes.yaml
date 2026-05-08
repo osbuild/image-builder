@@ -85,6 +85,27 @@
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
 
+  erofs_options: &default_erofs_options
+    compression:
+      method: "lzma"
+      level: 6
+    options:
+      - "fragments"
+    cluster-size: 1048576
+
+  rootfs_excludes: &default_rootfs_excludes
+    - "boot/efi/.*"
+    - "boot/grub2/.*"
+    - "boot/config-.*"
+    - "boot/initramfs-.*"
+    - "boot/loader/.*"
+    - "boot/symvers-.*"
+    - "boot/System.map-.*"
+    - "usr/lib/sysimage/rpm/.*"
+    - "var/lib/rpm/.*"
+    - "var/lib/yum/.*"
+    - "var/lib/dnf/.*"
+
   supported_options_lists:
     supported_options_disk: &supported_options_disk
       - "customizations.bootloader"
@@ -183,11 +204,16 @@ image_types:
   # TODO: Discuss names of container-based isos: anaconda-iso,
   # bootc-generic-iso and bootc-installer are all confusing.
   bootc-generic-iso:
+    <<: *raw_image_type
     mime_type: "application/x-iso9660-image"
     exports: ["bootiso"]
     filename: "install.iso"
     boot_iso: true
     image_func: "bootc_generic_iso"
+    iso_config:
+      rootfs_type: "erofs"
+      erofs_options: *default_erofs_options
+      rootfs_excludes: *default_rootfs_excludes
     blueprint:
       supported_options: *supported_options_iso
 
