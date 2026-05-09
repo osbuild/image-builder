@@ -21,6 +21,9 @@ type BootcDiskImage struct {
 	ContainerSource      *container.SourceSpec
 	BuildContainerSource *container.SourceSpec
 
+	Bootloader    *string
+	UnifiedKernel bool
+
 	// Customizations
 	OSCustomizations   manifest.OSCustomizations
 	DiskCustomizations manifest.DiskCustomizations

@@ -210,6 +210,10 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
+
+	img.Bootloader = bd.bootloader
+	img.UnifiedKernel = bd.unifiedKernel
+
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
 
 	groups, err := customizations.GetGroups()
