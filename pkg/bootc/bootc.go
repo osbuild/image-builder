@@ -27,4 +27,7 @@ type Info struct {
 
 	// Is the container using a unified kernel?
 	UnifiedKernel bool
+
+	// What bootloader should be passed?
+	Bootloader *string
 }

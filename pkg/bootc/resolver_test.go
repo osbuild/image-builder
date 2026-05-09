@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/bootc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -240,5 +241,29 @@ echo '%s'
 		unified, err := cnt.UnifiedKernel()
 		assert.NoError(t, err)
 		assert.Equal(t, tc.Out, unified)
+	}
+}
+
+func TestBootloaderHappy(t *testing.T) {
+	for _, tc := range []struct {
+		In  string
+		Out *string
+	}{
+		{"", nil},
+		{"systemd", common.ToPtr("systemd")},
+		{"none", common.ToPtr("none")},
+		{"grub", common.ToPtr("grub")},
+	} {
+		jsonStr := "{}"
+		if tc.In != "" {
+			jsonStr = fmt.Sprintf(`{"bootloader": "%s"}`, tc.In)
+		}
+		makeFakePodman(t, fmt.Sprintf(`#!/bin/sh
+echo '%s'
+`, jsonStr))
+		cnt := bootc.Container{}
+		installConfig, err := cnt.InstallConfiguration()
+		assert.NoError(t, err)
+		assert.Equal(t, tc.Out, installConfig.Bootloader)
 	}
 }

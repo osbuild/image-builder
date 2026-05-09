@@ -197,6 +197,7 @@ func (c *Container) ResolveInfo() (*Info, error) {
 		return nil, err
 	}
 	bootcInfo.DefaultRootFs = bootcInstallConfig.Filesystem.Root.Type
+	bootcInfo.Bootloader = bootcInstallConfig.Bootloader
 
 	unifiedKernel, err := c.UnifiedKernel()
 	if err != nil {
@@ -305,6 +306,12 @@ func (c *Container) InstallConfiguration() (BootcInstallConfiguration, error) {
 	// filesystem.root.type is the preferred way instead of the old root-fs-type top-level key.
 	// See https://github.com/containers/bootc/commit/558cd4b1d242467e0ffec77fb02b35166469dcc7
 	fsType := bootcInstallConfig.Filesystem.Root.Type
+
+	// Return early to skip validating the empty default root filesystem type
+	if fsType == "" {
+		return bootcInstallConfig, nil
+	}
+
 	// Note that these are the only filesystems that the "images" library
 	// knows how to handle, i.e. how to construct the required osbuild
 	// stages for.
@@ -312,10 +319,6 @@ func (c *Container) InstallConfiguration() (BootcInstallConfiguration, error) {
 	// a single place that needs updating when we add e.g. btrfs or
 	// bcachefs
 	supportedFS := []string{"ext4", "xfs", "btrfs"}
-
-	if fsType == "" {
-		return BootcInstallConfiguration{}, nil
-	}
 	if !slices.Contains(supportedFS, fsType) {
 		return BootcInstallConfiguration{}, fmt.Errorf("unsupported root filesystem type: %s, supported: %s", fsType, strings.Join(supportedFS, ", "))
 	}
