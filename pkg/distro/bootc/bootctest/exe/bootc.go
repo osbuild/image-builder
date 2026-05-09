@@ -9,12 +9,15 @@ import (
 )
 
 func fakeBootc() error {
-	if os.Args[1] != "install" || os.Args[2] != "print-configuration" {
-		return fmt.Errorf("unexpected bootc arguments %v", os.Args)
+	if len(os.Args) >= 3 && os.Args[1] == "install" && os.Args[2] == "print-configuration" {
+		fmt.Println(`{"filesystem": {"root": {"type": "ext4"}}}`)
+		return nil
 	}
-	// print a sensible default configuration
-	fmt.Println(`{"filesystem": {"root": {"type": "ext4"}}}`)
-	return nil
+	if len(os.Args) >= 4 && os.Args[1] == "container" && os.Args[2] == "inspect" && os.Args[3] == "--json" {
+		fmt.Println(`{"kernel": {"unified": false}}`)
+		return nil
+	}
+	return fmt.Errorf("unexpected bootc arguments %v", os.Args)
 }
 
 func fakeSleep() error {

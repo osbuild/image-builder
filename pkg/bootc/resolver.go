@@ -198,6 +198,12 @@ func (c *Container) ResolveInfo() (*Info, error) {
 	}
 	bootcInfo.DefaultRootFs = defaultFs
 
+	unifiedKernel, err := c.UnifiedKernel()
+	if err != nil {
+		return nil, err
+	}
+	bootcInfo.UnifiedKernel = unifiedKernel
+
 	size, err := getContainerSize(c.ref, c.extraOpts)
 	if err != nil {
 		return nil, err
@@ -330,6 +336,33 @@ func (c *Container) InitrdModules(kver string) ([]string, error) {
 	}
 
 	return strings.Split(strings.TrimRight(string(output), "\n"), "\n"), nil
+}
+
+// UnifiedKernel finds out if the kernel inside the bootc container is unified
+func (c *Container) UnifiedKernel() (bool, error) {
+	args := []string{"exec"}
+	args = append(args, c.extraOpts...)
+	args = append(args, c.id, "bootc", "container", "inspect", "--json")
+
+	/* #nosec G204 */
+	output, err := exec.Command("podman", args...).Output()
+	if err != nil {
+		return false, fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
+	}
+
+	var bootcInspect struct {
+		Kargs  []string `json:"kargs"`
+		Kernel struct {
+			Version string `json:"version"`
+			Unified bool   `json:"unified"`
+		} `json:"kernel"`
+	}
+
+	if err := json.Unmarshal(output, &bootcInspect); err != nil {
+		return false, fmt.Errorf("failed to unmarshal bootc inspect : %w", err)
+	}
+
+	return bootcInspect.Kernel.Unified, nil
 }
 
 func findImageIdFor(cntId, ref string, extraOpts []string) (string, error) {
