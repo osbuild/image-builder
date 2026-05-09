@@ -222,3 +222,23 @@ echo '%s'
 		assert.ErrorContains(t, err, "unsupported root filesystem type: ext1, supported: ")
 	}
 }
+
+func TestUnifiedKernelHappy(t *testing.T) {
+	for _, tc := range []struct {
+		In  string
+		Out bool
+	}{
+		{`{"kernel": {"unified": true}}`, true},
+		{`{"kernel": {"unified": false}}`, false},
+		{`{"kernel": {}}`, false},
+		{`{}`, false},
+	} {
+		makeFakePodman(t, fmt.Sprintf(`#!/bin/sh
+echo '%s'
+`, tc.In))
+		cnt := bootc.Container{}
+		unified, err := cnt.UnifiedKernel()
+		assert.NoError(t, err)
+		assert.Equal(t, tc.Out, unified)
+	}
+}
