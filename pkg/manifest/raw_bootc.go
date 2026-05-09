@@ -36,6 +36,9 @@ type RawBootcImage struct {
 	// This adds directories to the root filesystem so that dmsquash-live will boot it
 	LiveBoot bool
 
+	UnifiedKernel bool
+	Bootloader    *string
+
 	// customizations go here because there is no intermediate
 	// tree, with `bootc install to-filesystem` we can only work
 	// with the image itself
@@ -145,6 +148,13 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	}
 	opts := &osbuild.BootcInstallToFilesystemOptions{
 		Kargs: p.OSCustomizations.KernelOptionsAppend,
+	}
+	// Unified implies that the composefs backend must be used
+	if p.UnifiedKernel {
+		opts.ComposeFS = common.ToPtr(true)
+	}
+	if p.Bootloader != nil {
+		opts.Bootloader = *p.Bootloader
 	}
 	if len(p.containers) > 0 {
 		opts.TargetImgref = p.containers[0].Name
