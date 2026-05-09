@@ -205,9 +205,9 @@ func TestRootfsTypeHappy(t *testing.T) {
 echo '%s'
 `, jsonStr))
 		cnt := bootc.Container{}
-		rootfs, err := cnt.DefaultRootfsType()
+		installConfig, err := cnt.InstallConfiguration()
 		assert.NoError(t, err)
-		assert.Equal(t, tc, rootfs)
+		assert.Equal(t, tc, installConfig.Filesystem.Root.Type)
 	}
 }
 
@@ -218,7 +218,7 @@ func TestRootfsTypeSad(t *testing.T) {
 echo '%s'
 `, jsonStr))
 		cnt := bootc.Container{}
-		_, err := cnt.DefaultRootfsType()
+		_, err := cnt.InstallConfiguration()
 		assert.ErrorContains(t, err, "unsupported root filesystem type: ext1, supported: ")
 	}
 }
