@@ -664,25 +664,28 @@ def get_common_ci_runner_distro():
 
 def find_image_file(build_path: str) -> str:
     """
-    Find the path to the image by reading the manifest to get the name of the last pipeline and searching for the file
-    under the directory named after the pipeline. Raises RuntimeError if no or multiple files are found in the expected
-    path.
+    Find the path to the image by reading the manifest and finding the exported pipeline's output directory.
+    A manifest may contain multiple pipelines but only one is exported during a build. This function finds the
+    exported pipeline by checking which pipeline directory exists in the build output.
+    Raises RuntimeError if no or multiple exported directories are found, or if the directory doesn't contain
+    exactly one file.
     """
     manifest_file = os.path.join(build_path, "manifest.json")
     with open(manifest_file, encoding="utf-8") as manifest:
         data = json.load(manifest)
 
-    last_pipeline = data["pipelines"][-1]["name"]
-    files = os.listdir(os.path.join(build_path, last_pipeline))
-    if len(files) > 1:
-        error = "Multiple files found in build path while searching for image file"
-        error += "\n".join(files)
-        raise RuntimeError(error)
+    pipeline_names = [p["name"] for p in data["pipelines"] if p["name"] != "build"]
+    export_dirs = [p for p in pipeline_names if os.path.isdir(os.path.join(build_path, p))]
 
-    if len(files) == 0:
-        raise RuntimeError("No found in build path while searching for image file")
+    if len(export_dirs) != 1:
+        raise RuntimeError(f"Expected exactly one exported pipeline directory in {build_path}, found: {export_dirs}")
 
-    return os.path.join(build_path, last_pipeline, files[0])
+    files = os.listdir(os.path.join(build_path, export_dirs[0]))
+    if len(files) != 1:
+        raise RuntimeError(
+            f"Expected exactly one file in export directory '{export_dirs[0]}', found: {files}")
+
+    return os.path.join(build_path, export_dirs[0], files[0])
 
 
 def read_build_info(build_path: str) -> Dict:
