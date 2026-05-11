@@ -1,0 +1,76 @@
+{
+  "name": "filesystem-customizations",
+  "blueprint": {
+    "name": "filesystem-customizations",
+    "description": "Dedicated test for the legacy customizations.filesystem API with a comprehensive set of mount paths.",
+    "version": "1.0",
+    "customizations": {
+      "filesystem": [
+        {
+          "mountpoint": "/",
+          "minsize": 2147483648
+        },
+        {
+          "mountpoint": "/var",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/var/log",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/var/log/audit",
+          "minsize": "125 MiB"
+        },
+        {
+          "mountpoint": "/usr",
+          "minsize": "4 GiB"
+        },
+        {
+          "mountpoint": "/tmp",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/var/tmp",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/home",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/home/shadowman",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/opt",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/srv",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/app",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/data",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/boot",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/boot/firmware",
+          "minsize": 131072000
+        },
+        {
+          "mountpoint": "/foobar",
+          "minsize": 131072000
+        }
+      ]
+    }
+  }
+}
