@@ -1,0 +1,16 @@
+{
+  "name": "filesystem-no-explicit-rootfs",
+  "blueprint": {
+    "name": "filesystem-no-explicit-rootfs",
+    "description": "Regression test: filesystem customization for /data without an explicit / entry (RHBZ#2049500). The compose must succeed with an implicit root filesystem.",
+    "version": "1.0",
+    "customizations": {
+      "filesystem": [
+        {
+          "mountpoint": "/data",
+          "minsize": 2147483648
+        }
+      ]
+    }
+  }
+}

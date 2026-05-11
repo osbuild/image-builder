@@ -616,6 +616,24 @@
     }
   },
   {
+    "path": "./configs/filesystem-no-explicit-rootfs.json",
+    "filters": {
+      "image-types": [
+        "generic-qcow2",
+        "server-qcow2",
+        "qcow2"
+      ],
+      "distros": [
+        "centos-10",
+        "centos-9",
+        "rhel-10*",
+        "rhel-9*",
+        "rhel-8*",
+        "fedora*"
+      ]
+    }
+  },
+  {
     "path": "./configs/modularity-in-packages.json",
     "filters": {
       "image-types": [
