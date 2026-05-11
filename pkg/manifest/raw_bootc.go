@@ -146,8 +146,10 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	if len(p.containerSpecs) != 1 {
 		return osbuild.Pipeline{}, fmt.Errorf("expected a single container input got %v", p.containerSpecs)
 	}
-	opts := &osbuild.BootcInstallToFilesystemOptions{
-		Kargs: p.OSCustomizations.KernelOptionsAppend,
+	opts := &osbuild.BootcInstallToFilesystemOptions{}
+	// Unified kernels cannot have custom kernel options
+	if !p.UnifiedKernel {
+		opts.Kargs = p.OSCustomizations.KernelOptionsAppend
 	}
 	// Unified implies that the composefs backend must be used
 	if p.UnifiedKernel {
