@@ -598,6 +598,24 @@
     }
   },
   {
+    "path": "./configs/filesystem-customizations.json",
+    "filters": {
+      "image-types": [
+        "generic-qcow2",
+        "server-qcow2",
+        "qcow2"
+      ],
+      "distros": [
+        "centos-10",
+        "centos-9",
+        "fedora*",
+        "rhel-10*",
+        "rhel-9*",
+        "rhel-8*"
+      ]
+    }
+  },
+  {
     "path": "./configs/modularity-in-packages.json",
     "filters": {
       "image-types": [
@@ -818,7 +836,7 @@
         "centos*"
       ],
       "image-types": [
-          "network-installer"
+        "network-installer"
       ]
     }
   },
@@ -829,8 +847,8 @@
         "fedora*"
       ],
       "image-types": [
-          "everything-network-installer",
-          "server-network-installer"
+        "everything-network-installer",
+        "server-network-installer"
       ]
     }
   }
