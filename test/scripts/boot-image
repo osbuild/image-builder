@@ -536,7 +536,7 @@ def main():
     config = json.loads(pathlib.Path(build_config_path).read_text(encoding="utf8"))
     if not testlib.can_boot_test(image_type, testlib.read_manifest(search_path),
                                  image_type, arch, distro, config.get("blueprint", {})):
-        print(f"{image_type} boot tests are not supported yet")
+        print(f"SKIP: {image_type} boot tests on {arch} are not supported ({distro})")
         return
 
     print(f"Testing image at {image_path}")
