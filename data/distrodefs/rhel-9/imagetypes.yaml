@@ -1637,6 +1637,11 @@ image_types:
             system_info:
               default_user:
                 name: "opc"
+      dracut_conf:
+        - filename: "oci.conf"
+          config:
+            add_drivers:
+              - "mlx5_core"
     blueprint:
       supported_options: *supported_options_disk
 
