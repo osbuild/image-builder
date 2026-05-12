@@ -101,6 +101,13 @@ func (t *bootcImageType) BootMode() platform.BootMode {
 		return platform.BOOT_UEFI
 	}
 
+	// Sealed images don't need a BIOSBOOT partition as they don't use bootupd
+	// (which requires it to exist), let's set ourselves to UEFI
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.unifiedKernel {
+		return platform.BOOT_UEFI
+	}
+
 	return platform.BOOT_HYBRID
 }
 
