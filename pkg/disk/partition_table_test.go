@@ -1150,9 +1150,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_AARCH64, // doesn't matter for dos
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_DOS,
-				Size: 201 * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_DOS,
+				Size:   201 * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start: 1 * datasizes.MiB,
@@ -1206,9 +1207,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_DOS,
-				Size: 222 * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_DOS,
+				Size:   222 * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -1290,9 +1292,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT,
-				Size: 223 * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_GPT,
+				Size:   223 * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -1378,9 +1381,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_AARCH64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT,
-				Size: (1+200+20+5)*datasizes.MiB + datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_GPT,
+				Size:   (1+200+20+5)*datasizes.MiB + datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start: 1 * datasizes.MiB,
@@ -1467,9 +1471,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_AARCH64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT,
-				Size: 226*datasizes.MiB + datasizes.MiB, // last part + footer
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_GPT,
+				Size:   226*datasizes.MiB + datasizes.MiB, // last part + footer
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start: 1 * datasizes.MiB,
@@ -1553,9 +1558,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_DOS,
-				Size: 22 * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_DOS,
+				Size:   22 * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -1619,9 +1625,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_DOS,
-				Size: 221 * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_DOS,
+				Size:   221 * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start: 1 * datasizes.MiB,
@@ -1699,6 +1706,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Size:        225*datasizes.MiB + 3*datasizes.GiB,
 				StartOffset: 3 * datasizes.MiB,
 				UUID:        "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy:      disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    4 * datasizes.MiB, // header + offset
@@ -1797,7 +1805,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Type: disk.PT_GPT,
 				Size: (20+12+1)*datasizes.MiB + 3*datasizes.GiB + datasizes.MiB, // start + size of last partition + footer
 
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB,
@@ -1870,7 +1879,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Type: disk.PT_DOS,
 				Size: 4*datasizes.MiB + 3*datasizes.GiB + datasizes.MiB, // start + size of last partition + footer
 
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -1922,7 +1932,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Type: disk.PT_GPT,
 				Size: (4+1)*datasizes.MiB + 3*datasizes.GiB + datasizes.MiB, // start + size of last partition + footer
 
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -2006,9 +2017,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:  arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_DOS,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-				Size: 1226*datasizes.MiB + 200*datasizes.MiB, // start + size of last partition (VG)
+				Type:   disk.PT_DOS,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Size:   1226*datasizes.MiB + 200*datasizes.MiB, // start + size of last partition (VG)
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -2160,9 +2172,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:  arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT, // default when unspecified
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-				Size: 1226*datasizes.MiB + 200*datasizes.MiB + datasizes.MiB, // start + size of last partition (VG) + footer
+				Type:   disk.PT_GPT, // default when unspecified
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Size:   1226*datasizes.MiB + 200*datasizes.MiB + datasizes.MiB, // start + size of last partition (VG) + footer
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -2307,9 +2320,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:     arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT, // default when unspecified
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-				Size: 1330*datasizes.MiB + 16*datasizes.MiB + 3*datasizes.GiB + datasizes.MiB, // start + size of last partition (VG) + footer
+				Type:   disk.PT_GPT, // default when unspecified
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Size:   1330*datasizes.MiB + 16*datasizes.MiB + 3*datasizes.GiB + datasizes.MiB, // start + size of last partition (VG) + footer
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -2444,9 +2458,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_DOS,
-				Size: 1226*datasizes.MiB + 230*datasizes.MiB, // start + size of last partition + footer
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_DOS,
+				Size:   1226*datasizes.MiB + 230*datasizes.MiB, // start + size of last partition + footer
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -2552,9 +2567,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT,
-				Size: 1346*datasizes.MiB + 230*datasizes.MiB + datasizes.MiB, // start + size of last partition + footer
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_GPT,
+				Size:   1346*datasizes.MiB + 230*datasizes.MiB + datasizes.MiB, // start + size of last partition + footer
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -2670,9 +2686,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT,
-				Size: 322*datasizes.MiB + 230*datasizes.MiB + datasizes.MiB, // start + size of last partition + footer
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_GPT,
+				Size:   322*datasizes.MiB + 230*datasizes.MiB + datasizes.MiB, // start + size of last partition + footer
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB, // header
@@ -2750,9 +2767,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			options: nil,
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT,
-				Size: 1026 * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_GPT,
+				Size:   1026 * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * datasizes.MiB,
@@ -2839,9 +2857,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT,
-				Size: (1 + 200 + 64 + 64 + 1 + 1) * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_GPT,
+				Size:   (1 + 200 + 64 + 64 + 1 + 1) * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					// ESP created by BOOT_UEFI option
 					{
@@ -2921,9 +2940,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_GPT,
-				Size: (1 + 500 + 1) * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_GPT,
+				Size:   (1 + 500 + 1) * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start: 1 * datasizes.MiB,
@@ -2977,9 +2997,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
-				Type: disk.PT_DOS,
-				Size: (500 + 1) * datasizes.MiB,
-				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Type:   disk.PT_DOS,
+				Size:   (500 + 1) * datasizes.MiB,
+				UUID:   "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+				Policy: disk.NewDefaultPartitionTablePolicy(),
 				Partitions: []disk.Partition{
 					{
 						Start: 1 * datasizes.MiB,
@@ -3023,7 +3044,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			// order will affect results
 			/* #nosec G404 */
 			rnd := rand.New(rand.NewSource(0))
-			pt, err := disk.NewCustomPartitionTable(tc.customizations, tc.options, rnd)
+			pt, err := disk.NewCustomPartitionTable(tc.customizations, tc.options, nil, rnd)
 
 			assert.NoError(err)
 			assert.Equal(tc.expected, pt)
@@ -3098,7 +3119,7 @@ func TestNewCustomPartitionTableSectorSize(t *testing.T) {
 			assert := assert.New(t)
 			/* #nosec G404 */
 			rnd := rand.New(rand.NewSource(0))
-			pt, err := disk.NewCustomPartitionTable(tc.customizations, options, rnd)
+			pt, err := disk.NewCustomPartitionTable(tc.customizations, options, nil, rnd)
 
 			assert.NoError(err)
 			assert.Equal(tc.expectedSize, pt.SectorSize, "SectorSize should match the customization")
@@ -3339,7 +3360,7 @@ func TestNewCustomPartitionTableErrors(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			_, err := disk.NewCustomPartitionTable(tc.customizations, tc.options, rnd)
+			_, err := disk.NewCustomPartitionTable(tc.customizations, tc.options, nil, rnd)
 			assert.EqualError(err, tc.errmsg)
 		})
 	}
@@ -3419,4 +3440,80 @@ func TestUnmarshalSizeUnitStringPartitionTable(t *testing.T) {
 			assert.Equal(t, datasizes.Size(tc.expected), pt.Size)
 		})
 	}
+}
+
+func TestNewCustomPartitionTablePolicyNoXBOOTLDR(t *testing.T) {
+	noBootPolicy := &disk.PartitionTablePolicy{EnsureXBOOTLDR: false}
+	/* #nosec G404 */
+	rnd := rand.New(rand.NewSource(0))
+
+	t.Run("lvm-gpt-no-boot", func(t *testing.T) {
+		customizations := &blueprint.DiskCustomization{
+			Partitions: []blueprint.PartitionCustomization{
+				{
+					Type:    "lvm",
+					MinSize: 100 * datasizes.MiB,
+					VGCustomization: blueprint.VGCustomization{
+						Name: "testvg",
+						LogicalVolumes: []blueprint.LVCustomization{
+							{
+								Name:    "rootlv",
+								MinSize: 50 * datasizes.MiB,
+								FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+									Mountpoint: "/",
+									Label:      "root",
+									FSType:     "xfs",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		options := &disk.CustomPartitionTableOptions{
+			DefaultFSType:      disk.FS_EXT4,
+			BootMode:           platform.BOOT_HYBRID,
+			PartitionTableType: disk.PT_GPT,
+			Architecture:       arch.ARCH_X86_64,
+		}
+
+		pt, err := disk.NewCustomPartitionTable(customizations, options, noBootPolicy, rnd)
+		require.NoError(t, err)
+
+		assert.Nil(t, disk.EntityPath(pt, "/boot"), "no /boot should be created with EnsureXBOOTLDR=false")
+		assert.NotNil(t, disk.EntityPath(pt, "/"), "root should exist")
+		assert.Equal(t, noBootPolicy, pt.Policy)
+	})
+
+	t.Run("btrfs-gpt-no-boot", func(t *testing.T) {
+		customizations := &blueprint.DiskCustomization{
+			Partitions: []blueprint.PartitionCustomization{
+				{
+					Type:    "btrfs",
+					MinSize: 230 * datasizes.MiB,
+					BtrfsVolumeCustomization: blueprint.BtrfsVolumeCustomization{
+						Subvolumes: []blueprint.BtrfsSubvolumeCustomization{
+							{
+								Name:       "subvol/root",
+								Mountpoint: "/",
+							},
+						},
+					},
+				},
+			},
+		}
+		options := &disk.CustomPartitionTableOptions{
+			DefaultFSType:      disk.FS_EXT4,
+			BootMode:           platform.BOOT_HYBRID,
+			PartitionTableType: disk.PT_GPT,
+			Architecture:       arch.ARCH_X86_64,
+		}
+
+		pt, err := disk.NewCustomPartitionTable(customizations, options, noBootPolicy, rnd)
+		require.NoError(t, err)
+
+		assert.Nil(t, disk.EntityPath(pt, "/boot"), "no /boot should be created with EnsureXBOOTLDR=false")
+		assert.NotNil(t, disk.EntityPath(pt, "/"), "root should exist")
+		assert.Equal(t, noBootPolicy, pt.Policy)
+	})
 }
