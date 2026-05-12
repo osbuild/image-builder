@@ -557,7 +557,12 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 	return isc, nil
 }
 
-func isoCustomizations(t *imageType, c *blueprint.Customizations) (manifest.ISOCustomizations, error) {
+type ISOImageType interface {
+	ISOLabel() (string, error)
+	getDefaultISOConfig() (*distro.ISOConfig, error)
+}
+
+func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.ISOCustomizations, error) {
 	isoLabel, err := t.ISOLabel()
 	if err != nil {
 		return manifest.ISOCustomizations{}, err
@@ -601,6 +606,11 @@ func isoCustomizations(t *imageType, c *blueprint.Customizations) (manifest.ISOC
 			isc.ExcludePaths = excludePaths
 		}
 
+	}
+
+	// No blueprint customizations, just return the defaults from the YAML
+	if c == nil {
+		return isc, nil
 	}
 
 	isoCust, err := c.GetISO()
