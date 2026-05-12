@@ -8,6 +8,7 @@ import (
 
 var (
 	AddBuildBootstrapPipelines = addBuildBootstrapPipelines
+	EFIBootPartitionTable      = efiBootPartitionTable
 )
 
 func MockManifestNewBuild(new func(m *manifest.Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts *manifest.BuildOptions) manifest.Build) (restore func()) {
