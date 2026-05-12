@@ -1742,6 +1742,8 @@ image_types:
       - arch: "aarch64"
     image_config:
       no_selinux: true
+      enabled_services:
+        - "sshd.service"
       conditions:
         "wsl config for rhel":
           when:
