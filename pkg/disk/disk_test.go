@@ -1081,3 +1081,40 @@ func TestCreatePartitionTableDefaultFs(t *testing.T) {
 	assert.Equal(t, "/var/stuff", mpt.Partitions[nParts-2].Payload.(*disk.Filesystem).Mountpoint)
 	assert.Equal(t, "ext4", mpt.Partitions[nParts-2].Payload.(*disk.Filesystem).Type)
 }
+
+func TestNewPartitionTablePolicyNoXBOOTLDR(t *testing.T) {
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+	noBootPolicy := &disk.PartitionTablePolicy{EnsureXBOOTLDR: false}
+
+	t.Run("lvm-noboot-errors", func(t *testing.T) {
+		pt := testdisk.TestPartitionTables()["plain-noboot"]
+		pt.Policy = noBootPolicy
+		_, err := disk.NewPartitionTable(&pt, []blueprint.FilesystemCustomization{
+			{Mountpoint: "/home", MinSize: 1 * GiB},
+		}, 13*MiB, partition.AutoLVMPartitioningMode, arch.ARCH_X86_64, nil, "", rng)
+		assert.ErrorContains(t, err, "policy says to not create one")
+	})
+
+	t.Run("btrfs-noboot-succeeds", func(t *testing.T) {
+		pt := testdisk.TestPartitionTables()["plain-noboot"]
+		pt.Policy = noBootPolicy
+		mpt, err := disk.NewPartitionTable(&pt, []blueprint.FilesystemCustomization{
+			{Mountpoint: "/home", MinSize: 1 * GiB},
+		}, 13*MiB, partition.BtrfsPartitioningMode, arch.ARCH_X86_64, nil, "", rng)
+		require.NoError(t, err)
+		assert.Nil(t, disk.EntityPath(mpt, "/boot"), "no /boot should be created")
+		assert.NotNil(t, disk.EntityPath(mpt, "/"), "root should exist")
+	})
+
+	t.Run("lvm-with-boot-succeeds", func(t *testing.T) {
+		pt := testdisk.TestPartitionTables()["plain"]
+		pt.Policy = noBootPolicy
+		mpt, err := disk.NewPartitionTable(&pt, []blueprint.FilesystemCustomization{
+			{Mountpoint: "/home", MinSize: 1 * GiB},
+		}, 13*MiB, partition.AutoLVMPartitioningMode, arch.ARCH_X86_64, nil, "", rng)
+		require.NoError(t, err)
+		assert.NotNil(t, disk.EntityPath(mpt, "/boot"), "/boot should be preserved from base PT")
+		assert.NotNil(t, disk.EntityPath(mpt, "/"), "root should exist")
+	})
+}
