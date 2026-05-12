@@ -783,6 +783,15 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 
 	bd := t.arch.distro.(*BootcDistro)
 
+	// When there's a unified kernel we don't want to auto-create a /boot even *if* the
+	// root filesystem is btrfs or lvm. Set a policy that disables the creation. Otherwise
+	// the default partition table policy is used.
+	if bd.unifiedKernel {
+		basept.Policy = &disk.PartitionTablePolicy{
+			EnsureXBOOTLDR: false,
+		}
+	}
+
 	// Embedded disk customization applies if there was no local customization
 	if fsCust == nil && diskCust == nil && bd.sourceInfo != nil && bd.sourceInfo.ImageCustomization != nil {
 		imageCustomizations := bd.sourceInfo.ImageCustomization
