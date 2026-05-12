@@ -13,6 +13,7 @@ import subprocess
 import textwrap
 import uuid
 from tempfile import TemporaryDirectory
+from typing import Dict, Optional
 
 import imgtestlib as testlib
 
@@ -27,25 +28,44 @@ WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
 ISO_BOOT_TIMEOUT = 1800
 
 
+def ensure_env_vars(env_vars: Dict[str, Optional[str]]):
+    missing = [name for name, value in env_vars.items() if value is None or value == ""]
+    if missing:
+        raise RuntimeError(f"Missing or empty environment variables: {missing}")
+
+
 def get_aws_config():
-    return {
+    env_vars = {
         "key_id": os.environ.get("AWS_ACCESS_KEY_ID"),
         "secret_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
         "bucket": os.environ.get("AWS_BUCKET"),
         "region": os.environ.get("AWS_REGION")
     }
+    ensure_env_vars(env_vars)
+    return env_vars
 
 
 def get_azure_config():
-    return {
+    env_vars = {
         "subscription": os.environ.get("AZURE_SUBSCRIPTION"),
         "tenant": os.environ.get("AZURE_TENANT"),
         "client_id": os.environ.get("AZURE_CLIENT_ID"),
         "client_secret": os.environ.get("AZURE_CLIENT_SECRET"),
         "resource_group": os.environ.get("AZURE_RESOURCE_GROUP"),
+    }
+    ensure_env_vars(env_vars)
+    return env_vars
+
+
+def get_wsl_config():
+    azure_config = get_azure_config()
+    env_vars = {
         "windows_snapshot": os.environ.get("AZURE_WINDOWS_SNAPSHOT"),
         "windows_ssh_privkey": os.environ.get("AZURE_WINDOWS_SSH_PRIVKEY"),
     }
+    ensure_env_vars(env_vars)
+    env_vars.update(azure_config)
+    return env_vars
 
 
 @contextlib.contextmanager
@@ -492,7 +512,7 @@ def boot_wsl(distro, arch, image_path, config):
     with ensure_uncompressed(image_path) as raw_image_path:
         cmd = [WSL_TEST_SCRIPT, raw_image_path, BASE_TEST_EXEC+arch, config]
         make_check_host_config(arch)
-        az_config = get_azure_config()
+        az_config = get_wsl_config()
         with create_ssh_key(privkey_file = az_config["windows_ssh_privkey"]) as (privkey, pubkey):
             # a lot of resources have <=64 character naming constraint
             name = f"{distro}-" + str(uuid.uuid4())
