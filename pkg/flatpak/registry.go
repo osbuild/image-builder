@@ -46,11 +46,17 @@ func (r *Registry) queryOCI(ref string) (*Spec, error) {
 		panic("uri missing oci+ prefix")
 	}
 
+	parsed, err := NewReferenceFromString(ref)
+	if err != nil {
+		return nil, err
+	}
+
 	container, err := QueryOCIRegistryIndex(
 		uri,
 		ref,
 		"linux",
 		"latest",
+		parsed.Arch,
 	)
 
 	if err != nil {
