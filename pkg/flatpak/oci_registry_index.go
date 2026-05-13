@@ -44,43 +44,67 @@ type ResponseImage struct {
 	Labels       map[string]string `json:"Labels"`
 }
 
-// Deserialization of an OCI Manifest, only defines the fields necessary for us
-// to get what we need; which is the digest of the config object.
-type OCIManifest struct {
-	Config *struct {
-		Digest string `json:"digest,omitempty"`
-	} `json:"config,omitempty"`
-}
-
 type ResponseImageList struct{}
 
-func QueryOCIRegistryIndex(uri, ref, os, tag string) (*container.Spec, error) {
+// QueryOCIRegistryIndex looks up a flatpak ref via the registry index, then uses
+// [container.Resolver] to resolve the digest-pinned image to a [container.Spec]
+// (manifest digest, config digest / image ID, source name, optional list digest).
+//
+// imageArch is the flatpak architecture string from the ref (e.g. x86_64); it is passed
+// to the container resolver for manifest-list selection.
+func QueryOCIRegistryIndex(uri, ref, os, tag, imageArch string) (*container.Spec, error) {
 	res, err := fetchRegistryIndex(uri, os, tag)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, result := range res.Results {
-		for _, img := range result.Images {
-			if img.Labels["org.flatpak.ref"] == ref {
-				imageID, err := fetchDockerAPIConfigDigest(res.Registry, result.Name, img.Digest)
-				if err != nil {
-					return nil, err
-				}
-
-				reg, _ := strings.CutPrefix(res.Registry, "https://")
-
-				return &container.Spec{
-					Source:    fmt.Sprintf("%s%s", reg, result.Name),
-					Digest:    img.Digest,
-					ImageID:   imageID,
-					LocalName: result.Name,
-				}, nil
-			}
-		}
+	repoName, manifestDigest, err := findFlatpakInIndex(res, ref)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, fmt.Errorf("did not find image %q", ref)
+	imageRef := ociImageRefFromIndexComponents(res.Registry, repoName, manifestDigest)
+
+	r := container.NewBlockingResolver(imageArch)
+	spec, err := r.Resolve(container.SourceSpec{
+		Source:    imageRef,
+		Name:      repoName,
+		TLSVerify: nil,
+		Local:     false,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("resolve flatpak container %q: %w", imageRef, err)
+	}
+	return &spec, nil
+}
+
+// findFlatpakInIndex returns the repository name and manifest digest for the first image
+// whose org.flatpak.ref label equals wantRef.
+func findFlatpakInIndex(res *ResponseRoot, wantRef string) (repoName, manifestDigest string, err error) {
+	for _, result := range res.Results {
+		for _, img := range result.Images {
+			if img == nil || img.Labels == nil {
+				continue
+			}
+			if img.Labels["org.flatpak.ref"] != wantRef {
+				continue
+			}
+			if res.Registry == "" {
+				return "", "", fmt.Errorf("registry index: found %q but Registry field was missing", wantRef)
+			}
+			return result.Name, img.Digest, nil
+		}
+	}
+	return "", "", fmt.Errorf("did not find image %q", wantRef)
+}
+
+// ociImageRefFromIndexComponents builds a docker-style reference host/repo@digest for
+// [container.NewClient] / the blocking resolver.
+func ociImageRefFromIndexComponents(registryURL, repoName, manifestDigest string) string {
+	host := strings.TrimPrefix(strings.TrimPrefix(registryURL, "https://"), "http://")
+	host = strings.TrimSuffix(host, "/")
+	repoPath := strings.TrimPrefix(repoName, "/")
+	return fmt.Sprintf("%s/%s@%s", host, repoPath, manifestDigest)
 }
 
 func httpClient() (*http.Client, error) {
@@ -132,51 +156,4 @@ func fetchRegistryIndex(uri, os, tag string) (*ResponseRoot, error) {
 	}
 
 	return &root, nil
-}
-
-// Use the docker API provided by a registry to fetch the digest of the 'config' section of
-// a manifest [1], [2].
-// [1]: https://distribution.github.io/distribution/spec/api/#pulling-an-image-manifest
-// [2]: https://specs.opencontainers.org/image-spec/manifest/
-func fetchDockerAPIConfigDigest(registry, name, digest string) (string, error) {
-	client, err := httpClient()
-	if err != nil {
-		return "", err
-	}
-
-	uri, err := url.JoinPath(registry, "v2", name, "manifests", digest)
-	if err != nil {
-		return "", fmt.Errorf("could not format URI: %w", err)
-	}
-
-	req, err := http.NewRequest(http.MethodGet, uri, nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Accept", "application/vnd.oci.image.manifest.v1+json")
-
-	res, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("docker api error %d %w %q", res.StatusCode, err, uri)
-	}
-
-	var manifest OCIManifest
-	if err := json.NewDecoder(res.Body).Decode(&manifest); err != nil {
-		return "", err
-	}
-
-	if manifest.Config == nil {
-		return "", fmt.Errorf("manifest did not contain config")
-	}
-
-	if manifest.Config.Digest == "" {
-		return "", fmt.Errorf("config did not contain digest")
-	}
-
-	return manifest.Config.Digest, nil
 }
