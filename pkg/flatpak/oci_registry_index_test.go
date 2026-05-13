@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -225,7 +226,13 @@ func TestFetchRegistryIndex(t *testing.T) {
 			}))
 			defer ts.Close()
 
-			root, err := fetchRegistryIndex(ts.URL, tt.os, tt.tag)
+			idx, err := NewOCIRegistryIndex(ts.URL, tt.os, tt.tag)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer idx.Close()
+
+			root, err := idx.getResponseRoot()
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error")
@@ -249,5 +256,42 @@ func TestFetchRegistryIndex(t *testing.T) {
 				t.Fatalf("repo=%q digest=%q want repo=%q digest=%q", repo, dig, tt.wantRepo, tt.wantDigest)
 			}
 		})
+	}
+}
+
+func TestOCIRegistryIndex_cacheReusesGET(t *testing.T) {
+	const body = `{"Registry":"https://registry.example.com","Results":[]}`
+	var indexGets atomic.Int32
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/index/static") {
+			indexGets.Add(1)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(body))
+	}))
+	defer ts.Close()
+
+	idx, err := NewOCIRegistryIndex(ts.URL, "linux", "latest")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer idx.Close()
+
+	if _, err := idx.getResponseRoot(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := idx.getResponseRoot(); err != nil {
+		t.Fatal(err)
+	}
+	if indexGets.Load() != 1 {
+		t.Fatalf("expected 1 index GET, got %d", indexGets.Load())
+	}
+
+	idx.Close()
+	if _, err := idx.getResponseRoot(); err != nil {
+		t.Fatal(err)
+	}
+	if indexGets.Load() != 2 {
+		t.Fatalf("after Close expected 2 index GETs, got %d", indexGets.Load())
 	}
 }
