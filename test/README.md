@@ -167,7 +167,8 @@ in the form
   "commit": "<commit ID>",
   "boot-success": true,
   "pr": "<PR number>",
-  "runner-distro": "<runner distro>"
+  "runner-distro": "<runner distro>",
+  "iso-embedded-ks": "<path to embedded kickstart file within the build directory>"
 }
 ```
 
@@ -186,7 +187,8 @@ for example:
   "commit": "52ecfdf1eb345e09c6a6edf4a8d3dd5c8079c51c",
   "boot-success": true,
   "pr": 42,
-  "runner-distro": "fedora-40"
+  "runner-distro": "fedora-40",
+  "iso-embedded-ks": "embedded.ks"
 }
 ```
 
