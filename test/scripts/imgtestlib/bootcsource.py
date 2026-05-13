@@ -5,7 +5,7 @@ BOOTCREFS_PATH = "./test/data/bootcrefs"
 VANILLA_REF_IMAGE_TYPES = {"raw", "vmdk", "ova", "qcow2"}
 CLOUD_IMAGE_TYPES = {"ami", "gce", "vhd"}
 DISK_IMAGE_TYPES = VANILLA_REF_IMAGE_TYPES | CLOUD_IMAGE_TYPES
-INSTALLER_IMAGE_TYPES = {"bootc-generic-iso", "bootc-installer"}
+INSTALLER_IMAGE_TYPES = {"generic-iso", "bootc-installer"}
 
 # we test all image types for fedora-44, but only vhd for rhel-10
 # since we only have bootc-foundry for rhel-10, we only support vhd for rhel-10

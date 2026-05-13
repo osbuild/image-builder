@@ -203,7 +203,7 @@ def test_resolve_ref_from_entry_no_derived_refs():
     assert testlib.bootcsource.resolve_ref_from_entry(
         entry, "src", "x86_64", "bootc-installer") is None
     assert testlib.bootcsource.resolve_ref_from_entry(
-        entry, "src", "x86_64", "bootc-generic-iso") is None
+        entry, "src", "x86_64", "generic-iso") is None
     assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64") == "quay.io/example/base:latest"
 
 

@@ -87,7 +87,7 @@ The important differences are:
 Most disk image type names are unchanged: `qcow2`, `raw`, `vmdk`, `vhd`, `ami`, `gce`, `ova`, and
 `pxe-tar-xz`.
 
-For ISO images, use the `bootc-generic-iso` image type. The old `anaconda-iso`/`iso` image types from
+For ISO images, use the `generic-iso` image type. The old `anaconda-iso`/`iso` image types from
 `bootc-image-builder` are legacy and are not supported by `image-builder`. The `bootc-installer`
 image type is still available but its use is not recommended.
 

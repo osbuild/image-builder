@@ -351,7 +351,7 @@ Container publishers can use `$TARGETARCH` or other Containerfile logic to inclu
 
 ### `iso.yaml`
 
-A YAML file containing instructions for constructing an ISO. This YAML file is only used for the `bootc-generic-iso` image type which makes as few assumptions as possible and thus needs extra instructions to tell it what to do. Read [more about the `bootc-generic-iso`](./10-isos.md) to see what you can do with this file.
+A YAML file containing instructions for constructing an ISO. This YAML file is only used for the `generic-iso` image type which makes as few assumptions as possible and thus needs extra instructions to tell it what to do. Read [more about the `generic-iso`](./10-isos.md) to see what you can do with this file.
 
 ```yaml
 label: "Fedora-bootc-Installer"

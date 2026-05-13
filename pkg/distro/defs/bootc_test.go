@@ -734,7 +734,7 @@ var diskContainers = map[string][]container.Spec{
 	},
 }
 
-// isoContainers can be passed to Serialize() to get a minimal bootc-generic-iso image
+// isoContainers can be passed to Serialize() to get a minimal generic-iso image
 var isoContainers = map[string][]container.Spec{
 	"build": {
 		containerSpec,
@@ -1028,7 +1028,7 @@ func TestManifestGenerationBootloaderValidation(t *testing.T) {
 
 func TestBootcIsoManifestSerialization(t *testing.T) {
 	bd := NewTestBootcDistro(t)
-	imgType, err := bd.arches["x86_64"].GetImageType("bootc-generic-iso")
+	imgType, err := bd.arches["x86_64"].GetImageType("generic-iso")
 	assert.NoError(t, err)
 
 	bp := &blueprint.Blueprint{}
@@ -1103,7 +1103,7 @@ func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			imgType, err := tc.distro.arches[tc.archName].GetImageType("bootc-generic-iso")
+			imgType, err := tc.distro.arches[tc.archName].GetImageType("generic-iso")
 			require.NoError(t, err)
 
 			mf, _, err := imgType.Manifest(&blueprint.Blueprint{}, distro.ImageOptions{}, nil, common.ToPtr(int64(0)))

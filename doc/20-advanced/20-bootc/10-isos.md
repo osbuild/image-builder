@@ -2,7 +2,7 @@
 
 ## Generic
 
-`image-builder` can build ISOs out of bootable containers. The image type to use to build ISOs is the `bootc-generic-iso` image type. `image-builder` takes the bootable container and explodes the relevant parts to put them into the correct places on the ISO this means that there is a small contract in place on what `image-builder` expects to exist in your bootable container:
+`image-builder` can build ISOs out of bootable containers. The image type to use to build ISOs is the `generic-iso` image type. `image-builder` takes the bootable container and explodes the relevant parts to put them into the correct places on the ISO this means that there is a small contract in place on what `image-builder` expects to exist in your bootable container:
 
 1. A kernel must live in `/usr/lib/module/*/vmlinuz`. If there are multiple kernels the behavior is undefined. This kernel will be placed in `/images/pxeboot/vmlinuz` on the ISO filesystem.
 2. An initramfs is expected to be next to the kernel with the filename `initramfs.img`. The initramfs is placed in `/images/pxeboot/initrd.img` on the ISO filesystem.
@@ -14,7 +14,7 @@
 
 You can [define additional configuration](./05-sources-of-configuration.md#isoyaml) for an ISO inside your container.
 
-If a `--bootc-installer-payload-ref` argument is optionally passed to `image-builder` when building a `bootc-generic-iso` then the container reference is copied from the hosts container storage to `/var/lib/containers/storage` in the squashfs filesystem.
+If a `--bootc-installer-payload-ref` argument is optionally passed to `image-builder` when building a `generic-iso` then the container reference is copied from the hosts container storage to `/var/lib/containers/storage` in the squashfs filesystem.
 
 ### Example Containerfile
 
@@ -112,7 +112,7 @@ You can then build this into an ISO:
 
 ```
 sudo podman build -t localhost/iso -f Containerfile
-sudo image-builder build --bootc-ref localhost/iso --bootc-default-fs ext4 bootc-generic-iso
+sudo image-builder build --bootc-ref localhost/iso --bootc-default-fs ext4 generic-iso
 ```
 
 > [!TIP]
@@ -132,7 +132,7 @@ sudo image-builder build --bootc-ref localhost/iso --bootc-default-fs ext4 bootc
 > ```
 > PAYLOADREF="quay.io/fedora/fedora-bootc:rawhide"
 > sudo podman build -t localhost/iso -f Containerfile
-> sudo image-builder build --bootc-ref localhost/iso --bootc-installer-payload-ref "$PAYLOADREF" --bootc-default-fs ext4 bootc-generic-iso
+> sudo image-builder build --bootc-ref localhost/iso --bootc-installer-payload-ref "$PAYLOADREF" --bootc-default-fs ext4 generic-iso
 > ```
 
 > [!WARNING]
@@ -144,7 +144,7 @@ For more examples, including for other operating systems, you can take a look at
 
 ### `bootc-installer`
 
-There's an alternative image type called `bootc-installer` which makes more assumptions about the contents of the container. You should prefer using `bootc-generic-iso`.
+There's an alternative image type called `bootc-installer` which makes more assumptions about the contents of the container. You should prefer using `generic-iso`.
 
 ### `anaconda-iso`
 
