@@ -58,6 +58,17 @@ func TestNewMounts(t *testing.T) {
 		}
 		assert.Equal(expected, actual)
 	}
+
+	{ // erofs
+		actual := osbuild.NewErofsMount("erofs", "rootfs.img", "/mnt/erofs")
+		expected := &osbuild.Mount{
+			Name:   "erofs",
+			Type:   "org.osbuild.erofs",
+			Source: "rootfs.img",
+			Target: "/mnt/erofs",
+		}
+		assert.Equal(expected, actual)
+	}
 }
 
 func TestMountJsonAll(t *testing.T) {
