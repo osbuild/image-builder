@@ -93,15 +93,15 @@ containers:
         id: "fedora"
         versionid: "42"
 
-  # test bootc-generic-iso
+  # test generic-iso
   - <<: *default_fake_container
-    image_types: ["bootc-generic-iso"]
+    image_types: ["generic-iso"]
     arch: x86_64
     info:
       <<: *default_info
       uefi_vendor: "uefi-vendor-x86_64"
   - <<: *default_fake_container
-    image_types: ["bootc-generic-iso"]
+    image_types: ["generic-iso"]
     arch: aarch64
     info:
       <<: *default_info
