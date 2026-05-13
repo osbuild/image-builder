@@ -69,6 +69,17 @@ func TestNewMounts(t *testing.T) {
 		}
 		assert.Equal(expected, actual)
 	}
+
+	{ // squashfs
+		actual := osbuild.NewSquashfsMount("squashfs", "rootfs.img", "/mnt/squashfs")
+		expected := &osbuild.Mount{
+			Name:   "squashfs",
+			Type:   "org.osbuild.squashfs",
+			Source: "rootfs.img",
+			Target: "/mnt/squashfs",
+		}
+		assert.Equal(expected, actual)
+	}
 }
 
 func TestMountJsonAll(t *testing.T) {
