@@ -166,7 +166,8 @@ in the form
   "osbuild-commit": "<osbuild commit ID>",
   "commit": "<commit ID>",
   "boot-success": true,
-  "pr": "<PR number>"
+  "pr": "<PR number>",
+  "runner-distro": "<runner distro>"
 }
 ```
 
@@ -184,7 +185,8 @@ for example:
   "osbuild-commit": "74392a0238dec6bfa3f030e46c840148df2814e0",
   "commit": "52ecfdf1eb345e09c6a6edf4a8d3dd5c8079c51c",
   "boot-success": true,
-  "pr": 42
+  "pr": 42,
+  "runner-distro": "fedora-40"
 }
 ```
 
