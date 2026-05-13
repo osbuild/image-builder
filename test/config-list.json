@@ -739,7 +739,7 @@
         "vmdk",
         "ova",
         "anaconda-iso",
-        "bootc-generic-iso",
+        "generic-iso",
         "pxe-tar-xz"
       ]
     }
@@ -770,7 +770,7 @@
         "vmdk",
         "ova",
         "anaconda-iso",
-        "bootc-generic-iso",
+        "generic-iso",
         "pxe-tar-xz"
       ]
     }
