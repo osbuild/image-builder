@@ -34,7 +34,7 @@ CAN_BOOT_TEST = {
         "qcow2", "generic-qcow2", "cloud-qcow2",
         "raw", "vmdk",
         "wsl", "generic-wsl",
-        "bootc-generic-iso",
+        "generic-iso",
     ]
 }
 
@@ -478,7 +478,7 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
             return False
 
     if image_type in ["qcow2", "generic-qcow2", "cloud-qcow2", "image-installer", "minimal-installer",
-                      "network-installer", "everything-network-installer", "bootc-generic-iso"]:
+                      "network-installer", "everything-network-installer", "generic-iso"]:
         if blueprint.get("customizations", {}).get("fips") and distro.startswith("fedora"):
             print("  not bootable: fips on fedora is unstable, fails with e.g. dracut:"
                   "FATAL: FIPS integrity test failed")

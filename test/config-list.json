@@ -724,7 +724,7 @@
         "vmdk",
         "ova",
         "anaconda-iso",
-        "bootc-generic-iso",
+        "generic-iso",
         "pxe-tar-xz"
       ]
     }
@@ -744,7 +744,7 @@
         "vmdk",
         "ova",
         "anaconda-iso",
-        "bootc-generic-iso",
+        "generic-iso",
         "pxe-tar-xz"
       ]
     }
@@ -757,7 +757,7 @@
       ],
       "image-types": [
         "bootc-installer",
-        "bootc-generic-iso"
+        "generic-iso"
       ]
     }
   },
@@ -776,7 +776,7 @@
         "vmdk",
         "ova",
         "anaconda-iso",
-        "bootc-generic-iso",
+        "generic-iso",
         "pxe-tar-xz"
       ]
     }
@@ -796,7 +796,7 @@
         "vmdk",
         "ova",
         "anaconda-iso",
-        "bootc-generic-iso",
+        "generic-iso",
         "pxe-tar-xz"
       ]
     }
@@ -809,7 +809,7 @@
       ],
       "image-types": [
         "bootc-installer",
-        "bootc-generic-iso"
+        "generic-iso"
       ]
     }
   },
