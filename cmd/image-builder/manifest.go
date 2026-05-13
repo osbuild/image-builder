@@ -122,7 +122,10 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 		return err
 	}
 
-	if _, err := fmt.Fprintf(output, "%s\n", pretty.String()); err != nil {
+	if _, err := pretty.WriteTo(output); err != nil {
+		return err
+	}
+	if _, err := output.Write([]byte{'\n'}); err != nil {
 		return err
 	}
 	return nil
