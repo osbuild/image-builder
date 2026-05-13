@@ -60,6 +60,9 @@ jobs:
               echo
               echo "Please refer to the developer docs at docs/developer for more information."
               echo "-----------------------------------------------------------------------------"
+              echo "git status:"
+              git status -vv
+              echo "-----------------------------------------------------------------------------"
               exit 1
           fi
 
