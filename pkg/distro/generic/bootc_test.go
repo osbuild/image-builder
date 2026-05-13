@@ -736,7 +736,7 @@ var diskContainers = map[string][]container.Spec{
 	},
 }
 
-// isoContainers can be passed to Serialize() to get a minimal bootc-generic-iso image
+// isoContainers can be passed to Serialize() to get a minimal generic-iso image
 var isoContainers = map[string][]container.Spec{
 	"build": {
 		containerSpec,
@@ -1030,7 +1030,7 @@ func TestManifestGenerationBootloaderValidation(t *testing.T) {
 
 func TestBootcIsoManifestSerialization(t *testing.T) {
 	bd := NewTestBootcDistro(t)
-	imgType, err := bd.arches["x86_64"].GetImageType("bootc-generic-iso")
+	imgType, err := bd.arches["x86_64"].GetImageType("generic-iso")
 	assert.NoError(t, err)
 
 	bp := &blueprint.Blueprint{}
@@ -1072,7 +1072,7 @@ func TestContainerSourceLocality(t *testing.T) {
 				switch imgTypeName {
 				case "anaconda-iso", "iso":
 					t.Skipf("skipping %s: legacy ISO requires real distro definitions not available in the test distro", imgTypeName)
-				case "bootc-generic-iso":
+				case "generic-iso", "bootc-generic-iso":
 					t.Skipf("skipping %s: installer payload not supported ", imgTypeName)
 				}
 
