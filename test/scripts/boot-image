@@ -292,6 +292,8 @@ def boot_qemu_iso_no_unattended_support(distro, arch, image_type, installer_iso_
         # workaround for centos-10 as it fails to start here and that causes issue
         # with our "check-host-config.sh" that expects a non-degraded boot
         systemctl mask mcelog.service || true
+        echo "osbuild ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/osbuild
+        chmod 0440 /etc/sudoers.d/osbuild
         {rhsm_unregister}
         %end
         """)
