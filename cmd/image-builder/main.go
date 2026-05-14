@@ -596,6 +596,7 @@ func normalizeRootArgs(_ *pflag.FlagSet, name string) pflag.NormalizedName {
 func run() error {
 	// Initialize console logger (stderr, no prefix)
 	log.SetFlags(0)
+	memProfileResetForProcessStart()
 
 	rootCmd := &cobra.Command{
 		Use:   "image-builder",
@@ -634,6 +635,8 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode (more logging on stderr and verbose progress)`)
+	registerMemProfileFlags(rootCmd)
+	rootCmd.PersistentPreRun = memProfilePersistentPreRun
 
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
@@ -764,7 +767,11 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 		ilog.SetDefault(log.New(os.Stderr, "", 0))
 	}
 
-	return rootCmd.Execute()
+	execErr := rootCmd.Execute()
+	if flushErr := memProfileFlush(); flushErr != nil {
+		return errors.Join(execErr, flushErr)
+	}
+	return execErr
 }
 
 func main() {
