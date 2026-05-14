@@ -29,6 +29,12 @@ Build by running:
 $ go build ./cmd/image-builder/
 ```
 
+To include optional **profiling** support (`--memprofile`, `--memprofile-goroutine`, `--memprofile-rate`), set **`DEBUG`** to any non-empty value when invoking `make build`, for example:
+
+```console
+$ DEBUG=1 make build
+```
+
 ## Unit tests
 
 Run the unit tests via:

@@ -99,9 +99,12 @@ $(BUILDDIR)/%/:
 # keep in sync with:
 # https://github.com/containers/podman/blob/2981262215f563461d449b9841741339f4d9a894/Makefile#L51
 TAGS := containers_image_openpgp,exclude_graphdriver_btrfs,exclude_graphdriver_devicemapper
+ifneq ($(DEBUG),)
+TAGS := $(TAGS),profiling
+endif
 
 .PHONY: build
-build: $(BUILDDIR)/bin/  ## build the binary from source
+build: $(BUILDDIR)/bin/  ## build the binary from source (set DEBUG=1 to include extra build tags)
 	go build -tags="$(TAGS)" -ldflags="-X main.version=${VERSION}" -o $<image-builder ./cmd/image-builder/
 	# Note that this is only needed for the bib container to detect if qemu-user is available
 	for arch in amd64 arm64; do \
