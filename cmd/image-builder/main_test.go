@@ -1116,28 +1116,19 @@ customizations.FIPS = true
 	}
 }
 
-func TestDefaultCacheDirAsRoot(t *testing.T) {
-	if os.Getuid() != 0 {
-		t.Skip("test requires running as root")
-	}
-	assert.Equal(t, "/var/cache/image-builder/store", main.DefaultCacheDir())
+func TestCacheDirForUidRoot(t *testing.T) {
+	assert.Equal(t, "/var/cache/image-builder/store", main.CacheDirForUid(0))
 }
 
-func TestDefaultCacheDirNonRootXDG(t *testing.T) {
-	if os.Getuid() == 0 {
-		t.Skip("test requires running as non-root")
-	}
+func TestCacheDirForUidNonRootXDG(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", "/tmp/test-xdg-cache")
-	assert.Equal(t, "/tmp/test-xdg-cache/image-builder/store", main.DefaultCacheDir())
+	assert.Equal(t, "/tmp/test-xdg-cache/image-builder/store", main.CacheDirForUid(1000))
 }
 
-func TestDefaultCacheDirNonRootFallback(t *testing.T) {
-	if os.Getuid() == 0 {
-		t.Skip("test requires running as non-root")
-	}
+func TestCacheDirForUidNonRootFallback(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", "")
 	home, err := os.UserHomeDir()
 	require.NoError(t, err)
 	expected := filepath.Join(home, ".cache", "image-builder", "store")
-	assert.Equal(t, expected, main.DefaultCacheDir())
+	assert.Equal(t, expected, main.CacheDirForUid(1000))
 }
