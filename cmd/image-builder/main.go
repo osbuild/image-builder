@@ -38,13 +38,12 @@ var (
 	osStderr io.Writer = os.Stderr
 )
 
-// defaultCacheDir returns the default cache directory for osbuild
-// intermediate build artifacts. When running as root it uses the
-// system-wide /var/cache path. When running as a non-root user it
-// follows the XDG Base Directory specification and falls back to
-// ~/.cache.
-func defaultCacheDir() string {
-	if os.Getuid() == 0 {
+// cacheDirForUid returns the cache directory for the given uid.
+// When root (uid 0) it uses the system-wide /var/cache path.
+// When non-root it follows the XDG Base Directory specification
+// and falls back to ~/.cache.
+func cacheDirForUid(uid int) string {
+	if uid == 0 {
 		return "/var/cache/image-builder/store"
 	}
 	if cacheHome := os.Getenv("XDG_CACHE_HOME"); cacheHome != "" {
@@ -55,6 +54,11 @@ func defaultCacheDir() string {
 		return "/var/cache/image-builder/store"
 	}
 	return filepath.Join(home, ".cache", "image-builder", "store")
+}
+
+// defaultCacheDir returns the cache directory for the current user.
+func defaultCacheDir() string {
+	return cacheDirForUid(os.Getuid())
 }
 
 // basenameFor returns the basename for directory and filenames
