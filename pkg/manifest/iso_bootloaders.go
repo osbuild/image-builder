@@ -63,6 +63,8 @@ type Grub2X86Boot struct {
 
 	// Default Grub2 menu on the ISO
 	DefaultMenu int
+	// Custom menu entries (overrides all default entries)
+	Custom []ISOGrub2MenuEntry
 }
 
 func NewGrub2X86Bootloader(buildPipeline Build, product, version string) *Grub2X86Boot {
@@ -101,6 +103,22 @@ func (boot *Grub2X86Boot) GetISOBootStages(inputName string, _ *disk.PartitionTa
 		Config:          grub2config,
 	}
 
+	// If any menu entries are defined we turn off all default
+	// entries and instead append our own entries
+	if len(boot.Custom) > 0 {
+		options.Troubleshooting = false
+		options.Test = false
+		options.Install = false
+
+		for _, entry := range boot.Custom {
+			options.Custom = append(options.Custom, osbuild.Grub2ISOLegacyCustomEntryOptions{
+				Name:   entry.Name,
+				Linux:  entry.Linux,
+				Initrd: entry.Initrd,
+			})
+		}
+	}
+
 	stages = append(stages, osbuild.NewGrub2ISOLegacyStage(options))
 
 	// Add a stage to create the eltorito.img file for grub2 BIOS boot support
@@ -124,6 +142,8 @@ type Grub2PPC64Boot struct {
 
 	// Default Grub2 menu on the ISO
 	DefaultMenu int
+	// Custom menu entries (overrides all default entries)
+	Custom []ISOGrub2MenuEntry
 }
 
 func NewGrub2PPC64Bootloader(buildPipeline Build, product, version string) *Grub2PPC64Boot {
@@ -163,6 +183,23 @@ func (boot *Grub2PPC64Boot) GetISOBootStages(inputName string, _ *disk.Partition
 		Config:          grub2config,
 		Platform:        "powerpc-ieee1275",
 	}
+
+	// If any menu entries are defined we turn off all default
+	// entries and instead append our own entries
+	if len(boot.Custom) > 0 {
+		options.Troubleshooting = false
+		options.Test = false
+		options.Install = false
+
+		for _, entry := range boot.Custom {
+			options.Custom = append(options.Custom, osbuild.Grub2ISOLegacyCustomEntryOptions{
+				Name:   entry.Name,
+				Linux:  entry.Linux,
+				Initrd: entry.Initrd,
+			})
+		}
+	}
+
 	stages = append(stages, osbuild.NewGrub2ISOLegacyStage(options))
 
 	// Add the bootinfo.txt file which is used by the CHRP boot method to point to grub2
