@@ -9,6 +9,10 @@ import (
 type ISOBootloaders struct {
 	InstallerCustomizations *manifest.InstallerCustomizations
 	ISOCustomizations       *manifest.ISOCustomizations
+
+	// Grub2 menu customization for x86, ppc64, uefi iso menus, not supported by syslinux
+	// Setting these turns off all of the default menus
+	Custom []manifest.ISOGrub2MenuEntry
 }
 
 func (img *ISOBootloaders) Bootloaders(buildPipeline manifest.Build, platform platform.Platform, kernelOpts []string) []manifest.ISOBootloader {
@@ -33,6 +37,15 @@ func (img *ISOBootloaders) Bootloaders(buildPipeline manifest.Build, platform pl
 		grub2.ISOLabel = img.ISOCustomizations.Label
 		grub2.KernelOpts = kernelOpts
 		grub2.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+
+		for _, entry := range img.Custom {
+			grub2.Custom = append(grub2.Custom, manifest.ISOGrub2MenuEntry{
+				Name:   entry.Name,
+				Linux:  entry.Linux,
+				Initrd: entry.Initrd,
+			})
+		}
+
 		bootloaders = append(bootloaders, grub2)
 		addUEFIBootTree = true
 
@@ -42,6 +55,15 @@ func (img *ISOBootloaders) Bootloaders(buildPipeline manifest.Build, platform pl
 		grub2ppc64.ISOLabel = img.ISOCustomizations.Label
 		grub2ppc64.KernelOpts = kernelOpts
 		grub2ppc64.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+
+		for _, entry := range img.Custom {
+			grub2ppc64.Custom = append(grub2ppc64.Custom, manifest.ISOGrub2MenuEntry{
+				Name:   entry.Name,
+				Linux:  entry.Linux,
+				Initrd: entry.Initrd,
+			})
+		}
+
 		bootloaders = append(bootloaders, grub2ppc64)
 
 	case manifest.S390ISOBoot:
@@ -53,13 +75,22 @@ func (img *ISOBootloaders) Bootloaders(buildPipeline manifest.Build, platform pl
 
 	if addUEFIBootTree {
 		// EFI bootloader adds a pipeline and adds stages
-		bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
-		bootTreePipeline.Platform = platform
-		bootTreePipeline.UEFIVendor = platform.GetUEFIVendor()
-		bootTreePipeline.ISOLabel = img.ISOCustomizations.Label
-		bootTreePipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
-		bootTreePipeline.KernelOpts = kernelOpts
-		bootloaders = append(bootloaders, bootTreePipeline)
+		efiPipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
+		efiPipeline.Platform = platform
+		efiPipeline.UEFIVendor = platform.GetUEFIVendor()
+		efiPipeline.ISOLabel = img.ISOCustomizations.Label
+		efiPipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+		efiPipeline.KernelOpts = kernelOpts
+
+		for _, entry := range img.Custom {
+			efiPipeline.MenuEntries = append(efiPipeline.MenuEntries, manifest.ISOGrub2MenuEntry{
+				Name:   entry.Name,
+				Linux:  entry.Linux,
+				Initrd: entry.Initrd,
+			})
+		}
+
+		bootloaders = append(bootloaders, efiPipeline)
 	}
 	return bootloaders
 }
