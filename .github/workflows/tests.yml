@@ -19,9 +19,9 @@ jobs:
       matrix:
         fedora_version:
           - name: previous
-            version: 42
-          - name: current
             version: 43
+          - name: current
+            version: 44
             # Enable this when we get osbuild rpm builds for Fedora 44
             # - name: rawhide
             #   version: rawhide
