@@ -6,16 +6,19 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gobwas/glob"
@@ -222,7 +225,7 @@ func loadImgConfig(configPath string, opts *buildconfig.Options) *BuildConfigs {
 	return cm
 }
 
-type manifestJob func(chan string) error
+type manifestJob func(context.Context, chan string) error
 
 func makeManifestJob(
 	bc *buildconfig.BuildConfig,
@@ -296,7 +299,7 @@ func makeManifestJob(
 		allRepos = append(allRepos, bc.CustomRepos...)
 	}
 
-	job := func(msgq chan string) (err error) {
+	job := func(ctx context.Context, msgq chan string) (err error) {
 		defer func() {
 			msg := fmt.Sprintf("Finished job %s", filename)
 			if err != nil {
@@ -312,6 +315,9 @@ func makeManifestJob(
 				})
 			}
 		}()
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		msgq <- fmt.Sprintf("Starting job %s", filename)
 
 		manifest, _, err := imgType.Manifest(&bp, options, allRepos, &seedArg)
@@ -323,7 +329,7 @@ func makeManifestJob(
 		var depsolvedSets map[string]depsolvednf.DepsolveResult
 		if content["packages"] {
 			solver := depsolvednf.NewSolver(distribution.ModulePlatformID(), distribution.Releasever(), archName, distribution.Name(), cacheDir)
-			depsolvedSets, err = solver.DepsolveAll(common.Must(manifest.GetPackageSetChains()))
+			depsolvedSets, err = solver.DepsolveAll(ctx, common.Must(manifest.GetPackageSetChains()))
 			if err != nil {
 				err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
 				return
@@ -433,6 +439,9 @@ func u(s string) string {
 }
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	// common args
 	var outputDir, cacheRoot, configPath, configMapPath string
 	var nWorkers int
@@ -516,6 +525,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "WARNING: invalid distro names: [%s]\n", strings.Join(invalidDistros, ","))
 	}
 	for _, distroName := range distros {
+		if err := ctx.Err(); err != nil {
+			break
+		}
 		distribution := distroFac.GetDistro(distroName)
 		if distribution == nil {
 			fmt.Fprintf(os.Stderr, "WARNING: invalid distro name %q\n", distroName)
@@ -584,6 +596,9 @@ func main() {
 	}
 
 	for _, bootcRefTuple := range bootcRefs {
+		if err := ctx.Err(); err != nil {
+			break
+		}
 		l := strings.SplitN(bootcRefTuple, "#", 2)
 		bootcRef := l[0]
 
@@ -677,6 +692,9 @@ func main() {
 			panic(err)
 		}
 		for _, fakeBootcCnt := range fakeContainers.Containers {
+			if err := ctx.Err(); err != nil {
+				break
+			}
 			fakeBootcInfo := &bootc.Info{
 				Imgref:        fakeBootcCnt.ImageRef,
 				OSInfo:        &fakeBootcCnt.Info,
@@ -743,7 +761,7 @@ func main() {
 	fmt.Fprintf(os.Stderr, "Collected %d jobs\n", nJobs)
 
 	// nolint:gosec
-	wq := newWorkerQueue(uint32(nWorkers), uint32(nJobs))
+	wq := newWorkerQueue(ctx, uint32(nWorkers), uint32(nJobs))
 	wq.start()
 	fmt.Fprintf(os.Stderr, "Initialised %d workers\n", nWorkers)
 	fmt.Fprintf(os.Stderr, "Submitting %d jobs... ", nJobs)
@@ -753,6 +771,10 @@ func main() {
 	fmt.Fprintln(os.Stderr, "done")
 	errs := wq.wait()
 	exit := 0
+	if ctx.Err() != nil {
+		fmt.Fprintln(os.Stderr, "Interrupted")
+		exit = 130
+	}
 	if nErrs := len(errs); nErrs > 0 {
 		fmt.Fprintf(os.Stderr, "Encountered %d errors:\n", nErrs)
 		var err1 *panicError
@@ -766,7 +788,9 @@ func main() {
 		if err1 != nil {
 			fmt.Fprintf(os.Stderr, "\nStack trace of the first error:\n%s\n", err1.stack)
 		}
-		exit = 1
+		if exit == 0 {
+			exit = 1
+		}
 	}
 	fmt.Fprintf(os.Stderr, "RPM metadata cache kept in %s\n", cacheRoot)
 	os.Exit(exit)

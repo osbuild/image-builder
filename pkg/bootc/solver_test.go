@@ -1,6 +1,7 @@
 package bootc_test
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -62,7 +63,7 @@ func TestDepsolveDNFWorks(t *testing.T) {
 	require.NoError(t, err)
 	solver, err := cnt.NewContainerSolver(cacheRoot, arch.Current(), sourceInfo)
 	require.NoError(t, err)
-	res, err := solver.Depsolve([]rpmmd.PackageSet{
+	res, err := solver.Depsolve(context.Background(), []rpmmd.PackageSet{
 		{
 			Include: []string{"coreutils"},
 		},
@@ -141,7 +142,7 @@ func TestDepsolveDNFWorkWithSubscribedContent(t *testing.T) {
 	solver, err := cnt.NewContainerSolver(cacheRoot, arch.ARCH_X86_64, sourceInfo)
 	require.NoError(t, err)
 
-	res, err := solver.Depsolve([]rpmmd.PackageSet{
+	res, err := solver.Depsolve(context.Background(), []rpmmd.PackageSet{
 		{
 			Include: []string{"coreutils"},
 		},

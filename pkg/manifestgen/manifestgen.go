@@ -2,6 +2,7 @@ package manifestgen
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -348,7 +349,7 @@ func DefaultDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarnin
 	// type. Once we have more types than Spdx of course
 	// we need to add a option to select the type.
 	solver.SetSBOMType(sbom.StandardTypeSpdx)
-	return solver.DepsolveAll(packageSets)
+	return solver.DepsolveAll(context.Background(), packageSets)
 }
 
 type (

@@ -2,6 +2,7 @@ package depsolvednf
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -238,7 +239,7 @@ func TestSolverDepsolve(t *testing.T) {
 
 					solver := newTestSolver(t)
 					solver.SetRootDir(tc.rootDir)
-					actualResult, err := solver.Depsolve(pkgsets, tc.sbomType)
+					actualResult, err := solver.Depsolve(context.Background(), pkgsets, tc.sbomType)
 					if tc.err {
 						assert.Error(err)
 						assert.Contains(err.Error(), tc.expMsg)
@@ -441,7 +442,7 @@ func TestSolverDepsolveAll(t *testing.T) {
 
 					solver := NewSolver("platform:el9", "9", "x86_64", "rhel9.0", tmpdir)
 					solver.SetSBOMType(tc.sbomType)
-					res, err := solver.DepsolveAll(tc.packageSets)
+					res, err := solver.DepsolveAll(context.Background(), tc.packageSets)
 					if len(tc.expErrs) != 0 {
 						assert.Error(err)
 						for _, expErr := range tc.expErrs {
@@ -975,7 +976,7 @@ func TestErrorRepoInfo(t *testing.T) {
 			solver := NewSolver("platform:f38", "38", "x86_64", "fedora-38", "/tmp/cache")
 			for idx, tc := range testCases {
 				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-					_, err := solver.Depsolve([]rpmmd.PackageSet{
+					_, err := solver.Depsolve(context.Background(), []rpmmd.PackageSet{
 						{
 							Include:      []string{"osbuild"},
 							Exclude:      nil,
@@ -1043,7 +1044,7 @@ exit 1
 
 			solver := NewSolver("platform:f38", "38", "x86_64", "fedora-38", t.TempDir())
 			solver.depsolveDNFCmd = []string{fakeSolverPath}
-			res, err := solver.Depsolve(nil, sbom.StandardTypeNone)
+			res, err := solver.Depsolve(context.Background(), nil, sbom.StandardTypeNone)
 
 			assert.EqualError(t, err, `DNF error occurred: InternalError: osbuild-depsolve-dnf output was empty: running the depsolver failed: exit status 1`)
 			assert.Nil(t, res)
@@ -1071,7 +1072,7 @@ echo '{"solver": "zypper"}'
 			solver := NewSolver("platform:f38", "38", "x86_64", "fedora-38", "/tmp/cache")
 			solver.Stderr = &capturedStderr
 			solver.depsolveDNFCmd = []string{fakeSolverPath}
-			res, err := solver.Depsolve(nil, sbom.StandardTypeNone)
+			res, err := solver.Depsolve(context.Background(), nil, sbom.StandardTypeNone)
 			assert.NoError(t, err)
 			assert.NotNil(t, res)
 			assert.Equal(t, "output-on-stderr\n", capturedStderr.String())
@@ -1118,7 +1119,7 @@ func TestDepsolverSubscriptionsError(t *testing.T) {
 				},
 			}
 			solver.SetRootDir(rootDir)
-			_, err := solver.Depsolve(pkgsets, 0)
+			_, err := solver.Depsolve(context.Background(), pkgsets, 0)
 			assert.EqualError(t, err, "This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources (error details: no matching key and certificate pair)")
 		})
 	}

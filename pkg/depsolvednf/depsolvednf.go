@@ -16,6 +16,7 @@ package depsolvednf
 import (
 	"bytes"
 	"cmp"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -273,7 +274,10 @@ func (s *Solver) SetSBOMType(sbomType sbom.StandardType) {
 // their associated repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
-func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) (*DepsolveResult, error) {
+func (s *Solver) Depsolve(ctx context.Context, pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) (*DepsolveResult, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if err := validatePackageSetRepoChain(pkgSets); err != nil {
 		return nil, err
 	}
@@ -296,7 +300,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 	s.cache.locker.RLock()
 	defer s.cache.locker.RUnlock()
 
-	output, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
+	output, err := run(ctx, s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
 		return nil, parseError(output, allRepos, err)
 	}
@@ -338,10 +342,13 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 
 // DepsolveAll calls [Solver.Depsolve] with each package set slice in the map and
 // returns a map of results with the corresponding keys as the input argument.
-func (s *Solver) DepsolveAll(pkgSetsMap map[string][]rpmmd.PackageSet) (map[string]DepsolveResult, error) {
+func (s *Solver) DepsolveAll(ctx context.Context, pkgSetsMap map[string][]rpmmd.PackageSet) (map[string]DepsolveResult, error) {
 	results := make(map[string]DepsolveResult, len(pkgSetsMap))
 	for name, pkgSet := range pkgSetsMap {
-		res, err := s.Depsolve(pkgSet, s.sbomType)
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		res, err := s.Depsolve(ctx, pkgSet, s.sbomType)
 		if err != nil {
 			return nil, fmt.Errorf("error depsolving package sets for %q: %w", name, err)
 		}
@@ -369,7 +376,7 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 		return pkgs, nil
 	}
 
-	rawRes, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
+	rawRes, err := run(context.Background(), s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
 		return nil, parseError(rawRes, repos, err)
 	}
@@ -417,7 +424,7 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 		return pkgs, nil
 	}
 
-	rawRes, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
+	rawRes, err := run(context.Background(), s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
 		return nil, parseError(rawRes, repos, err)
 	}
@@ -596,7 +603,7 @@ func parseError(data []byte, repos []rpmmd.RepoConfig, cmdError error) Error {
 	return e
 }
 
-func run(dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error) {
+func run(ctx context.Context, dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error) {
 	if len(dnfJsonCmd) == 0 {
 		dnfJsonCmd = []string{findDepsolveDnf()}
 	}
@@ -608,7 +615,7 @@ func run(dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error) 
 	if len(dnfJsonCmd) > 1 {
 		args = dnfJsonCmd[1:]
 	}
-	cmd := exec.Command(ex, args...)
+	cmd := exec.CommandContext(ctx, ex, args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, fmt.Errorf("creating stdin pipe for %s failed: %w", ex, err)
@@ -635,8 +642,11 @@ func run(dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error) 
 
 	err = cmd.Wait()
 	output := stdout.Bytes()
-	if err != nil {
-		return output, fmt.Errorf("running the depsolver failed: %w", err)
+	if ctx.Err() != nil {
+		return output, ctx.Err()
+	}
+	if runError, ok := err.(*exec.ExitError); ok && runError.ExitCode() != 0 {
+		return output, fmt.Errorf("depsolve failed with exit code %d", runError.ExitCode())
 	}
 	return output, nil
 }

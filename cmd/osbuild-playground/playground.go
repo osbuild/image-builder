@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -38,7 +39,7 @@ func RunPlayground(img image.ImageKind, d distro.Distro, arch distro.Arch, repos
 
 	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
 	for name, chain := range common.Must(manifest.GetPackageSetChains()) {
-		res, err := solver.Depsolve(chain, sbom.StandardTypeNone)
+		res, err := solver.Depsolve(context.Background(), chain, sbom.StandardTypeNone)
 		if err != nil {
 			panic(fmt.Sprintf("failed to depsolve for pipeline %s: %s\n", name, err.Error()))
 		}

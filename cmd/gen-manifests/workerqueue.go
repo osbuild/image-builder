@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -8,6 +9,8 @@ import (
 )
 
 type workerQueue struct {
+	ctx context.Context
+
 	// manifest job channel
 	jobQueue chan manifestJob
 
@@ -35,10 +38,13 @@ type workerQueue struct {
 
 	// wait group for internal routines (printer and error collector)
 	utilWG sync.WaitGroup
+
+	stopOnce sync.Once
 }
 
-func newWorkerQueue(nworkers uint32, njobs uint32) *workerQueue {
+func newWorkerQueue(ctx context.Context, nworkers uint32, njobs uint32) *workerQueue {
 	wq := workerQueue{
+		ctx:           ctx,
 		jobQueue:      make(chan manifestJob, njobs),
 		msgQueue:      make(chan string, nworkers),
 		errQueue:      make(chan error, nworkers),
@@ -59,10 +65,17 @@ func (wq *workerQueue) start() {
 	}
 }
 
+// shutdown stops accepting new jobs. Workers exit once in-flight jobs finish or
+// the context is cancelled.
+func (wq *workerQueue) shutdown() {
+	wq.stopOnce.Do(func() {
+		close(wq.jobQueue)
+	})
+}
+
 // close all queues and wait for waitgroups
 func (wq *workerQueue) wait() []error {
-	// close job channel and wait for workers to finish
-	close(wq.jobQueue)
+	wq.shutdown()
 	wq.workerWG.Wait()
 
 	// close message channels and wait for them to finish their work so we don't miss any messages or errors
@@ -78,10 +91,21 @@ func (wq *workerQueue) startWorker(idx uint32) {
 		atomic.AddInt32(&(wq.activeWorkers), 1)
 		defer atomic.AddInt32(&(wq.activeWorkers), -1)
 		defer wq.workerWG.Done()
-		for job := range wq.jobQueue {
-			err := job(wq.msgQueue)
-			if err != nil {
-				wq.errQueue <- err
+		for {
+			select {
+			case <-wq.ctx.Done():
+				return
+			case job, ok := <-wq.jobQueue:
+				if !ok {
+					return
+				}
+				if wq.ctx.Err() != nil {
+					return
+				}
+				err := job(wq.ctx, wq.msgQueue)
+				if err != nil {
+					wq.errQueue <- err
+				}
 			}
 		}
 	}()
@@ -113,5 +137,9 @@ func (wq *workerQueue) startErrorCollector() {
 }
 
 func (wq *workerQueue) submitJob(j manifestJob) {
-	wq.jobQueue <- j
+	select {
+	case <-wq.ctx.Done():
+		return
+	case wq.jobQueue <- j:
+	}
 }
