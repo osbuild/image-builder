@@ -69,7 +69,7 @@ func newClientFromArgs(flags *pflag.FlagSet) (*azure.Client, error) {
 func getDefaultSize(architecture string) (string, error) {
 	switch architecture {
 	case "x86_64":
-		return "Standard_DS1_v2", nil
+		return "Standard_D2ls_v5", nil
 	case "aarch64":
 		return "Standard_D2pls_v5", nil
 	default:
