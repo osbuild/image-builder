@@ -225,22 +225,39 @@ echo '%s'
 }
 
 func TestUnifiedKernelHappy(t *testing.T) {
-	for _, tc := range []struct {
-		In  string
-		Out bool
-	}{
-		{`{"kernel": {"unified": true}}`, true},
-		{`{"kernel": {"unified": false}}`, false},
-		{`{"kernel": {}}`, false},
-		{`{}`, false},
-	} {
-		makeFakePodman(t, fmt.Sprintf(`#!/bin/sh
-echo '%s'
-`, tc.In))
-		cnt := bootc.Container{}
-		unified, err := cnt.UnifiedKernel()
-		assert.NoError(t, err)
-		assert.Equal(t, tc.Out, unified)
+	type testCase struct {
+		Name     string
+		In       string
+		ExitCode int
+		Out      bool
+		ErrMsg   string
+	}
+
+	testCases := []testCase{
+		{Name: "unified", In: `{"kernel": {"unified": true}}`, ExitCode: 0, Out: true, ErrMsg: ""},
+		{Name: "not unified", In: `{"kernel": {"unified": false}}`, ExitCode: 0, Out: false, ErrMsg: ""},
+		{Name: "empty", In: `{"kernel": {}}`, ExitCode: 0, Out: false, ErrMsg: ""},
+		{Name: "empty", In: `{}`, ExitCode: 0, Out: false, ErrMsg: ""},
+		{Name: "unknown command", In: "", ExitCode: 2, Out: false, ErrMsg: ""},
+		{Name: "error", In: "", ExitCode: 1, Out: false, ErrMsg: "failed to run bootc container inspect"},
+		{Name: "error", In: "", ExitCode: 127, Out: false, ErrMsg: "failed to run bootc container inspect"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			makeFakePodman(t, fmt.Sprintf(`#!/bin/sh
+				echo '%s'
+				exit %d
+				`, tc.In, tc.ExitCode))
+			cnt := bootc.Container{}
+			unified, err := cnt.UnifiedKernel()
+			if tc.ErrMsg != "" {
+				assert.ErrorContains(t, err, tc.ErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.Out, unified)
+		})
 	}
 }
 
