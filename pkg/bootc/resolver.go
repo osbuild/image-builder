@@ -353,6 +353,11 @@ func (c *Container) UnifiedKernel() (bool, error) {
 	/* #nosec G204 */
 	output, err := exec.Command("podman", args...).Output()
 	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 2 {
+			// NOTE: the 'bootc container inspect' was added in version 1.12.0, which was not in RHEL-10.1.
+			// Treat exit value '2' as a non-error, since it means the command is not available and return false.
+			return false, nil
+		}
 		return false, fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
 	}
 
