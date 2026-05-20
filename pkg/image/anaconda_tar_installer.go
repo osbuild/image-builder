@@ -10,31 +10,12 @@ import (
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
-
-func efiBootPartitionTable(rng *rand.Rand) *disk.PartitionTable {
-	efibootImageSize := datasizes.Size(20 * datasizes.MebiByte)
-	return &disk.PartitionTable{
-		Size: efibootImageSize,
-		Partitions: []disk.Partition{
-			{
-				Start: 0,
-				Size:  efibootImageSize,
-				Payload: &disk.Filesystem{
-					Type:       "vfat",
-					Mountpoint: "/",
-					UUID:       disk.NewVolIDFromRand(rng),
-				},
-			},
-		},
-	}
-}
 
 type AnacondaTarInstaller struct {
 	Base
