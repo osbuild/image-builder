@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/pkg/customizations/kickstart"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
 )
@@ -19,7 +20,7 @@ type AnacondaInstallerBase struct {
 }
 
 func initIsoTreePipeline(isoTreePipeline *manifest.AnacondaInstallerISOTree, img *AnacondaInstallerBase, rng *rand.Rand) {
-	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
+	isoTreePipeline.PartitionTable = disk.EFIBootPartitionTable(rng)
 	isoTreePipeline.Release = img.InstallerCustomizations.Release
 	isoTreePipeline.Kickstart = img.Kickstart
 

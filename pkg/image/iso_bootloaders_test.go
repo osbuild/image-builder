@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -26,7 +27,7 @@ func TestBootType(t *testing.T) {
 	rng := rand.New(source)
 
 	runner := &runner.Fedora{Version: 44}
-	pt := image.EFIBootPartitionTable(rng)
+	pt := disk.EFIBootPartitionTable(rng)
 
 	type results struct {
 		stages []string

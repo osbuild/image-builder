@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/ignition"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -137,7 +138,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline := manifest.NewCoreOSISOTree(buildPipeline, compressedImage, coiPipeline, bootTreePipeline)
 	isoTreePipeline.KernelOpts = kernelOpts
-	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
+	isoTreePipeline.PartitionTable = disk.EFIBootPartitionTable(rng)
 	isoTreePipeline.OSName = img.OSName
 	isoTreePipeline.PayloadPath = fmt.Sprintf("/%s", imageFilename)
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
