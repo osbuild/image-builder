@@ -1740,3 +1740,22 @@ func needsBoot(disk *blueprint.DiskCustomization) bool {
 	}
 	return foundBtrfsOrLVM
 }
+
+// EFIBootPartitionTable returns a standard vfat EFI system partition table
+func EFIBootPartitionTable(rng *rand.Rand) *PartitionTable {
+	efibootImageSize := datasizes.Size(20 * datasizes.MebiByte)
+	return &PartitionTable{
+		Size: efibootImageSize,
+		Partitions: []Partition{
+			{
+				Start: 0,
+				Size:  efibootImageSize,
+				Payload: &Filesystem{
+					Type:       "vfat",
+					Mountpoint: "/",
+					UUID:       NewVolIDFromRand(rng),
+				},
+			},
+		},
+	}
+}
