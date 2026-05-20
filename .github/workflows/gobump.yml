@@ -10,33 +10,38 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   update-and-push:
     runs-on: ubuntu-latest
-    container: registry.fedoraproject.org/fedora:42
+    container: registry.fedoraproject.org/fedora:43
     steps:
-      - name: Update go.mod and open a PR
+      - name: Prepare environment and run tests
+        run: |
+          set -xe
+          sudo dnf -y install git gh golang skopeo libvirt-devel gpgme-devel btrfs-progs-devel krb5-devel
+          git clone --depth 1 https://github.com/osbuild/images
+          cd images/
+          go build ./...
+          go test ./...
+
+      - name: Run gobump and open a PR
         env:
           GH_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
         run: |
-          # Install deps
-          set -x
-          sudo dnf -y install git gh golang gpgme-devel btrfs-progs-devel krb5-devel
-          # Checkout the project
-          git clone --depth 1 https://github.com/osbuild/images
+          set -xe
           cd images/
-          # Install and run gobump
-          go run github.com/lzap/gobump@latest -exec "go build ./..." -exec "go test ./..." 2>&1 | tee github_pr_body.txt
-          ./tools/prepare-source.sh
-          # Make a PR when needed
-          if git diff --exit-code; then echo "No changes"; exit 0; fi
           git config user.name "schutzbot"
           git config user.email "schutzbot@gmail.com"
           branch="schutz-gobump-$(date -I)"
           git checkout -b "${branch}"
-          git add -A
-          git commit -m "build(deps): Update dependencies via gobump"
-          git push -f "https://$GH_TOKEN@github.com/schutzbot/images.git"
+          go run github.com/lzap/gobump@latest \
+            -exec "go build ./..." \
+            -exec "go test ./..." \
+            -exec "./tools/prepare-source.sh" \
+            -exec "./tools/gen-manifest-checksums.sh" \
+            -verbose -format markdown | tee "/tmp/github_pr_body.txt"
+          git log --oneline "main..${branch}"
+          git push -f "https://$GH_TOKEN@github.com/schutzbot/images.git" "${branch}"
           gh pr create \
             -t "Update dependencies $(date -I)" \
-            -F "github_pr_body.txt" \
+            -F "/tmp/github_pr_body.txt" \
             --repo "osbuild/images" \
             --base "main" \
             --head "schutzbot:${branch}"
