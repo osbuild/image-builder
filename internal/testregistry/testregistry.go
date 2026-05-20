@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/opencontainers/go-digest"
@@ -96,26 +97,51 @@ func MakeDescriptorForBlob(b Blob) manifest.Schema2Descriptor {
 	}
 }
 
+// SyncMap is a very simple generic map with concurrency-safe accessors.
+type SyncMap[T any] struct {
+	mappy map[string]T
+	mutex sync.Mutex
+}
+
+func (sm *SyncMap[T]) Add(name string, elem T) {
+	sm.mutex.Lock()
+	defer sm.mutex.Unlock()
+	if sm.mappy == nil {
+		// magically handle initialising the map on first Add().
+		sm.mappy = make(map[string]T)
+	}
+
+	sm.mappy[name] = elem
+}
+
+func (sm *SyncMap[T]) Get(name string) (T, bool) {
+	sm.mutex.Lock()
+	defer sm.mutex.Unlock()
+
+	elem, ok := sm.mappy[name]
+	return elem, ok
+}
+
 // Repo //
 type Repo struct {
-	blobs     map[string]Blob
-	manifests map[string]*manifest.Schema2
-	images    map[string]*manifest.Schema2List
-	tags      map[string]string
+	blobs     SyncMap[Blob]
+	manifests SyncMap[*manifest.Schema2]
+	images    SyncMap[*manifest.Schema2List]
+	tags      SyncMap[string]
 }
 
 func NewRepo() *Repo {
 	return &Repo{
-		blobs:     make(map[string]Blob),
-		manifests: make(map[string]*manifest.Schema2),
-		tags:      make(map[string]string),
-		images:    make(map[string]*manifest.Schema2List),
+		blobs:     SyncMap[Blob]{},
+		manifests: SyncMap[*manifest.Schema2]{},
+		images:    SyncMap[*manifest.Schema2List]{},
+		tags:      SyncMap[string]{},
 	}
 }
 
 func (r *Repo) AddBlob(b Blob) manifest.Schema2Descriptor {
 	desc := MakeDescriptorForBlob(b)
-	r.blobs[desc.Digest.String()] = b
+	r.blobs.Add(desc.Digest.String(), b)
 	return desc
 }
 
@@ -136,7 +162,7 @@ func (r *Repo) AddObject(v interface{}, mediaType string) manifest.Schema2Descri
 func (r *Repo) AddManifest(mf *manifest.Schema2) manifest.Schema2Descriptor {
 	desc := r.AddObject(mf, mf.MediaType)
 
-	r.manifests[desc.Digest.String()] = mf
+	r.manifests.Add(desc.Digest.String(), mf)
 
 	return desc
 }
@@ -182,19 +208,19 @@ func (r *Repo) AddImage(layers []Blob, arches []string, comment string, ctime ti
 	desc := r.AddObject(list, list.MediaType)
 	checksum := desc.Digest.String()
 
-	r.images[checksum] = list
-	r.tags["latest"] = checksum
+	r.images.Add(checksum, list)
+	r.tags.Add("latest", checksum)
 
 	return checksum
 }
 
 func (r *Repo) AddTag(checksum, tag string) {
 
-	if _, ok := r.images[checksum]; !ok {
+	if _, ok := r.images.Get(checksum); !ok {
 		panic("cannot tag: image not found: " + checksum)
 	}
 
-	r.tags[tag] = checksum
+	r.tags.Add(tag, checksum)
 }
 
 func WriteBlob(blob Blob, w http.ResponseWriter) {
@@ -217,11 +243,11 @@ func BlobIsManifest(blob Blob) bool {
 }
 
 func (r *Repo) ServeManifest(ref string, w http.ResponseWriter, req *http.Request) {
-	if checksum, ok := r.tags[ref]; ok {
+	if checksum, ok := r.tags.Get(ref); ok {
 		ref = checksum
 	}
 
-	blob, ok := r.blobs[ref]
+	blob, ok := r.blobs.Get(ref)
 	if !ok || !BlobIsManifest(blob) {
 		fmt.Fprintf(os.Stderr, "manifest %s not found", ref)
 		http.NotFound(w, req)
@@ -233,7 +259,7 @@ func (r *Repo) ServeManifest(ref string, w http.ResponseWriter, req *http.Reques
 
 func (r *Repo) ServeBlob(ref string, w http.ResponseWriter, req *http.Request) {
 
-	blob, ok := r.blobs[ref]
+	blob, ok := r.blobs.Get(ref)
 
 	if !ok {
 		fmt.Fprintf(os.Stderr, "blob %s not found", ref)
@@ -248,7 +274,7 @@ func (r *Repo) ServeBlob(ref string, w http.ResponseWriter, req *http.Request) {
 
 type Registry struct {
 	server *httptest.Server
-	repos  map[string]*Repo
+	repos  SyncMap[*Repo]
 }
 
 func (reg *Registry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -283,7 +309,7 @@ func (reg *Registry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	repoName := strings.Join(paths[1:len(paths)-2], "/")
 
-	repo, ok := reg.repos[repoName]
+	repo, ok := reg.repos.Get(repoName)
 	if !ok {
 		fmt.Fprintf(os.Stderr, "repo %s not found", repoName)
 		http.NotFound(w, req)
@@ -303,7 +329,9 @@ func (reg *Registry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func New() *Registry {
 
 	reg := &Registry{
-		repos: make(map[string]*Repo),
+		repos: SyncMap[*Repo]{
+			mappy: make(map[string]*Repo),
+		},
 	}
 	reg.server = httptest.NewTLSServer(reg)
 
@@ -312,7 +340,7 @@ func New() *Registry {
 
 func (reg *Registry) AddRepo(name string) *Repo {
 	repo := NewRepo()
-	reg.repos[name] = repo
+	reg.repos.Add(name, repo)
 	return repo
 }
 
@@ -347,19 +375,19 @@ func (reg *Registry) Resolve(target string, imgArch arch.Arch) (container.Spec, 
 	ref = reference.TrimNamed(ref)
 	path := reference.Path(ref)
 
-	repo, ok := reg.repos[path]
+	repo, ok := reg.repos.Get(path)
 	if !ok {
 		return container.Spec{}, fmt.Errorf("unknown repo")
 	}
 
 	if checksum == "" {
-		checksum, ok = repo.tags[tag]
+		checksum, ok = repo.tags.Get(tag)
 		if !ok {
 			return container.Spec{}, fmt.Errorf("unknown tag")
 		}
 	}
 
-	lst, ok := repo.images[checksum]
+	lst, ok := repo.images.Get(checksum)
 	listDigest := checksum
 
 	if ok {
@@ -377,7 +405,7 @@ func (reg *Registry) Resolve(target string, imgArch arch.Arch) (container.Spec, 
 		}
 	}
 
-	mf, ok := repo.manifests[checksum]
+	mf, ok := repo.manifests.Get(checksum)
 	if !ok {
 		return container.Spec{}, fmt.Errorf("unknown digest")
 	}
