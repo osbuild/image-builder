@@ -246,7 +246,7 @@ def check_config_names():
 
 
 def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images=None,
-                  commits=False, skip_no_config=False):
+                  commits=False, flatpaks=False, skip_no_config=False):
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     cmd = ["go", "run", "./cmd/gen-manifests",
            "--cache", os.path.join(TEST_CACHE_ROOT, "rpmmd"),
@@ -262,6 +262,8 @@ def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images
         cmd.extend(["--types", ",".join(images)])
     if commits:
         cmd.append("--commits")
+    if flatpaks:
+        cmd.append("--flatpaks")
     if skip_no_config:
         cmd.append("--skip-noconfig")
     env = rng_seed_env()
