@@ -148,7 +148,8 @@ def gen_image_manifests(config_list, configs, distro, arch, outputdir):
             json.dump(config_list, config_list_file)
 
         err = testlib.gen_manifests(outputdir, config_list=config_list_path,
-                                    arches=[arch], distros=distros, commits=True, skip_no_config=True)
+                                    arches=[arch], distros=distros, commits=True,
+                                    flatpaks=True, skip_no_config=True)
 
     # print stderr in case there were errors or warnings about skipped configurations
     # but filter out the annoying ones
