@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# NOTE: This script is also used in the image-builder-cli workflows
+#       https://github.com/osbuild/image-builder-cli/tree/main/.github/workflows
+
 set -e
 
 # we need qemu-kvm here but libvirt-devel pulls this in
