@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -14,24 +13,27 @@ import (
 
 type BootcPXETree struct {
 	Base
-	RootfsCompression string
-	RootfsType        ISORootfsType
+	RootfsType ISORootfsType
 
-	platform      platform.Platform
-	bootcPipeline *RawBootcImage
-	files         []*fsnode.File // grub template and README files
+	platform     platform.Platform
+	treePipeline TreePipeline
+	files        []*fsnode.File // grub template and README files
+
+	KernelOptionsAppend []string
+	KernelPath          string
+	InitramfsPath       string
+	RootfsPath          string
 }
 
 // NewBootcPXETree creates a pipeline with a kernel, initrd, and compressed root filesystem
 // suitable for use with PXE booting a system.
 // Defaults to using xz compressed squashfs rootfs
-func NewBootcPXETree(buildPipeline Build, bootcPipeline *RawBootcImage, platform platform.Platform) *BootcPXETree {
+func NewBootcPXETree(buildPipeline Build, treePipeline TreePipeline, platform platform.Platform) *BootcPXETree {
 	p := &BootcPXETree{
-		Base:              NewBase("bootc-pxe-tree", buildPipeline),
-		platform:          platform,
-		bootcPipeline:     bootcPipeline,
-		RootfsCompression: "xz",
-		RootfsType:        SquashfsRootfs,
+		Base:         NewBase("bootc-pxe-tree", buildPipeline),
+		platform:     platform,
+		treePipeline: treePipeline,
+		RootfsType:   SquashfsRootfs,
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -44,94 +46,54 @@ func (p *BootcPXETree) serialize() (osbuild.Pipeline, error) {
 		return pipeline, err
 	}
 
-	// Copy the disk.raw from the bootc image pipeline
+	// Copy kernel and initramfs
+	if p.KernelPath == "" || p.InitramfsPath == "" || p.RootfsPath == "" {
+		return osbuild.Pipeline{}, fmt.Errorf("kernel, initramfs, and rootfs paths must be set")
+	}
+
 	inputName := "tree"
-	copyOptions := &osbuild.CopyStageOptions{
+	copyStageOptions := &osbuild.CopyStageOptions{
 		Paths: []osbuild.CopyStagePath{
 			{
-				From: fmt.Sprintf("input://%s/%s", inputName, p.bootcPipeline.Filename()),
-				To:   "tree:///",
+				From: fmt.Sprintf("input://%s/%s", inputName, p.KernelPath),
+				To:   "tree:///vmlinuz",
+			},
+			{
+				From: fmt.Sprintf("input://%s/%s", inputName, p.InitramfsPath),
+				To:   "tree:///initrd.img",
+			},
+			{
+				From: fmt.Sprintf("input://%s/%s", inputName, p.RootfsPath),
+				To:   "tree:///rootfs.img",
 			},
 		},
 	}
-	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.bootcPipeline.Name())
-	stage := osbuild.NewCopyStageSimple(copyOptions, copyInputs)
-	pipeline.AddStage(stage)
+	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
+	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
+	pipeline.AddStage(copyStage)
 
-	// Setup the device and mounts needed to access the ostree filesystem
-	devices, mounts, err := osbuild.GenBootupdDevicesMounts(p.bootcPipeline.Filename(), p.bootcPipeline.PartitionTable, p.platform)
-	if err != nil {
-		return osbuild.Pipeline{}, fmt.Errorf("gen devices stage failed %w", err)
-	}
-
-	// Create the compressed rootfs.img of the bare ostree filesystem
-	// NOTE: mounts MUST NOT include the 'ostree.deployment' stage
-	if p.RootfsType == ErofsRootfs {
-		erofsOptions := osbuild.ErofsStageOptions{
+	lodevice := osbuild.NewLoopbackDevice(
+		&osbuild.LoopbackDeviceOptions{
 			Filename: "rootfs.img",
-		}
-
-		var compression osbuild.ErofsCompression
-		if p.RootfsCompression != "" {
-			compression.Method = p.RootfsCompression
-		} else {
-			// default to zstd if not specified
-			compression.Method = "zstd"
-		}
-		compression.Level = common.ToPtr(8)
-		erofsOptions.Compression = &compression
-		erofsOptions.ExtendedOptions = []string{"all-fragments", "dedupe"}
-		erofsOptions.ClusterSize = common.ToPtr(131072)
-
-		// TODO this is shared with the ISO, should it be?
-		// Clean up the root filesystem's /boot to save space
-		erofsOptions.ExcludePaths = installerBootExcludePaths
-		erofsOptions.Source = "mount://-/"
-		erofsStage := osbuild.NewErofsWithMountsStage(&erofsOptions, nil, devices, mounts)
-		pipeline.AddStage(erofsStage)
-	} else {
-		var squashfsOptions osbuild.SquashfsStageOptions
-
-		squashfsOptions.Filename = "rootfs.img"
-		squashfsOptions.Compression.Method = "xz"
-
-		if squashfsOptions.Compression.Method == "xz" {
-			squashfsOptions.Compression.Options = &osbuild.FSCompressionOptions{
-				BCJ: osbuild.BCJOption(p.platform.GetArch().String()),
-			}
-		}
-
-		// Compress the mounted ostree filesystem instead of a pipeline tree
-		squashfsOptions.Source = "mount://-/"
-		squashfsStage := osbuild.NewSquashfsWithMountsStage(&squashfsOptions, nil, devices, mounts)
-		pipeline.AddStage(squashfsStage)
+		},
+	)
+	devices := map[string]osbuild.Device{"disk": *lodevice}
+	var mounts []osbuild.Mount
+	switch p.RootfsType {
+	case ErofsRootfs:
+		mounts = []osbuild.Mount{*osbuild.NewErofsMount("-", "disk", "/")}
+	case SquashfsRootfs:
+		mounts = []osbuild.Mount{*osbuild.NewSquashfsMount("-", "disk", "/")}
+	default:
+		return osbuild.Pipeline{}, fmt.Errorf("Unknown ISOTree rootfs type: %v", p.RootfsType)
 	}
 
-	// Mount the ostree disk image (not the deployment) and copy the EFI files from it
-	copyStageOptions := &osbuild.CopyStageOptions{
+	// Copy the EFI boot files
+	copyStageOptions = &osbuild.CopyStageOptions{
 		Paths: []osbuild.CopyStagePath{
 			{
 				From: "mount://-/boot/efi/EFI",
 				To:   "tree:///EFI",
-			},
-		},
-	}
-	copyStage := osbuild.NewCopyStage(copyStageOptions, nil, devices, mounts)
-	pipeline.AddStage(copyStage)
-
-	// NOTE: After this point mounts includes the 'ostree.deployment' stage
-	mounts = append(mounts, *osbuild.NewOSTreeDeploymentMountDefault("ostree.deployment", osbuild.OSTreeMountSourceMount))
-
-	// Mount the ostree disk image and deployment and copy files from it
-	copyStageOptions = &osbuild.CopyStageOptions{
-		Paths: []osbuild.CopyStagePath{
-			{
-				From: fmt.Sprintf("mount://-/usr/lib/modules/%s/vmlinuz", p.bootcPipeline.KernelVersion),
-				To:   "tree:///vmlinuz",
-			},
-			{
-				From: fmt.Sprintf("mount://-/usr/lib/modules/%s/initramfs.img", p.bootcPipeline.KernelVersion),
-				To:   "tree:///initrd.img",
 			},
 		},
 	}
@@ -145,19 +107,19 @@ func (p *BootcPXETree) serialize() (osbuild.Pipeline, error) {
 	}
 	pipeline.AddStages(stages...)
 
-	// Make a README file
-	stages, err = p.makeREADME()
-	if err != nil {
-		return pipeline, err
-	}
-	pipeline.AddStages(stages...)
-
 	// Update the grub.cfg with the ostree boot uuid
 	ostreeStageOptions := &osbuild.OSTreeGrub2StageOptions{
 		Filename: "grub.cfg",
 		Source:   "mount://-/",
 	}
 	pipeline.AddStage(osbuild.NewOSTreeGrub2MountsStage(ostreeStageOptions, nil, devices, mounts))
+
+	// Make a README file
+	stages, err = p.makeREADME()
+	if err != nil {
+		return pipeline, err
+	}
+	pipeline.AddStages(stages...)
 
 	// Make sure all the files are readable
 	options := osbuild.ChmodStageOptions{
@@ -175,7 +137,7 @@ func (p *BootcPXETree) makeGrubConfig() ([]*osbuild.Stage, error) {
 		return nil, err
 	}
 
-	template := strings.ReplaceAll(string(grubTemplate), "@CMDLINE@", strings.Join(p.bootcPipeline.OSCustomizations.KernelOptionsAppend, " "))
+	template := strings.ReplaceAll(string(grubTemplate), "@CMDLINE@", strings.Join(p.KernelOptionsAppend, " "))
 	f, err := fsnode.NewFile("/grub.cfg", nil, nil, nil, []byte(template))
 	if err != nil {
 		panic(err)

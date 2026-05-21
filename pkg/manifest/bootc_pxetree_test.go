@@ -1,7 +1,6 @@
 package manifest_test
 
 import (
-	"fmt"
 	"slices"
 	"testing"
 
@@ -16,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func makeFakeBootcPXETreePipeline(kernelVersion string) *manifest.BootcPXETree {
+func makeFakeBootcPXETreePipeline(kernelVersion string, rootfsType manifest.ISORootfsType) *manifest.BootcPXETree {
 	mani := manifest.New()
 	runner := &runner.Linux{}
 	pf := &platform.Data{
@@ -28,26 +27,32 @@ func makeFakeBootcPXETreePipeline(kernelVersion string) *manifest.BootcPXETree {
 	rawBootcPipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
 	rawBootcPipeline.KernelVersion = kernelVersion
 	rawBootcPipeline.LiveBoot = true
+
 	err := rawBootcPipeline.SerializeStart(manifest.Inputs{Containers: []container.Spec{{Source: "foo"}}})
 	if err != nil {
 		panic(err)
 	}
 
-	pxetreePipeline := manifest.NewBootcPXETree(build, rawBootcPipeline, pf)
+	rootfsPipeline := manifest.NewBootcRootFS(build, rawBootcPipeline, pf)
+	rootfsPipeline.RootfsType = rootfsType
+
+	err = rootfsPipeline.SerializeStart(manifest.Inputs{Containers: []container.Spec{{Source: "foo"}}})
+	if err != nil {
+		panic(err)
+	}
+
+	pxetreePipeline := manifest.NewBootcPXETree(build, rootfsPipeline, pf)
+	pxetreePipeline.KernelPath = "vmlinuz"
+	pxetreePipeline.InitramfsPath = "initrd.img"
+	pxetreePipeline.RootfsPath = "rootfs.img"
+	pxetreePipeline.RootfsType = rootfsType
+
 	err = pxetreePipeline.SerializeStart(manifest.Inputs{Containers: []container.Spec{{Source: "foo"}}})
 	if err != nil {
 		panic(err)
 	}
 
 	return pxetreePipeline
-}
-
-// Test to make sure mounts do not include ostree deployment or bind mount
-func assertNoBootcDeploymentAndBindMount(t *testing.T, stage *osbuild.Stage) {
-	deploymentMntIdx := findMountIdx(stage.Mounts, "org.osbuild.ostree.deployment")
-	assert.Equal(t, -1, deploymentMntIdx)
-	bindMntIdx := findMountIdx(stage.Mounts, "org.osbuild.bind")
-	assert.Equal(t, -1, bindMntIdx)
 }
 
 // Check for the common stages
@@ -64,21 +69,15 @@ func assertCommonPXEStages(t *testing.T, kernelVersion string, stages []*osbuild
 		}
 	}
 	// Check for the kernel/initrd/EFI from the ostree deployment
-	assert.Contains(t, fromPaths, fmt.Sprintf("mount://-/usr/lib/modules/%s/vmlinuz", kernelVersion))
-	assert.Contains(t, fromPaths, fmt.Sprintf("mount://-/usr/lib/modules/%s/initramfs.img", kernelVersion))
+	assert.Contains(t, fromPaths, "input://tree/vmlinuz")
+	assert.Contains(t, fromPaths, "input://tree/initrd.img")
+	assert.Contains(t, fromPaths, "input://tree/rootfs.img")
 	assert.Contains(t, fromPaths, "mount://-/boot/efi/EFI")
 
 	// Check for EFI, grub.cfg and README
 	assert.Contains(t, toPaths, "tree:///EFI")
 	assert.Contains(t, toPaths, "tree:///grub.cfg")
 	assert.Contains(t, toPaths, "tree:///README")
-
-	// Check the ostree.grub2 stage
-	grub2Stage := findStage("org.osbuild.ostree.grub2", stages)
-	require.NotNil(t, grub2Stage)
-	grub2Opts := grub2Stage.Options.(*osbuild.OSTreeGrub2StageOptions)
-	assert.Equal(t, "grub.cfg", grub2Opts.Filename)
-	assert.Equal(t, "mount://-/", grub2Opts.Source)
 
 	// Check for the expected chmod paths
 	chmodStage := findStage("org.osbuild.chmod", stages)
@@ -95,18 +94,18 @@ func assertCommonPXEStages(t *testing.T, kernelVersion string, stages []*osbuild
 
 func TestBootcPXETreeSquashfs(t *testing.T) {
 	kernelVersion := "5.14.0-611.4.1.el9_7.x86_64"
-	pxeTreePipeline := makeFakeBootcPXETreePipeline(kernelVersion)
+	pxeTreePipeline := makeFakeBootcPXETreePipeline(kernelVersion, manifest.SquashfsRootfs)
 
 	pipeline, err := pxeTreePipeline.Serialize()
 	require.NoError(t, err)
 
-	// Check the squashfs stage
-	squashfsStage := findStage("org.osbuild.squashfs", pipeline.Stages)
-	require.NotNil(t, squashfsStage)
-	opts := squashfsStage.Options.(*osbuild.SquashfsStageOptions)
-	assert.Equal(t, "rootfs.img", opts.Filename)
+	// Check the ostree.grub2 stage mount type
+	grub2Stage := findStage("org.osbuild.ostree.grub2", pipeline.Stages)
+	require.NotNil(t, grub2Stage)
+	opts := grub2Stage.Options.(*osbuild.OSTreeGrub2StageOptions)
+	assert.Equal(t, "grub.cfg", opts.Filename)
 	assert.Equal(t, "mount://-/", opts.Source)
-	assertNoBootcDeploymentAndBindMount(t, squashfsStage)
+	assert.Equal(t, 0, findMountIdx(grub2Stage.Mounts, "org.osbuild.squashfs"))
 
 	// Check the stages common between squashfs and erofs
 	assertCommonPXEStages(t, kernelVersion, pipeline.Stages)
@@ -114,19 +113,18 @@ func TestBootcPXETreeSquashfs(t *testing.T) {
 
 func TestBootcPXETreeErofs(t *testing.T) {
 	kernelVersion := "5.14.0-611.4.1.el9_7.x86_64"
-	pxeTreePipeline := makeFakeBootcPXETreePipeline(kernelVersion)
-	pxeTreePipeline.RootfsType = manifest.ErofsRootfs
+	pxeTreePipeline := makeFakeBootcPXETreePipeline(kernelVersion, manifest.ErofsRootfs)
 
 	pipeline, err := pxeTreePipeline.Serialize()
 	require.NoError(t, err)
 
-	// Check the squashfs stage
-	erofsStage := findStage("org.osbuild.erofs", pipeline.Stages)
-	require.NotNil(t, erofsStage)
-	opts := erofsStage.Options.(*osbuild.ErofsStageOptions)
-	assert.Equal(t, "rootfs.img", opts.Filename)
+	// Check the ostree.grub2 stage mount type
+	grub2Stage := findStage("org.osbuild.ostree.grub2", pipeline.Stages)
+	require.NotNil(t, grub2Stage)
+	opts := grub2Stage.Options.(*osbuild.OSTreeGrub2StageOptions)
+	assert.Equal(t, "grub.cfg", opts.Filename)
 	assert.Equal(t, "mount://-/", opts.Source)
-	assertNoBootcDeploymentAndBindMount(t, erofsStage)
+	assert.Equal(t, 0, findMountIdx(grub2Stage.Mounts, "org.osbuild.erofs"))
 
 	// Check the stages common between squashfs and erofs
 	assertCommonPXEStages(t, kernelVersion, pipeline.Stages)

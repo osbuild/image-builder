@@ -111,3 +111,11 @@ func TestBootcRootFSErofs(t *testing.T) {
 	// Check the stages common between squashfs and erofs
 	assertCommonRootFSStages(t, kernelVersion, pipeline.Stages)
 }
+
+// Test to make sure mounts do not include ostree deployment or bind mount
+func assertNoBootcDeploymentAndBindMount(t *testing.T, stage *osbuild.Stage) {
+	deploymentMntIdx := findMountIdx(stage.Mounts, "org.osbuild.ostree.deployment")
+	assert.Equal(t, -1, deploymentMntIdx)
+	bindMntIdx := findMountIdx(stage.Mounts, "org.osbuild.bind")
+	assert.Equal(t, -1, bindMntIdx)
+}
