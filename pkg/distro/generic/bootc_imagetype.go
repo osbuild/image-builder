@@ -131,9 +131,6 @@ func (t *bootcImageType) RequiredBlueprintOptions() []string {
 }
 
 func (t *bootcImageType) getDefaultISOConfig() (*distro.ISOConfig, error) {
-	if !t.ImageTypeYAML.BootISO {
-		return nil, fmt.Errorf("image type %q is not an ISO", t.Name())
-	}
 	d := t.Arch().Distro()
 	return t.ISOConfig(d.ID(), t.arch.arch.String()), nil
 }
