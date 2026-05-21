@@ -6,7 +6,8 @@ import (
 	"io"
 	"testing"
 
-	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,7 @@ type fakeAWSClient struct {
 	checkBucketPermissionErr   error
 	checkBucketPermissionCalls int
 
-	uploadFromReader      *s3manager.UploadOutput
+	uploadFromReader      *transfermanager.UploadObjectOutput
 	uploadFromReaderErr   error
 	uploadFromReaderCalls int
 
@@ -60,7 +61,7 @@ func (fa *fakeAWSClient) CheckBucketPermission(string, s3types.Permission) (bool
 	return fa.checkBucketPermission, fa.checkBucketPermissionErr
 }
 
-func (fa *fakeAWSClient) UploadFromReader(io.Reader, string, string) (*s3manager.UploadOutput, error) {
+func (fa *fakeAWSClient) UploadFromReader(io.Reader, string, string) (*transfermanager.UploadObjectOutput, error) {
 	fa.uploadFromReaderCalls++
 	return fa.uploadFromReader, fa.uploadFromReaderErr
 }
@@ -141,8 +142,8 @@ func TestUploaderUploadHappy(t *testing.T) {
 			uuid.SetRand(&repeatReader{})
 
 			fa := &fakeAWSClient{
-				uploadFromReader: &s3manager.UploadOutput{
-					Location: "some-location",
+				uploadFromReader: &transfermanager.UploadObjectOutput{
+					Location: aws.String("some-location"),
 				},
 				registerImageId:    "image-id",
 				registerSnapshotId: "snapshot-id",
@@ -178,8 +179,8 @@ func TestUploaderUploadButRegisterError(t *testing.T) {
 	uuid.SetRand(&repeatReader{})
 
 	fa := &fakeAWSClient{
-		uploadFromReader: &s3manager.UploadOutput{
-			Location: "some-location",
+		uploadFromReader: &transfermanager.UploadObjectOutput{
+			Location: aws.String("some-location"),
 		},
 		registerErr: fmt.Errorf("fake-register-err"),
 	}
@@ -208,8 +209,8 @@ Deleted S3 object bucket:01010101-0101-4101-8101-010101010101-ami
 
 func TestUploaderUploadButRegisterErrorAndDeleteError(t *testing.T) {
 	fa := &fakeAWSClient{
-		uploadFromReader: &s3manager.UploadOutput{
-			Location: "some-location",
+		uploadFromReader: &transfermanager.UploadObjectOutput{
+			Location: aws.String("some-location"),
 		},
 		registerErr:     fmt.Errorf("fake-register-err"),
 		deleteObjectErr: fmt.Errorf("fake-delete-object-err"),

@@ -6,7 +6,8 @@ import (
 	"io"
 	"slices"
 
-	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
 
@@ -45,7 +46,7 @@ type awsClient interface {
 	Regions() ([]string, error)
 	Buckets() ([]string, error)
 	CheckBucketPermission(string, s3types.Permission) (bool, error)
-	UploadFromReader(io.Reader, string, string) (*s3manager.UploadOutput, error)
+	UploadFromReader(io.Reader, string, string) (*transfermanager.UploadObjectOutput, error)
 	Register(name, bucket, key string, tags []AWSTag, shareWith []string, architecture arch.Arch, bootMode *platform.BootMode, importRole *string) (string, string, error)
 	DeleteObject(string, string) error
 }
@@ -125,7 +126,7 @@ func (au *awsUploader) UploadAndRegister(r io.Reader, _ uint64, status io.Writer
 			err = errors.Join(err, aErr)
 		}
 	}()
-	fmt.Fprintf(status, "File uploaded to %s\n", res.Location)
+	fmt.Fprintf(status, "File uploaded to %s\n", aws.ToString(res.Location))
 	if au.targetArch == arch.ARCH_UNSET {
 		au.targetArch = arch.Current()
 	}

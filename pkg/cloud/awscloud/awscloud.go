@@ -15,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	s3manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -61,7 +61,7 @@ func newAwsFromConfig(cfg aws.Config) *AWS {
 	return &AWS{
 		ec2:        ec2.NewFromConfig(cfg),
 		s3:         s3cli,
-		s3uploader: s3manager.NewUploader(s3cli),
+		s3uploader: transfermanager.New(s3cli),
 		s3presign:  s3.NewPresignClient(s3cli),
 	}
 }
@@ -166,7 +166,7 @@ func newAwsFromCredsWithEndpoint(optsFunc config.LoadOptionsFunc, region, endpoi
 	return &AWS{
 		ec2:        ec2.NewFromConfig(cfg),
 		s3:         s3cli,
-		s3uploader: s3manager.NewUploader(s3cli),
+		s3uploader: transfermanager.New(s3cli),
 		s3presign:  s3.NewPresignClient(s3cli),
 	}, nil
 }
@@ -189,7 +189,7 @@ func NewForEndpointFromFile(filename, endpoint, region, caBundle string, skipSSL
 	return newAwsFromCredsWithEndpoint(config.WithSharedCredentialsFiles([]string{filename, "default"}), region, endpoint, caBundle, skipSSLVerification)
 }
 
-func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, error) {
+func (a *AWS) Upload(filename, bucket, key string) (*transfermanager.UploadObjectOutput, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -204,11 +204,11 @@ func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, err
 	return a.UploadFromReader(file, bucket, key)
 }
 
-func (a *AWS) UploadFromReader(r io.Reader, bucket, key string) (*s3manager.UploadOutput, error) {
+func (a *AWS) UploadFromReader(r io.Reader, bucket, key string) (*transfermanager.UploadObjectOutput, error) {
 	olog.Printf("[AWS] 🚀 Uploading image to S3: %s/%s", bucket, key)
-	return a.s3uploader.Upload(
+	return a.s3uploader.UploadObject(
 		context.TODO(),
-		&s3.PutObjectInput{
+		&transfermanager.UploadObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 			Body:   r,

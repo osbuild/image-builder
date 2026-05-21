@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	awsSigner "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -267,18 +267,18 @@ func (f *fakeS3Client) GetBucketAcl(ctx context.Context, input *s3.GetBucketAclI
 }
 
 type fakeS3Uploader struct {
-	uploadCalls []s3.PutObjectInput
+	uploadCalls []transfermanager.UploadObjectInput
 	uploadErr   error
 }
 
 var _ awscloud.S3Uploader = (*fakeS3Uploader)(nil)
 
-func (f *fakeS3Uploader) Upload(ctx context.Context, input *s3.PutObjectInput, optFns ...func(*manager.Uploader)) (*manager.UploadOutput, error) {
+func (f *fakeS3Uploader) UploadObject(ctx context.Context, input *transfermanager.UploadObjectInput, optFns ...func(*transfermanager.Options)) (*transfermanager.UploadObjectOutput, error) {
 	f.uploadCalls = append(f.uploadCalls, *input)
 	if f.uploadErr != nil {
 		return nil, f.uploadErr
 	}
-	return &manager.UploadOutput{
+	return &transfermanager.UploadObjectOutput{
 		Key: input.Key,
 	}, nil
 }

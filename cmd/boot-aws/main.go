@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -128,7 +129,7 @@ func doSetup(a *awscloud.AWS, filename string, flags *pflag.FlagSet, res *resour
 		return fmt.Errorf("Upload() failed: %s", err.Error())
 	}
 
-	fmt.Printf("file uploaded to %s\n", uploadOutput.Location)
+	fmt.Printf("file uploaded to %s\n", aws.ToString(uploadOutput.Location))
 
 	var bootMode *platform.BootMode
 	bootModeFlag, err := flags.GetString("boot-mode")

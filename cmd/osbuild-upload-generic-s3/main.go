@@ -55,5 +55,5 @@ func main() {
 		}
 	}
 
-	fmt.Printf("file uploaded to %s\n", aws.ToString(&uploadOutput.Location))
+	fmt.Printf("file uploaded to %s\n", aws.ToString(uploadOutput.Location))
 }
