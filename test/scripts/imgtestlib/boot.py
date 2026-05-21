@@ -550,33 +550,32 @@ def boot_image(search_path, build_config_path, keep_booted=False):
 
     print(f"Testing image at {image_path}")
     bib_image_id = ""
-    match image_type:
+    if image_type in ("qcow2", "generic-qcow2", "cloud-qcow2"):
         # Not all qcow2 types can be boot-tested, for example `server-qcow2` uses
         # initial-setup and this blocks the boot.
-        case "qcow2" | "generic-qcow2" | "cloud-qcow2":
-            boot_qemu(arch, image_path, build_config_path, keep_booted=keep_booted)
-        case "image-installer" | "minimal-installer":
-            boot_qemu_iso(arch, image_path, build_config_path)
-        case "network-installer" | "everything-network-installer" | "bootc-generic-iso":
-            boot_qemu_iso_no_unattended_support(arch, image_path, build_config_path)
-        case "pxe-tar-xz":
-            boot_qemu_pxe(arch, image_path)
-        case "ami" | "ec2" | "ec2-ha" | "ec2-sap" | "edge-ami" | "cloud-ec2":
-            boot_ami(distro, arch, image_type, image_path, build_config_path)
-        case "vhd":
-            boot_vhd(distro, arch, image_path, build_config_path)
-        case "iot-bootable-container":
-            manifest_id = build_info["manifest-checksum"]
-            boot_container(distro, arch, image_type, image_path, manifest_id, build_config_path)
-            bib_ref = get_bib_ref()
-            bib_image_id = skopeo_inspect_id(f"docker://{bib_ref}", host_container_arch())
-        case "wsl" | "generic-wsl":
-            if distro == "fedora-41":
-                print(f"{distro} {image_type} boot tests are not supported, fails on wsl import")
-                return
-            boot_wsl(distro, arch, image_path, build_config_path)
-        case _:
-            raise MissingBootImplementation(f"{arch} {image_type} is missing a boot implementation.")
+        boot_qemu(arch, image_path, build_config_path, keep_booted=keep_booted)
+    elif image_type in ("image-installer", "minimal-installer"):
+        boot_qemu_iso(arch, image_path, build_config_path)
+    elif image_type in ("network-installer", "everything-network-installer", "bootc-generic-iso"):
+        boot_qemu_iso_no_unattended_support(arch, image_path, build_config_path)
+    elif image_type in ("pxe-tar-xz"):
+        boot_qemu_pxe(arch, image_path)
+    elif image_type in ("ami", "ec2", "ec2-ha", "ec2-sap", "edge-ami", "cloud-ec2"):
+        boot_ami(distro, arch, image_type, image_path, build_config_path)
+    elif image_type in ("vhd"):
+        boot_vhd(distro, arch, image_path, build_config_path)
+    elif image_type in ("iot-bootable-container"):
+        manifest_id = build_info["manifest-checksum"]
+        boot_container(distro, arch, image_type, image_path, manifest_id, build_config_path)
+        bib_ref = get_bib_ref()
+        bib_image_id = skopeo_inspect_id(f"docker://{bib_ref}", host_container_arch())
+    elif image_type in ("wsl", "generic-wsl"):
+        if distro == "fedora-41":
+            print(f"{distro} {image_type} boot tests are not supported, fails on wsl import")
+            return
+        boot_wsl(distro, arch, image_path, build_config_path)
+    else:
+        raise MissingBootImplementation(f"{arch} {image_type} is missing a boot implementation.")
 
     print("✅ Marking boot successful")
     # amend build info with boot success
