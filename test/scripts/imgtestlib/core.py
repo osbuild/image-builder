@@ -6,7 +6,6 @@ import sys
 from glob import glob
 from typing import Dict
 
-from .boot import can_boot_test
 from .build import get_manifest_id
 from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_s3
 from .gitlab import print_section_end, print_section_start
@@ -20,6 +19,27 @@ CONFIG_LIST = "./test/config-list.json"
 BIB_TYPES = [
     "iot-bootable-container"
 ]
+
+
+# image types that can be boot tested
+# Keep in sync with test/scripts/boot-image which has the same checks again
+CAN_BOOT_TEST = {
+    "*": [
+        "ami",
+        "ec2",
+        "ec2-ha",
+        "ec2-sap",
+        "edge-ami",
+        "iot-bootable-container",
+        "vhd",
+        "cloud-ec2",
+    ],
+    "x86_64": [
+        "image-installer", "minimal-installer", "network-installer",
+        "qcow2", "generic-qcow2", "cloud-qcow2",
+        "wsl", "generic-wsl",
+    ]
+}
 
 
 # base and terraform bits copied from main .gitlab-ci.yml
@@ -369,3 +389,51 @@ def read_manifest(build_path: str) -> Dict:
     info_file_path = os.path.join(build_path, "manifest.json")
     with open(info_file_path, encoding="utf-8") as info_fp:
         return json.load(info_fp)
+
+
+# pylint: disable=too-many-return-statements,too-many-arguments,too-many-positional-arguments
+def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, blueprint):
+    if image_type not in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
+        return False
+
+    if image_type in ["image-installer", "minimal-installer"]:
+        if not blueprint.get("customizations", {}).get("installer", {}).get("unattended"):
+            print("  not bootable: only unattended installers are supported")
+            return False
+
+    if image_type in ["network-installer", "everything-network-installer", "server-network-installer"]:
+        if distro in ["rhel-10.1", "rhel-10.2"]:
+            print("  not bootable: rhel network-installer tests have incomplete repos in nightly snapshot"
+                  "and won't install")
+            return False
+        if distro.startswith("fedora"):
+            print("  not bootable: fedora network-installer crashes in sshd,"
+                  "see https://bugzilla.redhat.com/show_bug.cgi?id=2415883")
+            return False
+        if distro == "centos-9":
+            print("  not bootable: centos-9 will not start an install and waits on source selection")
+            return False
+        if distro.startswith("rhel-9"):
+            print("  not bootable: rhel-9 will not start an install and waits on source selection")
+            return False
+
+    if image_type in ["qcow2", "generic-qcow2", "cloud-qcow2", "image-installer", "minimal-installer",
+                      "network-installer", "everything-network-installer"]:
+        if blueprint.get("customizations", {}).get("fips") and distro.startswith("fedora"):
+            print("  not bootable: fips on fedora is unstable, fails with e.g. dracut:"
+                  "FATAL: FIPS integrity test failed")
+            return False
+        # Note that this needs adjustment when we switch to librepo
+        urls = [src["url"] for src in manifest_data["sources"]["org.osbuild.curl"]["items"].values()]
+        if not any("ssh-server" in url for url in urls):
+            # This can happen e.g. when an image is build with the "minimal: true" customization.
+            # We could use guestfs to inject keys, see PR#1995
+            print(f"  not bootable: ssh-server not found in manifest {manifest_fname} ({arch} {image_type})")
+            return False
+        # We need jq in the image many images do not have it
+        # (e.g. centos-9/rhel-9 with releasever config) so skip those too
+        if not any("jq" in url for url in urls):
+            print(f"  not bootable: jq not found in {manifest_fname} ({arch} {image_type})")
+            return False
+
+    return True

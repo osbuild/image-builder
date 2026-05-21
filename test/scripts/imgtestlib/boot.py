@@ -15,8 +15,11 @@ from typing import Generator
 from vmtest.util import get_free_port
 from vmtest.vm import QEMU
 
+from .build import read_build_info, write_build_info
+from .core import (can_boot_test, find_image_file, read_manifest,
+                   skopeo_inspect_id)
 from .run import runcmd, runcmd_nc
-from .testenv import get_bib_ref
+from .testenv import get_bib_ref, host_container_arch
 
 BASE_TEST_EXEC = "check-host-config-"  # + arch
 WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
@@ -25,26 +28,6 @@ WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
 ISO_BOOT_TIMEOUT = 1800
 
 REGISTRY = "registry.gitlab.com/redhat/services/products/image-builder/ci/images"
-
-# image types that can be boot tested
-# Keep in sync with test/scripts/boot-image which has the same checks again
-CAN_BOOT_TEST = {
-    "*": [
-        "ami",
-        "ec2",
-        "ec2-ha",
-        "ec2-sap",
-        "edge-ami",
-        "iot-bootable-container",
-        "vhd",
-        "cloud-ec2",
-    ],
-    "x86_64": [
-        "image-installer", "minimal-installer", "network-installer",
-        "qcow2", "generic-qcow2", "cloud-qcow2",
-        "wsl", "generic-wsl",
-    ]
-}
 
 
 def get_aws_config():
@@ -537,49 +520,72 @@ def boot_wsl(distro, arch, image_path, config):
             runcmd_nc(cmd)
 
 
-# pylint: disable=too-many-return-statements,too-many-arguments,too-many-positional-arguments
-def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, blueprint):
-    if image_type not in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
-        return False
+# pylint: disable=too-many-branches
+def boot_image(search_path, build_config_path, keep_booted=False):
+    image_path = find_image_file(search_path)
+    build_info = read_build_info(search_path)
+    distro = build_info["distro"]
+    arch = build_info["arch"]
+    image_type = build_info["image-type"]
 
-    if image_type in ["image-installer", "minimal-installer"]:
-        if not blueprint.get("customizations", {}).get("installer", {}).get("unattended"):
-            print("  not bootable: only unattended installers are supported")
-            return False
+    # NOTE: Some installer ISOs have embedded kickstart, but they are interactive, so we need to embed
+    # a custom kickstart with non-interactive settings in it. To preserve the original kickstart content,
+    # we need to read the original kickstart content from the build directory and merge it with the custom
+    # kickstart content.
+    iso_embedded_ks = build_info.get("iso-embedded-ks", None)
+    iso_embedded_ks_path = None
+    if iso_embedded_ks:
+        iso_embedded_ks_path = os.path.join(search_path, iso_embedded_ks)
+        if not os.path.exists(iso_embedded_ks_path):
+            raise RuntimeError(
+                f"'iso-embedded-ks' specified in the info.json, but file not found: {iso_embedded_ks_path}"
+            )
 
-    if image_type in ["network-installer", "everything-network-installer", "server-network-installer"]:
-        if distro in ["rhel-10.1", "rhel-10.2"]:
-            print("  not bootable: rhel network-installer tests have incomplete repos in nightly snapshot"
-                  "and won't install")
-            return False
-        if distro.startswith("fedora"):
-            print("  not bootable: fedora network-installer crashes in sshd,"
-                  "see https://bugzilla.redhat.com/show_bug.cgi?id=2415883")
-            return False
-        if distro == "centos-9":
-            print("  not bootable: centos-9 will not start an install and waits on source selection")
-            return False
-        if distro.startswith("rhel-9"):
-            print("  not bootable: rhel-9 will not start an install and waits on source selection")
-            return False
+    config = json.loads(pathlib.Path(build_config_path).read_text(encoding="utf8"))
+    manifest_path = os.path.join(search_path, "manifest.json")
+    if not can_boot_test(manifest_path, read_manifest(search_path),
+                         image_type, arch, distro, config.get("blueprint", {})):
+        print(f"SKIP: {image_type} boot tests on {arch} are not supported ({distro})")
+        return
 
-    if image_type in ["qcow2", "generic-qcow2", "cloud-qcow2", "image-installer", "minimal-installer",
-                      "network-installer", "everything-network-installer"]:
-        if blueprint.get("customizations", {}).get("fips") and distro.startswith("fedora"):
-            print("  not bootable: fips on fedora is unstable, fails with e.g. dracut:"
-                  "FATAL: FIPS integrity test failed")
-            return False
-        # Note that this needs adjustment when we switch to librepo
-        urls = [src["url"] for src in manifest_data["sources"]["org.osbuild.curl"]["items"].values()]
-        if not any("ssh-server" in url for url in urls):
-            # This can happen e.g. when an image is build with the "minimal: true" customization.
-            # We could use guestfs to inject keys, see PR#1995
-            print(f"  not bootable: ssh-server not found in manifest {manifest_fname} ({arch} {image_type})")
-            return False
-        # We need jq in the image many images do not have it
-        # (e.g. centos-9/rhel-9 with releasever config) so skip those too
-        if not any("jq" in url for url in urls):
-            print(f"  not bootable: jq not found in {manifest_fname} ({arch} {image_type})")
-            return False
+    print(f"Testing image at {image_path}")
+    bib_image_id = ""
+    match image_type:
+        # Not all qcow2 types can be boot-tested, for example `server-qcow2` uses
+        # initial-setup and this blocks the boot.
+        case "qcow2" | "generic-qcow2" | "cloud-qcow2":
+            boot_qemu(arch, image_path, build_config_path, keep_booted=keep_booted)
+        case "image-installer" | "minimal-installer":
+            boot_qemu_iso(arch, image_path, build_config_path)
+        case "network-installer" | "everything-network-installer" | "bootc-generic-iso":
+            boot_qemu_iso_no_unattended_support(arch, image_path, build_config_path)
+        case "pxe-tar-xz":
+            boot_qemu_pxe(arch, image_path)
+        case "ami" | "ec2" | "ec2-ha" | "ec2-sap" | "edge-ami" | "cloud-ec2":
+            boot_ami(distro, arch, image_type, image_path, build_config_path)
+        case "vhd":
+            boot_vhd(distro, arch, image_path, build_config_path)
+        case "iot-bootable-container":
+            manifest_id = build_info["manifest-checksum"]
+            boot_container(distro, arch, image_type, image_path, manifest_id, build_config_path)
+            bib_ref = get_bib_ref()
+            bib_image_id = skopeo_inspect_id(f"docker://{bib_ref}", host_container_arch())
+        case "wsl" | "generic-wsl":
+            if distro == "fedora-41":
+                print(f"{distro} {image_type} boot tests are not supported, fails on wsl import")
+                return
+            boot_wsl(distro, arch, image_path, build_config_path)
+        case _:
+            raise MissingBootImplementation(f"{arch} {image_type} is missing a boot implementation.")
 
-    return True
+    print("✅ Marking boot successful")
+    # amend build info with boot success
+    # search_path is the root of the build path (build/build_name)
+    build_info["boot-success"] = True
+    write_build_info(search_path, build_info)
+    if bib_image_id:
+        # write a separate file with the bib image ID as filename to mark the boot success with that image
+        bib_id_file = os.path.join(search_path, f"bib-{bib_image_id}")
+        print(f"Writing bib image ID file: {bib_id_file}")
+        with open(bib_id_file, "w", encoding="utf-8") as fp:
+            fp.write("")
