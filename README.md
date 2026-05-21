@@ -84,6 +84,11 @@ Make sure to have the required `osbuild` RPMs installed:
 $ sudo dnf install osbuild osbuild-depsolve-dnf
 ```
 
+Check if there is enough space in /tmp, as some larger image configurations may
+need to create larger temporary files. For technical reasons (SELinux), the
+image builder cannot be configured to use a directory other than /tmp; in this
+case, enabling (or increasing) swap space will do the trick.
+
 ## Examples
 
 ### Listing
