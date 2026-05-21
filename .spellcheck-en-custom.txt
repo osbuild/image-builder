@@ -19,6 +19,7 @@ SBOM
 SBOMs
 spdx
 toml
+tmp
 customizations
 entrypoint
 fedoraproject
