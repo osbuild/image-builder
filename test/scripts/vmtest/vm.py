@@ -11,8 +11,15 @@ import time
 import uuid
 from io import StringIO
 
-import boto3
-from botocore.exceptions import ClientError
+try:
+    # The vmtest module is imported by imgtestlib.
+    # Allow importing the module without boto3 since most times it's not needed.
+    import boto3
+    from botocore.exceptions import ClientError
+except ImportError:
+    boto3 = None
+    ClientError = None
+
 from vmtest.util import get_free_port, wait_ssh_ready
 
 AWS_REGION = "us-east-1"
