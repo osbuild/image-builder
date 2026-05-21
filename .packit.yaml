@@ -56,6 +56,10 @@ jobs:
       - rhel-9-x86_64
       - rhel-10-aarch64
       - rhel-10-x86_64
+      - fedora-eln-x86_64
+      - fedora-eln-aarch64
+      - fedora-eln-s390x
+      - fedora-eln-ppc64le
   - job: copr_build
     trigger: commit
     branch: main
