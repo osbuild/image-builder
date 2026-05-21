@@ -208,5 +208,7 @@ image_types:
     compression: "xz"
     image_func: "pxe_tar"
     exports: ["xz"]
+    iso_config:
+      rootfs_type: "squashfs"
     blueprint:
       supported_options: *supported_options_pxe
