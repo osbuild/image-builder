@@ -27,7 +27,7 @@ require (
 	github.com/gocomply/scap v0.1.3
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/gophercloud/gophercloud/v2 v2.8.0
+	github.com/gophercloud/gophercloud/v2 v2.10.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/hashicorp/go-version v1.7.0
 	github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b
