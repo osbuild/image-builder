@@ -42,35 +42,6 @@ CAN_BOOT_TEST = {
 }
 
 
-# base and terraform bits copied from main .gitlab-ci.yml
-# needed for status reporting and defining the runners
-BASE_CONFIG = """
-.base:
-  before_script:
-    - cat schutzbot/team_ssh_keys.txt |
-        tee -a ~/.ssh/authorized_keys > /dev/null
-  interruptible: true
-  retry: 1
-  tags:
-    - terraform
-  variables:
-    PYTHONUNBUFFERED: 1
-
-.terraform:
-  extends: .base
-  tags:
-    - terraform
-"""
-
-NULL_CONFIG = """
-NullBuild:
-  stage: test
-  script: echo "No manifest changes detected. Skipping build."
-  tags:
-    - "shell"
-"""
-
-
 def list_images(distros=None, arches=None, images=None):
     distros_arg = "*"
     if distros:
@@ -357,7 +328,6 @@ def get_tag_for(runner):
         return "terraform/openstack"
 
     raise ValueError(f"Unknown runner: {runner}")
-
 
 
 def find_image_file(build_path: str) -> str:
