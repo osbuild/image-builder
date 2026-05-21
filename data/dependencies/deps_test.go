@@ -8,5 +8,5 @@ import (
 )
 
 func TestMinimumOSBuildVersion(t *testing.T) {
-	assert.Equal(t, "180", dependencies.MinimumOSBuildVersion())
+	assert.Equal(t, "183", dependencies.MinimumOSBuildVersion())
 }
