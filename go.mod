@@ -36,7 +36,7 @@ require (
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
 	github.com/osbuild/blueprint v1.30.0
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.9
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/supakeen/yamlplus v1.1.0
 	github.com/ubccr/kerby v0.0.0-20230802201021-412be7bfaee5
