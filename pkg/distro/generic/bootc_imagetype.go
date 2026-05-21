@@ -130,6 +130,14 @@ func (t *bootcImageType) RequiredBlueprintOptions() []string {
 	return nil
 }
 
+func (t *bootcImageType) getDefaultISOConfig() (*distro.ISOConfig, error) {
+	if !t.ImageTypeYAML.BootISO {
+		return nil, fmt.Errorf("image type %q is not an ISO", t.Name())
+	}
+	d := t.Arch().Distro()
+	return t.ISOConfig(d.ID(), t.arch.arch.String()), nil
+}
+
 // keep in sync with "generic/imagetype.go:checkOptions()"
 func (t *bootcImageType) checkOptions(bp *blueprint.Blueprint) []string {
 	if bp == nil {
