@@ -143,7 +143,7 @@ def check_for_build(manifest_fname, build_request, manifest_data, build_info_dir
     build_info_path = os.path.join(build_info_dir, "info.json")
     # rebuild if matching build info is not found
     if not os.path.exists(build_info_path):
-        print(f"Build info not found: {build_info_path}")
+        print(f"🟥 Build info not found: {build_info_path}")
         print("  Adding config to build pipeline.")
         return True
 
