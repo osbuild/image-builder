@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import json
 import os
 
 import imgtestlib as testlib
@@ -19,37 +18,7 @@ def main():
     config_path = args.config
     arch = os.uname().machine
 
-    with open(config_path, "r", encoding="utf-8") as config_file:
-        config = json.load(config_file)
-        config_name = config["name"]
-
-    build_dir = os.path.join("build", testlib.gen_build_name(distro, arch, image_type, config_name))
-
-    # get the manifest ID to use in the destination path
-    manifest_path = os.path.join(build_dir, "manifest.json")
-    with open(manifest_path, "r", encoding="utf-8") as manifest_fp:
-        manifest_data = json.load(manifest_fp)
-    manifest_id = testlib.get_manifest_id(manifest_data)
-
-    # add the PR number (gitlab branch name) to the info.json if available
-    if pr_number := os.environ.get("CI_COMMIT_BRANCH"):
-        build_info = testlib.read_build_info(build_dir)
-        # strip the PR prefix
-        build_info["pr"] = pr_number.removeprefix("PR-")
-        testlib.write_build_info(build_dir, build_info)
-
-    s3url = testlib.gen_build_info_s3_dir_path(distro, arch, manifest_id)
-
-    # It can happen that the upload fails before finishing. This can cause problems with inconsistent cache state if,
-    # for example, the info.json file is uploaded but the manifest or image is not. Since the info.json is the important
-    # file for identifying if a build was successful, let's upload everything else first, without info.json, and then
-    # upload the info.json separately as a final step.
-    print(f"⬆️ Uploading {build_dir} to {s3url} (without info)")
-    testlib.runcmd_nc(["aws", "s3", "cp", "--no-progress", "--acl=private", "--recursive", "--exclude=info.json",
-                       build_dir+"/", s3url])
-    print(f"⬆️ Uploading info.json to {s3url}")
-    testlib.runcmd_nc(["aws", "s3", "cp", "--no-progress", "--acl=private", "--recursive", build_dir+"/", s3url])
-    print("✅ DONE!!")
+    testlib.upload_results(distro, arch, image_type, config_path)
 
 
 if __name__ == "__main__":

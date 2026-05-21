@@ -1,8 +1,11 @@
+import json
 import os
 import subprocess as sp
 from datetime import datetime
 from typing import List, Optional
 
+from .build import (gen_build_name, get_manifest_id, read_build_info,
+                    write_build_info)
 from .run import runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit
 
@@ -110,3 +113,37 @@ def touch_s3(distro, arch, manifest_id, osbuild_ref=None, runner_distro=None):
     print(f"⌚ Updating timestamps for {s3url} ({now})")
     cmd = ["aws", "s3", "cp", "--recursive", "--metadata", f"touched={now}", s3url, s3url]
     runcmd_nc(cmd)
+
+
+def upload_results(distro, arch, image_type, config_path):
+    with open(config_path, "r", encoding="utf-8") as config_file:
+        config = json.load(config_file)
+        config_name = config["name"]
+
+    build_dir = os.path.join("build", gen_build_name(distro, arch, image_type, config_name))
+
+    # get the manifest ID to use in the destination path
+    manifest_path = os.path.join(build_dir, "manifest.json")
+    with open(manifest_path, "r", encoding="utf-8") as manifest_fp:
+        manifest_data = json.load(manifest_fp)
+    manifest_id = get_manifest_id(manifest_data)
+
+    # add the PR number (gitlab branch name) to the info.json if available
+    if pr_number := os.environ.get("CI_COMMIT_BRANCH"):
+        build_info = read_build_info(build_dir)
+        # strip the PR prefix
+        build_info["pr"] = pr_number.removeprefix("PR-")
+        write_build_info(build_dir, build_info)
+
+    s3url = gen_build_info_s3_dir_path(distro, arch, manifest_id)
+
+    # It can happen that the upload fails before finishing. This can cause problems with inconsistent cache state if,
+    # for example, the info.json file is uploaded but the manifest or image is not. Since the info.json is the important
+    # file for identifying if a build was successful, let's upload everything else first, without info.json, and then
+    # upload the info.json separately as a final step.
+    print(f"⬆️ Uploading {build_dir} to {s3url} (without info)")
+    runcmd_nc(["aws", "s3", "cp", "--no-progress", "--acl=private", "--recursive", "--exclude=info.json",
+               build_dir+"/", s3url])
+    print(f"⬆️ Uploading info.json to {s3url}")
+    runcmd_nc(["aws", "s3", "cp", "--no-progress", "--acl=private", "--recursive", build_dir+"/", s3url])
+    print("✅ DONE!!")
