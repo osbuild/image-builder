@@ -30,9 +30,10 @@ func New(credentials []byte) (*GCP, error) {
 	var getCredsFunc func() (*google.Credentials, error)
 	if credentials != nil {
 		getCredsFunc = func() (*google.Credentials, error) {
-			return google.CredentialsFromJSON(
+			return google.CredentialsFromJSONWithType(
 				context.Background(),
 				credentials,
+				google.ServiceAccount,
 				scopes...,
 			)
 		}
