@@ -23,6 +23,7 @@ type BootcPXEImage struct {
 	// Customizations
 	OSCustomizations   manifest.OSCustomizations
 	DiskCustomizations manifest.DiskCustomizations
+	ISOCustomizations  manifest.ISOCustomizations
 
 	// Kernel version from the container, used to copy it into the PXE tar tree
 	KernelVersion string
@@ -116,9 +117,18 @@ func (img *BootcPXEImage) InstantiateManifestFromContainers(m *manifest.Manifest
 	// Setup root filesystem so that dmsquash-live will boot it
 	rawImage.LiveBoot = true
 
+	rootfsPipeline := manifest.NewBootcRootFS(buildPipeline, rawImage, img.platform)
+	rootfsPipeline.ErofsOptions = img.ISOCustomizations.ErofsOptions
+	rootfsPipeline.RootfsType = img.ISOCustomizations.RootfsType
+
 	// Add the rootfs pipeline which compresses the bootc/ostree filesystem and copies
 	// out the kernel, initramfs, and EFI/ files needed for PXE booting it
-	pxeTreePipeline := manifest.NewBootcPXETree(buildPipeline, rawImage, img.platform)
+	pxeTreePipeline := manifest.NewBootcPXETree(buildPipeline, rootfsPipeline, img.platform)
+	pxeTreePipeline.KernelOptionsAppend = img.OSCustomizations.KernelOptionsAppend
+	pxeTreePipeline.KernelPath = "vmlinuz"
+	pxeTreePipeline.InitramfsPath = "initrd.img"
+	pxeTreePipeline.RootfsPath = "rootfs.img"
+	pxeTreePipeline.RootfsType = rootfsPipeline.RootfsType
 
 	tarPipeline := manifest.NewTar(buildPipeline, pxeTreePipeline, "tar")
 	tarPipeline.Paths = pxeTreePipeline.GetTarFiles()
