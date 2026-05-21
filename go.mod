@@ -21,7 +21,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.303.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0
 	github.com/containers/common v1.0.1
-	github.com/containers/image/v5 v5.36.1
+	github.com/containers/image/v5 v5.36.2
 	github.com/containers/storage v1.59.1
 	github.com/gobwas/glob v0.2.3
 	github.com/gocomply/scap v0.1.3
