@@ -63,7 +63,7 @@ def test_smoke_has_expected_images_fedora(build_container):
         "iot-simplified-installer": ["x86_64", "aarch64"],
     }
 
-    for distro in ["fedora-42", "fedora-43", "fedora-44"]:
+    for distro in ["fedora-43", "fedora-44", "fedora-45"]:
         for type_, arches in type_arch.items():
             for arch in arches:
                 assert f"{distro} type:{type_} arch:{arch}" in output
