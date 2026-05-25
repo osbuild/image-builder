@@ -635,8 +635,8 @@ func run(dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error) 
 
 	err = cmd.Wait()
 	output := stdout.Bytes()
-	if runError, ok := err.(*exec.ExitError); ok && runError.ExitCode() != 0 {
-		return output, fmt.Errorf("depsolve failed with exit code %d", runError.ExitCode())
+	if err != nil {
+		return output, fmt.Errorf("running the depsolver failed: %w", err)
 	}
 	return output, nil
 }
