@@ -663,14 +663,6 @@
     }
   },
   {
-    "path": "./configs/firewall.json",
-    "filters": {
-      "image-types": [
-        "minimal-raw"
-      ]
-    }
-  },
-  {
     "path": "./configs/rhel9-azure-rhui-cdn.json",
     "filters": {
       "distros": [
