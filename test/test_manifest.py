@@ -186,7 +186,7 @@ def test_manifest_honors_rpmmd_cache(tmp_path, build_container):
 
 
 @pytest.mark.parametrize("bootc_ref,defaultfs", [
-    ("quay.io/fedora/fedora-bootc:42", "ext4"),
+    ("quay.io/fedora/fedora-bootc:44", "ext4"),
     ("quay.io/centos-bootc/centos-bootc:stream10", ""),
     ("quay.io/centos-bootc/centos-bootc:stream9", ""),
 ])

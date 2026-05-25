@@ -95,7 +95,7 @@ def test_iso_install_img_is_squashfs(tmp_path, image_type):
 @pytest.mark.skipif(platform.system() != "Linux", reason="boot test only runs on linux right now")
 @pytest.mark.parametrize("container_ref", [
     "quay.io/centos-bootc/centos-bootc:stream10",
-    "quay.io/fedora/fedora-bootc:42",
+    "quay.io/fedora/fedora-bootc:44",
     "quay.io/centos-bootc/centos-bootc:stream9",
 ])
 # pylint: disable=too-many-locals
