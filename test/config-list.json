@@ -630,18 +630,7 @@
     }
   },
   {
-    "path": "./configs/modularity-in-packages.json",
-    "filters": {
-      "image-types": [
-        "ami"
-      ],
-      "distros": [
-        "centos-9"
-      ]
-    }
-  },
-  {
-    "path": "./configs/modularity-enabled-modules.json",
+    "path": "./configs/modularity.json",
     "filters": {
       "image-types": [
         "ami"

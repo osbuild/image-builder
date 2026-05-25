@@ -1,0 +1,22 @@
+{
+  "name": "modularity",
+  "blueprint": {
+    "name": "modularity",
+    "description": "Blueprint exercising module shorthand in packages and enabled_modules.",
+    "version": "1.0",
+    "enabled_modules": [
+      {
+        "name": "nodejs",
+        "stream": "18"
+      }
+    ],
+    "packages": [
+      {
+        "name": "@nodejs:18"
+      },
+      {
+        "name": "nodejs"
+      }
+    ]
+  }
+}
