@@ -352,17 +352,6 @@
     }
   },
   {
-    "path": "./configs/oscap-rhel9.json",
-    "filters": {
-      "distros": [
-        "rhel-9.4"
-      ],
-      "image-types": [
-        "ami"
-      ]
-    }
-  },
-  {
     "path": "./configs/oscap-rhel9-with-json-tailoring.json",
     "filters": {
       "distros": [
