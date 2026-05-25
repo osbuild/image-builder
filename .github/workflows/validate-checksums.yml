@@ -54,14 +54,17 @@ jobs:
               echo "Manifests changes detected (commit $(git rev-parse HEAD))!"
               echo "https://github.com/osbuild/images/commit/$(git rev-parse HEAD)"
               echo
-              echo "Please review the manifest changes with ./tools/gen-manifests-diff and if the"
+              echo "Please review the manifest changes with ./tools/gen-manifest-diffs and if the"
               echo "changes are expected use ./tools/gen-manifest-checksums.sh to amend each"
-              echo "commit that results in manifest changes."
+              echo "commit that results in manifest changes. If there is no difference, chances"
+              echo "are that the codebase contains some flaky code."
               echo
               echo "Please refer to the developer docs at docs/developer for more information."
               echo "-----------------------------------------------------------------------------"
               echo "git status:"
               git status -vv
+              echo "tools/gen-manifest-diffs:"
+              ./tools/gen-manifest-diffs
               echo "-----------------------------------------------------------------------------"
               exit 1
           fi
