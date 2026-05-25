@@ -47,7 +47,7 @@ require (
 	golang.org/x/tools v0.42.0
 	google.golang.org/api v0.248.0
 	gopkg.in/ini.v1 v1.67.2
-	libvirt.org/go/libvirt v1.11006.0
+	libvirt.org/go/libvirt v1.12003.0
 )
 
 require (
