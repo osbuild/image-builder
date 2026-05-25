@@ -1045,7 +1045,7 @@ exit 1
 			solver.depsolveDNFCmd = []string{fakeSolverPath}
 			res, err := solver.Depsolve(nil, sbom.StandardTypeNone)
 
-			assert.EqualError(t, err, `DNF error occurred: InternalError: osbuild-depsolve-dnf output was empty: depsolve failed with exit code 1`)
+			assert.EqualError(t, err, `DNF error occurred: InternalError: osbuild-depsolve-dnf output was empty: running the depsolver failed: exit status 1`)
 			assert.Nil(t, res)
 		})
 	}
