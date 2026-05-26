@@ -68,6 +68,15 @@ var (
 
 	// Osbuild version for cache keys (initialized once in main)
 	osbuildVersion string
+
+	// Statistics
+	cacheHits               int64
+	cacheMisses             int64
+	manifestGenTimeTotal    int64 // nanoseconds
+	manifestGenCount        int64
+	osbuildInspectTimeTotal int64 // nanoseconds
+	osbuildInspectCount     int64
+	statsMu                 sync.Mutex
 )
 
 type buildRequest struct {
@@ -314,7 +323,15 @@ func makeManifestJob(
 	}
 
 	job := func(msgq chan string) (err error) {
+		startTime := time.Now()
 		defer func() {
+			// Record manifest generation timing
+			duration := time.Since(startTime)
+			statsMu.Lock()
+			manifestGenTimeTotal += duration.Nanoseconds()
+			manifestGenCount++
+			statsMu.Unlock()
+
 			msg := fmt.Sprintf("Finished job %s", filename)
 			if err != nil {
 				msg += " [failed]"
@@ -470,11 +487,28 @@ func generateOSBuildInspectOutput(manifestJSON []byte) (string, error) {
 	// Try cache first
 	if cached := readCache(cacheKey); cached != "" {
 		// Cache hit - use cached raw JSON
+		statsMu.Lock()
+		cacheHits++
+		statsMu.Unlock()
 		inspectedJSON = []byte(cached)
 	} else {
-		// Cache miss - run osbuild --inspect
+		// Cache miss - track it
+		statsMu.Lock()
+		cacheMisses++
+		statsMu.Unlock()
+
+		// Run osbuild --inspect and time it
+		startTime := time.Now()
 		var err error
 		inspectedJSON, err = osbuild.OSBuildInspect(manifestJSON)
+		inspectDuration := time.Since(startTime)
+
+		// Record timing
+		statsMu.Lock()
+		osbuildInspectTimeTotal += inspectDuration.Nanoseconds()
+		osbuildInspectCount++
+		statsMu.Unlock()
+
 		if err != nil {
 			// Propagate osbuild errors instead of silently returning empty string
 			return "", fmt.Errorf("osbuild --inspect failed: %w", err)
@@ -979,6 +1013,28 @@ func main() {
 				os.Exit(1)
 			}
 		}
+
+		// Print statistics
+		statsMu.Lock()
+		totalCacheOps := cacheHits + cacheMisses
+		avgManifestGen := float64(0)
+		if manifestGenCount > 0 {
+			avgManifestGen = float64(manifestGenTimeTotal) / float64(manifestGenCount) / 1e6 // convert to ms
+		}
+		avgOsbuildInspect := float64(0)
+		if osbuildInspectCount > 0 {
+			avgOsbuildInspect = float64(osbuildInspectTimeTotal) / float64(osbuildInspectCount) / 1e6 // convert to ms
+		}
+		statsMu.Unlock()
+
+		if totalCacheOps > 0 {
+			fmt.Printf("\nCache hits: %d, cache misses: %d\n", cacheHits, cacheMisses)
+			fmt.Printf("Avg. manifest generation: %.2f ms\n", avgManifestGen)
+			if osbuildInspectCount > 0 {
+				fmt.Printf("Avg. osbuild inspect call: %.2f ms\n", avgOsbuildInspect)
+			}
+		}
+
 		os.Exit(0)
 	}
 
