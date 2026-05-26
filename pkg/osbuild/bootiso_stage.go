@@ -42,7 +42,7 @@ type FSCompression struct {
 }
 
 type FSCompressionOptions struct {
-	BCJ string `json:"bcj"`
+	BCJ string `json:"bcj,omitempty"`
 }
 
 // BCJOption returns the appropriate xz branch/call/jump (BCJ) filter for the
