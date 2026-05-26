@@ -8,6 +8,7 @@
 2. An initramfs is expected to be next to the kernel with the filename `initramfs.img`. The initramfs is placed in `/images/pxeboot/initrd.img` on the ISO filesystem.
 3. The UEFI vendor is sourced by a directory name in `/usr/lib/efi/shim/*EFI/$VENDOR`. If there are multiple directories the behavior is undefined. The `BOOT` directory is always ignored.
 4. shim and grub2 EFI binaries (`shimx64.efi`, `mmx64.efi`, `gcdx64.efi`) are expected to be present in `/boot/efi/EFI/$VENDOR`.
+5. `/usr/share/grub2/unicode.pf` and `/usr/lib/grub/i386-pc` are expected to present. These are normally provided by the `grub2-common` and `grub2-pc-modules` packages respectively. The latter is only necessary on `x86_64`.
 5. Required executables in the container are: `podman`, `mksquashfs`, `xorriso`, `implantisomd5`, `grub2-mkimage` and `python`. If you are using a separate build container then these executables must exist in the build container.
 6. The container image is converted to a `squashfs` filesystem and put into `/LiveOS/squashfs.img` in the ISO.
 
