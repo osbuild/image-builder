@@ -497,7 +497,6 @@ func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest, local 
 			return resolvedIds{}, nil, nil
 		}
 		imageID = m.ConfigInfo().Digest
-
 	default:
 		return resolvedIds{}, nil, fmt.Errorf("unsupported manifest format '%s'", rm.MimeType)
 	}
@@ -620,6 +619,12 @@ func parseMediaType(raw []byte) (string, error) {
 
 	if p.SchemaVersion != 2 {
 		return "", fmt.Errorf("unknown schema version: %d", p.SchemaVersion)
+	}
+
+	// we only guess when the field was omitted (it's optional), note that it
+	// might still be unknown after this guess but at least the odds are better
+	if p.MediaType == "" {
+		p.MediaType = manifest.GuessMIMEType(raw)
 	}
 
 	return p.MediaType, nil
