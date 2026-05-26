@@ -96,7 +96,7 @@ func (wq *workerQueue) startMessagePrinter() {
 			// clear previous line (avoids leftover trailing characters from progress)
 			fmt.Printf("%s\r", strings.Repeat(" ", msglen))
 			fmt.Println(msg)
-			msglen, _ = fmt.Printf(" == Jobs == Queue: %4d  Active: %4d  Total: %4d\r", len(wq.jobQueue), wq.activeWorkers, wq.njobs)
+			msglen, _ = fmt.Printf(" == Jobs == Queue: %4d  Active: %4d  Total: %4d\r", len(wq.jobQueue), atomic.LoadInt32(&wq.activeWorkers), wq.njobs)
 		}
 		fmt.Println()
 	}()
