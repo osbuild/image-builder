@@ -18,7 +18,7 @@ import (
 type GRUB2StageOptions struct {
 	CompatVersion      int          `json:"compat_version,omitempty"`
 	RootFilesystemUUID uuid.UUID    `json:"root_fs_uuid"`
-	BootFilesystemUUID *uuid.UUID   `json:"boot_fs_uuid,omitempty"`
+	BootFilesystemUUID *string      `json:"boot_fs_uuid,omitempty"`
 	KernelOptions      string       `json:"kernel_opts,omitempty"`
 	Legacy             string       `json:"legacy,omitempty"`
 	UEFI               *GRUB2UEFI   `json:"uefi,omitempty"`
@@ -94,7 +94,12 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 	}
 
 	if bootFs := pt.FindMountableOnPlain("/boot"); bootFs != nil {
-		bootFsUUID := uuid.MustParse(bootFs.GetFSSpec().UUID)
+		bootFsUUID := bootFs.GetFSSpec().UUID
+		// validate the UUID but only when it's not vfat since vfat doesn't use actual
+		// UUIDs
+		if bootFs.GetFSType() != "vfat" {
+			bootFsUUID = uuid.MustParse(bootFsUUID).String()
+		}
 		stageOptions.BootFilesystemUUID = &bootFsUUID
 	}
 
