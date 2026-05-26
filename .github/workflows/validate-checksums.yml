@@ -41,6 +41,20 @@ jobs:
       - name: Install libgpgme devel package
         run: sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev systemd git
 
+      # Get osbuild version for cache key
+      - name: Get osbuild version
+        id: osbuild-version
+        run: echo "version=$(osbuild --version | awk '{print $2}')" >> $GITHUB_OUTPUT
+
+      # Cache osbuild inspect results to speed up checksum validation
+      - name: Cache osbuild inspect results
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/osbuild-gen-manifests
+          key: osbuild-inspect-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/validate-checksums.yml') }}-osbuild-${{ steps.osbuild-version.outputs.version }}
+          restore-keys: |
+            osbuild-inspect-cache-${{ runner.os }}-${{ hashFiles('.github/workflows/validate-checksums.yml') }}-osbuild-
+
       # Run the manifest checksum generator on each commit on the branch.
       # If it changes, it will interrupt the rebase and exit with non-zero.
       - name: Validate manifest checksums for every commit in the PR
