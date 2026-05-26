@@ -33,5 +33,5 @@ VOLUME /var/lib/containers/storage
 LABEL description="This tools allows to build and deploy disk-images."
 LABEL io.k8s.description="This tools allows to build and deploy disk-images."
 LABEL io.k8s.display-name="Image Builder"
-LABEL io.openshift.tags="base fedora40"
+LABEL io.openshift.tags="base fedora43"
 LABEL summary="A container to create disk-images."
