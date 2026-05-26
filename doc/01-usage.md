@@ -304,6 +304,32 @@ $ image-builder manifest --arch aarch64 minimal-raw-xz
 # ... output ...
 ```
 
+## `image-builder bootc`
+
+The `bootc` subcommand groups helpers for working with bootable containers.
+
+### `inspect`
+
+The `bootc inspect` command shows the data that `image-builder` gathers from a bootable container. This is useful for debugging and understanding how `image-builder` interprets a container before building an image from it.
+
+> [!WARNING]
+> *The inspect subcommand exposes internal information. We do not consider this format to be stable though we might stabilize with a public interface in the future.*
+
+The `--ref` flag is required and specifies the container reference to inspect. The container must be available in the container storage of the user running the command.
+
+```console
+$ sudo podman pull quay.io/centos-bootc/centos:stream10
+$ image-builder bootc inspect --ref quay.io/centos-bootc/centos:stream10
+# ... yaml output ...
+```
+
+The output format can be changed with `--format`. Available formats are `yaml` (default) and `json`:
+
+```console
+$ image-builder bootc inspect --ref quay.io/centos-bootc/centos:stream10 --format=json
+# ... json output ...
+```
+
 ## `image-builder version`
 
 The `version` command prints version information about the `image-builder` binary including its dependencies.
