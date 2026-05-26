@@ -7,6 +7,7 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -16,6 +17,7 @@ import (
 	"runtime/debug"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gobwas/glob"
@@ -52,6 +54,13 @@ type panicError struct {
 func (e *panicError) Error() string {
 	return fmt.Sprintf("panic: %v", e.panic)
 }
+
+// Global state for checksums-only mode
+var (
+	checksumsOnlyMode bool
+	checksums         = make(map[string]string)
+	checksumsMu       sync.Mutex
+)
 
 type buildRequest struct {
 	Distro       string                   `json:"distro,omitempty"`
@@ -411,11 +420,45 @@ func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.Depsolve
 	} else {
 		data = ms
 	}
+
+	// In checksums-only mode, calculate canonical JSON checksum
+	if checksumsOnlyMode {
+		// Round-trip through any to ensure all map keys are sorted
+		// This makes checksums independent of key order in the input
+		b, err := json.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("failed to marshal data for %q: %w", filename, err)
+		}
+
+		var canonical any
+		if err := json.Unmarshal(b, &canonical); err != nil {
+			return fmt.Errorf("failed to unmarshal for canonicalization: %w", err)
+		}
+
+		canonicalBytes, err := json.Marshal(canonical)
+		if err != nil {
+			return fmt.Errorf("failed to marshal canonical form: %w", err)
+		}
+
+		h := sha256.New()
+		h.Write(canonicalBytes)
+		checksum := hex.EncodeToString(h.Sum(nil))
+
+		// Store checksum with filename (without .json extension)
+		checksumKey := strings.TrimSuffix(filename, ".json")
+		checksumsMu.Lock()
+		checksums[checksumKey] = checksum
+		checksumsMu.Unlock()
+		return nil
+	}
+
+	// Normal mode: write pretty-printed JSON to file
 	b, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal data for %q: %s\n", filename, err.Error())
 	}
 	b = append(b, '\n') // add new line at end of file
+
 	fpath := filepath.Join(path, filename)
 	fp, err := os.Create(fpath)
 	if err != nil {
@@ -471,6 +514,9 @@ func main() {
 	// dry-run
 	var dryRun bool
 	flag.BoolVar(&dryRun, "dry-run", false, "print what manifests would be generated")
+
+	// checksums-only mode
+	flag.BoolVar(&checksumsOnlyMode, "checksums-only", false, "generate mock manifests and calculate checksums on-the-fly (writes to output directory)")
 
 	flag.Parse()
 
@@ -768,6 +814,20 @@ func main() {
 		}
 		exit = 1
 	}
+
+	// If checksums-only mode and no errors, write checksums to files
+	if checksumsOnlyMode && exit == 0 {
+		// Write checksum files to the output directory
+		for filename, checksum := range checksums {
+			checksumPath := filepath.Join(outputDir, filename)
+			if err := os.WriteFile(checksumPath, []byte(checksum+"\n"), 0644); err != nil { //nolint:gosec // G306 - checksum files are not sensitive
+				fmt.Fprintf(os.Stderr, "Error writing checksum file %q: %v\n", checksumPath, err)
+				os.Exit(1)
+			}
+		}
+		os.Exit(0)
+	}
+
 	fmt.Fprintf(os.Stderr, "RPM metadata cache kept in %s\n", cacheRoot)
 	os.Exit(exit)
 }
