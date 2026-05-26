@@ -120,18 +120,22 @@ MANIFEST_GEN_TEMPLATE = """
   variables:
     RUNNER: {runner}-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches {arch} --distros {distro} --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches {arch} --distros {distro} --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 """
 
 
