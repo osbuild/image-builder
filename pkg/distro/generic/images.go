@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
-	"sync"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/arch"
@@ -400,14 +399,7 @@ func ostreeCommitServerCustomizations(t *imageType) manifest.OSTreeCommitServerC
 	return c
 }
 
-// We need a lock around applying/retrieving installer customizations as we run our test cases
-// with race detector and since the InstallerConfig/ExpandTemplates bits write to a slice.
-var installerCustomizationsMu sync.Mutex
-
 func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro.ImageOptions) (manifest.InstallerCustomizations, error) {
-	installerCustomizationsMu.Lock()
-	defer installerCustomizationsMu.Unlock()
-
 	d := t.arch.distro.(*distribution)
 
 	// By default we get the preview state from the distro. When given through
