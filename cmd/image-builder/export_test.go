@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/manifestgen"
@@ -74,6 +75,14 @@ func MockAwscloudNewUploader(f func(string, string, string, *awscloud.UploaderOp
 	awscloudNewUploader = f
 	return func() {
 		awscloudNewUploader = saved
+	}
+}
+
+func MockBootcResolveInfo(f func(string) (*bootc.Info, error)) (restore func()) {
+	saved := bootcResolveInfo
+	bootcResolveInfo = f
+	return func() {
+		bootcResolveInfo = saved
 	}
 }
 

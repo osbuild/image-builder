@@ -17,6 +17,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"go.yaml.in/yaml/v3"
+
 	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bootc"
@@ -34,8 +36,9 @@ import (
 )
 
 var (
-	osStdout io.Writer = os.Stdout
-	osStderr io.Writer = os.Stderr
+	osStdout         io.Writer = os.Stdout
+	osStderr         io.Writer = os.Stderr
+	bootcResolveInfo           = bootc.ResolveBootcInfo
 )
 
 // cacheDirForUid returns the cache directory for the given uid.
@@ -99,6 +102,45 @@ func cmdVersion(cmd *cobra.Command, args []string) error {
 	}
 	return nil
 }
+
+func cmdBootcInspect(cmd *cobra.Command, args []string) error {
+	ref, err := cmd.Flags().GetString("ref")
+	if err != nil {
+		return err
+	}
+
+	info, err := bootcResolveInfo(ref)
+	if err != nil {
+		return err
+	}
+
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+
+	switch format {
+	case "", "yaml":
+		output, err := yaml.Marshal(&info)
+		if err != nil {
+			return err
+		}
+
+		fmt.Fprint(cmd.OutOrStdout(), string(output))
+	case "json":
+		output, err := json.Marshal(&info)
+		if err != nil {
+			return err
+		}
+
+		fmt.Fprint(cmd.OutOrStdout(), string(output))
+	default:
+		return fmt.Errorf("unsupported format %q, supported formats: yaml, json", format)
+	}
+
+	return nil
+}
+
 
 func cmdListImages(cmd *cobra.Command, args []string) error {
 	filter, err := cmd.Flags().GetStringArray("filter")
@@ -640,6 +682,25 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
+
+	bootcCommand := &cobra.Command{
+		Use:	"bootc",
+		Short:  "bootc-related commands",
+		Args:   cobra.NoArgs,
+	}
+
+	bootcInspectCommand := &cobra.Command{
+		Use:	"inspect",
+		Short:  "Show data gathered by `image-builder` for a container",
+		RunE:   cmdBootcInspect,
+		Args:   cobra.NoArgs,
+	}
+	bootcInspectCommand.Flags().String("ref", "", `bootc container ref`)
+	_ = bootcInspectCommand.MarkFlagRequired("ref")
+	bootcInspectCommand.Flags().String("format", "", "Output in a specific format (yaml, json)")
+	bootcCommand.AddCommand(bootcInspectCommand)
+
+	rootCmd.AddCommand(bootcCommand)
 
 	listCmd := &cobra.Command{
 		Use:          "list",
