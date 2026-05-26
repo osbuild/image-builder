@@ -2155,18 +2155,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros centos-10 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros centos-10 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [centos-10, s390x]":
@@ -2175,18 +2179,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros centos-10 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros centos-10 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [centos-9, ppc64le]":
@@ -2195,18 +2203,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros centos-9 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros centos-9 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [centos-9, s390x]":
@@ -2215,18 +2227,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros centos-9 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros centos-9 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [eln-11, ppc64le]":
@@ -2235,18 +2251,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros eln-11 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros eln-11 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [eln-11, s390x]":
@@ -2255,18 +2275,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros eln-11 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros eln-11 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [fedora-42, ppc64le]":
@@ -2275,18 +2299,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros fedora-42 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros fedora-42 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [fedora-42, s390x]":
@@ -2295,18 +2323,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros fedora-42 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros fedora-42 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [fedora-43, ppc64le]":
@@ -2315,18 +2347,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros fedora-43 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros fedora-43 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [fedora-43, s390x]":
@@ -2335,18 +2371,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros fedora-43 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros fedora-43 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [fedora-44, ppc64le]":
@@ -2355,18 +2395,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros fedora-44 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros fedora-44 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [fedora-44, s390x]":
@@ -2375,18 +2419,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros fedora-44 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros fedora-44 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [fedora-45, ppc64le]":
@@ -2395,18 +2443,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros fedora-45 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros fedora-45 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [fedora-45, s390x]":
@@ -2415,18 +2467,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros fedora-45 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros fedora-45 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-10.0, ppc64le]":
@@ -2435,18 +2491,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.0 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.0 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-10.0, s390x]":
@@ -2455,18 +2515,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-10.0 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-10.0 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-10.1, ppc64le]":
@@ -2475,18 +2539,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.1 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.1 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-10.1, s390x]":
@@ -2495,18 +2563,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-10.1 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-10.1 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-10.2, ppc64le]":
@@ -2515,18 +2587,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.2 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.2 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-10.2, s390x]":
@@ -2535,18 +2611,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-10.2 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-10.2 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-10.3, ppc64le]":
@@ -2555,18 +2635,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.3 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.3 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-10.3, s390x]":
@@ -2575,18 +2659,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-10.3 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-10.3 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-8.10, ppc64le]":
@@ -2595,18 +2683,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-8.10 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-8.10 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-8.10, s390x]":
@@ -2615,18 +2707,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-8.10 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-8.10 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-8.4, ppc64le]":
@@ -2635,18 +2731,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-8.4 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-8.4 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-8.4, s390x]":
@@ -2655,18 +2755,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-8.4 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-8.4 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-8.6, ppc64le]":
@@ -2675,18 +2779,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-8.6 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-8.6 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-8.6, s390x]":
@@ -2695,18 +2803,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-8.6 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-8.6 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-8.8, ppc64le]":
@@ -2715,18 +2827,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-8.8 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-8.8 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-8.8, s390x]":
@@ -2735,18 +2851,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-8.8 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-8.8 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.0, ppc64le]":
@@ -2755,18 +2875,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.0 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.0 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.0, s390x]":
@@ -2775,18 +2899,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.0 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-9.0 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.2, ppc64le]":
@@ -2795,18 +2923,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.2 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.2 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.2, s390x]":
@@ -2815,18 +2947,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.2 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-9.2 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.4, ppc64le]":
@@ -2835,18 +2971,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.4 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.4 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.4, s390x]":
@@ -2855,18 +2995,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.4 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-9.4 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.6, ppc64le]":
@@ -2875,18 +3019,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.6 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.6 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.6, s390x]":
@@ -2895,18 +3043,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.6 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-9.6 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.7, ppc64le]":
@@ -2915,18 +3067,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.7 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.7 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.7, s390x]":
@@ -2935,18 +3091,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.7 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-9.7 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.8, ppc64le]":
@@ -2955,18 +3115,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.8 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.8 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.8, s390x]":
@@ -2975,18 +3139,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.8 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-9.8 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.9, ppc64le]":
@@ -2995,18 +3163,22 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.9 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.9 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
 
 
 "generate-manifests: [rhel-9.9, s390x]":
@@ -3015,15 +3187,19 @@ fail:
   variables:
     RUNNER: aws/fedora-42-x86_64
     INTERNAL_NETWORK: "true"
-  script:
-    - sudo ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - echo "GOPROXY=$GOPROXY"
-    - go run ./cmd/gen-manifests --arches s390x --distros rhel-9.9 --workers 10 --metadata=false --output ./manifests
-    - for manifest in ./manifests/*; do
-        if osbuild --inspect $manifest > output; then
-          echo "$manifest OK";
-        else
-          cat output;
-        fi;
-      done
+  script: |
+    sudo ./test/scripts/setup-osbuild-repo
+    sudo ./test/scripts/install-dependencies
+    echo "GOPROXY=$GOPROXY"
+    go run ./cmd/gen-manifests --arches s390x --distros rhel-9.9 --workers 10 --metadata=false --output ./manifests
+    errors=0
+    for manifest in ./manifests/*; do
+      if osbuild --inspect $manifest > output; then
+        echo "$manifest OK";
+      else
+        echo "$manifest validation failed";
+        cat output;
+        errors+=1
+      fi;
+    done
+    exit "$errors"
