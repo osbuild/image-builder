@@ -409,6 +409,12 @@ func (t *bootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 	img.InstallerCustomizations.LoraxTemplates = bootc.LoraxTemplates(sourceInfo.OSRelease)
 	img.InstallerCustomizations.LoraxTemplatePackage = bootc.LoraxTemplatePackage(sourceInfo.OSRelease)
 
+	// Potentially KernelInfo is nil when we couldn't read it from the container; handle that so
+	// we don't panic
+	if sourceInfo.KernelInfo == nil {
+		return nil, nil, fmt.Errorf("could not read kernel info from container")
+	}
+
 	// kernelVer is used by dracut
 	img.KernelVer = sourceInfo.KernelInfo.Version
 	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", sourceInfo.KernelInfo.Version)
@@ -465,6 +471,13 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 	}
 	img.RootfsCompression = "zstd"
 	img.RootfsType = manifest.SquashfsRootfs
+
+	// Potentially KernelInfo is nil when we couldn't read it from the container; handle that so
+	// we don't panic
+	if bd.sourceInfo.KernelInfo == nil {
+		return nil, nil, fmt.Errorf("could not read kernel info from container")
+	}
+
 	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", bd.sourceInfo.KernelInfo.Version)
 	img.InitramfsPath = fmt.Sprintf("lib/modules/%s/initramfs.img", bd.sourceInfo.KernelInfo.Version)
 	img.Product = bd.sourceInfo.OSRelease.Name
@@ -701,6 +714,12 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// Potentially KernelInfo is nil when we couldn't read it from the container; handle that so
+	// we don't panic
+	if bd.sourceInfo.KernelInfo == nil {
+		return nil, nil, fmt.Errorf("could not read kernel info from container")
 	}
 
 	// Used when dracut rebuilds the initramfs in the bootc pipeline
