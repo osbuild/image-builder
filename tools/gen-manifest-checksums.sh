@@ -30,34 +30,28 @@ fi
 # NOTE: fedora-41 riscv has no test repositories so we need to skip it.
 # NOTE: silence stdout as it gets way too noisy in the GitHub action log (until
 # gen-manifests gets a verbosity or progress option).
-# Save stderr to reduce noise as well and print it only if the run fails.
-echo "Generating mock manifests"
-if ! "${tmpdir}/bin/gen-manifests" \
-    --packages=false --containers=false --commits=false --flatpaks=false \
-    --metadata=false \
-    --fake-bootc=true \
-    --arches "x86_64,aarch64,ppc64le,s390x" \
-    --output "${tmpdir}/manifests" \
-    > /dev/null 2> "${tmpdir}/stderr"; then
-
-    cat "${tmpdir}/stderr"
-    exit 1
-fi
-
-
 # NOTE: 'osbuild --inspect' is generally a better way to calculate a manifest
 # fingerprint, because it ignores things like pipeline names, source URLs, and
 # generally things that don't affect the build output.
 # For mocked manifests though we want those things to be visible changes, so we
 # calculate the checksum of the file directly. Also it's faster.
+# NOTE: save stderr to reduce noise as well and print it only if the run fails.
 echo "Calculating checksums"
 checksums_dir="./test/data/manifest-checksums"
 rm -rf "${checksums_dir}"
 mkdir -p "${checksums_dir}"
 
-for manifest_path in "${tmpdir}/manifests/"*; do
-    filename=$(basename "${manifest_path/.json}")
-    sha1sum -- "${manifest_path}" | cut -d' ' -f1 > "${checksums_dir}/${filename}"
-done
+if ! "${tmpdir}/bin/gen-manifests" \
+    --packages=false --containers=false --commits=false --flatpaks=false \
+    --metadata=false \
+    --fake-bootc=true \
+    --arches "x86_64,aarch64,ppc64le,s390x" \
+	--checksums-only=true \
+    --output "${checksums_dir}" \
+    > /dev/null 2> "${tmpdir}/stderr"; then
+
+    cat "${tmpdir}/stderr"
+    exit 1
+fi
 
 echo "Checksums saved to ${checksums_dir}"
