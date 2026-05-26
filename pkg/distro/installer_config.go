@@ -98,3 +98,66 @@ func (c *InstallerConfig) ExpandTemplates(id ID, archName string) error {
 
 	return nil
 }
+
+// WithExpandTemplates returns a deep copy of the InstallerConfig with templates expanded.
+// This prevents concurrent modification when the same config is used for multiple architectures.
+func (c *InstallerConfig) WithExpandTemplates(id ID, archName string) (*InstallerConfig, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	// Create shallow copy of the struct
+	configCopy := *c
+
+	// Deep copy Flatpaks slice and all nested structures
+	if len(configCopy.Flatpaks) > 0 {
+		flatpaksCopy := make([]*struct {
+			Registry *struct {
+				RemoteName string `yaml:"remote_name,omitempty"`
+				URL        string `yaml:"url,omitempty"`
+			} `yaml:"registry,omitempty"`
+			References []string `yaml:"references,omitempty"`
+		}, len(configCopy.Flatpaks))
+
+		for i, fp := range configCopy.Flatpaks {
+			if fp == nil {
+				continue
+			}
+			fpCopy := &struct {
+				Registry *struct {
+					RemoteName string `yaml:"remote_name,omitempty"`
+					URL        string `yaml:"url,omitempty"`
+				} `yaml:"registry,omitempty"`
+				References []string `yaml:"references,omitempty"`
+			}{}
+
+			// Copy Registry if present
+			if fp.Registry != nil {
+				fpCopy.Registry = &struct {
+					RemoteName string `yaml:"remote_name,omitempty"`
+					URL        string `yaml:"url,omitempty"`
+				}{
+					RemoteName: fp.Registry.RemoteName,
+					URL:        fp.Registry.URL,
+				}
+			}
+
+			// Deep copy References slice
+			if len(fp.References) > 0 {
+				fpCopy.References = make([]string, len(fp.References))
+				copy(fpCopy.References, fp.References)
+			}
+
+			flatpaksCopy[i] = fpCopy
+		}
+
+		configCopy.Flatpaks = flatpaksCopy
+	}
+
+	// Expand templates on the copy
+	if err := configCopy.ExpandTemplates(id, archName); err != nil {
+		return nil, err
+	}
+
+	return &configCopy, nil
+}

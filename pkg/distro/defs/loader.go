@@ -823,13 +823,9 @@ func (imgType *ImageTypeYAML) InstallerConfig(id distro.ID, archName string) (*d
 		}
 	}
 
-	if installerConfig != nil {
-		if err := installerConfig.ExpandTemplates(id, archName); err != nil {
-			return nil, err
-		}
-	}
-
-	return installerConfig, nil
+	// WithExpandTemplates creates a deep copy and expands templates to prevent
+	// concurrent modification when multiple architectures share the same config
+	return installerConfig.WithExpandTemplates(id, archName)
 }
 
 // ISOConfig returns the ISOConfig for the given imgType
