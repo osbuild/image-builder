@@ -7,7 +7,6 @@ package main
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -39,6 +38,7 @@ import (
 	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/manifestgen/manifestmock"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -399,6 +399,54 @@ func makeManifestJob(
 	return job
 }
 
+// inspectedStage is a simplified struct for parsing stage data from osbuild --inspect
+// We only need the ID field, not all the options/inputs/devices/mounts
+type inspectedStage struct {
+	Type string `json:"type"`
+	ID   string `json:"id,omitempty"`
+	// We don't parse options, inputs, devices, mounts - they're not needed for checksums
+}
+
+// inspectedPipeline is a simplified struct for parsing pipeline data from osbuild --inspect
+// We only need the name and stage IDs
+type inspectedPipeline struct {
+	Name   string           `json:"name,omitempty"`
+	Build  string           `json:"build,omitempty"`
+	Runner string           `json:"runner,omitempty"`
+	Stages []inspectedStage `json:"stages,omitempty"`
+}
+
+// inspectedManifest is a simplified struct for parsing osbuild --inspect output
+// We only need pipelines and their stages, not the full manifest with sources
+type inspectedManifest struct {
+	Version   string              `json:"version"`
+	Pipelines []inspectedPipeline `json:"pipelines"`
+	// Sources can be any map - we don't need to parse them
+	Sources map[string]any `json:"sources,omitempty"`
+}
+
+// parseInspectedJSON extracts pipeline stage IDs from osbuild inspect JSON output
+func parseInspectedJSON(inspectedJSON []byte) string {
+	var inspected inspectedManifest
+	if err := json.Unmarshal(inspectedJSON, &inspected); err != nil {
+		return "", fmt.Errorf("failed to parse osbuild inspect output: %w", err)
+	}
+
+	var result strings.Builder
+	for _, pipeline := range inspected.Pipelines {
+		if len(pipeline.Stages) == 0 {
+			continue
+		}
+		lastStage := pipeline.Stages[len(pipeline.Stages)-1]
+		result.WriteString(lastStage.ID)
+		result.WriteString(": ")
+		result.WriteString(pipeline.Name)
+		result.WriteString("\n")
+	}
+
+	return result.String(), nil
+}
+
 func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.DepsolveResult, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, flatpaks map[string][]flatpak.Spec, cr buildRequest, path, filename string, metadata bool) error {
 	var data any
 	if metadata {
@@ -421,33 +469,19 @@ func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.Depsolve
 		data = ms
 	}
 
-	// In checksums-only mode, calculate canonical JSON checksum
+	// In checksums-only mode, generate osbuild inspect checksum
 	if checksumsOnlyMode {
-		// Round-trip through any to ensure all map keys are sorted
-		// This makes checksums independent of key order in the input
-		b, err := json.Marshal(data)
+		// Generate osbuild inspect output (semantic checksum)
+		// Fail if osbuild --inspect fails (invalid manifests)
+		osbuildInspect, err := generateOSBuildInspectOutput(ms)
 		if err != nil {
-			return fmt.Errorf("failed to marshal data for %q: %w", filename, err)
+			return fmt.Errorf("failed to generate osbuild inspect checksum for %q: %w", filename, err)
 		}
-
-		var canonical any
-		if err := json.Unmarshal(b, &canonical); err != nil {
-			return fmt.Errorf("failed to unmarshal for canonicalization: %w", err)
-		}
-
-		canonicalBytes, err := json.Marshal(canonical)
-		if err != nil {
-			return fmt.Errorf("failed to marshal canonical form: %w", err)
-		}
-
-		h := sha256.New()
-		h.Write(canonicalBytes)
-		checksum := hex.EncodeToString(h.Sum(nil))
 
 		// Store checksum with filename (without .json extension)
 		checksumKey := strings.TrimSuffix(filename, ".json")
 		checksumsMu.Lock()
-		checksums[checksumKey] = checksum
+		checksums[checksumKey] = osbuildInspect
 		checksumsMu.Unlock()
 		return nil
 	}

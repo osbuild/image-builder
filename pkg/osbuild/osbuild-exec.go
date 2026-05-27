@@ -224,11 +224,15 @@ func OSBuildVersion() (string, error) {
 
 // OSBuildInspect converts a manifest to an inspected manifest.
 func OSBuildInspect(manifest []byte) ([]byte, error) {
-	cmd := exec.Command(osbuildCmd, "--inspect")
+	cmd := exec.Command(osbuildCmd, "--inspect", "-")
 	cmd.Stdin = bytes.NewBuffer(manifest)
 
 	out, err := cmd.Output()
 	if err != nil {
+		// Include stderr in error for better diagnostics
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return nil, fmt.Errorf("%w: %s", err, string(exitErr.Stderr))
+		}
 		return nil, err
 	}
 
