@@ -13,8 +13,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -60,6 +62,12 @@ var (
 	checksumsOnlyMode bool
 	checksums         = make(map[string]string)
 	checksumsMu       sync.Mutex
+
+	// Cache directory for osbuild inspect results
+	cacheDir string
+
+	// Osbuild version for cache keys (initialized once in main)
+	osbuildVersion string
 )
 
 type buildRequest struct {
@@ -429,7 +437,7 @@ type inspectedManifest struct {
 func parseInspectedJSON(inspectedJSON []byte) string {
 	var inspected inspectedManifest
 	if err := json.Unmarshal(inspectedJSON, &inspected); err != nil {
-		return "", fmt.Errorf("failed to parse osbuild inspect output: %w", err)
+		return ""
 	}
 
 	var result strings.Builder
@@ -444,7 +452,40 @@ func parseInspectedJSON(inspectedJSON []byte) string {
 		result.WriteString("\n")
 	}
 
-	return result.String(), nil
+	return result.String()
+}
+
+// generateOSBuildInspectOutput runs osbuild --inspect and extracts pipeline stage IDs
+// Uses cache based on cache key (canonical JSON + osbuild version) to avoid re-running osbuild
+// Returns error if osbuild --inspect fails (e.g., invalid manifests)
+func generateOSBuildInspectOutput(manifestJSON []byte) (string, error) {
+	// Generate cache key from manifest + osbuild version
+	cacheKey, err := generateCacheKey(manifestJSON, osbuildVersion)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate cache key: %w", err)
+	}
+
+	var inspectedJSON []byte
+
+	// Try cache first
+	if cached := readCache(cacheKey); cached != "" {
+		// Cache hit - use cached raw JSON
+		inspectedJSON = []byte(cached)
+	} else {
+		// Cache miss - run osbuild --inspect
+		var err error
+		inspectedJSON, err = osbuild.OSBuildInspect(manifestJSON)
+		if err != nil {
+			// Propagate osbuild errors instead of silently returning empty string
+			return "", fmt.Errorf("osbuild --inspect failed: %w", err)
+		}
+
+		// Cache the raw JSON output for next time
+		_ = writeCache(cacheKey, string(inspectedJSON))
+	}
+
+	// Parse the inspected JSON (whether from cache or fresh)
+	return parseInspectedJSON(inspectedJSON), nil
 }
 
 func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.DepsolveResult, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, flatpaks map[string][]flatpak.Spec, cr buildRequest, path, filename string, metadata bool) error {
@@ -471,15 +512,29 @@ func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.Depsolve
 
 	// In checksums-only mode, generate osbuild inspect checksum
 	if checksumsOnlyMode {
+		// Marshal manifest to JSON for checksum functions
+		manifestJSON, err := json.Marshal(ms)
+		if err != nil {
+			return fmt.Errorf("failed to marshal manifest for checksums: %w", err)
+		}
+
 		// Generate osbuild inspect output (semantic checksum)
 		// Fail if osbuild --inspect fails (invalid manifests)
-		osbuildInspect, err := generateOSBuildInspectOutput(ms)
+		osbuildInspect, err := generateOSBuildInspectOutput(manifestJSON)
 		if err != nil {
 			return fmt.Errorf("failed to generate osbuild inspect checksum for %q: %w", filename, err)
 		}
 
 		// Store checksum with filename (without .json extension)
 		checksumKey := strings.TrimSuffix(filename, ".json")
+
+		// Track this cache key in the history for this manifest
+		// Generate the cache key to store in history
+		cacheKey, err := generateCacheKey(manifestJSON, osbuildVersion)
+		if err == nil {
+			_ = appendHistory(checksumKey, cacheKey)
+		}
+
 		checksumsMu.Lock()
 		checksums[checksumKey] = osbuildInspect
 		checksumsMu.Unlock()
@@ -515,7 +570,7 @@ func main() {
 	var nWorkers int
 	var metadata, skipNoconfig, skipNorepos, buildconfigAllowUnknown bool
 	flag.StringVar(&outputDir, "output", "test/data/manifests/", "manifest store directory")
-	flag.IntVar(&nWorkers, "workers", 16, "number of workers to run concurrently")
+	flag.IntVar(&nWorkers, "workers", runtime.NumCPU()+1, "number of workers to run concurrently")
 	flag.StringVar(&cacheRoot, "cache", "/tmp/rpmmd", "rpm metadata cache directory")
 	flag.BoolVar(&metadata, "metadata", true, "store metadata in the file")
 	flag.StringVar(&configPath, "config", "", "image config file to use for all images (overrides -config-list)")
@@ -552,7 +607,72 @@ func main() {
 	// checksums-only mode
 	flag.BoolVar(&checksumsOnlyMode, "checksums-only", false, "generate mock manifests and calculate checksums on-the-fly (writes to output directory)")
 
+	// history mode
+	var historyArg string
+	flag.StringVar(&historyArg, "history", "", "show history for a manifest name or display cached content for a SHA256 sum")
+
 	flag.Parse()
+
+	// Initialize cache directory for osbuild inspect results
+	if err := initCacheDir(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to initialize cache directory: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Continuing without cache...\n")
+	}
+
+	// Get osbuild version once for all cache operations
+	// Uses cached version if osbuild binary hasn't been modified
+	var err error
+	osbuildVersion, err = getOSBuildVersion()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to get osbuild version: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Continuing without osbuild version (cache disabled)...\n")
+		osbuildVersion = "unknown"
+	}
+
+	// Handle -history mode
+	if historyArg != "" {
+		// Check if argument is a SHA256 sum (64 hex characters) or a filename
+		if isSHA256Hex(historyArg) {
+			// Mode 2: Display cached content for a SHA256 sum
+			content := readCache(historyArg)
+			if content == "" {
+				fmt.Fprintf(os.Stderr, "No cached content found for SHA256: %s\n", historyArg)
+				os.Exit(1)
+			}
+			fmt.Print(content)
+		} else {
+			// Mode 1: Show history for a manifest name
+			// Use basename to strip directory path
+			manifestName := filepath.Base(historyArg)
+			sums, err := readHistory(manifestName)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error reading history: %v\n", err)
+				os.Exit(1)
+			}
+			if len(sums) == 0 {
+				fmt.Fprintf(os.Stderr, "No history found for manifest: %s\n", manifestName)
+				os.Exit(1)
+			}
+			for _, sum := range sums {
+				// Parse "timestamp cacheKey" format
+				parts := strings.Fields(sum)
+				if len(parts) >= 2 {
+					// Parse Unix timestamp and convert to date/time
+					if timestamp, err := strconv.ParseInt(parts[0], 10, 64); err == nil {
+						dateTime := time.Unix(timestamp, 0).UTC().Format("2006-01-02 15:04:05 MST")
+						fmt.Printf("%s %s\n", dateTime, parts[1])
+					} else {
+						// Fallback if parsing fails
+						fmt.Println(sum)
+					}
+				} else {
+					// Fallback for old format (no timestamp)
+					fmt.Println(sum)
+				}
+			}
+		}
+		os.Exit(0)
+	}
 
 	testedRepoRegistry, err := testrepos.New()
 	if err != nil {
