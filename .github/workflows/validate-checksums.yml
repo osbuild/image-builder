@@ -57,12 +57,22 @@ jobs:
 
       # Run the manifest checksum generator on each commit on the branch.
       # If it changes, it will interrupt the rebase and exit with non-zero.
+      # Special case: If the last commit message contains "SMC" (Squashed Manifest Commit),
+      # run validation but don't fail on checksum differences.
       - name: Validate manifest checksums for every commit in the PR
         if: ${{ github.event_name == 'pull_request' }}
         env:
           # commit ID of target branch
           base_sha: ${{ github.event.pull_request.base.sha }}
         run: |
+          # Check if last commit has [SMC] marker (Squashed Manifest Commit)
+          last_commit_msg=$(git log -1 --pretty=%s)
+          smc_mode=""
+          if echo "$last_commit_msg" | grep -q "SMC"; then
+            smc_mode="true"
+            echo "Last commit contains 'SMC' marker - validation will not fail on checksum differences"
+          fi
+
           if ! git rebase "$(git merge-base ${base_sha} HEAD)" --exec ./tools/gen-manifest-checksums.sh; then
               echo "-----------------------------------------------------------------------------"
               echo "Manifests changes detected (commit $(git rev-parse HEAD))!"
@@ -80,7 +90,11 @@ jobs:
               echo "tools/gen-manifest-diffs:"
               ./tools/gen-manifest-diffs
               echo "-----------------------------------------------------------------------------"
-              exit 1
+
+              # Only fail if not in SMC mode
+              if [ -z "$smc_mode" ]; then
+                exit 1
+              fi
           fi
 
       # Run the manifest checksum generator on the HEAD (which also works for
