@@ -2669,9 +2669,8 @@ image_types:
     bootable: true
     package_sets:
       os:
+        - *generic_base_pkgset
         - include:
-            - "bash"
-            - "coreutils"
             - "dracut-live"
             - "dracut-network"
             - "dracut-config-generic"
