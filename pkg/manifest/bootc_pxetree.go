@@ -2,6 +2,8 @@ package manifest
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/osbuild/images/internal/common"
@@ -237,7 +239,7 @@ func (p *BootcPXETree) getChmodFiles() map[string]osbuild.ChmodStagePathOptions 
 // GetTarFiles returns the list of files in the tree to be included in a tar
 func (p *BootcPXETree) GetTarFiles() []string {
 	var files []string
-	for f := range p.getChmodFiles() {
+	for _, f := range slices.Sorted(maps.Keys(p.getChmodFiles())) {
 		// Tar needs relative paths
 		files = append(files, strings.TrimPrefix(f, "/"))
 	}

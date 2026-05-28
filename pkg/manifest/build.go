@@ -3,6 +3,8 @@ package manifest
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
@@ -356,7 +358,8 @@ func (p *BuildrootFromContainer) serialize() (osbuild.Pipeline, error) {
 		pipeline.AddStage(stage)
 	}
 
-	for copyFilesFrom, copyFiles := range p.copyFilesFrom {
+	for _, copyFilesFrom := range slices.Sorted(maps.Keys(p.copyFilesFrom)) {
+		copyFiles := p.copyFilesFrom[copyFilesFrom]
 		inputName := "copy-tree"
 		paths := []osbuild.CopyStagePath{}
 		for _, copyPath := range copyFiles {
