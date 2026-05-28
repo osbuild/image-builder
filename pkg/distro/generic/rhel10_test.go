@@ -401,3 +401,18 @@ func TestRH10Rhel10_KernelOption_NoIfnames(t *testing.T) {
 		}
 	}
 }
+
+func TestRhel10_PodmanDefaultNetBackendIsNil(t *testing.T) {
+	for _, fd := range rhel10FamilyDistros {
+		t.Run(fd.name, func(t *testing.T) {
+			a, err := fd.distro.GetArch("x86_64")
+			require.NoError(t, err)
+
+			it, err := a.GetImageType("qcow2")
+			require.NoError(t, err)
+
+			cfg := it.(*generic.ImageType).GetDefaultImageConfig()
+			assert.Nil(t, cfg.PodmanDefaultNetBackend, "RHEL 10 should not set PodmanDefaultNetBackend")
+		})
+	}
+}

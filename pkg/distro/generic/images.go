@@ -336,6 +336,18 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc.Files = append(osc.Files, imageConfig.Files...)
 	osc.Directories = append(osc.Directories, imageConfig.Directories...)
 
+	if len(containers) > 0 && imageConfig.PodmanDefaultNetBackend != nil {
+		var storagePath string
+		if osc.ContainersStorage != nil {
+			storagePath = *osc.ContainersStorage
+		}
+		defaultNetBackendFile, err := container.GenDefaultNetworkBackendFile(storagePath, *imageConfig.PodmanDefaultNetBackend)
+		if err != nil {
+			return osc, fmt.Errorf("generating default network backend file: %w", err)
+		}
+		osc.Files = append(osc.Files, defaultNetBackendFile)
+	}
+
 	if imageConfig.NoBLS != nil {
 		osc.NoBLS = *imageConfig.NoBLS
 	}

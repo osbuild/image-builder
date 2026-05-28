@@ -10,8 +10,10 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/defs"
+	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func isoTestImageType() *imageType {
@@ -132,5 +134,120 @@ func TestReplaceBasictemplate(t *testing.T) {
 		},
 	} {
 		assert.Equal(t, replaceBasicTemplate(tc.input, tc.arch), tc.expected)
+	}
+}
+
+func diskTestImageType() *imageType {
+	return &imageType{
+		arch: &architecture{
+			distro: &distribution{},
+		},
+		ImageTypeYAML: defs.ImageTypeYAML{},
+	}
+}
+
+func ostreeTestImageType() *imageType {
+	it := diskTestImageType()
+	it.ImageTypeYAML.OSTree.Ref = "rhel/9/x86_64/edge"
+	return it
+}
+
+func TestOSCustomizationsPodmanDefaultNetBackend(t *testing.T) {
+	netavark := container.NetworkBackendNetavark
+
+	tests := []struct {
+		name         string
+		imageType    func() *imageType
+		backend      *container.NetworkBackend
+		containers   []container.SourceSpec
+		expectFile   bool
+		expectedPath string
+		expectedVal  string
+	}{
+		{
+			name:      "disk: backend set with containers creates file",
+			imageType: diskTestImageType,
+			backend:   &netavark,
+			containers: []container.SourceSpec{
+				{Source: "registry.example.com/test:latest"},
+			},
+			expectFile:   true,
+			expectedPath: "/var/lib/containers/storage/defaultNetworkBackend",
+			expectedVal:  "netavark",
+		},
+		{
+			name:      "disk: nil backend with containers does not create file",
+			imageType: diskTestImageType,
+			backend:   nil,
+			containers: []container.SourceSpec{
+				{Source: "registry.example.com/test:latest"},
+			},
+			expectFile: false,
+		},
+		{
+			name:       "disk: backend set without containers does not create file",
+			imageType:  diskTestImageType,
+			backend:    &netavark,
+			containers: nil,
+			expectFile: false,
+		},
+		{
+			name:       "disk: nil backend without containers does not create file",
+			imageType:  diskTestImageType,
+			backend:    nil,
+			containers: nil,
+			expectFile: false,
+		},
+		{
+			name:      "ostree: backend set with containers creates file in relocated path",
+			imageType: ostreeTestImageType,
+			backend:   &netavark,
+			containers: []container.SourceSpec{
+				{Source: "registry.example.com/test:latest"},
+			},
+			expectFile:   true,
+			expectedPath: "/usr/share/containers/storage/defaultNetworkBackend",
+			expectedVal:  "netavark",
+		},
+		{
+			name:      "ostree: nil backend with containers does not create file",
+			imageType: ostreeTestImageType,
+			backend:   nil,
+			containers: []container.SourceSpec{
+				{Source: "registry.example.com/test:latest"},
+			},
+			expectFile: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			it := tt.imageType()
+			it.ImageConfigYAML.ImageConfig = &distro.ImageConfig{
+				PodmanDefaultNetBackend: tt.backend,
+			}
+
+			bp := &blueprint.Blueprint{}
+			osc, err := osCustomizations(it, rpmmd.PackageSet{}, distro.ImageOptions{}, tt.containers, bp)
+			require.NoError(t, err)
+
+			if !tt.expectFile {
+				for _, f := range osc.Files {
+					assert.NotContains(t, f.Path(), "defaultNetworkBackend",
+						"unexpected defaultNetworkBackend file found at %s", f.Path())
+				}
+				return
+			}
+
+			var found bool
+			for _, f := range osc.Files {
+				if f.Path() == tt.expectedPath {
+					found = true
+					assert.Equal(t, []byte(tt.expectedVal), f.Data())
+					break
+				}
+			}
+			assert.True(t, found, "expected file at %s", tt.expectedPath)
+		})
 	}
 }
