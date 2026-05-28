@@ -61,7 +61,7 @@ GEN_TEMPLATE = """
     RUNNER: {runner}-{arch}
     INTERNAL_NETWORK: "true"
   script:
-    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
     - ./test/scripts/generate-build-config --distro {distro} --arch {arch} build-config.yml
   artifacts:
@@ -89,7 +89,7 @@ OSTREE_GEN_TEMPLATE = """
     RUNNER: {runner}-{arch}
     INTERNAL_NETWORK: "true"
   script:
-    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
     - ./test/scripts/generate-ostree-build-config --distro {distro} --arch {arch} build-config.yml build-configs
   artifacts:
@@ -121,7 +121,7 @@ MANIFEST_GEN_TEMPLATE = """
     RUNNER: {runner}-x86_64
     INTERNAL_NETWORK: "true"
   script: |
-    sudo ./test/scripts/setup-osbuild-repo
+    sudo -E ./test/scripts/setup-osbuild-repo
     sudo ./test/scripts/install-dependencies
     echo "GOPROXY=$GOPROXY"
     go run ./cmd/gen-manifests --arches {arch} --distros {distro} --workers 10 --metadata=false --output ./manifests

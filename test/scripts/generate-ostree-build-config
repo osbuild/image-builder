@@ -11,7 +11,7 @@ JOB_TEMPLATE = """
 build/{distro}/{arch}/{image_type}/{config_name}:
   stage: test
   script:
-    - sudo ./test/scripts/setup-osbuild-repo
+    - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
     - {dl_container}
     - {start_container}
