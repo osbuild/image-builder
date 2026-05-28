@@ -2,7 +2,9 @@ package generic
 
 import (
 	"fmt"
+	"maps"
 	"math/rand"
+	"slices"
 	"strings"
 	"sync"
 
@@ -242,8 +244,8 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.Files = append(osc.Files, gpgKeyFiles...)
 	}
 
-	for filename, repos := range yumRepos {
-		osc.YUMRepos = append(osc.YUMRepos, osbuild.NewYumReposStageOptions(filename, repos))
+	for _, filename := range slices.Sorted(maps.Keys(yumRepos)) {
+		osc.YUMRepos = append(osc.YUMRepos, osbuild.NewYumReposStageOptions(filename, yumRepos[filename]))
 	}
 
 	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
