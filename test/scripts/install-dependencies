@@ -6,32 +6,68 @@
 set -e
 
 # we need qemu-kvm here but libvirt-devel pulls this in
-dnf -y install \
-    awscli2 \
-    btrfs-progs-devel \
-    cloud-utils \
-    device-mapper-devel \
-    libvirt-devel \
-    gcc \
-    go \
-    gpgme-devel \
-    krb5-devel \
-    lorax \
-    osbuild \
-    osbuild-depsolve-dnf \
-    osbuild-luks2 \
-    osbuild-lvm2 \
-    osbuild-ostree \
-    osbuild-selinux \
-    podman \
-    python3 \
-    python3-pip \
-    python3-pytest \
-    python3-boto3 \
-    python3-qemu-qmp \
-    python3-scp \
-    yamllint \
-    xz
+
+install_deps() {
+    dnf -y install \
+        awscli2 \
+        btrfs-progs-devel \
+        cloud-utils \
+        device-mapper-devel \
+        libvirt-devel \
+        gcc \
+        go \
+        gpgme-devel \
+        krb5-devel \
+        lorax \
+        osbuild \
+        osbuild-depsolve-dnf \
+        osbuild-luks2 \
+        osbuild-lvm2 \
+        osbuild-ostree \
+        osbuild-selinux \
+        podman \
+        python3 \
+        python3-pip \
+        python3-pytest \
+        python3-boto3 \
+        python3-qemu-qmp \
+        python3-scp \
+        yamllint \
+        xz
+}
+
+install_deps_el() {
+    dnf -y install \
+        awscli2 \
+        device-mapper-devel \
+        libvirt-devel \
+        gcc \
+        go \
+        gpgme-devel \
+        krb5-devel \
+        lorax \
+        osbuild \
+        osbuild-depsolve-dnf \
+        osbuild-luks2 \
+        osbuild-lvm2 \
+        osbuild-ostree \
+        osbuild-selinux \
+        podman \
+        python3 \
+        python3-pip \
+        python3-pytest \
+        xz
+}
+
+source /etc/os-release
+case "${ID}" in
+    "centos" | "rhel")
+        install_deps_el
+        ;;
+    *)
+        install_deps
+        ;;
+esac
 
 # We need this for the qemu boot tests and for any python tests but
 # could skip it for other testing. This can be removed once we figure
