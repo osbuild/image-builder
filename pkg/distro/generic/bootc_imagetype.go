@@ -511,14 +511,14 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 // if no direct match can be found it will it will use the ID_LIKE.
 // This should ensure we work on every bootc image that puts a correct
 // ID_LIKE= in /etc/os-release
-func newDistroYAMLFrom(sourceInfo *osinfo.Info) (*defs.DistroYAML, *distro.ID, error) {
+func newDistroYAMLFrom(loader *defs.Loader, sourceInfo *osinfo.Info) (*defs.DistroYAML, *distro.ID, error) {
 	for _, distroID := range append([]string{sourceInfo.OSRelease.ID}, sourceInfo.OSRelease.IDLike...) {
 		nameVer := fmt.Sprintf("%s-%s", distroID, sourceInfo.OSRelease.VersionID)
 		id, err := distro.ParseID(nameVer)
 		if err != nil {
 			return nil, nil, err
 		}
-		distroYAML, err := defs.NewDistroYAML(nameVer)
+		distroYAML, err := loader.NewDistroYAML(nameVer)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -545,7 +545,7 @@ func (t *bootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 	archStr := t.arch.Name()
 	sourceInfo := bd.sourceInfo
 
-	distroYAML, id, err := newDistroYAMLFrom(bd.sourceInfo)
+	distroYAML, id, err := newDistroYAMLFrom(defs.BuiltinLoader(), bd.sourceInfo)
 	if err != nil {
 		return nil, nil, err
 	}

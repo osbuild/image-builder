@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/images/pkg/distro/defs"
 )
 
 func TestGetDistroDefaultList(t *testing.T) {
@@ -73,6 +75,22 @@ func TestGetDistroDefaultList(t *testing.T) {
 		})
 	}
 
+}
+
+func TestNewDefaultWithLoader(t *testing.T) {
+	loader := defs.BuiltinLoader()
+	df := NewDefaultWithLoader(loader)
+
+	d := df.GetDistro("rhel-10.1")
+	assert.NotNil(t, d)
+	assert.Equal(t, "rhel-10.1", d.Name())
+
+	d = df.GetDistro("fedora-42")
+	assert.NotNil(t, d)
+	assert.Equal(t, "fedora-42", d.Name())
+
+	d = df.GetDistro("nonexistent-1")
+	assert.Nil(t, d)
 }
 
 func TestGetDistroDefaultListWithAliases(t *testing.T) {

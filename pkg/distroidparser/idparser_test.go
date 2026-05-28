@@ -194,9 +194,23 @@ func TestDefaltParser(t *testing.T) {
 }
 
 func TestParserDoubleMatch(t *testing.T) {
-	Parser := New(defs.ParseID, defs.ParseID)
+	loader := defs.BuiltinLoader()
+	Parser := New(loader.ParseID, loader.ParseID)
 
 	require.Panics(t, func() {
 		_, _ = Parser.Parse("rhel-90")
 	}, "Parser should panic when rhel-9.0 is matched by multiple parsers")
+}
+
+func TestNewParserWithLoader(t *testing.T) {
+	loader := defs.BuiltinLoader()
+	parser := NewParserWithLoader(loader)
+
+	id, err := parser.Parse("rhel-810")
+	require.NoError(t, err)
+	require.Equal(t, &distro.ID{Name: "rhel", MajorVersion: 8, MinorVersion: 10}, id)
+
+	std, err := parser.Standardize("rhel-810")
+	require.NoError(t, err)
+	require.Equal(t, "rhel-8.10", std)
 }

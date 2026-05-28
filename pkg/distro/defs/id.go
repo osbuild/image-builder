@@ -59,10 +59,8 @@ func matchAndNormalize(reStr, nameVer string) (string, error) {
 // ParseID parse the given nameVer into a distro.ID. It will also
 // apply normalizations from the distros `match` rule. This is needed
 // to support distro names like "rhel-810" without dots.
-//
-// If no match is found it will "nil" and no error (
-func ParseID(nameVer string) (*distro.ID, error) {
-	distros, err := loadDistros()
+func (l *Loader) ParseID(nameVer string) (*distro.ID, error) {
+	distros, err := l.loadDistros()
 	if err != nil {
 		return nil, err
 	}

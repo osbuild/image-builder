@@ -51,6 +51,10 @@ const (
 // ref, use the [github.com/osbuild/images/pkg/bootc.Container] type and its
 // methods.
 func NewBootc(name string, cinfo *bootc.Info) (*BootcDistro, error) {
+	return NewBootcWithLoader(defs.BuiltinLoader(), name, cinfo)
+}
+
+func NewBootcWithLoader(loader *defs.Loader, name string, cinfo *bootc.Info) (*BootcDistro, error) {
 	if cinfo == nil {
 		return nil, errors.New("failed to initialize bootc distro: container info is empty")
 	}
@@ -131,7 +135,7 @@ func NewBootc(name string, cinfo *bootc.Info) (*BootcDistro, error) {
 	}
 
 	// load image types from bootc-generic-1
-	distroYAML, err := defs.LoadDistroWithoutImageTypes("bootc-generic-1")
+	distroYAML, err := loader.LoadDistroWithoutImageTypes("bootc-generic-1")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load bootc image types: %w", err)
 	}

@@ -58,7 +58,12 @@ func (p *Parser) Standardize(idStr string) (string, error) {
 }
 
 func NewDefaultParser() *Parser {
+	return NewParserWithLoader(defs.BuiltinLoader())
+}
+
+// Parser but *with* a loader set, instead of the default
+func NewParserWithLoader(loader *defs.Loader) *Parser {
 	return New(
-		defs.ParseID,
+		loader.ParseID,
 	)
 }
