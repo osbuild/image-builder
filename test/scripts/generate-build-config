@@ -25,6 +25,7 @@ build/{distro}/{arch}/{image_type}/{config_name}:
 """
 
 
+@testlib.log_section("Generating manifests")
 def generate_manifests(outputdir, distro, arch):
     """
     Generate all manifest using the default config list and return a dictionary mapping each manifest file to the

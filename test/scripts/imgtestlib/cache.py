@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from .build import (gen_build_name, get_manifest_id, read_build_info,
                     write_build_info)
+from .gitlab import log_section
 from .run import runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit
 
@@ -115,6 +116,7 @@ def touch_s3(distro, arch, manifest_id, osbuild_ref=None, runner_distro=None):
     runcmd_nc(cmd)
 
 
+@log_section("Uploading results")
 def upload_results(distro, arch, image_type, config_path):
     with open(config_path, "r", encoding="utf-8") as config_file:
         config = json.load(config_file)
