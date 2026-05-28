@@ -11,17 +11,19 @@
     },
     "gitlab-ci-runner": "aws/fedora-44",
     "gitlab-ci-runner-for": {
-      "x86_64": {
-        "qcow2": "rhos-01/fedora-44",
-        "server-qcow2": "rhos-01/fedora-44",
-        "generic-qcow2": "rhos-01/fedora-44",
-        "cloud-qcow2": "rhos-01/fedora-44",
-        "image-installer": "rhos-01/fedora-44",
-        "minimal-installer": "rhos-01/fedora-44",
-        "network-installer": "rhos-01/fedora-44",
-        "everything-network-installer": "rhos-01/fedora-44",
-        "server-network-installer": "rhos-01/fedora-44",
-        "pxe-tar-xz": "rhos-01/fedora-44"
+      "*": {
+        "x86_64": {
+          "qcow2": "rhos-01/fedora-44",
+          "server-qcow2": "rhos-01/fedora-44",
+          "generic-qcow2": "rhos-01/fedora-44",
+          "cloud-qcow2": "rhos-01/fedora-44",
+          "image-installer": "rhos-01/fedora-44",
+          "minimal-installer": "rhos-01/fedora-44",
+          "network-installer": "rhos-01/fedora-44",
+          "everything-network-installer": "rhos-01/fedora-44",
+          "server-network-installer": "rhos-01/fedora-44",
+          "pxe-tar-xz": "rhos-01/fedora-44"
+        }
       }
     }
   },

@@ -93,13 +93,28 @@ def host_container_arch():
     }.get(host_arch, host_arch)
 
 
-def get_ci_runner_for(arch, image_type):
+def get_ci_runner_for(distro, arch, image_type):
     with open(SCHUTZFILE, encoding="utf-8") as schutzfile:
         data = json.load(schutzfile)
 
-    if (runner := data.get("common", {}).get("gitlab-ci-runner-for", {}).get(arch, {}).get(image_type)) is not None:
+    # handle "*" fallbacks for distro, arch, and image_type
+    ci_runner_overrides = data.get("common", {}).get("gitlab-ci-runner-for", {})
+    distro_ci_runners = ci_runner_overrides.get(distro)
+    if distro_ci_runners is None:
+        distro_ci_runners = ci_runner_overrides.get("*", {})
+
+    distro_arch_ci_runners = distro_ci_runners.get(arch)
+    if distro_arch_ci_runners is None:
+        distro_arch_ci_runners = distro_ci_runners.get("*", {})
+
+    runner = distro_arch_ci_runners.get(image_type)
+    if runner is None:
+        runner = distro_arch_ci_runners.get("*")
+
+    if runner is not None:
         return runner
 
+    # fall back to global common
     return get_common_ci_runner()
 
 
