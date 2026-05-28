@@ -13,3 +13,11 @@ func MockDataFS(path string) (restore func()) {
 		defaultDataFS = saved
 	}
 }
+
+func LoaderForTest(path string) *Loader {
+	return NewLoader(os.DirFS(path))
+}
+
+func ClearLoader(d *DistroYAML) {
+	d.loader = nil
+}

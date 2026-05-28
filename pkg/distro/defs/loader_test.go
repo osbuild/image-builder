@@ -1092,6 +1092,7 @@ func TestDistrosLoadingExact(t *testing.T) {
 
 	dist, err := defs.NewDistroYAML("fedora-43")
 	require.NoError(t, err)
+	defs.ClearLoader(dist)
 	assert.Equal(t, dist, &defs.DistroYAML{
 		Name:             "fedora-43",
 		Preview:          true,
@@ -1116,6 +1117,7 @@ func TestDistrosLoadingExact(t *testing.T) {
 
 	dist, err = defs.NewDistroYAML("centos-10")
 	require.NoError(t, err)
+	defs.ClearLoader(dist)
 	assert.Equal(t, dist, &defs.DistroYAML{
 		Name:             "centos-10",
 		Vendor:           "centos",
@@ -1136,6 +1138,7 @@ func TestDistrosLoadingFactoryCompat(t *testing.T) {
 
 	dist, err := defs.NewDistroYAML("rhel-10.1")
 	require.NoError(t, err)
+	defs.ClearLoader(dist)
 	assert.Equal(t, dist, &defs.DistroYAML{
 		Name:             "rhel-10.1",
 		Match:            "rhel-10.*",
@@ -1157,6 +1160,7 @@ func TestDistrosLoadingFactoryCompat(t *testing.T) {
 
 	dist, err = defs.NewDistroYAML("fedora-40")
 	require.NoError(t, err)
+	defs.ClearLoader(dist)
 	assert.Equal(t, dist, &defs.DistroYAML{
 		Name:             "fedora-40",
 		Match:            "fedora-[0-9]*",
@@ -1553,6 +1557,7 @@ distros:
 	} {
 		dist, err := defs.NewDistroYAML(tc.nameVer)
 		require.NoError(t, err)
+		defs.ClearLoader(dist)
 		assert.Equal(t, dist, &defs.DistroYAML{
 			Name:             tc.expectedDistroNameVer,
 			Match:            `(?P<name>rhel)-(?P<major>8)\.?(?P<minor>[0-9]+)`,
@@ -1563,4 +1568,77 @@ distros:
 			ID:               *common.Must(distro.ParseID(tc.expectedDistroNameVer)),
 		})
 	}
+}
+
+func TestLoaderNewDistroYAML(t *testing.T) {
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYAML, "")
+	loader := defs.LoaderForTest(baseDir)
+
+	dist, err := loader.NewDistroYAML("fedora-43")
+	require.NoError(t, err)
+	require.NotNil(t, dist)
+	assert.Equal(t, "fedora-43", dist.Name)
+	assert.Equal(t, distro.ID{Name: "fedora", MajorVersion: 43, MinorVersion: -1}, dist.ID)
+}
+
+func TestLoaderLoadDistroWithoutImageTypes(t *testing.T) {
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYAML, "")
+	loader := defs.LoaderForTest(baseDir)
+
+	dist, err := loader.LoadDistroWithoutImageTypes("rhel-10.1")
+	require.NoError(t, err)
+	require.NotNil(t, dist)
+	assert.Equal(t, "rhel-10.1", dist.Name)
+	assert.Equal(t, distro.ID{Name: "rhel", MajorVersion: 10, MinorVersion: 1}, dist.ID)
+}
+
+func TestLoaderParseID(t *testing.T) {
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYAML, "")
+	loader := defs.LoaderForTest(baseDir)
+
+	id, err := loader.ParseID("fedora-42")
+	require.NoError(t, err)
+	require.NotNil(t, id)
+	assert.Equal(t, &distro.ID{Name: "fedora", MajorVersion: 42, MinorVersion: -1}, id)
+}
+
+func TestLoaderNotFound(t *testing.T) {
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYAML, "")
+	loader := defs.LoaderForTest(baseDir)
+
+	dist, err := loader.NewDistroYAML("nonexistent-1")
+	require.NoError(t, err)
+	assert.Nil(t, dist)
+}
+
+func TestLoaderIsolation(t *testing.T) {
+	baseDir1 := makeFakeDistrosYAML(t, `
+distros:
+ - name: distro-a-1
+   defs_path: distro-a/
+`, "")
+	baseDir2 := makeFakeDistrosYAML(t, `
+distros:
+ - name: distro-b-1
+   defs_path: distro-b/
+`, "")
+
+	loader1 := defs.LoaderForTest(baseDir1)
+	loader2 := defs.LoaderForTest(baseDir2)
+
+	d1, err := loader1.NewDistroYAML("distro-a-1")
+	require.NoError(t, err)
+	require.NotNil(t, d1)
+
+	d2, err := loader1.NewDistroYAML("distro-b-1")
+	require.NoError(t, err)
+	assert.Nil(t, d2, "loader1 should not find distro-b")
+
+	d3, err := loader2.NewDistroYAML("distro-b-1")
+	require.NoError(t, err)
+	require.NotNil(t, d3)
+
+	d4, err := loader2.NewDistroYAML("distro-a-1")
+	require.NoError(t, err)
+	assert.Nil(t, d4, "loader2 should not find distro-a")
 }

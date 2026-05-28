@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 )
@@ -106,6 +107,14 @@ func New(factories ...FactoryFunc) *Factory {
 func NewDefault() *Factory {
 	return New(
 		generic.DistroFactory,
+	)
+}
+
+// NewDefaultWithLoader returns a Factory that loads distro definitions from
+// the given Loader's filesystem.
+func NewDefaultWithLoader(loader *defs.Loader) *Factory {
+	return New(
+		generic.DistroFactoryWithLoader(loader),
 	)
 }
 

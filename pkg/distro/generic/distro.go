@@ -47,7 +47,11 @@ type distribution struct {
 }
 
 func New(nameVer string) (distro.Distro, error) {
-	distroYAML, err := defs.NewDistroYAML(nameVer)
+	return NewWithLoader(defs.BuiltinLoader(), nameVer)
+}
+
+func NewWithLoader(loader *defs.Loader, nameVer string) (distro.Distro, error) {
+	distroYAML, err := loader.NewDistroYAML(nameVer)
 	if err != nil {
 		return nil, err
 	}
@@ -253,12 +257,18 @@ func (a *architecture) Distro() distro.Distro {
 }
 
 func DistroFactory(idStr string) distro.Distro {
-	distro, err := New(idStr)
-	if errors.Is(err, ErrDistroNotFound) {
-		return nil
+	return DistroFactoryWithLoader(defs.BuiltinLoader())(idStr)
+}
+
+func DistroFactoryWithLoader(loader *defs.Loader) func(string) distro.Distro {
+	return func(idStr string) distro.Distro {
+		d, err := NewWithLoader(loader, idStr)
+		if errors.Is(err, ErrDistroNotFound) {
+			return nil
+		}
+		if err != nil {
+			panic(fmt.Errorf("%w with distro %s", err, idStr))
+		}
+		return d
 	}
-	if err != nil {
-		panic(fmt.Errorf("%w with distro %s", err, idStr))
-	}
-	return distro
 }

@@ -43,14 +43,26 @@ var (
 var defaultDataFS fs.FS = distrodefs.Data
 
 func dataFS() fs.FS {
-	// XXX: this is a short term measure, pass a set of
-	// searchPaths down the stack instead
 	dataFS := defaultDataFS
 	if overrideDir := experimentalflags.String("yamldir"); overrideDir != "" {
 		olog.Printf("WARNING: using experimental override dir %q", overrideDir)
 		dataFS = os.DirFS(overrideDir)
 	}
 	return dataFS
+}
+
+type Loader struct {
+	fs fs.FS
+}
+
+func NewLoader(fsys fs.FS) *Loader {
+	return &Loader{fs: fsys}
+}
+
+// BuiltinLoader returns a Loader for the embedded distrodefs FS,
+// with the experimental yamldir override applied if it exists
+func BuiltinLoader() *Loader {
+	return NewLoader(dataFS())
 }
 
 // distrosYAML defines all supported YAML based distributions, since this can
@@ -109,7 +121,8 @@ type DistroYAML struct {
 	DistroLike manifest.Distro `yaml:"distro_like"`
 
 	// set by the loader
-	ID distro.ID
+	ID     distro.ID
+	loader *Loader
 
 	Tweaks *distro.Tweaks `yaml:"tweaks"`
 }
@@ -180,8 +193,8 @@ func (d *DistroYAML) GetTweaks() *distro.Tweaks {
 // are appended together.
 // Note that files are read separately from each other, so anchors and other
 // references can only be done within the same file.
-func loadDistros() (*distrosYAML, error) {
-	dents, err := fs.Glob(dataFS(), "*.yaml")
+func (l *Loader) loadDistros() (*distrosYAML, error) {
+	dents, err := fs.Glob(l.fs, "*.yaml")
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +202,7 @@ func loadDistros() (*distrosYAML, error) {
 	var allDistros distrosYAML
 
 	for _, name := range dents {
-		f, err := dataFS().Open(name)
+		f, err := l.fs.Open(name)
 		if err != nil {
 			return nil, err
 		}
@@ -217,7 +230,11 @@ func loadDistros() (*distrosYAML, error) {
 // with the way distrofactory/reporegistry work which is by defining
 // distros via repository files.
 func NewDistroYAML(nameVer string) (*DistroYAML, error) {
-	foundDistro, err := LoadDistroWithoutImageTypes(nameVer)
+	return BuiltinLoader().NewDistroYAML(nameVer)
+}
+
+func (l *Loader) NewDistroYAML(nameVer string) (*DistroYAML, error) {
+	foundDistro, err := l.LoadDistroWithoutImageTypes(nameVer)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +249,11 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 }
 
 func LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error) {
-	distros, err := loadDistros()
+	return BuiltinLoader().LoadDistroWithoutImageTypes(nameVer)
+}
+
+func (l *Loader) LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error) {
+	distros, err := l.loadDistros()
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +286,7 @@ func LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error) {
 		return nil, err
 	}
 	foundDistro.ID = *id
+	foundDistro.loader = l
 	if err := foundDistro.runTemplates(*id); err != nil {
 		return nil, err
 	}
@@ -273,13 +295,17 @@ func LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error) {
 }
 
 func (d *DistroYAML) LoadImageTypes() error {
+	if d.loader == nil {
+		return fmt.Errorf("called on DistroYAML without a loader")
+	}
+
 	var configs []imageTypesYAML
 	var err error
 
 	if yamlplus := experimentalflags.Bool("yamlplus"); yamlplus {
-		configs, err = loadImageTypeConfigsPlus(d)
+		configs, err = d.loader.loadImageTypeConfigsPlus(d)
 	} else {
-		configs, err = loadImageTypeConfigs(d)
+		configs, err = d.loader.loadImageTypeConfigs(d)
 	}
 
 	if err != nil {
@@ -288,18 +314,18 @@ func (d *DistroYAML) LoadImageTypes() error {
 	return mergeImageTypeConfigs(d, configs)
 }
 
-func loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
-	files, err := fs.Glob(dataFS(), filepath.Join(d.DefsPath, "[^_]*.yaml"))
+func (l *Loader) loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
+	files, err := fs.Glob(l.fs, filepath.Join(d.DefsPath, "[^_]*.yaml"))
 	if err != nil {
 		return nil, err
 	}
 
 	sharedPath := filepath.Join(d.DefsPath, "_shared.yaml")
-	sharedContent, _ := fs.ReadFile(dataFS(), sharedPath)
+	sharedContent, _ := fs.ReadFile(l.fs, sharedPath)
 
 	configs := make([]imageTypesYAML, 0, len(files))
 	for _, fileName := range files {
-		f, err := dataFS().Open(fileName)
+		f, err := l.fs.Open(fileName)
 		if err != nil {
 			return nil, err
 		}
@@ -325,18 +351,18 @@ func loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
 	return configs, nil
 }
 
-func loadImageTypeConfigsPlus(d *DistroYAML) ([]imageTypesYAML, error) {
-	files, err := fs.Glob(dataFS(), filepath.Join(d.DefsPath, "[^_]*.yaml"))
+func (l *Loader) loadImageTypeConfigsPlus(d *DistroYAML) ([]imageTypesYAML, error) {
+	files, err := fs.Glob(l.fs, filepath.Join(d.DefsPath, "[^_]*.yaml"))
 	if err != nil {
 		return nil, err
 	}
 
 	commonPath := filepath.Join(d.DefsPath, "_common.yaml")
-	commonContent, _ := fs.ReadFile(dataFS(), commonPath)
+	commonContent, _ := fs.ReadFile(l.fs, commonPath)
 
 	configs := make([]imageTypesYAML, 0, len(files))
 	for _, fileName := range files {
-		f, err := dataFS().Open(fileName)
+		f, err := l.fs.Open(fileName)
 		if err != nil {
 			return nil, err
 		}
@@ -347,7 +373,7 @@ func loadImageTypeConfigsPlus(d *DistroYAML) ([]imageTypesYAML, error) {
 			reader = io.MultiReader(bytes.NewReader(commonContent), f)
 		}
 
-		loader := yamlplus.NewLoader(dataFS())
+		loader := yamlplus.NewLoader(l.fs)
 		if err = loader.RegisterRecursively("."); err != nil {
 			return nil, err
 		}
