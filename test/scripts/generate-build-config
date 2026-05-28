@@ -67,7 +67,7 @@ def generate_configs(build_requests, pipeline_file):
         build_name = testlib.gen_build_name(distro, arch, image_type, config_name)
         image_path = f"./build/{build_name}"
 
-        runner = testlib.get_ci_runner_for(arch, image_type)
+        runner = testlib.get_ci_runner_for(distro, arch, image_type)
         tag = testlib.get_tag_for(runner)
 
         config_path = os.path.join(testlib.CONFIGS_PATH, config_name+".json")
