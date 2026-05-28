@@ -8,7 +8,7 @@ from typing import Dict
 
 from .build import get_manifest_id
 from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_s3
-from .gitlab import print_section_end, print_section_start
+from .gitlab import log_section
 from .run import runcmd
 from .testenv import get_bib_ref, host_container_arch, rng_seed_env
 
@@ -227,11 +227,12 @@ def check_for_build(manifest_fname, build_request, manifest_data, build_info_dir
     return True
 
 
+@log_section("Filtering build configurations")
 def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
     """
     Returns a list of build requests for the manifests that have no matching config in the test build cache.
     """
-    print_section_start("filter-build-configs", f"⚙️ Filtering {len(manifests)} build configurations")
+    print(f"⚙️ Filtering {len(manifests)} build configurations")
     dl_root_path = os.path.join(TEST_CACHE_ROOT, "s3configs", "builds")
     dl_path = os.path.join(dl_root_path, gen_build_info_dir_path_prefix(distro, arch))
     os.makedirs(dl_path, exist_ok=True)
@@ -282,7 +283,6 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
         print("⚠️ Errors:")
         print("\n".join(errors))
 
-    print_section_end("filter-build-configs")
     return build_requests
 
 

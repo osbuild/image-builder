@@ -18,6 +18,7 @@ from vmtest.vm import QEMU
 from .build import read_build_info, write_build_info
 from .core import (can_boot_test, find_image_file, read_manifest,
                    skopeo_inspect_id)
+from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_bib_ref, host_container_arch
 
@@ -521,6 +522,7 @@ def boot_wsl(distro, arch, image_path, config):
 
 
 # pylint: disable=too-many-branches
+@log_section("Booting image")
 def boot_image(search_path, build_config_path, keep_booted=False):
     image_path = find_image_file(search_path)
     build_info = read_build_info(search_path)

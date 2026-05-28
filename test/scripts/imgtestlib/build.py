@@ -2,19 +2,19 @@ import json
 import os
 from typing import Dict
 
-from .gitlab import print_section_end, print_section_start
+from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
 
 
+@log_section("Building image")
 def build_image(distro, arch, image_type, config_path):
     with open(config_path, "r", encoding="utf-8") as config_file:
         config = json.load(config_file)
 
     config_name = config["name"]
 
-    log_section_name = f"build_{distro}_{image_type}_{config_name}"
-    print_section_start(log_section_name, f"👷 Building image {distro}/{image_type} using config {config_path}")
+    print(f"👷 Building image {distro}/{image_type} using config {config_path}")
 
     # print the config for logging
     print(json.dumps(config, indent=2))
@@ -55,7 +55,6 @@ def build_image(distro, arch, image_type, config_path):
         "runner-distro": distro_version,
     }
     write_build_info(build_dir, build_info)
-    print_section_end(log_section_name)
 
 
 def read_build_info(build_path: str) -> Dict:
