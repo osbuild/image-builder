@@ -1,4 +1,6 @@
+import contextlib
 import os
+import uuid
 from datetime import datetime
 
 
@@ -35,3 +37,16 @@ def print_section_end(name: str):
     # custom line for non CI runs
     isonow = now.isoformat()
     print(f":: [{isonow}] Done ({name})")
+
+
+class log_section(contextlib.ContextDecorator):
+
+    def __init__(self, message):
+        self._id = str(uuid.uuid4())
+        self._message = message
+
+    def __enter__(self):
+        print_section_start(self._id, self._message)
+
+    def __exit__(self, *_):
+        print_section_end(self._id)
