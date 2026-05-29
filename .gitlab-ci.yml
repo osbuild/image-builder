@@ -145,36 +145,6 @@ fail:
       - build-config.yml
 
 
-"generate-build-config: [fedora-42, aarch64]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-aarch64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-build-config --distro fedora-42 --arch aarch64 build-config.yml
-  artifacts:
-    paths:
-      - build-config.yml
-
-
-"generate-build-config: [fedora-42, x86_64]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-build-config --distro fedora-42 --arch x86_64 build-config.yml
-  artifacts:
-    paths:
-      - build-config.yml
-
-
 "generate-build-config: [fedora-43, aarch64]":
   stage: gen
   extends: .terraform
@@ -795,28 +765,6 @@ fail:
     - "generate-build-config: [eln-11, x86_64]"
 
 
-"image-build-trigger: [fedora-42, aarch64]":
-  stage: build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-build-config: [fedora-42, aarch64]"
-    strategy: depend
-  needs:
-    - "generate-build-config: [fedora-42, aarch64]"
-
-
-"image-build-trigger: [fedora-42, x86_64]":
-  stage: build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-build-config: [fedora-42, x86_64]"
-    strategy: depend
-  needs:
-    - "generate-build-config: [fedora-42, x86_64]"
-
-
 "image-build-trigger: [fedora-43, aarch64]":
   stage: build
   trigger:
@@ -1257,42 +1205,6 @@ fail:
       - build-configs
   needs:
     - "image-build-trigger: [centos-9, x86_64]"
-
-
-"generate-ostree-build-config: [fedora-42, aarch64]":
-  stage: ostree-gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-aarch64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-ostree-build-config --distro fedora-42 --arch aarch64 build-config.yml build-configs
-  artifacts:
-    paths:
-      - build-config.yml
-      - build-configs
-  needs:
-    - "image-build-trigger: [fedora-42, aarch64]"
-
-
-"generate-ostree-build-config: [fedora-42, x86_64]":
-  stage: ostree-gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-ostree-build-config --distro fedora-42 --arch x86_64 build-config.yml build-configs
-  artifacts:
-    paths:
-      - build-config.yml
-      - build-configs
-  needs:
-    - "image-build-trigger: [fedora-42, x86_64]"
 
 
 "generate-ostree-build-config: [fedora-43, aarch64]":
@@ -1820,28 +1732,6 @@ fail:
     - "generate-ostree-build-config: [centos-9, x86_64]"
 
 
-"image-build-ostree-trigger: [fedora-42, aarch64]":
-  stage: ostree-build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-ostree-build-config: [fedora-42, aarch64]"
-    strategy: depend
-  needs:
-    - "generate-ostree-build-config: [fedora-42, aarch64]"
-
-
-"image-build-ostree-trigger: [fedora-42, x86_64]":
-  stage: ostree-build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-ostree-build-config: [fedora-42, x86_64]"
-    strategy: depend
-  needs:
-    - "generate-ostree-build-config: [fedora-42, x86_64]"
-
-
 "image-build-ostree-trigger: [fedora-43, aarch64]":
   stage: ostree-build
   trigger:
@@ -2280,54 +2170,6 @@ fail:
     sudo ./test/scripts/install-dependencies
     echo "GOPROXY=$GOPROXY"
     go run ./cmd/gen-manifests --arches s390x --distros eln-11 --workers 10 --metadata=false --output ./manifests
-    errors=0
-    for manifest in ./manifests/*; do
-      if osbuild --inspect $manifest > output; then
-        echo "$manifest OK";
-      else
-        echo "$manifest validation failed";
-        cat output;
-        errors+=1
-      fi;
-    done
-    exit "$errors"
-
-
-"generate-manifests: [fedora-42, ppc64le]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script: |
-    sudo -E ./test/scripts/setup-osbuild-repo
-    sudo ./test/scripts/install-dependencies
-    echo "GOPROXY=$GOPROXY"
-    go run ./cmd/gen-manifests --arches ppc64le --distros fedora-42 --workers 10 --metadata=false --output ./manifests
-    errors=0
-    for manifest in ./manifests/*; do
-      if osbuild --inspect $manifest > output; then
-        echo "$manifest OK";
-      else
-        echo "$manifest validation failed";
-        cat output;
-        errors+=1
-      fi;
-    done
-    exit "$errors"
-
-
-"generate-manifests: [fedora-42, s390x]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script: |
-    sudo -E ./test/scripts/setup-osbuild-repo
-    sudo ./test/scripts/install-dependencies
-    echo "GOPROXY=$GOPROXY"
-    go run ./cmd/gen-manifests --arches s390x --distros fedora-42 --workers 10 --metadata=false --output ./manifests
     errors=0
     for manifest in ./manifests/*; do
       if osbuild --inspect $manifest > output; then

@@ -809,10 +809,10 @@
     }
   },
   {
-    "path": "./configs/f42-x86-cuda-drivers.json",
+    "path": "./configs/f43-x86-cuda-drivers.json",
     "filters": {
       "distros": [
-        "fedora-42"
+        "fedora-43"
       ],
       "arches": [
         "x86_64"
