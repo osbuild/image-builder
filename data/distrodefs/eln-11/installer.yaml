@@ -133,20 +133,6 @@ image_types:
       - *aarch64_installer_platform
       - *ppc64le_installer_platform
       - *s390x_installer_platform
-    platforms_override:
-      conditions:
-        "RHEL 10.1+ adds FIPS menu":
-          when:
-            version_greater_or_equal: "10.1"
-          override:
-            - <<: *x86_64_installer_platform
-              fips_menu: true
-            - <<: *aarch64_installer_platform
-              fips_menu: true
-            - <<: *ppc64le_installer_platform
-              fips_menu: true
-            # s390x iso has no boot menu
-            - <<: *s390x_installer_platform
     package_sets:
       installer:
         - include:
@@ -250,17 +236,8 @@ image_types:
     iso_config: *default_iso_config
     platforms:
       - *x86_64_installer_platform
-      - *aarch64_platform
-    platforms_override:
-      conditions:
-        "RHEL 10.1+ adds FIPS menu":
-          when:
-            version_greater_or_equal: "10.1"
-          override:
-            - <<: *x86_64_installer_platform
-              fips_menu: true
-            - <<: *aarch64_platform
-              fips_menu: true
+      - <<: *aarch64_platform
+        fips_menu: true
     package_sets:
       os:
         - *distro_build_pkgset
