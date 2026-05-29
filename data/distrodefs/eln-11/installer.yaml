@@ -1,4 +1,97 @@
 .common:
+  distro_build_pkgset: &distro_build_pkgset
+    include:
+      - "dnf"
+      - "dosfstools"
+      - "e2fsprogs"
+      - "glibc"
+      - "lvm2"
+      - "policycoreutils"
+      - "python3-iniparse"
+      - "qemu-img"
+      - "selinux-policy-targeted"
+      - "systemd"
+      - "tar"
+      - "xfsprogs"
+      - "xz"
+    conditions:
+      "x86_64 specific packages for build pkgsset":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - "grub2-pc"
+      "ppc64le specific packages for build pkgsset":
+        when:
+          arch: "ppc64le"
+        append:
+          include:
+            - "grub2-ppc64le"
+            - "grub2-ppc64le-modules"
+
+  installer_firmware_packages: &installer_firmware_packages
+    - "amd-gpu-firmware"
+    - "amd-ucode-firmware"
+    - "atheros-firmware"
+    - "brcmfmac-firmware"
+    - "intel-gpu-firmware"
+    - "iwlegacy-firmware"
+    - "iwlwifi-dvm-firmware"
+    - "iwlwifi-mvm-firmware"
+    - "libertas-firmware"
+    - "linux-firmware"
+    - "mt7xxx-firmware"
+    - "nvidia-gpu-firmware"
+    - "nxpwireless-firmware"
+    - "realtek-firmware"
+    - "tiwilink-firmware"
+
+  installer_platforms:
+    x86_64_installer_platform: &x86_64_installer_platform
+      <<: *x86_64_bios_platform
+      image_format: "raw"
+      fips_menu: true
+      packages:
+        <<: *x86_64_bios_platform_packages
+        booting:
+          - "biosdevname"
+        firmware: *installer_firmware_packages
+    aarch64_installer_platform: &aarch64_installer_platform
+      <<: *aarch64_platform
+      fips_menu: true
+      packages:
+        <<: *aarch64_uefi_platform_packages
+        booting:
+          - "grub2-efi-aa64-cdboot"
+        firmware: *installer_firmware_packages
+    ppc64le_installer_platform: &ppc64le_installer_platform
+      <<: *ppc64le_bios_platform
+      image_format: "qcow2"
+      fips_menu: true
+      packages:
+        <<: *ppc64le_bios_platform_packages
+        booting:
+          - "lsvpd"
+          - "ppc64-diag"
+          - "grub2-tools"
+          - "grub2-tools-minimal"
+          - "grub2-tools-extra"
+        firmware: *installer_firmware_packages
+    s390x_installer_platform: &s390x_installer_platform
+      arch: "s390x"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      fips_menu: true
+      packages:
+        booting:
+          - "dracut-config-generic"
+          - "s390utils-base"
+          - "s390utils-core"
+      build_packages:
+        booting:
+          - "s390utils-base"
+      bootloader: "zipl"
+
   default_iso_config: &default_iso_config
     rootfs_type: "squashfs"
     conditions:
