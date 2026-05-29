@@ -402,7 +402,7 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
             return False
 
     if image_type in ["network-installer", "everything-network-installer", "server-network-installer"]:
-        if distro in ["rhel-10.1", "rhel-10.2"]:
+        if distro in ["rhel-10.1", "rhel-10.2", "rhel-10.3"]:
             print("  not bootable: rhel network-installer tests have incomplete repos in nightly snapshot"
                   "and won't install")
             return False
