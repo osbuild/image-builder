@@ -1116,6 +1116,75 @@ customizations.FIPS = true
 	}
 }
 
+func TestListImagesForceDefsDir(t *testing.T) {
+	defsDir := t.TempDir()
+	repoDir := t.TempDir()
+
+	distroYAML := `---
+distros:
+  - name: simonos-1
+    distro_like: fedora
+    os_version: "1"
+    release_version: "1"
+    module_platform_id: "platform:s1"
+    default_fs_type: "ext4"
+    defs_path: simonos
+    runner:
+      name: org.osbuild.fedora45
+      build_packages:
+        - "glibc"
+        - "systemd"
+        - "python3"
+`
+	imageTypesYAML := `---
+image_types:
+  "container":
+    filename: "container.tar"
+    mime_type: "application/x-tar"
+    image_func: "container"
+    bootable: false
+    exports: ["container"]
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
+    package_sets:
+      os:
+        - include:
+            - "bash"
+`
+	repoJSON := `{
+  "x86_64": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}],
+  "aarch64": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}]
+}`
+	err := os.MkdirAll(filepath.Join(defsDir, "simonos"), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(defsDir, "simonos.yaml"), []byte(distroYAML), 0644)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(defsDir, "simonos", "imagetypes.yaml"), []byte(imageTypesYAML), 0644)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(repoDir, "simonos-1.json"), []byte(repoJSON), 0644)
+	require.NoError(t, err)
+
+	restore := main.MockOsArgs([]string{
+		"list",
+		"--force-defs-dir", defsDir,
+		"--force-repo-dir", repoDir,
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err = main.Run()
+	require.NoError(t, err)
+
+	assert.Contains(t, fakeStdout.String(), "simonos-1")
+	for _, line := range strings.Split(strings.TrimSpace(fakeStdout.String()), "\n") {
+		assert.Contains(t, line, "simonos-1", "expected only simonos-1 distros, got: %s", line)
+	}
+}
+
 func TestCacheDirForUidRoot(t *testing.T) {
 	assert.Equal(t, "/var/cache/image-builder/store", main.CacheDirForUid(0))
 }

@@ -2,16 +2,24 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/gobwas/glob"
 
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/imagefilter"
 )
 
-func newImageFilterDefault(repoDir string, extraRepos []string) (*imagefilter.ImageFilter, error) {
-	fac := distrofactory.NewDefault()
+func newImageFilterDefault(repoDir string, extraRepos []string, forceDefsDir string) (*imagefilter.ImageFilter, error) {
+	var fac *distrofactory.Factory
+	if forceDefsDir != "" {
+		fmt.Fprintf(os.Stderr, "WARNING: using experimental --force-defs-dir from %q\n", forceDefsDir)
+		fac = distrofactory.NewDefaultWithLoader(defs.NewLoader(os.DirFS(forceDefsDir)))
+	} else {
+		fac = distrofactory.NewDefault()
+	}
 	repos, err := newRepoRegistry(repoDir, extraRepos)
 	if err != nil {
 		return nil, err
@@ -30,6 +38,9 @@ type repoOptions struct {
 
 	// ForceRepos contains baseURLs that replace *all* base repositories
 	ForceRepos []string
+
+	// ForceDefsDir overrides the path to load YAML distro definitions from
+	ForceDefsDir string
 }
 
 // should this be moved to images:imagefilter?
@@ -38,7 +49,7 @@ func getOneImage(distroName, imgTypeStr, archStr string, repoOpts *repoOptions) 
 		repoOpts = &repoOptions{}
 	}
 
-	imageFilter, err := newImageFilterDefault(repoOpts.RepoDir, repoOpts.ExtraRepos)
+	imageFilter, err := newImageFilterDefault(repoOpts.RepoDir, repoOpts.ExtraRepos, repoOpts.ForceDefsDir)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +95,7 @@ func getAllImages(repoOpts *repoOptions, filterExprs ...string) ([]imagefilter.R
 		repoOpts = &repoOptions{}
 	}
 
-	imageFilter, err := newImageFilterDefault(repoOpts.RepoDir, repoOpts.ExtraRepos)
+	imageFilter, err := newImageFilterDefault(repoOpts.RepoDir, repoOpts.ExtraRepos, repoOpts.ForceDefsDir)
 	if err != nil {
 		return nil, err
 	}
