@@ -159,8 +159,12 @@ func cmdListImages(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	forceDefsDir, err := cmd.Flags().GetString("force-defs-dir")
+	if err != nil {
+		return err
+	}
 
-	return listImages(repoDir, extraRepos, format, filter)
+	return listImages(repoDir, extraRepos, forceDefsDir, format, filter)
 }
 
 func ostreeImageOptions(cmd *cobra.Command) (*ostree.ImageOptions, error) {
@@ -336,6 +340,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
+	forceDefsDir, err := cmd.Flags().GetString("force-defs-dir")
+	if err != nil {
+		return nil, err
+	}
 
 	// no error check here as this is (deliberately) not defined on
 	// "manifest" (if "images" learn to set the output filename in
@@ -405,6 +413,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 			RepoDir:    repoDir,
 			ExtraRepos: extraRepos,
 			ForceRepos: forceRepos,
+			ForceDefsDir: forceDefsDir,
 		}
 		img, err = getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
 		if err != nil {
@@ -607,6 +616,10 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	if archStr == "" {
 		archStr = arch.Current().String()
 	}
+	forceDefsDir, err := cmd.Flags().GetString("force-defs-dir")
+	if err != nil {
+		return err
+	}
 
 	distroStr, err = findDistro(distroStr, "")
 	if err != nil {
@@ -614,7 +627,7 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	}
 
 	imgTypeStr := args[0]
-	res, err := getOneImage(distroStr, imgTypeStr, archStr, &repoOptions{RepoDir: repoDir})
+	res, err := getOneImage(distroStr, imgTypeStr, archStr, &repoOptions{RepoDir: repoDir, ForceDefsDir: forceDefsDir})
 	if err != nil {
 		return err
 	}
@@ -673,6 +686,8 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.PersistentFlags().MarkDeprecated("force-data-dir", `Use --force-repo-dir instead`)
 	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
 	rootCmd.PersistentFlags().MarkDeprecated("data-dir", `Use --force-repo-dir instead`)
+	rootCmd.PersistentFlags().String("force-defs-dir", "", "Override the path to load YAML distro definitions from")
+	rootCmd.PersistentFlags().MarkHidden("force-defs-dir")
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
