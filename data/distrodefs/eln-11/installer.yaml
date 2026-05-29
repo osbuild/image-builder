@@ -236,8 +236,7 @@ image_types:
     iso_config: *default_iso_config
     platforms:
       - *x86_64_installer_platform
-      - <<: *aarch64_platform
-        fips_menu: true
+      - *aarch64_installer_platform
     package_sets:
       os:
         - *distro_build_pkgset
