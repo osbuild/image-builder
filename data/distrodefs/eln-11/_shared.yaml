@@ -63,6 +63,7 @@
     x86_64_installer_platform: &x86_64_installer_platform
       <<: *x86_64_bios_platform
       image_format: "raw"
+      fips_menu: true
       packages:
         <<: *x86_64_bios_platform_packages
         booting:
@@ -99,6 +100,7 @@
           - "shim-aa64"
     aarch64_installer_platform: &aarch64_installer_platform
       <<: *aarch64_platform
+      fips_menu: true
       packages:
         <<: *aarch64_uefi_platform_packages
         booting:
@@ -139,6 +141,7 @@
     ppc64le_installer_platform: &ppc64le_installer_platform
       <<: *ppc64le_bios_platform
       image_format: "qcow2"
+      fips_menu: true
       packages:
         <<: *ppc64le_bios_platform_packages
         booting:
@@ -182,6 +185,7 @@
       arch: "s390x"
       image_format: "qcow2"
       qcow2_compat: "1.1"
+      fips_menu: true
       packages:
         booting:
           - "dracut-config-generic"
@@ -358,40 +362,10 @@
       "x86_64 specific kernel commandline for rhel-10.2+":
         when:
           arch: "x86_64"
-          version_greater_or_equal: "10.2"
         shallow_merge:
           kernel_options:
             # common
             - "ro"
-            # x86
-            - "console=tty1"
-            - "console=ttyS0"
-            - "earlyprintk=ttyS0"
-            - "rootdelay=300"
-      "x86_64 specific kernel commandline for rhel-10.1":
-        when:
-          arch: "x86_64"
-          version_equal: "10.1"
-        shallow_merge:
-          kernel_options:
-            # common
-            - "ro"
-            - "nvme_core.io_timeout=240"
-            # x86
-            - "console=tty1"
-            - "console=ttyS0"
-            - "earlyprintk=ttyS0"
-            - "rootdelay=300"
-      "x86_64 specific kernel commandline for rhel-10.0":
-        when:
-          arch: "x86_64"
-          version_equal: "10.0"
-        shallow_merge:
-          kernel_options:
-            # common
-            - "ro"
-            - "loglevel=3"
-            - "nvme_core.io_timeout=240"
             # x86
             - "console=tty1"
             - "console=ttyS0"
@@ -400,34 +374,10 @@
       "aarch64 specific kernel commandline for rhel-10.2+":
         when:
           arch: "aarch64"
-          version_greater_or_equal: "10.2"
         shallow_merge:
           kernel_options:
             # common
             - "ro"
-            # aarch64
-            - "console=ttyAMA0"
-      "aarch64 specific kernel commandline for rhel-10.1":
-        when:
-          arch: "aarch64"
-          version_equal: "10.1"
-        shallow_merge:
-          kernel_options:
-            # common
-            - "ro"
-            - "nvme_core.io_timeout=240"
-            # aarch64
-            - "console=ttyAMA0"
-      "aarch64 specific kernel commandline for rhel-10.0":
-        when:
-          arch: "aarch64"
-          version_equal: "10.0"
-        shallow_merge:
-          kernel_options:
-            # common
-            - "ro"
-            - "loglevel=3"
-            - "nvme_core.io_timeout=240"
             # aarch64
             - "console=ttyAMA0"
       "x86_64 grub2 config terminal=serial":
@@ -449,6 +399,7 @@
   azure_base_pkgset: &azure_base_pkgset
     include:
       - "@Server"
+      - "azure-vm-utils"
       - "bzip2"
       - "cloud-init"
       - "cloud-utils-growpart"
@@ -480,6 +431,7 @@
       - "dnf-plugin-spacewalk"
       - "dracut-config-rescue"
       - "glibc-all-langpacks"
+      - "initscripts-rename-device"
       - "iprutils"
       - "ivtv-firmware"
       - "iwlegacy-firmware"
@@ -514,14 +466,6 @@
         append:
           include:
             - "rng-tools"
-      "rhel-10.2+ gets azure-vm-utils and excludes initscripts-rename-device":
-        when:
-          version_greater_or_equal: "10.2"
-        append:
-          include:
-            - "azure-vm-utils"
-          exclude:
-            - "initscripts-rename-device"
   supported_options_lists:
     # Common options supported by all disk image types.
     # This includes everything that is not specific to installers.
