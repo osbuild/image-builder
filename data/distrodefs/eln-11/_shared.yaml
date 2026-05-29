@@ -35,6 +35,23 @@
       "/": "1 GiB"
       "/usr": "2 GiB"
 
+  installer_firmware_packages: &installer_firmware_packages
+    - "amd-gpu-firmware"
+    - "amd-ucode-firmware"
+    - "atheros-firmware"
+    - "brcmfmac-firmware"
+    - "intel-gpu-firmware"
+    - "iwlegacy-firmware"
+    - "iwlwifi-dvm-firmware"
+    - "iwlwifi-mvm-firmware"
+    - "libertas-firmware"
+    - "linux-firmware"
+    - "mt7xxx-firmware"
+    - "nvidia-gpu-firmware"
+    - "nxpwireless-firmware"
+    - "realtek-firmware"
+    - "tiwilink-firmware"
+
   platforms:
     x86_64_uefi_platform: &x86_64_uefi_platform
       arch: "x86_64"
@@ -68,22 +85,7 @@
         <<: *x86_64_bios_platform_packages
         booting:
           - "biosdevname"
-        firmware:
-          - "amd-gpu-firmware"
-          - "amd-ucode-firmware"
-          - "atheros-firmware"
-          - "brcmfmac-firmware"
-          - "intel-gpu-firmware"
-          - "iwlegacy-firmware"
-          - "iwlwifi-dvm-firmware"
-          - "iwlwifi-mvm-firmware"
-          - "libertas-firmware"
-          - "linux-firmware"
-          - "mt7xxx-firmware"
-          - "nvidia-gpu-firmware"
-          - "nxpwireless-firmware"
-          - "realtek-firmware"
-          - "tiwilink-firmware"
+        firmware: *installer_firmware_packages
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       bootloader: "grub2"
@@ -105,22 +107,7 @@
         <<: *aarch64_uefi_platform_packages
         booting:
           - "grub2-efi-aa64-cdboot"
-        firmware:
-          - "amd-gpu-firmware"
-          - "amd-ucode-firmware"
-          - "atheros-firmware"
-          - "brcmfmac-firmware"
-          - "intel-gpu-firmware"
-          - "iwlegacy-firmware"
-          - "iwlwifi-dvm-firmware"
-          - "iwlwifi-mvm-firmware"
-          - "libertas-firmware"
-          - "linux-firmware"
-          - "mt7xxx-firmware"
-          - "nvidia-gpu-firmware"
-          - "nxpwireless-firmware"
-          - "realtek-firmware"
-          - "tiwilink-firmware"
+        firmware: *installer_firmware_packages
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bootloader: "grub2"
@@ -150,22 +137,7 @@
           - "grub2-tools"
           - "grub2-tools-minimal"
           - "grub2-tools-extra"
-        firmware:
-          - "amd-gpu-firmware"
-          - "amd-ucode-firmware"
-          - "atheros-firmware"
-          - "brcmfmac-firmware"
-          - "intel-gpu-firmware"
-          - "iwlegacy-firmware"
-          - "iwlwifi-dvm-firmware"
-          - "iwlwifi-mvm-firmware"
-          - "libertas-firmware"
-          - "linux-firmware"
-          - "mt7xxx-firmware"
-          - "nvidia-gpu-firmware"
-          - "nxpwireless-firmware"
-          - "realtek-firmware"
-          - "tiwilink-firmware"
+        firmware: *installer_firmware_packages
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       # XXX: merge zipl_support/bootloader
