@@ -11,6 +11,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -385,13 +386,19 @@ func makeManifestJob(
 			Repositories: allRepos,
 			Config:       bc,
 		}
-		err = save(mf, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, path, filename, metadata)
+		fpath := filepath.Join(path, filename)
+		fp, err := os.Create(fpath)
+		if err != nil {
+			return fmt.Errorf("failed to create output file %q: %s\n", fpath, err.Error())
+		}
+		defer fp.Close()
+		err = save(fp, true, mf, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, filename, metadata)
 		return
 	}
 	return job
 }
 
-func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.DepsolveResult, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, flatpaks map[string][]flatpak.Spec, cr buildRequest, path, filename string, metadata bool) error {
+func save(w io.Writer, indent bool, ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.DepsolveResult, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, flatpaks map[string][]flatpak.Spec, cr buildRequest, filename string, metadata bool) error {
 	var data any
 	if metadata {
 		rpmmds := make(map[string]rpmmd.PackageList)
@@ -412,19 +419,19 @@ func save(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.Depsolve
 	} else {
 		data = ms
 	}
-	b, err := json.MarshalIndent(data, "", "  ")
+	var b []byte
+	var err error
+	if indent {
+		b, err = json.MarshalIndent(data, "", "  ")
+	} else {
+		b, err = json.Marshal(data)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to marshal data for %q: %s\n", filename, err.Error())
 	}
 	b = append(b, '\n') // add new line at end of file
-	fpath := filepath.Join(path, filename)
-	fp, err := os.Create(fpath)
-	if err != nil {
-		return fmt.Errorf("failed to create output file %q: %s\n", fpath, err.Error())
-	}
-	defer fp.Close()
-	if _, err := fp.Write(b); err != nil {
-		return fmt.Errorf("failed to write output file %q: %s\n", fpath, err.Error())
+	if _, err := w.Write(b); err != nil {
+		return fmt.Errorf("failed to write output for %q: %s\n", filename, err.Error())
 	}
 	return nil
 }
