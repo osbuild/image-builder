@@ -232,31 +232,19 @@
       - "WALinuxAgent"
       - "dnf5-plugins"
     exclude:
-      - "aic94xx-firmware"
-      - "alsa-firmware"
       - "alsa-lib"
       - "alsa-sof-firmware"
-      - "alsa-tools-firmware"
-      - "biosdevname"
       - "bolt"
       - "buildah"
       - "cockpit-podman"
       - "containernetworking-plugins"
       - "dnf-plugin-spacewalk"
-      - "dracut-config-rescue"
       - "glibc-all-langpacks"
       - "initscripts-rename-device"
-      - "iprutils"
-      - "ivtv-firmware"
-      - "iwlegacy-firmware"
-      - "iwlwifi-dvm-firmware"
-      - "iwlwifi-mvm-firmware"
       - "libertas-sd8686-firmware"
-      - "libertas-sd8787-firmware"
       - "libertas-usb8388-firmware"
       - "microcode_ctl"
       - "NetworkManager-config-server"
-      - "plymouth"
       - "podman"
       - "python3-dnf-plugin-spacewalk"
       - "python3-hwdata"
@@ -280,6 +268,21 @@
         append:
           include:
             - "rng-tools"
+
+  common_disk_pkgset_exclude: &common_disk_pkgset_exclude
+    exclude:
+      - "aic94xx-firmware"
+      - "alsa-firmware"
+      - "alsa-tools-firmware"
+      - "biosdevname"
+      - "dracut-config-rescue"
+      - "iprutils"
+      - "ivtv-firmware"
+      - "iwlegacy-firmware"
+      - "iwlwifi-dvm-firmware"
+      - "iwlwifi-mvm-firmware"
+      - "libertas-sd8787-firmware"
+      - "plymouth"
 
   supported_options_disk: &supported_options_disk
     - "distro"
@@ -351,6 +354,7 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
+        - *common_disk_pkgset_exclude
         - include:
             - "@core"
             - "chrony"
@@ -374,25 +378,13 @@ image_types:
             - "tuned"
             - "tcpdump"
           exclude:
-            - "aic94xx-firmware"
-            - "alsa-firmware"
             - "alsa-lib"
-            - "alsa-tools-firmware"
-            - "biosdevname"
             - "dnf-plugin-spacewalk"
-            - "dracut-config-rescue"
             - "fedora-release"
             - "fedora-repos"
             - "firewalld"
-            - "iprutils"
-            - "ivtv-firmware"
-            - "iwlegacy-firmware"
-            - "iwlwifi-dvm-firmware"
-            - "iwlwifi-mvm-firmware"
             - "langpacks-*"
             - "langpacks-en"
-            - "libertas-sd8787-firmware"
-            - "plymouth"
             - "rng-tools"
             - "udisks2"
           conditions:
@@ -519,6 +511,7 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
+        - *common_disk_pkgset_exclude
         - *azure_base_pkgset
     blueprint:
       supported_options: *supported_options_disk
@@ -762,6 +755,7 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
+        - *common_disk_pkgset_exclude
         - &ami_pkgset
           include:
             - "@core"
@@ -781,22 +775,9 @@ image_types:
             - "tuned"
             - "tar"
           exclude:
-            - "aic94xx-firmware"
-            - "alsa-firmware"
-            - "alsa-tools-firmware"
-            - "biosdevname"
             - "firewalld"
-            - "iprutils"
-            - "ivtv-firmware"
-            - "iwlegacy-firmware"
-            - "iwlwifi-dvm-firmware"
-            - "iwlwifi-mvm-firmware"
             - "libertas-sd8686-firmware"
-            - "libertas-sd8787-firmware"
             - "libertas-usb8388-firmware"
-            - "plymouth"
-            # RHBZ#2064087
-            - "dracut-config-rescue"
             # RHBZ#2075815
             - "qemu-guest-agent"
           conditions:

@@ -1,4 +1,16 @@
 .common:
+  common_container_exclude: &common_container_exclude
+    exclude:
+      - "coreutils"
+      - "coreutils-common"
+      - "libbrotli"
+      - "libcurl"
+      - "libpsl"
+      - "libssh"
+      - "libssh-config"
+      - "publicsuffix-list-dafsa"
+      - "rpm-plugin-audit"
+
   # supported options for container types
   supported_options_container: &supported_options_container
     - "distro"
@@ -39,6 +51,7 @@ image_types:
       timezone: "Etc/UTC"
     package_sets:
       os:
+        - *common_container_exclude
         - include:
             - "bash"
             - "coreutils-single"
@@ -59,16 +72,7 @@ image_types:
             - "yum"
           exclude:
             - "chrony"
-            - "coreutils"
-            - "coreutils-common"
-            - "libbrotli"
-            - "libcurl"
-            - "libpsl"
-            - "libssh"
-            - "libssh-config"
             - "libxkbcommon"
-            - "publicsuffix-list-dafsa"
-            - "rpm-plugin-audit"
             - "xkeyboard-config"
     blueprint:
       supported_options: *supported_options_container
@@ -78,6 +82,7 @@ image_types:
     filename: "container-minimal.tar"
     package_sets:
       os:
+        - *common_container_exclude
         - include:
             - "bash"
             - "coreutils-single"
@@ -85,16 +90,7 @@ image_types:
             - "rpm"
             - "microdnf"
           exclude:
-            - "coreutils"
-            - "coreutils-common"
-            - "libbrotli"
-            - "libcurl"
-            - "libpsl"
             - "libsemanage"
-            - "libssh"
-            - "libssh-config"
             - "libxcrypt"
-            - "publicsuffix-list-dafsa"
-            - "rpm-plugin-audit"
             - "shadow-utils"
             - "tzdata"
