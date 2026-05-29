@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -438,7 +439,7 @@ func main() {
 	var nWorkers int
 	var metadata, skipNoconfig, skipNorepos, buildconfigAllowUnknown bool
 	flag.StringVar(&outputDir, "output", "test/data/manifests/", "manifest store directory")
-	flag.IntVar(&nWorkers, "workers", 16, "number of workers to run concurrently")
+	flag.IntVar(&nWorkers, "workers", runtime.NumCPU()+1, "number of workers to run concurrently")
 	flag.StringVar(&cacheRoot, "cache", "/tmp/rpmmd", "rpm metadata cache directory")
 	flag.BoolVar(&metadata, "metadata", true, "store metadata in the file")
 	flag.StringVar(&configPath, "config", "", "image config file to use for all images (overrides -config-list)")
