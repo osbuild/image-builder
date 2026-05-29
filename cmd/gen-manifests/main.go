@@ -486,7 +486,7 @@ func main() {
 	flag.BoolVar(&dryRun, "dry-run", false, "print what manifests would be generated")
 
 	var checksumsOnly bool
-	flag.BoolVar(&checksumsOnly, "checksums-only", false, "write manifest SHA-1 checksum files instead of JSON manifests")
+	flag.BoolVar(&checksumsOnly, "checksums-only", false, "write manifest SHA-256 checksum files instead of JSON manifests")
 
 	flag.Parse()
 

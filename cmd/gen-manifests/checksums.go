@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha1" //nolint:gosec // manifest fingerprints, not a security boundary
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -19,7 +19,7 @@ import (
 
 // manifestChecksum is the method reponsible for doing the hard work
 func manifestChecksum(b []byte) string {
-	sum := sha1.Sum(b) //nolint:gosec // manifest fingerprints, not a security boundary
+	sum := sha256.Sum256(b)
 	return hex.EncodeToString(sum[:])
 }
 
@@ -48,7 +48,7 @@ func writeChecksumFileIfChanged(path, digest string) error {
 
 func (c *Checksums) recordManifestChecksum(ms manifest.OSBuildManifest, depsolved map[string]depsolvednf.DepsolveResult, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, flatpaks map[string][]flatpak.Spec, cr buildRequest, filename string, metadata bool) error {
 	var buf bytes.Buffer
-	if err := save(&buf, true, ms, depsolved, containers, commits, flatpaks, cr, filename, metadata); err != nil {
+	if err := save(&buf, false, ms, depsolved, containers, commits, flatpaks, cr, filename, metadata); err != nil {
 		return err
 	}
 	name := checksumBasename(filename)
