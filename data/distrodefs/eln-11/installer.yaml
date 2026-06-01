@@ -508,6 +508,7 @@ image_types:
         - "customizations.directories"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"

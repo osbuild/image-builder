@@ -297,6 +297,7 @@
     - "customizations.dnf"
     - "customizations.files"
     - "customizations.filesystem"
+    - "customizations.firstboot"
     - "customizations.partitioning_mode"
     - "customizations.fips"
     - "customizations.firewall"

@@ -72,6 +72,7 @@ blueprint:
     - customizations.directories
     - customizations.files
     - customizations.firewall
+    - customizations.firstboot
     - customizations.user
     - customizations.sshkey
     - customizations.group
@@ -104,9 +105,11 @@ func TestDescribeImageRequiredBlueprintOptions(t *testing.T) {
 blueprint:
   supported_options:
     - distro
+    - customizations.cacerts
     - customizations.dnf
     - customizations.installation_device
     - customizations.filesystem
+    - customizations.firstboot
     - customizations.disk
     - customizations.fdo
     - customizations.ignition
