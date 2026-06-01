@@ -86,6 +86,22 @@ func MockBootcResolveInfo(f func(string) (*bootc.Info, error)) (restore func()) 
 	}
 }
 
+func MockGetCacheDir(f func() string) (restore func()) {
+	saved := getCacheDir
+	getCacheDir = f
+	return func() {
+		getCacheDir = saved
+	}
+}
+
+func MockDirSize(f func(string) (int64, error)) (restore func()) {
+	saved := dirSize
+	dirSize = f
+	return func() {
+		dirSize = saved
+	}
+}
+
 func MockManifestgenDepsolver(new manifestgen.DepsolveFunc) (restore func()) {
 	saved := manifestgenDepsolver
 	manifestgenDepsolver = new
