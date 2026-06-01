@@ -87,6 +87,22 @@ func basenameFor(img *imagefilter.Result, userBasename string) string {
 	return fmt.Sprintf("%s-%s-%s", distro.Name(), img.ImgType.Name(), arch.Name())
 }
 
+func cmdSystem(cmd *cobra.Command, args []string) error {
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+	switch format {
+	case "", "yaml":
+		fmt.Fprint(cmd.OutOrStdout(), prettySystemStatus())
+	case "json":
+		fmt.Fprint(cmd.OutOrStdout(), jsonSystemStatus())
+	default:
+		return fmt.Errorf("unsupported format %q, supported formats: yaml, json", format)
+	}
+	return nil
+}
+
 func cmdVersion(cmd *cobra.Command, args []string) error {
 	format, err := cmd.Flags().GetString("format")
 	if err != nil {
@@ -737,6 +753,15 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 	versionCmd.Flags().String("format", "", "Output in a specific format (yaml, json)")
 	rootCmd.AddCommand(versionCmd)
+
+	systemCmd := &cobra.Command{
+		Use:   "system",
+		Short: "Show system status information",
+		RunE:  cmdSystem,
+		Args:  cobra.NoArgs,
+	}
+	systemCmd.Flags().String("format", "", "Output in a specific format (yaml, json)")
+	rootCmd.AddCommand(systemCmd)
 
 	manifestCmd := &cobra.Command{
 		Use:          "manifest <image-type>",
