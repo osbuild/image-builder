@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -101,7 +102,7 @@ func (p *Partition) IsBIOSBoot() bool {
 		return false
 	}
 
-	return p.Type == BIOSBootPartitionGUID || p.Type == BIOSBootPartitionDOSID
+	return strings.EqualFold(p.Type, BIOSBootPartitionGUID) || p.Type == BIOSBootPartitionDOSID
 }
 
 func (p *Partition) IsPReP() bool {
@@ -109,7 +110,7 @@ func (p *Partition) IsPReP() bool {
 		return false
 	}
 
-	return p.Type == PRepPartitionDOSID || p.Type == PRePartitionGUID
+	return p.Type == PRepPartitionDOSID || strings.EqualFold(p.Type, PRePartitionGUID)
 }
 
 func (p *Partition) MarshalJSON() ([]byte, error) {
