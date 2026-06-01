@@ -1197,7 +1197,7 @@ func findESPMountpoint(pt *disk.PartitionTable) (string, error) {
 		parent := path[1]
 		if partition, ok := parent.(*disk.Partition); ok {
 			// ESP filesystem parent must be a plain partition
-			if partition.Type != disk.EFISystemPartitionGUID {
+			if !strings.EqualFold(partition.Type, disk.EFISystemPartitionGUID) {
 				return nil
 			}
 
@@ -1219,7 +1219,7 @@ func findXBootLDRMountpoint(pt *disk.PartitionTable) (string, error) {
 	_ = pt.ForEachMountable(func(mnt disk.Mountable, path []disk.Entity) error {
 		parent := path[1]
 		if partition, ok := parent.(*disk.Partition); ok {
-			if partition.Type != disk.XBootLDRPartitionGUID {
+			if !strings.EqualFold(partition.Type, disk.XBootLDRPartitionGUID) {
 				return nil
 			}
 
