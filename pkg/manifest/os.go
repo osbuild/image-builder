@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/customizations/bootc"
+	"github.com/osbuild/image-builder/pkg/customizations/firstboot"
 	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
 	"github.com/osbuild/image-builder/pkg/customizations/ignition"
 	"github.com/osbuild/image-builder/pkg/customizations/oscap"
@@ -171,10 +172,10 @@ type OSCustomizations struct {
 	// here are always added at the end of the pipeline.
 	Files []*fsnode.File
 
-	CACerts []string
-
-	FIPS     bool
-	Hostonly bool
+	CACerts   []string
+	Firstboot *firstboot.FirstbootOptions
+	FIPS      bool
+	Hostonly  bool
 
 	// NoBLS configures the image bootloader with traditional menu entries
 	// instead of BLS. Required for legacy systems like RHEL 7.
@@ -542,6 +543,8 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
+	var subscriptionEnabledServices []string
+
 	if p.ostreeParentSpec != nil {
 		pipeline.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", p.ostreeParentSpec.Checksum))
 	}
@@ -720,12 +723,28 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		pipeline = prependStage(pipeline, osbuild.NewDracutConfStage(dracutConfConfig))
 	}
 
+	fbCerts, fbDirs, fbFiles, fbUnits, err := osbuild.GenFirstbootFromOptions(p.OSCustomizations.Firstboot)
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+
+	if len(fbDirs) > 0 {
+		pipeline.AddStages(osbuild.GenDirectoryNodesStages(fbDirs)...)
+	}
+
+	if len(fbFiles) > 0 {
+		p.addStagesForAllFilesAndInlineData(&pipeline, fbFiles)
+	}
+
 	for _, systemdUnitConfig := range p.OSCustomizations.SystemdDropin {
 		pipeline.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
 	}
 
 	for _, systemdUnitCreateConfig := range p.OSCustomizations.SystemdUnit {
 		pipeline.AddStage(osbuild.NewSystemdUnitCreateStage(systemdUnitCreateConfig))
+	}
+	for _, fbUnit := range fbUnits {
+		pipeline.AddStage(osbuild.NewSystemdUnitCreateStage(fbUnit))
 	}
 
 	if p.OSCustomizations.Authselect != nil {
@@ -806,7 +825,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		pipeline.AddStage(subStage)
 		pipeline.AddStages(osbuild.GenDirectoryNodesStages(subDirs)...)
 		p.addStagesForAllFilesAndInlineData(&pipeline, subFiles)
-		p.OSCustomizations.EnabledServices = append(p.OSCustomizations.EnabledServices, subServices...)
+		subscriptionEnabledServices = subServices
 	}
 
 	if p.OSCustomizations.RHSMConfig != nil {
@@ -959,6 +978,10 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	disabledServices := []string{}
 	maskedServices := []string{}
 	enabledServices = append(enabledServices, p.OSCustomizations.EnabledServices...)
+	for _, fbUnit := range fbUnits {
+		enabledServices = append(enabledServices, fbUnit.Filename)
+	}
+	enabledServices = append(enabledServices, subscriptionEnabledServices...)
 	disabledServices = append(disabledServices, p.OSCustomizations.DisabledServices...)
 	maskedServices = append(maskedServices, p.OSCustomizations.MaskedServices...)
 	if p.Environment != nil {
@@ -984,14 +1007,13 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	}
 
 	if p.OSCustomizations.WSLDistributionConfig != nil {
-		// We format in our version string into the name field, if there's no %s in there nothing
-		// special will happen.
-		p.OSCustomizations.WSLDistributionConfig.OOBE.DefaultName = fmt.Sprintf(
-			p.OSCustomizations.WSLDistributionConfig.OOBE.DefaultName,
+		// Format version into the name field; if there's no %s nothing special happens.
+		wslDistConfig := *p.OSCustomizations.WSLDistributionConfig
+		wslDistConfig.OOBE.DefaultName = fmt.Sprintf(
+			wslDistConfig.OOBE.DefaultName,
 			p.OSVersion,
 		)
-
-		pipeline.AddStage(osbuild.NewWSLDistributionConfStage(p.OSCustomizations.WSLDistributionConfig))
+		pipeline.AddStage(osbuild.NewWSLDistributionConfStage(&wslDistConfig))
 	}
 
 	if p.OSCustomizations.FIPS {
@@ -1017,8 +1039,10 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		}))
 	}
 
-	if len(p.OSCustomizations.CACerts) > 0 {
-		for _, cc := range p.OSCustomizations.CACerts {
+	allCACerts := append([]string{}, p.OSCustomizations.CACerts...)
+	allCACerts = append(allCACerts, fbCerts...)
+	if len(allCACerts) > 0 {
+		for _, cc := range allCACerts {
 			files, err := osbuild.NewCAFileNodes(cc)
 			if err != nil {
 				return osbuild.Pipeline{}, err
