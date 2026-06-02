@@ -352,17 +352,6 @@
     }
   },
   {
-    "path": "./configs/oscap-rhel9.json",
-    "filters": {
-      "distros": [
-        "rhel-9.4"
-      ],
-      "image-types": [
-        "ami"
-      ]
-    }
-  },
-  {
     "path": "./configs/oscap-rhel9-with-json-tailoring.json",
     "filters": {
       "distros": [
@@ -641,32 +630,13 @@
     }
   },
   {
-    "path": "./configs/modularity-in-packages.json",
+    "path": "./configs/modularity.json",
     "filters": {
       "image-types": [
         "ami"
       ],
       "distros": [
         "centos-9"
-      ]
-    }
-  },
-  {
-    "path": "./configs/modularity-enabled-modules.json",
-    "filters": {
-      "image-types": [
-        "ami"
-      ],
-      "distros": [
-        "centos-9"
-      ]
-    }
-  },
-  {
-    "path": "./configs/firewall.json",
-    "filters": {
-      "image-types": [
-        "minimal-raw"
       ]
     }
   },
