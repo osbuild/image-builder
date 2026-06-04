@@ -1,6 +1,7 @@
 package image_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,11 +13,11 @@ import (
 	"github.com/osbuild/image-builder/pkg/runner"
 )
 
-func makeGetCompressionPipelineInputs() (manifest.Build, manifest.FilePipeline) {
+func makeGetCompressionPipelineInputs() (*manifest.Manifest, manifest.Build, manifest.FilePipeline) {
 	mf := manifest.New()
 	build := manifest.NewBuild(&mf, &runner.Fedora{Version: 41}, []rpmmd.RepoConfig{}, nil)
 	inputPipeline := manifest.NewTar(build, nil, "input")
-	return build, inputPipeline
+	return &mf, build, inputPipeline
 }
 
 func TestGetCompressionPipeline(t *testing.T) {
@@ -33,7 +34,7 @@ func TestGetCompressionPipeline(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			build, inputPipeline := makeGetCompressionPipelineInputs()
+			mf, build, inputPipeline := makeGetCompressionPipelineInputs()
 			result := image.GetCompressionPipeline(tt.compression, build, inputPipeline)
 			require.NotNil(t, result)
 			if tt.expectedPipeline == "" {
@@ -41,12 +42,19 @@ func TestGetCompressionPipeline(t *testing.T) {
 			} else {
 				assert.Equal(t, tt.expectedPipeline, result.Name())
 			}
+
+			// All compression pipelines should always be present
+			payloads := mf.PayloadPipelines()
+			for _, c := range manifest.CompressionTypes {
+				assert.True(t, slices.Contains(payloads, string(c)),
+					"expected pipeline %q in manifest payloads %v", c, payloads)
+			}
 		})
 	}
 }
 
 func TestGetCompressionPipelinePanicsOnUnknown(t *testing.T) {
-	build, inputPipeline := makeGetCompressionPipelineInputs()
+	_, build, inputPipeline := makeGetCompressionPipelineInputs()
 	assert.PanicsWithValue(t, `unsupported compression type "banana"`, func() {
 		image.GetCompressionPipeline(manifest.Compression("banana"), build, inputPipeline)
 	})

@@ -39,11 +39,15 @@ build_pipelines:
 payload_pipelines:
   - os
   - archive
+  - gzip
+  - xz
+  - zstd
 packages:
   build:
     include:
       - coreutils
       - glibc
+      - gzip
       - platform-python
       - policycoreutils
       - python3
@@ -52,6 +56,7 @@ packages:
       - systemd
       - tar
       - xz
+      - zstd
     exclude: []
   os:
     include:
