@@ -43,6 +43,8 @@ func GetCompressionPipeline(compression string, buildPipeline manifest.Build, in
 		return manifest.NewZstd(buildPipeline, inputPipeline)
 	case "gzip":
 		return manifest.NewGzip(buildPipeline, inputPipeline)
+	case "none":
+		fallthrough
 	case "":
 		return inputPipeline
 	default:
