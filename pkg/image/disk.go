@@ -23,7 +23,7 @@ type DiskImage struct {
 	OSCustomizations   manifest.OSCustomizations
 	DiskCustomizations manifest.DiskCustomizations
 	Environment        environment.Environment
-	Compression        string
+	Compression        manifest.Compression
 
 	// Control the VPC subformat use of force_size
 	VPCForceSize *bool

@@ -21,7 +21,7 @@ func TestBootcPXETarNoCustomizations(t *testing.T) {
 	containers := []container.SourceSpec{containerSource}
 	img := image.NewBootcPXEImage(testPlatform, "bootc-test-pxe.tar.xz", containerSource, containerSource)
 	require.NotNil(t, img)
-	img.Compression = "xz"
+	img.Compression = manifest.CompressionXZ
 	img.ISOCustomizations = manifest.ISOCustomizations{RootfsType: manifest.SquashfsRootfs}
 	img.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
 	img.KernelVersion = "5.14.0-611.4.1.el9_7.x86_64"

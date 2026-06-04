@@ -15,7 +15,7 @@ type PXETar struct {
 	Base
 	OSCustomizations manifest.OSCustomizations
 	Environment      environment.Environment
-	Compression      string
+	Compression      manifest.Compression
 
 	OSVersion string
 }
