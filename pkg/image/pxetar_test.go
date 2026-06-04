@@ -18,7 +18,7 @@ func TestPXETarNoCustomizations(t *testing.T) {
 	img := image.NewPXETar(testPlatform, "test-pxe.tar.xz")
 	require.NotNil(t, img)
 
-	img.Compression = "xz"
+	img.Compression = manifest.CompressionXZ
 	img.OSVersion = "42"
 
 	source := rand.NewSource(int64(0))

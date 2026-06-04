@@ -22,14 +22,13 @@ func makeGetCompressionPipelineInputs() (manifest.Build, manifest.FilePipeline) 
 func TestGetCompressionPipeline(t *testing.T) {
 	tests := []struct {
 		name             string
-		compression      string
+		compression      manifest.Compression
 		expectedPipeline string
 	}{
-		{"xz", "xz", "xz"},
-		{"zstd", "zstd", "zstd"},
-		{"gzip", "gzip", "gzip"},
-		{"none", "none", ""},
-		{"empty", "", ""},
+		{"xz", manifest.CompressionXZ, "xz"},
+		{"zstd", manifest.CompressionZstd, "zstd"},
+		{"gzip", manifest.CompressionGzip, "gzip"},
+		{"none", manifest.CompressionNone, ""},
 	}
 
 	for _, tt := range tests {
@@ -49,6 +48,6 @@ func TestGetCompressionPipeline(t *testing.T) {
 func TestGetCompressionPipelinePanicsOnUnknown(t *testing.T) {
 	build, inputPipeline := makeGetCompressionPipelineInputs()
 	assert.PanicsWithValue(t, `unsupported compression type "banana"`, func() {
-		image.GetCompressionPipeline("banana", build, inputPipeline)
+		image.GetCompressionPipeline(manifest.Compression("banana"), build, inputPipeline)
 	})
 }
