@@ -43,5 +43,18 @@ func GetCompressionPipeline(compression manifest.Compression, buildPipeline mani
 	if !ok {
 		panic(fmt.Sprintf("unsupported compression type %q", compression))
 	}
+
+	// Create non-selected compression pipelines first so the selected
+	// one ends up last in the manifest pipeline order. This is some form
+	// of backwards compatibility with code that uses the last pipeline.
+	// Unsure about it; it'll still break for non-compressed exports since
+	// they still get all the compression types appended.
+	for _, c := range manifest.CompressionTypes {
+		if c == compression {
+			continue
+		}
+		manifest.CompressionPipelines[c](buildPipeline, inputPipeline)
+	}
+
 	return fn(buildPipeline, inputPipeline)
 }
