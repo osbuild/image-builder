@@ -11,6 +11,9 @@ const (
 	CompressionNone Compression = "none"
 )
 
+// Keep ordering of compression types to keep manifest generation deterministic
+var CompressionTypes = []Compression{CompressionGzip, CompressionXZ, CompressionZstd}
+
 type CompressionPipelineFunc func(Build, FilePipeline) FilePipeline
 
 var CompressionPipelines = map[Compression]CompressionPipelineFunc{
