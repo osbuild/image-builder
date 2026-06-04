@@ -28,6 +28,7 @@ func TestGetCompressionPipeline(t *testing.T) {
 		{"xz", "xz", "xz"},
 		{"zstd", "zstd", "zstd"},
 		{"gzip", "gzip", "gzip"},
+		{"none", "none", ""},
 		{"empty", "", ""},
 	}
 
