@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess as sp
 import tempfile
@@ -259,3 +260,152 @@ def test_skopeo_inspect_localstore(arch):
 
         # arch arg to skopeo_inspect_id doesn't matter here
         assert testlib.skopeo_inspect_id(f"{transport}[vfs@{tmpdir}]{image}", arch) == image_ids[arch]
+
+
+def test_find_image_file_single_export():
+    """Test find_image_file with a single exported pipeline (excluding build)."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create manifest with build and one export pipeline
+        manifest = {
+            "pipelines": [
+                {"name": "build"},
+                {"name": "qcow2"}
+            ]
+        }
+        manifest_path = os.path.join(tmpdir, "manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f)
+
+        # Create the export directory and file
+        export_dir = os.path.join(tmpdir, "qcow2")
+        os.makedirs(export_dir)
+        image_file = os.path.join(export_dir, "disk.qcow2")
+        with open(image_file, "w", encoding="utf-8") as f:
+            f.write("fake image")
+
+        # Test that it finds the correct file
+        result = testlib.find_image_file(tmpdir)
+        assert result == image_file
+
+
+def test_find_image_file_multiple_pipelines_one_export():
+    """Test find_image_file when manifest has multiple pipelines but only one is exported."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create manifest with build and multiple pipelines, but only one exported
+        manifest = {
+            "pipelines": [
+                {"name": "build"},
+                {"name": "image"},
+                {"name": "qcow2"},
+                {"name": "archive"}
+            ]
+        }
+        manifest_path = os.path.join(tmpdir, "manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f)
+
+        # Create only the archive directory (the actual export)
+        export_dir = os.path.join(tmpdir, "archive")
+        os.makedirs(export_dir)
+        image_file = os.path.join(export_dir, "image.tar")
+        with open(image_file, "w", encoding="utf-8") as f:
+            f.write("fake archive")
+
+        # Test that it finds the correct file from the exported pipeline
+        result = testlib.find_image_file(tmpdir)
+        assert result == image_file
+
+
+def test_find_image_file_no_export_directory():
+    """Test find_image_file raises error when no export directory exists."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create manifest but no export directories
+        manifest = {
+            "pipelines": [
+                {"name": "build"},
+                {"name": "qcow2"}
+            ]
+        }
+        manifest_path = os.path.join(tmpdir, "manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f)
+
+        # Don't create any export directories
+        with pytest.raises(RuntimeError, match="Expected exactly one exported pipeline directory"):
+            testlib.find_image_file(tmpdir)
+
+
+def test_find_image_file_multiple_export_directories():
+    """Test find_image_file raises error when multiple export directories exist."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create manifest with multiple pipelines
+        manifest = {
+            "pipelines": [
+                {"name": "build"},
+                {"name": "qcow2"},
+                {"name": "vmdk"}
+            ]
+        }
+        manifest_path = os.path.join(tmpdir, "manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f)
+
+        # Create multiple export directories
+        for pipeline in ["qcow2", "vmdk"]:
+            export_dir = os.path.join(tmpdir, pipeline)
+            os.makedirs(export_dir)
+            with open(os.path.join(export_dir, f"disk.{pipeline}"), "w", encoding="utf-8") as f:
+                f.write("fake image")
+
+        # Should raise error about multiple export directories
+        with pytest.raises(RuntimeError, match="Expected exactly one exported pipeline directory"):
+            testlib.find_image_file(tmpdir)
+
+
+def test_find_image_file_no_files_in_export():
+    """Test find_image_file raises error when export directory is empty."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create manifest
+        manifest = {
+            "pipelines": [
+                {"name": "build"},
+                {"name": "qcow2"}
+            ]
+        }
+        manifest_path = os.path.join(tmpdir, "manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f)
+
+        # Create export directory but no files
+        export_dir = os.path.join(tmpdir, "qcow2")
+        os.makedirs(export_dir)
+
+        # Should raise error about no files
+        with pytest.raises(RuntimeError, match="Expected exactly one file in export directory"):
+            testlib.find_image_file(tmpdir)
+
+
+def test_find_image_file_multiple_files_in_export():
+    """Test find_image_file raises error when export directory has multiple files."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create manifest
+        manifest = {
+            "pipelines": [
+                {"name": "build"},
+                {"name": "qcow2"}
+            ]
+        }
+        manifest_path = os.path.join(tmpdir, "manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f)
+
+        # Create export directory with multiple files
+        export_dir = os.path.join(tmpdir, "qcow2")
+        os.makedirs(export_dir)
+        for filename in ["disk1.qcow2", "disk2.qcow2"]:
+            with open(os.path.join(export_dir, filename), "w", encoding="utf-8") as f:
+                f.write("fake image")
+
+        # Should raise error about multiple files
+        with pytest.raises(RuntimeError, match="Expected exactly one file in export directory"):
+            testlib.find_image_file(tmpdir)
