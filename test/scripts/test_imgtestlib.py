@@ -208,20 +208,20 @@ def test_gen_build_info_s3_dir_path(kwargs, expected):
 
 test_container = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
 
-manifest_list_digest = "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
+manifest_list_digest = "sha256:11b8172c893595bfcdea054e15457deb54f208afdaf16a602d05fad8e1f6adc1"
 
 # manifest IDs for
 #  registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test:latest
 manifest_ids = {
-    "amd64": "sha256:601c98c8148720ec5c29b8e854a1d5d88faddbc443eca12920d76cf993d7290e",
-    "arm64": "sha256:1a19a94647b1379fed8c23eb7553327cb604ba546eb93f9f6c1e6d11911c8beb",
+    "amd64": "sha256:78bd1e02fb7b18fbcec064ec10eba0dabfbe94ab6c4513f4edf9e8c8e13396a5",
+    "arm64": "sha256:33d37d6b9a9ce7935494d053a0777ec7f764a75ad623a6f1e5285eb5ab785b6b",
 }
 
 # image IDs for
 #  registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test:latest
 image_ids = {
-    "amd64": "sha256:dbb63178dc9157068107961f11397df3fb62c02fa64f697d571bf84aad71cb99",
-    "arm64": "sha256:62d2a7b3bf9e0b4f3aba22553d6971227b5a39f7f408d46347b1ee74eb97cb20",
+    "amd64": "sha256:d0f28374e1a9b1ae28d543cadd0916b8ee4f8619a834900a964961a188bc16c4",
+    "arm64": "sha256:d012c8612b9c700f7651aca3f6b0853077ea97c306b97fd614c846929cc28ac4",
 }
 
 
