@@ -93,7 +93,14 @@
       bootloader: "zipl"
 
   default_iso_config: &default_iso_config
-    rootfs_type: "squashfs"
+    rootfs_type: "erofs"
+    erofs_options:
+      compression:
+        method: "lzma"
+        level: 6
+      options:
+        - "fragments"
+      cluster-size: 1048576
     conditions:
       "x86_64 uses grub2":
         when:
