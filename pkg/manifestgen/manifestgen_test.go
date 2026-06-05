@@ -72,7 +72,7 @@ func TestManifestGeneratorDepsolve(t *testing.T) {
 
 			pipelineNames, err := manifesttest.PipelineNamesFrom(osbuildManifest)
 			assert.NoError(t, err)
-			assert.Equal(t, []string{"build", "os", "image", "qcow2"}, pipelineNames)
+			assert.Equal(t, []string{"build", "os", "image", "qcow2", "gzip", "xz", "zstd"}, pipelineNames)
 
 			// Verify depsolving produced source items
 			if useLibrepo {
@@ -125,7 +125,7 @@ func TestManifestGeneratorWithOstreeCommit(t *testing.T) {
 
 	pipelineNames, err := manifesttest.PipelineNamesFrom(osbuildManifest)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"build", "ostree-deployment", "image"}, pipelineNames)
+	assert.Equal(t, []string{"build", "ostree-deployment", "image", "gzip", "xz", "zstd"}, pipelineNames)
 
 	// XXX: add testhelper to manifesttest for this
 	assert.Contains(t, string(osbuildManifest), `{"url":"resolved-url-for-centos/9/x86_64/edge"}`)

@@ -29,7 +29,7 @@ type BootcPXEImage struct {
 	KernelVersion string
 
 	// Compression used for the tar
-	Compression string
+	Compression manifest.Compression
 }
 
 func NewBootcPXEImage(platform platform.Platform, filename string, container container.SourceSpec, buildContainer container.SourceSpec) *BootcPXEImage {

@@ -28,7 +28,7 @@ type OSTreeDiskImage struct {
 	OSName string
 	Ref    string
 
-	Compression string
+	Compression manifest.Compression
 }
 
 func NewOSTreeDiskImageFromCommit(platform platform.Platform, filename string, commit ostree.SourceSpec) *OSTreeDiskImage {
