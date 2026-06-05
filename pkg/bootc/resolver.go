@@ -13,10 +13,11 @@ import (
 	"strconv"
 	"strings"
 
+	"slices"
+
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bib/osinfo"
 	"github.com/osbuild/images/pkg/depsolvednf"
-	"golang.org/x/exp/slices"
 )
 
 // envPath is written by podman
