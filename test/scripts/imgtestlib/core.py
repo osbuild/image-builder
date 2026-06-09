@@ -428,6 +428,9 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
                   "FATAL: FIPS integrity test failed")
             return False
         # Note that this needs adjustment when we switch to librepo
+        # Handle manifests that don't have org.osbuild.curl sources (e.g., bootc images)
+        if "org.osbuild.curl" not in manifest_data.get("sources", {}):
+            return True
         urls = [src["url"] for src in manifest_data["sources"]["org.osbuild.curl"]["items"].values()]
         if not any("ssh-server" in url for url in urls):
             # This can happen e.g. when an image is build with the "minimal: true" customization.
