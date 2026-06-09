@@ -3,8 +3,10 @@ import os
 from typing import Dict
 
 from .gitlab import log_section
-from .run import runcmd, runcmd_nc
+from .run import runcmd
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
+
+BUILD_LOG_PATH = "./logs"
 
 
 @log_section("Building image")
@@ -21,7 +23,10 @@ def build_image(distro, arch, image_type, config_path):
 
     cmd = ["sudo", "-E", "./bin/build", "--output", "./build", "--checkpoints", "build",
            "--distro", distro, "--arch", arch, "--type", image_type, "--config", config_path]
-    runcmd_nc(cmd, extra_env=rng_seed_env())
+    stdout, stderr = runcmd(cmd, extra_env=rng_seed_env())
+
+    build_name = gen_build_name(distro, arch, image_type, config_name)
+    save_logs(build_name, stdout, stderr)
 
     # Build artifacts are owned by root. Make them world accessible.
     runcmd(["sudo", "chmod", "a+rwX", "-R", "./build"])
@@ -85,3 +90,14 @@ def gen_build_name(distro, arch, image_type, config_name):
 
 def _u(s):
     return s.replace("-", "_")
+
+
+def save_logs(build_name, out, err):
+    """
+    Save stdout and stderr output for a job to the BUILD_LOG_PATH.
+    """
+    os.makedirs(BUILD_LOG_PATH, exist_ok=True)
+    with open(os.path.join(BUILD_LOG_PATH, f"{build_name}.out"), mode="w", encoding="utf-8") as log:
+        log.write(out.decode())
+    with open(os.path.join(BUILD_LOG_PATH, f"{build_name}.err"), mode="w", encoding="utf-8") as log:
+        log.write(err.decode())
