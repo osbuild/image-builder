@@ -43,13 +43,14 @@ def generate_manifests(outputdir, distro, arch):
 
 def build_new_images(build_requests):
     print(f"Building {len(build_requests)} new images")
-    for build in build_requests:
+    for idx, build in enumerate(build_requests, start=1):
         distro = build["distro"]
         arch = build["arch"]
         image_type = build["image-type"]
         config = build["config"]
-
         config_name = config["name"]
+
+        print(f"{idx}/{len(build_requests)}: Testing image {distro}/{image_type} using config {config_name}")
 
         config_path = os.path.join(testlib.CONFIGS_PATH, config_name+".json")
         testlib.build_image(distro, arch, image_type, config_path)
@@ -58,6 +59,7 @@ def build_new_images(build_requests):
         image_search_path = os.path.join("build", build_name)
         testlib.boot_image(image_search_path, config_path)
         testlib.upload_results(distro, arch, image_type, config_path)
+        print("✅ Test finished!!")
 
     print("✅ DONE!")
 

@@ -14,8 +14,6 @@ def build_image(distro, arch, image_type, config_path):
 
     config_name = config["name"]
 
-    print(f"👷 Building image {distro}/{image_type} using config {config_path}")
-
     # print the config for logging
     print(json.dumps(config, indent=2))
 
@@ -24,8 +22,6 @@ def build_image(distro, arch, image_type, config_path):
     cmd = ["sudo", "-E", "./bin/build", "--output", "./build", "--checkpoints", "build",
            "--distro", distro, "--arch", arch, "--type", image_type, "--config", config_path]
     runcmd_nc(cmd, extra_env=rng_seed_env())
-
-    print("✅ Build finished!!")
 
     # Build artifacts are owned by root. Make them world accessible.
     runcmd(["sudo", "chmod", "a+rwX", "-R", "./build"])
