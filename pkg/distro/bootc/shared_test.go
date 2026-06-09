@@ -27,6 +27,11 @@ func TestGetDistroAndRunner(t *testing.T) {
 		{"centos", "9", manifest.DISTRO_EL9, &runner.CentOS{Version: 9}, ""},
 		{"centos", "10", manifest.DISTRO_EL10, &runner.CentOS{Version: 10}, ""},
 		{"centos", "11", manifest.DISTRO_NULL, &runner.CentOS{Version: 11}, ""},
+		{"ol", "9.7", manifest.DISTRO_EL9, &runner.Ol{Version: 9}, ""},
+		{"ol", "10.1", manifest.DISTRO_EL10, &runner.Ol{Version: 10}, ""},
+		{"ol", "10.asdf", manifest.DISTRO_EL10, &runner.Ol{Version: 10}, ""},
+		{"ol", "10.1.2", manifest.DISTRO_EL10, &runner.Ol{Version: 10}, ""},
+		{"ol", "11.1", manifest.DISTRO_NULL, &runner.Ol{Version: 11}, ""},
 		{"rhel", "9.4", manifest.DISTRO_EL9, &runner.RHEL{Major: 9, Minor: 4}, ""},
 		{"rhel", "10.4", manifest.DISTRO_EL10, &runner.RHEL{Major: 10, Minor: 4}, ""},
 		{"rhel", "11.4", manifest.DISTRO_NULL, &runner.RHEL{Major: 11, Minor: 4}, ""},
@@ -35,6 +40,8 @@ func TestGetDistroAndRunner(t *testing.T) {
 		// Sad
 		{"fedora", "asdf", manifest.DISTRO_NULL, nil, "cannot parse Fedora version (asdf)"},
 		{"centos", "asdf", manifest.DISTRO_NULL, nil, "cannot parse CentOS version (asdf)"},
+		{"ol", "10", manifest.DISTRO_NULL, nil, "invalid Oracle Linux version format: 10"},
+		{"ol", "asdf.1", manifest.DISTRO_NULL, nil, "cannot parse Oracle Linux major version (asdf)"},
 		{"rhel", "10", manifest.DISTRO_NULL, nil, "invalid RHEL version format: 10"},
 		{"rhel", "10.asdf", manifest.DISTRO_NULL, nil, "cannot parse RHEL minor version (asdf)"},
 	}
