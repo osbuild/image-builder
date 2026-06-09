@@ -836,6 +836,59 @@ func TestRelayout(t *testing.T) {
 				},
 			},
 		},
+		"gpt-4k-grain-repart-compat": {
+			pt: &PartitionTable{
+				Type:                PT_GPT,
+				Size:                200*MiB + 2*GiB,
+				GrainSize:           4096,
+				StartOffset:         1 * MiB,
+				AbsoluteStartOffset: true,
+				AlignFooter:         true,
+				Partitions: []Partition{
+					{
+						Size: 200 * MiB,
+						Type: EFISystemPartitionGUID,
+						Payload: &Filesystem{
+							Type:       "vfat",
+							Mountpoint: "/boot/efi",
+						},
+					},
+					{
+						Size: 2 * GiB,
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+					},
+				},
+			},
+			size: 200*MiB + 2*GiB,
+			expected: &PartitionTable{
+				Type:                PT_GPT,
+				Size:                1*MiB + 200*MiB + 2*GiB + 5*4096, // start (1 MiB) + partitions + aligned footer
+				GrainSize:           4096,
+				StartOffset:         1 * MiB,
+				AbsoluteStartOffset: true,
+				AlignFooter:         true,
+				Partitions: []Partition{
+					{
+						Start: 1 * MiB, // StartOffset treated as absolute minimum, already grain-aligned
+						Size:  200 * MiB,
+						Type:  EFISystemPartitionGUID,
+						Payload: &Filesystem{
+							Type:       "vfat",
+							Mountpoint: "/boot/efi",
+						},
+					},
+					{
+						Start: 1*MiB + 200*MiB,
+						Size:  2 * GiB,
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name := range testCases {
