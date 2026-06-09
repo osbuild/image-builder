@@ -37,15 +37,6 @@ const (
 	Stig                  Profile = "xccdf_org.ssgproject.content_profile_stig"
 	StigGui               Profile = "xccdf_org.ssgproject.content_profile_stig_gui"
 
-	// datastream fallbacks
-	defaultFedoraDatastream   string = "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
-	defaultCentos8Datastream  string = "/usr/share/xml/scap/ssg/content/ssg-centos8-ds.xml"
-	defaultCentos9Datastream  string = "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
-	defaultCentos10Datastream string = "/usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml"
-	defaultRHEL8Datastream    string = "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
-	defaultRHEL9Datastream    string = "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
-	defaultRHEL10Datastream   string = "/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml"
-
 	// oscap related directories
 	DataDir string = "/oscap_data"
 )
@@ -122,31 +113,6 @@ func NewConfigs(oscapConfig blueprint.OpenSCAPCustomization, defaultDatastream *
 	default:
 		return &remediationConfig, nil
 	}
-}
-
-func DefaultFedoraDatastream() string {
-	return defaultFedoraDatastream
-}
-
-func DefaultRHEL8Datastream(isRHEL bool) string {
-	if isRHEL {
-		return defaultRHEL8Datastream
-	}
-	return defaultCentos8Datastream
-}
-
-func DefaultRHEL9Datastream(isRHEL bool) string {
-	if isRHEL {
-		return defaultRHEL9Datastream
-	}
-	return defaultCentos9Datastream
-}
-
-func DefaultRHEL10Datastream(isRHEL bool) string {
-	if isRHEL {
-		return defaultRHEL10Datastream
-	}
-	return defaultCentos10Datastream
 }
 
 func IsProfileAllowed(profile string, allowlist []Profile) bool {
