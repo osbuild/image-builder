@@ -32,8 +32,14 @@ type PartitionTable struct {
 	SectorSize uint64 `json:"sector_size,omitempty" yaml:"sector_size,omitempty"`
 	// Extra space at the end of the partition table (sectors)
 	ExtraPadding uint64 `json:"extra_padding,omitempty" yaml:"extra_padding,omitempty"`
-	// Starting offset of the first partition in the table (in bytes)
+	// Starting offset of the first partition in the table (in bytes).
+	// By default this is added to the header size. When
+	// AbsoluteStartOffset is true, it is treated as a minimum absolute
+	// position (matching systemd-repart's use of libfdisk's first_lba).
 	StartOffset Offset `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
+	// Treat StartOffset as an absolute minimum start position rather
+	// than an additive offset on top of the header.
+	AbsoluteStartOffset bool `json:"absolute_start_offset,omitempty" yaml:"absolute_start_offset,omitempty"`
 	// Align the GPT footer to the grain size, ensuring the last partition's
 	// size is also grain-aligned. Matches systemd-repart behavior.
 	AlignFooter bool `json:"align_footer,omitempty" yaml:"align_footer,omitempty"`
@@ -220,16 +226,17 @@ func (pt *PartitionTable) Clone() Entity {
 	}
 
 	clone := &PartitionTable{
-		Size:         pt.Size,
-		UUID:         pt.UUID,
-		Type:         pt.Type,
-		Partitions:   make([]Partition, len(pt.Partitions)),
-		SectorSize:   pt.SectorSize,
-		GrainSize:    pt.GrainSize,
-		ExtraPadding: pt.ExtraPadding,
-		StartOffset:  pt.StartOffset,
-		AlignFooter:  pt.AlignFooter,
-		Policy:       pt.Policy,
+		Size:                pt.Size,
+		UUID:                pt.UUID,
+		Type:                pt.Type,
+		Partitions:          make([]Partition, len(pt.Partitions)),
+		SectorSize:          pt.SectorSize,
+		GrainSize:           pt.GrainSize,
+		ExtraPadding:        pt.ExtraPadding,
+		StartOffset:         pt.StartOffset,
+		AbsoluteStartOffset: pt.AbsoluteStartOffset,
+		AlignFooter:         pt.AlignFooter,
+		Policy:              pt.Policy,
 	}
 
 	for idx, partition := range pt.Partitions {
@@ -525,7 +532,11 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 		}
 	}
 
-	start := pt.AlignUp(header + pt.StartOffset).Uint64()
+	startBase := header + pt.StartOffset
+	if pt.AbsoluteStartOffset && pt.StartOffset > header {
+		startBase = pt.StartOffset
+	}
+	start := pt.AlignUp(startBase).Uint64()
 
 	size = pt.AlignUp(size)
 
