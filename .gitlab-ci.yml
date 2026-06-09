@@ -61,6 +61,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro centos-10 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [centos-10, x86_64]":
@@ -75,6 +78,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro centos-10 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [centos-9, aarch64]":
@@ -89,6 +95,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro centos-9 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [centos-9, x86_64]":
@@ -103,6 +112,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro centos-9 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [eln-11, aarch64]":
@@ -117,6 +129,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro eln-11 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [eln-11, x86_64]":
@@ -131,6 +146,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro eln-11 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [fedora-43, aarch64]":
@@ -145,6 +163,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro fedora-43 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [fedora-43, x86_64]":
@@ -159,6 +180,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro fedora-43 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [fedora-44, aarch64]":
@@ -173,6 +197,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro fedora-44 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [fedora-44, x86_64]":
@@ -187,6 +214,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro fedora-44 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [fedora-45, aarch64]":
@@ -201,6 +231,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro fedora-45 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [fedora-45, x86_64]":
@@ -215,6 +248,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro fedora-45 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-10.0, aarch64]":
@@ -229,6 +265,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-10.0 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-10.0, x86_64]":
@@ -243,6 +282,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-10.0 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-10.1, aarch64]":
@@ -257,6 +299,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-10.1 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-10.1, x86_64]":
@@ -271,6 +316,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-10.1 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-10.2, aarch64]":
@@ -285,6 +333,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-10.2 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-10.2, x86_64]":
@@ -299,6 +350,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-10.2 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-10.3, aarch64]":
@@ -313,6 +367,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-10.3 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-10.3, x86_64]":
@@ -327,6 +384,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-10.3 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-7.9, x86_64]":
@@ -341,6 +401,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-7.9 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-8.10, aarch64]":
@@ -355,6 +418,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-8.10 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-8.10, x86_64]":
@@ -369,6 +435,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-8.10 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-8.4, aarch64]":
@@ -383,6 +452,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-8.4 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-8.4, x86_64]":
@@ -397,6 +469,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-8.4 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-8.6, aarch64]":
@@ -411,6 +486,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-8.6 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-8.6, x86_64]":
@@ -425,6 +503,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-8.6 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-8.8, aarch64]":
@@ -439,6 +520,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-8.8 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-8.8, x86_64]":
@@ -453,6 +537,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-8.8 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.0, aarch64]":
@@ -467,6 +554,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.0 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.0, x86_64]":
@@ -481,6 +571,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.0 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.2, aarch64]":
@@ -495,6 +588,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.2 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.2, x86_64]":
@@ -509,6 +605,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.2 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.4, aarch64]":
@@ -523,6 +622,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.4 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.4, x86_64]":
@@ -537,6 +639,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.4 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.6, aarch64]":
@@ -551,6 +656,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.6 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.6, x86_64]":
@@ -565,6 +673,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.6 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.7, aarch64]":
@@ -579,6 +690,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.7 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.7, x86_64]":
@@ -593,6 +707,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.7 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.8, aarch64]":
@@ -607,6 +724,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.8 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.8, x86_64]":
@@ -621,6 +741,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.8 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.9, aarch64]":
@@ -635,6 +758,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.9 --arch aarch64
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-images: [rhel-9.9, x86_64]":
@@ -649,6 +775,9 @@ fail:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro rhel-9.9 --arch x86_64
+  artifacts:
+    paths:
+      - ./logs
 
 "test-ostree-images: [centos-9, aarch64]":
   stage: ostree-build
@@ -664,6 +793,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro centos-9 --arch aarch64
   needs:
     - "test-images: [centos-9, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [centos-9, x86_64]":
@@ -680,6 +812,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro centos-9 --arch x86_64
   needs:
     - "test-images: [centos-9, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [fedora-43, aarch64]":
@@ -696,6 +831,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro fedora-43 --arch aarch64
   needs:
     - "test-images: [fedora-43, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [fedora-43, x86_64]":
@@ -712,6 +850,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro fedora-43 --arch x86_64
   needs:
     - "test-images: [fedora-43, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [fedora-44, aarch64]":
@@ -728,6 +869,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro fedora-44 --arch aarch64
   needs:
     - "test-images: [fedora-44, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [fedora-44, x86_64]":
@@ -744,6 +888,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro fedora-44 --arch x86_64
   needs:
     - "test-images: [fedora-44, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [fedora-45, aarch64]":
@@ -760,6 +907,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro fedora-45 --arch aarch64
   needs:
     - "test-images: [fedora-45, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [fedora-45, x86_64]":
@@ -776,6 +926,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro fedora-45 --arch x86_64
   needs:
     - "test-images: [fedora-45, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-8.10, aarch64]":
@@ -792,6 +945,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-8.10 --arch aarch64
   needs:
     - "test-images: [rhel-8.10, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-8.10, x86_64]":
@@ -808,6 +964,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-8.10 --arch x86_64
   needs:
     - "test-images: [rhel-8.10, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-8.4, aarch64]":
@@ -824,6 +983,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-8.4 --arch aarch64
   needs:
     - "test-images: [rhel-8.4, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-8.4, x86_64]":
@@ -840,6 +1002,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-8.4 --arch x86_64
   needs:
     - "test-images: [rhel-8.4, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-8.6, aarch64]":
@@ -856,6 +1021,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-8.6 --arch aarch64
   needs:
     - "test-images: [rhel-8.6, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-8.6, x86_64]":
@@ -872,6 +1040,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-8.6 --arch x86_64
   needs:
     - "test-images: [rhel-8.6, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-8.8, aarch64]":
@@ -888,6 +1059,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-8.8 --arch aarch64
   needs:
     - "test-images: [rhel-8.8, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-8.8, x86_64]":
@@ -904,6 +1078,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-8.8 --arch x86_64
   needs:
     - "test-images: [rhel-8.8, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.0, aarch64]":
@@ -920,6 +1097,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.0 --arch aarch64
   needs:
     - "test-images: [rhel-9.0, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.0, x86_64]":
@@ -936,6 +1116,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.0 --arch x86_64
   needs:
     - "test-images: [rhel-9.0, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.2, aarch64]":
@@ -952,6 +1135,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.2 --arch aarch64
   needs:
     - "test-images: [rhel-9.2, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.2, x86_64]":
@@ -968,6 +1154,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.2 --arch x86_64
   needs:
     - "test-images: [rhel-9.2, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.4, aarch64]":
@@ -984,6 +1173,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.4 --arch aarch64
   needs:
     - "test-images: [rhel-9.4, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.4, x86_64]":
@@ -1000,6 +1192,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.4 --arch x86_64
   needs:
     - "test-images: [rhel-9.4, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.6, aarch64]":
@@ -1016,6 +1211,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.6 --arch aarch64
   needs:
     - "test-images: [rhel-9.6, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.6, x86_64]":
@@ -1032,6 +1230,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.6 --arch x86_64
   needs:
     - "test-images: [rhel-9.6, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.7, aarch64]":
@@ -1048,6 +1249,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.7 --arch aarch64
   needs:
     - "test-images: [rhel-9.7, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.7, x86_64]":
@@ -1064,6 +1268,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.7 --arch x86_64
   needs:
     - "test-images: [rhel-9.7, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.8, aarch64]":
@@ -1080,6 +1287,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.8 --arch aarch64
   needs:
     - "test-images: [rhel-9.8, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.8, x86_64]":
@@ -1096,6 +1306,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.8 --arch x86_64
   needs:
     - "test-images: [rhel-9.8, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.9, aarch64]":
@@ -1112,6 +1325,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.9 --arch aarch64
   needs:
     - "test-images: [rhel-9.9, aarch64]"
+  artifacts:
+    paths:
+      - ./logs
 
 
 "test-ostree-images: [rhel-9.9, x86_64]":
@@ -1128,6 +1344,9 @@ fail:
     - ./test/scripts/test-new-ostree-manifests --distro rhel-9.9 --arch x86_64
   needs:
     - "test-images: [rhel-9.9, x86_64]"
+  artifacts:
+    paths:
+      - ./logs
 
 "generate-manifests: [centos-10, ppc64le]":
   stage: build

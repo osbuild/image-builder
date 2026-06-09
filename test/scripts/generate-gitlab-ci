@@ -75,6 +75,9 @@ TEST_IMAGES_TEMPLATE = """
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo -E ./test/scripts/install-dependencies
     - ./test/scripts/test-new-manifests --distro {distro} --arch {arch}
+  artifacts:
+    paths:
+      - {logdir}
 """
 
 TEST_OSTREE_IMAGES_TEMPLATE = """
@@ -92,6 +95,9 @@ TEST_OSTREE_IMAGES_TEMPLATE = """
     - ./test/scripts/test-new-ostree-manifests --distro {distro} --arch {arch}
   needs:
     - "test-images: [{distro}, {arch}]"
+  artifacts:
+    paths:
+      - {logdir}
 """
 
 MANIFEST_GEN_TEMPLATE = """
@@ -144,7 +150,8 @@ def main():
             distro=img["distro"],
             arch=img["arch"],
             runner=runner,
-            tag=tag))
+            tag=tag,
+            logdir=testlib.BUILD_LOG_PATH))
 
         for ostree_distro_prefix in OSTREE_DISTROS:
             if img["distro"].startswith(ostree_distro_prefix):
@@ -156,7 +163,8 @@ def main():
             distro=img["distro"],
             arch=img["arch"],
             runner=runner,
-            tag=tag))
+            tag=tag,
+            logdir=testlib.BUILD_LOG_PATH))
 
     man_only_images = testlib.list_images(arches=MANIFEST_ONLY_ARCHES)
     man_gen_stage = []
