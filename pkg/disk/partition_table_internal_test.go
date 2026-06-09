@@ -787,6 +787,55 @@ func TestRelayout(t *testing.T) {
 				},
 			},
 		},
+		"gpt-4k-grain-align-footer": {
+			pt: &PartitionTable{
+				Type:        PT_GPT,
+				Size:        200*MiB + 2*GiB,
+				GrainSize:   4096,
+				AlignFooter: true,
+				Partitions: []Partition{
+					{
+						Size: 200 * MiB,
+						Type: EFISystemPartitionGUID,
+						Payload: &Filesystem{
+							Type:       "vfat",
+							Mountpoint: "/boot/efi",
+						},
+					},
+					{
+						Size: 2 * GiB,
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+					},
+				},
+			},
+			size: 200*MiB + 2*GiB,
+			expected: &PartitionTable{
+				Type:        PT_GPT,
+				Size:        200*MiB + 2*GiB + 10*4096, // header (5*4096) + footer (5*4096)
+				GrainSize:   4096,
+				AlignFooter: true,
+				Partitions: []Partition{
+					{
+						Start: 5 * 4096, // header (16896) aligned up to 4096 grain
+						Size:  200 * MiB,
+						Type:  EFISystemPartitionGUID,
+						Payload: &Filesystem{
+							Type:       "vfat",
+							Mountpoint: "/boot/efi",
+						},
+					},
+					{
+						Start: 5*4096 + 200*MiB,
+						Size:  2 * GiB, // exactly 2 GiB: footer is grain-aligned so root stays aligned
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name := range testCases {
