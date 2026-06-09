@@ -157,6 +157,258 @@ func TestNewBootc(t *testing.T) {
 			expectedError: "failed to initialize bootc distro: missing required info: Arch, DefaultRootFs, Size, OSInfo",
 		},
 
+		"defaultrootfs-from-partition-table": {
+			// When DefaultRootFs is empty but disk.yaml provides a partition
+			// table with root filesystem, use the fs type from the partition table
+			info: &bootc.Info{
+				Imgref:  "example.com/containers/distro-bootc:version12",
+				ImageID: "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+				Arch:    "x86_64",
+				Size:    100 * datasizes.MiB,
+				OSInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Filesystem{
+									Type:       "ext4",
+									Mountpoint: "/",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedDistro: &BootcDistro{
+				imgref:      "example.com/containers/distro-bootc:version12",
+				imageID:     "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+				buildImgref: "example.com/containers/distro-bootc:version12",
+				sourceInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Filesystem{
+									Type:       "ext4",
+									Mountpoint: "/",
+								},
+							},
+						},
+					},
+				},
+				buildSourceInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Filesystem{
+									Type:       "ext4",
+									Mountpoint: "/",
+								},
+							},
+						},
+					},
+				},
+				id: distro.ID{
+					Name:         "bootc-aos",
+					MajorVersion: 5000,
+					MinorVersion: -1,
+				},
+				releasever:    "5000",
+				defaultFs:     "ext4",
+				rootfsMinSize: 200 * datasizes.MiB,
+				arches: map[string]distro.Arch{
+					"x86_64": &architecture{
+						arch: arch.ARCH_X86_64,
+					},
+				},
+			},
+		},
+
+		"disk-yaml-overrides-bootc-config": {
+			// When both bootc config (DefaultRootFs) and disk.yaml (PartitionTable)
+			// provide root filesystem type, disk.yaml should always take priority
+			info: &bootc.Info{
+				Imgref:        "example.com/containers/distro-bootc:version12",
+				ImageID:       "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+				Arch:          "x86_64",
+				DefaultRootFs: "xfs", // bootc config says xfs
+				Size:          100 * datasizes.MiB,
+				OSInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Filesystem{
+									Type:       "ext4", // disk.yaml says ext4
+									Mountpoint: "/",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedDistro: &BootcDistro{
+				imgref:      "example.com/containers/distro-bootc:version12",
+				imageID:     "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+				buildImgref: "example.com/containers/distro-bootc:version12",
+				sourceInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Filesystem{
+									Type:       "ext4",
+									Mountpoint: "/",
+								},
+							},
+						},
+					},
+				},
+				buildSourceInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Filesystem{
+									Type:       "ext4",
+									Mountpoint: "/",
+								},
+							},
+						},
+					},
+				},
+				id: distro.ID{
+					Name:         "bootc-aos",
+					MajorVersion: 5000,
+					MinorVersion: -1,
+				},
+				releasever:    "5000",
+				defaultFs:     "ext4", // disk.yaml wins over bootc config
+				rootfsMinSize: 200 * datasizes.MiB,
+				arches: map[string]distro.Arch{
+					"x86_64": &architecture{
+						arch: arch.ARCH_X86_64,
+					},
+				},
+			},
+		},
+
+		"defaultrootfs-from-partition-table-btrfs": {
+			// Test with btrfs subvolumes as root filesystem
+			info: &bootc.Info{
+				Imgref:  "example.com/containers/distro-bootc:version12",
+				ImageID: "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+				Arch:    "x86_64",
+				Size:    100 * datasizes.MiB,
+				OSInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Btrfs{
+									Subvolumes: []disk.BtrfsSubvolume{
+										{
+											Name:       "root",
+											Mountpoint: "/",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedDistro: &BootcDistro{
+				imgref:      "example.com/containers/distro-bootc:version12",
+				imageID:     "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+				buildImgref: "example.com/containers/distro-bootc:version12",
+				sourceInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Btrfs{
+									Subvolumes: []disk.BtrfsSubvolume{
+										{
+											Name:       "root",
+											Mountpoint: "/",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				buildSourceInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						ID:        "aos",
+						VersionID: "5000",
+					},
+					PartitionTable: &disk.PartitionTable{
+						Type: disk.PT_GPT,
+						Partitions: []disk.Partition{
+							{
+								Payload: &disk.Btrfs{
+									Subvolumes: []disk.BtrfsSubvolume{
+										{
+											Name:       "root",
+											Mountpoint: "/",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				id: distro.ID{
+					Name:         "bootc-aos",
+					MajorVersion: 5000,
+					MinorVersion: -1,
+				},
+				releasever:    "5000",
+				defaultFs:     "btrfs",
+				rootfsMinSize: 200 * datasizes.MiB,
+				arches: map[string]distro.Arch{
+					"x86_64": &architecture{
+						arch: arch.ARCH_X86_64,
+					},
+				},
+			},
+		},
+
 		"osinfo-without-values": {
 			info: &bootc.Info{
 				Imgref:        "example.com/containers/distro-bootc:version12",

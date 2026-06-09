@@ -393,9 +393,22 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		if err != nil {
 			return nil, err
 		}
-		if bootcDefaultFs != "" {
+
+		// Log informational message about root filesystem configuration source.
+		// disk.yaml always takes priority over --bootc-default-fs and bootc config.
+		diskYamlRootFs := bootcInfo.OSInfo.GetDiskYamlRootFs()
+		if diskYamlRootFs != "" {
+			if bootcDefaultFs != "" {
+				pbar.SetPulseMsgf("Using disk.yaml root filesystem (%s), ignoring --bootc-default-fs (%s)", diskYamlRootFs, bootcDefaultFs)
+			} else if bootcInfo.DefaultRootFs != "" {
+				pbar.SetPulseMsgf("Using disk.yaml root filesystem (%s), ignoring bootc config (%s)", diskYamlRootFs, bootcInfo.DefaultRootFs)
+			} else {
+				pbar.SetPulseMsgf("Using disk.yaml root filesystem (%s)", diskYamlRootFs)
+			}
+		} else if bootcDefaultFs != "" {
 			bootcInfo.DefaultRootFs = bootcDefaultFs
 		}
+
 		distro, err := generic.NewBootc("bootc", bootcInfo)
 		if err != nil {
 			return nil, err
