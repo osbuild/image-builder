@@ -44,6 +44,25 @@ func TestAlignUp(t *testing.T) {
 		got := pt.AlignUp(tt.size)
 		assert.Equal(t, tt.want, got, "Expected %d, got %d", tt.want, got)
 	}
+
+	// custom grain size
+	customGrain := datasizes.Size(4096)
+	ptCustom := disk.PartitionTable{GrainSize: customGrain}
+	customTests := []struct {
+		size datasizes.Size
+		want datasizes.Size
+	}{
+		{0, 0},
+		{1, customGrain},
+		{customGrain - 1, customGrain},
+		{customGrain, customGrain},
+		{customGrain + 1, customGrain * 2},
+	}
+
+	for _, tt := range customTests {
+		got := ptCustom.AlignUp(tt.size)
+		assert.Equal(t, tt.want, got, "Expected %d, got %d (grain=%d)", tt.want, got, customGrain)
+	}
 }
 
 func TestDynamicallyResizePartitionTable(t *testing.T) {

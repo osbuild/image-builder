@@ -26,7 +26,9 @@ type PartitionTable struct {
 	Type       PartitionTableType `json:"type" yaml:"type"`
 	Partitions []Partition        `json:"partitions" yaml:"partitions"`
 
-	// Sector size in bytes
+	// Grain size for partition alignment (in bytes). 0 means DefaultGrainBytes.
+	GrainSize datasizes.Size `json:"grain_size,omitempty" yaml:"grain_size,omitempty"`
+	// Sector size in bytes. 0 means DefaultSectorSize.
 	SectorSize uint64 `json:"sector_size,omitempty" yaml:"sector_size,omitempty"`
 	// Extra space at the end of the partition table (sectors)
 	ExtraPadding uint64 `json:"extra_padding,omitempty" yaml:"extra_padding,omitempty"`
@@ -220,6 +222,7 @@ func (pt *PartitionTable) Clone() Entity {
 		Type:         pt.Type,
 		Partitions:   make([]Partition, len(pt.Partitions)),
 		SectorSize:   pt.SectorSize,
+		GrainSize:    pt.GrainSize,
 		ExtraPadding: pt.ExtraPadding,
 		StartOffset:  pt.StartOffset,
 		Policy:       pt.Policy,
@@ -243,10 +246,17 @@ func (pt *PartitionTable) Clone() Entity {
 	return clone
 }
 
-// AlignUp will round up the given size value to the default grain if not
+func (pt *PartitionTable) grainSize() datasizes.Size {
+	if pt.GrainSize > 0 {
+		return pt.GrainSize
+	}
+	return DefaultGrainBytes
+}
+
+// AlignUp will round up the given size value to the grain size if not
 // already aligned.
 func (pt *PartitionTable) AlignUp(size datasizes.Size) datasizes.Size {
-	grain := DefaultGrainBytes
+	grain := pt.grainSize()
 	if size%grain == 0 {
 		// already aligned: return unchanged
 		return size
