@@ -34,6 +34,9 @@ type PartitionTable struct {
 	ExtraPadding uint64 `json:"extra_padding,omitempty" yaml:"extra_padding,omitempty"`
 	// Starting offset of the first partition in the table (in bytes)
 	StartOffset Offset `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
+	// Align the GPT footer to the grain size, ensuring the last partition's
+	// size is also grain-aligned. Matches systemd-repart behavior.
+	AlignFooter bool `json:"align_footer,omitempty" yaml:"align_footer,omitempty"`
 
 	// Dictates if certain bits and bobs are required or not; uses the default
 	// policy if not set.
@@ -225,6 +228,7 @@ func (pt *PartitionTable) Clone() Entity {
 		GrainSize:    pt.GrainSize,
 		ExtraPadding: pt.ExtraPadding,
 		StartOffset:  pt.StartOffset,
+		AlignFooter:  pt.AlignFooter,
 		Policy:       pt.Policy,
 	}
 
@@ -516,6 +520,9 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	// The GPT header is also at the end of the partition table
 	if pt.Type == PT_GPT {
 		footer = header
+		if pt.AlignFooter {
+			footer = pt.AlignUp(footer)
+		}
 	}
 
 	start := pt.AlignUp(header + pt.StartOffset).Uint64()
