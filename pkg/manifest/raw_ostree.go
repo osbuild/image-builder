@@ -99,10 +99,10 @@ func (p *RawOSTreeImage) serialize() (osbuild.Pipeline, error) {
 			return osbuild.Pipeline{}, fmt.Errorf("no mount found for the filesystem root")
 		}
 
-		for _, paths := range bootFiles {
+		for _, bf := range bootFiles {
 			bootCopyOptions.Paths = append(bootCopyOptions.Paths, osbuild.CopyStagePath{
-				From: fmt.Sprintf("input://ostree-tree/%s%s", commitChecksum, paths[0]),
-				To:   fmt.Sprintf("mount://%s%s", fsRootMntName, paths[1]),
+				From: fmt.Sprintf("input://ostree-tree/%s%s", commitChecksum, bf.Src),
+				To:   fmt.Sprintf("mount://%s%s", fsRootMntName, bf.Dst),
 			})
 		}
 

@@ -26,7 +26,8 @@ func TestPlatformYamlSmoke(t *testing.T) {
           bios:
             - grub2-pc-as-bp
         boot_files:
-          - ["/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"]
+          - src: "/usr/share/uboot/rpi_arm64/u-boot.bin"
+            dst: "/boot/efi/rpi-u-boot.bin"
         extra_uefi_architectures:
           - "ia32"
 `)
@@ -45,8 +46,8 @@ func TestPlatformYamlSmoke(t *testing.T) {
 		BuildPackages: map[string][]string{
 			"bios": []string{"grub2-pc-as-bp"},
 		},
-		BootFiles: [][2]string{
-			{"/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"},
+		BootFiles: []platform.BootFile{
+			{Src: "/usr/share/uboot/rpi_arm64/u-boot.bin", Dst: "/boot/efi/rpi-u-boot.bin"},
 		},
 		FIPSMenu:               false,
 		ExtraUEFIArchitectures: []string{"ia32"},

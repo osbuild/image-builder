@@ -1752,45 +1752,84 @@ image_types:
       - <<: *aarch64_platform
         image_format: "raw"
         boot_files:
-          - ["/usr/lib/ostree-boot/efi/bcm2710-rpi-2-b.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b-plus.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2710-rpi-cm0.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2710-rpi-cm3.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2-w.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2711-rpi-4-b.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2711-rpi-400.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4s.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2712-rpi-5-b.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2712-rpi-500.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2712-d-rpi-5-b.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2712d0-rpi-5-b.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2712-rpi-cm5-cm4io.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2712-rpi-cm5-cm5io.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2712-rpi-cm5l-cm4io.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bcm2712-rpi-cm5l-cm5io.dtb", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/bootcode.bin", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/config.txt", "/boot/efi/config.txt"]
-          - ["/usr/lib/ostree-boot/efi/fixup.dat", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/fixup4.dat", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/fixup4cd.dat", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/fixup4db.dat", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/fixup4x.dat", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/fixup_cd.dat", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/fixup_db.dat", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/fixup_x.dat", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/overlays", "/boot/efi/"]
-          - ["/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"]
-          - ["/usr/lib/ostree-boot/efi/start.elf", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/start4.elf", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/start4cd.elf", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/start4db.elf", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/start4x.elf", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/start_cd.elf", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/start_db.elf", "/boot/efi/"]
-          - ["/usr/lib/ostree-boot/efi/start_x.elf", "/boot/efi/"]
+          - src: "/usr/lib/ostree-boot/efi/bcm2710-rpi-2-b.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b-plus.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2710-rpi-cm0.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2710-rpi-cm3.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2-w.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2711-rpi-4-b.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2711-rpi-400.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4s.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2712-rpi-5-b.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2712-rpi-500.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2712-d-rpi-5-b.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2712d0-rpi-5-b.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2712-rpi-cm5-cm4io.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2712-rpi-cm5-cm5io.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2712-rpi-cm5l-cm4io.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bcm2712-rpi-cm5l-cm5io.dtb"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/bootcode.bin"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/config.txt"
+            dst: "/boot/efi/config.txt"
+          - src: "/usr/lib/ostree-boot/efi/fixup.dat"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/fixup4.dat"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/fixup4cd.dat"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/fixup4db.dat"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/fixup4x.dat"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/fixup_cd.dat"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/fixup_db.dat"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/fixup_x.dat"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/overlays"
+            dst: "/boot/efi/"
+          - src: "/usr/share/uboot/rpi_arm64/u-boot.bin"
+            dst: "/boot/efi/rpi-u-boot.bin"
+          - src: "/usr/lib/ostree-boot/efi/start.elf"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/start4.elf"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/start4cd.elf"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/start4db.elf"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/start4x.elf"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/start_cd.elf"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/start_db.elf"
+            dst: "/boot/efi/"
+          - src: "/usr/lib/ostree-boot/efi/start_x.elf"
+            dst: "/boot/efi/"
     partition_table:
       <<: *iot_base_partition_tables
     blueprint:
@@ -1996,7 +2035,8 @@ image_types:
             - "bcm283x-firmware"
             - "uboot-images-armv8"
         boot_files:
-          - ["/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"]
+          - src: "/usr/share/uboot/rpi_arm64/u-boot.bin"
+            dst: "/boot/efi/rpi-u-boot.bin"
         bootloader: "grub2"
       - *riscv64_uefi_platform
     disk_config:
