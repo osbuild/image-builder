@@ -570,13 +570,15 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 
 	bootloader := p.platform.GetBootloader()
 
+	bootRoot := "/boot"
+
 	if bootloader == platform.BOOTLOADER_UKI && p.PartitionTable != nil {
-		espMountpoint, err := findESPMountpoint(p.PartitionTable)
+		bootRoot, err = findESPMountpoint(p.PartitionTable)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}
 		baseRPMOptions.KernelInstallEnv = &osbuild.KernelInstallEnv{
-			BootRoot: espMountpoint,
+			BootRoot: bootRoot,
 		}
 	}
 
@@ -593,7 +595,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 			xbootldrMountpoint = ""
 		}
 
-		bootRoot := espMountpoint
+		bootRoot = espMountpoint
 		if xbootldrMountpoint != "" {
 			bootRoot = xbootldrMountpoint
 		}
@@ -612,11 +614,15 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	if !p.OSCustomizations.NoBLS {
 		fixBLSOptions := &osbuild.FixBLSStageOptions{}
 
-		// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-		if p.PartitionTable != nil && p.PartitionTable.FindMountableOnPlain("/boot") != nil {
+		// If the bootRoot is on a separate partition, the prefix for the BLS stage must be "" as
+		// the bootloader looks relative to the partition this is the case no matter if the bootRoot
+		// is the ESP or the XBOOTLDR
+		if p.PartitionTable != nil && p.PartitionTable.FindMountableOnPlain(bootRoot) != nil {
 			fixBLSOptions.Prefix = common.ToPtr("")
 		}
 
+		// When the bootloader is systemd we need to do the same dance to find the boot root that
+		// was used previously
 		if bootloader == platform.BOOTLOADER_SYSTEMD {
 			fixBLSOptions.RequireBootPrefix = common.ToPtr(false)
 		}
