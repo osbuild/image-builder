@@ -42,10 +42,11 @@ def print_section_end(name: str):
 class log_section(contextlib.ContextDecorator):
 
     def __init__(self, message):
-        self._id = str(uuid.uuid4())
+        self._id = ""
         self._message = message
 
     def __enter__(self):
+        self._id = str(uuid.uuid4())
         print_section_start(self._id, self._message)
 
     def __exit__(self, *_):
