@@ -149,6 +149,11 @@ func (f *ImageFormat) UnmarshalYAML(unmarshal func(any) error) error {
 	return common.UnmarshalYAMLviaJSON(f, unmarshal)
 }
 
+type BootFile struct {
+	Src string `yaml:"src" json:"src"`
+	Dst string `yaml:"dst" json:"dst"`
+}
+
 type Platform interface {
 	GetArch() arch.Arch
 	GetImageFormat() ImageFormat
@@ -159,7 +164,7 @@ type Platform interface {
 	GetZiplSupport() bool
 	GetPackages() []string
 	GetBuildPackages() []string
-	GetBootFiles() [][2]string
+	GetBootFiles() []BootFile
 	GetBootloader() Bootloader
 	GetFIPSMenu() bool
 }

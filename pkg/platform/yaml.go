@@ -20,7 +20,7 @@ type Data struct {
 	// bios support
 	Packages      map[string][]string `yaml:"packages"`
 	BuildPackages map[string][]string `yaml:"build_packages"`
-	BootFiles     [][2]string         `yaml:"boot_files"`
+	BootFiles     []BootFile          `yaml:"boot_files"`
 
 	Bootloader Bootloader `yaml:"bootloader"`
 	FIPSMenu   bool       `yaml:"fips_menu"` // Add FIPS entry to iso bootloader menu
@@ -64,7 +64,7 @@ func (d *Data) GetBuildPackages() []string {
 	}
 	return merged
 }
-func (d *Data) GetBootFiles() [][2]string {
+func (d *Data) GetBootFiles() []BootFile {
 	return d.BootFiles
 }
 
