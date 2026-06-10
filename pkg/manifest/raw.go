@@ -69,10 +69,20 @@ func (p *RawImage) serialize() (osbuild.Pipeline, error) {
 	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
 	pipeline.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 
-	bootFiles := p.treePipeline.platform.GetBootFiles()
-	if len(bootFiles) > 0 {
-		bootCopyInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
-		stage, err := bootFilesCopyStage(bootFiles, bootCopyInputs, inputName, inputName, p.treePipeline.Name(), p.Filename(), pt)
+	treeBootFiles, buildBootFiles := splitBootFiles(p.treePipeline.platform.GetBootFiles())
+	if len(treeBootFiles) > 0 {
+		treeInputName := "root-tree"
+		bootCopyInputs := osbuild.NewPipelineTreeInputs(treeInputName, p.treePipeline.Name())
+		stage, err := bootFilesCopyStage(treeBootFiles, bootCopyInputs, treeInputName, p.Filename(), pt)
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+		pipeline.AddStage(stage)
+	}
+	if len(buildBootFiles) > 0 {
+		buildInputName := "build-tree"
+		buildCopyInputs := osbuild.NewPipelineTreeInputs(buildInputName, p.build.Name())
+		stage, err := bootFilesCopyStage(buildBootFiles, buildCopyInputs, buildInputName, p.Filename(), pt)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}
@@ -117,13 +127,24 @@ func (p *RawImage) serialize() (osbuild.Pipeline, error) {
 	return pipeline, nil
 }
 
+func splitBootFiles(bootFiles []platform.BootFile) (tree, build []platform.BootFile) {
+	for _, bf := range bootFiles {
+		if bf.FromBuild {
+			build = append(build, bf)
+		} else {
+			tree = append(tree, bf)
+		}
+	}
+	return tree, build
+}
+
 func bootFilesCopyStage(
 	bootFiles []platform.BootFile,
 	inputs osbuild.Inputs,
-	srcPrefix, inputName, pipelineName, filename string,
+	srcPrefix, filename string,
 	pt *disk.PartitionTable,
 ) (*osbuild.Stage, error) {
-	_, devices, mounts := osbuild.GenCopyFSTreeOptions(inputName, pipelineName, filename, pt)
+	_, devices, mounts := osbuild.GenCopyFSTreeOptions("", "", filename, pt)
 
 	var fsRootMntName string
 	for _, mnt := range mounts {

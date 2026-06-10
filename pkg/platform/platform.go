@@ -150,8 +150,9 @@ func (f *ImageFormat) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 type BootFile struct {
-	Src string `yaml:"src" json:"src"`
-	Dst string `yaml:"dst" json:"dst"`
+	Src       string `yaml:"src" json:"src"`
+	Dst       string `yaml:"dst" json:"dst"`
+	FromBuild bool   `yaml:"from_build,omitempty" json:"from_build,omitempty"`
 }
 
 type Platform interface {

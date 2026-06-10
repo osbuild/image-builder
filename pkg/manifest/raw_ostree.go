@@ -71,15 +71,24 @@ func (p *RawOSTreeImage) serialize() (osbuild.Pipeline, error) {
 
 	pipeline.AddStage(osbuild.NewCopyStage(treeCopyOptions, treeCopyInputs, treeCopyDevices, treeCopyMounts))
 
-	bootFiles := p.platform.GetBootFiles()
-	if len(bootFiles) > 0 {
+	treeBootFiles, buildBootFiles := splitBootFiles(p.platform.GetBootFiles())
+	if len(treeBootFiles) > 0 {
 		commit := p.treePipeline.ostreeSpec
 		commitChecksum := commit.Checksum
 		bootCopyInputs := osbuild.OSTreeCheckoutInputs{
 			"ostree-tree": *osbuild.NewOSTreeCheckoutInput("org.osbuild.source", commitChecksum),
 		}
 		srcPrefix := fmt.Sprintf("ostree-tree/%s", commitChecksum)
-		stage, err := bootFilesCopyStage(bootFiles, bootCopyInputs, srcPrefix, inputName, p.treePipeline.Name(), p.Filename(), pt)
+		stage, err := bootFilesCopyStage(treeBootFiles, bootCopyInputs, srcPrefix, p.Filename(), pt)
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+		pipeline.AddStage(stage)
+	}
+	if len(buildBootFiles) > 0 {
+		buildInputName := "build-tree"
+		buildCopyInputs := osbuild.NewPipelineTreeInputs(buildInputName, p.build.Name())
+		stage, err := bootFilesCopyStage(buildBootFiles, buildCopyInputs, buildInputName, p.Filename(), pt)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}
