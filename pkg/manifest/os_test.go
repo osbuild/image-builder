@@ -948,6 +948,54 @@ func TestOSPipelineSystemdBootFixBLS(t *testing.T) {
 	opts := st.Options.(*osbuild.FixBLSStageOptions)
 	require.NotNil(t, opts.RequireBootPrefix)
 	assert.Equal(t, false, *opts.RequireBootPrefix)
+	require.NotNil(t, opts.Prefix)
+	assert.Equal(t, "", *opts.Prefix)
+}
+
+func TestOSPipelineSystemdBootFixBLSXBootLDR(t *testing.T) {
+	os := manifest.NewTestOSWithPlatform(&platform.Data{
+		Arch:       arch.ARCH_X86_64,
+		Bootloader: platform.BOOTLOADER_SYSTEMD,
+	})
+	os.PartitionTable = makeSystemdBootPartitionTableWithXBootLDR()
+
+	pipeline, err := os.Serialize()
+	require.NoError(t, err)
+
+	st := findStage("org.osbuild.fix-bls", pipeline.Stages)
+	require.NotNil(t, st)
+	opts := st.Options.(*osbuild.FixBLSStageOptions)
+	require.NotNil(t, opts.RequireBootPrefix)
+	assert.Equal(t, false, *opts.RequireBootPrefix)
+	require.NotNil(t, opts.Prefix)
+	assert.Equal(t, "", *opts.Prefix)
+}
+
+func TestOSPipelineFixBLSPrefixSeparateBoot(t *testing.T) {
+	os := manifest.NewTestOS()
+	os.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot")
+
+	pipeline, err := os.Serialize()
+	require.NoError(t, err)
+
+	st := findStage("org.osbuild.fix-bls", pipeline.Stages)
+	require.NotNil(t, st)
+	opts := st.Options.(*osbuild.FixBLSStageOptions)
+	require.NotNil(t, opts.Prefix)
+	assert.Equal(t, "", *opts.Prefix)
+}
+
+func TestOSPipelineFixBLSPrefixNoSeparateBoot(t *testing.T) {
+	os := manifest.NewTestOS()
+	os.PartitionTable = testdisk.MakeFakePartitionTable("/")
+
+	pipeline, err := os.Serialize()
+	require.NoError(t, err)
+
+	st := findStage("org.osbuild.fix-bls", pipeline.Stages)
+	require.NotNil(t, st)
+	opts := st.Options.(*osbuild.FixBLSStageOptions)
+	assert.Nil(t, opts.Prefix)
 }
 
 func TestOSPipelineSystemdBootKernelInstallEnv(t *testing.T) {
