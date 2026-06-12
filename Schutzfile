@@ -45,7 +45,7 @@
           {
             "title": "fedora-updates",
             "name": "fedora-updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-x86_64-updates-released-20260517"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-x86_64-updates-released-20260607"
           }
         ],
         "aarch64": [
@@ -57,7 +57,7 @@
           {
             "title": "fedora-updates",
             "name": "fedora-updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-aarch64-updates-released-20260517"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-aarch64-updates-released-20260607"
           }
         ]
       }
