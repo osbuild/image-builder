@@ -91,7 +91,7 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 			},
 			{
 				From: fmt.Sprintf("input://%s/%s", inputName, p.RootfsPath),
-				To:   "tree:///LiveOS/rootfs.img",
+				To:   "tree:///LiveOS/squashfs.img",
 			},
 		},
 	}
@@ -114,7 +114,7 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 	if p.SetOSTREE {
 		lodevice := osbuild.NewLoopbackDevice(
 			&osbuild.LoopbackDeviceOptions{
-				Filename: "LiveOS/rootfs.img",
+				Filename: "LiveOS/squashfs.img",
 			},
 		)
 		devices := map[string]osbuild.Device{"disk": *lodevice}
