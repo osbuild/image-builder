@@ -265,36 +265,6 @@ fail:
       - build-config.yml
 
 
-"generate-build-config: [rhel-10.1, aarch64]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-aarch64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-build-config --distro rhel-10.1 --arch aarch64 build-config.yml
-  artifacts:
-    paths:
-      - build-config.yml
-
-
-"generate-build-config: [rhel-10.1, x86_64]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-build-config --distro rhel-10.1 --arch x86_64 build-config.yml
-  artifacts:
-    paths:
-      - build-config.yml
-
-
 "generate-build-config: [rhel-10.2, aarch64]":
   stage: gen
   extends: .terraform
@@ -610,36 +580,6 @@ fail:
       - build-config.yml
 
 
-"generate-build-config: [rhel-9.7, aarch64]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-aarch64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-build-config --distro rhel-9.7 --arch aarch64 build-config.yml
-  artifacts:
-    paths:
-      - build-config.yml
-
-
-"generate-build-config: [rhel-9.7, x86_64]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-build-config --distro rhel-9.7 --arch x86_64 build-config.yml
-  artifacts:
-    paths:
-      - build-config.yml
-
-
 "generate-build-config: [rhel-9.8, aarch64]":
   stage: gen
   extends: .terraform
@@ -851,28 +791,6 @@ fail:
     strategy: depend
   needs:
     - "generate-build-config: [rhel-10.0, x86_64]"
-
-
-"image-build-trigger: [rhel-10.1, aarch64]":
-  stage: build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-build-config: [rhel-10.1, aarch64]"
-    strategy: depend
-  needs:
-    - "generate-build-config: [rhel-10.1, aarch64]"
-
-
-"image-build-trigger: [rhel-10.1, x86_64]":
-  stage: build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-build-config: [rhel-10.1, x86_64]"
-    strategy: depend
-  needs:
-    - "generate-build-config: [rhel-10.1, x86_64]"
 
 
 "image-build-trigger: [rhel-10.2, aarch64]":
@@ -1104,28 +1022,6 @@ fail:
     strategy: depend
   needs:
     - "generate-build-config: [rhel-9.6, x86_64]"
-
-
-"image-build-trigger: [rhel-9.7, aarch64]":
-  stage: build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-build-config: [rhel-9.7, aarch64]"
-    strategy: depend
-  needs:
-    - "generate-build-config: [rhel-9.7, aarch64]"
-
-
-"image-build-trigger: [rhel-9.7, x86_64]":
-  stage: build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-build-config: [rhel-9.7, x86_64]"
-    strategy: depend
-  needs:
-    - "generate-build-config: [rhel-9.7, x86_64]"
 
 
 "image-build-trigger: [rhel-9.8, aarch64]":
@@ -1603,42 +1499,6 @@ fail:
     - "image-build-trigger: [rhel-9.6, x86_64]"
 
 
-"generate-ostree-build-config: [rhel-9.7, aarch64]":
-  stage: ostree-gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-aarch64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-ostree-build-config --distro rhel-9.7 --arch aarch64 build-config.yml build-configs
-  artifacts:
-    paths:
-      - build-config.yml
-      - build-configs
-  needs:
-    - "image-build-trigger: [rhel-9.7, aarch64]"
-
-
-"generate-ostree-build-config: [rhel-9.7, x86_64]":
-  stage: ostree-gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script:
-    - sudo -E ./test/scripts/setup-osbuild-repo
-    - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-ostree-build-config --distro rhel-9.7 --arch x86_64 build-config.yml build-configs
-  artifacts:
-    paths:
-      - build-config.yml
-      - build-configs
-  needs:
-    - "image-build-trigger: [rhel-9.7, x86_64]"
-
-
 "generate-ostree-build-config: [rhel-9.8, aarch64]":
   stage: ostree-gen
   extends: .terraform
@@ -1972,28 +1832,6 @@ fail:
     strategy: depend
   needs:
     - "generate-ostree-build-config: [rhel-9.6, x86_64]"
-
-
-"image-build-ostree-trigger: [rhel-9.7, aarch64]":
-  stage: ostree-build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-ostree-build-config: [rhel-9.7, aarch64]"
-    strategy: depend
-  needs:
-    - "generate-ostree-build-config: [rhel-9.7, aarch64]"
-
-
-"image-build-ostree-trigger: [rhel-9.7, x86_64]":
-  stage: ostree-build
-  trigger:
-    include:
-      - artifact: build-config.yml
-        job: "generate-ostree-build-config: [rhel-9.7, x86_64]"
-    strategy: depend
-  needs:
-    - "generate-ostree-build-config: [rhel-9.7, x86_64]"
 
 
 "image-build-ostree-trigger: [rhel-9.8, aarch64]":
@@ -2362,54 +2200,6 @@ fail:
     sudo ./test/scripts/install-dependencies
     echo "GOPROXY=$GOPROXY"
     go run ./cmd/gen-manifests --arches s390x --distros rhel-10.0 --workers 10 --metadata=false --output ./manifests
-    errors=0
-    for manifest in ./manifests/*; do
-      if osbuild --inspect $manifest > output; then
-        echo "$manifest OK";
-      else
-        echo "$manifest validation failed";
-        cat output;
-        errors+=1
-      fi;
-    done
-    exit "$errors"
-
-
-"generate-manifests: [rhel-10.1, ppc64le]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script: |
-    sudo -E ./test/scripts/setup-osbuild-repo
-    sudo ./test/scripts/install-dependencies
-    echo "GOPROXY=$GOPROXY"
-    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-10.1 --workers 10 --metadata=false --output ./manifests
-    errors=0
-    for manifest in ./manifests/*; do
-      if osbuild --inspect $manifest > output; then
-        echo "$manifest OK";
-      else
-        echo "$manifest validation failed";
-        cat output;
-        errors+=1
-      fi;
-    done
-    exit "$errors"
-
-
-"generate-manifests: [rhel-10.1, s390x]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script: |
-    sudo -E ./test/scripts/setup-osbuild-repo
-    sudo ./test/scripts/install-dependencies
-    echo "GOPROXY=$GOPROXY"
-    go run ./cmd/gen-manifests --arches s390x --distros rhel-10.1 --workers 10 --metadata=false --output ./manifests
     errors=0
     for manifest in ./manifests/*; do
       if osbuild --inspect $manifest > output; then
@@ -2890,54 +2680,6 @@ fail:
     sudo ./test/scripts/install-dependencies
     echo "GOPROXY=$GOPROXY"
     go run ./cmd/gen-manifests --arches s390x --distros rhel-9.6 --workers 10 --metadata=false --output ./manifests
-    errors=0
-    for manifest in ./manifests/*; do
-      if osbuild --inspect $manifest > output; then
-        echo "$manifest OK";
-      else
-        echo "$manifest validation failed";
-        cat output;
-        errors+=1
-      fi;
-    done
-    exit "$errors"
-
-
-"generate-manifests: [rhel-9.7, ppc64le]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script: |
-    sudo -E ./test/scripts/setup-osbuild-repo
-    sudo ./test/scripts/install-dependencies
-    echo "GOPROXY=$GOPROXY"
-    go run ./cmd/gen-manifests --arches ppc64le --distros rhel-9.7 --workers 10 --metadata=false --output ./manifests
-    errors=0
-    for manifest in ./manifests/*; do
-      if osbuild --inspect $manifest > output; then
-        echo "$manifest OK";
-      else
-        echo "$manifest validation failed";
-        cat output;
-        errors+=1
-      fi;
-    done
-    exit "$errors"
-
-
-"generate-manifests: [rhel-9.7, s390x]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-    INTERNAL_NETWORK: "true"
-  script: |
-    sudo -E ./test/scripts/setup-osbuild-repo
-    sudo ./test/scripts/install-dependencies
-    echo "GOPROXY=$GOPROXY"
-    go run ./cmd/gen-manifests --arches s390x --distros rhel-9.7 --workers 10 --metadata=false --output ./manifests
     errors=0
     for manifest in ./manifests/*; do
       if osbuild --inspect $manifest > output; then
