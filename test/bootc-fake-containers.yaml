@@ -106,3 +106,17 @@ containers:
     info:
       <<: *default_info
       uefi_vendor: "uefi-vendor-aarch64"
+
+  # test pxe-tar-xz
+  - <<: *default_fake_container
+    image_types: ["pxe-tar-xz"]
+    arch: x86_64
+    info:
+      <<: *default_info
+      uefi_vendor: "uefi-vendor-x86_64"
+  - <<: *default_fake_container
+    image_types: ["pxe-tar-xz"]
+    arch: aarch64
+    info:
+      <<: *default_info
+      uefi_vendor: "uefi-vendor-aarch64"
