@@ -72,10 +72,10 @@ func TestISOTreeNoOSTREE(t *testing.T) {
 	assert.Contains(t, fromPaths, "input://tree/rootfs.img")
 	assert.Contains(t, fromPaths, "input://root-tree/EFI")
 
-	// Check for final paths for kernel, initrd, rootfs
+	// Check for final paths for kernel, initrd, rootfs (squashfs.img)
 	assert.Contains(t, toPaths, "tree:///images/pxeboot/vmlinuz")
 	assert.Contains(t, toPaths, "tree:///images/pxeboot/initrd.img")
-	assert.Contains(t, toPaths, "tree:///LiveOS/rootfs.img")
+	assert.Contains(t, toPaths, "tree:///LiveOS/squashfs.img")
 
 	// No ostree.grub2 stage
 	require.Nil(t, findStage("org.osbuild.ostree.grub2", pipeline.Stages))
