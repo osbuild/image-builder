@@ -251,7 +251,7 @@ func (pt *PartitionTable) AlignUp(size datasizes.Size) datasizes.Size {
 		// already aligned: return unchanged
 		return size
 	}
-	return ((size + grain) / grain) * grain
+	return (size - (size % grain)) + grain
 }
 
 // Convert the given bytes to the number of sectors.
