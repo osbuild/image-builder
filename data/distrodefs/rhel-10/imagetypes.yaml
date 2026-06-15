@@ -1016,7 +1016,7 @@ image_types:
     image_config: &qcow2_image_config
       default_target: "multi-user.target"
       kernel_options: ["console=tty0", "console=ttyS0,115200n8"]
-      conditions:
+      conditions: &qcow2_image_config_conditions
         "tweak the rhsm config on rhel":
           when:
             distro_name: "rhel"
@@ -1108,6 +1108,16 @@ image_types:
               append:
                 include:
                   - "redhat-release-eula"
+            "exclude rhn packages on Oracle Linux":
+              when:
+                distro_name: "ol"
+              append:
+                exclude:
+                  - "rhn-check"
+                  - "rhn-setup"
+                  - "rhnsd"
+                  - "dnf-plugin-spacewalk"
+
     blueprint:
       supported_options: *supported_options_disk
 
@@ -1180,6 +1190,13 @@ image_types:
           config:
             add_drivers:
               - "mlx5_core"
+      conditions:
+        <<: *qcow2_image_config_conditions
+        "oracle linux is hostonly":
+          when:
+            distro_name: "ol"
+          shallow_merge:
+            hostonly: true
     partition_table:
       x86_64:
         type: "gpt"
