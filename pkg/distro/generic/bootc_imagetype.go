@@ -592,8 +592,10 @@ func (t *bootcImageType) manifestForGenericISO(bp *blueprint.Blueprint, options 
 		// TODO This really belongs in ISOCustomization
 		img.InstallerCustomizations.DefaultMenu = *isoi.Grub2.Default
 	}
-	// TODO -- add timeout to one of the customizations
-	// img.Grub2MenuTimeout = isoi.Grub2.Timeout
+	if isoi.Grub2.Timeout != nil {
+		// TODO This really belongs in ISOCustomization
+		img.InstallerCustomizations.MenuTimeout = *isoi.Grub2.Timeout
+	}
 
 	if len(isoi.KernelArgs) > 0 {
 		img.KernelOpts = isoi.KernelArgs
