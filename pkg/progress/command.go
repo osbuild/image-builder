@@ -212,7 +212,7 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 
 	// append metrics to the end message
 	if opts.Metrics {
-		pb.Write(oss.Bytes())
+		_, _ = pb.Write(oss.Bytes())
 	}
 
 	return nil

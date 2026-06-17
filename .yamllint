@@ -2,9 +2,5 @@
 extends: default
 
 rules:
-  document-start: disable
-  line-length: disable
-
-ignore:
-  - test/data/error/09-duplicated-key.yaml
-  - test/data/error/10-duplicated-key-no-otk.yaml
+  line-length:
+    max: 300

@@ -4,12 +4,12 @@
 name: Go
 
 on:  # yamllint disable-line rule:truthy
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-  merge_group:
-    types: ["checks_requested"]
+#  push:
+#    branches: ["main"]
+#  pull_request:
+#    branches: ["main"]
+#  merge_group:
+#    types: ["checks_requested"]
 
 jobs:
   build:

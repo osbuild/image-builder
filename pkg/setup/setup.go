@@ -11,8 +11,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/osbuild/image-builder-cli/pkg/podmanutil"
-	"github.com/osbuild/image-builder-cli/pkg/util"
+	"github.com/osbuild/images/pkg/podmanutil"
+	"github.com/osbuild/images/pkg/util"
 )
 
 // EnsureEnvironment mutates external filesystem state as necessary

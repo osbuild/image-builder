@@ -1,0 +1,45 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        args:
+          - --markdown-linebreak-ext=md
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [--strict]
+  - repo: https://github.com/schuellerf/pre-commit-pyspelling
+    rev: 0.1.0
+    hooks:
+      - id: pyspelling
+        args: ["--config", ".spellcheck.yml"]
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v2.3.0
+    hooks:
+      - id: golangci-lint
+  - repo: https://github.com/hhatto/autopep8
+    rev: v2.3.0
+    hooks:
+      - id: autopep8
+  - repo: https://github.com/pycqa/pylint
+    rev: v3.2.6
+    hooks:
+      - id: pylint
+        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest", "vmtest @ git+https://github.com/osbuild/images.git"]
+        files: ^(?!test/|tools/)
+      - id: pylint
+        name: pylint test/ directory
+        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest", "vmtest @ git+https://github.com/osbuild/images.git"]
+        args: ["--rcfile=test/.pylintrc"]
+        files: ^test/
+      - id: pylint
+        name: pylint tools/ directory
+        additional_dependencies: ["PyYAML", "types-PyYAML", "pytest", "vmtest @ git+https://github.com/osbuild/images.git"]
+        args: ["--rcfile=tools/.pylintrc"]
+        files: ^tools/

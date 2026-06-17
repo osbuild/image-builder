@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/osbuild/image-builder-cli/internal/olog"
+	"github.com/osbuild/images/internal/olog"
 )
 
 // IsMountpoint checks if the target path is a mount point

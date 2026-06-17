@@ -18,7 +18,7 @@ import (
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
+	main "github.com/osbuild/images/cmd/image-builder"
 )
 
 func TestCanChownInPathHappy(t *testing.T) {

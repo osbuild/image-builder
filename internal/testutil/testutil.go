@@ -85,12 +85,12 @@ func CaptureStdio(t *testing.T, f func()) (string, string) {
 	// when the pipe is full
 	go func() {
 		defer wg.Done()
-		io.Copy(&stdout, r1)
+		_, _ = io.Copy(&stdout, r1)
 	}()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		io.Copy(&stderr, r2)
+		_, _ = io.Copy(&stderr, r2)
 	}()
 
 	os.Stdout = w1
@@ -113,7 +113,7 @@ func Chdir(t *testing.T, dir string, f func()) {
 		t.Errorf("%s", err.Error())
 	}
 	defer func() {
-		os.Chdir(cwd)
+		_ = os.Chdir(cwd)
 	}()
 
 	err = os.Chdir(dir)

@@ -87,7 +87,7 @@ func prepareOsbuildMTLSConfig(mTLS *mTLSConfig) (envVars []string, cleanup func(
 	if err := os.WriteFile(certPath, mTLS.cert, 0600); err != nil {
 		return nil, nil, fmt.Errorf("failed to write TLS client certificate for osbuild: %w", err)
 	}
-	if err := os.WriteFile(caPath, mTLS.ca, 0644); err != nil {
+	if err := os.WriteFile(caPath, mTLS.ca, 0600); err != nil {
 		return nil, nil, fmt.Errorf("failed to write TLS CA certificate for osbuild: %w", err)
 	}
 

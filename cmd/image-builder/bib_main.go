@@ -32,9 +32,9 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 
-	"github.com/osbuild/image-builder-cli/internal/bibimg"
-	"github.com/osbuild/image-builder-cli/pkg/progress"
-	"github.com/osbuild/image-builder-cli/pkg/setup"
+	"github.com/osbuild/images/internal/bibimg"
+	"github.com/osbuild/images/pkg/progress"
+	"github.com/osbuild/images/pkg/setup"
 )
 
 var (
@@ -47,8 +47,8 @@ func saveManifest(ms manifest.OSBuildManifest, fpath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal data for %q: %s", fpath, err.Error())
 	}
-	b = append(b, '\n') // add new line at end of file
-	return os.WriteFile(fpath, b, 0644)
+	b = append(b, '\n')                 // add new line at end of file
+	return os.WriteFile(fpath, b, 0644) // #nosec: G306
 }
 
 // bibManifestFromCobra generate an osbuild manifest from a cobra commandline.

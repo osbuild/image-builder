@@ -67,7 +67,7 @@ func prettyVersion() string {
 	enc := yaml.NewEncoder(&b)
 	enc.SetIndent(2)
 
-	enc.Encode(readVersionInfo())
+	_ = enc.Encode(readVersionInfo())
 
 	return b.String()
 }

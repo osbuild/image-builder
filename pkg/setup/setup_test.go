@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder-cli/pkg/setup"
+	"github.com/osbuild/images/pkg/setup"
 )
 
 func TestValidateCanRunTargetArchTrivial(t *testing.T) {

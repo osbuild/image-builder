@@ -24,8 +24,8 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	testrepos "github.com/osbuild/images/test/data/repositories"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
-	"github.com/osbuild/image-builder-cli/internal/testutil"
+	main "github.com/osbuild/images/cmd/image-builder"
+	"github.com/osbuild/images/internal/testutil"
 	"github.com/osbuild/images/pkg/arch"
 )
 
@@ -169,7 +169,7 @@ minsize = "20 GiB"
 func makeTestBlueprint(t *testing.T, testBlueprint string) string {
 	tmpdir := t.TempDir()
 	blueprintPath := filepath.Join(tmpdir, "blueprint.toml")
-	err := os.WriteFile(blueprintPath, []byte(testBlueprint), 0644)
+	err := os.WriteFile(blueprintPath, []byte(testBlueprint), 0600)
 	assert.NoError(t, err)
 	return blueprintPath
 }
@@ -771,8 +771,8 @@ func TestProgressFromCmd(t *testing.T) {
 		{"term", false, "*progress.terminalProgressBar"},
 		{"term", true, "*progress.terminalProgressBar"},
 	} {
-		cmd.Flags().Set("progress", tc.progress)
-		cmd.Flags().Set("verbose", fmt.Sprintf("%v", tc.verbose))
+		assert.NoError(t, cmd.Flags().Set("progress", tc.progress))
+		assert.NoError(t, cmd.Flags().Set("verbose", fmt.Sprintf("%v", tc.verbose)))
 		pbar, err := main.ProgressFromCmd(cmd)
 		assert.NoError(t, err)
 		assert.Equal(t, tc.expectedProgress, fmt.Sprintf("%T", pbar))
@@ -1042,7 +1042,7 @@ func TestManifestIntegrationWithRegistrations(t *testing.T) {
   }
 }`
 	fakeRegistrationsPath := filepath.Join(t.TempDir(), "registrations.json")
-	err := os.WriteFile(fakeRegistrationsPath, []byte(fakeRegContent), 0644)
+	err := os.WriteFile(fakeRegistrationsPath, []byte(fakeRegContent), 0600)
 	assert.NoError(t, err)
 
 	// XXX: fake the depsolving or we will need full support for
@@ -1158,11 +1158,11 @@ image_types:
 }`
 	err := os.MkdirAll(filepath.Join(defsDir, "simonos"), 0755)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(defsDir, "simonos.yaml"), []byte(distroYAML), 0644)
+	err = os.WriteFile(filepath.Join(defsDir, "simonos.yaml"), []byte(distroYAML), 0600)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(defsDir, "simonos", "imagetypes.yaml"), []byte(imageTypesYAML), 0644)
+	err = os.WriteFile(filepath.Join(defsDir, "simonos", "imagetypes.yaml"), []byte(imageTypesYAML), 0600)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(repoDir, "simonos-1.json"), []byte(repoJSON), 0644)
+	err = os.WriteFile(filepath.Join(repoDir, "simonos-1.json"), []byte(repoJSON), 0600)
 	require.NoError(t, err)
 
 	restore := main.MockOsArgs([]string{

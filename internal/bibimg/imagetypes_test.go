@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder-cli/internal/bibimg"
+	"github.com/osbuild/images/internal/bibimg"
 )
 
 type testCase struct {

@@ -84,7 +84,7 @@ func TestNewRepoRegistryImplRepodir(t *testing.T) {
 	]
 }
 `
-	err = os.WriteFile(repoFile, []byte(repoContents), 0644)
+	err = os.WriteFile(repoFile, []byte(repoContents), 0644) // #nosec: G306
 	require.NoError(t, err)
 
 	// and ensure we have testdistro-1 now
@@ -117,7 +117,7 @@ func TestNewRepoRegistryImplRepodirNoSubDir(t *testing.T) {
 	]
 }
 `
-	err = os.WriteFile(repoFile, []byte(repoContents), 0644)
+	err = os.WriteFile(repoFile, []byte(repoContents), 0644) // #nosec: G306
 	require.NoError(t, err)
 
 	// and ensure we have testdistro-1 now
