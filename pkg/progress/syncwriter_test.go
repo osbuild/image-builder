@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder-cli/pkg/progress"
+	"github.com/osbuild/images/pkg/progress"
 )
 
 func TestSyncWriter(t *testing.T) {
@@ -33,10 +33,7 @@ func TestSyncWriter(t *testing.T) {
 	wg.Wait()
 
 	scanner := bufio.NewScanner(&buf)
-	for {
-		if !scanner.Scan() {
-			break
-		}
+	for !scanner.Scan() {
 		line := scanner.Text()
 		assert.True(t, len(line) == 60, fmt.Sprintf("len %v: line: %v", len(line), line))
 	}

@@ -52,7 +52,7 @@ func chownR(path string, chown string) error {
 		gid = osGetgid()
 	}
 
-	return filepath.Walk(path, func(name string, info os.FileInfo, err error) error {
+	return filepath.Walk(path, func(name string, info os.FileInfo, err error) error { // #nosec: G122
 		if err == nil {
 			err = os.Chown(name, uid, gid)
 		}

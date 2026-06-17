@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
+	main "github.com/osbuild/images/cmd/image-builder"
 	"github.com/osbuild/images/pkg/bootc"
 )
 

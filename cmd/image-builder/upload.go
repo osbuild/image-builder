@@ -12,7 +12,6 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/cloud/awscloud"
@@ -20,6 +19,7 @@ import (
 	"github.com/osbuild/images/pkg/cloud/libvirt"
 	"github.com/osbuild/images/pkg/cloud/openstack"
 	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/progress"
 )
 
 // ErrMissingUploadConfig is returned when the upload configuration is missing
@@ -51,7 +51,11 @@ func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
 	if err != nil {
 		return fmt.Errorf("cannot stat upload: %v", err)
 	}
-	size := uint64(st.Size())
+	sizei64 := st.Size()
+	if sizei64 < 0 {
+		return fmt.Errorf("invalid size read for %s: %d", imagePath, sizei64)
+	}
+	size := uint64(sizei64)
 	pbar := pb.New64(st.Size())
 	pbar.Set(pb.Bytes, true)
 	pbar.SetWriter(osStdout)
@@ -242,7 +246,7 @@ func detectArchFromImagePath(imagePath string) string {
 	//   /path/to/<disro>-<imgtype>-<arch>.img.xz
 	// so try to infer the arch
 	baseName := filepath.Base(imagePath)
-	nameNoEx := strings.SplitN(baseName, ".", -1)[0]
+	nameNoEx := strings.Split(baseName, ".")[0]
 	frags := strings.Split(nameNoEx, "-")
 	maybeArch := frags[len(frags)-1]
 	if a, err := arch.FromString(maybeArch); err == nil {

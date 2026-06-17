@@ -231,7 +231,7 @@ func (p *AnacondaInstallerISOTree) getBuildPackages(_ Distro) ([]string, error) 
 	case ErofsRootfs:
 		packages = []string{"erofs-utils"}
 	default:
-		return nil, fmt.Errorf("unknown rootfs type: %q", p.RootfsType)
+		return nil, fmt.Errorf("unknown rootfs type: %d", p.RootfsType)
 	}
 
 	if p.ISOBoot == Grub2ISOBoot {

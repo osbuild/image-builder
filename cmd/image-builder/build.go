@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/images/pkg/progress"
 )
 
 type buildOptions struct {
@@ -32,6 +32,7 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
 			return "", err
 		}
+		// #nosec: G306
 		if err := os.WriteFile(p, osbuildManifest, 0644); err != nil {
 			return "", err
 		}

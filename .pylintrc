@@ -1,3 +1,10 @@
-# Note that there are additional pylintrc files in ./tools, ./test
 [FORMAT]
 max-line-length=120
+
+[MESSAGES CONTROL]
+disable=missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-many-locals,
+    invalid-name,
+    duplicate-code

@@ -1,388 +1,94 @@
-# image-builder CLI
-
-Build images from the command line in a convenient way.
-
-## Run via container
-
-```console
-$ sudo podman run --privileged \
-   -v ./output:/output \
-   ghcr.io/osbuild/image-builder-cli:latest \
-   build \
-   --distro fedora-43 \
-   minimal-raw
-```
-
-## Installation
-
-You can install `image-builder` in Fedora and CentOS from the repositories:
-
-```console
-$ dnf install image-builder
-```
-
-As this project is under development right now we provide up-to-date
-development snapshots of the main branch through COPR:
-
-```console
-$ dnf copr enable @osbuild/osbuild
-$ dnf copr enable @osbuild/image-builder
-$ dnf install image-builder
-```
-
-On RHEL systems, pass the platform argument:
-
-```console
-$ dnf copr enable @osbuild/osbuild rhel-10-x86_64
-$ dnf copr enable @osbuild/image-builder rhel-10-x86_64
-$ dnf install image-builder
-```
-
-You can also install `image-builder` via the go build system.
-
-```console
-$ go run github.com/osbuild/image-builder-cli/cmd/image-builder@main
-```
-or install it into `$GOPATH/bin`
-```console
-$ go install github.com/osbuild/image-builder-cli/cmd/image-builder@main
-```
-
-Lastly you can use a container:
-
-```console
-$ sudo podman run --privileged ghcr.io/osbuild/image-builder-cli
-```
-
-When building an image in the container it will be written to `/output` in the container. If you want the produced images available on your host system mount that directory:
-
-```console
-$ mkdir output
-$ sudo podman run --privileged -v ./output:/output ghcr.io/osbuild/image-builder-cli
-```
-
-## Compilation
-
-You can compile the application in `cmd/image-builder` with
-the normal `go` command or use
-
-```console
-$ make build
-```
-
-To compile without go build tags you will need to install
-the required RPMs:
-
-```console
-$ sudo dnf install gpgme-devel
-```
-
-## Prerequisites
-
-Make sure to have the required `osbuild` RPMs installed:
-```console
-$ sudo dnf install osbuild osbuild-depsolve-dnf
-```
-
-Check if there is enough space in /tmp, as some larger image configurations may
-need to create larger temporary files. For technical reasons (SELinux), the
-image builder cannot be configured to use a directory other than /tmp; in this
-case, enabling (or increasing) swap space will do the trick.
-
-## Examples
-
-### Listing
-
-To see the list of buildable images run:
-```console
-$ image-builder list
-...
-centos-9 type:qcow2 arch:x86_64
-...
-rhel-10.0 type:ami arch:x86_64
-...
-```
-
-### Building
-
-To actually build an image run:
-```console
-$ sudo image-builder build qcow2 --distro centos-9
-...
-```
-this will create a directory `centos-9-qcow2-x86_64` under which the
-output is stored.
-
-With the `--with-manifest` option an
-[osbuild](https://github.com/osbuild/osbuild) manifest will be
-placed in the output directory too.
-
-With the `--with-sbom` option an SPDX SBOM document will be
-placed in the output directory too.
-
-### Blueprints
-
-Blueprints are supported, first create a `config.toml` and put e.g.
-the following content in:
-```toml
-[[customizations.user]]
-name = "alice"
-password = "bob"
-key = "ssh-rsa AAA ... user@email.com"
-groups = ["wheel"]
-```
-Note that both toml and json are supported for the blueprint format.
-
-See https://osbuild.org/docs/user-guide/blueprint-reference/ for
-the full blueprint reference.
-
-Then just pass them as an additional argument after the image type:
-```console
-$ sudo image-builder build qcow2 --blueprint ./config.toml --distro centos-9
-...
-```
-
-### Adding registrations
-
-Adding registrations/subscriptions to an image can be done at
-build time via the `--registrations` command line option. When
-using this option the resulting image will include the given
-subscriptions/registrations in the resulting image.
-
-Currently the Red Hat subscription is supported, e.g.
-```console
-$ cat > registrations.json <<EOF
-{
-  "redhat": {
-    "subscription": {
-      "activation_key": "replace-with_activation_key",
-      "organization": "replace-with_org",
-      "server_url": "replace-with_server_url",
-      "base_url": "replace_with-base_url",
-      "insights": true,
-      "rhc": true,
-      "proxy": "replace-with_proxy"
-    }
-  }
-}
-EOF
-$ sudo image-builder build qcow2 --registrations registrations.json --distro centos-9
-```
-Note that some of these options are optional and the image must have
-`subscription-manager` installed.
-
-### Cross architecture building
-
-When `qemu-user-static` is installed images can be build for foreign
-architectures. To do this, pass `--arch`, e.g.:
-
-```console
-$ sudo image-builder build --arch=riscv64 minimal-raw --distro fedora-43
-```
-building is about 8x-10x slower than native building but still fast
-enough to be usable.
-
-Note that this feature is considered experimental currently.
-
-
-### SBOMs
-
-It is possible to generate spdx based SBOM (software bill of materials)
-documents as part of the build. Just pass `--with-sbom` and
-it will put them into the output directory.
-
-### Cloud integration
-
-When building an image type that can be uploaded to the cloud
-(e.g. an "ami") image-builder will automatically upload if
-all cloud parameters are provided, e.g.
-```
-$ image-builder build ami --distro centos-9 \
-    --aws-region us-east-1 \
-	--aws-bucket example-bucket \
-	--aws-ami-name my-image-1
-```
-Images can also be uploaded with the `image-builder upload` command
-after they are built.
-
-
-
-### Filtering
-
-When listing images, it is possible to filter:
-```console
-$ image-builder list --filter ami
-...
-centos-9 type:ami arch:x86_64
-...
-rhel-8.5 type:ami arch:aarch64
-...
-rhel-10.0 type:ami arch:aarch64
-```
-or be more specific
-```console
-$ image-builder list --filter "arch:x86*" --filter "distro:*centos*"
-centos-9 type:ami arch:x86_64
-...
-centos-9 type:qcow2 arch:x86_64
-...
-```
-
-The following filters are currently supported, shell-style globbing is supported:
- * distro: the distro name (e.g. fedora-43)
- * arch: the architecture name (e.g. x86_64)
- * type: the image type name (e.g. qcow2)
- * bootmode: the bootmode (legacy, UEFI, hybrid)
-
-### Text control
-
-The text format can also be switched, supported are "text", "json":
-```console
-$ image-builder list --format=json
-[
-  {
-    "distro": {
-      "name": "centos-9"
-    },
-    "arch": {
-      "name": "aarch64"
-    },
-    "image_type": {
-      "name": "ami"
-    }
-  },
-...
-  {
-    "distro": {
-      "name": "rhel-10.0"
-    },
-    "arch": {
-      "name": "x86_64"
-    },
-    "image_type": {
-      "name": "wsl"
-    }
-  }
-]
-```
-
-### Version information
-
-To show version information about the installed `image-builder`:
-```console
-$ image-builder version
-image-builder:
-  version: 0.5
-  commit: abc123
-  dependencies:
-    images: v0.100.0
-    osbuild: "105"
-```
-
-The output format can be changed with `--format`, supported formats are `yaml` (default) and `json`:
-```console
-$ image-builder version --format=json | jq '.["image-builder"].version'
-"0.5"
-```
-
-## Modifying the set of used repositories
-
-There are various ways to add extra repositories or override the default
-base repositories. Most users will want to use the
-[blueprint systems](https://osbuild.org/docs/user-guide/blueprint-reference/#repositories)
-for this. Repositories that are part of the blueprint will get added
-to the installed image but are not used at build time to install third-party
-packages.
-
-To change repositories during image build time the command line options
-`--force-data-dir`, `--extra-repo` and `--force-repo` can be used. The repositories
-there will only added during build time and will not be available in the
-installed system (use the above blueprint options if that the goal).
-
-Note that both options are targeting advanced users/use-cases and when
-used wrongly can result in failing image builds or non-booting
-systems.
-
-## Using the force-data-dir switch
-
-When using the `--force-data-dir` flag `image-builder` will look into
-the <datadir>/repositories directory for a file called <distro>.json
-that contains the repositories for the <distro>.
-
-This <distro>.json file is a simple architecture-> repositories mapping
-that looks like [this example](https://github.com/osbuild/images/blob/main/data/repositories/centos-10.json).
-
-### Adding extra repositories during the build
-
-To add one or more extra repositories during the build use:
-`--extra-repo <baseurl>`, e.g. `--extra-repo file:///path/to/repo`.
-This will make the content of the repository available during image
-building and the dependency solver will pick packages from there as
-appropriate (e.g. if that repository contains a libc or kernel with a
-higher version number it will be picked over the default
-repositories).
-
-### Overriding the default base repositories during build
-
-To completely replace the default base repositories during a build the
-option `--force-repo=file:///path/to/repos` can be used.
-
-When replacing repositories with Katello/Satellite kickstart trees, the host
-system must be subscribed in order to access repositories. Unsubscribed hosts
-can still access kickstart repositories published over HTTP. Keep in mind that
-GPG check is disabled when overriding base repositories. To use GPG, use
-`--data-dir` instead.
-
-Note that the repositories defined there will be used for all
-dependency solving and there is no safeguards, i.e. one can point to
-a fedora-43 repository url and try to build a centos-9 image type and
-the system will happily try its best (and most likely fail). Use with
-caution.
-
-## Subscriptions
-
-When executing `image-builder-cli` via `podman`, subscription information is
-passed to the container and used to access Red Hat CDN. As long as the host
-machine is properly subscribed with attached Red Hat Enterprise Linux
-subscription, building RHEL images will work automatically.
-
-To use content from Red Hat Satellite, follow the extra repositories section
-above.
-
-## FAQ
-
-Q: Does this require a backend.
-A: The osbuild binary is used to actually build the images but beyond that
-   no setup is required, i.e. no daemons like osbuild-composer.
-
-Q: Can I have custom repository files?
-A: Sure! The repositories are encoded in json in "<distro>-<vesion>.json",
-   files, e.g. "fedora-43.json". See these [examples](https://github.com/osbuild/images/tree/main/data/repositories). Use the "--force-data-dir" switch and
-   place them under "repositories/name-version.json", e.g. for:
-   "--force-data-dir ~/my-project --distro foo-1" a json file must be put under
-   "~/my-project/repositories/foo-1.json.
-
-Q: What is the relation to [bootc-image-builder](https://github.com/osbuild/bootc-image-builder)?
-A: Both projects are very close. The `bootc-image-builder` focuses on providing
-   image-based artifacts while `image-builder` works with traditional package
-   based inputs. We expect the two projects to merge eventually and they already
-   share a lot of code.
-
-Q: I get `Warnings during manifest creation` and the build stops, what can I do?
-A: This is a safety feature so that in e.g. CI systems warnings cannot
-   go unnoticed. Just add `--ignore-warnings` to the build they are
-   harmless.
+Images
+======
+
+This repository is, primarily, a Go library for generating osbuild manifests
+([more details here](./docs/developer/code-manifest-generation.md)).
+It also has some libraries for uploading artifacts to cloud platforms and Koji.
+The binaries implemented in `cmd/` are for development and testing purposes and not part of the library.
 
 ## Project
 
  * **Website**: <https://www.osbuild.org>
- * **Bug Tracker**: <https://github.com/osbuild/image-builder-cli/issues>
- * **Discussions**: <https://github.com/orgs/osbuild/discussions>
+ * **Bug Tracker**: <https://github.com/osbuild/images/issues>
+* **Discussions**: https://github.com/orgs/osbuild/discussions
  * **Matrix (chat)**: [Image Builder channel on Fedora Chat](https://matrix.to/#/#image-builder:fedoraproject.org?web-instance[element.io]=chat.fedoraproject.org)
- * **Changelog**: <https://github.com/osbuild/image-builder-cli/releases>
+ * **Changelog**: <https://github.com/osbuild/images/releases>
 
-### Repository
+### Principles
+1. The image definitions API is internal and can therefore be broken. The blueprint API is the stable API.
+2. Nonsensical manifests should not compile (at the Golang level).
+3. OSBuild units (stages, sources, inputs, mounts, devices) should be directly mapped into Go objects.
+4. Image definitions don’t test distributions that are end-of-life. Respective code-paths should be dropped.
+5. Image definitions need to support the oldest supported target distribution.
 
- - **web**:   <https://github.com/osbuild/image-builder-cli>
- - **https**: `https://github.com/osbuild/image-builder-cli.git`
- - **ssh**:   `git@github.com:osbuild/image-builder-cli.git`
+### Contributing
+
+Please refer to the [developer guide](https://www.osbuild.org/docs/developer-guide/index) to learn about our workflow, code style and more.
+
+See also the [local developer documentation](./docs/developer) for useful information about working with this specific project.
+
+#### YAML based image definitions
+
+More and more parts of the library are converted to use yaml to define core
+parts of an image. See this [example](./data/distrodefs/)
+directory. For local development that just changes the YAML based
+definitions the library can be forced to use alternative yaml dirs.
+
+E.g. if there is a `./my-yaml/fedora/package-sets.yaml` then that can be
+used via:
+```console
+$ IMAGE_BUILDER_EXPERIMENTAL=yamldir=./my-yaml image-builder build minimal-raw --distro fedora-42
+```
+WARNING: this is an experimental feature and unsupported feature that should
+never be used in production and may change anytime.
+
+We do plan to eventually stabilize this so that it can be a switch for
+the `image-builder` tool but for now this environment option is
+required.
+
+#### Build requirements
+
+The build-requirements of the Go library for Fedora and rpm-based
+distributions can be installed with:
+
+```console
+sudo ./test/scripts/install-dependencies
+```
+
+(see also [`Containerfile`](Containerfile) )
+
+The minimal dependencies are:
+
+- `go`
+- `gpgme-devel`
+- `libvirt-devel`
+
+Other dependencies only needed in some cases are:
+
+- `btrfs-progs-devel`, `device-mapper-devel`  
+  build dependencies for the unit tests and projects that import `pkg/container`, which even in that case can be skipped using exclude_graphdriver_btrfs and exclude_graphdriver_devicemapper (see bootc-image-builder).
+- `krb5-devel`  
+  build dependency for the unit tests and projects that import `pkg/upload/koji`
+- `osbuild-depsolve-dnf`  
+  runtime dependency for the unit tests and projects that import `pkg/depsolvednf`.
+  or to run `cmd/gen-manifests` and `cmd/build`
+- `osbuild` (and subpackages)  
+  runtime dependencies for `cmd/build`.
+
+
+### Repository:
+
+ - **web**:   <https://github.com/osbuild/images>
+ - **https**: `https://github.com/osbuild/images.git`
+ - **ssh**:   `git@github.com:osbuild/images.git`
+
+### Pull request gating
+
+Each pull request against `images` starts a series of automated
+tests. Tests run via GitHub Actions and GitLab CI. Each push to the pull request
+will launch theses tests automatically.
+
+### License:
+
+ - **Apache-2.0**
+ - See LICENSE file for details.

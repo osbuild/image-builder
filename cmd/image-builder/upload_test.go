@@ -16,8 +16,8 @@ import (
 	"github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/osbuild/images/pkg/platform"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
-	"github.com/osbuild/image-builder-cli/internal/testutil"
+	main "github.com/osbuild/images/cmd/image-builder"
+	"github.com/osbuild/images/internal/testutil"
 )
 
 func TestUploadWithAWSMock(t *testing.T) {
@@ -40,7 +40,7 @@ func TestUploadWithAWSMock(t *testing.T) {
 		{"fake-disk.img", "", arch.Current().String(), fmt.Sprintf("WARNING: no upload architecture specified, using %q (use --arch to override)\n", arch.Current().String())},
 	} {
 		fakeImageFilePath := filepath.Join(t.TempDir(), tc.fakeDiskName)
-		err := os.WriteFile(fakeImageFilePath, []byte(fakeDiskContent), 0644)
+		err := os.WriteFile(fakeImageFilePath, []byte(fakeDiskContent), 0600)
 		assert.NoError(t, err)
 
 		var fa fakeAwsUploader

@@ -2,8 +2,8 @@
 name: Testing rhel content
 
 on:  # yamllint disable-line rule:truthy
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+#  pull_request_target:
+#    types: [opened, synchronize, reopened]
 
 # To use rhel content we need the SUBSCRIPTION_* secret available inside the
 # forked repo which requires the pull_request_target trigger. To protect

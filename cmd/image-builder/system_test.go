@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
+	main "github.com/osbuild/images/cmd/image-builder"
 )
 
 func runSystemRaw(t *testing.T) map[string]interface{} {
@@ -100,7 +100,7 @@ func TestSystemSubcommandCacheMaxSizeFromFile(t *testing.T) {
 	xdgCache := t.TempDir()
 	cacheDir := filepath.Join(xdgCache, "image-builder", "store")
 	require.NoError(t, os.MkdirAll(cacheDir, 0755))
-	require.NoError(t, os.WriteFile(filepath.Join(cacheDir, "cache.size"), []byte("21474836480\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(cacheDir, "cache.size"), []byte("21474836480\n"), 0600))
 
 	restore := main.MockGetCacheDir(func() string {
 		return cacheDir
@@ -121,7 +121,7 @@ func TestSystemSubcommandCacheMaxSizeZeroIsUnlimited(t *testing.T) {
 	xdgCache := t.TempDir()
 	cacheDir := filepath.Join(xdgCache, "image-builder", "store")
 	require.NoError(t, os.MkdirAll(cacheDir, 0755))
-	require.NoError(t, os.WriteFile(filepath.Join(cacheDir, "cache.size"), []byte("0\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(cacheDir, "cache.size"), []byte("0\n"), 0600))
 
 	restore := main.MockGetCacheDir(func() string {
 		return cacheDir

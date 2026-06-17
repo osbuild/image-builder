@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	main "github.com/osbuild/image-builder-cli/cmd/image-builder"
+	main "github.com/osbuild/images/cmd/image-builder"
 	testrepos "github.com/osbuild/images/test/data/repositories"
 )
 

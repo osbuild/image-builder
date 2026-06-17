@@ -18,7 +18,7 @@ import (
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/sbom"
 
-	"github.com/osbuild/image-builder-cli/internal/blueprintload"
+	"github.com/osbuild/images/internal/blueprintload"
 )
 
 type manifestOptions struct {

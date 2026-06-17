@@ -98,7 +98,7 @@ func prettySystemStatus() string {
 	enc := yaml.NewEncoder(&b)
 	enc.SetIndent(2)
 
-	enc.Encode(readSystemStatus())
+	_ = enc.Encode(readSystemStatus())
 
 	return b.String()
 }

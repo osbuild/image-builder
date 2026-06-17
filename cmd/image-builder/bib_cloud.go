@@ -48,5 +48,10 @@ func bibUpload(uploader cloud.Uploader, path string, flags *pflag.FlagSet) error
 		defer pbar.Finish()
 	}
 
+	// Should never happen, but it is an int64 all the way down to fstat
+	if size < 0 {
+		size = 0
+	}
+	// #nosec G115
 	return uploader.UploadAndRegister(r, uint64(size), osStderr)
 }

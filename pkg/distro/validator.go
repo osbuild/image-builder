@@ -96,7 +96,7 @@ func validateSupportedConfig(supported []string, conf reflect.Value) *validation
 			// nothing to validate: continue
 			continue
 		}
-		if subStruct.Kind() == reflect.Ptr {
+		if subStruct.Kind() == reflect.Pointer {
 			// dereference pointer before validating
 			subStruct = subStruct.Elem()
 		}
@@ -201,7 +201,7 @@ func validateRequiredConfig(required []string, conf reflect.Value) *validationEr
 			return &validationError{message: err.Error(), revPath: []string{key}}
 		}
 		switch value.Kind() {
-		case reflect.Ptr, reflect.Struct, reflect.String, reflect.Slice:
+		case reflect.Pointer, reflect.Struct, reflect.String, reflect.Slice:
 			// Required should only be used for Pointer, String, and Slice types.
 			// For other types, the zero value can be valid and not indicate a
 			// missing value.
@@ -223,7 +223,7 @@ func validateRequiredConfig(required []string, conf reflect.Value) *validationEr
 		if err != nil {
 			return &validationError{message: err.Error(), revPath: []string{key}}
 		}
-		if value.Kind() == reflect.Ptr {
+		if value.Kind() == reflect.Pointer {
 			// Dereference pointer before validating.
 			// We don't need to worry about Zero values because of the previous
 			// check in iteration through requiredMap above.

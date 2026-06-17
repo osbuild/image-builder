@@ -15,11 +15,9 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/image-builder-cli/pkg/progress"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/customizations/subscription"
@@ -29,10 +27,11 @@ import (
 	ilog "github.com/osbuild/images/pkg/olog"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/progress"
 
-	"github.com/osbuild/image-builder-cli/internal/blueprintload"
-	"github.com/osbuild/image-builder-cli/internal/olog"
-	"github.com/osbuild/image-builder-cli/pkg/setup"
+	"github.com/osbuild/images/internal/blueprintload"
+	"github.com/osbuild/images/internal/olog"
+	"github.com/osbuild/images/pkg/setup"
 )
 
 var (
@@ -156,7 +155,6 @@ func cmdBootcInspect(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-
 
 func cmdListImages(cmd *cobra.Command, args []string) error {
 	filter, err := cmd.Flags().GetStringArray("filter")
@@ -419,16 +417,16 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		if err != nil {
 			return nil, err
 		}
-		img = &imagefilter.Result{imgType, nil}
+		img = &imagefilter.Result{ImgType: imgType, Repos: nil}
 		// XXX: hack to skip repo loading for the bootc image.
 		// We need to add a SkipRepositories or similar to
 		// manifestgen instead to make this clean
 		forceRepos = []string{"https://example.com/not-used"}
 	} else {
 		repoOpts := &repoOptions{
-			RepoDir:    repoDir,
-			ExtraRepos: extraRepos,
-			ForceRepos: forceRepos,
+			RepoDir:      repoDir,
+			ExtraRepos:   extraRepos,
+			ForceRepos:   forceRepos,
 			ForceDefsDir: forceDefsDir,
 		}
 		img, err = getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
@@ -651,19 +649,6 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	return describeImage(res, osStdout)
 }
 
-func normalizeRootArgs(_ *pflag.FlagSet, name string) pflag.NormalizedName {
-	switch name {
-	case "data-dir":
-		name = "force-repo-dir"
-		break
-	case "force-data-dir":
-		name = "force-repo-dir"
-		break
-	}
-
-	return pflag.NormalizedName(name)
-}
-
 func run() error {
 	// Initialize console logger (stderr, no prefix)
 	log.SetFlags(0)
@@ -689,21 +674,29 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 				fmt.Fprintln(cmd.ErrOrStderr(), `Flag --version has been deprecated, use "image-builder version" instead`)
 				fmt.Fprint(cmd.OutOrStdout(), prettyVersion())
 			} else {
-				cmd.Help()
+				_ = cmd.Help()
 			}
 		},
 	}
 
 	rootCmd.Flags().Bool("version", false, "Print version information and exit (deprecated: use \"image-builder version\" instead)")
-	rootCmd.Flags().MarkHidden("version")
+	if err := rootCmd.Flags().MarkHidden("version"); err != nil {
+		return err
+	}
 	var forceRepoDir string
 	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "force-repo-dir", "", "Override the default repository search path for custom repository files")
 	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "force-data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
-	rootCmd.PersistentFlags().MarkDeprecated("force-data-dir", `Use --force-repo-dir instead`)
+	if err := rootCmd.PersistentFlags().MarkDeprecated("force-data-dir", `Use --force-repo-dir instead`); err != nil {
+		return err
+	}
 	rootCmd.PersistentFlags().StringVar(&forceRepoDir, "data-dir", "", `Override the default data directory for e.g. custom repositories/*.json data`)
-	rootCmd.PersistentFlags().MarkDeprecated("data-dir", `Use --force-repo-dir instead`)
+	if err := rootCmd.PersistentFlags().MarkDeprecated("data-dir", `Use --force-repo-dir instead`); err != nil {
+		return err
+	}
 	rootCmd.PersistentFlags().String("force-defs-dir", "", "Override the path to load YAML distro definitions from")
-	rootCmd.PersistentFlags().MarkHidden("force-defs-dir")
+	if err := rootCmd.PersistentFlags().MarkHidden("force-defs-dir"); err != nil {
+		return err
+	}
 	rootCmd.PersistentFlags().StringArray("extra-repo", nil, `Add an extra repository during build (will *not* be gpg checked and not be part of the final image)`)
 	rootCmd.PersistentFlags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
@@ -715,16 +708,16 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.SetErr(osStderr)
 
 	bootcCommand := &cobra.Command{
-		Use:	"bootc",
-		Short:  "bootc-related commands",
-		Args:   cobra.NoArgs,
+		Use:   "bootc",
+		Short: "bootc-related commands",
+		Args:  cobra.NoArgs,
 	}
 
 	bootcInspectCommand := &cobra.Command{
-		Use:	"inspect",
-		Short:  "Show data gathered by `image-builder` for a container",
-		RunE:   cmdBootcInspect,
-		Args:   cobra.NoArgs,
+		Use:   "inspect",
+		Short: "Show data gathered by `image-builder` for a container",
+		RunE:  cmdBootcInspect,
+		Args:  cobra.NoArgs,
 	}
 	bootcInspectCommand.Flags().String("ref", "", `bootc container ref`)
 	_ = bootcInspectCommand.MarkFlagRequired("ref")
@@ -784,15 +777,21 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
 	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
-	manifestCmd.Flags().MarkHidden("use-librepo")
+	if err := manifestCmd.Flags().MarkHidden("use-librepo"); err != nil {
+		return err
+	}
 	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
 	manifestCmd.Flags().Bool("with-rpmlist", false, `export RPM list as JSON`)
-	manifestCmd.Flags().MarkHidden("with-rpmlist")
+	if err := manifestCmd.Flags().MarkHidden("with-rpmlist"); err != nil {
+		return err
+	}
 	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
 	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
 	manifestCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
 	manifestCmd.Flags().Bool("preview", true, `override distro default preview state if passed`)
-	manifestCmd.Flags().MarkHidden("preview")
+	if err := manifestCmd.Flags().MarkHidden("preview"); err != nil {
+		return err
+	}
 	rootCmd.AddCommand(manifestCmd)
 
 	uploadCmd := &cobra.Command{

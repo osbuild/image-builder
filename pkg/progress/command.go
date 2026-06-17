@@ -56,6 +56,7 @@ func newOsbuildCmd(manifest []byte, exports []string, opts *OSBuildOptions) *exe
 	if opts.CacheMaxSize != 0 {
 		cacheMaxSize = opts.CacheMaxSize
 	}
+	// #nosec: G204
 	cmd := exec.Command(
 		osbuildCmd,
 		"--store", opts.StoreDir,
@@ -212,7 +213,7 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 
 	// append metrics to the end message
 	if opts.Metrics {
-		pb.Write(oss.Bytes())
+		_, _ = pb.Write(oss.Bytes())
 	}
 
 	return nil

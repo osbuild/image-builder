@@ -29,7 +29,9 @@ jobs:
       fail-fast: false  # if one fails, keep the other(s) running
     name: "🛃 Unit tests (Fedora ${{ matrix.fedora_version.name }})"
     runs-on: ubuntu-24.04
-    container: registry.fedoraproject.org/fedora:${{ matrix.fedora_version.version }}
+    container:
+      image: registry.fedoraproject.org/fedora:${{ matrix.fedora_version.version }}
+      options: --privileged
     continue-on-error: ${{ matrix.continue-on-error || false }}
     env:
       # workaround for expired cert at source of indirect dependency
@@ -116,6 +118,7 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: quay.io/centos/centos:${{ matrix.centos_stream.image_tag }}
+      options: --privileged
     env:
       GOFLAGS: "-tags=exclude_graphdriver_btrfs"
       # workaround for expired cert at source of indirect dependency

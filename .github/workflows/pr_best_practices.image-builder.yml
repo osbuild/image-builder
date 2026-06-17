@@ -1,18 +1,17 @@
----
-name: "Verify PR best practices"
+name: "Best Practices"
 
 on:  # yamllint disable-line rule:truthy
-  pull_request_target:
-    branches: [main]
-    types: [opened, synchronize, reopened, edited]
-  issue_comment:
-    types: [created]
+#  pull_request_target:
+#    branches: [main]
+#    types: [opened, synchronize, reopened, edited]
+#  issue_comment:
+#    types: [created]
 
 jobs:
   pr-best-practices:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
-      - name: PR best practice check
+      - name: Check
         uses: osbuild/pr-best-practices@main
         with:
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
