@@ -31,6 +31,7 @@ echo >> "$0".run
 ` + script
 
 	t.Setenv("PATH", mockCmd.binDir+":"+os.Getenv("PATH"))
+	// #nosec G306
 	err := os.WriteFile(filepath.Join(mockCmd.binDir, name), []byte(fullScript), 0755)
 	require.NoError(t, err)
 

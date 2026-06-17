@@ -56,6 +56,7 @@ func newOsbuildCmd(manifest []byte, exports []string, opts *OSBuildOptions) *exe
 	if opts.CacheMaxSize != 0 {
 		cacheMaxSize = opts.CacheMaxSize
 	}
+	// #nosec: G204
 	cmd := exec.Command(
 		osbuildCmd,
 		"--store", opts.StoreDir,
