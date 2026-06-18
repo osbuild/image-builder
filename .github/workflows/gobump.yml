@@ -16,8 +16,8 @@ jobs:
         run: |
           set -xe
           sudo dnf -y install git gh golang skopeo libvirt-devel gpgme-devel btrfs-progs-devel krb5-devel
-          git clone --depth 1 https://github.com/osbuild/images
-          cd images/
+          git clone --depth 1 https://github.com/osbuild/image-builder
+          cd image-builder/
           go build ./...
           go test ./...
 
@@ -26,7 +26,7 @@ jobs:
           GH_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
         run: |
           set -xe
-          cd images/
+          cd image-builder/
           git config user.name "schutzbot"
           git config user.email "schutzbot@gmail.com"
           branch="schutz-gobump-$(date -I)"
@@ -38,10 +38,10 @@ jobs:
             -exec "./tools/gen-manifest-checksums.sh" \
             -verbose -format markdown | tee "/tmp/github_pr_body.txt"
           git log --oneline "main..${branch}"
-          git push -f "https://$GH_TOKEN@github.com/schutzbot/images.git" "${branch}"
+          git push -f "https://$GH_TOKEN@github.com/schutzbot/image-builder.git" "${branch}"
           gh pr create \
             -t "Update dependencies $(date -I)" \
             -F "/tmp/github_pr_body.txt" \
-            --repo "osbuild/images" \
+            --repo "osbuild/image-builder" \
             --base "main" \
             --head "schutzbot:${branch}"
