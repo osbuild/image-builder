@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/osbuild/images/pkg/artifact"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/artifact"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 type Vagrant struct {

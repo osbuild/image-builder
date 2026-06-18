@@ -45,7 +45,7 @@ import (
 	#include <string.h>
 	#include <crypt.h>
 
-	char *gnu_ext_crypt(char *pass, char *salt) {
+	char *gnu_ext_crypt_migration(char *pass, char *salt) {
 		char *enc = NULL;
 		char *ret = NULL;
 		struct crypt_data data;
@@ -74,7 +74,7 @@ func crypt(pass, salt string) (string, error) {
 	c_salt := C.CString(salt)
 	defer C.free(unsafe.Pointer(c_salt))
 
-	c_enc, err := C.gnu_ext_crypt(c_pass, c_salt)
+	c_enc, err := C.gnu_ext_crypt_migration(c_pass, c_salt)
 	if c_enc == nil {
 		return "", err
 	}

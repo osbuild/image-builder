@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 func TestNewGRUB2Stage(t *testing.T) {

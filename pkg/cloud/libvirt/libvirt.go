@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/osbuild/images/pkg/cloud"
-	"github.com/osbuild/images/pkg/olog"
+	"github.com/osbuild/image-builder/pkg/cloud"
+	"github.com/osbuild/image-builder/pkg/olog"
 
 	lv "libvirt.org/go/libvirt"
 )

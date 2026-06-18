@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

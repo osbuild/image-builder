@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 
-	testrepos "github.com/osbuild/images/test/data/repositories"
+	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 
-	main "github.com/osbuild/images/cmd/image-builder"
+	main "github.com/osbuild/image-builder/cmd/image-builder"
 )
 
 func TestDescribeImage(t *testing.T) {

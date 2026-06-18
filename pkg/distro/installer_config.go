@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/manifest"
 )
 
 // InstallerConfig represents a configuration for the installer

@@ -7,9 +7,9 @@ import (
 	"slices"
 	"time"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/sbom"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 // v2 API structs
@@ -434,7 +434,7 @@ func (h *v2Handler) reposFromRPMMD(cfg *solverConfig, rpmRepos []rpmmd.RepoConfi
 			// and removing the client-side secrets resolution below.
 			// This requires functional testing to ensure RHSM secrets discovery
 			// works correctly in the solver.
-			// See: https://github.com/osbuild/images/issues/2055
+			// See: https://github.com/osbuild/image-builder/issues/2055
 
 			// NOTE: It is assumed that the s.subscriptions are not nil if the repo needs RHSM secrets
 			// because validateSubscriptionsForRepos() is called before makeDepsolveRequest().

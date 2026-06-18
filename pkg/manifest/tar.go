@@ -1,8 +1,8 @@
 package manifest
 
 import (
-	"github.com/osbuild/images/pkg/artifact"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/artifact"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 // A Tar represents the contents of another pipeline in a tar file

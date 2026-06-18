@@ -10,24 +10,24 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/customizations/bootc"
-	"github.com/osbuild/images/pkg/customizations/fsnode"
-	"github.com/osbuild/images/pkg/customizations/ignition"
-	"github.com/osbuild/images/pkg/customizations/oscap"
-	"github.com/osbuild/images/pkg/customizations/shell"
-	"github.com/osbuild/images/pkg/customizations/subscription"
-	"github.com/osbuild/images/pkg/customizations/users"
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rhsm/facts"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/environment"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/customizations/bootc"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/ignition"
+	"github.com/osbuild/image-builder/pkg/customizations/oscap"
+	"github.com/osbuild/image-builder/pkg/customizations/shell"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/pkg/customizations/users"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rhsm/facts"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 // OSCustomizations encapsulates all configuration applied to the base
@@ -349,7 +349,7 @@ func (p *OS) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 
 	// Depsolve customization packages separately to avoid conflicts with base
 	// package exclusion.
-	// See https://github.com/osbuild/images/issues/1323
+	// See https://github.com/osbuild/image-builder/issues/1323
 	if len(customizationPackages) > 0 {
 		chain = append(chain, rpmmd.PackageSet{
 			Include:      customizationPackages,
@@ -563,7 +563,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		// rpm-ostree requires that only one kernel exists in the image.
 		// Disabling dracut for ostree-based systems resolves this issue.
 		// Dracut will be run by rpm-ostree itself while composing the image.
-		// https://github.com/osbuild/images/issues/624
+		// https://github.com/osbuild/image-builder/issues/624
 		baseRPMOptions.DisableDracut = true
 	}
 	baseRPMOptions.InstallLangs = p.OSCustomizations.InstallLangs

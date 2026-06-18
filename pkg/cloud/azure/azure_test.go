@@ -6,8 +6,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/cloud/azure"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/cloud/azure"
 )
 
 type azm struct {

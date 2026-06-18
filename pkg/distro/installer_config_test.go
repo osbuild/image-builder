@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro"
 )
 
 func TestInstallerConfigInheritFrom(t *testing.T) {

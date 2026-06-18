@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/osbuild/images/internal/buildconfig"
+	"github.com/osbuild/image-builder/internal/buildconfig"
 )
 
 func init() {
@@ -12,7 +12,7 @@ func init() {
 		Name:                   "kernel",
 		RequiresBlueprint:      true,
 		RequiresCustomizations: true,
-		TempDisabled:           "https://github.com/osbuild/images/pull/2175",
+		TempDisabled:           "https://github.com/osbuild/image-builder/pull/2175",
 	}, kernelCheck)
 }
 

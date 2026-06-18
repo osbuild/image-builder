@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 func writeOSRelease(t *testing.T, root, id, versionID, name, platformID, variantID, idLike string) {

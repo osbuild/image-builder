@@ -8,7 +8,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/spf13/pflag"
 
-	"github.com/osbuild/images/pkg/cloud"
+	"github.com/osbuild/image-builder/pkg/cloud"
 )
 
 func bibUpload(uploader cloud.Uploader, path string, flags *pflag.FlagSet) error {

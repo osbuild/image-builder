@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 func TestNewSfdiskStage(t *testing.T) {

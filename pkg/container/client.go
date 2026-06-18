@@ -31,8 +31,8 @@ import (
 
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/arch"
 )
 
 const (

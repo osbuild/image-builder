@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/image-builder/internal/common"
 )
 
 const usernameRegex = `^[A-Za-z0-9_.][A-Za-z0-9_.-]{0,31}$`

@@ -4,9 +4,9 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/osbuild/images/pkg/customizations/users"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/customizations/users"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 type CoreOSISOTree struct {

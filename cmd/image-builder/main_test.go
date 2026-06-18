@@ -17,16 +17,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/manifestgen/manifestmock"
-	"github.com/osbuild/images/pkg/osbuild/manifesttest"
-	"github.com/osbuild/images/pkg/rpmmd"
-	testrepos "github.com/osbuild/images/test/data/repositories"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
+	"github.com/osbuild/image-builder/pkg/osbuild/manifesttest"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 
-	main "github.com/osbuild/images/cmd/image-builder"
-	"github.com/osbuild/images/internal/testutil"
-	"github.com/osbuild/images/pkg/arch"
+	main "github.com/osbuild/image-builder/cmd/image-builder"
+	"github.com/osbuild/image-builder/internal/testutil"
+	"github.com/osbuild/image-builder/pkg/arch"
 )
 
 func assertJsonContains(t *testing.T, jsonInput, searchTerm string) {

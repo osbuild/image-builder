@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/osbuild/images/pkg/upload/oci"
+	"github.com/osbuild/image-builder/pkg/upload/oci"
 )
 
 var (

@@ -3,7 +3,7 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 type ISORootfsImg struct {

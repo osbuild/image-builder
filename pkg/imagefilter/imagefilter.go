@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/distrosort"
-	"github.com/osbuild/images/pkg/reporegistry"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/distrosort"
+	"github.com/osbuild/image-builder/pkg/reporegistry"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 type MinimalRepoRegistry interface {

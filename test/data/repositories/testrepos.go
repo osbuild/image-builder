@@ -4,7 +4,7 @@ import (
 	"embed"
 	"io/fs"
 
-	"github.com/osbuild/images/pkg/reporegistry"
+	"github.com/osbuild/image-builder/pkg/reporegistry"
 )
 
 //go:embed *.json

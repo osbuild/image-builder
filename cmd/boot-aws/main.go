@@ -13,11 +13,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/test"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/cloud/awscloud"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/test"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 // exitCheck can be deferred from the top of command functions to exit with an

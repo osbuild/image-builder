@@ -8,9 +8,9 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/olog"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/olog"
 )
 
 type GalleryImage struct {

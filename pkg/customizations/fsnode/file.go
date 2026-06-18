@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/image-builder/internal/common"
 )
 
 type File struct {

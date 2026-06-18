@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 func TestPartitionTableTypeUnmarshalYAML(t *testing.T) {

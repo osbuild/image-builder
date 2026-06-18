@@ -9,7 +9,7 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 
-	"github.com/osbuild/images/internal/blueprintload"
+	"github.com/osbuild/image-builder/internal/blueprintload"
 )
 
 var testBlueprintJSON = `{

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/image-builder/pkg/container"
 )
 
 // SPECIFIC INPUT STRUCTURE

@@ -1,8 +1,8 @@
 package distroidparser
 
 import (
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/defs"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 )
 
 var DefaultParser = NewDefaultParser()

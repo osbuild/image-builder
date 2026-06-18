@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/distro_test_common"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/distro_test_common"
 )
 
 func TestRH10DistroFactory(t *testing.T) {

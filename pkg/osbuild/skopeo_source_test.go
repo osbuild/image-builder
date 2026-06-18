@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/internal/assertx"
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/image-builder/internal/assertx"
+	"github.com/osbuild/image-builder/internal/common"
 )
 
 func TestNewSkopeoSource(t *testing.T) {

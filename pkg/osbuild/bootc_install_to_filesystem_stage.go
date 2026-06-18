@@ -5,7 +5,7 @@ import (
 
 	"slices"
 
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 type BootcInstallToFilesystemOptions struct {

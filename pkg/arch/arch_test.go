@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/image-builder/internal/common"
 )
 
 func TestCurrentArchAMD64(t *testing.T) {

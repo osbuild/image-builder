@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/sirupsen/logrus"
 )
 

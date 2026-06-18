@@ -6,17 +6,17 @@ import (
 	"os"
 	"slices"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/customizations/fsnode"
-	"github.com/osbuild/images/pkg/customizations/kickstart"
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/flatpak"
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/flatpak"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 type AnacondaInstallerType int

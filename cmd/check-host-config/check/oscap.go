@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/gocomply/scap/pkg/scap/models/cdf"
-	"github.com/osbuild/images/internal/buildconfig"
+	"github.com/osbuild/image-builder/internal/buildconfig"
 )
 
 // ignoredSeverityRules is a list of rule IDs that are ignored by the OpenSCAP check.

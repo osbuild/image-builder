@@ -1,8 +1,8 @@
 package image
 
 import (
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 // common struct that all anaconda installers share

@@ -10,11 +10,11 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk/partition"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk/partition"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 type PartitionTable struct {

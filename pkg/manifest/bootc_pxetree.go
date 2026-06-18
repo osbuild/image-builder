@@ -6,9 +6,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/images/pkg/customizations/fsnode"
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 type BootcPXETree struct {

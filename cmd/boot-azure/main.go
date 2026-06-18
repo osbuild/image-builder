@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/osbuild/images/internal/test"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/cloud/azure"
+	"github.com/osbuild/image-builder/internal/test"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/cloud/azure"
 )
 
 const (

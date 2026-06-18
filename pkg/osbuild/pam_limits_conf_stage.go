@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/image-builder/internal/common"
 )
 
 // PamLimitsConfStageOptions represents a single pam_limits module configuration file.

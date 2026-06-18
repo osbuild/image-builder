@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/arch"
 )
 
 type ImageFormat uint64

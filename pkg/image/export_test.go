@@ -1,9 +1,9 @@
 package image
 
 import (
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/runner"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/runner"
 )
 
 var (

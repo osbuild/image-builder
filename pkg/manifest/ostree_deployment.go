@@ -6,14 +6,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/customizations/fsnode"
-	"github.com/osbuild/images/pkg/customizations/users"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/users"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 // OSTreeDeploymentCustomizations encapsulates all configuration applied to an
@@ -392,7 +392,7 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 		// mountpoints if its not present.This will safeguard
 		// any ostree deployment  which has custom filesystem
 		// during ostree upgrade.
-		// issue # https://github.com/osbuild/images/issues/352
+		// issue # https://github.com/osbuild/image-builder/issues/352
 		if len(p.CustomFileSystems) != 0 {
 			serviceName := "osbuild-ostree-mountpoints.service"
 			mps, err := createMountpointService(serviceName, p.CustomFileSystems)

@@ -13,11 +13,11 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/bib/blueprintload"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/olog"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/bib/blueprintload"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/olog"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 // paths we check for configuration files, first one to match is the

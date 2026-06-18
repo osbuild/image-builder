@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 func TestImageConfigInheritFrom(t *testing.T) {

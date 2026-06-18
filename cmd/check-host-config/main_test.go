@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/cmd/check-host-config/check"
-	"github.com/osbuild/images/internal/buildconfig"
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/image-builder/cmd/check-host-config/check"
+	"github.com/osbuild/image-builder/internal/buildconfig"
+	"github.com/osbuild/image-builder/pkg/distro"
 )
 
 func TestShouldRunOn(t *testing.T) {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/ostree"
 )
 
 type SourceSpec struct {

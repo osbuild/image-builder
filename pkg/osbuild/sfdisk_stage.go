@@ -3,7 +3,7 @@ package osbuild
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 // Partition a target using sfdisk(8)
