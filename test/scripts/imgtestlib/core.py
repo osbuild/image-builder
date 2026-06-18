@@ -10,7 +10,8 @@ from .build import get_manifest_id
 from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_s3
 from .gitlab import log_section
 from .run import runcmd
-from .testenv import get_bib_ref, host_container_arch, rng_seed_env
+from .testenv import (get_bib_ref, get_ci_runner_for, host_container_arch,
+                      rng_seed_env)
 
 TEST_CACHE_ROOT = ".cache/osbuild-images"
 CONFIGS_PATH = "./test/configs"
@@ -264,10 +265,19 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
         # add manifest id to build request
         build_request["manifest-checksum"] = manifest_id
 
+        # The config generator runner distro might differ from the builder. The cache path includes the runner distro as
+        # a component when a directory is created, so we need to use that to check for a hit.
+        runner = get_ci_runner_for(distro, arch, "*")
+        # Runners are defined as <platform>/<distro> (e.g. aws/fedora-44)
+        runner = runner.split("/")[1]
+        # special case for CentOS Stream. Our runners use centos-stream-N but the cache path generator reads os-release
+        # to create the host distro name, which ends up as centos-N
+        runner = runner.replace("centos-stream", "centos")
+
         # check if the hash_fname exists in the synced directory
         build_info_dir = os.path.join(
             dl_root_path,
-            gen_build_info_dir_path_prefix(distro, arch, manifest_id)
+            gen_build_info_dir_path_prefix(distro, arch, manifest_id, runner_distro=runner)
         )
 
         if check_for_build(manifest_fname, build_request, data["manifest"], build_info_dir, errors):
