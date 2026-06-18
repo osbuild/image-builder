@@ -1,11 +1,11 @@
 package image
 
 import (
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/experimentalflags"
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/runner"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/experimentalflags"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/runner"
 )
 
 // addBuildBootstrapPipelines will add a build pipeline to the

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/images/pkg/olog"
+	"github.com/osbuild/image-builder/pkg/olog"
 	"gopkg.in/ini.v1"
 )
 

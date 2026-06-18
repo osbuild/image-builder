@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/osbuild/images/data/files"
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/customizations/fsnode"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/data/files"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 var fileDataFS embed.FS = files.Data

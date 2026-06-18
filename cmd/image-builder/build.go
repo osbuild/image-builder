@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/images/pkg/imagefilter"
-	"github.com/osbuild/images/pkg/progress"
+	"github.com/osbuild/image-builder/pkg/imagefilter"
+	"github.com/osbuild/image-builder/pkg/progress"
 )
 
 type buildOptions struct {
@@ -60,7 +60,7 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 	if err := progress.RunOSBuild(pbar, osbuildManifest, res.ImgType.Exports(), osbuildOpts); err != nil {
 		return "", err
 	}
-	// Rename *sigh*, see https://github.com/osbuild/images/pull/1039
+	// Rename *sigh*, see https://github.com/osbuild/image-builder/pull/1039
 	// for my preferred way. Every frontend to images has to duplicate
 	// similar code like this.
 	pipelineDir := filepath.Join(opts.OutputDir, res.ImgType.Exports()[0])

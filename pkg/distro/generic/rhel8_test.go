@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/distro_test_common"
-	"github.com/osbuild/images/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/distro_test_common"
+	"github.com/osbuild/image-builder/pkg/distro/generic"
 )
 
 var rhel8_FamilyDistros = []rhelFamilyDistro{

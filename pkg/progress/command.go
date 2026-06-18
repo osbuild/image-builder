@@ -12,8 +12,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 type OSBuildOptions struct {

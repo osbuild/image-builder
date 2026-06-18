@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/bootc"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 
-	"github.com/osbuild/images/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/pkg/bib/osinfo"
 )
 
 const (

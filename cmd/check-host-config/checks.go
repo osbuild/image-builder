@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/osbuild/images/cmd/check-host-config/check"
+	"github.com/osbuild/image-builder/cmd/check-host-config/check"
 )
 
 // getAllChecks returns all checks discovered from the check package.

@@ -13,15 +13,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/flatpak"
-	"github.com/osbuild/images/pkg/manifestgen/manifestmock"
-	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/rpmmd"
-	testrepos "github.com/osbuild/images/test/data/repositories"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/flatpak"
+	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 )
 
 // listTestedDistros returns a list of distro names that are explicitly tested

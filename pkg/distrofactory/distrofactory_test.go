@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/pkg/distro/defs"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 )
 
 func TestGetDistroDefaultList(t *testing.T) {

@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/disk/partition"
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/disk/partition"
+	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/stretchr/testify/assert"
 )
 

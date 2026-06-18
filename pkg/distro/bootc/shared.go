@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/bib/osinfo"
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/olog"
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/runner"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/olog"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/runner"
 )
 
 // This file contains shared helpers between the various bootc
@@ -23,13 +23,13 @@ import (
 // TODO: find a way to move them into YAML to make sharing easier
 // between package and image based image types
 //
-// from:https://github.com/osbuild/images/blob/v0.207.0/data/distrodefs/rhel-10/imagetypes.yaml#L169
+// from:https://github.com/osbuild/image-builder/blob/v0.207.0/data/distrodefs/rhel-10/imagetypes.yaml#L169
 var loraxRhelTemplates = []manifest.InstallerLoraxTemplate{
 	manifest.InstallerLoraxTemplate{Path: "80-rhel/runtime-postinstall.tmpl"},
 	manifest.InstallerLoraxTemplate{Path: "80-rhel/runtime-cleanup.tmpl", AfterDracut: true},
 }
 
-// from:https://github.com/osbuild/images/blob/v0.207.0/data/distrodefs/fedora/imagetypes.yaml#L408
+// from:https://github.com/osbuild/image-builder/blob/v0.207.0/data/distrodefs/fedora/imagetypes.yaml#L408
 var loraxFedoraTemplates = []manifest.InstallerLoraxTemplate{
 	manifest.InstallerLoraxTemplate{Path: "99-generic/runtime-postinstall.tmpl"},
 	manifest.InstallerLoraxTemplate{Path: "99-generic/runtime-cleanup.tmpl", AfterDracut: true},

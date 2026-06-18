@@ -13,7 +13,7 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 
-	"github.com/osbuild/images/pkg/util"
+	"github.com/osbuild/image-builder/pkg/util"
 )
 
 var (
@@ -307,7 +307,7 @@ type debugProgressBar struct {
 }
 
 // NewDebugProgressBar will create a progressbar aimed to debug the
-// lower level osbuild/images message. It will never clear the screen
+// lower level osbuild/image-builder message. It will never clear the screen
 // so "glitches/weird" messages from the lower-layers can be inspected
 // easier.
 func NewDebugProgressBar() (ProgressBar, error) {

@@ -28,9 +28,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/osbuild/images/pkg/rhsm"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/sbom"
+	"github.com/osbuild/image-builder/pkg/rhsm"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 // BaseSolver defines the basic solver configuration without platform
@@ -278,7 +278,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 		return nil, err
 	}
 
-	// XXX: we should let the depsolver handle subscriptions: https://github.com/osbuild/images/issues/2055
+	// XXX: we should let the depsolver handle subscriptions: https://github.com/osbuild/image-builder/issues/2055
 	if err := validateSubscriptionsForRepos(pkgSets, s.subscriptions != nil, s.subscriptionsErr); err != nil {
 		return nil, err
 	}

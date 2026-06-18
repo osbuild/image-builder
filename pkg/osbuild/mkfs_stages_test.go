@@ -7,10 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/testdisk"
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/testdisk"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 var defaultStageDevices = map[string]Device{

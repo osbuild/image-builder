@@ -3,7 +3,7 @@ package osbuild_test
 import (
 	"testing"
 
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/stretchr/testify/assert"
 )
 

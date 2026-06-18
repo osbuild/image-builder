@@ -10,8 +10,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	main "github.com/osbuild/images/cmd/image-builder"
-	testrepos "github.com/osbuild/images/test/data/repositories"
+	main "github.com/osbuild/image-builder/cmd/image-builder"
+	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 )
 
 func TestMemProfileWritesHeapAndGoroutineFiles(t *testing.T) {

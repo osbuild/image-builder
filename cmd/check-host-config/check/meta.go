@@ -1,7 +1,7 @@
 package check
 
 import (
-	"github.com/osbuild/images/internal/buildconfig"
+	"github.com/osbuild/image-builder/internal/buildconfig"
 )
 
 // Metadata provides information about a check. It is used to manage the execution

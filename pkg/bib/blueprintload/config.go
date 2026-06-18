@@ -11,7 +11,7 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/olog"
+	"github.com/osbuild/image-builder/pkg/olog"
 )
 
 // legacyBuildConfig is the json based configuration that was used in

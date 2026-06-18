@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/gobwas/glob"
-	"github.com/osbuild/images/pkg/distrofactory"
-	testrepos "github.com/osbuild/images/test/data/repositories"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
+	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 )
 
 type multiValue []string

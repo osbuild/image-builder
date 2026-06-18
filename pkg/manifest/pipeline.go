@@ -1,13 +1,13 @@
 package manifest
 
 import (
-	"github.com/osbuild/images/pkg/artifact"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/flatpak"
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/artifact"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/flatpak"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 // Pipeline serializes to a series of stages that modify a file system tree

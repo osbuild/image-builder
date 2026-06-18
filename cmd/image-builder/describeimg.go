@@ -10,12 +10,12 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/defs"
-	"github.com/osbuild/images/pkg/imagefilter"
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
+	"github.com/osbuild/image-builder/pkg/imagefilter"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/ostree"
 )
 
 // Use yaml output by default because it is both nicely human and
@@ -123,7 +123,7 @@ func packageSetsFor(imgType distro.ImageType) (map[string]*packagesYAML, error) 
 // XXX: should this live in images instead?
 func describeImage(img *imagefilter.Result, out io.Writer) error {
 	// see
-	// https://github.com/osbuild/images/pull/1019#discussion_r1832376568
+	// https://github.com/osbuild/image-builder/pull/1019#discussion_r1832376568
 	// for what is available on an image (without depsolve or partitioning)
 	pkgSets, err := packageSetsFor(img.ImgType)
 	if err != nil {

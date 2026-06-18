@@ -20,9 +20,9 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/olog"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/olog"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 type AWS struct {

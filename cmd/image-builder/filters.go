@@ -7,9 +7,9 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"github.com/osbuild/images/pkg/distro/defs"
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/imagefilter"
 )
 
 func newImageFilterDefault(repoDir string, extraRepos []string, forceDefsDir string) (*imagefilter.ImageFilter, error) {

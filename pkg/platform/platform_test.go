@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 func TestBootloaderString(t *testing.T) {

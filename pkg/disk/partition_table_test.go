@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/internal/testdisk"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/internal/testdisk"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 func TestPartitionTable_GetMountpointSize(t *testing.T) {

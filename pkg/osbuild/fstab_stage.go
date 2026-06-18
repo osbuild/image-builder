@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 // The FSTabStageOptions describe the content of the /etc/fstab file.

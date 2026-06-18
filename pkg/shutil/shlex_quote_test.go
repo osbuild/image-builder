@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/pkg/shutil"
+	"github.com/osbuild/image-builder/pkg/shutil"
 )
 
 func TestShlexQuote(t *testing.T) {

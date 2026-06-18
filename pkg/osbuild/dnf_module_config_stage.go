@@ -1,7 +1,7 @@
 package osbuild
 
 import (
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 type DNFModuleConfig struct {

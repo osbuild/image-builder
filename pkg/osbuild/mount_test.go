@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 func TestNewMounts(t *testing.T) {

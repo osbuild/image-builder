@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	main "github.com/osbuild/images/cmd/image-builder"
+	main "github.com/osbuild/image-builder/cmd/image-builder"
 )
 
 func runSystemRaw(t *testing.T) map[string]interface{} {

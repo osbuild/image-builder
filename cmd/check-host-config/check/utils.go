@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro"
 )
 
 // OSRelease contains parsed fields from /etc/os-release

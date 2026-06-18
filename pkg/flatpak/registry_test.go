@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/flatpak"
+	"github.com/osbuild/image-builder/pkg/flatpak"
 )
 
 func TestNewRegistryFromURI(t *testing.T) {

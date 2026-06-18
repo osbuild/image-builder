@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/artifact"
-	"github.com/osbuild/images/pkg/customizations/fdo"
-	"github.com/osbuild/images/pkg/customizations/ignition"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/runner"
+	"github.com/osbuild/image-builder/internal/environment"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/artifact"
+	"github.com/osbuild/image-builder/pkg/customizations/fdo"
+	"github.com/osbuild/image-builder/pkg/customizations/ignition"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/runner"
 )
 
 type OSTreeSimplifiedInstaller struct {

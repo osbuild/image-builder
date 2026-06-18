@@ -2,7 +2,7 @@ package awscloud
 
 import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 type AwsClient = awsClient

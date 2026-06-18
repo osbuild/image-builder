@@ -1,7 +1,7 @@
 package osbuild
 
 import (
-	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/image-builder/pkg/container"
 )
 
 func GenContainerStorageStages(storagePath string, containerSpecs []container.Spec) (stages []*Stage) {

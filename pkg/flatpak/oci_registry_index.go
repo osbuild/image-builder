@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/image-builder/pkg/container"
 )
 
 // Functionality query for flatpaks in an OCI registry that supports the registry index
