@@ -275,7 +275,9 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
         else:
             # The specific build configuration exists in the cache and wont be rebuilt. Update the file timestamps to
             # keep them fresh in the cache.
-            touch_s3(distro, arch, manifest_id)
+            # touch_s3(distro, arch, manifest_id)
+            # NOTE(2026-06-18): Disabling this temporarily since it slows down the filtering process by a lot
+            print("WARNING: timestamp updating has been temporarily disabled", file=sys.stderr)
 
     print("✅ Config filtering done!\n")
     if errors:
