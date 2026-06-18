@@ -1,11 +1,5 @@
-# The minimum required osbuild version, note that this used to be 129
-# but got bumped to 138 for librepo support which is not strictly
-# required. So if this needs backport to places where there is no
-# recent osbuild available we could simply make --use-librepo false
-# and go back to 129.
 %global min_osbuild_version 183
-
-%global goipath         github.com/osbuild/image-builder-cli
+%global goipath         github.com/osbuild/image-builder
 
 Version:        70
 
@@ -27,7 +21,7 @@ ExcludeArch:    i686
 License:        Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND CC-BY-SA-4.0 AND ISC AND MIT AND MPL-2.0 AND Unlicense
 
 URL:            %{gourl}
-Source0:        https://github.com/osbuild/image-builder-cli/releases/download/v%{version}/image-builder-cli-%{version}.tar.gz
+Source0:        https://github.com/osbuild/image-builder/releases/download/v%{version}/image-builder-%{version}.tar.gz
 
 
 BuildRequires:  %{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
