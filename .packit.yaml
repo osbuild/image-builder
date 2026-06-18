@@ -17,9 +17,9 @@ srpm_build_deps:
 
 actions:
   # v1 just the default prior to having tags
-  get-current-version: bash -c "make show-version"
+  get-current-version: bash -c "make -f Makefile.image-builder show-version"
   post-upstream-clone: bash -c "GOPROXY=https://proxy.golang.org,direct go mod vendor && ./tools/rpm_spec_add_provides_bundle.sh"
-  create-archive: bash -c "make release_artifacts"
+  create-archive: bash -c "make -f Makefile.image-builder release_artifacts"
 
 # Handle only releases without a "dot" (e.g. v88.2), since "dot" releases should never be released to Fedora
 upstream_tag_include: 'v\d+'
