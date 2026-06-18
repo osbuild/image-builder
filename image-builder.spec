@@ -25,14 +25,17 @@ Source0:        https://github.com/osbuild/image-builder/releases/download/v%{ve
 
 
 BuildRequires:  %{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
+BuildRequires:  libvirt-devel
+BuildRequires:  skopeo
+
+# Build requirements of the `kerby/kerby` package
+BuildRequires:  krb5-devel
 # Build requirements of 'theproglottis/gpgme' package
 BuildRequires:  gpgme-devel
 BuildRequires:  libassuan-devel
 # Build requirements of 'github.com/containers/storage' package
 BuildRequires:  device-mapper-devel
 BuildRequires:  libxcrypt-devel
-# Build requiremets of 'github.com/osbuild/images' package
-BuildRequires:  libvirt-devel
 %if 0%{?fedora}
 # Build requirements of 'github.com/containers/storage' package
 BuildRequires:  btrfs-progs-devel
