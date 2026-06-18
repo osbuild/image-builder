@@ -3,9 +3,9 @@ package depsolvednf
 import (
 	"encoding/json"
 
-	"github.com/osbuild/images/pkg/rhsm"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/sbom"
+	"github.com/osbuild/image-builder/pkg/rhsm"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 // depsolveResultRaw is the internal result type returned by handlers.

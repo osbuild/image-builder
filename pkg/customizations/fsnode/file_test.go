@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 

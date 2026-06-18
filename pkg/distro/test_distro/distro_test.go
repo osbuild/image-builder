@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/test_distro"
 	"github.com/stretchr/testify/require"
 )
 

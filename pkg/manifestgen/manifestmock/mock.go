@@ -10,13 +10,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/osbuild/images/internal/buildconfig"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/flatpak"
-	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/sbom"
+	"github.com/osbuild/image-builder/internal/buildconfig"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/flatpak"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 func ResolveContainers(containerSources map[string][]container.SourceSpec) map[string][]container.Spec {

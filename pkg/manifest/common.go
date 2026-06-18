@@ -3,8 +3,8 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 // filesystemConfigStages generates either an org.osbuild.fstab stage or a

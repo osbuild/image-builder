@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/customizations/fdo"
-	"github.com/osbuild/images/pkg/customizations/ignition"
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/customizations/fdo"
+	"github.com/osbuild/image-builder/pkg/customizations/ignition"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 type CoreOSInstaller struct {

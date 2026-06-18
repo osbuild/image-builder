@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"slices"
 
-	"github.com/osbuild/images/pkg/customizations/oci"
+	"github.com/osbuild/image-builder/pkg/customizations/oci"
 )
 
 type OCIArchiveStageOptions struct {

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/flatpak"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/flatpak"
 )
 
 type PayloadLocation uint

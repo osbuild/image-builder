@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/runner"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/runner"
 )
 
 func TestPipelineRoleBuild(t *testing.T) {

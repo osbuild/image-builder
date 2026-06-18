@@ -3,8 +3,8 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 // ISOTree represents a simplified ISO tree that supports squashfs and erofs

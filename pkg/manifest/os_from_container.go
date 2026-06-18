@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 // OSFromContainer represents a pipeline that deploys an OS tree from a container.

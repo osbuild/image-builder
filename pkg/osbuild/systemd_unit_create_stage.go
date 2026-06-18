@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 const (

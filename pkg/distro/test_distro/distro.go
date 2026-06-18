@@ -7,14 +7,15 @@ import (
 	"slices"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/policies"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/runner"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/policies"
+	"github.com/osbuild/image-builder/pkg/repomigration"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/runner"
 )
 
 const (
@@ -244,7 +245,7 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 	if b != nil {
 		mountpoints := b.Customizations.GetFilesystems()
 
-		err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
+		err := repomigration.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
 		if err != nil {
 			return nil, nil, err
 		}

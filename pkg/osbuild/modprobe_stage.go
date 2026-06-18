@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/image-builder/internal/common"
 )
 
 const modprobeCfgFilenameRegex = "^[\\w.-]{1,250}\\.conf$"

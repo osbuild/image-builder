@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/osbuild/images/internal/buildconfig"
+	"github.com/osbuild/image-builder/internal/buildconfig"
 )
 
 const hostnameFilePath = "/etc/hostname"

@@ -3,8 +3,8 @@ package testdisk
 import (
 	"math/rand"
 
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
 )
 
 const (

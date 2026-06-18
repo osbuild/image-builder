@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/internal/testutil"
+	"github.com/osbuild/image-builder/internal/testutil"
 )
 
 func TestMockCommand(t *testing.T) {

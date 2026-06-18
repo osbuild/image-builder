@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/osbuild/images/pkg/cloud"
+	"github.com/osbuild/image-builder/pkg/cloud"
 
 	"github.com/gophercloud/gophercloud/v2"
 	ostack "github.com/gophercloud/gophercloud/v2/openstack"

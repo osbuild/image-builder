@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,7 +1,7 @@
 package policies
 
 import (
-	"github.com/osbuild/images/pkg/pathpolicy"
+	"github.com/osbuild/image-builder/pkg/pathpolicy"
 )
 
 // MountpointPolicies is a set of default mountpoint policies used for filesystem customizations

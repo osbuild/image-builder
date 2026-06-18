@@ -1,8 +1,8 @@
 package distro
 
 import (
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 // ISOConfig represents configuration for the ISO part of images that are packed

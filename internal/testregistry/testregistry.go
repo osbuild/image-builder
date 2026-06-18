@@ -18,9 +18,9 @@ import (
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/containers/image/v5/manifest"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/container"
 )
 
 /*

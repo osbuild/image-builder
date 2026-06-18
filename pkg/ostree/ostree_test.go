@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/ostree/test_mtls_server"
-	"github.com/osbuild/images/pkg/rhsm"
+	"github.com/osbuild/image-builder/pkg/ostree/test_mtls_server"
+	"github.com/osbuild/image-builder/pkg/rhsm"
 )
 
 func TestOstreeResolveRef(t *testing.T) {

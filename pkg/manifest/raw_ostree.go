@@ -3,9 +3,9 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/artifact"
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/artifact"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 // A RawOSTreeImage represents a raw ostree image file which can be booted in a

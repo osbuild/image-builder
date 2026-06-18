@@ -4,8 +4,8 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/distro"
 )
 
 // math/rand is good enough in this case

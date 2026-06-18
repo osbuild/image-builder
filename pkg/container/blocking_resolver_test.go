@@ -10,10 +10,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/testregistry"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/testregistry"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/container"
 )
 
 func TestBlockingResolver(t *testing.T) {

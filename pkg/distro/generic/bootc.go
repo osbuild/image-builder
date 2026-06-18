@@ -7,14 +7,14 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/bib/osinfo"
-	"github.com/osbuild/images/pkg/bootc"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/defs"
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/runner"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/runner"
 )
 
 type BootcDistro struct {
@@ -47,8 +47,8 @@ const (
 // requirements for the name of the distro and it is only used to identify this
 // particular instance of the distribution. The name bootc is commonly used,
 // unless multiple instances are created.
-// To generate the [github.com/osbuild/images/pkg/bootc.Info] from a container
-// ref, use the [github.com/osbuild/images/pkg/bootc.Container] type and its
+// To generate the [github.com/osbuild/image-builder/pkg/bootc.Info] from a container
+// ref, use the [github.com/osbuild/image-builder/pkg/bootc.Container] type and its
 // methods.
 func NewBootc(name string, cinfo *bootc.Info) (*BootcDistro, error) {
 	return NewBootcWithLoader(defs.BuiltinLoader(), name, cinfo)
@@ -235,8 +235,8 @@ func (d *BootcDistro) ImageConfig() *distro.ImageConfig {
 
 // SetBuildContainer configures the build to use a separate container for the
 // build root.
-// To generate the [github.com/osbuild/images/pkg/bootc.Info] from a container
-// ref, use the [github.com/osbuild/images/pkg/bootc.Container] type and its
+// To generate the [github.com/osbuild/image-builder/pkg/bootc.Info] from a container
+// ref, use the [github.com/osbuild/image-builder/pkg/bootc.Container] type and its
 // methods.
 func (d *BootcDistro) SetBuildContainer(cinfo *bootc.Info) error {
 	if cinfo == nil {

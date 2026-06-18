@@ -12,9 +12,9 @@ import (
 
 	"github.com/hashicorp/go-version"
 
-	"github.com/osbuild/images/data/dependencies"
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/image-builder/data/dependencies"
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/datasizes"
 )
 
 type MonitorType string

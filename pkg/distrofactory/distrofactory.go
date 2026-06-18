@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/defs"
-	"github.com/osbuild/images/pkg/distro/generic"
-	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
+	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distro/test_distro"
 )
 
 // FactoryFunc is a function that returns a distro.Distro for a given distro

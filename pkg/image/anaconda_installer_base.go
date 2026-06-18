@@ -3,10 +3,10 @@ package image
 import (
 	"math/rand"
 
-	"github.com/osbuild/images/pkg/customizations/kickstart"
-	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 // common struct that all anaconda installers share

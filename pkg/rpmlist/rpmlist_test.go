@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

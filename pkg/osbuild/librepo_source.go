@@ -3,7 +3,7 @@ package osbuild
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 const SourceNameLibrepo = "org.osbuild.librepo"

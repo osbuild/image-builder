@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	testrepos "github.com/osbuild/images/test/data/repositories"
+	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 
-	main "github.com/osbuild/images/cmd/image-builder"
+	main "github.com/osbuild/image-builder/cmd/image-builder"
 )
 
 func TestGetOneImageHappy(t *testing.T) {

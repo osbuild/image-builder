@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/osbuild/images/pkg/imagefilter"
+	"github.com/osbuild/image-builder/pkg/imagefilter"
 )
 
 func listImages(repoDir string, extraRepos []string, forceDefsDir string, output string, filterExprs []string) error {

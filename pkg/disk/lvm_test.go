@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/datasizes"
 )
 
 func TestLVMVCreateMountpoint(t *testing.T) {

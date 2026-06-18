@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 func (br *BuildrootFromContainer) Dependents() []Pipeline {

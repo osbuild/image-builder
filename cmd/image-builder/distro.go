@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro"
 )
 
 var distroGetHostDistroName = distro.GetHostDistroName

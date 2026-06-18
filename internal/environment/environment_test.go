@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/internal/environment"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 func TestEnvironmentConf(t *testing.T) {
