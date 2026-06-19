@@ -39,7 +39,7 @@ ImagesDep = namedtuple('ImagesDep', ['name', 'min_version'])
 
 def get_images_deps(images_dir: str) -> List[Tuple[str, str]]:
     """
-    Get the osbuild/images dependencies from the images directory
+    Get the osbuild/image-builder dependencies from the images directory
 
     Each non-go file in the 'data/dependencies' directory is considered a dependency.
     The filename is the name of the dependency and the content is the minimum version.
@@ -78,7 +78,7 @@ def main():
         'IMAGES_DIR',
         help="Path to the directory containing the images",
         nargs='?',
-        default='./vendor/github.com/osbuild/images'
+        default='./vendor/github.com/osbuild/image-builder'
     )
 
     args = parser.parse_args()
@@ -90,7 +90,7 @@ def main():
         sys.exit(1)
 
     if not os.path.isdir(images_dir):
-        print(f"::error file={images_dir},title=⛔ error hint::osbuild/images directory not found")
+        print(f"::error file={images_dir},title=⛔ error hint::osbuild/image-builder directory not found")
         sys.exit(1)
 
     spec_deps = get_spec_deps(spec)
@@ -119,7 +119,7 @@ def main():
 
         if spec_dep.op in ['<', '<=']:
             print(f"::error file={spec},title=⛔ error hint::Unsupported operator in the SPEC file: '{spec_dep}'. "
-                  "he osbuild/images defines the minimum version, so only '=', '>=', '>' operators are allowed")
+                  "he osbuild/image-builder defines the minimum version, so only '=', '>=', '>' operators are allowed")
             error = True
             continue
 
