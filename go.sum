@@ -310,10 +310,8 @@ github.com/opencontainers/runtime-spec v1.2.1 h1:S4k4ryNgEpxW1dzyqffOmhI1BHYcjzU
 github.com/opencontainers/runtime-spec v1.2.1/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
-github.com/osbuild/blueprint v1.30.0 h1:p8BpF4H5dJtvGCcvDaoyTzEdNVgVoJNh985ZyFKnJtk=
-github.com/osbuild/blueprint v1.30.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
-github.com/osbuild/images v0.171.0 h1:7lfYqIJUYh6QM6ioLW3cYLAzIu8lqPX5aGreyzEwRV8=
-github.com/osbuild/images v0.171.0/go.mod h1:uZAQRhxUB5G9aAczIcgU2d9VxLude4OXEdvtnKNgAEs=
+github.com/osbuild/blueprint v1.32.0 h1:5uZ2SDPI+pUdmFn5T5G6H8mUw18wK9NzxQGiJ0QQ70E=
+github.com/osbuild/blueprint v1.32.0/go.mod h1:zFiI1IULOe85F/OM8YPhHek7YCpWZENJoxZezJgRvto=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c/go.mod h1:7rwL4CYBLnjLxUqIJNnCWiEdr3bn6IUYi15bNlnbCCU=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
