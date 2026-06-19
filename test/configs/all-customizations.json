@@ -206,6 +206,34 @@
           "1337:udp",
           "42-48:tcp"
         ]
+      },
+      "firstboot": {
+        "scripts": [
+          {
+            "type":"satellite",
+            "command": "#!/bin/bash\ncurl https://localhost/register",
+            "cacerts": ["-----BEGIN CERTIFICATE-----\nMIIDszCCApugAwIBAgIUJ4lK+JfdJCNgcEVxZDinJfKKbQswDQYJKoZIhvcNAQEL\nBQAwaDELMAkGA1UEBhMCVVMxFzAVBgNVBAgMDk5vcnRoIENhcm9saW5hMRAwDgYD\nVQQHDAdSYWxlaWdoMRAwDgYDVQQKDAdSZWQgSGF0MRwwGgYDVQQDDBNUZXN0IENB\nIGZvciBvc2J1aWxkMCAXDTI0MDkwMzEzMjkyMFoYDzIyOTgwNjE4MTMyOTIwWjBo\nMQswCQYDVQQGEwJVUzEXMBUGA1UECAwOTm9ydGggQ2Fyb2xpbmExEDAOBgNVBAcM\nB1JhbGVpZ2gxEDAOBgNVBAoMB1JlZCBIYXQxHDAaBgNVBAMME1Rlc3QgQ0EgZm9y\nIG9zYnVpbGQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDeA7OcWTrV\ngstoBsUaeJKm8nelg7Lc0WNXH6yOTLsr4td4yHs0YOvFGwgSf+ffV3RAG1mgqnMG\nMgkD2+z+7QhHbHHs3y0d0zfhA2bg0KVvfCWk7fNRPHY0UOePpXk245Bfw3D0VTpl\nF7nePk1I7ZY09snPWUeb2rjKXzYjKjzM0h27+ykV8I8+FbdyPk/pR8whyDqtHLUa\nXfFy2TFloDSYMkHKVd38BnL0bj91x5F+KsZkN4HzfbYwxLbCQfOSgy7q6TWce9kq\nLo6tya9vuvpWFm1dye7L+BodAQAq/dI/JMeCfyTb0eFb+tyzfr5aVIoqqDN+p9ft\ncw4OefpHbhtNAgMBAAGjUzBRMB0GA1UdDgQWBBRV2A9YmusekPzu5Yf08cV0oPL1\nwjAfBgNVHSMEGDAWgBRV2A9YmusekPzu5Yf08cV0oPL1wjAPBgNVHRMBAf8EBTAD\nAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCgQZ2Xfj+NxaKBZgn2KNxS0MTbhzHRz6Rn\nqJs+h8OUz2Crmaf6N+RHlmDRZXUrDjSHpxVT2LxFy7ofRrLYIezFDUYfb920VkkV\nSVcxh1YDFROJalfMoE6wdyR/LnK4MJZS9fUpeCJJc/A0J+9FK9CwcyUrHgJ8XbJh\nMKYyQ+cf6O7wzutuBpMyRqSKS+hVM7BQTmSFvv1eAJlo6klGAmmKiYmAEvcQadH1\ndjrujsA3Cn5vX2L+0yuiLB5/zoxqx5cEy97TuKUYB8OqMMujAXNzF4L3HJDUNba2\nAhEkFozMXwYX73TGbGZ0mawPS5D3v3tYTEmJFf6SnVCmUW1fs57g\n-----END CERTIFICATE-----\n"],
+            "ignore_failure": true
+          },
+          {
+            "type":"custom",
+            "name":"script1",
+            "contents":"#!/bin/bash\ntouch /tmp/script1_done\n"
+          },
+          {
+            "type":"custom",
+            "name":"script2",
+            "after":["osbuild-first-boot-script1.service"],
+            "contents":"#!/bin/bash\ntouch /tmp/script2_done\n"
+          },
+          {
+            "type":"aap",
+            "name":"aap",
+            "host_config_key":"key",
+            "job_template_url":"https://localhost/api/v2/job_templates/9/callback/",
+            "ignore_failure": true
+          }
+        ]
       }
     }
   }
