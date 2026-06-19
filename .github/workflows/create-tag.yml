@@ -17,6 +17,10 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      - name: Even or odd week
+        run: if [ `expr \`date +\%s\` / 86400 \% 2` -eq 0 ]; then echo "WEEK=odd" >> $GITHUB_ENV; else echo "WEEK=even" >> $GITHUB_ENV; fi
+        shell: bash
+
       - name: Upstream tag
         uses: osbuild/release-action@create-tag
         with:
@@ -24,5 +28,5 @@ jobs:
           username: "imagebuilder-bot"
           email: "imagebuilder-bots+imagebuilder-bot@redhat.com"
           semver: "true"
-          semver_bump_type: "minor"
+          semver_bump_type: "major"
           version: ${{ github.event.inputs.version }}
