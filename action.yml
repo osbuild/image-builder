@@ -1,13 +1,13 @@
 name: "check-spec-deps-action"
-description: "Check osbuild/images dependencies in SPEC file. The action is meant to be run in a Fedora environment."
+description: "Check osbuild/image-builder dependencies in SPEC file. The action is meant to be run in a Fedora environment."
 
 inputs:
   specfile:
     description: "The specfile to check. If not provided, the action will look for a single spec file in the repository"
     required: false
   images_path:
-    description: "The path to the vendored osbuild/images module. Default is './vendor/github.com/osbuild/images'."
-    default: "./vendor/github.com/osbuild/images"
+    description: "The path to the vendored osbuild/image-builder module. Default is './vendor/github.com/osbuild/image-builder'."
+    default: "./vendor/github.com/osbuild/image-builder"
     required: false
 
 runs:
@@ -47,7 +47,7 @@ runs:
         SPECFILE: ${{ env.SPECFILE }}
       run: sudo dnf builddep -y $SPECFILE
 
-    - name: Check SPEC file against dependencies specified by osbuild/images
+    - name: Check SPEC file against dependencies specified by osbuild/image-builder
       shell: bash
       env:
         SPECFILE: ${{ env.SPECFILE }}

@@ -1,6 +1,6 @@
 # images@check-spec-deps-action
 
-Action for projects depending on `osbuild/images` module, to ensure that they depend at least on the component version specified by the module. The action checks the project's spec file and compares the dependencies version with the minimum version specified by the `osbuild/images` module.
+Action for projects depending on `osbuild/image-builder` module, to ensure that they depend at least on the component version specified by the module. The action checks the project's spec file and compares the dependencies version with the minimum version specified by the `osbuild/image-builder` module.
 
 ## Requirements
 
@@ -9,7 +9,7 @@ The action assumes to be run in a Fedora container, as it uses `dnf` to install 
 ## Usage
 
 ```yaml
-name: Check osbuild/images dependencies in spec file
+name: Check osbuild/image-builder dependencies in spec file
 
 on: [pull_request]
 
@@ -22,10 +22,10 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Check dependencies in spec file
-      uses: osbuild/images@check-spec-deps-action
+      uses: osbuild/image-builder@check-spec-deps-action
       with:
         specfile: "osbuild-composer.spec"
-        images_path: "./vendor/github.com/osbuild/images"
+        images_path: "./vendor/github.com/osbuild/image-builder"
 ```
 
 ## Inputs
@@ -36,4 +36,4 @@ jobs:
 
 ### `images_path`
 
-**Optional** The path to the `osbuild/images` module in the repository. By default, the action will look for the module in `./vendor/github.com/osbuild/images` directory.
+**Optional** The path to the `osbuild/image-builder` module in the repository. By default, the action will look for the module in `./vendor/github.com/osbuild/image-builder` directory.
