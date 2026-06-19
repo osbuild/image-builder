@@ -15,3 +15,5 @@ jobs:
         with:
           token: "${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}"
           slack_bot_token: "${{ secrets.SLACK_BOT_TOKEN }}"
+          semver: "true"
+          semver_bump_type: "major"
