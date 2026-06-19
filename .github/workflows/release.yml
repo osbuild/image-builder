@@ -17,3 +17,4 @@ jobs:
           slack_bot_token: "${{ secrets.SLACK_BOT_TOKEN }}"
           semver: "true"
           semver_bump_type: "major"
+          build_release_artifacts: true
