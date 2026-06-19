@@ -28,7 +28,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/pathpolicy"
 	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/policies"
-	"github.com/osbuild/image-builder/pkg/repomigration"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/image-builder/pkg/runner"
 )
@@ -271,17 +270,17 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	if err := blueprint.ValidateDirFileCustomizations(dc, fc); err != nil {
 		return nil, nil, err
 	}
-	if err := repomigration.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
+	if err := blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
 		return nil, nil, err
 	}
-	if err := repomigration.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
+	if err := blueprint.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Files, err = repomigration.FileCustomizationsToFsNodeFiles(fc)
+	img.OSCustomizations.Files, err = blueprint.FileCustomizationsToFsNodeFiles(fc)
 	if err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(dc)
+	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -699,17 +698,17 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 	if err := blueprint.ValidateDirFileCustomizations(dc, fc); err != nil {
 		return nil, nil, err
 	}
-	if err := repomigration.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
+	if err := blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
 		return nil, nil, err
 	}
-	if err := repomigration.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
+	if err := blueprint.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Files, err = repomigration.FileCustomizationsToFsNodeFiles(fc)
+	img.OSCustomizations.Files, err = blueprint.FileCustomizationsToFsNodeFiles(fc)
 	if err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(dc)
+	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
 	if err != nil {
 		return nil, nil, err
 	}
