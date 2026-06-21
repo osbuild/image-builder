@@ -6,7 +6,7 @@
         "ref": "quay.io/centos-bootc/bootc-image-builder@sha256:9893e7209e5f449b86ababfd2ee02a58cca2e5990f77b06c3539227531fc8120"
       },
       "osbuild": {
-        "commit": "87e170f20af58189722cbac7cab0f18256aea0ed"
+        "commit": "81b34a84e7eb01b8fef147cd5f9f04b5cd06d1a7"
       }
     },
     "gitlab-ci-runner": "aws/fedora-44",
