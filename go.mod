@@ -52,7 +52,7 @@ require (
 	google.golang.org/api v0.248.0
 	gopkg.in/ini.v1 v1.67.3
 	libvirt.org/go/libvirt v1.12003.0
-	sigs.k8s.io/yaml v1.5.0
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
