@@ -36,7 +36,7 @@ require (
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
 	github.com/osbuild/blueprint v1.32.0
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
