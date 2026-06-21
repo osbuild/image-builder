@@ -14,7 +14,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.6.4
 	github.com/BurntSushi/toml v1.6.0
 	github.com/IBM/ibm-cos-sdk-go v1.12.3
-	github.com/aws/aws-sdk-go-v2 v1.41.12
+	github.com/aws/aws-sdk-go-v2 v1.42.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.23
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.22
 	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.2.8
