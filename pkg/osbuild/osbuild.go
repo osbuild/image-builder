@@ -31,6 +31,8 @@ type Pipeline struct {
 	// Sequence of stages that produce the filesystem tree, which is the
 	// payload of the produced image.
 	Stages []*Stage `json:"stages,omitempty"`
+
+	mounts []Mount
 }
 
 // SetBuild sets the pipeline and runner for generating the build environment
@@ -39,10 +41,26 @@ func (p *Pipeline) SetBuild(build string) {
 	p.Build = build
 }
 
+// SetMounts sets pipeline-level mounts that are appended to every stage
+// added via AddStage or AddStages.
+func (p *Pipeline) SetMounts(mounts ...Mount) {
+	p.mounts = append(p.mounts, mounts...)
+}
+
 // AddStage appends a stage to the list of stages of a pipeline. The stages
 // will be executed in the order they are appended.
 // If the argument is nil, it is not added.
 func (p *Pipeline) AddStage(stage *Stage) {
+	if stage != nil {
+		stage.Mounts = append(stage.Mounts, p.mounts...)
+		p.Stages = append(p.Stages, stage)
+	}
+}
+
+// AddStageDirect appends a stage without merging pipeline-level mounts or
+// devices. Use this for stages that intentionally bypass the pipeline
+// mounts (e.g. stages that write outside the deployment).
+func (p *Pipeline) AddStageDirect(stage *Stage) {
 	if stage != nil {
 		p.Stages = append(p.Stages, stage)
 	}
