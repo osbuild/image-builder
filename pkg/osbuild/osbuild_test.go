@@ -110,6 +110,62 @@ func TestPipeline_NoMountsDoesNotAffectStages(t *testing.T) {
 	assert.Len(t, pipeline.Stages[0].Mounts, 0)
 }
 
+func TestPipeline_SetDevices(t *testing.T) {
+	pipeline := &Pipeline{}
+	pipeline.SetDevices(map[string]Device{
+		"root": {Type: "org.osbuild.loopback"},
+		"boot": {Type: "org.osbuild.loopback"},
+	})
+
+	pipeline.AddStage(&Stage{Type: "org.osbuild.rpm"})
+	pipeline.AddStage(&Stage{Type: "org.osbuild.locale"})
+
+	assert.Len(t, pipeline.Stages, 2)
+	for _, stage := range pipeline.Stages {
+		assert.Len(t, stage.Devices, 2)
+		assert.Equal(t, "org.osbuild.loopback", stage.Devices["root"].Type)
+		assert.Equal(t, "org.osbuild.loopback", stage.Devices["boot"].Type)
+	}
+}
+
+func TestPipeline_SetDevicesPanicsOnConflict(t *testing.T) {
+	pipeline := &Pipeline{}
+	pipeline.SetDevices(map[string]Device{
+		"root": {Type: "org.osbuild.loopback"},
+	})
+
+	stage := &Stage{
+		Type: "org.osbuild.rpm",
+		Devices: map[string]Device{
+			"root": {Type: "org.osbuild.luks2"},
+		},
+	}
+	assert.PanicsWithValue(t,
+		`stage "org.osbuild.rpm" already defines device "root" which conflicts with pipeline device`,
+		func() { pipeline.AddStage(stage) },
+	)
+}
+
+func TestPipeline_NoDevicesDoesNotAffectStages(t *testing.T) {
+	pipeline := &Pipeline{}
+	pipeline.AddStage(&Stage{Type: "org.osbuild.rpm"})
+
+	assert.Nil(t, pipeline.Stages[0].Devices)
+}
+
+func TestPipeline_MountsAndDevicesTogether(t *testing.T) {
+	pipeline := &Pipeline{}
+	pipeline.SetMounts(*NewExt4Mount("root", "root-dev", "/"))
+	pipeline.SetDevices(map[string]Device{
+		"root-dev": {Type: "org.osbuild.loopback"},
+	})
+
+	pipeline.AddStage(&Stage{Type: "org.osbuild.rpm"})
+
+	assert.Len(t, pipeline.Stages[0].Mounts, 1)
+	assert.Len(t, pipeline.Stages[0].Devices, 1)
+}
+
 var fakeOsbuildManifestWithIdentifiers = []byte(`{
   "version": "2",
   "pipelines": [
