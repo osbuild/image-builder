@@ -189,45 +189,38 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 		mounts = append(mounts, *osbuild.NewOSTreeDeploymentMountDefault("ostree.deployment", osbuild.OSTreeMountSourceMount))
 		mounts = append(mounts, *osbuild.NewBindMount("bind-ostree-deployment-to-tree", "mount://", "tree://"))
 
+		pipeline.SetMounts(mounts...)
+		pipeline.SetDevices(devices)
+
 		postStages := []*osbuild.Stage{}
 
 		fsCfgStages, err := filesystemConfigStages(pt, p.DiskCustomizations.MountConfiguration)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}
-		for _, stage := range fsCfgStages {
-			stage.Mounts = mounts
-			stage.Devices = devices
-			postStages = append(postStages, stage)
-		}
+		postStages = append(postStages, fsCfgStages...)
 
 		// customize the image
 		if len(p.OSCustomizations.Groups) > 0 {
-			groupsStage := osbuild.GenGroupsStage(p.OSCustomizations.Groups)
-			groupsStage.Mounts = mounts
-			groupsStage.Devices = devices
-			postStages = append(postStages, groupsStage)
+			postStages = append(postStages, osbuild.GenGroupsStage(p.OSCustomizations.Groups))
 		}
 
 		if len(p.OSCustomizations.Users) > 0 {
 			// ensure home root dir (currently /var/home, /var/roothome) is
 			// available
-			mkdirStage := osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+			postStages = append(postStages, osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 				Paths: buildHomedirPaths(p.OSCustomizations.Users),
-			})
-			mkdirStage.Mounts = mounts
-			mkdirStage.Devices = devices
-			postStages = append(postStages, mkdirStage)
+			}))
 
 			// add the users
 			usersStage, err := osbuild.GenUsersStage(p.OSCustomizations.Users, false)
 			if err != nil {
 				return osbuild.Pipeline{}, fmt.Errorf("user stage failed %w", err)
 			}
-			usersStage.Mounts = mounts
-			usersStage.Devices = devices
 			postStages = append(postStages, usersStage)
 		}
+
+		pipeline.AddStages(postStages...)
 
 		if p.LiveBoot {
 			// The dracut dmsquash-live module has a check for the root filesystem
@@ -254,31 +247,22 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 				}
 				noDeploymentMounts = append(noDeploymentMounts, m)
 			}
+			// These stages use custom mounts (without the deployment
+			// mount) so they bypass the pipeline mounts.
 			for _, stage := range stages {
 				stage.Mounts = noDeploymentMounts
 				stage.Devices = devices
+				pipeline.AddStageDirect(stage)
 			}
-			postStages = append(postStages, stages...)
 		}
 
 		// First create custom directories, because some of the custom files may depend on them
 		if len(p.OSCustomizations.Directories) > 0 {
-
-			stages := osbuild.GenDirectoryNodesStages(p.OSCustomizations.Directories)
-			for _, stage := range stages {
-				stage.Mounts = mounts
-				stage.Devices = devices
-			}
-			postStages = append(postStages, stages...)
+			pipeline.AddStages(osbuild.GenDirectoryNodesStages(p.OSCustomizations.Directories)...)
 		}
 
 		if len(p.OSCustomizations.Files) > 0 {
-			stages := osbuild.GenFileNodesStages(p.OSCustomizations.Files)
-			for _, stage := range stages {
-				stage.Mounts = mounts
-				stage.Devices = devices
-			}
-			postStages = append(postStages, stages...)
+			pipeline.AddStages(osbuild.GenFileNodesStages(p.OSCustomizations.Files)...)
 		}
 
 		// The ignition stamp must be created after bootc install, otherwise bootc will error out
@@ -299,32 +283,25 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 				}
 				ignitionStage = osbuild.NewIgnitionStage(&opts)
 			}
-			var err error
-			// We cannot reuse the existing mounts because the generated ostree mounts are shadowing /boot and the file ends up
-			// in the wrong place. We reuse the bootupd mount generator as it's enough for this. We just need /boot.
+			// The ignition stage uses its own mounts and devices
+			// because the pipeline ostree mounts shadow /boot.
 			ignitionStage.Devices, ignitionStage.Mounts, err = osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
 			if err != nil {
 				return osbuild.Pipeline{}, fmt.Errorf("gen devices stage failed %w", err)
 			}
-			postStages = append(postStages, ignitionStage)
+			pipeline.AddStageDirect(ignitionStage)
 		}
-
-		pipeline.AddStages(postStages...)
 
 		// In case we created any files in the deploy directory we need to relabel
 		// then per the selinux policy
 		if p.OSCustomizations.SELinux != "" {
-			if len(postStages) > 0 {
+			if len(postStages) > 0 || len(p.OSCustomizations.Directories) > 0 || len(p.OSCustomizations.Files) > 0 {
 				for _, changedFile := range []string{"/etc", "/var"} {
-					opts := &osbuild.SELinuxStageOptions{
+					pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 						Target:       "tree://" + changedFile,
 						FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.OSCustomizations.SELinux),
 						ExcludePaths: []string{"/sysroot"},
-					}
-					selinuxStage := osbuild.NewSELinuxStage(opts)
-					selinuxStage.Mounts = mounts
-					selinuxStage.Devices = devices
-					pipeline.AddStage(selinuxStage)
+					}))
 				}
 			}
 		}
