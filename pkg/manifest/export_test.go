@@ -50,7 +50,7 @@ func NewTestOSWithPlatform(pf *platform.Data) *OS {
 }
 
 func (p *OSTreeDeployment) AddStagesForAllFilesAndInlineData(pipeline *osbuild.Pipeline, files []*fsnode.File) {
-	p.addStagesForAllFilesAndInlineData(pipeline, files, "ostree/ref")
+	p.addStagesForAllFilesAndInlineData(pipeline, files)
 }
 
 func (p *Vagrant) GetMacAddress() string {

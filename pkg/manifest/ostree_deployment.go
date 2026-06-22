@@ -337,7 +337,11 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, fmt.Errorf("no content source defined for ostree deployment")
 	}
 
-	configStage := osbuild.NewOSTreeConfigStage(
+	// Set up mounts for the pipeline. These are used by all stages in
+	// this pipeline except those added via AddStageDirect.
+	pipeline.SetMounts(*osbuild.NewOSTreeDeploymentMount("ostree-"+ref, p.osName, ref, 0))
+
+	pipeline.AddStage(osbuild.NewOSTreeConfigStage(
 		&osbuild.OSTreeConfigStageOptions{
 			Repo: repoPath,
 			Config: &osbuild.OSTreeConfig{
@@ -347,23 +351,16 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 				},
 			},
 		},
-	)
-	configStage.MountOSTree(p.osName, ref, 0)
-	pipeline.AddStage(configStage)
+	))
 
 	fsCfgStages, err := filesystemConfigStages(p.PartitionTable, p.MountConfiguration)
 	if err != nil {
 		return osbuild.Pipeline{}, err
 	}
-	for _, stage := range fsCfgStages {
-		stage.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(stage)
-	}
+	pipeline.AddStages(fsCfgStages...)
 
 	if len(p.Groups) > 0 {
-		grpStage := osbuild.GenGroupsStage(p.Groups)
-		grpStage.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(grpStage)
+		pipeline.AddStage(osbuild.GenGroupsStage(p.Groups))
 	}
 
 	if len(p.Users) > 0 {
@@ -371,12 +368,13 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 		if err != nil {
 			return osbuild.Pipeline{}, fmt.Errorf("password encryption failed")
 		}
-		usersStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(usersStage)
 	}
 
 	if p.IgnitionPlatform != "" {
-		pipeline.AddStage(osbuild.NewIgnitionStage(&osbuild.IgnitionStageOptions{
+		// The ignition stage writes outside the deployment, so it
+		// bypasses the pipeline mounts.
+		pipeline.AddStageDirect(osbuild.NewIgnitionStage(&osbuild.IgnitionStageOptions{
 			// This is a workaround to make the systemd believe it's firstboot when ignition runs on real firstboot.
 			// Right now, since we ship /etc/machine-id, systemd thinks it's not firstboot and ignition depends on it
 			// to run on the real firstboot to enable services from presets.
@@ -399,9 +397,7 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 			if err != nil {
 				return osbuild.Pipeline{}, err
 			}
-			stageOption := osbuild.NewSystemdUnitCreateStage(mps)
-			stageOption.MountOSTree(p.osName, ref, 0)
-			pipeline.AddStage(stageOption)
+			pipeline.AddStage(osbuild.NewSystemdUnitCreateStage(mps))
 			p.EnabledServices = append(p.EnabledServices, serviceName)
 		}
 
@@ -412,9 +408,7 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 		// in the code based on distro version, we enable / disable services also by
 		// creating a preset file.
 		if len(p.EnabledServices) != 0 || len(p.DisabledServices) != 0 {
-			presetsStage := osbuild.GenServicesPresetStage(p.EnabledServices, p.DisabledServices)
-			presetsStage.MountOSTree(p.osName, ref, 0)
-			pipeline.AddStage(presetsStage)
+			pipeline.AddStage(osbuild.GenServicesPresetStage(p.EnabledServices, p.DisabledServices))
 		}
 	}
 
@@ -428,35 +422,24 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 	}
 
 	if p.LockRootUser && !hasRoot {
-		rootLockStage := osbuild.NewUsersStage(osbuild.NewUsersStageOptionsForLockedRoot())
-		rootLockStage.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(rootLockStage)
+		pipeline.AddStage(osbuild.NewUsersStage(osbuild.NewUsersStageOptionsForLockedRoot()))
 	}
 
 	if p.Keyboard != "" {
-		options := &osbuild.KeymapStageOptions{
+		pipeline.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{
 			Keymap: p.Keyboard,
-		}
-		keymapStage := osbuild.NewKeymapStage(options)
-		keymapStage.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(keymapStage)
+		}))
 	}
 
 	if p.Locale != "" {
-		options := &osbuild.LocaleStageOptions{
+		pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{
 			Language: p.Locale,
-		}
-		localeStage := osbuild.NewLocaleStage(options)
-		localeStage.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(localeStage)
+		}))
 	}
 
 	if p.FIPS {
-		p.addStagesForAllFilesAndInlineData(&pipeline, osbuild.GenFIPSFiles(), ref)
-		for _, stage := range osbuild.GenFIPSStages() {
-			stage.MountOSTree(p.osName, ref, 0)
-			pipeline.AddStage(stage)
-		}
+		p.addStagesForAllFilesAndInlineData(&pipeline, osbuild.GenFIPSFiles())
+		pipeline.AddStages(osbuild.GenFIPSStages()...)
 	}
 
 	if !p.UseBootupd {
@@ -473,34 +456,28 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 			Timeout:        1,
 			TerminalOutput: []string{"console"},
 		}
-		bootloader := osbuild.NewGRUB2Stage(grubOptions)
-		bootloader.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(bootloader)
+		pipeline.AddStage(osbuild.NewGRUB2Stage(grubOptions))
 	}
 
 	// First create custom directories, because some of the files may depend on them
 	if len(p.Directories) > 0 {
-		dirStages := osbuild.GenDirectoryNodesStages(p.Directories)
-		for _, stage := range dirStages {
-			stage.MountOSTree(p.osName, ref, 0)
-		}
-		pipeline.AddStages(dirStages...)
+		pipeline.AddStages(osbuild.GenDirectoryNodesStages(p.Directories)...)
 	}
 
 	if len(p.Files) > 0 {
-		p.addStagesForAllFilesAndInlineData(&pipeline, p.Files, ref)
+		p.addStagesForAllFilesAndInlineData(&pipeline, p.Files)
 	}
 
 	if len(p.EnabledServices) != 0 || len(p.DisabledServices) != 0 {
-		systemdStage := osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
+		pipeline.AddStage(osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
 			EnabledServices:  p.EnabledServices,
 			DisabledServices: p.DisabledServices,
-		})
-		systemdStage.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(systemdStage)
+		}))
 	}
 
-	pipeline.AddStage(osbuild.NewOSTreeSelinuxStage(
+	// The selinux stage references the deployment through its options,
+	// not through mounts, so it bypasses the pipeline mounts.
+	pipeline.AddStageDirect(osbuild.NewOSTreeSelinuxStage(
 		&osbuild.OSTreeSelinuxStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: p.osName,
@@ -519,11 +496,8 @@ func (p *OSTreeDeployment) getInline() []string {
 // addStagesForAllFilesAndInlineData generates stages for creating files and adds them to
 // the pipeline. It also adds their data to the inlineData for the pipeline so
 // that the appropriate sources are created.
-func (p *OSTreeDeployment) addStagesForAllFilesAndInlineData(pipeline *osbuild.Pipeline, files []*fsnode.File, ref string) {
-	for _, stage := range osbuild.GenFileNodesStages(files) {
-		stage.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(stage)
-	}
+func (p *OSTreeDeployment) addStagesForAllFilesAndInlineData(pipeline *osbuild.Pipeline, files []*fsnode.File) {
+	pipeline.AddStages(osbuild.GenFileNodesStages(files)...)
 
 	for _, file := range files {
 		p.inlineData = append(p.inlineData, string(file.Data()))
