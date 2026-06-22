@@ -180,6 +180,8 @@ type OSCustomizations struct {
 	// instead of BLS. Required for legacy systems like RHEL 7.
 	NoBLS bool
 
+	SystemdBoot *osbuild.SystemdBootConfig
+
 	// InstallWeakDeps enables installation of weak dependencies for packages
 	// that are statically defined for the pipeline.
 	// Defaults to True.

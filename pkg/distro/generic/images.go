@@ -346,6 +346,8 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.NoBLS = *imageConfig.NoBLS
 	}
 
+	osc.SystemdBoot = imageConfig.SystemdBoot
+
 	ca, err := c.GetCACerts()
 	if err != nil {
 		panic(fmt.Sprintf("unexpected error checking CA certs: %v", err))
