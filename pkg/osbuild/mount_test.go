@@ -80,6 +80,17 @@ func TestNewMounts(t *testing.T) {
 		}
 		assert.Equal(expected, actual)
 	}
+
+	{ // ddi
+		actual := osbuild.NewDDIMount("ddi", "image.raw", "/sysroot")
+		expected := &osbuild.Mount{
+			Name:   "ddi",
+			Type:   "org.osbuild.ddi",
+			Source: "image.raw",
+			Target: "/sysroot",
+		}
+		assert.Equal(expected, actual)
+	}
 }
 
 func TestMountJsonAll(t *testing.T) {
