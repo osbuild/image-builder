@@ -116,6 +116,8 @@ type ImageConfig struct {
 	// instead of BLS. Required for legacy systems like RHEL 7.
 	NoBLS *bool `yaml:"no_bls,omitempty"`
 
+	SystemdBoot *osbuild.SystemdBootConfig `yaml:"systemd_boot,omitempty"`
+
 	// OSTree specific configuration
 
 	// Read only sysroot and boot

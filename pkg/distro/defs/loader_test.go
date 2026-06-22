@@ -702,6 +702,39 @@ image_types:
 	})
 }
 
+func TestDefsDistroImageConfigSystemdBoot(t *testing.T) {
+	fakeDistroYaml := `
+distros:
+  - name: test-distro-1
+    vendor: test-vendor
+    defs_path: test-distro-1/
+    image_config:
+      default:
+        systemd_boot:
+          random-seed: "no"
+          make-entry-directory: "yes"
+          entry-token: "os-id"
+`
+
+	fakeImageTypeYaml := `
+image_types:
+  test_type:
+    filename: foo
+`
+	baseDir := makeFakeDistrosYAML(t, fakeDistroYaml, fakeImageTypeYaml)
+	restore := defs.MockDataFS(baseDir)
+	defer restore()
+	dist, err := defs.NewDistroYAML("test-distro-1")
+	assert.NoError(t, err)
+	assert.Equal(t, &distro.ImageConfig{
+		SystemdBoot: &osbuild.SystemdBootConfig{
+			RandomSeed:         "no",
+			MakeEntryDirectory: "yes",
+			EntryToken:         "os-id",
+		},
+	}, dist.ImageConfig())
+}
+
 func TestDefsPartitionTableErrorsNotForImageType(t *testing.T) {
 	badDistroYamlMissingPartitionTable := `
 image_types:
