@@ -1,5 +1,5 @@
 %global min_osbuild_version 183
-%global goipath         github.com/osbuild/image-builder
+%global goipath         github.com/osbuild/image-builder/v73
 
 Version:        73.0.0
 
