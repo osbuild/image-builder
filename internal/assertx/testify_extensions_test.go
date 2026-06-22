@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/internal/assertx"
+	"github.com/osbuild/image-builder/v73/internal/assertx"
 )
 
 type mockTestingT struct {

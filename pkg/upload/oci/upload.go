@@ -13,7 +13,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v54/objectstorage"
 	"github.com/oracle/oci-go-sdk/v54/objectstorage/transfer"
 	"github.com/oracle/oci-go-sdk/v54/workrequests"
-	"github.com/osbuild/image-builder/pkg/olog"
+	"github.com/osbuild/image-builder/v73/pkg/olog"
 )
 
 type Uploader interface {

@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	check "github.com/osbuild/image-builder/cmd/check-host-config/check"
-	"github.com/osbuild/image-builder/internal/test"
+	check "github.com/osbuild/image-builder/v73/cmd/check-host-config/check"
+	"github.com/osbuild/image-builder/v73/internal/test"
 )
 
 // ExecResult holds the result of a mocked Exec call (stdout, stderr, exit code, error).

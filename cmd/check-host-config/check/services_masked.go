@@ -3,7 +3,7 @@ package check
 import (
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/buildconfig"
+	"github.com/osbuild/image-builder/v73/internal/buildconfig"
 )
 
 func init() {

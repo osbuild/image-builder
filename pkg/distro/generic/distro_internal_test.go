@@ -3,9 +3,9 @@ package generic
 import (
 	"testing"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/distro/defs"
 	"github.com/stretchr/testify/assert"
 )
 

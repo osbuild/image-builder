@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/disk/partition"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
-	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/disk/partition"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro/generic"
+	"github.com/osbuild/image-builder/v73/pkg/ostree"
 )
 
 func TestCheckOptions(t *testing.T) {

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/osbuild/image-builder/pkg/disk"
+import "github.com/osbuild/image-builder/v73/pkg/disk"
 
 var basePT = disk.PartitionTable{
 	UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",

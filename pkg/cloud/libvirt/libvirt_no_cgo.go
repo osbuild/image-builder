@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/osbuild/image-builder/pkg/cloud"
+	"github.com/osbuild/image-builder/v73/pkg/cloud"
 )
 
 var _ = cloud.Uploader(&libvirtUploader{})

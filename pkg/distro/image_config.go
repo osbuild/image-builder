@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/customizations/oci"
-	"github.com/osbuild/image-builder/pkg/customizations/ostreeserver"
-	"github.com/osbuild/image-builder/pkg/customizations/shell"
-	"github.com/osbuild/image-builder/pkg/customizations/subscription"
-	"github.com/osbuild/image-builder/pkg/customizations/users"
-	"github.com/osbuild/image-builder/pkg/customizations/wsl"
-	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/oci"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/ostreeserver"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/shell"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/users"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/wsl"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
 )
 
 // ImageConfig represents a (default) configuration applied to the image payload.

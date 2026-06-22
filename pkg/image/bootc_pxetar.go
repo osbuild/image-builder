@@ -3,13 +3,13 @@ package image
 import (
 	"math/rand"
 
-	"github.com/osbuild/image-builder/pkg/container"
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/platform"
-	"github.com/osbuild/image-builder/pkg/runner"
+	"github.com/osbuild/image-builder/v73/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/runner"
 )
 
 type BootcPXEImage struct {

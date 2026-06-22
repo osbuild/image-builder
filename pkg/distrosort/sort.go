@@ -5,7 +5,7 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/osbuild/image-builder/pkg/distroidparser"
+	"github.com/osbuild/image-builder/v73/pkg/distroidparser"
 )
 
 // Names sorts the given list of distro names by name, version

@@ -3,8 +3,8 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
 )
 
 type BootcRootFS struct {

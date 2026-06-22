@@ -3,7 +3,7 @@ package osbuild
 import (
 	"fmt"
 
-	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
 )
 
 // Stage to copy items from inputs to mount points or the tree. Multiple items

@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/ostree"
-	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/ostree"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
 )
 
 const RandomTestSeed = 0

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 // TransactionList represents an ordered list of package transactions.

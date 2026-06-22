@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
 )
 
 func newGCETarPipelineForImg(buildPipeline manifest.Build, inputPipeline manifest.FilePipeline, pipelinename string) *manifest.Tar {

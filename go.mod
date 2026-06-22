@@ -1,4 +1,4 @@
-module github.com/osbuild/image-builder
+module github.com/osbuild/image-builder/v73
 
 go 1.24.12
 
@@ -146,6 +146,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/runtime-spec v1.2.1 // indirect
+	github.com/osbuild/image-builder v0.274.1-0.20260619004246-4bef593e25f5 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect

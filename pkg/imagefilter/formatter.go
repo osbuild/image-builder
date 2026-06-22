@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/image-builder/pkg/distrosort"
+	"github.com/osbuild/image-builder/v73/pkg/distrosort"
 )
 
 // OutputFormat contains the valid output formats for formatting results

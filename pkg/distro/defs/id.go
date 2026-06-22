@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
 )
 
 func validateSubexpMatch(re *regexp.Regexp, names ...string) error {

@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
 )
 
 type osbuildStageMetrics struct {

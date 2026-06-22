@@ -1,7 +1,7 @@
 package distro
 
 import (
-	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
 )
 
 // DiskConfig represents configuration for the Disk part of images that are packed

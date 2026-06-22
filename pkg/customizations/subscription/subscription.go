@@ -2,7 +2,7 @@ package subscription
 
 import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/v73/internal/common"
 )
 
 // The ImageOptions specify subscription-specific image options

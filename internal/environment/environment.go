@@ -1,6 +1,6 @@
 package environment
 
-import "github.com/osbuild/image-builder/pkg/rpmmd"
+import "github.com/osbuild/image-builder/v73/pkg/rpmmd"
 
 type Environment interface {
 	GetPackages() []string

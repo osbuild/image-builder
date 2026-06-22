@@ -6,14 +6,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/artifact"
-	"github.com/osbuild/image-builder/pkg/container"
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/customizations/users"
-	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/artifact"
+	"github.com/osbuild/image-builder/v73/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/users"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
 )
 
 // A RawBootcImage represents a raw bootc image file which can be booted in a

@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
 )
 
 // syslinux booting

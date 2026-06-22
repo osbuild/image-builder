@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
-	testrepos "github.com/osbuild/image-builder/test/data/repositories"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro/generic"
+	testrepos "github.com/osbuild/image-builder/v73/test/data/repositories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

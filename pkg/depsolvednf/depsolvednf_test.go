@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/internal/mocks/rpmrepo"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/internal/mocks/rpmrepo"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/sbom"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

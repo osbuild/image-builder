@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
 )
 
 func TestImplementsInterfacesCompileTimeCheckFilesystem(t *testing.T) {

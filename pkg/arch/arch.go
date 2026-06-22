@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/v73/internal/common"
 )
 
 type Arch uint64

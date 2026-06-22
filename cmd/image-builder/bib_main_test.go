@@ -14,11 +14,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/cloud"
-	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/cloud"
+	"github.com/osbuild/image-builder/v73/pkg/cloud/awscloud"
 
-	main "github.com/osbuild/image-builder/cmd/image-builder"
+	main "github.com/osbuild/image-builder/v73/cmd/image-builder"
 )
 
 func TestCanChownInPathHappy(t *testing.T) {

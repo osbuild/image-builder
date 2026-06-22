@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/image-builder/cmd/check-host-config/check"
-	"github.com/osbuild/image-builder/internal/test"
+	"github.com/osbuild/image-builder/v73/cmd/check-host-config/check"
+	"github.com/osbuild/image-builder/v73/internal/test"
 )
 
 func joinArgs(name string, arg ...string) string {

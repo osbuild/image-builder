@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/runner"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/runner"
 
-	"github.com/osbuild/image-builder/pkg/bib/osinfo"
-	"github.com/osbuild/image-builder/pkg/distro/bootc"
+	"github.com/osbuild/image-builder/v73/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/v73/pkg/distro/bootc"
 )
 
 func TestGetDistroAndRunner(t *testing.T) {

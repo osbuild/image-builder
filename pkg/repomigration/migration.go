@@ -23,10 +23,10 @@ import (
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/pathpolicy"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/pathpolicy"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 // CheckMountpointsPolicy checks if the mountpoints are allowed by the policy

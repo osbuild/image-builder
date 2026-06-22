@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro/defs"
 )
 
 func TestDefaltParser(t *testing.T) {

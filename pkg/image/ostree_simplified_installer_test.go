@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/internal/testdisk"
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/image"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/ostree"
-	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/v73/internal/testdisk"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/image"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/ostree"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
 )
 
 func TestSimplifiedInstallerDracut(t *testing.T) {

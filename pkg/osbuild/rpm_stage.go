@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/depsolvednf"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 type RPMStageOptions struct {

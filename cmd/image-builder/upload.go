@@ -12,14 +12,14 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/cloud"
-	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
-	"github.com/osbuild/image-builder/pkg/cloud/ibmcloud"
-	"github.com/osbuild/image-builder/pkg/cloud/libvirt"
-	"github.com/osbuild/image-builder/pkg/cloud/openstack"
-	"github.com/osbuild/image-builder/pkg/platform"
-	"github.com/osbuild/image-builder/pkg/progress"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/cloud"
+	"github.com/osbuild/image-builder/v73/pkg/cloud/awscloud"
+	"github.com/osbuild/image-builder/v73/pkg/cloud/ibmcloud"
+	"github.com/osbuild/image-builder/v73/pkg/cloud/libvirt"
+	"github.com/osbuild/image-builder/v73/pkg/cloud/openstack"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/progress"
 )
 
 // ErrMissingUploadConfig is returned when the upload configuration is missing

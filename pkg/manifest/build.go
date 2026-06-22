@@ -6,12 +6,12 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/osbuild/image-builder/pkg/container"
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/depsolvednf"
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/runner"
+	"github.com/osbuild/image-builder/v73/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/runner"
 )
 
 // A Build represents the build environment for other pipelines. As a

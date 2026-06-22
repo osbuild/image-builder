@@ -9,15 +9,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/testdisk"
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/container"
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/customizations/users"
-	"github.com/osbuild/image-builder/pkg/image"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/platform"
-	"github.com/osbuild/image-builder/pkg/runner"
+	"github.com/osbuild/image-builder/v73/internal/testdisk"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/users"
+	"github.com/osbuild/image-builder/v73/pkg/image"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/runner"
 )
 
 func TestBootcDiskImageNew(t *testing.T) {

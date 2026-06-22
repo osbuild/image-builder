@@ -3,8 +3,8 @@ package osbuild
 import (
 	"github.com/google/uuid"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
 )
 
 // The GRUB2StageOptions describes the bootloader configuration.

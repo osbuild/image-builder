@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/osbuild/image-builder/data/repositories"
-	"github.com/osbuild/image-builder/pkg/reporegistry"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/data/repositories"
+	"github.com/osbuild/image-builder/v73/pkg/reporegistry"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 // defaultRepoDirs contains the default search paths to look for

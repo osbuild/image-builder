@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	main "github.com/osbuild/image-builder/cmd/image-builder"
-	"github.com/osbuild/image-builder/pkg/bootc"
+	main "github.com/osbuild/image-builder/v73/cmd/image-builder"
+	"github.com/osbuild/image-builder/v73/pkg/bootc"
 )
 
 func mockBootcInfo() *bootc.Info {

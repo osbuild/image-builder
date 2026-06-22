@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/osbuild/image-builder/pkg/rhsm"
+	"github.com/osbuild/image-builder/v73/pkg/rhsm"
 )
 
 var (

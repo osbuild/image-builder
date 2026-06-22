@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/pkg/progress"
+	"github.com/osbuild/image-builder/v73/pkg/progress"
 )
 
 func TestSyncWriter(t *testing.T) {

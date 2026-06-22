@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/osbuild/image-builder/cmd/check-host-config/check"
+	"github.com/osbuild/image-builder/v73/cmd/check-host-config/check"
 )
 
 var ErrTimeout = errors.New("timeout")

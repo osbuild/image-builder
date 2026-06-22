@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
 )
 
 // Install the grub2 boot loader for non-UEFI systems or hybrid boot

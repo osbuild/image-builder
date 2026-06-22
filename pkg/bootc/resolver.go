@@ -15,9 +15,9 @@ import (
 
 	"slices"
 
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/bib/osinfo"
-	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/v73/pkg/depsolvednf"
 )
 
 // envPath is written by podman

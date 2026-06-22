@@ -9,24 +9,25 @@ import (
 	"sync"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/container"
-	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
-	"github.com/osbuild/image-builder/pkg/customizations/bootc"
-	"github.com/osbuild/image-builder/pkg/customizations/fdo"
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/customizations/ignition"
-	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
-	"github.com/osbuild/image-builder/pkg/customizations/oscap"
-	"github.com/osbuild/image-builder/pkg/customizations/subscription"
-	"github.com/osbuild/image-builder/pkg/customizations/users"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/flatpak"
-	"github.com/osbuild/image-builder/pkg/image"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/ostree"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/anaconda"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/bootc"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fdo"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/ignition"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/kickstart"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/oscap"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/users"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/flatpak"
+	"github.com/osbuild/image-builder/v73/pkg/image"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/ostree"
+	"github.com/osbuild/image-builder/v73/pkg/repomigration"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 func kernelOptions(t *imageType, c *blueprint.Customizations) []string {
@@ -197,14 +198,14 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	}
 
 	var err error
-	osc.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
+	osc.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
 	if err != nil {
 		// In theory this should never happen, because the blueprint directory customizations
 		// should have been validated before this point.
 		panic(fmt.Sprintf("failed to convert directory customizations to fs node directories: %v", err))
 	}
 
-	osc.Files, err = blueprint.FileCustomizationsToFsNodeFiles(c.GetFiles())
+	osc.Files, err = repomigration.FileCustomizationsToFsNodeFiles(c.GetFiles())
 	if err != nil {
 		// In theory this should never happen, because the blueprint file customizations
 		// should have been validated before this point.
@@ -238,7 +239,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	// and a list of fs node files for the inline gpg keys so we can save
 	// them to disk. This step also swaps the inline gpg key with the path
 	// to the file in the os file tree
-	yumRepos, gpgKeyFiles, err := blueprint.RepoCustomizationsToRepoConfigAndGPGKeyFiles(customRepos)
+	yumRepos, gpgKeyFiles, err := repomigration.RepoCustomizationsToRepoConfigAndGPGKeyFiles(customRepos)
 	if err != nil {
 		panic(fmt.Sprintf("failed to convert inline gpgkeys to fs node files: %v", err))
 	}
@@ -703,11 +704,11 @@ func ostreeDeploymentCustomizations(
 	}
 	deploymentConf.Groups = users.GroupsFromBP(groups)
 
-	deploymentConf.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
+	deploymentConf.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
 	if err != nil {
 		return manifest.OSTreeDeploymentCustomizations{}, err
 	}
-	deploymentConf.Files, err = blueprint.FileCustomizationsToFsNodeFiles(c.GetFiles())
+	deploymentConf.Files, err = repomigration.FileCustomizationsToFsNodeFiles(c.GetFiles())
 	if err != nil {
 		return manifest.OSTreeDeploymentCustomizations{}, err
 	}

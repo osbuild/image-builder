@@ -9,16 +9,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/image-builder/pkg/customizations/subscription"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/imagefilter"
-	"github.com/osbuild/image-builder/pkg/manifestgen"
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/ostree"
-	"github.com/osbuild/image-builder/pkg/rhsm/facts"
-	"github.com/osbuild/image-builder/pkg/sbom"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/imagefilter"
+	"github.com/osbuild/image-builder/v73/pkg/manifestgen"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/ostree"
+	"github.com/osbuild/image-builder/v73/pkg/rhsm/facts"
+	"github.com/osbuild/image-builder/v73/pkg/sbom"
 
-	"github.com/osbuild/image-builder/internal/blueprintload"
+	"github.com/osbuild/image-builder/v73/internal/blueprintload"
 )
 
 type manifestOptions struct {

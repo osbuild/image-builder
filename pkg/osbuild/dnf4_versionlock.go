@@ -3,8 +3,8 @@ package osbuild
 import (
 	"fmt"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 const dnf4VersionlockType = "org.osbuild.dnf4.versionlock"

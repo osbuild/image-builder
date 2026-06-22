@@ -11,9 +11,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/pkg/container"
-	"github.com/osbuild/image-builder/pkg/depsolvednf"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 func TestSource_UnmarshalJSON(t *testing.T) {

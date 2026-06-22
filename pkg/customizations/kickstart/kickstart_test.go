@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
-	"github.com/osbuild/image-builder/pkg/customizations/users"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/kickstart"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/users"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/bib/osinfo"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/olog"
-	"github.com/osbuild/image-builder/pkg/platform"
-	"github.com/osbuild/image-builder/pkg/runner"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/olog"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/runner"
 )
 
 // This file contains shared helpers between the various bootc

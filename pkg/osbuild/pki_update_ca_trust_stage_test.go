@@ -4,7 +4,7 @@ import (
 	"encoding/pem"
 	"testing"
 
-	"github.com/osbuild/image-builder/pkg/cert"
+	"github.com/osbuild/image-builder/v73/pkg/cert"
 	"github.com/stretchr/testify/assert"
 )
 

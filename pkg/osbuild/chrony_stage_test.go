@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/v73/internal/common"
 )
 
 func TestNewChronyStage(t *testing.T) {

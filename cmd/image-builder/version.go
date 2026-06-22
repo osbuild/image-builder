@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -46,7 +46,7 @@ func readVersionInfo() *versionDescription {
 		}
 
 		for _, dep := range bi.Deps {
-			if dep.Path == "github.com/osbuild/image-builder" {
+			if dep.Path == "github.com/osbuild/image-builder/v73" {
 				vd.ImageBuilder.Dependencies.Images = dep.Version
 			}
 		}

@@ -7,29 +7,30 @@ import (
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/cmdutil"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/bib/osinfo"
-	"github.com/osbuild/image-builder/pkg/container"
-	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
-	"github.com/osbuild/image-builder/pkg/customizations/ignition"
-	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
-	"github.com/osbuild/image-builder/pkg/customizations/users"
-	"github.com/osbuild/image-builder/pkg/datasizes"
-	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/disk/partition"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/bootc"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
-	"github.com/osbuild/image-builder/pkg/image"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/pathpolicy"
-	"github.com/osbuild/image-builder/pkg/platform"
-	"github.com/osbuild/image-builder/pkg/policies"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/runner"
+	"github.com/osbuild/image-builder/v73/internal/cmdutil"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/v73/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/anaconda"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/ignition"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/kickstart"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/users"
+	"github.com/osbuild/image-builder/v73/pkg/datasizes"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/disk/partition"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro/bootc"
+	"github.com/osbuild/image-builder/v73/pkg/distro/defs"
+	"github.com/osbuild/image-builder/v73/pkg/image"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/pathpolicy"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/policies"
+	"github.com/osbuild/image-builder/v73/pkg/repomigration"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/runner"
 )
 
 var _ = distro.ImageType(&bootcImageType{})
@@ -270,17 +271,17 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	if err := blueprint.ValidateDirFileCustomizations(dc, fc); err != nil {
 		return nil, nil, err
 	}
-	if err := blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
+	if err := repomigration.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
 		return nil, nil, err
 	}
-	if err := blueprint.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
+	if err := repomigration.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Files, err = blueprint.FileCustomizationsToFsNodeFiles(fc)
+	img.OSCustomizations.Files, err = repomigration.FileCustomizationsToFsNodeFiles(fc)
 	if err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
+	img.OSCustomizations.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(dc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -698,17 +699,17 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 	if err := blueprint.ValidateDirFileCustomizations(dc, fc); err != nil {
 		return nil, nil, err
 	}
-	if err := blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
+	if err := repomigration.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
 		return nil, nil, err
 	}
-	if err := blueprint.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
+	if err := repomigration.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Files, err = blueprint.FileCustomizationsToFsNodeFiles(fc)
+	img.OSCustomizations.Files, err = repomigration.FileCustomizationsToFsNodeFiles(fc)
 	if err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
+	img.OSCustomizations.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(dc)
 	if err != nil {
 		return nil, nil, err
 	}

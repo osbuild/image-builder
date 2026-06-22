@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/v73/internal/common"
 )
 
 func TestStageResult_UnmarshalJSON(t *testing.T) {

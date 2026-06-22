@@ -1,8 +1,8 @@
 package manifest
 
 import (
-	"github.com/osbuild/image-builder/pkg/artifact"
-	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/artifact"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
 )
 
 type ISOGrub2MenuEntry struct {

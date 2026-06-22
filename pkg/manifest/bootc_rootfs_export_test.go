@@ -1,6 +1,6 @@
 package manifest
 
-import "github.com/osbuild/image-builder/pkg/osbuild"
+import "github.com/osbuild/image-builder/v73/pkg/osbuild"
 
 func (bpt *BootcRootFS) Serialize() (osbuild.Pipeline, error) {
 	return bpt.serialize()

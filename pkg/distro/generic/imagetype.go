@@ -9,15 +9,16 @@ import (
 	"text/template"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/pkg/container"
-	"github.com/osbuild/image-builder/pkg/datasizes"
-	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
-	"github.com/osbuild/image-builder/pkg/image"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/platform"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/datasizes"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro/defs"
+	"github.com/osbuild/image-builder/v73/pkg/image"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/repomigration"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 type imageFunc func(t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, payloadRepos []rpmmd.RepoConfig, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
@@ -284,7 +285,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	if err != nil {
 		return nil, nil, err
 	}
-	installFromRepos := blueprint.RepoCustomizationsInstallFromOnly(customRepos)
+	installFromRepos := repomigration.RepoCustomizationsInstallFromOnly(customRepos)
 	payloadRepos = append(payloadRepos, installFromRepos...)
 
 	containerSources := make([]container.SourceSpec, len(bp.Containers))

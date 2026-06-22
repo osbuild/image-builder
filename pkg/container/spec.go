@@ -1,7 +1,7 @@
 package container
 
 import (
-	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
 )
 
 // A Spec is the specification of how to get a specific

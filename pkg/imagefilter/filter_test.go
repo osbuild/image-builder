@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/pkg/distrofactory"
+	"github.com/osbuild/image-builder/v73/pkg/distrofactory"
 )
 
 func TestImageFilterFilter(t *testing.T) {

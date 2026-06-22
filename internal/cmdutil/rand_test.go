@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/buildconfig"
-	"github.com/osbuild/image-builder/internal/cmdutil"
+	"github.com/osbuild/image-builder/v73/internal/buildconfig"
+	"github.com/osbuild/image-builder/v73/internal/cmdutil"
 )
 
 func TestNewRNGSeed(t *testing.T) {

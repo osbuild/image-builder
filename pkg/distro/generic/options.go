@@ -5,11 +5,12 @@ import (
 	"slices"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/customizations/oscap"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/policies"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/oscap"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/policies"
+	"github.com/osbuild/image-builder/v73/pkg/repomigration"
 )
 
 func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
@@ -90,10 +91,10 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		return warnings, fmt.Errorf("%s: customizations.disk cannot be used with customizations.filesystem", errPrefix)
 	}
 
-	if err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
+	if err := repomigration.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
-	if err := blueprint.CheckDiskMountpointsPolicy(partitioning, policies.MountpointPolicies); err != nil {
+	if err := repomigration.CheckDiskMountpointsPolicy(partitioning, policies.MountpointPolicies); err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 	if err := partitioning.ValidateLayoutConstraints(); err != nil {
@@ -128,12 +129,12 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		fcp = policies.OstreeCustomFilesPolicies
 	}
 
-	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, dcp)
+	err = repomigration.CheckDirectoryCustomizationsPolicy(dc, dcp)
 	if err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 
-	err = blueprint.CheckFileCustomizationsPolicy(fc, fcp)
+	err = repomigration.CheckFileCustomizationsPolicy(fc, fcp)
 	if err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}

@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
-	"github.com/osbuild/image-builder/pkg/customizations/users"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/users"
 )
 
 const (

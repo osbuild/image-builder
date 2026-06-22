@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/pkg/osbuild/manifesttest"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild/manifesttest"
 )
 
 var fakeOsbuildManifest = `{

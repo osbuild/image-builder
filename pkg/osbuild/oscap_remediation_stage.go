@@ -3,7 +3,7 @@ package osbuild
 import (
 	"fmt"
 
-	"github.com/osbuild/image-builder/pkg/customizations/oscap"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/oscap"
 )
 
 type OscapVerbosityLevel string

@@ -17,16 +17,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/pkg/depsolvednf"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
-	"github.com/osbuild/image-builder/pkg/osbuild/manifesttest"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
-	testrepos "github.com/osbuild/image-builder/test/data/repositories"
+	"github.com/osbuild/image-builder/v73/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/manifestgen/manifestmock"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild/manifesttest"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
+	testrepos "github.com/osbuild/image-builder/v73/test/data/repositories"
 
-	main "github.com/osbuild/image-builder/cmd/image-builder"
-	"github.com/osbuild/image-builder/internal/testutil"
-	"github.com/osbuild/image-builder/pkg/arch"
+	main "github.com/osbuild/image-builder/v73/cmd/image-builder"
+	"github.com/osbuild/image-builder/v73/internal/testutil"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
 )
 
 func assertJsonContains(t *testing.T, jsonInput, searchTerm string) {

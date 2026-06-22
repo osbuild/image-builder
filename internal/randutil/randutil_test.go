@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/internal/randutil"
+	"github.com/osbuild/image-builder/v73/internal/randutil"
 )
 
 func TestChoiceSimple(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/randutil"
+	"github.com/osbuild/image-builder/v73/internal/randutil"
 )
 
 func makeOsRelease(t *testing.T, buildDir string) {

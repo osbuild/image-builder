@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/pkg/distrosort"
+	"github.com/osbuild/image-builder/v73/pkg/distrosort"
 )
 
 func TestSortNames(t *testing.T) {

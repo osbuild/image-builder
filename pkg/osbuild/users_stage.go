@@ -1,9 +1,9 @@
 package osbuild
 
 import (
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/crypt"
-	"github.com/osbuild/image-builder/pkg/customizations/users"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/crypt"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/users"
 )
 
 type UsersStageOptions struct {

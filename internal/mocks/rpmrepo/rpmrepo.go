@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"os"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 type testRepoServer struct {

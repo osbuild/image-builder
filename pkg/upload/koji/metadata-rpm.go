@@ -3,7 +3,7 @@ package koji
 import (
 	"fmt"
 
-	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
 )
 
 // RPM represents an RPM package in the Koji metadata format.

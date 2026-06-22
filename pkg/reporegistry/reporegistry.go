@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/osbuild/image-builder/pkg/distroidparser"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/distroidparser"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 // ErrNoRepoFound is raied if a repository request for a given

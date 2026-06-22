@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/osbuild/image-builder/cmd/check-host-config/check"
-	"github.com/osbuild/image-builder/internal/buildconfig"
+	"github.com/osbuild/image-builder/v73/cmd/check-host-config/check"
+	"github.com/osbuild/image-builder/v73/internal/buildconfig"
 )
 
 // waitForSystem waits until the system is reported by systemd as "running" or the timeout is reached.

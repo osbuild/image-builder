@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
 )
 
 type Device struct {

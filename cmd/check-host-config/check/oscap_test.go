@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	check "github.com/osbuild/image-builder/cmd/check-host-config/check"
-	"github.com/osbuild/image-builder/internal/test"
+	check "github.com/osbuild/image-builder/v73/cmd/check-host-config/check"
+	"github.com/osbuild/image-builder/v73/internal/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -9,7 +9,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/osbuild/image-builder/internal/buildconfig"
+	"github.com/osbuild/image-builder/v73/internal/buildconfig"
 )
 
 const RNG_SEED_ENV_KEY = "OSBUILD_TESTING_RNG_SEED"

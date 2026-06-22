@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/image-builder/pkg/runner"
+	"github.com/osbuild/image-builder/v73/pkg/runner"
 )
 
 func TestRunnerFromYaml(t *testing.T) {

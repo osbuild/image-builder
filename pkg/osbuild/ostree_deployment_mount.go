@@ -1,6 +1,6 @@
 package osbuild
 
-import "github.com/osbuild/image-builder/internal/common"
+import "github.com/osbuild/image-builder/v73/internal/common"
 
 type OSTreeMountSource string
 

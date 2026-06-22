@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/image-builder/pkg/hashutil"
+	"github.com/osbuild/image-builder/v73/pkg/hashutil"
 )
 
 func TestSha256sum(t *testing.T) {

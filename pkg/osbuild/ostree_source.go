@@ -1,6 +1,6 @@
 package osbuild
 
-import "github.com/osbuild/image-builder/pkg/ostree"
+import "github.com/osbuild/image-builder/v73/pkg/ostree"
 
 const SourceNameOstree = "org.osbuild.ostree"
 

@@ -1,7 +1,7 @@
 package platform
 
 import (
-	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
 )
 
 // Data is a platform configured from YAML inputs

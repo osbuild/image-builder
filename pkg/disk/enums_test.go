@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
 )
 
 var partitionTypeEnumMap = map[string]disk.PartitionTableType{

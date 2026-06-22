@@ -3,7 +3,7 @@ package dependencies_test
 import (
 	"testing"
 
-	"github.com/osbuild/image-builder/data/dependencies"
+	"github.com/osbuild/image-builder/v73/data/dependencies"
 	"github.com/stretchr/testify/assert"
 )
 

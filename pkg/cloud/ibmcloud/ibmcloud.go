@@ -11,7 +11,7 @@ import (
 	"github.com/IBM/ibm-cos-sdk-go/aws/session"
 	"github.com/IBM/ibm-cos-sdk-go/service/s3/s3manager"
 
-	"github.com/osbuild/image-builder/pkg/cloud"
+	"github.com/osbuild/image-builder/v73/pkg/cloud"
 )
 
 var _ = cloud.Uploader(&ibmcloudUploader{})

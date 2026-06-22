@@ -2,7 +2,7 @@
 // generating manifests for bootc-derived images.
 package bootc
 
-import "github.com/osbuild/image-builder/pkg/bib/osinfo"
+import "github.com/osbuild/image-builder/v73/pkg/bib/osinfo"
 
 // Info contains all the information from the bootc container that is
 // required to create a manifest for a bootc-based image.

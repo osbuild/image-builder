@@ -10,12 +10,12 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
-	"github.com/osbuild/image-builder/pkg/imagefilter"
-	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro/defs"
+	"github.com/osbuild/image-builder/v73/pkg/imagefilter"
+	"github.com/osbuild/image-builder/v73/pkg/manifest"
+	"github.com/osbuild/image-builder/v73/pkg/ostree"
 )
 
 // Use yaml output by default because it is both nicely human and

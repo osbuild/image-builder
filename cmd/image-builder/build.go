@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/image-builder/pkg/imagefilter"
-	"github.com/osbuild/image-builder/pkg/progress"
+	"github.com/osbuild/image-builder/v73/pkg/imagefilter"
+	"github.com/osbuild/image-builder/v73/pkg/progress"
 )
 
 type buildOptions struct {

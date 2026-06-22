@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/osbuild/image-builder/pkg/cert"
-	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/v73/pkg/cert"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/fsnode"
 )
 
 func NewUpdateCATrustStage() *Stage {

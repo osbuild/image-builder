@@ -3,8 +3,8 @@ package osbuild
 import (
 	"slices"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/subscription"
 )
 
 // RHSMStageOptions describes configuration of the RHSM stage.

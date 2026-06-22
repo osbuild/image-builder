@@ -18,20 +18,20 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/bootc"
-	"github.com/osbuild/image-builder/pkg/customizations/subscription"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
-	"github.com/osbuild/image-builder/pkg/imagefilter"
-	"github.com/osbuild/image-builder/pkg/manifestgen"
-	ilog "github.com/osbuild/image-builder/pkg/olog"
-	"github.com/osbuild/image-builder/pkg/osbuild"
-	"github.com/osbuild/image-builder/pkg/ostree"
-	"github.com/osbuild/image-builder/pkg/progress"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/bootc"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/v73/pkg/distro/generic"
+	"github.com/osbuild/image-builder/v73/pkg/imagefilter"
+	"github.com/osbuild/image-builder/v73/pkg/manifestgen"
+	ilog "github.com/osbuild/image-builder/v73/pkg/olog"
+	"github.com/osbuild/image-builder/v73/pkg/osbuild"
+	"github.com/osbuild/image-builder/v73/pkg/ostree"
+	"github.com/osbuild/image-builder/v73/pkg/progress"
 
-	"github.com/osbuild/image-builder/internal/blueprintload"
-	"github.com/osbuild/image-builder/internal/olog"
-	"github.com/osbuild/image-builder/pkg/setup"
+	"github.com/osbuild/image-builder/v73/internal/blueprintload"
+	"github.com/osbuild/image-builder/v73/internal/olog"
+	"github.com/osbuild/image-builder/v73/pkg/setup"
 )
 
 var (

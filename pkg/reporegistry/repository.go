@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/image-builder/pkg/distroidparser"
-	"github.com/osbuild/image-builder/pkg/olog"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/distroidparser"
+	"github.com/osbuild/image-builder/v73/pkg/olog"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 // LoadAllRepositories loads all repositories for given distros from the given list of paths.

@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/distro/test_distro"
-	"github.com/osbuild/image-builder/pkg/olog"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/distro/test_distro"
+	"github.com/osbuild/image-builder/v73/pkg/olog"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
 )
 
 func getConfPaths(t *testing.T) []string {

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	check "github.com/osbuild/image-builder/cmd/check-host-config/check"
-	"github.com/osbuild/image-builder/internal/buildconfig"
-	"github.com/osbuild/image-builder/pkg/distro"
+	check "github.com/osbuild/image-builder/v73/cmd/check-host-config/check"
+	"github.com/osbuild/image-builder/v73/internal/buildconfig"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

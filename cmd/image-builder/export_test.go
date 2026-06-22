@@ -5,11 +5,11 @@ import (
 	"io"
 	"os"
 
-	"github.com/osbuild/image-builder/pkg/bootc"
-	"github.com/osbuild/image-builder/pkg/cloud"
-	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
-	"github.com/osbuild/image-builder/pkg/manifestgen"
-	"github.com/osbuild/image-builder/pkg/reporegistry"
+	"github.com/osbuild/image-builder/v73/pkg/bootc"
+	"github.com/osbuild/image-builder/v73/pkg/cloud"
+	"github.com/osbuild/image-builder/v73/pkg/cloud/awscloud"
+	"github.com/osbuild/image-builder/v73/pkg/manifestgen"
+	"github.com/osbuild/image-builder/v73/pkg/reporegistry"
 )
 
 var (

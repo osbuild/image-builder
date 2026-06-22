@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/image-builder/internal/common"
-	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/v73/internal/common"
+	"github.com/osbuild/image-builder/v73/pkg/datasizes"
 )
 
 type Partition struct {

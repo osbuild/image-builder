@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/osbuild/image-builder/internal/testdisk"
+	"github.com/osbuild/image-builder/v73/internal/testdisk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

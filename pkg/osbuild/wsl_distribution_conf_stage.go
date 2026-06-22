@@ -1,7 +1,7 @@
 package osbuild
 
 import (
-	"github.com/osbuild/image-builder/pkg/customizations/wsl"
+	"github.com/osbuild/image-builder/v73/pkg/customizations/wsl"
 )
 
 type WSLDistributionConfStageOptions struct {

@@ -11,13 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/cloud"
-	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
-	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/v73/pkg/arch"
+	"github.com/osbuild/image-builder/v73/pkg/cloud"
+	"github.com/osbuild/image-builder/v73/pkg/cloud/awscloud"
+	"github.com/osbuild/image-builder/v73/pkg/platform"
 
-	main "github.com/osbuild/image-builder/cmd/image-builder"
-	"github.com/osbuild/image-builder/internal/testutil"
+	main "github.com/osbuild/image-builder/v73/cmd/image-builder"
+	"github.com/osbuild/image-builder/v73/internal/testutil"
 )
 
 func TestUploadWithAWSMock(t *testing.T) {

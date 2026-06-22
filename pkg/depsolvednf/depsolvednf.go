@@ -28,9 +28,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/osbuild/image-builder/pkg/rhsm"
-	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
+	"github.com/osbuild/image-builder/v73/pkg/rhsm"
+	"github.com/osbuild/image-builder/v73/pkg/rpmmd"
+	"github.com/osbuild/image-builder/v73/pkg/sbom"
 )
 
 // BaseSolver defines the basic solver configuration without platform

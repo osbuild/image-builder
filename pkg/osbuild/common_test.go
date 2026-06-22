@@ -1,6 +1,6 @@
 package osbuild
 
-import "github.com/osbuild/image-builder/pkg/disk"
+import "github.com/osbuild/image-builder/v73/pkg/disk"
 
 // This is a copy of `internal/disk/disk_test.go`
 // (but ours has one more entry: "luks+lvm+clevisBind"):

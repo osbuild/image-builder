@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/distro_test_common"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/v73/pkg/disk"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro/distro_test_common"
+	"github.com/osbuild/image-builder/v73/pkg/distro/generic"
 )
 
 var fedoraFamilyDistros = []distro.Distro{

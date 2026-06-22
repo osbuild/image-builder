@@ -7,7 +7,7 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/v73/pkg/distro"
 )
 
 const (

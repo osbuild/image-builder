@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/v73/pkg/container"
 	"github.com/stretchr/testify/assert"
 )
 
