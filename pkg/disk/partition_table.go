@@ -1697,46 +1697,58 @@ func needsBoot(disk *blueprint.DiskCustomization) bool {
 	}
 
 	var foundBtrfsOrLVM bool
+	var hasPlainRoot bool
+	var hasPlainBoot bool
+	var lvmOrBtrfsRootNeedsBoot bool
+	var hasBtrfsRootWithBootSubvol bool
+
+	// Do not use early returns in the loop below, we need to check all partitions.
 	for _, part := range disk.Partitions {
 		switch part.Type {
 		case "plain", "":
-			if part.Mountpoint == "/" {
-				return false
-			}
-			if part.Mountpoint == "/boot" {
-				return false
+			switch part.Mountpoint {
+			case "/":
+				hasPlainRoot = true
+			case "/boot":
+				hasPlainBoot = true
 			}
 		case "lvm":
 			foundBtrfsOrLVM = true
-			// check if any of the LVs is root
 			for _, lv := range part.LogicalVolumes {
 				if lv.Mountpoint == "/" {
-					return true
+					lvmOrBtrfsRootNeedsBoot = true
 				}
 			}
 		case "btrfs":
 			foundBtrfsOrLVM = true
-
-			// check if any of the subvols is root and no subvol is boot
 			hasRoot := false
-			hasBoot := false
+			hasBootSubvol := false
 
 			for _, subvol := range part.Subvolumes {
 				if subvol.Mountpoint == "/" {
 					hasRoot = true
 				}
 				if subvol.Mountpoint == "/boot" {
-					hasBoot = true
+					hasBootSubvol = true
 				}
 			}
 
-			if hasRoot {
-				return !hasBoot
+			if hasRoot && hasBootSubvol {
+				hasBtrfsRootWithBootSubvol = true
+			} else if hasRoot {
+				lvmOrBtrfsRootNeedsBoot = true
 			}
 
 		default:
 			// NOTE: invalid types should be validated elsewhere
 		}
+	}
+
+	if hasPlainRoot || hasPlainBoot || hasBtrfsRootWithBootSubvol {
+		return false
+	}
+	if lvmOrBtrfsRootNeedsBoot {
+		return true
 	}
 	return foundBtrfsOrLVM
 }
