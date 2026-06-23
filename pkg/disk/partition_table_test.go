@@ -3517,3 +3517,64 @@ func TestNewCustomPartitionTablePolicyNoXBOOTLDR(t *testing.T) {
 		assert.Equal(t, noBootPolicy, pt.Policy)
 	})
 }
+
+// Regression test for https://redhat.atlassian.net/browse/HMS-10805
+func TestNewCustomPartitionTableLVMWithExplicitBootAfterLVM(t *testing.T) {
+	/* #nosec G404 */
+	rnd := rand.New(rand.NewSource(0))
+
+	customizations := &blueprint.DiskCustomization{
+		Partitions: []blueprint.PartitionCustomization{
+			{
+				Type:    "plain",
+				MinSize: 1 * datasizes.GiB,
+				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+					Mountpoint: "/boot/efi",
+					FSType:     "vfat",
+				},
+			},
+			{
+				Type:    "lvm",
+				MinSize: 1 * datasizes.GiB,
+				VGCustomization: blueprint.VGCustomization{
+					Name: "vg",
+					LogicalVolumes: []blueprint.LVCustomization{
+						{
+							Name:    "lv_root",
+							MinSize: 20 * datasizes.GiB,
+							FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+								Mountpoint: "/",
+								FSType:     "xfs",
+							},
+						},
+					},
+				},
+			},
+			{
+				Type:    "plain",
+				MinSize: 2 * datasizes.GiB,
+				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+					Mountpoint: "/boot",
+					FSType:     "xfs",
+				},
+			},
+		},
+	}
+	options := &disk.CustomPartitionTableOptions{
+		DefaultFSType:      disk.FS_XFS,
+		BootMode:           platform.BOOT_NONE,
+		PartitionTableType: disk.PT_GPT,
+		Architecture:       arch.ARCH_X86_64,
+	}
+
+	pt, err := disk.NewCustomPartitionTable(customizations, options, nil, rnd)
+	require.NoError(t, err)
+
+	bootCount := 0
+	for _, part := range pt.Partitions {
+		if fs, ok := part.Payload.(*disk.Filesystem); ok && fs.Mountpoint == "/boot" {
+			bootCount++
+		}
+	}
+	assert.Equal(t, 1, bootCount, "expected exactly one /boot partition, not an auto-created duplicate")
+}
