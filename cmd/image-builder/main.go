@@ -413,6 +413,15 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return err
 	}
+	bootcRemote, err := cmd.Flags().GetBool("bootc-pull-container")
+	if err != nil {
+		return err
+	}
+	imageSize, err := cmd.Flags().GetUint64("image-size")
+	if err != nil {
+		return err
+	}
+
 	var preview *bool
 	// Verify that the flag was actually passed. If it wasn't passed
 	// we keep our nil value so that images used the distro-defined
@@ -502,6 +511,8 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		BootcRef:                   bootcRef,
 		BootcInstallerPayloadRef:   bootcInstallerPayloadRef,
 		BootcOmitDefaultKernelArgs: bootcOmitDefaultKernelArgs,
+		BootcRemote:                bootcRemote,
+		ImageSize:                  imageSize,
 		WithSBOM:                   withSBOM,
 		WithRPMList:                withRPMList,
 		IgnoreWarnings:             ignoreWarnings,
@@ -844,6 +855,8 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	manifestCmd.Flags().String("bootc-installer-payload-ref", "", `bootc installer payload ref`)
 	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
 	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
+	manifestCmd.Flags().Bool("bootc-pull-container", false, `pull bootc container from remote location instead of using it from local container storage`)
+	manifestCmd.Flags().Uint64("image-size", 0, `override the default image size in bytes`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	if err := manifestCmd.Flags().MarkHidden("use-librepo"); err != nil {
 		return err

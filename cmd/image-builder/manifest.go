@@ -31,6 +31,8 @@ type manifestOptions struct {
 	BootcRef                   string
 	BootcInstallerPayloadRef   string
 	BootcOmitDefaultKernelArgs bool
+	BootcRemote                bool
+	ImageSize                  uint64
 	Subscription               *subscription.ImageOptions
 	RpmDownloader              osbuild.RpmDownloader
 	WithSBOM                   bool
@@ -106,9 +108,11 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 		Facts:        &facts.ImageOptions{APIType: facts.IBCLI_APITYPE},
 		OSTree:       opts.Ostree,
 		Subscription: opts.Subscription,
+		Size:         opts.ImageSize,
 		Bootc: &distro.BootcImageOptions{
-			InstallerPayloadRef:   opts.BootcInstallerPayloadRef,
-			OmitDefaultKernelArgs: opts.BootcOmitDefaultKernelArgs,
+			InstallerPayloadRef:      opts.BootcInstallerPayloadRef,
+			OmitDefaultKernelArgs:    opts.BootcOmitDefaultKernelArgs,
+			UseRemoteContainerSource: opts.BootcRemote,
 		},
 		Preview: opts.Preview,
 	}
