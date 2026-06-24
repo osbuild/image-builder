@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
@@ -43,6 +46,65 @@ func TestParseExtraRepoSad(t *testing.T) {
 
 	_, err = parseRepoURLs([]string{"https://example.com", "/just/a/path"}, "forced", "", "")
 	assert.EqualError(t, err, `scheme missing in "/just/a/path", please prefix with e.g. file:// or https://`)
+}
+
+func TestParseRepoURLsCopr(t *testing.T) {
+	response := coprAPIResponse{
+		FullName:  "@osbuild/osbuild",
+		Ownername: "@osbuild",
+		Name:      "osbuild",
+		ChrootRepos: map[string]string{
+			"fedora-44-x86_64":        "https://example.com/fedora-44-x86_64/",
+			"centos-stream-10-x86_64": "https://example.com/centos-stream-10-x86_64/",
+		},
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(response)
+		require.NoError(t, err)
+	}))
+	defer srv.Close()
+
+	origClient := coprHTTPClient
+	origURL := coprBaseURL
+	t.Cleanup(func() {
+		coprHTTPClient = origClient
+		coprBaseURL = origURL
+	})
+	coprHTTPClient = srv.Client()
+	coprBaseURL = srv.URL
+
+	t.Run("copr resolves for matching chroot", func(t *testing.T) {
+		cfg, err := parseRepoURLs([]string{"copr://@osbuild/osbuild"}, "extra", "fedora-44", "x86_64")
+		require.NoError(t, err)
+		require.Len(t, cfg, 1)
+		assert.Equal(t, []string{"https://example.com/fedora-44-x86_64/"}, cfg[0].BaseURLs)
+		assert.True(t, *cfg[0].CheckGPG)
+	})
+
+	t.Run("copr skips non-matching chroot", func(t *testing.T) {
+		cfg, err := parseRepoURLs([]string{"copr://@osbuild/osbuild"}, "extra", "fedora-99", "x86_64")
+		require.NoError(t, err)
+		assert.Len(t, cfg, 0)
+	})
+
+	t.Run("copr mixed with regular URLs", func(t *testing.T) {
+		cfg, err := parseRepoURLs([]string{
+			"https://example.com/regular",
+			"copr://@osbuild/osbuild",
+		}, "extra", "fedora-44", "x86_64")
+		require.NoError(t, err)
+		require.Len(t, cfg, 2)
+		assert.Equal(t, []string{"https://example.com/regular"}, cfg[0].BaseURLs)
+		assert.Equal(t, []string{"https://example.com/fedora-44-x86_64/"}, cfg[1].BaseURLs)
+	})
+
+	t.Run("centos maps to centos-stream chroot", func(t *testing.T) {
+		cfg, err := parseRepoURLs([]string{"copr://@osbuild/osbuild"}, "extra", "centos-10", "x86_64")
+		require.NoError(t, err)
+		require.Len(t, cfg, 1)
+		assert.Equal(t, []string{"https://example.com/centos-stream-10-x86_64/"}, cfg[0].BaseURLs)
+	})
 }
 
 func TestNewRepoRegistryImplSmoke(t *testing.T) {

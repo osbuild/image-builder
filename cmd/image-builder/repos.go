@@ -25,11 +25,6 @@ func parseRepoURLs(repoURLs []string, what, distroName, archName string) ([]rpmm
 	var repoConf []rpmmd.RepoConfig
 
 	for i, repoURL := range repoURLs {
-		// We want to eventually support more URIs repos here:
-		// - config:/path/to/repo.json
-		// - copr:@osbuild/osbuild (with full gpg retrival via the copr API)
-		// But for now just default to base-urls
-
 		baseURL, err := url.Parse(repoURL)
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse extra repo %w", err)
@@ -38,17 +33,28 @@ func parseRepoURLs(repoURLs []string, what, distroName, archName string) ([]rpmm
 			return nil, fmt.Errorf(`scheme missing in %q, please prefix with e.g. file:// or https://`, repoURL)
 		}
 
-		// TODO: to support gpg checking we will need to add signing keys.
-		// We will eventually add support for our own "repo.json" format
-		// which is rich enough to contain gpg keys (and more).
-		checkGPG := false
-		repoConf = append(repoConf, rpmmd.RepoConfig{
-			Id:           fmt.Sprintf("%s-repo-%v", what, i),
-			Name:         fmt.Sprintf("%s repo#%v %s%s", what, i, baseURL.Host, baseURL.Path),
-			BaseURLs:     []string{baseURL.String()},
-			CheckGPG:     &checkGPG,
-			CheckRepoGPG: &checkGPG,
-		})
+		switch baseURL.Scheme {
+		case "copr":
+			rc, err := resolveCoprRepo(baseURL, what, i, distroName, archName)
+			if err != nil {
+				return nil, err
+			}
+			if rc != nil {
+				repoConf = append(repoConf, *rc)
+			}
+		default:
+			// TODO: to support gpg checking we will need to add signing keys.
+			// We will eventually add support for our own "repo.json" format
+			// which is rich enough to contain gpg keys (and more).
+			checkGPG := false
+			repoConf = append(repoConf, rpmmd.RepoConfig{
+				Id:           fmt.Sprintf("%s-repo-%v", what, i),
+				Name:         fmt.Sprintf("%s repo#%v %s%s", what, i, baseURL.Host, baseURL.Path),
+				BaseURLs:     []string{baseURL.String()},
+				CheckGPG:     &checkGPG,
+				CheckRepoGPG: &checkGPG,
+			})
+		}
 	}
 
 	return repoConf, nil
