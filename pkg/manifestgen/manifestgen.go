@@ -104,7 +104,7 @@ type Generator struct {
 
 	rpmDownloader osbuild.RpmDownloader
 
-	customSeed    *int64
+	customSeed *int64
 	forceRepos []rpmmd.RepoConfig
 
 	useBootstrapContainer bool

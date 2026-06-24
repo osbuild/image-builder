@@ -353,3 +353,46 @@ func TestInvalidReposByArchName(t *testing.T) {
 		})
 	}
 }
+
+func TestAppendRepos(t *testing.T) {
+	rr := getTestingRepoRegistry()
+	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+
+	repos, err := rr.ReposByArchName(testDistro.Name(), test_distro.TestArchName, false)
+	assert.NoError(t, err)
+	assert.Len(t, repos, 2)
+
+	rr.AppendRepos(testDistro.Name(), test_distro.TestArchName, rpmmd.RepoConfig{
+		Name:     "extra",
+		BaseURLs: []string{"https://example.com/extra"},
+	})
+
+	repos, err = rr.ReposByArchName(testDistro.Name(), test_distro.TestArchName, false)
+	assert.NoError(t, err)
+	assert.Len(t, repos, 3)
+	assert.Equal(t, "extra", repos[2].Name)
+}
+
+func TestAppendReposIgnoresUnknown(t *testing.T) {
+	rr := getTestingRepoRegistry()
+
+	rr.AppendRepos("no-such-distro", "no-such-arch", rpmmd.RepoConfig{
+		Name: "extra",
+	})
+}
+
+func TestListArches(t *testing.T) {
+	rr := getTestingRepoRegistry()
+	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+
+	arches := rr.ListArches(testDistro.Name())
+	assert.Len(t, arches, 2)
+	assert.ElementsMatch(t, []string{test_distro.TestArchName, test_distro.TestArch2Name}, arches)
+}
+
+func TestListArchesUnknownDistro(t *testing.T) {
+	rr := getTestingRepoRegistry()
+
+	arches := rr.ListArches("no-such-distro")
+	assert.Nil(t, arches)
+}
