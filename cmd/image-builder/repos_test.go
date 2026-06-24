@@ -17,7 +17,7 @@ func TestParseRepoURLsHappy(t *testing.T) {
 	cfg, err := parseRepoURLs([]string{
 		"file:///path/to/repo",
 		"https://example.com/repo",
-	}, "forced")
+	}, "forced", "", "")
 	assert.NoError(t, err)
 	assert.Equal(t, []rpmmd.RepoConfig{
 		{
@@ -38,10 +38,10 @@ func TestParseRepoURLsHappy(t *testing.T) {
 }
 
 func TestParseExtraRepoSad(t *testing.T) {
-	_, err := parseRepoURLs([]string{"/just/a/path"}, "forced")
+	_, err := parseRepoURLs([]string{"/just/a/path"}, "forced", "", "")
 	assert.EqualError(t, err, `scheme missing in "/just/a/path", please prefix with e.g. file:// or https://`)
 
-	_, err = parseRepoURLs([]string{"https://example.com", "/just/a/path"}, "forced")
+	_, err = parseRepoURLs([]string{"https://example.com", "/just/a/path"}, "forced", "", "")
 	assert.EqualError(t, err, `scheme missing in "/just/a/path", please prefix with e.g. file:// or https://`)
 }
 

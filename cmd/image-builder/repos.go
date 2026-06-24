@@ -21,7 +21,7 @@ var defaultRepoDirs = []string{
 	"/usr/share/image-builder/repositories",
 }
 
-func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
+func parseRepoURLs(repoURLs []string, what, distroName, archName string) ([]rpmmd.RepoConfig, error) {
 	var repoConf []rpmmd.RepoConfig
 
 	for i, repoURL := range repoURLs {
@@ -84,12 +84,12 @@ func newRepoRegistryImpl(repoDir string, extraRepos []string) (*reporegistry.Rep
 	// XXX: this should probably go into manifestgen.Options as a
 	// new Options.ExtraRepoConf eventually (just like
 	// ForceRepos)
-	repoConf, err := parseRepoURLs(extraRepos, "extra")
-	if err != nil {
-		return nil, err
-	}
 	for _, distro := range reg.ListDistros() {
 		for _, arch := range reg.ListArches(distro) {
+			repoConf, err := parseRepoURLs(extraRepos, "extra", distro, arch)
+			if err != nil {
+				return nil, err
+			}
 			reg.AppendRepos(distro, arch, repoConf...)
 		}
 	}
