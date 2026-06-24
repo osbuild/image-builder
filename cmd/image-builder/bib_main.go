@@ -179,7 +179,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 		// XXX: hack to skip repo loading for the bootc image.
 		// We need to add a SkipRepositories or similar to
 		// manifestgen instead to make this clean
-		OverrideRepos: []rpmmd.RepoConfig{
+		ForceRepos: []rpmmd.RepoConfig{
 			{
 				BaseURLs: []string{"https://example.com/not-used"},
 			},

@@ -80,7 +80,7 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 		if err != nil {
 			return err
 		}
-		manifestGenOpts.OverrideRepos = forcedRepos
+		manifestGenOpts.ForceRepos = forcedRepos
 	}
 	if opts.IgnoreWarnings {
 		manifestGenOpts.WarningsOutput = os.Stderr

@@ -83,7 +83,7 @@ func newRepoRegistryImpl(repoDir string, extraRepos []string) (*reporegistry.Rep
 	//
 	// XXX: this should probably go into manifestgen.Options as a
 	// new Options.ExtraRepoConf eventually (just like
-	// OverrideRepos)
+	// ForceRepos)
 	repoConf, err := parseRepoURLs(extraRepos, "extra")
 	if err != nil {
 		return nil, err

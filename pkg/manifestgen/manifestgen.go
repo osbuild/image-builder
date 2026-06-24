@@ -69,9 +69,9 @@ type Options struct {
 	// useful for testing
 	CustomSeed *int64
 
-	// OverrideRepos overrides the default repository selection.
+	// ForceRepos overrides the default repository selection.
 	// This is mostly useful for testing
-	OverrideRepos []rpmmd.RepoConfig
+	ForceRepos []rpmmd.RepoConfig
 
 	// Custom "solver" functions, if unset the defaults will be
 	// used. Only needed for specialized use-cases.
@@ -105,7 +105,7 @@ type Generator struct {
 	rpmDownloader osbuild.RpmDownloader
 
 	customSeed    *int64
-	overrideRepos []rpmmd.RepoConfig
+	forceRepos []rpmmd.RepoConfig
 
 	useBootstrapContainer bool
 	rpmlistWriter         RPMListWriterFunc
@@ -128,7 +128,7 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		warningsOutput:         opts.WarningsOutput,
 		depsolveWarningsOutput: opts.DepsolveWarningsOutput,
 		customSeed:             opts.CustomSeed,
-		overrideRepos:          opts.OverrideRepos,
+		forceRepos:             opts.ForceRepos,
 		useBootstrapContainer:  opts.UseBootstrapContainer,
 		rpmlistWriter:          opts.RPMListWriter,
 	}
@@ -168,8 +168,8 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 	dist := a.Distro()
 
 	var repos []rpmmd.RepoConfig
-	if mg.overrideRepos != nil {
-		repos = mg.overrideRepos
+	if mg.forceRepos != nil {
+		repos = mg.forceRepos
 	} else {
 		var err error
 		repos, err = mg.reporegistry.ReposByImageTypeName(dist.Name(), a.Name(), imgType.Name())
