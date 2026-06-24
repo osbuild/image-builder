@@ -71,7 +71,7 @@ func newRepoRegistryImpl(repoDir string, extraRepos []string) (*reporegistry.Rep
 		builtins = []fs.FS{repos.FS}
 	}
 
-	conf, err := reporegistry.LoadAllRepositories(repoDirs, builtins)
+	reg, err := reporegistry.New(repoDirs, builtins)
 	if err != nil {
 		return nil, err
 	}
@@ -88,15 +88,13 @@ func newRepoRegistryImpl(repoDir string, extraRepos []string) (*reporegistry.Rep
 	if err != nil {
 		return nil, err
 	}
-	for _, repoArchConfigs := range conf {
-		for arch := range repoArchConfigs {
-			archCfg := repoArchConfigs[arch]
-			archCfg = append(archCfg, repoConf...)
-			repoArchConfigs[arch] = archCfg
+	for _, distro := range reg.ListDistros() {
+		for _, arch := range reg.ListArches(distro) {
+			reg.AppendRepos(distro, arch, repoConf...)
 		}
 	}
 
-	return reporegistry.NewFromDistrosRepoConfigs(conf), nil
+	return reg, nil
 }
 
 // this is a variable to make it overridable in tests
