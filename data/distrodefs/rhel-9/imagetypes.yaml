@@ -1562,7 +1562,7 @@ image_types:
                     enabled: false
     partition_table:
       <<: *default_partition_tables
-    package_sets:
+    package_sets: &qcow2_package_sets
       os:
         - &qcow2_pkgset
           include:
@@ -1778,6 +1778,17 @@ image_types:
                     label: "root"
                     mountpoint: "/"
                     fstab_options: "defaults"
+    package_sets:
+      os:
+        - *qcow2_pkgset
+        - conditions:
+            "oracle-cloud-agent on rhel":
+              when:
+                distro_name: "rhel"
+                version_greater_or_equal: "9.8"
+              append:
+                include:
+                  - "oracle-cloud-agent"
     blueprint:
       supported_options: *supported_options_disk
 
