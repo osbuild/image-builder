@@ -268,6 +268,7 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 				"vagrant-libvirt",
 				"vagrant-virtualbox",
 				"pxe-tar-xz",
+				"minimal-raw-xz",
 			},
 		},
 		{
@@ -284,6 +285,7 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 				"vagrant-libvirt",
 				"vhd",
 				"wsl",
+				"minimal-raw-xz",
 			},
 		},
 		{

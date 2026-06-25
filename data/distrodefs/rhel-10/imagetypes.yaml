@@ -2601,6 +2601,61 @@ image_types:
         - "customizations.fips"
         - "customizations.locale"
 
+  "minimal-raw-xz":
+    filename: "image.raw.xz"
+    compression: "xz"
+    mime_type: "application/xz"
+    image_func: "disk"
+    exports: ["xz"]
+    bootable: true
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
+    package_sets:
+      os:
+        - include:
+            - "@core"
+            - "bash-completion"
+            - "grubby"
+            - "fwupd-efi"
+            - "libxkbcommon"
+            - "NetworkManager-wifi"
+            - "linux-firmware"
+            - "brcmfmac-firmware"
+            - "iwlwifi-mvm-firmware"
+            - "realtek-firmware"
+          exclude:
+            - "dracut-config-rescue"
+    partition_table:
+      x86_64: &partition_table_minimal_raw_x86_64
+        type: "gpt"
+        partitions:
+          - &minimal_raw_partition_table_part_efi
+            size: "200 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              mountpoint: "/boot/efi"
+              label: "ESP"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &minimal_raw_partition_table_part_root
+            size: "2 GiB"
+            type: *filesystem_data_guid
+            payload_type: "filesystem"
+            payload:
+              <<: *default_partition_table_part_root_payload
+      aarch64:
+        start_offset: "16 MiB"
+        <<: *partition_table_minimal_raw_x86_64
+    blueprint:
+      supported_options: *supported_options_disk
+
   "pxe-tar-xz":
     filename: "pxe.tar.xz"
     compression: "xz"

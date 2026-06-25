@@ -848,5 +848,18 @@
         "server-network-installer"
       ]
     }
+  },
+  {
+    "path": "./configs/empty.json",
+    "filters": {
+      "distros": [
+        "rhel-10*",
+        "centos-10"
+      ],
+      "arches": [],
+      "image-types": [
+        "minimal-raw-xz"
+      ]
+    }
   }
 ]
