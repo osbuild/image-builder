@@ -2824,6 +2824,8 @@ image_types:
         # only on rhel-9.2+ and centos
         - "ignition-firstboot-complete.service"
         - "coreos-ignition-write-issues.service"
+        # only on rhel-9.6+
+        - "bootloader-update.service"
       conditions: &conditions_edge_commit_image_config
         "rhel-9.1 and below do not have ignition":
           when:
@@ -2835,6 +2837,18 @@ image_types:
               - "firewalld.service"
               - "sshd.service"
               - "fdo-client-linuxapp.service"
+        "rhel-9.5 and below do not have bootupd bootloader update service":
+          when:
+            version_greater_or_equal: "9.2"
+            version_less_than: "9.6"
+          shallow_merge:
+            enabled_services:
+              - "NetworkManager.service"
+              - "firewalld.service"
+              - "sshd.service"
+              - "fdo-client-linuxapp.service"
+              - "ignition-firstboot-complete.service"
+              - "coreos-ignition-write-issues.service"
         "rhel-9.5 and below do not have bootupd":
           when:
             version_less_than: "9.6"
