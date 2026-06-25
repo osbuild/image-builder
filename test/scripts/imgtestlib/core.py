@@ -373,30 +373,44 @@ def get_tag_for(runner):
 
 
 
+def build_metadata_filenames(basename: str) -> set[str]:
+    """Return filenames in a build directory that are not the image artifact."""
+    return {
+        "manifest.json",
+        "info.json",
+        "rpmlist.json",
+        f"{basename}.osbuild-manifest.json",
+        f"{basename}.buildlog",
+    }
+
+
 def find_image_file(build_path: str) -> str:
     """
-    Find the path to the image by reading the manifest and finding the exported pipeline's output directory.
-    A manifest may contain multiple pipelines but only one is exported during a build. This function finds the
-    exported pipeline by checking which pipeline directory exists in the build output.
-    Raises RuntimeError if no or multiple exported directories are found, or if the directory doesn't contain
-    exactly one file.
+    Find the image file in an image-builder build output directory.
     """
-    manifest_file = os.path.join(build_path, "manifest.json")
-    with open(manifest_file, encoding="utf-8") as manifest:
-        data = json.load(manifest)
+    basename = os.path.basename(os.path.normpath(build_path))
+    prefix = f"{basename}."
+    skip_names = build_metadata_filenames(basename)
 
-    pipeline_names = [p["name"] for p in data["pipelines"] if p["name"] != "build"]
-    export_dirs = [p for p in pipeline_names if os.path.isdir(os.path.join(build_path, p))]
+    candidates = []
+    for name in os.listdir(build_path):
+        if name in skip_names or not name.startswith(prefix):
+            continue
 
-    if len(export_dirs) != 1:
-        raise RuntimeError(f"Expected exactly one exported pipeline directory in {build_path}, found: {export_dirs}")
+        path = os.path.join(build_path, name)
+        if os.path.isfile(path):
+            candidates.append(path)
 
-    files = os.listdir(os.path.join(build_path, export_dirs[0]))
-    if len(files) != 1:
+    if len(candidates) == 1:
+        return candidates[0]
+
+    if not candidates:
         raise RuntimeError(
-            f"Expected exactly one file in export directory '{export_dirs[0]}', found: {files}")
+            f"Expected exactly one image artifact in {build_path}, found none")
 
-    return os.path.join(build_path, export_dirs[0], files[0])
+    names = [os.path.basename(path) for path in candidates]
+    raise RuntimeError(
+        f"Expected exactly one image artifact in {build_path}, found: {names}")
 
 
 def read_manifest(build_path: str) -> Dict:

@@ -1,10 +1,44 @@
 import json
 import os
-from typing import Dict
+import tempfile
+from typing import Dict, List
 
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
+
+
+def config_to_cli_args(config: dict) -> List[str]:
+    args: List[str] = []
+
+    blueprint = config.get("blueprint", {})
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as bp_file:
+        json.dump(blueprint, bp_file)
+    args.append(f"--blueprint={bp_file.name}")
+
+    options = config.get("options", {})
+    ostree = options.get("ostree", {})
+    if ref := ostree.get("ref"):
+        args.append(f"--ostree-ref={ref}")
+    if url := ostree.get("url"):
+        args.append(f"--ostree-url={url}")
+    if parent := ostree.get("parent"):
+        args.append(f"--ostree-parent={parent}")
+
+    bootc = options.get("bootc", {})
+    if payload_ref := bootc.get("installer_payload_ref"):
+        args.append(f"--bootc-installer-payload-ref={payload_ref}")
+    if bootc.get("use_remote_container_source"):
+        args.append("--bootc-pull-container")
+
+    if size := options.get("size"):
+        args.append(f"--image-size={size}")
+
+    for repo in config.get("custom_repos", []):
+        for url in repo.get("baseurls", []):
+            args.append(f"--extra-repo={url}")
+
+    return args
 
 
 @log_section("Building image")
@@ -13,25 +47,40 @@ def build_image(distro, arch, image_type, config_path):
         config = json.load(config_file)
 
     config_name = config["name"]
+    build_name = gen_build_name(distro, arch, image_type, config_name)
+    build_dir = os.path.join("build", build_name)
 
     print(f"👷 Building image {distro}/{image_type} using config {config_path}")
 
     # print the config for logging
     print(json.dumps(config, indent=2))
 
-    runcmd(["go", "build", "-o", "./bin/build", "./cmd/build"])
-
-    cmd = ["sudo", "-E", "./bin/build", "--output", "./build", "--checkpoints", "build",
-           "--distro", distro, "--arch", arch, "--type", image_type, "--config", config_path]
-    runcmd_nc(cmd, extra_env=rng_seed_env())
+    runcmd(["go", "build", "-o", "./bin/image-builder", "./cmd/image-builder"])
+    seed = rng_seed_env()["OSBUILD_TESTING_RNG_SEED"]
+    cmd = [
+        "sudo", "-E", "./bin/image-builder", "build", image_type,
+        "--distro", distro,
+        "--arch", arch,
+        "--force-repo-dir", "test/data/repositories",
+        "--output-dir", build_dir,
+        "--output-name", build_name,
+        "--with-manifest",
+        "--ignore-warnings",
+        "--seed", str(seed),
+    ]
+    cmd.extend(config_to_cli_args(config))
+    runcmd_nc(cmd)
 
     print("✅ Build finished!!")
 
     # Build artifacts are owned by root. Make them world accessible.
     runcmd(["sudo", "chmod", "a+rwX", "-R", "./build"])
 
-    build_dir = os.path.join("build", gen_build_name(distro, arch, image_type, config_name))
+    osbuild_manifest = os.path.join(build_dir, f"{build_name}.osbuild-manifest.json")
     manifest_path = os.path.join(build_dir, "manifest.json")
+    if os.path.exists(osbuild_manifest) and not os.path.exists(manifest_path):
+        os.symlink(f"{build_name}.osbuild-manifest.json", manifest_path)
+
     with open(manifest_path, "r", encoding="utf-8") as manifest_fp:
         manifest_data = json.load(manifest_fp)
     manifest_id = get_manifest_id(manifest_data)
