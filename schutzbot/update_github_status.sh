@@ -39,5 +39,5 @@ curl \
     -u "${SCHUTZBOT_LOGIN}" \
     -X POST \
     -H "Accept: application/vnd.github.v3+json" \
-    "https://api.github.com/repos/osbuild/images/statuses/${CI_COMMIT_SHA}" \
+    "https://api.github.com/repos/osbuild/image-builder/statuses/${CI_COMMIT_SHA}" \
     -d '{"state":"'"${GITHUB_NEW_STATE}"'", "description": "'"${GITHUB_NEW_DESC}"'", "context": "'"${CONTEXT}"'", "target_url": "'"${CI_PIPELINE_URL}"'"}'
