@@ -2813,7 +2813,7 @@ image_types:
             # XXX: sadly the osbuild options are upper case for "Unit" vs lower above :(
             Unit:
               ConditionPathExists: "!/usr/libexec/greenboot/greenboot"
-      # Enable bootupd metadata generation for ostree commits (9.8+ only)
+      # Enable bootupd metadata generation for ostree commits (9.6+ only)
       bootupd_gen_metadata: true
       enabled_services: &enabled_services_edge
         # XXX: shared with 9.2
@@ -2835,9 +2835,9 @@ image_types:
               - "firewalld.service"
               - "sshd.service"
               - "fdo-client-linuxapp.service"
-        "rhel-9.7 and below do not have bootupd":
+        "rhel-9.5 and below do not have bootupd":
           when:
-            version_less_than: "9.8"
+            version_less_than: "9.6"
           shallow_merge:
             bootupd_gen_metadata: false
     package_sets:
@@ -2922,13 +2922,13 @@ image_types:
           exclude:
             - "rng-tools"
           conditions: &conditions_pkgsets_edge_commit
-            "greenboot in 9.8 and c9s requires bootupd":
+            "greenboot in 9.6 and c9s requires bootupd":
               # we don't want bootupd in edge commits, but greenboot requires
-              # it in 9.8 and c9s, so we can only exclude it for older versions
+              # it in 9.6 and c9s, so we can only exclude it for older versions
               # NOTE: this is temporary
               # see https://github.com/fedora-iot/greenboot-rs/pull/142
               when:
-                version_less_than: "9.8"
+                version_less_than: "9.6"
               append:
                 exclude:
                   - "bootupd"
