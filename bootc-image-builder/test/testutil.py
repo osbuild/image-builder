@@ -178,8 +178,6 @@ podman_run_common = [
     "--privileged",
     "-v", "/var/lib/containers/storage:/var/lib/containers/storage",
     "--security-opt", "label=type:unconfined_t",
-    # ensure we run in reasonable memory limits
-    "--memory=8g", "--memory-swap=8g",
 ]
 
 
