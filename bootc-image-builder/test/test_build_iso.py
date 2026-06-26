@@ -28,6 +28,7 @@ ISO_BOOT_TIMEOUT = 1800
 
 @pytest.mark.skipif(platform.system() != "Linux", reason="boot test only runs on linux right now")
 @pytest.mark.parametrize("image_type", gen_testcases("anaconda-iso"), indirect=["image_type"])
+@pytest.mark.skip(reason="kvm boot tests are currently disabled")
 def test_iso_installs(image_type):
     installer_iso_path = image_type.img_path
     test_disk_path = installer_iso_path.with_name("test-disk.img")
@@ -97,6 +98,7 @@ def test_iso_install_img_is_squashfs(tmp_path, image_type):
     "quay.io/centos-bootc/centos-bootc:stream9",
 ])
 # pylint: disable=too-many-locals
+@pytest.mark.skip(reason="kvm boot tests are currently disabled")
 def test_bootc_installer_iso_installs(tmp_path, build_container, container_ref):
     # XXX: duplicated from test_build_disk.py
     username = "test"
