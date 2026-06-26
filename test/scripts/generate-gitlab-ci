@@ -138,6 +138,18 @@ MANIFEST_GEN_TEMPLATE = """
     exit "$errors"
 """
 
+BOOTC_IMAGE_BUILDER_TEMPLATE = """
+"bootc-image-builder [{arch}]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: {runner}-{arch}
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_disk.py::test_image_is_generated
+"""
+
 
 def sort_configs(configs):
     return sorted(configs, key=lambda img: img["distro"]+img["arch"]+img["image-type"])
@@ -193,6 +205,13 @@ def main():
 
         combos.add(combo)
         man_gen_stage.append(MANIFEST_GEN_TEMPLATE.format(distro=img["distro"], arch=img["arch"], runner=RUNNER))
+
+    # Run bootc-image-builder tests on Fedora 44 only for now (both arches)
+    for arch in ("x86_64", "aarch64"):
+        trigger_stage.append(BOOTC_IMAGE_BUILDER_TEMPLATE.format(
+            runner=RUNNER,
+            arch=arch,
+        ))
 
     with open(config_path, "w", encoding="utf-8") as config_file:
         config_file.write(BASE_CONFIG.format(runner=RUNNER))
