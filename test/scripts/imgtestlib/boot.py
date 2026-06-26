@@ -12,15 +12,13 @@ import uuid
 from tempfile import TemporaryDirectory
 from typing import Generator
 
-from vmtest.util import get_free_port
-from vmtest.vm import QEMU
-
 from .build import read_build_info, write_build_info
 from .core import (can_boot_test, find_image_file, read_manifest,
                    skopeo_inspect_id)
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_bib_ref, host_container_arch
+from .vm import QEMU, get_free_port
 
 BASE_TEST_EXEC = "check-host-config-"  # + arch
 WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
