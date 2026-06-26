@@ -1,10 +1,11 @@
 import subprocess
 
 import pytest
+
 import testutil
-from containerbuild import (build_container_fixture,
-                            build_erroring_container_fixture,
-                            build_fake_container_fixture)
+from containerbuild import (  # pylint: disable=unused-import
+    build_container_fixture, build_erroring_container_fixture,
+    build_fake_container_fixture)
 # pylint: disable=unused-import,duplicate-code
 from test_opts import container_storage_fixture
 

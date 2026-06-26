@@ -1,3 +1,5 @@
+# allow TODO and XXX in the whole file
+# pylint: disable=fixme
 import json
 import os
 import pathlib
@@ -93,6 +95,7 @@ def test_build_generates_rpmlist(tmp_path, build_container, shared_store):
     ("term", "[|]", "osbuild-stdout-output"),
 ])
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_build_with_progress(tmp_path, build_fake_container, shared_store, progress, needle, forbidden):
     output_dir = tmp_path / "output"
     output_dir.mkdir()

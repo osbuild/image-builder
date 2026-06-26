@@ -10,7 +10,6 @@ install_deps() {
         btrfs-progs-devel \
         cloud-utils \
         device-mapper-devel \
-        flake8 \
         gcc \
         go \
         gpgme-devel \

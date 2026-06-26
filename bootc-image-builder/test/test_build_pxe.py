@@ -1,3 +1,5 @@
+# allow TODO and XXX in the whole file
+# pylint: disable=fixme
 import json
 import os
 import pathlib
@@ -42,7 +44,7 @@ class DirServer(ThreadingHTTPServer):
         SimpleHTTPRequestHandler(request, client_address, self, directory=self.directory)
 
 
-# pylint: disable=too-many-arguments,too-many-locals,unused-argument
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,unused-argument
 def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key_path, keep=False):
     with ExitStack() as cm:
         # unpack the tar and create a combined image

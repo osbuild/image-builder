@@ -263,12 +263,11 @@ jobs:
       - name: Install build and test dependencies
         run: |
           ./test/scripts/install-dependencies
-          dnf -y install python3-pylint
 
       - name: Analysing the code with pylint
         run: |
-          python3 -m pylint --version
-          python3 -m pylint $(grep -l "/usr/bin/env python3" -r test/scripts) test/scripts/*.py
+          pylint --version
+          pylint --recursive=y .
 
   yaml-checks:
     name: "YAML checks"
