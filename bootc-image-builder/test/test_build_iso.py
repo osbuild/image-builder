@@ -8,7 +8,9 @@ import subprocess
 import textwrap
 from contextlib import ExitStack
 
+import imgtestlib as testlib
 import pytest
+
 # local test utils
 import testutil
 from containerbuild import (  # pylint: disable=unused-import
@@ -18,7 +20,6 @@ from test_build_disk import (assert_kernel_args, gpg_conf_fixture,
                              image_type_fixture, registry_conf_fixture,
                              shared_tmpdir_fixture)
 from testcases import gen_testcases
-from vmtest.vm import QEMU
 
 ISO_BOOT_TIMEOUT = 1800
 
@@ -31,11 +32,11 @@ def test_iso_installs(image_type):
     with open(test_disk_path, "w", encoding="utf8") as fp:
         fp.truncate(10_1000_1000_1000)
     # install to test disk
-    with QEMU(test_disk_path, cdrom=installer_iso_path) as vm:
+    with testlib.vm.QEMU(test_disk_path, cdrom=installer_iso_path) as vm:
         vm.start(wait_event="qmp:RESET", snapshot=False, use_ovmf=True, timeout_sec=ISO_BOOT_TIMEOUT)
         vm.force_stop()
     # boot test disk and do extremly simple check
-    with QEMU(test_disk_path) as vm:
+    with testlib.vm.QEMU(test_disk_path) as vm:
         vm.start(use_ovmf=True)
         vm.run("true", user=image_type.username, password=image_type.password)
         assert_kernel_args(vm, image_type)
@@ -192,11 +193,11 @@ def test_bootc_installer_iso_installs(tmp_path, build_container, container_ref):
         with open(test_disk_path, "w", encoding="utf8") as fp:
             fp.truncate(10_1000_1000_1000)
         # install to test disk
-        with QEMU(test_disk_path, cdrom=installer_iso_path) as vm:
+        with testlib.vm.QEMU(test_disk_path, cdrom=installer_iso_path) as vm:
             vm.start(wait_event="qmp:RESET", snapshot=False, use_ovmf=True, timeout_sec=ISO_BOOT_TIMEOUT)
             vm.force_stop()
         # boot test disk and do extremly simple check
-        with QEMU(test_disk_path) as vm:
+        with testlib.vm.QEMU(test_disk_path) as vm:
             vm.start(use_ovmf=True)
             vm.run("true", user=username, password=password)
             ret = vm.run(["bootc", "status"], user="root", keyfile=ssh_keyfile_private_path)

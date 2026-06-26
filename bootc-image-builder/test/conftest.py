@@ -1,7 +1,7 @@
 import pytest
+
 # pylint: disable=wrong-import-order
 from testcases import TestCase
-from vmtest.util import get_free_port
 
 
 def pytest_addoption(parser):
@@ -29,8 +29,3 @@ def pytest_make_parametrize_id(config, val):  # pylint: disable=W0613
     if isinstance(val, TestCase):
         return f"{val}"
     return None
-
-
-@pytest.fixture(name="free_port")
-def free_port_fixture():
-    return get_free_port()
