@@ -152,6 +152,9 @@ jobs:
 
             This is simply a notice. It will not block this PR from being merged.
 
+            See $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID for details
+            under 'osbuild-composer: Unit tests -> Run unit tests (PR HEAD)' section.
+
       - name: Update comment (fixed)
         uses: mshick/add-pr-comment@v3
         if: needs.unit-tests-osbuild-composer.outputs.pr_test == 1
