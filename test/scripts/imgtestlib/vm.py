@@ -4,7 +4,8 @@ import pathlib
 import platform
 import shlex
 import shutil
-import subprocess
+import socket
+import subprocess as sp
 import sys
 import tempfile
 import time
@@ -12,15 +13,12 @@ import uuid
 from io import StringIO
 
 try:
-    # The vmtest module is imported by imgtestlib.
     # Allow importing the module without boto3 since most times it's not needed.
     import boto3
     from botocore.exceptions import ClientError
 except ImportError:
     boto3 = None
     ClientError = None
-
-from vmtest.util import get_free_port, wait_ssh_ready
 
 AWS_REGION = "us-east-1"
 
@@ -104,15 +102,15 @@ class VM(abc.ABC):
         ssh_cmd.append(f"{user}@{self._address}")
         ssh_cmd.append(run_cmd)
         output = StringIO()
-        with subprocess.Popen(
+        with sp.Popen(
                 ssh_cmd,
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                stdout=sp.PIPE, stderr=sp.STDOUT,
                 text=True, bufsize=1,
         ) as p:
             for out in p.stdout:
                 self._log(out)
                 output.write(out)
-        ret = subprocess.CompletedProcess(run_cmd, p.returncode)
+        ret = sp.CompletedProcess(run_cmd, p.returncode)
         ret.stdout = output.getvalue()
         # this will raise an CalledProcessError on error
         ret.check_returncode()
@@ -127,7 +125,7 @@ class VM(abc.ABC):
             scp_cmd.extend(["-i", keyfile])
         scp_cmd.append(src)
         scp_cmd.append(f"{user}@{self._address}:{dst}")
-        subprocess.check_call(scp_cmd)
+        sp.check_call(scp_cmd)
 
     @property
     def ssh_port(self):
@@ -270,7 +268,7 @@ class QEMU(VM):
 
         # XXX: use systemd-run to ensure cleanup?
         # pylint: disable=consider-using-with
-        self._qemu_p = subprocess.Popen(
+        self._qemu_p = sp.Popen(
             self._gen_qemu_cmdline(snapshot, use_ovmf),
             stdout=sys.stdout,
             stderr=sys.stderr,
@@ -424,3 +422,25 @@ class AWS(VM):
 
     def running(self):
         return self._ec2_instance is not None
+
+
+def get_free_port() -> int:
+    # this is racy but there is no race-free way to do better with the qemu CLI
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("localhost", 0))
+        return s.getsockname()[1]
+
+
+def wait_ssh_ready(address, port, sleep, max_wait_sec):
+    for _ in range(int(max_wait_sec / sleep)):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(sleep)
+            try:
+                s.connect((address, port))
+                data = s.recv(256)
+                if b"OpenSSH" in data:
+                    return
+            except (ConnectionRefusedError, ConnectionResetError, TimeoutError):
+                pass
+            time.sleep(sleep)
+    raise ConnectionRefusedError(f"cannot connect to port {port} after {max_wait_sec}s")
