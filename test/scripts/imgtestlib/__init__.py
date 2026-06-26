@@ -5,3 +5,4 @@ from .core import *
 from .gitlab import *
 from .run import *
 from .testenv import *
+from .vm import *
