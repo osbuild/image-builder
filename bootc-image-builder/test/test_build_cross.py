@@ -1,17 +1,10 @@
 import platform
 
 import pytest
-
-from testcases import gen_testcases
-
 from test_build_disk import (  # pylint: disable=unused-import
-    assert_disk_image_boots,
-    build_container_fixture,
-    gpg_conf_fixture,
-    image_type_fixture,
-    registry_conf_fixture,
-    shared_tmpdir_fixture,
-)
+    assert_disk_image_boots, build_container_fixture, gpg_conf_fixture,
+    image_type_fixture, registry_conf_fixture, shared_tmpdir_fixture)
+from testcases import gen_testcases
 
 
 # This testcase is not part of "test_build_disk.py:test_image_boots"

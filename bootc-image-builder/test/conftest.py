@@ -1,5 +1,4 @@
 import pytest
-
 # pylint: disable=wrong-import-order
 from testcases import TestCase
 from vmtest.util import get_free_port

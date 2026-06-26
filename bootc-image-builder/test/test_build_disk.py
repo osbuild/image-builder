@@ -9,17 +9,18 @@ import string
 import subprocess
 import tempfile
 import uuid
-from contextlib import contextmanager, ExitStack
-from typing import NamedTuple
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
+from typing import NamedTuple
 
 import pytest
 # local test utils
 import testutil
-from containerbuild import build_container_fixture    # pylint: disable=unused-import
-from testcases import CLOUD_BOOT_IMAGE_TYPES, DISK_IMAGE_TYPES, gen_testcases
 import vmtest.util
-from vmtest.vm import AWS_REGION, AWS, QEMU
+from containerbuild import \
+    build_container_fixture  # pylint: disable=unused-import
+from testcases import CLOUD_BOOT_IMAGE_TYPES, DISK_IMAGE_TYPES, gen_testcases
+from vmtest.vm import AWS, AWS_REGION, QEMU
 
 if not testutil.has_executable("podman"):
     pytest.skip("no podman, skipping integration tests that required podman", allow_module_level=True)
