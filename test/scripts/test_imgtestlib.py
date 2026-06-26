@@ -432,7 +432,7 @@ def test_wait_ssh_ready_sleeps_wrong_reply():
     free_port = testlib.vm.get_free_port()
     with contextlib.ExitStack() as cm:
         with sp.Popen(
-            f"echo not-ssh | nc -vv -l -p {free_port}",
+            f"echo not-ssh | nc -vv -l {free_port}",
             shell=True,
             stdout=sp.PIPE,
             stderr=sp.STDOUT,
