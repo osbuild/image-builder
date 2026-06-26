@@ -32,10 +32,10 @@ jobs:
         run: python3 test/scripts/setup-osbuild-repo
       - name: Install dependencies
         run: |
-          # we have the same build-deps as the images library
-          curl -sL https://raw.githubusercontent.com/osbuild/images/refs/heads/main/pyproject.toml > pyproject.toml
+          # we have the same build-deps as the image-builder library
+          curl -sL https://raw.githubusercontent.com/osbuild/image-builder/refs/heads/main/pyproject.toml > pyproject.toml
           mkdir -p test/scripts
-          curl -sL https://raw.githubusercontent.com/osbuild/images/refs/heads/main/test/scripts/install-dependencies > test/scripts/install-dependencies
+          curl -sL https://raw.githubusercontent.com/osbuild/image-builder/refs/heads/main/test/scripts/install-dependencies > test/scripts/install-dependencies
           bash test/scripts/install-dependencies
           # we also need createrepo_c
           dnf install -y createrepo_c
