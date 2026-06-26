@@ -1067,6 +1067,28 @@ fail:
   needs:
     - "generate-build-config: [rhel-9.9, x86_64]"
 
+
+"bootc-image-builder [x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-x86_64
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_disk.py::test_image_is_generated
+
+
+"bootc-image-builder [aarch64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-aarch64
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_disk.py::test_image_is_generated
+
 "generate-ostree-build-config: [centos-9, aarch64]":
   stage: ostree-gen
   extends: .terraform
