@@ -52,7 +52,7 @@ jobs:
           if ! git rebase "$(git merge-base ${base_sha} HEAD)" --exec ./tools/gen-manifest-checksums.sh; then
               echo "-----------------------------------------------------------------------------"
               echo "Manifests changes detected (commit $(git rev-parse HEAD))!"
-              echo "https://github.com/osbuild/images/commit/$(git rev-parse HEAD)"
+              echo "https://github.com/osbuild/image-builder/commit/$(git rev-parse HEAD)"
               echo
               echo "Please review the manifest changes with ./tools/gen-manifests-diff and if the"
               echo "changes are expected use ./tools/gen-manifest-checksums.sh to amend each"
