@@ -9,7 +9,6 @@ import subprocess
 import textwrap
 
 import pytest
-
 import testutil
 from containerbuild import build_container_fixture as _
 from containerbuild import make_container

@@ -1,8 +1,8 @@
-import os
-import random
 import json
+import os
 import pathlib
 import platform
+import random
 import string
 import subprocess
 import textwrap
@@ -11,18 +11,13 @@ from contextlib import ExitStack
 import pytest
 # local test utils
 import testutil
-from containerbuild import build_container_fixture, make_container    # pylint: disable=unused-import
+from containerbuild import (  # pylint: disable=unused-import
+    build_container_fixture, make_container)
+from test_build_disk import ImageBuildResult  # pylint: disable=unused-import
+from test_build_disk import (assert_kernel_args, gpg_conf_fixture,
+                             image_type_fixture, registry_conf_fixture,
+                             shared_tmpdir_fixture)
 from testcases import gen_testcases
-from test_build_disk import (
-    assert_kernel_args,
-    ImageBuildResult,
-)
-from test_build_disk import (  # pylint: disable=unused-import
-    gpg_conf_fixture,
-    image_type_fixture,
-    registry_conf_fixture,
-    shared_tmpdir_fixture,
-)
 from vmtest.vm import QEMU
 
 ISO_BOOT_TIMEOUT = 1800

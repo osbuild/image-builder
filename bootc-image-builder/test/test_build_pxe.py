@@ -1,21 +1,21 @@
-import os
-import random
 import json
+import os
 import pathlib
 import platform
+import random
 import string
 import subprocess
 import textwrap
 import threading
-
 from contextlib import ExitStack
-from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from tempfile import TemporaryDirectory
 
 import pytest
 # local test utils
 import testutil
-from containerbuild import build_container_fixture, make_container    # pylint: disable=unused-import
+from containerbuild import (  # pylint: disable=unused-import
+    build_container_fixture, make_container)
 from vmtest.vm import QEMU
 
 
