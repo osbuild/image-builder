@@ -67,11 +67,3 @@ case "${ID}" in
         install_deps
         ;;
 esac
-
-# We need this for the qemu boot tests and for any python tests but
-# could skip it for other testing. This can be removed once we figure
-# out why it actually does not work:
-#
-#   https://github.com/osbuild/images/issues/2288
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-pip install "${SCRIPT_DIR}/../.."
