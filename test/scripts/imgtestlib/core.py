@@ -7,7 +7,7 @@ from glob import glob
 from typing import Dict
 
 from .build import get_manifest_id
-from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_s3
+from .cache import dl_build_info, gen_build_info_dir_path_prefix
 from .gitlab import log_section
 from .run import runcmd
 from .testenv import (get_bib_ref, get_ci_runner_for, host_container_arch,

@@ -1,3 +1,5 @@
+# allow TODO and XXX in the whole file
+# pylint: disable=fixme
 import abc
 import os
 import pathlib
@@ -11,6 +13,12 @@ import tempfile
 import time
 import uuid
 from io import StringIO
+
+try:
+    # Allow importing the module without boto3 since most times it's not needed.
+    from qemu import qmp
+except ImportError:
+    qmp = None
 
 try:
     # Allow importing the module without boto3 since most times it's not needed.
@@ -78,7 +86,7 @@ class VM(abc.ABC):
             try:
                 self._run("true", user=user, password=password, keyfile=keyfile)
                 return
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 print(f"ssh not ready {i+1}/{ssh_ready_n_retries}: {e}", file=sys.stderr)
             time.sleep(ssh_ready_wait_sec)
         raise RuntimeError(f"no ssh after {ssh_ready_n_retries} retries of {ssh_ready_wait_sec}s")
@@ -116,6 +124,7 @@ class VM(abc.ABC):
         ret.check_returncode()
         return ret
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def scp(self, src, dst, user, password="", keyfile=None):
         self._ensure_ssh(user, password, keyfile)
         scp_cmd = self._sshpass(password) + [
@@ -155,7 +164,9 @@ def find_ovmf():
     raise ValueError("cannot find a OVMF bios")
 
 
+# pylint: disable=too-many-instance-attributes
 class QEMU(VM):
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self, img, arch="", snapshot=True, cdrom=None, extra_args=None, memory="2048"):
         super().__init__()
         self._img = pathlib.Path(img)
@@ -181,6 +192,7 @@ class QEMU(VM):
         """
         return os.cpu_count() or 1
 
+    # pylint: disable=too-many-branches
     def _gen_qemu_cmdline(self, snapshot, use_ovmf):
         virtio_scsi_hd = [
             "-device", "virtio-scsi-pci,id=scsi",
@@ -293,10 +305,8 @@ class QEMU(VM):
         raise TimeoutError(f"no {self._qmp_socket} after {timeout_sec} seconds")
 
     def wait_qmp_event(self, qmp_event, timeout_sec=120):
-        # import lazy to avoid requiring it for all operations
-        import qmp  # pylint: disable=import-outside-toplevel
         self._wait_qmp_socket(30)
-        mon = qmp.QEMUMonitorProtocol(os.fspath(self._qmp_socket))
+        mon = qmp.legacy.QEMUMonitorProtocol(os.fspath(self._qmp_socket))
         mon.connect()
         start = time.monotonic()
         while True:

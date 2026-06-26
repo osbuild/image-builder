@@ -533,6 +533,7 @@ def test_ssh_calls_retries(mocked_sleep, tmp_path, monkeypatch, capsys):
         for i in range(30)
     ]) + "\n"
 
+
 def test_wait_ssh_ready_timeout():
     vm = MockVM()
     vm.set_ssh("localhost", testlib.vm.get_free_port())

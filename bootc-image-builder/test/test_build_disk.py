@@ -1,3 +1,5 @@
+# allow TODO and XXX in the whole file
+# pylint: disable=fixme
 import json
 import os
 import pathlib
@@ -36,7 +38,7 @@ if platform.system() == "Linux" and platform.machine() == "x86_64" and not testu
 
 class ImageBuildResult(NamedTuple):
     img_type: str
-    img_path: str
+    img_path: pathlib.Path
     img_arch: str
     container_ref: str
     build_container_ref: str
@@ -212,7 +214,7 @@ def sign_container_image(gpg_conf: GPGConf, registry_conf: RegistryConf, contain
 
 
 @pytest.fixture(name="image_type", scope="session")
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def image_type_fixture(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf, registry_conf):
     """
     Build an image inside the passed build_container and return an
@@ -228,7 +230,7 @@ def image_type_fixture(shared_tmpdir, build_container, request, force_aws_upload
 
 
 @pytest.fixture(name="images", scope="session")
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def images_fixture(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf, registry_conf):
     """
     Build one or more images inside the passed build_container and return an
@@ -241,7 +243,7 @@ def images_fixture(shared_tmpdir, build_container, request, force_aws_upload, gp
 
 
 # XXX: refactor
-# pylint: disable=too-many-locals,too-many-branches,too-many-statements,too-many-arguments
+# pylint: disable=too-many-locals,too-many-branches,too-many-statements,too-many-arguments,too-many-positional-arguments
 @contextmanager
 def build_images(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf, registry_conf):
     """

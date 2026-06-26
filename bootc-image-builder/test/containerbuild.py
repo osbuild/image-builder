@@ -37,7 +37,8 @@ def make_container(container_path, arch=None):
 def build_container_fixture():
     """Build a container from the Containerfile and returns the name"""
     if tag_from_env := os.getenv("BIB_TEST_BUILD_CONTAINER_TAG"):
-        return tag_from_env
+        yield tag_from_env
+        return
 
     container_tag = "bootc-image-builder-test"
     subprocess.check_call([

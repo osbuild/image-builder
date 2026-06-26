@@ -1,3 +1,5 @@
+# allow TODO and XXX in the whole file
+# pylint: disable=fixme
 import json
 import os
 import pathlib
@@ -16,9 +18,9 @@ import testutil
 from containerbuild import (  # pylint: disable=unused-import
     build_container_fixture, make_container)
 from test_build_disk import ImageBuildResult  # pylint: disable=unused-import
-from test_build_disk import (assert_kernel_args, gpg_conf_fixture,
-                             image_type_fixture, registry_conf_fixture,
-                             shared_tmpdir_fixture)
+from test_build_disk import (  # pylint: disable=unused-import
+    assert_kernel_args, gpg_conf_fixture, image_type_fixture,
+    registry_conf_fixture, shared_tmpdir_fixture)
 from testcases import gen_testcases
 
 ISO_BOOT_TIMEOUT = 1800
