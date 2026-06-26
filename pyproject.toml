@@ -16,6 +16,6 @@ dependencies = [
   "scp==0.15.0",
 ]
 
-[tool.setuptools.packages.find]
-where = ["test/scripts"]
-include = ["vmtest"]
+# make imgtestlib importable when running pytest
+[tool.pytest.ini_options]
+pythonpath = ["test/scripts"]

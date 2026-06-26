@@ -11,12 +11,13 @@ from contextlib import ExitStack
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from tempfile import TemporaryDirectory
 
+import imgtestlib as testlib
 import pytest
+
 # local test utils
 import testutil
 from containerbuild import (  # pylint: disable=unused-import
     build_container_fixture, make_container)
-from vmtest.vm import QEMU
 
 
 def get_ostree_path(grub_path):
@@ -84,7 +85,7 @@ def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key
                         "-append", append_arg
                     ]
 
-                    with QEMU(test_disk_path, memory="4096", arch=arch, extra_args=extra_args) as vm:
+                    with testlib.vm.QEMU(test_disk_path, memory="4096", arch=arch, extra_args=extra_args) as vm:
                         vm.start(use_ovmf=use_ovmf)
                         vm.run("true", user=username, password=password)
                         vm.run("mount", user="root", keyfile=ssh_key_path)

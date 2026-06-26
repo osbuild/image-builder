@@ -13,14 +13,14 @@ from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 from typing import NamedTuple
 
+import imgtestlib as testlib
 import pytest
+
 # local test utils
 import testutil
-import vmtest.util
 from containerbuild import \
     build_container_fixture  # pylint: disable=unused-import
 from testcases import CLOUD_BOOT_IMAGE_TYPES, DISK_IMAGE_TYPES, gen_testcases
-from vmtest.vm import AWS, AWS_REGION, QEMU
 
 if not testutil.has_executable("podman"):
     pytest.skip("no podman, skipping integration tests that required podman", allow_module_level=True)
@@ -115,7 +115,7 @@ def registry_conf_fixture(shared_tmpdir, request):
       {local_registry}:
         lookaside: file:///{sigstore_dir}
     """
-    registry_port = vmtest.util.get_free_port()
+    registry_port = testlib.vm.get_free_port()
     # We cannot use localhost as we need to access the registry from both
     # the host system and the bootc-image-builder container.
     default_ip = testutil.get_ip_from_default_route()
@@ -412,7 +412,7 @@ def build_images(shared_tmpdir, build_container, request, force_aws_upload, gpg_
 
                 upload_args = [
                     f"--aws-ami-name=bootc-image-builder-test-{str(uuid.uuid4())}",
-                    f"--aws-region={AWS_REGION}",
+                    f"--aws-region={testlib.vm.AWS_REGION}",
                     "--aws-bucket=bootc-image-builder-ci",
                 ]
             elif force_aws_upload:
@@ -494,7 +494,7 @@ def build_images(shared_tmpdir, build_container, request, force_aws_upload, gpg_
         metadata["ami_id"] = parse_ami_id_from_log(journal_output)
 
         def del_ami():
-            testutil.deregister_ami(metadata["ami_id"], AWS_REGION)
+            testutil.deregister_ami(metadata["ami_id"], testlib.vm.AWS_REGION)
         request.addfinalizer(del_ami)
 
     journal_log_path.write_text(journal_output, encoding="utf8")
@@ -559,7 +559,7 @@ def test_image_boots(image_type):
 
 
 def assert_disk_image_boots(image_type):
-    with QEMU(image_type.img_path, arch=image_type.img_arch) as test_vm:
+    with testlib.vm.QEMU(image_type.img_path, arch=image_type.img_arch) as test_vm:
         # user/password login works
         test_vm.run("true", user=image_type.username, password=image_type.password)
         # root/ssh login also works
@@ -595,7 +595,7 @@ def test_ami_boots_in_aws(image_type, force_aws_upload):
     # check that upload progress is in the output log. Uploads looks like:
     # 4.30 GiB / 10.00 GiB [------------>____________] 43.02% 58.04 MiB p/s
     assert "] 100.00%" in image_type.bib_output
-    with AWS(image_type.metadata["ami_id"]) as test_vm:
+    with testlib.vm.AWS(image_type.metadata["ami_id"]) as test_vm:
         test_vm.run("true", user=image_type.username, password=image_type.password)
         ret = test_vm.run(["echo", "hello"], user=image_type.username, password=image_type.password)
         assert "hello" in ret.stdout
