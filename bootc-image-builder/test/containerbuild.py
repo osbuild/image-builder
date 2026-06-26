@@ -43,10 +43,12 @@ def build_container_fixture():
     subprocess.check_call([
         "podman", "build",
         "--cache-ttl=1h",
-        "-f", "Containerfile.bib",
+        "-f", "bootc-image-builder/Containerfile",
         "-t", container_tag,
+        ".",
     ])
-    return container_tag
+    yield container_tag
+    subprocess.check_call(["podman", "rmi", container_tag])
 
 
 @pytest.fixture(name="build_fake_container", scope="session")
@@ -98,7 +100,8 @@ def build_fake_container_fixture(tmpdir_factory, build_container):
         "-t", container_tag,
         tmp_path,
     ])
-    return container_tag
+    yield container_tag
+    subprocess.check_call(["podman", "rmi", container_tag])
 
 
 @pytest.fixture(name="build_erroring_container", scope="session")
@@ -145,4 +148,5 @@ def build_erroring_container_fixture(tmpdir_factory, build_container):
         "-t", container_tag,
         tmp_path,
     ])
-    return container_tag
+    yield container_tag
+    subprocess.check_call(["podman", "rmi", container_tag])
