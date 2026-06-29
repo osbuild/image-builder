@@ -60,16 +60,15 @@ jobs:
       - name: Run unit tests
         # Skip tests that resolve manifests from local container storage.
         # They are tested separately (see below: requires root)
-        run: go test  -race -timeout 20m ./... -test.skip 'TestBlockingResolverLocalManifest|TestResolverLocalManifest|TestGetManifestLocal'
+        run: go test -count=1 -race -timeout 20m ./... -test.skip 'TestBlockingResolverLocalManifest|TestResolverLocalManifest|TestGetManifestLocal'
 
       - name: Run depsolver tests with force-dnf to make sure it's not skipped
-        run: go test -race ./pkg/depsolvednf/... -force-dnf
+        run: go test -count=1 -race ./pkg/depsolvednf/... -force-dnf
 
       - name: Run depsolver tests with dnf5
         run: |
           sudo sed -i 's/"use_dnf5": false/"use_dnf5": true/' /usr/lib/osbuild/solver.json
-          go clean -testcache
-          go test -race ./pkg/depsolvednf/... -force-dnf
+          go test -count=1 -race ./pkg/depsolvednf/... -force-dnf
 
   container-resolver-tests:
     name: "🛃 Container resolver tests"
@@ -103,13 +102,13 @@ jobs:
       # We need to run the test as root, since we use the root
       # containers-storage for the local resolvers
       - name: Run unit tests for container resolve
-        run: sudo go test ./pkg/container/... --force-local-resolver
+        run: sudo go test -count=1 ./pkg/container/... --force-local-resolver
 
       - name: Run unit tests for bib container
-        run: sudo go test ./pkg/bootc/... --fail-if-podman-missing
+        run: sudo go test -count=1 ./pkg/bootc/... --fail-if-podman-missing
 
       - name: Run tests for bootc container
-        run: sudo go test ./pkg/distro/bootc/... ./pkg/distro/generic/...
+        run: sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...
 
   unit-tests-cs:
     strategy:
