@@ -971,10 +971,10 @@ func TestErrorRepoInfo(t *testing.T) {
 			restore := mockActiveHandler(h.handler)
 			defer restore()
 
-			assert := assert.New(t)
 			solver := NewSolver("platform:f38", "38", "x86_64", "fedora-38", "/tmp/cache")
 			for idx, tc := range testCases {
 				t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+					assert := assert.New(t)
 					_, err := solver.Depsolve([]rpmmd.PackageSet{
 						{
 							Include:      []string{"osbuild"},
