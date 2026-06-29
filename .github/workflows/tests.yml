@@ -65,6 +65,12 @@ jobs:
       - name: Run depsolver tests with force-dnf to make sure it's not skipped
         run: go test -race ./pkg/depsolvednf/... -force-dnf
 
+      - name: Run depsolver tests with dnf5
+        run: |
+          sudo sed -i 's/"use_dnf5": false/"use_dnf5": true/' /usr/lib/osbuild/solver.json
+          go clean -testcache
+          go test -race ./pkg/depsolvednf/... -force-dnf
+
   container-resolver-tests:
     name: "🛃 Container resolver tests"
     runs-on: ubuntu-24.04
