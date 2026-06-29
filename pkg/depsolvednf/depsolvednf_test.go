@@ -275,6 +275,8 @@ func TestSolverDepsolveAll(t *testing.T) {
 		sbomType    sbom.StandardType
 		// slice of message fragments which are all expected to be in the error
 		expErrs []string
+		// slice of message fragments which are all expected to be in the error (when using dnf5)
+		expErrs5 []string
 	}
 
 	tmpdir := t.TempDir()
@@ -365,7 +367,8 @@ func TestSolverDepsolveAll(t *testing.T) {
 					},
 				},
 			},
-			expErrs: []string{"error depsolving package sets for \"first\"", "missing packages: does-not-exist"},
+			expErrs:  []string{"error depsolving package sets for \"first\"", "missing packages: does-not-exist"},
+			expErrs5: []string{"error depsolving package sets for \"first\"", "No match for argument: does-not-exist"},
 		},
 		"multi-chain-error-second": {
 			// two chain depsolves for different pipelines, second one fails
@@ -395,7 +398,8 @@ func TestSolverDepsolveAll(t *testing.T) {
 					},
 				},
 			},
-			expErrs: []string{"error depsolving package sets for \"second\"", "missing packages: does-not-exist"},
+			expErrs:  []string{"error depsolving package sets for \"second\"", "missing packages: does-not-exist"},
+			expErrs5: []string{"error depsolving package sets for \"second\"", "No match for argument: does-not-exist"},
 		},
 		"multi-chain-with-sbom": {
 			// two chain depsolves for different pipelines with sbom
@@ -429,6 +433,8 @@ func TestSolverDepsolveAll(t *testing.T) {
 		},
 	}
 
+	dnf5 := usingDNF5(t)
+
 	for _, h := range getTestHandlers() {
 		t.Run(h.name, func(t *testing.T) {
 			restore := mockActiveHandler(h.handler)
@@ -444,7 +450,11 @@ func TestSolverDepsolveAll(t *testing.T) {
 					res, err := solver.DepsolveAll(tc.packageSets)
 					if len(tc.expErrs) != 0 {
 						assert.Error(err)
-						for _, expErr := range tc.expErrs {
+						expErrs := tc.expErrs
+						if dnf5 {
+							expErrs = tc.expErrs5
+						}
+						for _, expErr := range expErrs {
 							assert.Contains(err.Error(), expErr)
 						}
 						return
@@ -925,12 +935,30 @@ func expectedDepsolvedPackages(repo rpmmd.RepoConfig) rpmmd.PackageList {
 	return expectedTemplate
 }
 
+func usingDNF5(t *testing.T) bool {
+	t.Helper()
+	data := map[string]bool{}
+	config, err := os.ReadFile("/usr/lib/osbuild/solver.json")
+	if err != nil {
+		t.Fatalf("failed to read solver.json: %s", err)
+	}
+	if err := json.Unmarshal(config, &data); err != nil {
+		t.Fatalf("failed to parse solver.json: %s", err)
+	}
+
+	if _, ok := data["use_dnf5"]; !ok {
+		t.Fatal("expected property 'use_dnf5' not found in solver.json")
+	}
+	return data["use_dnf5"]
+}
+
 func TestErrorRepoInfo(t *testing.T) {
 	requireDNF(t)
 
 	type testCase struct {
-		repo   rpmmd.RepoConfig
-		expMsg string
+		repo    rpmmd.RepoConfig
+		expMsg  string
+		expMsg5 string // expected message when using dnf5
 	}
 
 	testCases := []testCase{
@@ -940,7 +968,8 @@ func TestErrorRepoInfo(t *testing.T) {
 				BaseURLs: []string{"https://0.0.0.0/baseos/repo"},
 				Metalink: "https://0.0.0.0/baseos/metalink",
 			},
-			expMsg: "https://0.0.0.0/baseos/repo",
+			expMsg:  "https://0.0.0.0/baseos/repo",
+			expMsg5: "https://0.0.0.0/baseos/metalink",
 		},
 		{
 			repo: rpmmd.RepoConfig{
@@ -948,23 +977,28 @@ func TestErrorRepoInfo(t *testing.T) {
 				BaseURLs: []string{"https://0.0.0.0/baseos/repo"},
 				Metalink: "https://0.0.0.0/baseos/metalink",
 			},
-			expMsg: "https://0.0.0.0/baseos/repo",
+			expMsg:  "https://0.0.0.0/baseos/repo",
+			expMsg5: "https://0.0.0.0/baseos/metalink",
 		},
 		{
 			repo: rpmmd.RepoConfig{
 				Name:     "fedora",
 				Metalink: "https://0.0.0.0/f35/metalink",
 			},
-			expMsg: "https://0.0.0.0/f35/metalink",
+			expMsg:  "https://0.0.0.0/f35/metalink",
+			expMsg5: "https://0.0.0.0/f35/metalink",
 		},
 		{
 			repo: rpmmd.RepoConfig{
 				Name:       "",
 				MirrorList: "https://0.0.0.0/baseos/mirrors",
 			},
-			expMsg: "https://0.0.0.0/baseos/mirrors",
+			expMsg:  "https://0.0.0.0/baseos/mirrors",
+			expMsg5: "https://0.0.0.0/baseos/mirrors",
 		},
 	}
+
+	dnf5 := usingDNF5(t)
 
 	for _, h := range getTestHandlers() {
 		t.Run(h.name, func(t *testing.T) {
@@ -983,7 +1017,11 @@ func TestErrorRepoInfo(t *testing.T) {
 						},
 					}, sbom.StandardTypeNone)
 					assert.Error(err)
-					assert.Contains(err.Error(), tc.expMsg)
+					expMsg := tc.expMsg
+					if dnf5 {
+						expMsg = tc.expMsg5
+					}
+					assert.Contains(err.Error(), expMsg)
 				})
 			}
 		})
