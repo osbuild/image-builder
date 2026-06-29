@@ -865,7 +865,15 @@ func TestManifestOverrideRepo(t *testing.T) {
 	testutil.CaptureStdio(t, func() {
 		err = main.Run()
 	})
-	assert.ErrorContains(t, err, "forced repo#0 xxx.abcdefgh-no-such-host.com/repo: http://xxx.abcdefgh-no-such-host.com/repo]: Cannot download repomd.xml")
+
+	// When using dnf5, the error message differs substantially. More complete
+	// error messages are already covered by the depsolvednf tests for both dnf
+	// and dnf5. Here we just make sure the repo URL appears in the error
+	// message with one of two fragments for each backend.
+	assert.ErrorContains(t, err, "xxx.abcdefgh-no-such-host.com/repo")
+	if !strings.Contains(err.Error(), "Cannot download repomd.xml") && !strings.Contains(err.Error(), "Usable URL not found") {
+		assert.Failf(t, "Unexpected error message", "Error %q does not contain either of the expected messages for dnf or dnf5", err)
+	}
 	// XXX: we should probably look into "images" here, there is a bunch
 	// of redundancy in the full error message:
 	//
