@@ -19,7 +19,25 @@ import (
 
 	main "github.com/osbuild/image-builder/cmd/image-builder"
 	"github.com/osbuild/image-builder/internal/testutil"
+	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 )
+
+func skipIfNoAMISupport(t *testing.T) {
+	t.Helper()
+	switch arch.Current() {
+	case arch.ARCH_X86_64, arch.ARCH_AARCH64:
+		return
+	default:
+		t.Skipf("AMI image type not available for %s", arch.Current())
+	}
+}
+
+func expectedBootModeForCurrentArch() platform.BootMode {
+	if arch.Current() == arch.ARCH_X86_64 {
+		return platform.BOOT_HYBRID
+	}
+	return platform.BOOT_UEFI
+}
 
 func TestUploadWithAWSMock(t *testing.T) {
 	fakeDiskContent := "fake-raw-img"
@@ -182,17 +200,20 @@ func TestUploadCmdlineErrors(t *testing.T) {
 }
 
 func TestBuildAndUploadWithAWSMock(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	skipIfNoAMISupport(t)
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
 
 	var regionName, bucketName, amiName string
 	var fa fakeAwsUploader
 	var uploadOpts *awscloud.UploaderOptions
-	restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
+	restore = main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
 		regionName = region
 		bucketName = bucket
 		amiName = ami
@@ -226,7 +247,7 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 	assert.Equal(t, regionName, "aws-region-1")
 	assert.Equal(t, bucketName, "aws-bucket-2")
 	assert.Equal(t, amiName, "aws-ami-3")
-	expectedBootMode := platform.BOOT_HYBRID
+	expectedBootMode := expectedBootModeForCurrentArch()
 	assert.Equal(t, &awscloud.UploaderOptions{BootMode: &expectedBootMode, TargetArch: arch.Current()}, uploadOpts)
 	assert.Equal(t, 1, fa.checkCalls)
 	assert.Equal(t, 1, fa.uploadAndRegisterCalls)
@@ -234,17 +255,20 @@ func TestBuildAndUploadWithAWSMock(t *testing.T) {
 }
 
 func TestBuildAndUploadFedoraWithAWSMock(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	skipIfNoAMISupport(t)
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
 
 	var regionName, bucketName, amiName string
 	var fa fakeAwsUploader
 	var uploadOpts *awscloud.UploaderOptions
-	restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
+	restore = main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
 		regionName = region
 		bucketName = bucket
 		amiName = ami
@@ -278,7 +302,7 @@ func TestBuildAndUploadFedoraWithAWSMock(t *testing.T) {
 	assert.Equal(t, regionName, "aws-region-1")
 	assert.Equal(t, bucketName, "aws-bucket-2")
 	assert.Equal(t, amiName, "aws-ami-3")
-	expectedBootMode := platform.BOOT_HYBRID
+	expectedBootMode := expectedBootModeForCurrentArch()
 	assert.Equal(t, &awscloud.UploaderOptions{BootMode: &expectedBootMode, TargetArch: arch.Current()}, uploadOpts)
 	assert.Equal(t, 1, fa.checkCalls)
 	assert.Equal(t, 1, fa.uploadAndRegisterCalls)
@@ -286,17 +310,20 @@ func TestBuildAndUploadFedoraWithAWSMock(t *testing.T) {
 }
 
 func TestBuildAmiButNotUpload(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	skipIfNoAMISupport(t)
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
 
 	fa := fakeAwsUploader{
 		uploadAndRegisterErr: fmt.Errorf("upload should not be called"),
 	}
-	restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
+	restore = main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
 		return &fa, nil
 	})
 	defer restore()
@@ -324,18 +351,21 @@ func TestBuildAmiButNotUpload(t *testing.T) {
 }
 
 func TestBuildAndUploadWithAWSPartialCmdlineErrors(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	skipIfNoAMISupport(t)
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
 
 	outputDir := t.TempDir()
 	fakeOsbuildScript := makeFakeOsbuildScript()
 	testutil.MockCommand(t, "osbuild", fakeOsbuildScript)
 
-	restore := main.MockOsArgs([]string{
+	restore = main.MockOsArgs([]string{
 		"build",
 		"--output-dir", outputDir,
 		// note that --aws-{ami-name,bucket} is missing

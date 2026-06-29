@@ -2,6 +2,8 @@ package testutil
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,6 +13,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func SHA256For(s string) string {
+	h := sha256.New()
+	h.Write([]byte(s))
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
 
 type MockCmd struct {
 	binDir string

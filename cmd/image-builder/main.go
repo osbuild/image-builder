@@ -243,6 +243,7 @@ type cmdManifestWrapperOptions struct {
 
 // used in tests
 var manifestgenDepsolver manifestgen.DepsolveFunc
+var manifestgenContainerResolver manifestgen.ContainerResolverFunc
 
 func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	repoDir, err := cmd.Flags().GetString("force-repo-dir")
@@ -503,6 +504,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 			RpmDownloader:          rpmDownloader,
 			DepsolveWarningsOutput: wd,
 			Depsolve:               manifestgenDepsolver,
+			ContainerResolver:      manifestgenContainerResolver,
 		},
 		OutputDir:                  outputDir,
 		OutputFilename:             outputFilename,

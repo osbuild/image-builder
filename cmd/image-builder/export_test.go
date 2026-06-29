@@ -25,25 +25,25 @@ var (
 
 type DescribeImgYAML describeImgYAML
 
-func MockOsArgs(new []string) (restore func()) {
+func MockOsArgs(args []string) (restore func()) {
 	saved := os.Args
-	os.Args = append([]string{"argv0"}, new...)
+	os.Args = append([]string{"argv0"}, args...)
 	return func() {
 		os.Args = saved
 	}
 }
 
-func MockOsStdout(new io.Writer) (restore func()) {
+func MockOsStdout(w io.Writer) (restore func()) {
 	saved := osStdout
-	osStdout = new
+	osStdout = w
 	return func() {
 		osStdout = saved
 	}
 }
 
-func MockOsStderr(new io.Writer) (restore func()) {
+func MockOsStderr(w io.Writer) (restore func()) {
 	saved := osStderr
-	osStderr = new
+	osStderr = w
 	return func() {
 		osStderr = saved
 	}
@@ -102,10 +102,18 @@ func MockDirSize(f func(string) (int64, error)) (restore func()) {
 	}
 }
 
-func MockManifestgenDepsolver(new manifestgen.DepsolveFunc) (restore func()) {
+func MockManifestgenDepsolver(fn manifestgen.DepsolveFunc) (restore func()) {
 	saved := manifestgenDepsolver
-	manifestgenDepsolver = new
+	manifestgenDepsolver = fn
 	return func() {
 		manifestgenDepsolver = saved
+	}
+}
+
+func MockManifestgenContainerResolver(fn manifestgen.ContainerResolverFunc) (restore func()) {
+	saved := manifestgenContainerResolver
+	manifestgenContainerResolver = fn
+	return func() {
+		manifestgenContainerResolver = saved
 	}
 }
