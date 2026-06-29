@@ -2,7 +2,6 @@ package manifestgen_test
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/internal/testutil"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
@@ -30,13 +30,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/sbom"
 	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 )
-
-func sha256For(s string) string {
-	h := sha256.New()
-	h.Write([]byte(s))
-	bs := h.Sum(nil)
-	return fmt.Sprintf("%x", bs)
-}
 
 func TestManifestGeneratorDepsolve(t *testing.T) {
 	repos, err := testrepos.New()
@@ -175,8 +168,8 @@ func fakeContainerResolver(containerSources map[string][]container.SourceSpec, a
 		for _, spec := range sourceSpecs {
 			containers = append(containers, container.Spec{
 				Source:  fmt.Sprintf("resolved-cnt-%s", spec.Source),
-				Digest:  "sha256:" + sha256For("digest:"+spec.Source),
-				ImageID: "sha256:" + sha256For("id:"+spec.Source),
+				Digest:  "sha256:" + testutil.SHA256For("digest:"+spec.Source),
+				ImageID: "sha256:" + testutil.SHA256For("id:"+spec.Source),
 				Arch:    common.Must(arch.FromString(archName)),
 			})
 		}

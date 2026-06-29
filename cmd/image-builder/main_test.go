@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
@@ -177,14 +179,13 @@ func makeTestBlueprint(t *testing.T, testBlueprint string) string {
 
 // XXX: move to pytest like bib maybe?
 func TestManifestIntegrationSmoke(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
 
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	for _, useLibrepo := range []bool{false, true} {
@@ -216,7 +217,7 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 
 			// XXX: provide helpers in manifesttest to extract this in a nicer way
 			assertJsonContains(t, fakeStdout.String(), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-			assertJsonContains(t, fakeStdout.String(), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+			assertJsonContains(t, fakeStdout.String(), `"image":{"name":"resolved-cnt-registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 
 			assert.Equal(t, strings.Contains(fakeStdout.String(), "org.osbuild.librepo"), useLibrepo)
 		})
@@ -390,14 +391,13 @@ fi
 }
 
 func TestBuildIntegrationHappy(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
 
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	var fakeStdout bytes.Buffer
@@ -425,7 +425,8 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	assert.Contains(t, fakeStdout.String(), `Image build successful: centos-9-qcow2-x86_64/centos-9-qcow2-x86_64.qcow2`)
+	currentArch := arch.Current().String()
+	assert.Contains(t, fakeStdout.String(), fmt.Sprintf(`Image build successful: centos-9-qcow2-%s/centos-9-qcow2-%s.qcow2`, currentArch, currentArch))
 
 	// ensure osbuild was run exactly one
 	require.Equal(t, 1, len(fakeOsbuildCmd.CallArgsList()))
@@ -437,28 +438,29 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	// and we passed the output dir
 	outputDirPos := slices.Index(osbuildCall, "--output-directory")
 	assert.True(t, outputDirPos > -1)
-	assert.Equal(t, "centos-9-qcow2-x86_64", osbuildCall[outputDirPos+1])
+	assert.Equal(t, fmt.Sprintf("centos-9-qcow2-%s", currentArch), osbuildCall[outputDirPos+1])
 
 	// ... and that the manifest passed to osbuild
 	manifest, err := os.ReadFile(fakeOsbuildCmd.Path() + ".stdin")
 	assert.NoError(t, err)
 	// XXX: provide helpers in manifesttest to extract this in a nicer way
 	assertJsonContains(t, string(manifest), `{"type":"org.osbuild.users","options":{"users":{"alice":{}}}}`)
-	assertJsonContains(t, string(manifest), `"image":{"name":"registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
+	assertJsonContains(t, string(manifest), `"image":{"name":"resolved-cnt-registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 }
 
 func TestBuildIntegrationArgs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
 
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	cacheDir := t.TempDir()
+	currentArch := arch.Current().String()
+	prefix := fmt.Sprintf("centos-9-qcow2-%s", currentArch)
 	for _, tc := range []struct {
 		args          []string
 		expectedFiles []string
@@ -470,29 +472,34 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			"",
 		}, {
 			[]string{"--with-manifest"},
-			[]string{"centos-9-qcow2-x86_64.osbuild-manifest.json"},
+			[]string{prefix + ".osbuild-manifest.json"},
 			"",
 		}, {
 			[]string{"--with-buildlog"},
-			[]string{"centos-9-qcow2-x86_64.buildlog"},
+			[]string{prefix + ".buildlog"},
 			"",
 		}, {
 			[]string{"--with-sbom"},
-			[]string{"centos-9-qcow2-x86_64.buildroot-build.spdx.json",
-				"centos-9-qcow2-x86_64.image-os.spdx.json",
+			[]string{prefix + ".buildroot-build.spdx.json",
+				prefix + ".image-os.spdx.json",
 			},
 			"",
 		}, {
 			[]string{"--with-manifest", "--with-sbom"},
-			[]string{"centos-9-qcow2-x86_64.buildroot-build.spdx.json",
-				"centos-9-qcow2-x86_64.image-os.spdx.json",
-				"centos-9-qcow2-x86_64.osbuild-manifest.json",
+			[]string{prefix + ".buildroot-build.spdx.json",
+				prefix + ".image-os.spdx.json",
+				prefix + ".osbuild-manifest.json",
 			},
 			"",
 		},
 		{
 			[]string{"--format", "json", "--with-buildlog", "--progress", "file"},
-			[]string{"centos-9-qcow2-x86_64.buildlog", "centos-9-qcow2-x86_64.progress"},
+			[]string{prefix + ".buildlog", prefix + ".progress"},
+			"{\"success\": true}\n",
+		},
+		{
+			[]string{"--format", "json", "--with-buildlog", "--progress", "debug"},
+			[]string{prefix + ".buildlog"},
 			"{\"success\": true}\n",
 		},
 	} {
@@ -523,7 +530,7 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			assert.Equal(t, outputDir, osbuildCall[outputDirPos+1])
 
 			if tc.expectedLog != "" {
-				data, err := os.ReadFile(filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildlog"))
+				data, err := os.ReadFile(filepath.Join(outputDir, prefix+".buildlog"))
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedLog, string(data))
 			}
@@ -553,14 +560,13 @@ exit 1
 `
 
 func TestBuildIntegrationErrorsProgressVerbose(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
 
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	outputDir := t.TempDir()
@@ -586,14 +592,13 @@ func TestBuildIntegrationErrorsProgressVerbose(t *testing.T) {
 }
 
 func TestBuildIntegrationErrorsProgressVerboseWithBuildlog(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
 
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	outputDir := t.TempDir()
@@ -626,7 +631,7 @@ exit 1
 	assert.Contains(t, stdout, "error on stdout\n")
 	assert.Contains(t, stdout, "error on stderr\n")
 
-	buildLog, err := os.ReadFile(filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildlog"))
+	buildLog, err := os.ReadFile(filepath.Join(outputDir, fmt.Sprintf("centos-9-qcow2-%s.buildlog", arch.Current())))
 	assert.NoError(t, err)
 	assert.Equal(t, string(buildLog), `error on stdout
 error on stderr
@@ -634,14 +639,13 @@ error on stderr
 }
 
 func TestBuildIntegrationErrorsProgressTerm(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
 
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	for _, withBuildlog := range []bool{false, true} {
@@ -676,15 +680,16 @@ error on stderr
 			assert.NotContains(t, stdout, "error on stdout")
 			assert.NotContains(t, stderr, "error on stderr")
 
+			buildlogName := fmt.Sprintf("centos-9-qcow2-%s.buildlog", arch.Current())
 			if withBuildlog {
-				buildLog, err := os.ReadFile(filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildlog"))
+				buildLog, err := os.ReadFile(filepath.Join(outputDir, buildlogName))
 				assert.NoError(t, err)
 				assert.Equal(t, string(buildLog), `error on stdout
 error on stderr
 osbuild-stage-output
 `)
 			} else {
-				_, err := os.Stat(filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildlog"))
+				_, err := os.Stat(filepath.Join(outputDir, buildlogName))
 				assert.True(t, os.IsNotExist(err))
 			}
 		})
@@ -692,15 +697,15 @@ osbuild-stage-output
 }
 
 func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
 	outputDir := filepath.Join(t.TempDir(), "output-dir")
 
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	restore = main.MockOsArgs([]string{
@@ -813,6 +818,7 @@ func TestManifestExtraRepos(t *testing.T) {
 	if !hasDepsolveDnf() {
 		t.Skip("no osbuild-depsolve-dnf binary found")
 	}
+
 	if _, err := exec.LookPath("createrepo_c"); err != nil {
 		t.Skip("need createrepo_c to run this test")
 	}
@@ -909,15 +915,19 @@ func TestManifestOverrideRepo(t *testing.T) {
 }
 
 func TestBuildCrossArchSmoke(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
-
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
 	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	crossArch := arch.ARCH_AARCH64
+	if arch.Current() == arch.ARCH_AARCH64 {
+		crossArch = arch.ARCH_X86_64
+	}
 
 	tmpdir := t.TempDir()
 	for _, withCrossArch := range []bool{false, true} {
@@ -929,7 +939,7 @@ func TestBuildCrossArchSmoke(t *testing.T) {
 			"--output-dir", tmpdir,
 		}
 		if withCrossArch {
-			cmd = append(cmd, "--arch=aarch64")
+			cmd = append(cmd, fmt.Sprintf("--arch=%s", crossArch))
 		}
 		restore = main.MockOsArgs(cmd)
 		defer restore()
@@ -948,7 +958,7 @@ func TestBuildCrossArchSmoke(t *testing.T) {
 		pipelines, err := manifesttest.PipelineNamesFrom(manifest)
 		assert.NoError(t, err)
 		crossArchPipeline := "bootstrap-buildroot"
-		crossArchWarning := `WARNING: using experimental cross-architecture building to build "aarch64"`
+		crossArchWarning := fmt.Sprintf(`WARNING: using experimental cross-architecture building to build %q`, crossArch)
 		if withCrossArch {
 			assert.Contains(t, pipelines, crossArchPipeline)
 			assert.Contains(t, stderr, crossArchWarning)
@@ -960,14 +970,13 @@ func TestBuildCrossArchSmoke(t *testing.T) {
 }
 
 func TestBuildIntegrationOutputFilename(t *testing.T) {
-	if testing.Short() {
-		t.Skip("manifest generation takes a while")
-	}
-	if !hasDepsolveDnf() {
-		t.Skip("no osbuild-depsolve-dnf binary found")
-	}
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
 
-	restore := main.MockNewRepoRegistry(testrepos.New)
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
 	var fakeStdout bytes.Buffer
@@ -1054,8 +1063,28 @@ func fakeDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsO
 	return depsolvedSets, nil
 }
 
+func fakeContainerResolver(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
+	containerSpecs := make(map[string][]container.Spec, len(containerSources))
+	for plName, sourceSpecs := range containerSources {
+		var containers []container.Spec
+		for _, spec := range sourceSpecs {
+			containers = append(containers, container.Spec{
+				Source:  fmt.Sprintf("resolved-cnt-%s", spec.Source),
+				Digest:  "sha256:" + testutil.SHA256For("digest:"+spec.Source),
+				ImageID: "sha256:" + testutil.SHA256For("id:"+spec.Source),
+				Arch:    common.Must(arch.FromString(archName)),
+			})
+		}
+		containerSpecs[plName] = containers
+	}
+	return containerSpecs, nil
+}
+
 func TestManifestIntegrationWithRegistrations(t *testing.T) {
 	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
 	defer restore()
 
 	restore = main.MockNewRepoRegistry(testrepos.New)
@@ -1106,6 +1135,9 @@ func TestManifestIntegrationWithRegistrations(t *testing.T) {
 
 func TestManifestIntegrationWarningsHandling(t *testing.T) {
 	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
 	defer restore()
 
 	restore = main.MockNewRepoRegistry(testrepos.New)
