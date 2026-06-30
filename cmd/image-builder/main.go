@@ -816,6 +816,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("ibmcloud-region", "", "target region for IBM Cloud uploads (only for type=ibmcloud)")
 	uploadCmd.Flags().String("ibmcloud-image-name", "", "name for the uploaded image (only for type=ibmcloud)")
 	uploadCmd.Flags().String("arch", "", "upload for the given architecture")
+	uploadCmd.Flags().String("format", "", "output in a specific format (yaml, json)")
 	rootCmd.AddCommand(uploadCmd)
 
 	buildCmd := &cobra.Command{

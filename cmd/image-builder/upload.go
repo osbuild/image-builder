@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/spf13/cobra"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/cloud"
@@ -286,6 +288,30 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = uploadImageWithProgress(uploader, imagePath)
-	return err
+	result, err := uploadImageWithProgress(uploader, imagePath)
+	if err != nil {
+		return err
+	}
+
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+	switch format {
+	case "", "yaml":
+		output, err := yaml.Marshal(result)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(output))
+	case "json":
+		output, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(output))
+	default:
+		return fmt.Errorf("unsupported format %q, supported formats: yaml, json", format)
+	}
+	return nil
 }
