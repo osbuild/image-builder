@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/cloud"
 	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
+	"github.com/osbuild/image-builder/pkg/cloud/azure"
 	"github.com/osbuild/image-builder/pkg/cloud/ibmcloud"
 	"github.com/osbuild/image-builder/pkg/cloud/libvirt"
 	"github.com/osbuild/image-builder/pkg/cloud/openstack"
@@ -36,6 +37,7 @@ var ErrUploadTypeUnsupported = errors.New("unsupported type")
 // uploader constructors that are mocked in tests
 var (
 	awscloudNewUploader  = awscloud.NewUploader
+	azureNewUploader     = azure.NewUploader
 	libvirtNewUploader   = libvirt.NewUploader
 	openstackNewUploader = openstack.NewUploader
 	ibmNewUploader       = ibmcloud.NewUploader
@@ -81,7 +83,7 @@ func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploade
 	return uploader.Check(pw)
 }
 
-func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, bootMode *platform.BootMode) (cloud.Uploader, error) {
+func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, bootMode *platform.BootMode, imagePath string) (cloud.Uploader, error) {
 	switch typeOrCloud {
 	case "ami", "generic-ami", "aws":
 		return uploaderForCmdAWS(cmd, targetArch, bootMode)
@@ -91,6 +93,8 @@ func uploaderFor(cmd *cobra.Command, typeOrCloud string, targetArch string, boot
 		return uploaderForCmdOpenstack(cmd, targetArch, bootMode)
 	case "ibmcloud":
 		return uploaderForCmdIbmCloud(cmd, targetArch, bootMode)
+	case "azure":
+		return uploaderForCmdAzure(cmd, targetArch, bootMode, imagePath)
 	default:
 		return nil, fmt.Errorf("%w: %q", ErrUploadTypeUnsupported, typeOrCloud)
 	}
@@ -237,6 +241,58 @@ func uploaderForCmdIbmCloud(cmd *cobra.Command, targetArchStr string, bootMode *
 	return ibmNewUploader(region, bucketName, imageName, credentials)
 }
 
+func uploaderForCmdAzure(cmd *cobra.Command, targetArchStr string, bootMode *platform.BootMode, imagePath string) (cloud.Uploader, error) {
+	clientID, err := cmd.Flags().GetString("azure-client-id")
+	if err != nil {
+		return nil, err
+	}
+	clientSecret, err := cmd.Flags().GetString("azure-client-secret")
+	if err != nil {
+		return nil, err
+	}
+	tenant, err := cmd.Flags().GetString("azure-tenant")
+	if err != nil {
+		return nil, err
+	}
+	subscription, err := cmd.Flags().GetString("azure-subscription")
+	if err != nil {
+		return nil, err
+	}
+	resourceGroup, err := cmd.Flags().GetString("azure-resource-group")
+	if err != nil {
+		return nil, err
+	}
+	imageName, err := cmd.Flags().GetString("azure-image-name")
+	if err != nil {
+		return nil, err
+	}
+
+	var missing []string
+	requiredArgs := []string{"azure-client-id", "azure-client-secret", "azure-tenant", "azure-subscription", "azure-resource-group", "azure-image-name"}
+	for _, argName := range requiredArgs {
+		arg, err := cmd.Flags().GetString(argName)
+		if err != nil {
+			return nil, err
+		}
+		if arg == "" {
+			missing = append(missing, fmt.Sprintf("--%s", argName))
+		}
+	}
+	if len(missing) > 0 {
+		if len(missing) == len(requiredArgs) {
+			return nil, fmt.Errorf("%w: %q", ErrUploadConfigNotProvided, missing)
+		}
+		return nil, fmt.Errorf("%w: %q", ErrMissingUploadConfig, missing)
+	}
+
+	targetArch, err := arch.FromString(targetArchStr)
+	if err != nil {
+		return nil, err
+	}
+
+	return azureNewUploader(clientID, clientSecret, tenant, subscription, resourceGroup, imageName, imagePath, targetArch)
+}
+
 func detectArchFromImagePath(imagePath string) string {
 	// This detection is currently rather naive, we just look for
 	// the file name and try to infer from that. We could extend
@@ -283,7 +339,7 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	uploader, err := uploaderFor(cmd, uploadTo, targetArch, nil)
+	uploader, err := uploaderFor(cmd, uploadTo, targetArch, nil, imagePath)
 	if err != nil {
 		return err
 	}

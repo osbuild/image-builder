@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/cloud"
@@ -18,10 +17,11 @@ type azureUploader struct {
 	client        *Client
 	resourceGroup string
 	imageName     string
+	imagePath     string
 	architecture  arch.Arch
 }
 
-func NewUploader(clientID, clientSecret, tenant, subscription, resourceGroup, imageName string, architecture arch.Arch) (cloud.Uploader, error) {
+func NewUploader(clientID, clientSecret, tenant, subscription, resourceGroup, imageName, imagePath string, architecture arch.Arch) (cloud.Uploader, error) {
 	creds := Credentials{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -35,6 +35,7 @@ func NewUploader(clientID, clientSecret, tenant, subscription, resourceGroup, im
 		client:        client,
 		resourceGroup: resourceGroup,
 		imageName:     imageName,
+		imagePath:     imagePath,
 		architecture:  architecture,
 	}, nil
 }
@@ -50,24 +51,7 @@ func (au *azureUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (au *azureUploader) UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) (*cloud.UploadResult, error) {
-	// UploadPageBlob requires a file path for seeking (MD5 hash then re-read),
-	// so write the reader to a temp file first.
-	tmpFile, err := os.CreateTemp("", "azure-upload-*.vhd")
-	if err != nil {
-		return nil, fmt.Errorf("cannot create temp file: %w", err)
-	}
-	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
-
-	fmt.Fprintf(status, "Preparing image for upload...\n")
-	if _, err := io.Copy(tmpFile, r); err != nil {
-		return nil, fmt.Errorf("cannot write image to temp file: %w", err)
-	}
-	if err := tmpFile.Close(); err != nil {
-		return nil, err
-	}
-
+func (au *azureUploader) UploadAndRegister(_ io.Reader, _ uint64, status io.Writer) (*cloud.UploadResult, error) {
 	ctx := context.Background()
 
 	location, err := au.client.GetResourceGroupLocation(ctx, au.resourceGroup)
@@ -116,7 +100,7 @@ func (au *azureUploader) UploadAndRegister(r io.Reader, uploadSize uint64, statu
 			ContainerName:  uploaderStorageContainer,
 			BlobName:       blobName,
 		},
-		tmpFile.Name(),
+		au.imagePath,
 		DefaultUploadThreads,
 	)
 	if err != nil {
