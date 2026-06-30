@@ -53,13 +53,13 @@ func (iu *ibmcloudUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (iu *ibmcloudUploader) UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) (err error) {
+func (iu *ibmcloudUploader) UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) (*cloud.UploadResult, error) {
 	fmt.Fprintf(status, "Uploading to IBM Cloud...\n")
 
 	endpoint := fmt.Sprintf("s3.%s.cloud-object-storage.appdomain.cloud", iu.region)
 	credentials, err := iu.getCredentials()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	conf := aws.NewConfig().
 		WithRegion(iu.region).
@@ -69,7 +69,7 @@ func (iu *ibmcloudUploader) UploadAndRegister(r io.Reader, uploadSize uint64, st
 
 	session, err := session.NewSession(conf)
 	if err != nil {
-		return fmt.Errorf("Failed to create a session: %w", err)
+		return nil, fmt.Errorf("Failed to create a session: %w", err)
 	}
 
 	uploader := s3manager.NewUploader(session)
@@ -79,10 +79,12 @@ func (iu *ibmcloudUploader) UploadAndRegister(r io.Reader, uploadSize uint64, st
 		Body:   r,
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to upload: %w", err)
+		return nil, fmt.Errorf("Failed to upload: %w", err)
 	}
 
-	return nil
+	return &cloud.UploadResult{
+		Provider: "ibmcloud",
+	}, nil
 }
 
 func (iu *ibmcloudUploader) getCredentials() (*credentials.Credentials, error) {

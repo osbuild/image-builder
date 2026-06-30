@@ -39,21 +39,21 @@ var (
 	ibmNewUploader       = ibmcloud.NewUploader
 )
 
-func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) error {
+func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) (*cloud.UploadResult, error) {
 	f, err := os.Open(imagePath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
 
 	// setup basic progress
 	st, err := f.Stat()
 	if err != nil {
-		return fmt.Errorf("cannot stat upload: %v", err)
+		return nil, fmt.Errorf("cannot stat upload: %v", err)
 	}
 	sizei64 := st.Size()
 	if sizei64 < 0 {
-		return fmt.Errorf("invalid size read for %s: %d", imagePath, sizei64)
+		return nil, fmt.Errorf("invalid size read for %s: %d", imagePath, sizei64)
 	}
 	size := uint64(sizei64)
 	pbar := pb.New64(st.Size())
@@ -286,5 +286,6 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return uploadImageWithProgress(uploader, imagePath)
+	_, err = uploadImageWithProgress(uploader, imagePath)
+	return err
 }

@@ -39,12 +39,12 @@ func (ou *openstackUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (ou *openstackUploader) UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) (err error) {
+func (ou *openstackUploader) UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) (*cloud.UploadResult, error) {
 	fmt.Fprintf(status, "Uploading to OpenStack...\n")
 
 	opts, err := ostack.AuthOptionsFromEnv()
 	if err != nil {
-		return fmt.Errorf("Failed to read OpenStack ENV variables. Please source the OpenStack RC file: %w", err)
+		return nil, fmt.Errorf("Failed to read OpenStack ENV variables. Please source the OpenStack RC file: %w", err)
 	}
 
 	// This is needed otherwise we get the following error when authenticating:
@@ -60,14 +60,14 @@ func (ou *openstackUploader) UploadAndRegister(r io.Reader, uploadSize uint64, s
 	ctx := context.Background()
 	provider, err := ostack.AuthenticatedClient(ctx, opts)
 	if err != nil {
-		return fmt.Errorf("Failed to authenticate to OpenStack: %w", err)
+		return nil, fmt.Errorf("Failed to authenticate to OpenStack: %w", err)
 	}
 
 	client, err := ostack.NewImageV2(provider, gophercloud.EndpointOpts{
 		Region: os.Getenv("OS_REGION_NAME"),
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to initialize the client: %w", err)
+		return nil, fmt.Errorf("Failed to initialize the client: %w", err)
 	}
 
 	createOpts := images.CreateOpts{
@@ -77,17 +77,16 @@ func (ou *openstackUploader) UploadAndRegister(r io.Reader, uploadSize uint64, s
 	}
 	img, err := images.Create(ctx, client, createOpts).Extract()
 	if err != nil {
-		return fmt.Errorf("Failed to create the image metadata: %w", err)
+		return nil, fmt.Errorf("Failed to create the image metadata: %w", err)
 	}
 
 	err = imagedata.Upload(ctx, client, img.ID, r).ExtractErr()
 	if err != nil {
-		return fmt.Errorf("Failed to upload the image: %w", err)
+		return nil, fmt.Errorf("Failed to upload the image: %w", err)
 	}
 
-	// This would glitch the progressbar, but once it gets fixed, we would
-	// like to print this message
-	// fmt.Printf("Created image: %s (ID: %s)\n", img.Name, img.ID)
-
-	return nil
+	return &cloud.UploadResult{
+		Provider: "openstack",
+		ImageID:  img.ID,
+	}, nil
 }
