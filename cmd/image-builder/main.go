@@ -605,7 +605,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	if uploader != nil {
 		// XXX: integrate better into the progress, see bib
-		if err := uploadImageWithProgress(uploader, imagePath); err != nil {
+		if _, err := uploadImageWithProgress(uploader, imagePath); err != nil {
 			return err
 		}
 	}

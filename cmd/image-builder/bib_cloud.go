@@ -53,5 +53,6 @@ func bibUpload(uploader cloud.Uploader, path string, flags *pflag.FlagSet) error
 		size = 0
 	}
 	// #nosec G115
-	return uploader.UploadAndRegister(r, uint64(size), osStderr)
+	_, err = uploader.UploadAndRegister(r, uint64(size), osStderr)
+	return err
 }

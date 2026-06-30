@@ -184,13 +184,16 @@ func (fa *fakeAwsUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (fa *fakeAwsUploader) UploadAndRegister(r io.Reader, size uint64, status io.Writer) error {
+func (fa *fakeAwsUploader) UploadAndRegister(r io.Reader, size uint64, status io.Writer) (*cloud.UploadResult, error) {
 	fa.uploadAndRegisterCalls++
 	_, err := io.Copy(&fa.uploadAndRegisterRead, r)
 	if err != nil {
 		panic(err)
 	}
-	return fa.uploadAndRegisterErr
+	if fa.uploadAndRegisterErr != nil {
+		return nil, fa.uploadAndRegisterErr
+	}
+	return &cloud.UploadResult{Provider: "aws"}, nil
 }
 
 func TestHandleAWSFlags(t *testing.T) {

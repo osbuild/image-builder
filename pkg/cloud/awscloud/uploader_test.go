@@ -157,8 +157,10 @@ func TestUploaderUploadHappy(t *testing.T) {
 			uploader, err := awscloud.NewUploader("region", "bucket", "ami", tc.opts)
 			assert.NoError(t, err)
 			var uploadLog bytes.Buffer
-			err = uploader.UploadAndRegister(fakeImage, 0, &uploadLog)
+			result, err := uploader.UploadAndRegister(fakeImage, 0, &uploadLog)
 			assert.NoError(t, err)
+			assert.Equal(t, "aws", result.Provider)
+			assert.Equal(t, "image-id", result.ImageID)
 			assert.Equal(t, 1, fa.uploadFromReaderCalls)
 			assert.Equal(t, 1, fa.registerCalls)
 			assert.Equal(t, 1, fa.deleteObjectCalls)
@@ -193,9 +195,10 @@ func TestUploaderUploadButRegisterError(t *testing.T) {
 	uploader, err := awscloud.NewUploader("region", "bucket", "ami", nil)
 	assert.NoError(t, err)
 	var uploadLog bytes.Buffer
-	err = uploader.UploadAndRegister(fakeImage, 0, &uploadLog)
+	result, err := uploader.UploadAndRegister(fakeImage, 0, &uploadLog)
 	// XXX: this should probably have a context
 	assert.EqualError(t, err, "fake-register-err")
+	assert.Nil(t, result)
 	assert.Equal(t, 1, fa.uploadFromReaderCalls)
 	assert.Equal(t, 1, fa.registerCalls)
 	assert.Equal(t, 1, fa.deleteObjectCalls)
@@ -224,7 +227,8 @@ func TestUploaderUploadButRegisterErrorAndDeleteError(t *testing.T) {
 	uploader, err := awscloud.NewUploader("region", "bucket", "ami", nil)
 	assert.NoError(t, err)
 	var uploadLog bytes.Buffer
-	err = uploader.UploadAndRegister(fakeImage, 0, &uploadLog)
+	result, err := uploader.UploadAndRegister(fakeImage, 0, &uploadLog)
 	// XXX: this should probably have a context
 	assert.EqualError(t, err, "fake-register-err\nfake-delete-object-err")
+	assert.Nil(t, result)
 }

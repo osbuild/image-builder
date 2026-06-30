@@ -32,18 +32,18 @@ func (lu *libvirtUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (lu *libvirtUploader) UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) (err error) {
+func (lu *libvirtUploader) UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) (*cloud.UploadResult, error) {
 	fmt.Fprintf(status, "Uploading to libvirt...\n")
 
 	conn, err := lv.NewConnect(lu.connection)
 	if err != nil {
-		return fmt.Errorf("Failed to connect to libvirt: %w", err)
+		return nil, fmt.Errorf("Failed to connect to libvirt: %w", err)
 	}
 	defer conn.Close()
 
 	pool, err := conn.LookupStoragePoolByName(lu.pool)
 	if err != nil {
-		return fmt.Errorf("Failed to find storage pool: %w", err)
+		return nil, fmt.Errorf("Failed to find storage pool: %w", err)
 	}
 
 	defer func() {
@@ -55,7 +55,7 @@ func (lu *libvirtUploader) UploadAndRegister(r io.Reader, uploadSize uint64, sta
 	volXML := lu.VolumeXML(lu.volume, uploadSize)
 	vol, err := pool.StorageVolCreateXML(volXML, 0)
 	if err != nil {
-		return fmt.Errorf("Failed to create a libvirt volume: %w", err)
+		return nil, fmt.Errorf("Failed to create a libvirt volume: %w", err)
 	}
 	defer func() {
 		if err := vol.Free(); err != nil {
@@ -65,10 +65,12 @@ func (lu *libvirtUploader) UploadAndRegister(r io.Reader, uploadSize uint64, sta
 
 	err = lu.Upload(conn, vol, r, uploadSize)
 	if err != nil {
-		return fmt.Errorf("Failed to upload the file to libvirt: %w", err)
+		return nil, fmt.Errorf("Failed to upload the file to libvirt: %w", err)
 	}
 
-	return nil
+	return &cloud.UploadResult{
+		Provider: "libvirt",
+	}, nil
 }
 
 func (lu *libvirtUploader) VolumeXML(name string, size uint64) string {
