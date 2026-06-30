@@ -381,8 +381,28 @@ def boot_qemu_pxe(arch, pxe_tar_path):
             http_server.wait()
 
 
+def get_boot_mode(distro, arch, image_type):
+    """Get the boot mode for an image type from image-builder describe."""
+    stdout, _ = runcmd(["go", "run", "./cmd/image-builder", "describe",
+                        image_type, "--distro", distro, "--arch", arch])
+    for line in stdout.decode().splitlines():
+        if line.startswith("bootmode:"):
+            mode = line.split(":", 1)[1].strip()
+            mode_map = {
+                "legacy": "legacy-bios",
+                "uefi": "uefi",
+                "hybrid": "uefi-preferred",
+            }
+            try:
+                return mode_map[mode]
+            except KeyError:
+                raise RuntimeError(f"unknown bootmode {mode!r} for {distro}/{arch}/{image_type}") from None
+
+    raise RuntimeError(f"bootmode not found in describe output for {distro}/{arch}/{image_type}")
+
+
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def upload_to_aws(arch, image_name, image_path):
+def upload_to_aws(arch, image_name, image_path, boot_mode=None):
     """Upload an image to AWS via image-builder and return the AMI ID."""
     aws_config = get_aws_config()
     cmd = ["go", "run", "./cmd/image-builder", "upload",
@@ -391,17 +411,29 @@ def upload_to_aws(arch, image_name, image_path):
            "--arch", arch,
            "--aws-ami-name", image_name,
            "--aws-bucket", aws_config["bucket"],
-           "--aws-region", aws_config["region"],
-           image_path]
+           "--aws-region", aws_config["region"]]
+    if boot_mode:
+        cmd += ["--aws-boot-mode", boot_mode]
+    cmd.append(image_path)
     stdout, _ = runcmd(cmd)
     result = json.loads(stdout)
     return result["image_id"]
 
 
-def cmd_boot_aws(arch, image_name, privkey, pubkey, image_path, script_cmd):
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def cmd_boot_aws(distro, arch, image_type, image_name, privkey, pubkey, image_path, script_cmd):
     make_check_host_config(arch)
     aws_config = get_aws_config()
-    ami_id = upload_to_aws(arch, image_name, image_path)
+
+    # we special case rhel 7.9 here as it doesn't 'actually exist' in the definitions
+    # for image-builder
+    if distro == "rhel-7.9" and image_type == "ec2":
+        boot_mode = "legacy-bios"
+    else:
+        # otherwise ask for the boot mode
+        boot_mode = get_boot_mode(distro, arch, image_type)
+
+    ami_id = upload_to_aws(arch, image_name, image_path, boot_mode)
     cmd = ["go", "run", "./cmd/boot-aws", "run",
            "--access-key-id", aws_config["key_id"],
            "--secret-access-key", aws_config["secret_key"],
@@ -421,7 +453,7 @@ def boot_ami(distro, arch, image_type, image_path, config):
     with ensure_uncompressed(image_path) as raw_image_path:
         with create_ssh_key() as (privkey, pubkey):
             image_name = f"image-boot-test-{distro}-{arch}-{image_type}-" + str(uuid.uuid4())
-            cmd_boot_aws(arch, image_name, privkey, pubkey, raw_image_path, cmd)
+            cmd_boot_aws(distro, arch, image_type, image_name, privkey, pubkey, raw_image_path, cmd)
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -481,7 +513,7 @@ def boot_container(distro, arch, image_type, image_path, manifest_id, host_confi
             # Build artifacts are owned by root. Make them world accessible.
             runcmd(["sudo", "chmod", "a+rwX", "-R", tmpdir])
             raw_image_path = f"{tmpdir}/image/disk.raw"
-            cmd_boot_aws(arch, image_name, privkey_file, pubkey_file, raw_image_path,
+            cmd_boot_aws(distro, arch, image_type, image_name, privkey_file, pubkey_file, raw_image_path,
                          [BASE_TEST_EXEC+arch, host_config])
 
 
