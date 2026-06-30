@@ -42,7 +42,7 @@ func bibUpload(uploader cloud.Uploader, path string, flags *pflag.FlagSet) error
 		size = st.Size()
 		pbar.SetTotal(size)
 		pbar.Set(pb.Bytes, true)
-		pbar.SetWriter(osStdout)
+		pbar.SetWriter(osStderr)
 		r = pbar.NewProxyReader(file)
 		pbar.Start()
 		defer pbar.Finish()

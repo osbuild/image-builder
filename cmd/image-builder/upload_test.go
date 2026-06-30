@@ -84,11 +84,11 @@ func TestUploadWithAWSMock(t *testing.T) {
 		assert.Equal(t, 0, fa.checkCalls)
 		assert.Equal(t, 1, fa.uploadAndRegisterCalls)
 		assert.Equal(t, fakeDiskContent, fa.uploadAndRegisterRead.String())
-		// progress was rendered
-		assert.Contains(t, fakeStdout.String(), "--] 100.00%")
+		// progress was rendered to stderr
+		assert.Contains(t, fakeStderr.String(), "--] 100.00%")
 
-		// warning was passed
-		assert.Equal(t, fakeStderr.String(), tc.expectedWarning)
+		// warning was passed to stderr
+		assert.Contains(t, fakeStderr.String(), tc.expectedWarning)
 
 	}
 }

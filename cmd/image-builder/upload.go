@@ -62,7 +62,7 @@ func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) (*cloud.
 	size := uint64(sizei64)
 	pbar := pb.New64(st.Size())
 	pbar.Set(pb.Bytes, true)
-	pbar.SetWriter(osStdout)
+	pbar.SetWriter(osStderr)
 	r := pbar.NewProxyReader(f)
 	pbar.Start()
 	defer pbar.Finish()
