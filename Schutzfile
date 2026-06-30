@@ -1,6 +1,6 @@
 {
   "common": {
-    "rngseed": 2026052100,
+    "rngseed": 2026063000,
     "dependencies": {
       "bootc-image-builder": {
         "ref": "quay.io/centos-bootc/bootc-image-builder@sha256:9893e7209e5f449b86ababfd2ee02a58cca2e5990f77b06c3539227531fc8120"
