@@ -382,21 +382,36 @@ def boot_qemu_pxe(arch, pxe_tar_path):
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
+def upload_to_aws(arch, image_name, image_path):
+    """Upload an image to AWS via image-builder and return the AMI ID."""
+    aws_config = get_aws_config()
+    cmd = ["go", "run", "./cmd/image-builder", "upload",
+           "--to=aws",
+           "--format=json",
+           "--arch", arch,
+           "--aws-ami-name", image_name,
+           "--aws-bucket", aws_config["bucket"],
+           "--aws-region", aws_config["region"],
+           image_path]
+    stdout, _ = runcmd(cmd)
+    result = json.loads(stdout)
+    return result["image_id"]
+
+
 def cmd_boot_aws(arch, image_name, privkey, pubkey, image_path, script_cmd):
     make_check_host_config(arch)
     aws_config = get_aws_config()
+    ami_id = upload_to_aws(arch, image_name, image_path)
     cmd = ["go", "run", "./cmd/boot-aws", "run",
            "--access-key-id", aws_config["key_id"],
            "--secret-access-key", aws_config["secret_key"],
            "--region", aws_config["region"],
-           "--bucket", aws_config["bucket"],
            "--arch", arch,
-           "--ami-name", image_name,
-           "--s3-key", f"images/boot/{image_name}",
+           "--ami", ami_id,
            "--username", "osbuild",
            "--ssh-privkey", privkey,
            "--ssh-pubkey", pubkey,
-           image_path, *script_cmd]
+           *script_cmd]
     runcmd_nc(cmd)
 
 
@@ -470,6 +485,25 @@ def boot_container(distro, arch, image_type, image_path, manifest_id, host_confi
                          [BASE_TEST_EXEC+arch, host_config])
 
 
+def upload_to_azure(arch, image_name, image_path):
+    """Upload an image to Azure via image-builder and return the image ref."""
+    az_config = get_azure_config()
+    cmd = ["go", "run", "./cmd/image-builder", "upload",
+           "--to=azure",
+           "--format=json",
+           "--arch", arch,
+           "--azure-client-id", az_config["client_id"],
+           "--azure-client-secret", az_config["client_secret"],
+           "--azure-tenant", az_config["tenant"],
+           "--azure-subscription", az_config["subscription"],
+           "--azure-resource-group", az_config["resource_group"],
+           "--azure-image-name", image_name,
+           image_path]
+    stdout, _ = runcmd(cmd)
+    result = json.loads(stdout)
+    return result["image_id"]
+
+
 def boot_vhd(distro, arch, image_path, config):
     cmd = [BASE_TEST_EXEC+arch, config]
     make_check_host_config(arch)
@@ -479,6 +513,7 @@ def boot_vhd(distro, arch, image_path, config):
             name = f"{distro}-" + str(uuid.uuid4())
 
             az_config = get_azure_config()
+            image_ref = upload_to_azure(arch, name, raw_image_path)
             cmd = ["go", "run", "./cmd/boot-azure", "run",
                    "--subscription", az_config["subscription"],
                    "--tenant", az_config["tenant"],
@@ -490,8 +525,8 @@ def boot_vhd(distro, arch, image_path, config):
                    "--ssh-pubkey", pubkey,
                    "--vm-name", name,
                    "--arch", arch,
-                   "--image-name", name,
-                   raw_image_path, *cmd]
+                   "--image", image_ref,
+                   *cmd]
             runcmd_nc(cmd)
 
 
@@ -511,13 +546,14 @@ def boot_wsl(distro, arch, image_path, config):
                    "--client-secret", az_config["client_secret"],
                    "--resource-group", az_config["resource_group"],
                    "--snapshot", az_config["windows_snapshot"],
+                   "--local-image", raw_image_path,
                    "--username", "azureuser",
                    "--ssh-privkey", privkey,
                    "--ssh-pubkey", pubkey,
                    "--vm-name", name,
                    "--arch", arch,
                    "--size", "Standard_D2as_v5",
-                   raw_image_path, *cmd]
+                   *cmd]
             runcmd_nc(cmd)
 
 
