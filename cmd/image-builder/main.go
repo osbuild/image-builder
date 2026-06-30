@@ -566,7 +566,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	bootMode := res.ImgType.BootMode()
-	uploader, err := uploaderFor(cmd, res.ImgType.Name(), res.ImgType.Arch().Name(), &bootMode)
+	uploader, err := uploaderFor(cmd, res.ImgType.Name(), res.ImgType.Arch().Name(), &bootMode, "")
 	if errors.Is(err, ErrUploadTypeUnsupported) || errors.Is(err, ErrUploadConfigNotProvided) {
 		err = nil
 	}
@@ -815,6 +815,12 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("ibmcloud-bucket", "", "target bucket name for storing the image (only for type=ibmcloud)")
 	uploadCmd.Flags().String("ibmcloud-region", "", "target region for IBM Cloud uploads (only for type=ibmcloud)")
 	uploadCmd.Flags().String("ibmcloud-image-name", "", "name for the uploaded image (only for type=ibmcloud)")
+	uploadCmd.Flags().String("azure-client-id", "", "Azure client ID (only for type=azure)")
+	uploadCmd.Flags().String("azure-client-secret", "", "Azure client secret (only for type=azure)")
+	uploadCmd.Flags().String("azure-tenant", "", "Azure tenant ID (only for type=azure)")
+	uploadCmd.Flags().String("azure-subscription", "", "Azure subscription ID (only for type=azure)")
+	uploadCmd.Flags().String("azure-resource-group", "", "Azure resource group (only for type=azure)")
+	uploadCmd.Flags().String("azure-image-name", "", "name for the uploaded image (only for type=azure)")
 	uploadCmd.Flags().String("arch", "", "upload for the given architecture")
 	uploadCmd.Flags().String("format", "", "output in a specific format (yaml, json)")
 	rootCmd.AddCommand(uploadCmd)
