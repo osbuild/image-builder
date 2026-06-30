@@ -12,12 +12,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/osbuild/image-builder/internal/test"
-	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/cloud/azure"
-)
-
-const (
-	StorageContainer = "images"
 )
 
 // exitCheck can be deferred from the top of command functions to exit with an
@@ -32,10 +27,7 @@ func exitCheck(err error) {
 // resources created or allocated for an instance that can be cleaned up when
 // tearing down.
 type resources struct {
-	VM        *azure.VM           `json:"vm,omitempty"`
-	GI        *azure.GalleryImage `json:"galleryimage,omitempty"`
-	BlobName  *string             `json:"blob,omitempty"`
-	ImageName *string             `json:"image,omitempty"`
+	VM *azure.VM `json:"vm,omitempty"`
 }
 
 func newClientFromArgs(flags *pflag.FlagSet) (*azure.Client, error) {
@@ -87,106 +79,7 @@ func isWindows(flags *pflag.FlagSet) (bool, error) {
 	return snapshot != "", err
 }
 
-func upload(ac *azure.Client, subscription, resourceGroup, localImage, remoteName, architecture string, res *resources) (string, error) {
-	ctx := context.Background()
-	location, err := ac.GetResourceGroupLocation(ctx, resourceGroup)
-	if err != nil {
-		return "", err
-	}
-
-	staccTag := azure.Tag{
-		Name:  "imagesStorageAccount",
-		Value: fmt.Sprintf("location=%s", location),
-	}
-	stacc, err := ac.GetResourceNameByTag(
-		ctx,
-		resourceGroup,
-		staccTag,
-	)
-	if err != nil {
-		return "", err
-	}
-
-	if stacc == "" {
-		stacc = azure.RandomStorageAccountName("images")
-		err = ac.CreateStorageAccount(ctx, resourceGroup, stacc, "", staccTag)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	storekey, err := ac.GetStorageAccountKey(ctx, resourceGroup, stacc)
-	if err != nil {
-		return "", err
-	}
-
-	storeClient, err := azure.NewStorageClient(stacc, storekey)
-	if err != nil {
-		return "", err
-	}
-
-	err = storeClient.CreateStorageContainerIfNotExist(ctx, stacc, StorageContainer)
-	if err != nil {
-		return "", err
-	}
-	blobName := azure.EnsureVHDExtension(remoteName)
-	err = storeClient.UploadPageBlob(
-		azure.BlobMetadata{
-			StorageAccount: stacc,
-			ContainerName:  StorageContainer,
-			BlobName:       blobName,
-		},
-		localImage,
-		azure.DefaultUploadThreads,
-	)
-	if err != nil {
-		return "", err
-	}
-	res.BlobName = &blobName
-
-	switch architecture {
-	case "x86_64":
-		err = ac.RegisterImage(
-			ctx,
-			resourceGroup,
-			stacc,
-			StorageContainer,
-			blobName,
-			remoteName,
-			"",
-			azure.HyperVGenV2,
-		)
-		if err != nil {
-			return "", err
-		}
-		res.ImageName = &remoteName
-		image := fmt.Sprintf(
-			"/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/images/%s",
-			subscription, resourceGroup, remoteName)
-		return image, nil
-	case "aarch64":
-		gi, err := ac.RegisterGalleryImage(
-			ctx,
-			resourceGroup,
-			stacc,
-			StorageContainer,
-			blobName,
-			remoteName,
-			"",
-			azure.HyperVGenV2,
-			arch.ARCH_AARCH64,
-		)
-		if err != nil {
-			return "", err
-		}
-		res.GI = gi
-		return res.GI.ImageRef, nil
-	default:
-		return "", fmt.Errorf("upload(): unknown architecture %q", architecture)
-	}
-}
-
-func doSetup(ac *azure.Client, flags *pflag.FlagSet, localImage string, res *resources) error {
+func doSetup(ac *azure.Client, flags *pflag.FlagSet, res *resources) error {
 	rg, err := flags.GetString("resource-group")
 	if err != nil {
 		return err
@@ -197,6 +90,15 @@ func doSetup(ac *azure.Client, flags *pflag.FlagSet, localImage string, res *res
 		return err
 	}
 
+	snapshot, err := flags.GetString("snapshot")
+	if err != nil {
+		return err
+	}
+
+	if image == "" && snapshot == "" {
+		return fmt.Errorf("either --image or --snapshot must be provided")
+	}
+
 	architecture, err := flags.GetString("arch")
 	if err != nil {
 		return err
@@ -205,22 +107,6 @@ func doSetup(ac *azure.Client, flags *pflag.FlagSet, localImage string, res *res
 	windows, err := isWindows(flags)
 	if err != nil {
 		return err
-	}
-
-	// on windows the (wsl) image should be scp'd to the host
-	if localImage != "" && !windows {
-		subscription, err := flags.GetString("subscription")
-		if err != nil {
-			return err
-		}
-		remoteImageName, err := flags.GetString("image-name")
-		if err != nil {
-			return err
-		}
-		image, err = upload(ac, subscription, rg, localImage, remoteImageName, architecture, res)
-		if err != nil {
-			return err
-		}
 	}
 
 	vmName, err := flags.GetString("vm-name")
@@ -264,11 +150,6 @@ func doSetup(ac *azure.Client, flags *pflag.FlagSet, localImage string, res *res
 		return err
 	}
 
-	snapshot, err := flags.GetString("snapshot")
-	if err != nil {
-		return err
-	}
-
 	ctx := context.Background()
 	vm, err := ac.CreateVM(
 		ctx,
@@ -302,24 +183,13 @@ func setup(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	localImage := ""
-	if len(args) == 1 {
-		localImage = args[0]
-	}
-
 	res := &resources{}
-	fnerr = doSetup(ac, flags, localImage, res)
+	fnerr = doSetup(ac, flags, res)
 	if fnerr != nil {
 		fmt.Fprintf(os.Stderr, "setup() failed: %s\n", fnerr.Error())
 		fmt.Fprint(os.Stderr, "tearing down resources\n")
 
-		rg, err := flags.GetString("resource-group")
-		if err != nil {
-			fnerr = fmt.Errorf("failed to get resource group to tear down resources: %s", err.Error())
-			return
-		}
-
-		if err := doTeardown(ac, rg, res); err != nil {
+		if err := doTeardown(ac, res); err != nil {
 			fnerr = fmt.Errorf("failed to tear down resources: %s", err.Error())
 			return
 		}
@@ -353,7 +223,7 @@ func setup(cmd *cobra.Command, args []string) {
 	}
 }
 
-func doTeardown(ac *azure.Client, resourceGroup string, res *resources) error {
+func doTeardown(ac *azure.Client, res *resources) error {
 	ctx := context.Background()
 
 	if res.VM != nil {
@@ -362,62 +232,6 @@ func doTeardown(ac *azure.Client, resourceGroup string, res *resources) error {
 		}
 	}
 
-	if res.GI != nil {
-		if err := ac.DeleteGalleryImage(ctx, res.GI); err != nil {
-			return err
-		}
-	}
-
-	if res.ImageName != nil {
-		if err := ac.DeleteImage(ctx, resourceGroup, *res.ImageName); err != nil {
-			return err
-		}
-	}
-
-	if res.BlobName == nil {
-		return nil
-	}
-
-	location, err := ac.GetResourceGroupLocation(ctx, resourceGroup)
-	if err != nil {
-		return err
-	}
-
-	staccTag := azure.Tag{
-		Name:  "imagesStorageAccount",
-		Value: fmt.Sprintf("location=%s", location),
-	}
-	stacc, err := ac.GetResourceNameByTag(
-		ctx,
-		resourceGroup,
-		staccTag,
-	)
-	if err != nil {
-		return err
-	}
-
-	// storage account no longer exists, so assume everything is gone
-	if stacc == "" {
-		return nil
-	}
-
-	storekey, err := ac.GetStorageAccountKey(ctx, resourceGroup, stacc)
-	if err != nil {
-		return err
-	}
-
-	storeClient, err := azure.NewStorageClient(stacc, storekey)
-	if err != nil {
-		return err
-	}
-
-	if err := storeClient.DeleteBlob(ctx, azure.BlobMetadata{
-		StorageAccount: stacc,
-		ContainerName:  StorageContainer,
-		BlobName:       *res.BlobName,
-	}); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -459,16 +273,10 @@ func teardown(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	rg, err := flags.GetString("resource-group")
-	if err != nil {
-		fnerr = fmt.Errorf("failed to get resource group: %s", err.Error())
-		return
-	}
-
-	fnerr = doTeardown(ac, rg, res)
+	fnerr = doTeardown(ac, res)
 }
 
-func doRunExec(ac *azure.Client, command []string, flags *pflag.FlagSet, localImage string, res *resources) error {
+func doRunExec(command []string, flags *pflag.FlagSet, res *resources) error {
 	privKey, err := flags.GetString("ssh-privkey")
 	if err != nil {
 		return err
@@ -513,6 +321,13 @@ func doRunExec(ac *azure.Client, command []string, flags *pflag.FlagSet, localIm
 	}
 	// on windows the (wsl) image should be scp'd to the host so it can be imported into wsl
 	if windows {
+		localImage, err := flags.GetString("local-image")
+		if err != nil {
+			return err
+		}
+		if localImage == "" {
+			return fmt.Errorf("--local-image is required when using --snapshot")
+		}
 		remotePath := filepath.Base(localImage)
 		if err := test.ScpFile(ip, username, privKey, hostsfile, localImage, remotePath); err != nil {
 			return err
@@ -551,9 +366,8 @@ func doRunExec(ac *azure.Client, command []string, flags *pflag.FlagSet, localIm
 func runExec(cmd *cobra.Command, args []string) {
 	var fnerr error
 	defer func() { exitCheck(fnerr) }()
-	image := args[0]
 
-	command := args[1:]
+	command := args
 	flags := cmd.Flags()
 
 	ac, fnerr := newClientFromArgs(flags)
@@ -563,29 +377,24 @@ func runExec(cmd *cobra.Command, args []string) {
 
 	res := &resources{}
 	defer func() {
-		rg, err := flags.GetString("resource-group")
-		if err != nil {
-			fnerr = fmt.Errorf("failed to get resource group to tear down resources: %s", err.Error())
-			return
-		}
-		if err := doTeardown(ac, rg, res); err != nil {
+		if err := doTeardown(ac, res); err != nil {
 			fnerr = fmt.Errorf("failed to destroy vm: %s", err.Error())
 			return
 		}
 	}()
 
-	fnerr = doSetup(ac, flags, image, res)
+	fnerr = doSetup(ac, flags, res)
 	if fnerr != nil {
 		return
 	}
 
-	fnerr = doRunExec(ac, command, flags, image, res)
+	fnerr = doRunExec(command, flags, res)
 }
 
 func setupCLI() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:                   "boot",
-		Long:                  "upload and boot an image to the appropriate cloud provider",
+		Long:                  "boot an image on Azure",
 		DisableFlagsInUseLine: true,
 	}
 
@@ -598,12 +407,12 @@ func setupCLI() *cobra.Command {
 	rootFlags.String("username", "azure", "name of the user to create on the system")
 	rootFlags.String("ssh-pubkey", "", "path to user's public ssh key, must be an rsa key")
 	rootFlags.String("ssh-privkey", "", "path to user's private ssh key")
-	rootFlags.String("image", "", "full resource ID of the remote image name, this should already exist in the resource group, if no local image is provided")
-	rootFlags.String("snapshot", "", "full resource ID of the snapshot, this should already exist in the resource group and is assumed to be a windows image, local image will be scp'd instead of uploaded")
+	rootFlags.String("image", "", "full resource ID of the remote image, should already exist in the resource group")
+	rootFlags.String("snapshot", "", "full resource ID of the snapshot, assumed to be a windows image for WSL testing")
+	rootFlags.String("local-image", "", "path to local image to SCP to the VM (only for WSL with --snapshot)")
 	rootFlags.String("vm-name", "vm-name", "name of the VM to create, all dependencies will be prefixed with this name")
-	rootFlags.String("image-name", "image-name", "the image and blob will")
 	rootFlags.String("size", "", "size or instance type of the VM to create")
-	rootFlags.String("arch", "x86_64", "size or instance type of the VM to create")
+	rootFlags.String("arch", "x86_64", "architecture (x86_64 or aarch64)")
 
 	exitCheck(rootCmd.MarkPersistentFlagRequired("client-id"))
 	exitCheck(rootCmd.MarkPersistentFlagRequired("client-secret"))
@@ -611,9 +420,9 @@ func setupCLI() *cobra.Command {
 	exitCheck(rootCmd.MarkPersistentFlagRequired("subscription"))
 
 	setupCmd := &cobra.Command{
-		Use:                   "setup [--resourcefile <filename>] <filename>",
-		Short:                 "upload and boot an image and save the created resource IDs to a file for later teardown",
-		Args:                  cobra.MaximumNArgs(1),
+		Use:                   "setup [--resourcefile <filename>]",
+		Short:                 "boot an image and save the created resource IDs to a file for later teardown",
+		Args:                  cobra.NoArgs,
 		Run:                   setup,
 		DisableFlagsInUseLine: true,
 	}
@@ -630,10 +439,10 @@ func setupCLI() *cobra.Command {
 	rootCmd.AddCommand(teardownCmd)
 
 	runCmd := &cobra.Command{
-		Use:   "run <image> <executable>...",
-		Short: "upload and boot an image, then upload the specified executable and run it on the remote host",
-		Long:  "upload and boot an image on Azure, then upload the executable file specified by the second positional argument and execute it via SSH with the args on the command line",
-		Args:  cobra.MinimumNArgs(2),
+		Use:   "run <executable>...",
+		Short: "boot an image, then upload the specified executable and run it on the remote host",
+		Long:  "boot an image on Azure, then upload the executable file specified by the first positional argument and execute it via SSH with the args on the command line",
+		Args:  cobra.MinimumNArgs(1),
 		Run:   runExec,
 	}
 	rootCmd.AddCommand(runCmd)
