@@ -1,132 +1,149 @@
-# ISOs
+# bootc generic-iso
 
-## Generic
+This ISO contains a bootable bootc root filesystem in /LiveOS/squashfs.img, the ISO
+is bootable as an ISO or as an image written to a USB flash drive.
 
-`image-builder` can build ISOs out of bootable containers. The image type to use to build ISOs is the `bootc-generic-iso` image type. `image-builder` takes the bootable container and explodes the relevant parts to put them into the correct places on the ISO this means that there is a small contract in place on what `image-builder` expects to exist in your bootable container:
+This ISO is created from a bootc container using image-builder. You create a
+custom container using podman, then run image-builder to turn it into an ISO.
 
-1. A kernel must live in `/usr/lib/module/*/vmlinuz`. If there are multiple kernels the behavior is undefined. This kernel will be placed in `/images/pxeboot/vmlinuz` on the ISO filesystem.
-2. An initramfs is expected to be next to the kernel with the filename `initramfs.img`. The initramfs is placed in `/images/pxeboot/initrd.img` on the ISO filesystem.
-3. The UEFI vendor is sourced by a directory name in `/usr/lib/efi/shim/*EFI/$VENDOR`. If there are multiple directories the behavior is undefined. The `BOOT` directory is always ignored.
-4. shim and grub2 EFI binaries (`shimx64.efi`, `mmx64.efi`, `gcdx64.efi`) are expected to be present in `/boot/efi/EFI/$VENDOR`.
-5. `/usr/share/grub2/unicode.pf` and `/usr/lib/grub/i386-pc` are expected to present. These are normally provided by the `grub2-common` and `grub2-pc-modules` packages respectively. The latter is only necessary on `x86_64`.
-5. Required executables in the container are: `podman`, `mksquashfs`, `xorriso`, `implantisomd5`, `grub2-mkimage` and `python`. If you are using a separate build container then these executables must exist in the build container.
-6. The container image is converted to a `squashfs` filesystem and put into `/LiveOS/squashfs.img` in the ISO.
+## bootc container
 
-You can [define additional configuration](./05-sources-of-configuration.md#isoyaml) for an ISO inside your container.
+The bootc container has a few requirements:
 
-If a `--bootc-installer-payload-ref` argument is optionally passed to `image-builder` when building a `bootc-generic-iso` then the container reference is copied from the hosts container storage to `/var/lib/containers/storage` in the squashfs filesystem.
+* Be based on a bootc container, eg. quay.io/fedora/fedora-bootc:latest
+* Include the dracut-live, erofs-utils packages
+* Include grub2 ISO bootloader related tools
+ - grub2-efi-*-cdboot xorriso isomd5sum shim
+* Configure dracut to add the dmsquash-live module
+* Configure ostree to not use composefs
+* Rebuild the initramfs so that it includes the dmsquash-live module
+* Optionally setup the ISO menus and kernel cmdline with iso.yaml
 
-### Example Containerfile
+## Sample Fedora bootc container
 
-This container file builds a `Fedora` "payload" installer (a `boot.iso`). It installs the container that's mentioned in the `/usr/share/anaconda/interactive-defaults.ks` kickstart file.
+This is a simple example using the `image-builder` cmdline tool and a local install of podman.
 
-```Dockerfile
-FROM quay.io/fedora/fedora-bootc:rawhide
+Save this in `Containerfile`:
 
-RUN dnf install -qy \
-    anaconda \
-    anaconda-install-img-deps \
-    anaconda-dracut \
-    dracut-config-generic \
-    dracut-network \
-    net-tools \
-    grub2-efi-x64-cdboot \
-    plymouth \
-    default-fonts-core-sans \
-    default-fonts-other-sans \
-    google-noto-sans-cjk-fonts
+```
+FROM quay.io/fedora/fedora-bootc:latest
+RUN dnf -y install grub2-efi-*-cdboot xorriso isomd5sum dracut-live erofs-utils shim && dnf clean all
+RUN mkdir /boot/efi && cp -r /usr/lib/efi/shim/*/EFI /boot/efi && cp -r /usr/lib/efi/grub2/*/EFI/* /boot/efi/EFI/
 
-# these are necessary build tools. if you use a separate build container then
-# these tools should be installed there
-RUN dnf install -qy \
-    xorrisofs \
-    squashfs-tools
+# Override using composefs for ostree (it is incompatible with the erofs rootfs)
+RUN cat <<EOF > /usr/lib/ostree/prepare-root.conf
+[composefs]
+enabled = no
+[sysroot]
+readonly = true
+EOF
 
-RUN dnf clean all
+# Include the dmsquash-live module in the initramfs
+RUN cat <<EOF > /usr/lib/dracut/dracut.conf.d/40-iso.conf
+compress="xz"
+add_dracutmodules+=" qemu qemu-net livenet dmsquash-live "
+early_microcode="no"
+EOF
 
-RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
-
-# ---
-
-# some configuration for our ISO
-
+# Override the default ISO menus
 RUN mkdir -p /usr/lib/image-builder/bootc
-
-COPY <<EOT /usr/lib/image-builder/bootc/iso.yaml
-label: "Fedora-bootc-Installer"
+RUN cat <<EOF > /usr/lib/image-builder/bootc/iso.yaml
+label: bootc-generic
+kernel_args:
+  - console=ttyS0
 grub2:
+  timeout: 5
   entries:
-    - name: "Install Fedora (bootc)"
-      linux: "/images/pxeboot/vmlinuz inst.stage2=hd:LABEL=Fedora-bootc-Installer console=tty0 inst.graphical selinux=0 rhgb quiet"
-      initrd: "/images/pxeboot/initrd.img"
-EOT
+    - name: Boot Linux
+      linux: \${kernelpath} \${root}
+      initrd: \${initrdpath}
+    - name: Boot Linux With debug
+      linux: \${kernelpath} \${root} rd.debug=1
+      initrd: \${initrdpath}
+EOF
 
-# some configuration for anaconda
+# Rebuild the initrd
+RUN set -xe; kver=$(ls /usr/lib/modules); env DRACUT_NO_XATTR=1 dracut -vf /usr/lib/modules/$kver/initramfs.img "$kver"
 
-COPY <<EOT /usr/share/anaconda/interactive-defaults.ks
-bootc --source-imgref registry:quay.io/fedora/fedora-bootc:rawhide --target-imgref quay.io/fedora/fedora-bootc:rawhide
-EOT
+# Mask services that aren't compatible with running from an ISO
+RUN systemctl mask bootc-generic-growpart.service bootc-publish-rhsm-facts.service bootloader-update.service rpm-ostree-fix-shadow-mode.service
 
-# ---
-
-# these things are normally performed by `lorax` to make `anaconda` work; this is the
-# bare minimum to get things to work
-
-RUN echo "install:x:0:0:root:/root:/usr/libexec/anaconda/run-anaconda" >> /etc/passwd && \
-    echo "install::14438:0:99999:7:::" >> /etc/shadow && \
-    passwd -d root
-
-RUN mv /usr/share/anaconda/list-harddrives-stub /usr/bin/list-harddrives && \
-    mv /etc/yum.repos.d /etc/anaconda.repos.d && \
-    ln -s /lib/systemd/system/anaconda.target /etc/systemd/system/default.target && \
-    rm -v /usr/lib/systemd/system-generators/systemd-gpt-auto-generator
-
-RUN ln -s /usr/lib/systemd/system/anaconda-shell@.service /usr/lib/systemd/system/autovt@.service
-
-RUN mkdir /usr/lib/systemd/logind.conf.d
-COPY <<EOT /usr/lib/systemd/logind.conf.d/anaconda-shell.conf
-[Login]
-ReserveVT=2
-EOT
-
-RUN mkdir "$(realpath /root)" && \
-    kernel=$(kernel-install list --json pretty | jq -r '.[] | select(.has_kernel == true) | .version') && \
-    DRACUT_NO_XATTR=1 dracut --force -v --zstd --reproducible --no-hostonly \
-        --add "anaconda" \
-        "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
-
-RUN mkdir /etc/systemd/user/pipewire.service.d/
-COPY <<EOT /etc/systemd/user/pipewire.service.d/allowroot.conf
-[Unit]
-ConditionUser=
-EOT
-
-RUN mkdir /etc/systemd/user/pipewire.socket.d/
-COPY <<EOT /etc/systemd/user/pipewire.socket.d/allowroot.conf
-[Unit]
-ConditionUser=
-EOT
+RUN bootc container lint
 ```
 
-You can then build this into an ISO:
-
+Build this container using podman:
 ```
-sudo podman build -t localhost/iso -f Containerfile
-sudo image-builder build --bootc-ref localhost/iso --bootc-default-fs ext4 bootc-generic-iso
+podman build -f ./Containerfile -t bootc-iso
 ```
 
-> [!WARNING]
-> *A `bootc`-system installed through Anaconda will fail to start the `systemd-remount-fs.service`. See [here](https://forge.fedoraproject.org/atomic-desktops/tracker/issues/72#issuecomment-593808) and [here](https://bugzilla.redhat.com/show_bug.cgi?id=2332319) for more information.*
+Run `image-builder` to create the ISO:
+```
+image-builder build --bootc-default-fs ext4 --bootc-ref localhost/bootc-iso:latest generic-iso
+```
 
+If your container is on a remote system replace the
+`localhost/bootc-iso:latest` with the right url.
 
-For more examples, including for other operating systems, you can take a look at [this demonstration repository](https://github.com/ondrejbudai/bootc-isos).
+## Sample CentOS 10 bootc container
 
-## Historical
+The CentOS container is slightly different from the Fedora container due to the
+bootloader files being in a different location.
 
-### `bootc-installer`
+Replace the top 3 lines with:
+```
+FROM quay.io/centos/centos-bootc:c10s
+RUN dnf -y install grub2-efi-*-cdboot xorriso isomd5sum dracut-live erofs-utils shim && dnf clean all
+RUN cp -r /usr/lib/bootupd/updates/EFI/* /boot/efi/EFI/
+```
 
-There's an alternative image type called `bootc-installer` which makes more assumptions about the contents of the container. You should prefer using `bootc-generic-iso`.
+The remainder of the Containerfile is identical to the Fedora example.
 
-### `anaconda-iso`
+# User config
 
-There was an alternative image type called `anaconda-iso` or `iso` in `bootc-image-builder` but this image type is not available in `image-builder`. See the [migration guide](./50-migration.md).
+When building the ISO you can use the `image-builder --blueprint user.toml`
+option to customize the users, including root. See the documentation at
+https://osbuild.org/docs/user-guide/blueprint-reference/#additional-users
+
+For example, to set the root password use a minimal blueprint like this:
+```
+name = "setup-root"
+version = "1.0.0"
+
+[[customizations.user]]
+name = "root"
+password = "root-password"
+```
+
+And run `image-builder` like so:
+```
+image-builder build --bootc-default-fs ext4 --bootc-ref localhost/bootc-iso:latest --blueprint setup-root.toml generic-iso
+```
+
+# Troubleshooting
+
+You can inspect the container you built by running bash:
+
+```
+podman run --rm -it localhost/bootc-iso:latest /usr/bin/bash
+```
+
+Check the contents of `/usr/lib/ostree/prepare-root.conf` and
+`/usr/lib/dracut/dracut.conf.d/40-iso.conf` to make sure they were created
+correctly. You can also run `lsinitrd --mod /usr/lib/modules/*/initramfs.img`
+to check to make sure the new initramfs contains the dmsquash-live and ostree
+modules.
+
+## Fails to mount the OSTree root
+
+If you get an error like:
+
+ostree-prepare-root[848]: ostree-prepare-root: Couldn't find specified OSTree root
+
+Check that the grub.cfg `ostree=...` entry in grub.cfg points to the path in the
+rootfs.img. The build process sets this uuid from the ostree directory so this really should not happen with an ISO build unless you change the ISO contents yourself.
+
+Or if the error looks like:
+
+ostree-prepare-root: Failed to mount composefs: composefs: failed to mount: Input/output error
+
+Check the prepare-root.conf file to make sure composefs has been disabled.
