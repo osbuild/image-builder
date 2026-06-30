@@ -8,16 +8,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/test"
-	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
-	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 // exitCheck can be deferred from the top of command functions to exit with an
@@ -49,8 +45,6 @@ ssh_authorized_keys:
 // resources created or allocated for an instance that can be cleaned up when
 // tearing down.
 type resources struct {
-	AMI           *string `json:"ami,omitempty"`
-	Snapshot      *string `json:"snapshot,omitempty"`
 	SecurityGroup *string `json:"security-group,omitempty"`
 	InstanceID    *string `json:"instance,omitempty"`
 }
@@ -87,20 +81,7 @@ func newClientFromArgs(flags *pflag.FlagSet) (*awscloud.AWS, error) {
 	return awscloud.New(region, keyID, secretKey, sessionToken)
 }
 
-// getOptionalStringFlag returns the value of a string flag if it's set, or nil
-// if it's not set.
-func getOptionalStringFlag(flags *pflag.FlagSet, name string) (*string, error) {
-	value, err := flags.GetString(name)
-	if err != nil {
-		return nil, err
-	}
-	if value == "" {
-		return nil, nil
-	}
-	return &value, nil
-}
-
-func doSetup(a *awscloud.AWS, filename string, flags *pflag.FlagSet, res *resources) error {
+func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	username, err := flags.GetString("username")
 	if err != nil {
 		return err
@@ -115,46 +96,7 @@ func doSetup(a *awscloud.AWS, filename string, flags *pflag.FlagSet, res *resour
 		return fmt.Errorf("createUserData(): %s", err.Error())
 	}
 
-	bucketName, err := flags.GetString("bucket")
-	if err != nil {
-		return err
-	}
-	keyName, err := flags.GetString("s3-key")
-	if err != nil {
-		return err
-	}
-
-	uploadOutput, err := a.Upload(filename, bucketName, keyName)
-	if err != nil {
-		return fmt.Errorf("Upload() failed: %s", err.Error())
-	}
-
-	fmt.Printf("file uploaded to %s\n", aws.ToString(uploadOutput.Location))
-
-	var bootMode *platform.BootMode
-	bootModeFlag, err := flags.GetString("boot-mode")
-	if err != nil {
-		return err
-	}
-	switch bootModeFlag {
-	case "legacy-bios":
-		bootMode = common.ToPtr(platform.BOOT_LEGACY)
-	case "uefi":
-		bootMode = common.ToPtr(platform.BOOT_UEFI)
-	case "uefi-preferred":
-		bootMode = common.ToPtr(platform.BOOT_HYBRID)
-	case "":
-		bootMode = nil // no explicit boot mode set
-	default:
-		return fmt.Errorf("invalid boot mode: %s", bootModeFlag)
-	}
-
-	importRole, err := getOptionalStringFlag(flags, "import-role")
-	if err != nil {
-		return err
-	}
-
-	imageName, err := flags.GetString("ami-name")
+	ami, err := flags.GetString("ami")
 	if err != nil {
 		return err
 	}
@@ -163,20 +105,8 @@ func doSetup(a *awscloud.AWS, filename string, flags *pflag.FlagSet, res *resour
 	if err != nil {
 		return err
 	}
-	imgArch, err := arch.FromString(archArg)
-	if err != nil {
-		return err
-	}
 
-	ami, snapshot, err := a.Register(imageName, bucketName, keyName, nil, nil, imgArch, bootMode, importRole)
-	if err != nil {
-		return fmt.Errorf("Register(): %s", err.Error())
-	}
-
-	res.AMI = &ami
-	res.Snapshot = &snapshot
-
-	fmt.Printf("AMI registered: %s\n", ami)
+	fmt.Printf("Using AMI: %s\n", ami)
 
 	securityGroupName := fmt.Sprintf("image-boot-tests-%s", uuid.New().String())
 	securityGroup, err := a.CreateSecurityGroupEC2(securityGroupName, "image-tests-security-group")
@@ -214,7 +144,6 @@ func setup(cmd *cobra.Command, args []string) {
 	var fnerr error
 	defer func() { exitCheck(fnerr) }()
 
-	filename := args[0]
 	flags := cmd.Flags()
 
 	a, err := newClientFromArgs(flags)
@@ -231,7 +160,7 @@ func setup(cmd *cobra.Command, args []string) {
 	}
 	res := &resources{}
 
-	fnerr = doSetup(a, filename, flags, res)
+	fnerr = doSetup(a, flags, res)
 	if fnerr != nil {
 		fmt.Fprintf(os.Stderr, "setup() failed: %s\n", fnerr.Error())
 		fmt.Fprint(os.Stderr, "tearing down resources\n")
@@ -279,12 +208,6 @@ func doTeardown(aws *awscloud.AWS, res *resources) error {
 		}
 	}
 
-	if res.AMI != nil {
-		fmt.Printf("deleting EC2 image %s and snapshot %s\n", *res.AMI, *res.Snapshot)
-		if err := aws.DeleteEC2Image(*res.AMI); err != nil {
-			return fmt.Errorf("failed to deregister image: %v", err)
-		}
-	}
 	return nil
 }
 
@@ -396,9 +319,8 @@ func doRunExec(a *awscloud.AWS, command []string, flags *pflag.FlagSet, res *res
 func runExec(cmd *cobra.Command, args []string) {
 	var fnerr error
 	defer func() { exitCheck(fnerr) }()
-	image := args[0]
 
-	command := args[1:]
+	command := args
 	flags := cmd.Flags()
 
 	a, fnerr := newClientFromArgs(flags)
@@ -415,7 +337,7 @@ func runExec(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	fnerr = doSetup(a, image, flags, res)
+	fnerr = doSetup(a, flags, res)
 	if fnerr != nil {
 		return
 	}
@@ -426,7 +348,7 @@ func runExec(cmd *cobra.Command, args []string) {
 func setupCLI() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:                   "boot",
-		Long:                  "upload and boot an image to the appropriate cloud provider",
+		Long:                  "boot an image on AWS EC2",
 		DisableFlagsInUseLine: true,
 	}
 
@@ -435,12 +357,8 @@ func setupCLI() *cobra.Command {
 	rootFlags.String("secret-access-key", "", "secret access key")
 	rootFlags.String("session-token", "", "session token")
 	rootFlags.String("region", "", "target region")
-	rootFlags.String("bucket", "", "target S3 bucket name")
-	rootFlags.String("s3-key", "", "target S3 key name")
-	rootFlags.String("ami-name", "", "AMI name")
+	rootFlags.String("ami", "", "AMI ID to boot")
 	rootFlags.String("arch", "", "arch (x86_64 or aarch64)")
-	rootFlags.String("boot-mode", "", "boot mode (legacy-bios, uefi, uefi-preferred)")
-	rootFlags.String("import-role", "", "name of the import role to be used (default is determined by the AWS API, it's usually 'vmimport')")
 	rootFlags.String("username", "", "name of the user to create on the system")
 	rootFlags.String("ssh-pubkey", "", "path to user's public ssh key")
 	rootFlags.String("ssh-privkey", "", "path to user's private ssh key")
@@ -448,14 +366,7 @@ func setupCLI() *cobra.Command {
 	exitCheck(rootCmd.MarkPersistentFlagRequired("access-key-id"))
 	exitCheck(rootCmd.MarkPersistentFlagRequired("secret-access-key"))
 	exitCheck(rootCmd.MarkPersistentFlagRequired("region"))
-	exitCheck(rootCmd.MarkPersistentFlagRequired("bucket"))
-
-	// TODO: make it optional and use UUID if not specified
-	exitCheck(rootCmd.MarkPersistentFlagRequired("s3-key"))
-
-	// TODO: make it optional and use UUID if not specified
-	exitCheck(rootCmd.MarkPersistentFlagRequired("ami-name"))
-
+	exitCheck(rootCmd.MarkPersistentFlagRequired("ami"))
 	exitCheck(rootCmd.MarkPersistentFlagRequired("arch"))
 
 	// TODO: make it optional and use a default
@@ -467,9 +378,9 @@ func setupCLI() *cobra.Command {
 	exitCheck(rootCmd.MarkPersistentFlagRequired("ssh-pubkey"))
 
 	setupCmd := &cobra.Command{
-		Use:                   "setup [--resourcefile <filename>] <filename>",
-		Short:                 "upload and boot an image and save the created resource IDs to a file for later teardown",
-		Args:                  cobra.ExactArgs(1),
+		Use:                   "setup [--resourcefile <filename>]",
+		Short:                 "boot an AMI and save the created resource IDs to a file for later teardown",
+		Args:                  cobra.NoArgs,
 		Run:                   setup,
 		DisableFlagsInUseLine: true,
 	}
@@ -486,10 +397,10 @@ func setupCLI() *cobra.Command {
 	rootCmd.AddCommand(teardownCmd)
 
 	runCmd := &cobra.Command{
-		Use:   "run <image> <executable>...",
-		Short: "upload and boot an image, then upload the specified executable and run it on the remote host",
-		Long:  "upload and boot an image on AWS EC2, then upload the executable file specified by the second positional argument and execute it via SSH with the args on the command line",
-		Args:  cobra.MinimumNArgs(2),
+		Use:   "run <executable>...",
+		Short: "boot an AMI, then upload the specified executable and run it on the remote host",
+		Long:  "boot an AMI on AWS EC2, then upload the executable file specified by the first positional argument and execute it via SSH with the args on the command line",
+		Args:  cobra.MinimumNArgs(1),
 		Run:   runExec,
 	}
 	rootCmd.AddCommand(runCmd)
