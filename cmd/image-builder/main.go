@@ -806,6 +806,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	uploadCmd.Flags().String("aws-region", "", "target region for AWS uploads (only for type=ami)")
 	uploadCmd.Flags().String("aws-profile", "", "name of the AWS credentials profile (only for type=aws)")
 	uploadCmd.Flags().StringArray("aws-tag", []string{}, "tag the AMI with this Key=Value (only for type=aws)")
+	uploadCmd.Flags().String("aws-boot-mode", "", "boot mode for the AMI: legacy-bios, uefi, uefi-preferred (only for type=aws)")
 	uploadCmd.Flags().String("libvirt-connection", "", "connection URI (only for type=libvirt)")
 	uploadCmd.Flags().String("libvirt-pool", "", "pool name (only for type=libvirt)")
 	uploadCmd.Flags().String("libvirt-volume", "", "volume name (only for type=libvirt)")

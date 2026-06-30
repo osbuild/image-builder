@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/cloud"
 	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
@@ -313,6 +314,25 @@ func detectArchFromImagePath(imagePath string) string {
 	return ""
 }
 
+func bootModeFromFlag(cmd *cobra.Command) (*platform.BootMode, error) {
+	bootModeFlag, err := cmd.Flags().GetString("aws-boot-mode")
+	if err != nil {
+		return nil, err
+	}
+	switch bootModeFlag {
+	case "":
+		return nil, nil
+	case "legacy-bios":
+		return common.ToPtr(platform.BOOT_LEGACY), nil
+	case "uefi":
+		return common.ToPtr(platform.BOOT_UEFI), nil
+	case "uefi-preferred":
+		return common.ToPtr(platform.BOOT_HYBRID), nil
+	default:
+		return nil, fmt.Errorf("invalid boot mode: %q, supported: legacy-bios, uefi, uefi-preferred", bootModeFlag)
+	}
+}
+
 func cmdUpload(cmd *cobra.Command, args []string) error {
 	imagePath := args[0]
 
@@ -339,7 +359,12 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	uploader, err := uploaderFor(cmd, uploadTo, targetArch, nil, imagePath)
+	bootMode, err := bootModeFromFlag(cmd)
+	if err != nil {
+		return err
+	}
+
+	uploader, err := uploaderFor(cmd, uploadTo, targetArch, bootMode, imagePath)
 	if err != nil {
 		return err
 	}
