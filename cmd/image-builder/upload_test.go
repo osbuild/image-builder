@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/cloud"
 	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
@@ -90,6 +91,56 @@ func TestUploadWithAWSMock(t *testing.T) {
 		// warning was passed to stderr
 		assert.Contains(t, fakeStderr.String(), tc.expectedWarning)
 
+	}
+}
+
+func TestUploadWithAWSBootMode(t *testing.T) {
+	fakeDiskContent := "fake-raw-img"
+
+	for _, tc := range []struct {
+		bootModeArg      string
+		expectedBootMode *platform.BootMode
+	}{
+		{"legacy-bios", common.ToPtr(platform.BOOT_LEGACY)},
+		{"uefi", common.ToPtr(platform.BOOT_UEFI)},
+		{"uefi-preferred", common.ToPtr(platform.BOOT_HYBRID)},
+	} {
+		t.Run(tc.bootModeArg, func(t *testing.T) {
+			fakeImageFilePath := filepath.Join(t.TempDir(), "fake-disk.img")
+			err := os.WriteFile(fakeImageFilePath, []byte(fakeDiskContent), 0600)
+			require.NoError(t, err)
+
+			var uploadOpts *awscloud.UploaderOptions
+			var fa fakeAwsUploader
+			restore := main.MockAwscloudNewUploader(func(region string, bucket string, ami string, opts *awscloud.UploaderOptions) (cloud.Uploader, error) {
+				uploadOpts = opts
+				return &fa, nil
+			})
+			defer restore()
+
+			var fakeStdout, fakeStderr bytes.Buffer
+			restore = main.MockOsStdout(&fakeStdout)
+			defer restore()
+			restore = main.MockOsStderr(&fakeStderr)
+			defer restore()
+
+			restore = main.MockOsArgs([]string{
+				"upload",
+				"--to=aws",
+				"--aws-region=aws-region-1",
+				"--aws-bucket=aws-bucket-2",
+				"--aws-ami-name=aws-ami-3",
+				"--aws-boot-mode=" + tc.bootModeArg,
+				"--arch=x86_64",
+				fakeImageFilePath,
+			})
+			defer restore()
+
+			err = main.Run()
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedBootMode, uploadOpts.BootMode)
+		})
 	}
 }
 
