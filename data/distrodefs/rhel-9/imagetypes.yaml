@@ -2068,6 +2068,10 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "ova"
+    disk_config:
+      ovf_vmware:
+        os_type: "rhel9_64Guest"
+        virtual_hardware_version: "vmx-18"
     blueprint:
       supported_options: *supported_options_disk
 
