@@ -3,8 +3,10 @@ package depsolvednf
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -939,16 +941,21 @@ func usingDNF5(t *testing.T) bool {
 	t.Helper()
 	data := map[string]bool{}
 	config, err := os.ReadFile("/usr/lib/osbuild/solver.json")
+	if errors.Is(err, fs.ErrNotExist) {
+		// file is not required, so fall back to false if it doesn't exist
+		return false
+	}
 	if err != nil {
+		// file exists but we couldn't read it
 		t.Fatalf("failed to read solver.json: %s", err)
 	}
+
 	if err := json.Unmarshal(config, &data); err != nil {
 		t.Fatalf("failed to parse solver.json: %s", err)
 	}
 
-	if _, ok := data["use_dnf5"]; !ok {
-		t.Fatal("expected property 'use_dnf5' not found in solver.json")
-	}
+	// valid json object without the specific property is also ok and will
+	// default to false
 	return data["use_dnf5"]
 }
 
