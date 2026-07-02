@@ -17,10 +17,11 @@ import (
 )
 
 type OSBuildOptions struct {
-	StoreDir  string
-	OutputDir string
-	ExtraEnv  []string
-	InVm      []string
+	StoreDir   string
+	OutputDir  string
+	ExtraEnv   []string
+	InVm       []string
+	JSONOutput bool
 
 	// BuildLog writes the osbuild output to the given writer
 	BuildLog io.Writer
@@ -69,6 +70,9 @@ func newOsbuildCmd(manifest []byte, exports []string, opts *OSBuildOptions) *exe
 	}
 	for _, pipeline := range opts.InVm {
 		cmd.Args = append(cmd.Args, "--in-vm", pipeline)
+	}
+	if opts.JSONOutput {
+		cmd.Args = append(cmd.Args, "--json")
 	}
 	cmd.Env = append(os.Environ(), opts.ExtraEnv...)
 	cmd.Stdin = bytes.NewBuffer(manifest)
@@ -162,6 +166,11 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 
 	var tracesMsgs []string
 	oss := osbuildStageMetrics{}
+	traceOut := buildLog
+	// do not pollute the buildlog with non-json stuff
+	if opts.JSONOutput {
+		traceOut = io.Discard
+	}
 	for {
 		st, err := osbuildStatus.Status()
 		if err != nil {
@@ -194,11 +203,14 @@ func runOSBuildWithProgress(pb ProgressBar, manifest []byte, exports []string, o
 		// external build log
 		if st.Message != "" {
 			tracesMsgs = append(tracesMsgs, st.Message)
-			fmt.Fprintln(buildLog, st.Message)
+			// don't pollute the buildlog with non-json stuff
+			if !opts.JSONOutput {
+				fmt.Fprintln(traceOut, st.Message)
+			}
 		}
 		if st.Trace != "" {
 			tracesMsgs = append(tracesMsgs, st.Trace)
-			fmt.Fprintln(buildLog, st.Trace)
+			fmt.Fprintln(traceOut, st.Trace)
 		}
 
 		// store metrics if requested
