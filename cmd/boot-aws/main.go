@@ -266,6 +266,16 @@ func setup(cmd *cobra.Command, args []string) {
 
 func doTeardown(aws *awscloud.AWS, res *resources) error {
 	if res.InstanceID != nil {
+		// Dump serial console output before terminating for debugging boot failures
+		consoleOutput, err := aws.GetConsoleOutputEC2(*res.InstanceID)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warning: failed to get console output: %v\n", err)
+		} else if consoleOutput != "" {
+			fmt.Println("--- instance console output ---")
+			fmt.Println(consoleOutput)
+			fmt.Println("--- end console output ---")
+		}
+
 		fmt.Printf("terminating instance %s\n", *res.InstanceID)
 		if _, err := aws.TerminateInstancesEC2([]string{*res.InstanceID}, time.Hour); err != nil {
 			return fmt.Errorf("failed to terminate instance: %v", err)

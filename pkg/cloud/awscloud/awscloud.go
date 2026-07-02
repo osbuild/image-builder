@@ -653,6 +653,23 @@ func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType string)
 }
 
 // TerminateInstancesEC2 terminates the specified EC2 instances and waits for them to be terminated if timeout is greater than 0.
+// GetConsoleOutputEC2 retrieves the serial console output for an instance.
+// This is useful for debugging boot failures.
+func (a *AWS) GetConsoleOutputEC2(instanceID string) (string, error) {
+	res, err := a.ec2.GetConsoleOutput(
+		context.TODO(),
+		&ec2.GetConsoleOutputInput{
+			InstanceId: &instanceID,
+		})
+	if err != nil {
+		return "", err
+	}
+	if res.Output == nil {
+		return "", nil
+	}
+	return *res.Output, nil
+}
+
 func (a *AWS) TerminateInstancesEC2(instanceIDs []string, timeout time.Duration) (*ec2.TerminateInstancesOutput, error) {
 	res, err := a.ec2.TerminateInstances(
 		context.TODO(),

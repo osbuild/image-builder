@@ -120,6 +120,10 @@ func (f *fakeEC2Client) DescribeInstances(ctx context.Context, input *ec2.Descri
 	return f.describeInstances, nil
 }
 
+func (f *fakeEC2Client) GetConsoleOutput(ctx context.Context, input *ec2.GetConsoleOutputInput, optFns ...func(*ec2.Options)) (*ec2.GetConsoleOutputOutput, error) {
+	return &ec2.GetConsoleOutputOutput{}, nil
+}
+
 func (f *fakeEC2Client) RunInstances(ctx context.Context, input *ec2.RunInstancesInput, optFns ...func(*ec2.Options)) (*ec2.RunInstancesOutput, error) {
 	f.runInstancesCalls = append(f.runInstancesCalls, input)
 	if f.runInstancesErr != nil {
