@@ -348,6 +348,7 @@ cat - > "$0".stdin
 
 output_dir=""
 export=""
+format=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
@@ -358,6 +359,10 @@ while [[ $# -gt 0 ]]; do
     --export)
       export="$2"
       shift 2
+      ;;
+    --json)
+      format="json"
+      shift 1
       ;;
     *)
       shift 1
@@ -376,6 +381,10 @@ case $export in
     exit 1
     ;;
 esac
+if [ "$format" = "json" ]; then
+  echo '{"message": "hai"}' >&3
+  echo '{"success": true}'
+fi
 `
 }
 
@@ -452,27 +461,38 @@ func TestBuildIntegrationArgs(t *testing.T) {
 	for _, tc := range []struct {
 		args          []string
 		expectedFiles []string
+		expectedLog   string
 	}{
 		{
 			nil,
 			nil,
+			"",
 		}, {
 			[]string{"--with-manifest"},
 			[]string{"centos-9-qcow2-x86_64.osbuild-manifest.json"},
+			"",
 		}, {
 			[]string{"--with-buildlog"},
 			[]string{"centos-9-qcow2-x86_64.buildlog"},
+			"",
 		}, {
 			[]string{"--with-sbom"},
 			[]string{"centos-9-qcow2-x86_64.buildroot-build.spdx.json",
 				"centos-9-qcow2-x86_64.image-os.spdx.json",
 			},
+			"",
 		}, {
 			[]string{"--with-manifest", "--with-sbom"},
 			[]string{"centos-9-qcow2-x86_64.buildroot-build.spdx.json",
 				"centos-9-qcow2-x86_64.image-os.spdx.json",
 				"centos-9-qcow2-x86_64.osbuild-manifest.json",
 			},
+			"",
+		},
+		{
+			[]string{"--format", "json", "--with-buildlog", "--progress", "debug"},
+			[]string{"centos-9-qcow2-x86_64.buildlog"},
+			"{\"success\": true}\n",
 		},
 	} {
 		t.Run(strings.Join(tc.args, ","), func(t *testing.T) {
@@ -500,6 +520,12 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			outputDirPos := slices.Index(osbuildCall, "--output-directory")
 			assert.True(t, outputDirPos > -1)
 			assert.Equal(t, outputDir, osbuildCall[outputDirPos+1])
+
+			if tc.expectedLog != "" {
+				data, err := os.ReadFile(filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildlog"))
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedLog, string(data))
+			}
 
 			// ensure we get exactly the expected files
 			files, err := filepath.Glob(outputDir + "/*")

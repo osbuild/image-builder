@@ -536,6 +536,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
 	// Fail early if the cache directory is not writable, instead of
 	// waiting for osbuild to fail after slow manifest generation.
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
@@ -603,6 +607,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		WriteManifest:  withManifest,
 		WriteBuildlog:  withBuildlog,
 		Metrics:        withMetrics,
+		JSONOutput:     format == "json",
 	}
 	if runInVm {
 		buildOpts.InVm = []string{"image"}
@@ -856,6 +861,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	buildCmd.Flags().Bool("with-metrics", false, `print timing information at the end of the build`)
 	buildCmd.Flags().String("output-name", "", "set specific output basename")
 	buildCmd.Flags().Bool("in-vm", false, `run the osbuild pipeline in a virtual machine`)
+	buildCmd.Flags().String("format", "", "Output in a specific format (json)")
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
 	// add after the rest of the uploadCmd flag set is added to avoid
