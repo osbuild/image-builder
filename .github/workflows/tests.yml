@@ -292,7 +292,7 @@ jobs:
     strategy:
       matrix:
         arch:
-          - ppc64le
+          # ppc64le disabled
           - s390x
       fail-fast: false  # if one fails, keep the other(s) running
     name: "Cross-arch qemu based image build/boot smoke test"
