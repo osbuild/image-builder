@@ -71,7 +71,6 @@ image_types:
             - "vim-minimal"
             - "virt-what"
             - "which"
-            - "yum"
           exclude:
             - "chrony"
             - "libxkbcommon"
@@ -88,9 +87,9 @@ image_types:
         - include:
             - "bash"
             - "coreutils-single"
+            - "dnf5"
             - "redhat-release"
             - "rpm"
-            - "microdnf"
           exclude:
             - "libsemanage"
             - "libxcrypt"
