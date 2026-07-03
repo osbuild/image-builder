@@ -125,10 +125,12 @@ image_types:
 
   "ami":
     <<: *raw_image_type
+    aliases: ["aws"]
     filename: "disk.raw"
 
   "qcow2": &qcow2_image_type
     <<: *raw_image_type
+    aliases: ["guest-image"]
     filename: "disk.qcow2"
     mime_type: "application/x-qemu-disk"
     exports: ["qcow2"]
