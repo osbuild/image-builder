@@ -104,6 +104,8 @@ func New(typ string) (ProgressBar, error) {
 }
 
 type terminalProgressBar struct {
+	mu sync.Mutex
+
 	spinnerPb   *pb.ProgressBar
 	msgPb       *pb.ProgressBar
 	subLevelPbs []*pb.ProgressBar
@@ -129,6 +131,9 @@ func NewTerminalProgressBar() (ProgressBar, error) {
 }
 
 func (b *terminalProgressBar) SetProgress(subLevel int, msg string, done int, total int) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	// auto-add as needed, requires sublevels to get added in order
 	// i.e. adding 0 and then 2 will fail
 	switch {
@@ -170,10 +175,15 @@ func shortenString(msg string) string {
 }
 
 func (b *terminalProgressBar) render() {
+	b.mu.Lock()
+	subPbs := make([]*pb.ProgressBar, len(b.subLevelPbs))
+	copy(subPbs, b.subLevelPbs)
+	b.mu.Unlock()
+
 	var renderedLines int
 	fmt.Fprintf(b.out, "%s%s\n", ERASE_LINE, shortenString(b.spinnerPb.String()))
 	renderedLines++
-	for _, prog := range b.subLevelPbs {
+	for _, prog := range subPbs {
 		fmt.Fprintf(b.out, "%s%s\n", ERASE_LINE, prog.String())
 		renderedLines++
 	}
@@ -191,7 +201,10 @@ func (b *terminalProgressBar) renderLoop() {
 			b.render()
 			// finally move cursor down again
 			fmt.Fprint(b.out, CURSOR_SHOW)
-			fmt.Fprint(b.out, strings.Repeat("\n", 2+len(b.subLevelPbs)))
+			b.mu.Lock()
+			n := len(b.subLevelPbs)
+			b.mu.Unlock()
+			fmt.Fprint(b.out, strings.Repeat("\n", 2+n))
 			// close last to avoid race with b.out
 			close(b.shutdownCh)
 			return
@@ -255,8 +268,11 @@ func (b *terminalProgressBar) Stop() {
 	// This should never happen but be paranoid, this should
 	// never happen but ensure we did not accumulate error while
 	// running
-	if err := b.Err(); err != nil {
-		fmt.Fprintf(b.out, "error from pb.ProgressBar: %v", err)
+	b.mu.Lock()
+	pbErr := b.Err()
+	b.mu.Unlock()
+	if pbErr != nil {
+		fmt.Fprintf(b.out, "error from pb.ProgressBar: %v", pbErr)
 	}
 	// write any buffered output
 	if b.buf.Len() > 0 {
