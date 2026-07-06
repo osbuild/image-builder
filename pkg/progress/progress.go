@@ -2,6 +2,7 @@ package progress
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -79,8 +80,13 @@ type ProgressBar interface {
 	Write(p []byte) (n int, err error)
 }
 
+type ProgressConfig struct {
+	// file progress only
+	FilePath string
+}
+
 // New creates a new progressbar based on the requested type
-func New(typ string) (ProgressBar, error) {
+func New(typ string, config ProgressConfig) (ProgressBar, error) {
 	updateTerminalSize(os.Stdout.Fd())
 	w, h := getTerminalSize()
 
@@ -98,6 +104,8 @@ func New(typ string) (ProgressBar, error) {
 		return NewTerminalProgressBar()
 	case "debug":
 		return NewDebugProgressBar()
+	case "file":
+		return NewFileProgressBar(config.FilePath)
 	default:
 		return nil, fmt.Errorf("unknown progress type: %q", typ)
 	}
@@ -362,4 +370,87 @@ func (b *debugProgressBar) SetProgress(subLevel int, msg string, done int, total
 	fmt.Fprintf(b.w, "%s[%v / %v] %s", strings.Repeat("  ", subLevel), done, total, msg)
 	fmt.Fprintf(b.w, "\n")
 	return nil
+}
+
+type fileProgressBar struct {
+	path string
+
+	// Keeps track of different levels of (sub)progress.
+	levels []*fileProgressItem
+}
+
+type fileProgressItem struct {
+	Msg         string            `json:"message"`
+	SubProgress *fileProgressItem `json:"subprogress,omitempty"`
+	Done        int               `json:"done"`
+	Total       int               `json:"total"`
+}
+
+// NewFileProgressBar starts a new "file" progressbar that will write any progress to a file.
+// Messages without progress information are ignored. The file progress never writes out subprogress
+// without the progress above it.
+func NewFileProgressBar(path string) (ProgressBar, error) {
+	b := &fileProgressBar{path: path}
+	return b, nil
+}
+
+func (b *fileProgressBar) SetPulseMsgf(msg string, args ...any) {
+	// nop: only messages with progress information are important
+}
+
+func (b *fileProgressBar) SetMessagef(msg string, args ...any) {
+	// nop: only messages with progress information are important
+}
+
+func (b *fileProgressBar) Start() {
+}
+
+func (b *fileProgressBar) Write(p []byte) (n int, err error) {
+	// use os.Rename to ensure atomic updates
+	tmpPath := fmt.Sprintf("%s.1", b.path)
+	//nolint:gosec // G306, progress can be readable by other users
+	err = os.WriteFile(tmpPath, p, 0644)
+	if err != nil {
+		return 0, err
+	}
+	return len(p), os.Rename(tmpPath, b.path)
+}
+
+func (b *fileProgressBar) Stop() {
+}
+
+func (b *fileProgressBar) SetProgress(level int, msg string, done int, total int) error {
+	item := fileProgressItem{
+		Msg:   msg,
+		Done:  done,
+		Total: total,
+	}
+	if level >= len(b.levels) {
+		b.levels = append(b.levels, &item)
+	} else {
+		// When a specific level completes, drop all sublevels. For instance, this ensures
+		// that subprogress of stages is cleared after completing a pipeline.
+		if done > b.levels[level].Done {
+			b.levels = b.levels[:level+1]
+		}
+		b.levels[level] = &item
+	}
+
+	for i := 0; i < len(b.levels)-1; i++ {
+		b.levels[i].SubProgress = b.levels[i+1]
+	}
+
+	data, err := json.Marshal(b.levels[0])
+	if err != nil {
+		return err
+	}
+
+	// use os.Rename to ensure atomic updates
+	tmpPath := fmt.Sprintf("%s.1", b.path)
+	//nolint:gosec // G306, progress can be readable by other users
+	err = os.WriteFile(tmpPath, data, 0644)
+	if err != nil {
+		return err
+	}
+	return os.Rename(tmpPath, b.path)
 }

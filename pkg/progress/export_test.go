@@ -8,6 +8,7 @@ type (
 	TerminalProgressBar = terminalProgressBar
 	DebugProgressBar    = debugProgressBar
 	VerboseProgressBar  = verboseProgressBar
+	FileProgressItem    = fileProgressItem
 )
 
 var (

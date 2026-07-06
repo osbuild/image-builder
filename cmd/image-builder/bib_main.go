@@ -219,7 +219,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 }
 
 func bibCmdManifest(cmd *cobra.Command, args []string) error {
-	pbar, err := progress.New("")
+	pbar, err := progress.New("", progress.ProgressConfig{})
 	if err != nil {
 		// this should never happen
 		return fmt.Errorf("cannot create progress bar: %w", err)
@@ -324,7 +324,7 @@ func bibCmdBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("chowning is not allowed in output directory")
 	}
 
-	pbar, err := progress.New(progressType)
+	pbar, err := progress.New(progressType, progress.ProgressConfig{})
 	if err != nil {
 		return fmt.Errorf("cannto create progress bar: %w", err)
 	}

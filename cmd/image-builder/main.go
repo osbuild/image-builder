@@ -310,7 +310,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 			// constructed before we have the img. Use the verbose bar, as the terminal
 			// bar would be overwritten by the next terminal message before anyone could
 			// see it.
-			pbar, err := progress.New("verbose")
+			pbar, err := progress.New("verbose", progress.ProgressConfig{})
 			if err != nil {
 				return nil, err
 			}
@@ -518,7 +518,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
-	pbar, err := progress.New("")
+	pbar, err := progress.New("", progress.ProgressConfig{})
 	if err != nil {
 		return err
 	}
@@ -529,7 +529,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	return cmdManifestWrapper(pbar, cmd, args, img, osStdout, io.Discard, nil)
 }
 
-func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
+func progressFromCmd(cmd *cobra.Command, conf progress.ProgressConfig) (progress.ProgressBar, error) {
 	progressType, err := cmd.Flags().GetString("progress")
 	if err != nil {
 		return nil, err
@@ -542,7 +542,7 @@ func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
 		progressType = "verbose"
 	}
 
-	return progress.New(progressType)
+	return progress.New(progressType, conf)
 }
 
 func cmdBuild(cmd *cobra.Command, args []string) error {
@@ -595,11 +595,6 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("running in VM outside container is not supported yet")
 	}
 
-	pbar, err := progressFromCmd(cmd)
-	if err != nil {
-		return err
-	}
-
 	img, err := getImage(cmd, args)
 	if err != nil {
 		return err
@@ -608,6 +603,13 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	outputDir = basenameFor(img, outputDir)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("cannot create output base directory %s: %w", outputDir, err)
+	}
+
+	pbar, err := progressFromCmd(cmd, progress.ProgressConfig{
+		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basenameFor(img, outputBasename))),
+	})
+	if err != nil {
+		return err
 	}
 
 	pbar.Start()

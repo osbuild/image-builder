@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/image-builder/pkg/osbuild/manifesttest"
+	"github.com/osbuild/image-builder/pkg/progress"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 
@@ -490,8 +491,8 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			"",
 		},
 		{
-			[]string{"--format", "json", "--with-buildlog", "--progress", "debug"},
-			[]string{"centos-9-qcow2-x86_64.buildlog"},
+			[]string{"--format", "json", "--with-buildlog", "--progress", "file"},
+			[]string{"centos-9-qcow2-x86_64.buildlog", "centos-9-qcow2-x86_64.progress"},
 			"{\"success\": true}\n",
 		},
 	} {
@@ -799,7 +800,7 @@ func TestProgressFromCmd(t *testing.T) {
 	} {
 		assert.NoError(t, cmd.Flags().Set("progress", tc.progress))
 		assert.NoError(t, cmd.Flags().Set("verbose", fmt.Sprintf("%v", tc.verbose)))
-		pbar, err := main.ProgressFromCmd(cmd)
+		pbar, err := main.ProgressFromCmd(cmd, progress.ProgressConfig{})
 		assert.NoError(t, err)
 		assert.Equal(t, tc.expectedProgress, fmt.Sprintf("%T", pbar))
 	}
