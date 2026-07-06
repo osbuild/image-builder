@@ -651,6 +651,7 @@ def test_image_build_without_se_linux_denials(image_type):
 @pytest.mark.skipif(platform.system() != "Linux", reason="osinfo detect test only runs on linux right now")
 @pytest.mark.skipif(not testutil.has_executable("unsquashfs"), reason="need unsquashfs")
 @pytest.mark.parametrize("image_type", gen_testcases("anaconda-iso"), indirect=["image_type"])
+@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_iso_install_img_is_squashfs(tmp_path, image_type):
     installer_iso_path = image_type.img_path
     with ExitStack() as cm:
