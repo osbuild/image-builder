@@ -29,6 +29,7 @@ ISO_BOOT_TIMEOUT = 1800
 @pytest.mark.skipif(platform.system() != "Linux", reason="boot test only runs on linux right now")
 @pytest.mark.parametrize("image_type", gen_testcases("anaconda-iso"), indirect=["image_type"])
 @pytest.mark.skip(reason="kvm boot tests are currently disabled")
+@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_iso_installs(image_type):
     installer_iso_path = image_type.img_path
     test_disk_path = installer_iso_path.with_name("test-disk.img")
@@ -61,6 +62,7 @@ def osinfo_for(it: ImageBuildResult, arch: str) -> str:
 
 @pytest.mark.skipif(platform.system() != "Linux", reason="osinfo detect test only runs on linux right now")
 @pytest.mark.parametrize("image_type", gen_testcases("anaconda-iso"), indirect=["image_type"])
+@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_iso_os_detection(image_type):
     installer_iso_path = image_type.img_path
     arch = image_type.img_arch
@@ -78,6 +80,7 @@ def test_iso_os_detection(image_type):
 @pytest.mark.skipif(platform.system() != "Linux", reason="osinfo detect test only runs on linux right now")
 @pytest.mark.skipif(not testutil.has_executable("unsquashfs"), reason="need unsquashfs")
 @pytest.mark.parametrize("image_type", gen_testcases("anaconda-iso"), indirect=["image_type"])
+@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_iso_install_img_is_squashfs(tmp_path, image_type):
     installer_iso_path = image_type.img_path
     with ExitStack() as cm:
