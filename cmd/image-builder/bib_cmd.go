@@ -18,7 +18,7 @@ func setupBibRootCmd() (*cobra.Command, error) {
 
 	rootCmd := &cobra.Command{
 		Use:               "bootc-image-builder",
-		Long:              "Create a bootable image from an ostree native container",
+		Long:              "Build operating system images from bootc containers",
 		PersistentPreRunE: bibRootPreRunE,
 		SilenceErrors:     true,
 		Version:           version,
@@ -33,9 +33,6 @@ func setupBibRootCmd() (*cobra.Command, error) {
 		return nil, err
 	}
 	buildCmd.SetVersionTemplate(version)
-	buildCmd.Short = rootCmd.Long + " (default command)"
-	buildCmd.Long = rootCmd.Long + "\n" + "(default action if no command is given)\n" + "IMAGE_NAME: container image to build into a bootable image"
-	buildCmd.Example = rootCmd.Use + " build quay.io/centos-bootc/centos-bootc:stream9\n" + rootCmd.Use + " quay.io/centos-bootc/centos-bootc:stream9\n"
 	buildCmd.Version = rootCmd.Version
 	rootCmd.AddCommand(buildCmd)
 
