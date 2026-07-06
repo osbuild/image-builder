@@ -244,15 +244,8 @@ type cmdManifestWrapperOptions struct {
 // used in tests
 var manifestgenDepsolver manifestgen.DepsolveFunc
 
-func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) (*imagefilter.Result, error) {
-	if wrapperOpts == nil {
-		wrapperOpts = &cmdManifestWrapperOptions{}
-	}
+func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	repoDir, err := cmd.Flags().GetString("force-repo-dir")
-	if err != nil {
-		return nil, err
-	}
-	rpmmdCacheDir, err := cmd.Flags().GetString("rpmmd-cache")
 	if err != nil {
 		return nil, err
 	}
@@ -275,63 +268,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
-	withSBOM, err := cmd.Flags().GetBool("with-sbom")
-	if err != nil {
-		return nil, err
-	}
-	withRPMList, err := cmd.Flags().GetBool("with-rpmlist")
-	if err != nil {
-		return nil, err
-	}
-	ignoreWarnings, err := cmd.Flags().GetBool("ignore-warnings")
-	if err != nil {
-		return nil, err
-	}
-	outputDir, err := cmd.Flags().GetString("output-dir")
-	if err != nil {
-		return nil, err
-	}
-	ostreeImgOpts, err := ostreeImageOptions(cmd)
-	if err != nil {
-		return nil, err
-	}
-	useLibrepo, err := cmd.Flags().GetBool("use-librepo")
-	if err != nil {
-		return nil, err
-	}
 	bootcDefaultFs, err := cmd.Flags().GetString("bootc-default-fs")
-	if err != nil {
-		return nil, err
-	}
-	var preview *bool
-	// Verify that the flag was actually passed. If it wasn't passed
-	// we keep our nil value so that images used the distro-defined
-	// value for preview. Otherwise use the provided value so the
-	// distro value gets overridden.
-	if cmd.Flags().Lookup("preview").Changed {
-		value, err := cmd.Flags().GetBool("preview")
-		if err != nil {
-			return nil, err
-		}
-		preview = &value
-	}
-	var rpmDownloader osbuild.RpmDownloader
-	if useLibrepo {
-		rpmDownloader = osbuild.RpmDownloaderLibrepo
-	}
-	blueprintPath, err := cmd.Flags().GetString("blueprint")
-	if err != nil {
-		return nil, err
-	}
-	var customSeed *int64
-	if cmd.Flags().Changed("seed") {
-		seedFlagVal, err := cmd.Flags().GetInt64("seed")
-		if err != nil {
-			return nil, err
-		}
-		customSeed = &seedFlagVal
-	}
-	subscription, err := subscriptionImageOptions(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -346,40 +283,11 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return nil, err
 	}
-	bootcInstallerPayloadRef, err := cmd.Flags().GetString("bootc-installer-payload-ref")
-	if err != nil {
-		return nil, err
-	}
-	bootcOmitDefaultKernelArgs, err := cmd.Flags().GetBool("bootc-no-default-kernel-args")
-	if err != nil {
-		return nil, err
-	}
 	forceDefsDir, err := cmd.Flags().GetString("force-defs-dir")
 	if err != nil {
 		return nil, err
 	}
-
-	// no error check here as this is (deliberately) not defined on
-	// "manifest" (if "images" learn to set the output filename in
-	// manifests we would change this
-	outputFilename, _ := cmd.Flags().GetString("output-name")
-
-	bp, err := blueprintload.Load(blueprintPath)
-	if err != nil {
-		return nil, err
-	}
-	if bootcRef == "" {
-		distroStr, err = findDistro(distroStr, bp.Distro)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		distroStr = "bootc-based"
-	}
-
 	imgTypeStr := args[0]
-	pbar.SetPulseMsgf("Manifest generation step")
-	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
 
 	var img *imagefilter.Result
 	if bootcRef != "" {
@@ -398,6 +306,14 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		// disk.yaml always takes priority over --bootc-default-fs and bootc config.
 		diskYamlRootFs := bootcInfo.OSInfo.GetDiskYamlRootFs()
 		if diskYamlRootFs != "" {
+			// XXX: hack, temporary progress bar, the file progress bar cannot be
+			// constructed before we have the img. Use the verbose bar, as the terminal
+			// bar would be overwritten by the next terminal message before anyone could
+			// see it.
+			pbar, err := progress.New("verbose")
+			if err != nil {
+				return nil, err
+			}
 			if bootcDefaultFs != "" {
 				pbar.SetPulseMsgf("Using disk.yaml root filesystem (%s), ignoring --bootc-default-fs (%s)", diskYamlRootFs, bootcDefaultFs)
 			} else if bootcInfo.DefaultRootFs != "" {
@@ -431,10 +347,6 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 			return nil, err
 		}
 		img = &imagefilter.Result{ImgType: imgType, Repos: nil}
-		// XXX: hack to skip repo loading for the bootc image.
-		// We need to add a SkipRepositories or similar to
-		// manifestgen instead to make this clean
-		forceRepos = []string{"https://example.com/not-used"}
 	} else {
 		repoOpts := &repoOptions{
 			RepoDir:      repoDir,
@@ -450,6 +362,130 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if len(img.ImgType.Exports()) > 1 {
 		return nil, fmt.Errorf("image %q has multiple exports: this is current unsupport: please report this as a bug", basenameFor(img, ""))
 	}
+	return img, err
+}
+
+func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, img *imagefilter.Result, w io.Writer, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) error {
+	if wrapperOpts == nil {
+		wrapperOpts = &cmdManifestWrapperOptions{}
+	}
+	repoDir, err := cmd.Flags().GetString("force-repo-dir")
+	if err != nil {
+		return err
+	}
+	rpmmdCacheDir, err := cmd.Flags().GetString("rpmmd-cache")
+	if err != nil {
+		return err
+	}
+	extraRepos, err := cmd.Flags().GetStringArray("extra-repo")
+	if err != nil {
+		return err
+	}
+	forceRepos, err := cmd.Flags().GetStringArray("force-repo")
+	if err != nil {
+		return err
+	}
+	distroStr, err := cmd.Flags().GetString("distro")
+	if err != nil {
+		return err
+	}
+	withSBOM, err := cmd.Flags().GetBool("with-sbom")
+	if err != nil {
+		return err
+	}
+	withRPMList, err := cmd.Flags().GetBool("with-rpmlist")
+	if err != nil {
+		return err
+	}
+	ignoreWarnings, err := cmd.Flags().GetBool("ignore-warnings")
+	if err != nil {
+		return err
+	}
+	outputDir, err := cmd.Flags().GetString("output-dir")
+	if err != nil {
+		return err
+	}
+	ostreeImgOpts, err := ostreeImageOptions(cmd)
+	if err != nil {
+		return err
+	}
+	useLibrepo, err := cmd.Flags().GetBool("use-librepo")
+	if err != nil {
+		return err
+	}
+	var preview *bool
+	// Verify that the flag was actually passed. If it wasn't passed
+	// we keep our nil value so that images used the distro-defined
+	// value for preview. Otherwise use the provided value so the
+	// distro value gets overridden.
+	if cmd.Flags().Lookup("preview").Changed {
+		value, err := cmd.Flags().GetBool("preview")
+		if err != nil {
+			return err
+		}
+		preview = &value
+	}
+	var rpmDownloader osbuild.RpmDownloader
+	if useLibrepo {
+		rpmDownloader = osbuild.RpmDownloaderLibrepo
+	}
+	blueprintPath, err := cmd.Flags().GetString("blueprint")
+	if err != nil {
+		return err
+	}
+	var customSeed *int64
+	if cmd.Flags().Changed("seed") {
+		seedFlagVal, err := cmd.Flags().GetInt64("seed")
+		if err != nil {
+			return err
+		}
+		customSeed = &seedFlagVal
+	}
+	subscription, err := subscriptionImageOptions(cmd)
+	if err != nil {
+		return err
+	}
+	bootcRef, err := cmd.Flags().GetString("bootc-ref")
+	if err != nil {
+		return err
+	}
+	if bootcRef != "" && distroStr != "" {
+		return fmt.Errorf("cannot use --distro with --bootc-ref")
+	}
+	bootcInstallerPayloadRef, err := cmd.Flags().GetString("bootc-installer-payload-ref")
+	if err != nil {
+		return err
+	}
+	bootcOmitDefaultKernelArgs, err := cmd.Flags().GetBool("bootc-no-default-kernel-args")
+	if err != nil {
+		return err
+	}
+
+	// no error check here as this is (deliberately) not defined on
+	// "manifest" (if "images" learn to set the output filename in
+	// manifests we would change this
+	outputFilename, _ := cmd.Flags().GetString("output-name")
+
+	bp, err := blueprintload.Load(blueprintPath)
+	if err != nil {
+		return err
+	}
+	if bootcRef == "" {
+		distroStr, err = findDistro(distroStr, bp.Distro)
+		if err != nil {
+			return err
+		}
+	} else {
+		distroStr = "bootc-based"
+		// XXX: hack to skip repo loading for the bootc image.
+		// We need to add a SkipRepositories or similar to
+		// manifestgen instead to make this clean
+		forceRepos = []string{"https://example.com/not-used"}
+	}
+
+	imgTypeStr := args[0]
+	pbar.SetPulseMsgf("Manifest generation step")
+	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
 
 	opts := &manifestOptions{
 		ManifestgenOptions: manifestgen.Options{
@@ -478,8 +514,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if opts.ManifestgenOptions.UseBootstrapContainer {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
-	err = generateManifest(repoDir, extraRepos, img, w, opts)
-	return img, err
+	return generateManifest(repoDir, extraRepos, img, w, opts)
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
@@ -487,8 +522,11 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	_, err = cmdManifestWrapper(pbar, cmd, args, osStdout, io.Discard, nil)
-	return err
+	img, err := getImage(cmd, args)
+	if err != nil {
+		return err
+	}
+	return cmdManifestWrapper(pbar, cmd, args, img, osStdout, io.Discard, nil)
 }
 
 func progressFromCmd(cmd *cobra.Command) (progress.ProgressBar, error) {
@@ -561,6 +599,17 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	img, err := getImage(cmd, args)
+	if err != nil {
+		return err
+	}
+	// Ensure the output directory exists before (file) progress starts.
+	outputDir = basenameFor(img, outputDir)
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("cannot create output base directory %s: %w", outputDir, err)
+	}
+
 	pbar.Start()
 	defer pbar.Stop()
 	go func() {
@@ -577,13 +626,13 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	// We discard any warnings from the depsolver until we figure out a better
 	// idea (likely in manifestgen)
-	res, err := cmdManifestWrapper(pbar, cmd, args, &mf, io.Discard, opts)
+	err = cmdManifestWrapper(pbar, cmd, args, img, &mf, io.Discard, opts)
 	if err != nil {
 		return err
 	}
 
-	bootMode := res.ImgType.BootMode()
-	uploader, err := uploaderFor(cmd, res.ImgType.Name(), res.ImgType.Arch().Name(), &bootMode, "")
+	bootMode := img.ImgType.BootMode()
+	uploader, err := uploaderFor(cmd, img.ImgType.Name(), img.ImgType.Arch().Name(), &bootMode, "")
 	if errors.Is(err, ErrUploadTypeUnsupported) || errors.Is(err, ErrUploadConfigNotProvided) {
 		err = nil
 	}
@@ -598,7 +647,6 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
-	outputDir = basenameFor(res, outputDir)
 
 	buildOpts := &buildOptions{
 		OutputDir:      outputDir,
@@ -613,7 +661,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		buildOpts.InVm = []string{"image"}
 	}
 	pbar.SetPulseMsgf("Image building step")
-	imagePath, err := buildImage(pbar, res, mf.Bytes(), buildOpts)
+	imagePath, err := buildImage(pbar, img, mf.Bytes(), buildOpts)
 	if err != nil {
 		return err
 	}
