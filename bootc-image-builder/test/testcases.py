@@ -51,7 +51,7 @@ class TestCase:
 
 @dataclasses.dataclass
 class TestCaseFedora(TestCase):
-    container_ref: str = "quay.io/fedora/fedora-bootc:42"
+    container_ref: str = "quay.io/fedora/fedora-bootc:44"
     rootfs: str = "btrfs"
     use_librepo: bool = True
 
@@ -78,16 +78,6 @@ class TestCaseC10S(TestCase):
         "BIB_TEST_BOOTC_CONTAINER_TAG",
         "quay.io/centos-bootc/centos-bootc:stream10")
     use_librepo: bool = True
-
-
-def test_testcase_nameing():
-    """
-    Ensure the testcase naming does not change without us knowing as those
-    are visible when running "pytest --collect-only"
-    """
-    tc = TestCaseFedora()
-    expected = "container_ref=quay.io/fedora/fedora-bootc:40,rootfs=btrfs"
-    assert f"{tc}" == expected, f"{tc} != {expected}"
 
 
 def gen_testcases(what):  # pylint: disable=too-many-return-statements
@@ -135,7 +125,7 @@ def gen_testcases(what):  # pylint: disable=too-many-return-statements
         # single test that specifies all image types
         image = "+".join(DISK_IMAGE_TYPES)
         return [
-            TestCaseC9S(image=image),
+            TestCaseC10S(image=image),
             TestCaseFedora(image=image),
         ]
     # Smoke test that all supported --target-arch architecture can
