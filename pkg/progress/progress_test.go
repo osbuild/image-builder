@@ -2,7 +2,10 @@ package progress_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -34,7 +37,7 @@ func TestProgressNew(t *testing.T) {
 			})
 			defer restoreGetTermSize()
 
-			pb, err := progress.New(tc.typ)
+			pb, err := progress.New(tc.typ, progress.ProgressConfig{})
 			if tc.expectedErr == "" {
 				assert.NoError(t, err)
 				assert.Equal(t, reflect.TypeOf(pb), reflect.TypeOf(tc.expected), fmt.Sprintf("[%v] %T not the expected %T", tc.typ, pb, tc.expected))
@@ -146,9 +149,72 @@ func TestProgressNewAutoselect(t *testing.T) {
 			})
 			defer restoreGetTermSize()
 
-			pb, err := progress.New("auto")
+			pb, err := progress.New("auto", progress.ProgressConfig{})
 			assert.NoError(t, err)
 			assert.Equal(t, reflect.TypeOf(pb), reflect.TypeOf(tc.expected), fmt.Sprintf("[%v] %T not the expected %T", tc.onTerm, pb, tc.expected))
 		})
 	}
+}
+
+func TestFileProgress(t *testing.T) {
+	testDir := t.TempDir()
+	progressFile := filepath.Join(testDir, "progress")
+
+	pbar, err := progress.NewFileProgressBar(progressFile)
+	assert.NoError(t, err)
+	pbar.Start()
+	_, err = os.Stat(progressFile)
+	assert.True(t, os.IsNotExist(err))
+
+	pbar.SetPulseMsgf("pulse-msg")
+	_, err = os.Stat(progressFile)
+	assert.True(t, os.IsNotExist(err))
+	pbar.SetMessagef("some-message")
+	_, err = os.Stat(progressFile)
+	assert.True(t, os.IsNotExist(err))
+
+	err = pbar.SetProgress(0, "set-progress-msg", 0, 5)
+	assert.NoError(t, err)
+	data, err := os.ReadFile(progressFile)
+	assert.NoError(t, err)
+	var item progress.FileProgressItem
+	err = json.Unmarshal(data, &item)
+	assert.NoError(t, err)
+	assert.Equal(t, progress.FileProgressItem{
+		Msg:   "set-progress-msg",
+		Done:  0,
+		Total: 5,
+	}, item)
+
+	err = pbar.SetProgress(1, "set-subprogress-msg", 0, 1)
+	assert.NoError(t, err)
+	data, err = os.ReadFile(progressFile)
+	assert.NoError(t, err)
+	item = progress.FileProgressItem{}
+	err = json.Unmarshal(data, &item)
+	assert.NoError(t, err)
+	assert.Equal(t, progress.FileProgressItem{
+		Msg:   "set-progress-msg",
+		Done:  0,
+		Total: 5,
+		SubProgress: &progress.FileProgressItem{
+			Msg:   "set-subprogress-msg",
+			Done:  0,
+			Total: 1,
+		},
+	}, item)
+
+	// subprogress is cleared after the above progress increments done counter
+	err = pbar.SetProgress(0, "set-2nd-progress-msg", 1, 5)
+	assert.NoError(t, err)
+	data, err = os.ReadFile(progressFile)
+	assert.NoError(t, err)
+	item = progress.FileProgressItem{}
+	err = json.Unmarshal(data, &item)
+	assert.NoError(t, err)
+	assert.Equal(t, progress.FileProgressItem{
+		Msg:   "set-2nd-progress-msg",
+		Done:  1,
+		Total: 5,
+	}, item)
 }

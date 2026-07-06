@@ -34,7 +34,7 @@ exit 112
 `))
 	defer restore()
 
-	pbar, err := progress.New("debug")
+	pbar, err := progress.New("debug", progress.ProgressConfig{})
 	assert.NoError(t, err)
 	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, nil)
 	assert.EqualError(t, err, `error running osbuild: exit status 112
@@ -61,7 +61,7 @@ done
 `, signalDeliveredMarkerPath)))
 	defer restore()
 
-	pbar, err := progress.New("debug")
+	pbar, err := progress.New("debug", progress.ProgressConfig{})
 	assert.NoError(t, err)
 	err = progress.RunOSBuild(pbar, []byte(`{"fake":"manifest"}`), nil, nil)
 	assert.EqualError(t, err, `error parsing osbuild status, please report a bug and try with "--progress=verbose": cannot scan line "invalid-json\n": invalid character 'i' looking for beginning of value`)
@@ -99,7 +99,7 @@ sleep 0.1
 	restore = progress.MockOsStderr(&fakeStderr)
 	defer restore()
 
-	pbar, err := progress.New("term")
+	pbar, err := progress.New("term", progress.ProgressConfig{})
 	assert.NoError(t, err)
 
 	var buildLog bytes.Buffer
@@ -128,7 +128,7 @@ echo osbuild-stdout-output
 	restore = progress.MockOsStderr(&fakeStderr)
 	defer restore()
 
-	pbar, err := progress.New("verbose")
+	pbar, err := progress.New("verbose", progress.ProgressConfig{})
 	assert.NoError(t, err)
 
 	var buildLog bytes.Buffer
@@ -148,7 +148,7 @@ func TestRunOSBuildCacheMaxSize(t *testing.T) {
 	restore := progress.MockOsbuildCmd(fakeOsbuildBinary)
 	defer restore()
 
-	pbar, err := progress.New("debug")
+	pbar, err := progress.New("debug", progress.ProgressConfig{})
 	assert.NoError(t, err)
 
 	osbuildOpts := &progress.OSBuildOptions{

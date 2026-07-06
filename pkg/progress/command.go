@@ -45,7 +45,7 @@ func RunOSBuild(pb ProgressBar, manifest []byte, exports []string, opts *OSBuild
 	// checked with them we can remove the runOSBuildNoProgress() and
 	// just run with the new runOSBuildWithProgress() helper.
 	switch pb.(type) {
-	case *terminalProgressBar, *debugProgressBar:
+	case *terminalProgressBar, *debugProgressBar, *fileProgressBar:
 		return runOSBuildWithProgress(pb, manifest, exports, opts)
 	default:
 		return runOSBuildNoProgress(pb, manifest, exports, opts)
