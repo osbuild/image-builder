@@ -109,7 +109,7 @@ func TestCobraCmdline(t *testing.T) {
 		restore := mockOsArgs(tc.cmdline)
 		defer restore()
 
-		rootCmd, err := main.BuildCobraCmdline()
+		rootCmd, err := main.SetupBibRootCmd()
 		assert.NoError(t, err)
 		addRunLog(rootCmd, &runeCall)
 
@@ -141,7 +141,7 @@ func TestCobraCmdlineVerbose(t *testing.T) {
 		restore := mockOsArgs(tc.cmdline)
 		defer restore()
 
-		rootCmd, err := main.BuildCobraCmdline()
+		rootCmd, err := main.SetupBibRootCmd()
 		assert.NoError(t, err)
 
 		// collect progressFlag value
@@ -213,7 +213,7 @@ func TestHandleAWSFlags(t *testing.T) {
 			return &fau, nil
 		}))
 
-		rootCmd, err := main.BuildCobraCmdline()
+		rootCmd, err := main.SetupBibRootCmd()
 		assert.NoError(t, err)
 		// Commands() returns commandsordered by name
 		buildCmd := rootCmd.Commands()[0]
