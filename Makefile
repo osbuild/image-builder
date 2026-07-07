@@ -58,7 +58,7 @@ BASE_CONTAINER_IMAGE_NAME?=registry.fedoraproject.org/fedora
 BASE_CONTAINER_IMAGE_TAG?=43
 BASE_CONTAINER_IMAGE?=${BASE_CONTAINER_IMAGE_NAME}:${BASE_CONTAINER_IMAGE_TAG}
 
-CONTAINERFILE=Containerfile
+CONTAINERFILE=devel/Containerfile
 CONTAINER_IMAGE?=osbuild-images_$(shell echo $(BASE_CONTAINER_IMAGE) | tr '/:.' '_')
 CONTAINER_EXECUTABLE?=podman
 
@@ -246,5 +246,3 @@ $(BUILDDIR)/:
 
 $(BUILDDIR)/%/:
 	mkdir -p "$@"
-
-
