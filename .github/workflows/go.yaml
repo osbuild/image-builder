@@ -23,7 +23,7 @@ jobs:
       # (go.opencensus.io/trace)
       GOPROXY: "https://proxy.golang.org,direct"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install Golang
         run: dnf install -y golang
       - name: Vendor Go dependencies
