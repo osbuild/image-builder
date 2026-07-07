@@ -12,7 +12,7 @@ and are run via the gitlab CI.
 go build -o bin/build ./cmd/build
 sudo ./bin/build --output ./buildtest --rpmmd /tmp/rpmmd --distro fedora-41 --type qcow2 --config test/configs/embed-containers.json
 ```
-will build a Fedora 38 qcow2 image using the configuration specified in the file `embed-containers.json`
+will build a Fedora 41 qcow2 image using the configuration specified in the file `embed-containers.json`
 
 - [./cmd/gen-manifests](../cmd/gen-manifests) generates manifests based on the configs specified in [./test/config-list.json](./config-list.json). The config list maps configuration files to image types, distributions, and architectures.  An empty list means it applies to all values.  Globs are supported.
 
@@ -47,7 +47,7 @@ to connect run:
 ssh -i /tmp/tmpg56bxqko/testkey -p 52387 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no osbuild@localhost
 ```
 The ssh command can just be copy/pasted and gives access to the vm running the image. The
-`check-host-config` binary and configuration will be availabe inside /tmp to inspect/run.
+`check-host-config` binary and configuration will be available inside /tmp to inspect/run.
 
 If qemu-user-static/qemu-system-$arch is installed `build-image --arch <arch>` is also supported,
 e.g. `build-image --arch ppc64le centos-10 qcow2 ./test/configs/empty.json` will create a
@@ -132,7 +132,7 @@ The following describe the stages that are run for each distro-arch combination.
 
 #### 1. Generate build config
 
-The first stage of the workflow runs the `./test/generate-build-config` script.
+The first stage of the workflow runs the `./test/scripts/generate-build-config` script.
 
 The config generator:
 - Generates all the manifests for a given distribution and architecture using the `./cmd/gen-manifests` tool.
@@ -194,16 +194,16 @@ for example:
 
 #### 3. Generate ostree build config
 
-This stage of the workflow runs the `./test/generate-ostree-build-config` script. It has the same purpose as the config generator in the first step, but it sets up ostree containers to serve commits to generate manifests for the image types that depend on them.
+This stage of the workflow runs the `./test/scripts/generate-ostree-build-config` script. It has the same purpose as the config generator in the first step, but it sets up ostree containers to serve commits to generate manifests for the image types that depend on them.
 
 The config generator:
 - Generates all the manifests for build config dependencies for a given distribution and architecture using the `./cmd/gen-manifests` tool.
   - Build config dependencies are image type and config pairings that appear in the `depends` part of a build config .
-  - For example [iot-ostree-pull-empty](./configs/iot-ostree-pull-empty.json)) will cause a manifest to be generated for `iot-container` with the `empty` config for all distros.
+  - For example [iot-ostree-pull-empty](./configs/iot-ostree-pull-empty.json) will cause a manifest to be generated for `iot-container` with the `empty` config for all distros.
 - Determines the container name and tag from the build name and manifest ID and pulls each container from the registry.
 - Runs each container with a unique port mapped to the internal web service port.
 - For each build config that defines a dependency and for each image that config applies to, creates build configs and a config list that defines the URL, port, and ref for the ostree commit source.
-  - For example, the config [iot-ostree-pull-empty](./configs/iot-ostree-pull-empty.json)) is mapped in the [config-list](config-list.json) to the image types `iot-ami`, `iot-installer`, `iot-raw-image`, and `iot-vsphere`. This will create four configs for each distro, one for each image type, that will all have ostree options to pull an ostree commit from an `iot-container` of the same distro.
+  - For example, the config [iot-ostree-pull-empty](./configs/iot-ostree-pull-empty.json) is mapped in the [config-list](config-list.json) to the image types `iot-ami`, `iot-installer`, `iot-raw-image`, and `iot-vsphere`. This will create four configs for each distro, one for each image type, that will all have ostree options to pull an ostree commit from an `iot-container` of the same distro.
 - Generates all the manifests defined in the config list that was generated in the previous step.
   - Note that this manifest generation step uses the `-skip-noconfig` flag, which means that any image type not defined in the list is skipped.
 - Downloads the test build cache.
