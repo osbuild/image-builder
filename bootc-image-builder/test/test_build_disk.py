@@ -215,7 +215,7 @@ def sign_container_image(gpg_conf: GPGConf, registry_conf: RegistryConf, contain
 
 @pytest.fixture(name="image_type", scope="session")
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def image_type_fixture(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf, registry_conf):
+def image_type_fixture(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf):
     """
     Build an image inside the passed build_container and return an
     ImageBuildResult with the resulting image path and user/password
@@ -224,8 +224,7 @@ def image_type_fixture(shared_tmpdir, build_container, request, force_aws_upload
     """
     testutil.pull_container(request.param.container_ref, request.param.target_arch)
 
-    with build_images(shared_tmpdir, build_container,
-                      request, force_aws_upload, gpg_conf, registry_conf) as build_results:
+    with build_images(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf) as build_results:
         return build_results[0]
 
 
@@ -245,7 +244,7 @@ def images_fixture(shared_tmpdir, build_container, request, force_aws_upload, gp
 # XXX: refactor
 # pylint: disable=too-many-locals,too-many-branches,too-many-statements,too-many-arguments,too-many-positional-arguments
 @contextmanager
-def build_images(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf, registry_conf):
+def build_images(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf, registry_conf=None):
     """
     Build all available image types if necessary and return the results for
     the image types that were requested via :request:.
