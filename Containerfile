@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/fedora:43 AS builder
+FROM registry.fedoraproject.org/fedora:44 AS builder
 RUN dnf install -y git-core golang gpgme-devel libassuan-devel && mkdir -p /build/
 WORKDIR /build
 COPY go.mod go.sum ./
@@ -11,7 +11,7 @@ COPY . .
 # the chmod/chown logic work as those need cgo/libnss (in the general case)
 RUN CGO_ENABLED=0 make build
 
-FROM registry.fedoraproject.org/fedora:43
+FROM registry.fedoraproject.org/fedora:44
 
 # podman mount needs this
 RUN mkdir -p /etc/containers/networks
@@ -33,5 +33,5 @@ VOLUME /var/lib/containers/storage
 LABEL description="This tools allows to build and deploy disk-images."
 LABEL io.k8s.description="This tools allows to build and deploy disk-images."
 LABEL io.k8s.display-name="Image Builder"
-LABEL io.openshift.tags="base fedora43"
+LABEL io.openshift.tags="base fedora44"
 LABEL summary="A container to create disk-images."
