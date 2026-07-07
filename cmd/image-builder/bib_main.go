@@ -326,12 +326,12 @@ func bibCmdBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cannot ensure ownership: %w", err)
 	}
 	if !canChown && chown != "" {
-		return fmt.Errorf("chowning is not allowed in output directory")
+		return fmt.Errorf("chown permission check failed for the output directory")
 	}
 
 	pbar, err := progress.New(progressType, progress.ProgressConfig{})
 	if err != nil {
-		return fmt.Errorf("cannto create progress bar: %w", err)
+		return fmt.Errorf("failed to initialise progress bar: %w", err)
 	}
 	defer pbar.Stop()
 
