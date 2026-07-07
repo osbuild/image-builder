@@ -20,7 +20,7 @@ jobs:
       - name: Install project dependencies
         run: sudo apt install -y libgpgme-dev libbtrfs-dev libvirt-dev
       - name: "Clone Repository"
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v6
       - name: Run linters
@@ -30,7 +30,7 @@ jobs:
     name: "Manifest"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/testdeps
       - name: Install integration test env
         run: |
@@ -45,7 +45,7 @@ jobs:
     name: "Build"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/testdeps
       - name: Install integration test env
         run: |
@@ -60,7 +60,7 @@ jobs:
     name: "Build (Cross-Architecture)"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/testdeps
       - name: Install integration test env
         run: |
@@ -78,7 +78,7 @@ jobs:
     name: "Smoke"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/testdeps
       - name: Install integration test env
         run: |
