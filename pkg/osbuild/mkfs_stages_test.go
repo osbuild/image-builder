@@ -509,6 +509,33 @@ func TestGenFsStagesUnitVfatGeometry(t *testing.T) {
 	}, stages)
 }
 
+func TestGenFsStagesUnitXfsAGCount(t *testing.T) {
+	pt := &disk.PartitionTable{
+		Type: disk.PT_GPT,
+		Partitions: []disk.Partition{
+			{
+				Payload: &disk.Filesystem{
+					Type:       "xfs",
+					Mountpoint: "/",
+					MkfsOptions: disk.MkfsOptions{
+						AGCount: 4,
+					},
+				},
+			},
+		},
+	}
+	stages := GenFsStages(pt, "file.img", "build")
+	assert.Equal(t, []*Stage{
+		{
+			Type: "org.osbuild.mkfs.xfs",
+			Options: &MkfsXfsStageOptions{
+				AGCount: 4,
+			},
+			Devices: defaultStageDevices,
+		},
+	}, stages)
+}
+
 func TestGenFsStagesUnhappy(t *testing.T) {
 	pt := &disk.PartitionTable{
 		Type: disk.PT_GPT,
@@ -543,6 +570,26 @@ func TestGenFsStagesUnhappyWrongOptionsVerity(t *testing.T) {
 	}
 
 	assert.PanicsWithValue(t, "fs type: xfs does not support verity option", func() {
+		GenFsStages(pt, "file.img", "build")
+	})
+}
+
+func TestGenFsStagesUnhappyWrongOptionsAGCount(t *testing.T) {
+	pt := &disk.PartitionTable{
+		Type: disk.PT_GPT,
+		Partitions: []disk.Partition{
+			{
+				Payload: &disk.Filesystem{
+					Type: "ext4",
+					MkfsOptions: disk.MkfsOptions{
+						AGCount: 4,
+					},
+				},
+			},
+		},
+	}
+
+	assert.PanicsWithValue(t, "fs type: ext4 does not support agcount option", func() {
 		GenFsStages(pt, "file.img", "build")
 	})
 }
