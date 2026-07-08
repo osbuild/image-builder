@@ -23,9 +23,9 @@ func TestMkfsOptionsClone(t *testing.T) {
 	orig := disk.MkfsOptions{
 		Verity:   true,
 		Geometry: &Geometry,
+		AGCount:  4,
 	}
 	clone := orig.Clone()
 	assert.Equal(t, orig, clone)
 	assert.False(t, reflect.ValueOf(orig.Geometry).Pointer() == reflect.ValueOf(clone.Geometry).Pointer())
-
 }
