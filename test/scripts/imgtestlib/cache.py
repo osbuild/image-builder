@@ -8,7 +8,7 @@ from .build import (gen_build_name, get_manifest_id, read_build_info,
                     write_build_info)
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
-from .testenv import get_host_distro, get_osbuild_commit
+from .testenv import get_ci_runner_for, get_osbuild_commit
 
 S3_BUCKET = "s3://" + os.environ.get("AWS_BUCKET", "images-ci-cache")
 S3_PREFIX = "images/builds"
@@ -62,7 +62,8 @@ def gen_build_info_dir_path_prefix(distro=None, arch=None, manifest_id=None, osb
     responsible for prepending the location root to the generated path.
 
     If no 'osbuild_ref' is specified, the value returned by get_osbuild_commit() for the 'runner_distro' will be used.
-    if no 'runner_distro' is specified, the value returned by get_host_distro() will be used.
+    if no 'runner_distro' is specified, calls get_ci_runner_for() to get the corresponding runner for the distro and
+    architecture from the Schutzfile (with image type "*").
 
     A fully specified path is returned if all of the 'distro', 'arch' and 'manifest_id' parameters are specified,
     otherwise a partial path is returned. Partial path may be useful for working with a superset of build infos.
@@ -73,7 +74,12 @@ def gen_build_info_dir_path_prefix(distro=None, arch=None, manifest_id=None, osb
     The returned path always has a trailing separator at the end to signal that it is a directory.
     """
     if runner_distro is None:
-        runner_distro = get_host_distro()
+        runner = get_ci_runner_for(distro, arch, image_type="*")
+        # Runners are defined as <platform>/<distro> (e.g. aws/fedora-44)
+        runner = runner.split("/")[1]
+        # special case for CentOS Stream. Our runners use centos-stream-N but the cache path generator reads os-release
+        # to create the host distro name, which ends up as centos-N
+        runner_distro = runner.replace("centos-stream", "centos")
     if osbuild_ref is None:
         osbuild_ref = get_osbuild_commit(runner_distro)
 
