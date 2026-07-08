@@ -118,7 +118,7 @@ def test_read_seed():
 ))
 def test_gen_build_info_dir_path_prefix(kwargs, expected):
     # we need to patch the functions that were imported into the cache namespace, not the originals in .testenv
-    with patch("imgtestlib.cache.get_host_distro", return_value="fedora-999"), \
+    with patch("imgtestlib.cache.get_ci_runner_for", return_value="aws/fedora-999"), \
          patch("imgtestlib.cache.get_osbuild_commit", return_value="abcdef123456"):
         assert testlib.cache.gen_build_info_dir_path_prefix(**kwargs) == expected
 
@@ -206,7 +206,7 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
 ))
 def test_gen_build_info_s3_dir_path(kwargs, expected):
     # we need to patch the functions that were imported into the cache namespace, not the originals in .testenv
-    with patch("imgtestlib.cache.get_host_distro", return_value="fedora-999"), \
+    with patch("imgtestlib.cache.get_ci_runner_for", return_value="aws/fedora-999"), \
          patch("imgtestlib.cache.get_osbuild_commit", return_value="abcdef123456"):
         assert testlib.cache.gen_build_info_s3_dir_path(**kwargs) == expected
 
