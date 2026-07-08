@@ -198,6 +198,9 @@ func uploaderForCmdOpenstack(cmd *cobra.Command, targetArchStr string, bootMode 
 	if err != nil {
 		return nil, err
 	}
+	if image == "" {
+		return nil, fmt.Errorf("%w: %q", ErrUploadConfigNotProvided, []string{"--openstack-image"})
+	}
 	diskFormat, err := cmd.Flags().GetString("openstack-disk-format")
 	if err != nil {
 		return nil, err
