@@ -99,6 +99,12 @@ For a `payload_type: filesystem` the `payload` has the following properties:
 - `fstab_options`
 - `fstab_freq`
 - `fstab_passno`
+- `mkfs_options`, an *optional* object containing filesystem-specific mkfs options. Currently supported properties:
+  - `verity`, an *optional* `boolean` to enable fs-verity (ext4 only).
+  - `geometry`, an *optional* object for drive geometry (vfat only), with the following properties:
+    - `heads`, an `integer` setting the number of heads.
+    - `sectors_per_track`, an `integer` setting the number of sectors per track.
+  - `agcount`, an *optional* `integer` setting the number of allocation groups (xfs only).
 
 Here's an example defining a few partition with XFS filesystem(s):
 
@@ -132,6 +138,32 @@ partition_table:
         type: "xfs"
         label: "root"
         mountpoint: "/"
+```
+
+To pass custom mkfs options, use the `mkfs_options` field. For example, to set the XFS allocation group count:
+
+```yaml
+    - payload_type: "filesystem"
+      payload:
+        type: "xfs"
+        label: "root"
+        mountpoint: "/"
+        mkfs_options:
+          agcount: 4
+```
+
+Or to set custom drive geometry on a vfat partition:
+
+```yaml
+    - payload_type: "filesystem"
+      payload:
+        type: "vfat"
+        mountpoint: "/boot/efi"
+        label: "ESP"
+        mkfs_options:
+          geometry:
+            heads: 64
+            sectors_per_track: 32
 ```
 
 ###### LVM
