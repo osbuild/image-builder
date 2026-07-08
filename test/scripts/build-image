@@ -21,7 +21,7 @@ def main():
     arch = args.arch
     config_path = args.config
 
-    testlib.build_image(distro, arch, image_type, config_path)
+    testlib.build.build_image(distro, arch, image_type, config_path)
 
 
 if __name__ == "__main__":

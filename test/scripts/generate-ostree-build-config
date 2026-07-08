@@ -29,7 +29,7 @@ build/{distro}/{arch}/{image_type}/{config_name}:
 
 
 def read_config_list():
-    with open(testlib.CONFIG_LIST, "r", encoding="utf-8") as config_list_file:
+    with open(testlib.core.CONFIG_LIST, "r", encoding="utf-8") as config_list_file:
         return json.load(config_list_file)
 
 
@@ -43,7 +43,7 @@ def configs_with_deps(configs, distro=None, arch=None):
     Filter on distro and arch if specified.
     """
     with_deps = []
-    config_list_dir = os.path.abspath(os.path.dirname(testlib.CONFIG_LIST))
+    config_list_dir = os.path.abspath(os.path.dirname(testlib.core.CONFIG_LIST))
     for item in configs:
         path = item["path"]
         filters = item["filters"]
@@ -105,8 +105,8 @@ def gen_dependency_manifests(config_list, distro, arch, outputdir):
     with NamedTemporaryFile(mode="w") as tmpfile:
         json.dump(dep_config_list, tmpfile)
         tmpfile.flush()
-        err = testlib.gen_manifests(outputdir, config_list=tmpfile.name,
-                                    distros=distros, arches=[arch], images=gen_image_types)
+        err = testlib.core.gen_manifests(outputdir, config_list=tmpfile.name,
+                                         distros=distros, arches=[arch], images=gen_image_types)
     # print stderr in case there were errors or warnings about skipped configurations
     # but filter out the annoying ones
     stderr = err.decode().splitlines()
@@ -118,7 +118,7 @@ def gen_dependency_manifests(config_list, distro, arch, outputdir):
         print(line)
 
     print("✅ Manifest generation done!\n")
-    return testlib.read_manifests(outputdir)
+    return testlib.core.read_manifests(outputdir)
 
 
 def gen_image_manifests(config_list, configs, distro, arch, outputdir):
@@ -147,9 +147,9 @@ def gen_image_manifests(config_list, configs, distro, arch, outputdir):
         with open(config_list_path, "w", encoding="utf-8") as config_list_file:
             json.dump(config_list, config_list_file)
 
-        err = testlib.gen_manifests(outputdir, config_list=config_list_path,
-                                    arches=[arch], distros=distros, commits=True,
-                                    flatpaks=True, skip_no_config=True)
+        err = testlib.core.gen_manifests(outputdir, config_list=config_list_path,
+                                         arches=[arch], distros=distros, commits=True,
+                                         flatpaks=True, skip_no_config=True)
 
     # print stderr in case there were errors or warnings about skipped configurations
     # but filter out the annoying ones
@@ -162,7 +162,7 @@ def gen_image_manifests(config_list, configs, distro, arch, outputdir):
         print(line)
 
     print("✅ Manifest generation done!\n")
-    return testlib.read_manifests(outputdir)
+    return testlib.core.read_manifests(outputdir)
 
 
 def default_ref(distro, arch):
@@ -217,9 +217,9 @@ def setup_dependencies(manifests, config_list, distro, arch):
         if distro:
             distros = [distro]
         arches = [arch]
-        image_configs = testlib.list_images(distros=distros,
-                                            arches=arches,
-                                            images=filters.get("image-types"))
+        image_configs = testlib.core.list_images(distros=distros,
+                                                 arches=arches,
+                                                 images=filters.get("image-types"))
 
         distros_to_skip = []
         for skip in filters.get("skip-distros", []):
@@ -234,9 +234,9 @@ def setup_dependencies(manifests, config_list, distro, arch):
                 continue
             ic_arch = image_config["arch"]
             ic_image_type = image_config["image-type"]
-            dep_build_name = testlib.gen_build_name(ic_distro, ic_arch, dep_image_type, dep_config_name)
+            dep_build_name = testlib.build.gen_build_name(ic_distro, ic_arch, dep_image_type, dep_config_name)
             manifest_id = manifests[dep_build_name + ".json"]["id"]
-            container_s3_prefix = testlib.gen_build_info_s3_dir_path(distro, arch, manifest_id)
+            container_s3_prefix = testlib.cache.gen_build_info_s3_dir_path(distro, arch, manifest_id)
             container_s3_path = os.path.join(container_s3_prefix, "container", "container.tar")
 
             # start each container once on an incremental port
@@ -284,19 +284,19 @@ def setup_dependencies(manifests, config_list, distro, arch):
             with TemporaryDirectory() as container_dir:
                 print(f"⬇️ Downloading container archive from {container_s3_path}")
                 container_archive = os.path.join(container_dir, "container.tar")
-                testlib.runcmd_nc(["aws", "s3", "cp", "--no-progress", container_s3_path, container_archive])
+                testlib.run.runcmd_nc(["aws", "s3", "cp", "--no-progress", container_s3_path, container_archive])
                 print(f"📦 Starting container oci-archive:{container_archive} {port}")
                 # Running podman as root is not necessary, but currently it's failing with permission errors.
                 # Run it with sudo for now until we figure out the issue.
-                cont_id, _ = testlib.runcmd(["sudo", "podman", "run", "-d", "--rm", f"-p{port}:8080",
-                                             f"oci-archive:{container_archive}"])
+                cont_id, _ = testlib.run.runcmd(["sudo", "podman", "run", "-d", "--rm", f"-p{port}:8080",
+                                                 f"oci-archive:{container_archive}"])
                 container_ids.append(cont_id.strip().decode())
 
         yield new_config_list, new_configs, container_configs
     finally:
         if container_ids:
             print("📦 Stopping containers")
-            out, _ = testlib.runcmd(["sudo", "podman", "stop", *container_ids])
+            out, _ = testlib.run.runcmd(["sudo", "podman", "stop", *container_ids])
             print(out.decode())
 
 
@@ -311,7 +311,7 @@ def generate_configs(build_requests, container_configs, pipeline_file, configs_d
 
         config_name = config["name"]
 
-        build_name = testlib.gen_build_name(distro, arch, image_type, config_name)
+        build_name = testlib.build.gen_build_name(distro, arch, image_type, config_name)
         image_path = f"./build/{build_name}"
         # generate script line to pull and start container
         container = container_configs[config_name]
@@ -328,7 +328,7 @@ def generate_configs(build_requests, container_configs, pipeline_file, configs_d
         run_container_cmd = f"sudo podman run -d --rm -p{container_port}:8080 oci-archive:container.tar"
 
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
-                                                runner=testlib.get_common_ci_runner(),
+                                                runner=testlib.testenv.get_common_ci_runner(),
                                                 config_name=config_name, config=build_config_path,
                                                 dl_container=dl_container_cmd,
                                                 start_container=run_container_cmd,
@@ -338,7 +338,7 @@ def generate_configs(build_requests, container_configs, pipeline_file, configs_d
 
 
 def main():
-    parser = testlib.clargs()
+    parser = testlib.core.clargs()
     parser.add_argument("build_configs", type=str, help="directory to write individual build configs")
     args = parser.parse_args()
 
@@ -347,7 +347,7 @@ def main():
     distro = args.distro
     arch = args.arch
 
-    testlib.check_config_names()
+    testlib.core.check_config_names()
 
     config_list = configs_with_deps(read_config_list(), distro, arch)  # filtered config list: only configs with deps
 
@@ -360,15 +360,15 @@ def main():
             manifest_dir = os.path.join(cache_root, "manifests")
             manifests = gen_image_manifests(pull_config_list, pull_configs, distro, arch, manifest_dir)
 
-        build_requests = testlib.filter_builds(manifests, distro=distro, arch=arch, skip_ostree_pull=False)
+        build_requests = testlib.core.filter_builds(manifests, distro=distro, arch=arch, skip_ostree_pull=False)
 
     with open(config_path, "w", encoding="utf-8") as config_file:
         if len(build_requests) == 0:
             print("⚫ No manifest changes detected. Generating null config.")
-            config_file.write(testlib.NULL_CONFIG)
+            config_file.write(testlib.core.NULL_CONFIG)
             return
 
-        config_file.write(testlib.BASE_CONFIG)
+        config_file.write(testlib.core.BASE_CONFIG)
         generate_configs(build_requests, containers, config_file, configs_dir)
 
 

@@ -8,9 +8,9 @@ import imgtestlib as testlib
 def main():
     ref = "quay.io/centos-bootc/bootc-image-builder:latest"
     cmd = ["skopeo", "inspect", "--raw", f"docker://{ref}"]
-    out, _ = testlib.runcmd(cmd)
+    out, _ = testlib.run.runcmd(cmd)
     data = json.loads(out)
-    if not testlib.is_manifest_list(data):
+    if not testlib.core.is_manifest_list(data):
         raise RuntimeError(f"{ref} is not a manifest list")
 
     checksum = hashlib.sha256(out).hexdigest()
@@ -18,11 +18,11 @@ def main():
     ref_no_tag = ":".join(ref.split(":")[:-1])
     new_ref = f"{ref_no_tag}@{digest}"
 
-    with open(testlib.SCHUTZFILE, encoding="utf-8") as schutzfile:
+    with open(testlib.testenv.SCHUTZFILE, encoding="utf-8") as schutzfile:
         data = json.load(schutzfile)
 
     data["common"]["dependencies"]["bootc-image-builder"]["ref"] = new_ref
-    with open(testlib.SCHUTZFILE, "w", encoding="utf-8") as schutzfile:
+    with open(testlib.testenv.SCHUTZFILE, "w", encoding="utf-8") as schutzfile:
         json.dump(data, schutzfile, indent=2)
 
 

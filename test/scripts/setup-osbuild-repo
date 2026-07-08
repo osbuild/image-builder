@@ -49,10 +49,10 @@ def write_repo(commit, distro_version):
         repofile.write(REPO_TEMPLATE.format(commit=commit, baseurl=repo_baseurl))
 
 
-@testlib.log_section("Setting up osbuild repo")
+@testlib.gitlab.log_section("Setting up osbuild repo")
 def main():
-    distro_version = testlib.get_host_distro()
-    commit_id = testlib.get_osbuild_commit(distro_version)
+    distro_version = testlib.testenv.get_host_distro()
+    commit_id = testlib.testenv.get_osbuild_commit(distro_version)
     if not commit_id:
         print(f"Error: {distro_version} does not have the osbuild commit ID defined in the Schutzfile")
         sys.exit(1)

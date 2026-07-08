@@ -36,7 +36,7 @@ def osbuild_main_commit_id():
 
 
 def update_osbuild_commit_ids(new):
-    with open(testlib.SCHUTZFILE, encoding="utf-8") as schutzfile:
+    with open(testlib.testenv.SCHUTZFILE, encoding="utf-8") as schutzfile:
         data = json.load(schutzfile)
 
     unique_changes = []
@@ -50,7 +50,7 @@ def update_osbuild_commit_ids(new):
             unique_changes.append(change)
         data[distro].setdefault("dependencies", {}).setdefault("osbuild", {})["commit"] = new
 
-    with open(testlib.SCHUTZFILE, encoding="utf-8", mode="w") as schutzfile:
+    with open(testlib.testenv.SCHUTZFILE, encoding="utf-8", mode="w") as schutzfile:
         json.dump(data, schutzfile, indent="  ")
 
     with open("github_pr_body.txt", encoding="utf-8", mode="w") as pr_body:

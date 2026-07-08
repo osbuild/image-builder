@@ -18,7 +18,7 @@ def main():
     build_config_path = args.config
     keep = args.keep_booted
 
-    testlib.boot_image(search_path, build_config_path, keep)
+    testlib.boot.boot_image(search_path, build_config_path, keep)
 
 
 if __name__ == "__main__":

@@ -39,7 +39,7 @@ def main():
     build_info_dir = os.path.dirname(args.build_info) if args.build_info else build_dir
 
     print(f"📜 Reading 'info.json' from {build_info_dir}")
-    build_info = testlib.read_build_info(build_info_dir)
+    build_info = testlib.build.read_build_info(build_info_dir)
 
     distro = build_info["distro"]
     arch = build_info["arch"]
@@ -48,7 +48,7 @@ def main():
     runner_distro = build_info.get("runner-distro")
 
     if runner_distro is None:
-        runner_distro = testlib.get_common_ci_runner_distro()
+        runner_distro = testlib.testenv.get_common_ci_runner_distro()
         print("⚠️ Runner distro not found in the build info. " +
               f"Using the CI runner distro from the current branch: {runner_distro}", file=sys.stderr)
 
@@ -59,14 +59,14 @@ def main():
     print(f"    osbuild-ref: {osbuild_ref}")
     print(f"    runner-distro: {runner_distro}")
 
-    out, dl_ok = testlib.dl_build_cache(build_dir, distro, arch, osbuild_ref, runner_distro, manifest_id)
+    out, dl_ok = testlib.cache.dl_build_cache(build_dir, distro, arch, osbuild_ref, runner_distro, manifest_id)
     print(out)
     if not dl_ok:
         print("❌ Failed to download the image build cache", file=sys.stderr)
         sys.exit(1)
 
     print("✅ Successfully downloaded the image build cache")
-    testlib.touch_s3(distro, arch, manifest_id, osbuild_ref, runner_distro)
+    testlib.cache.touch_s3(distro, arch, manifest_id, osbuild_ref, runner_distro)
 
 
 if __name__ == "__main__":

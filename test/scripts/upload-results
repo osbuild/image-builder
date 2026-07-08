@@ -18,7 +18,7 @@ def main():
     config_path = args.config
     arch = os.uname().machine
 
-    testlib.upload_results(distro, arch, image_type, config_path)
+    testlib.cache.upload_results(distro, arch, image_type, config_path)
 
 
 if __name__ == "__main__":

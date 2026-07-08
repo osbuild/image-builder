@@ -7,7 +7,7 @@ import imgtestlib as testlib
 
 ARCHITECTURES = ["x86_64", "aarch64"]
 MANIFEST_ONLY_ARCHES = ["ppc64le", "s390x"]
-RUNNER = testlib.get_common_ci_runner()
+RUNNER = testlib.testenv.get_common_ci_runner()
 OSTREE_DISTROS = ["fedora", "rhel-8", "rhel-9", "centos-9"]
 
 
@@ -145,7 +145,7 @@ def sort_configs(configs):
 
 def main():
     config_path = sys.argv[1]
-    images = testlib.list_images(arches=ARCHITECTURES)
+    images = testlib.core.list_images(arches=ARCHITECTURES)
     combos = set()
 
     gen_stage = []
@@ -184,7 +184,7 @@ def main():
             arch=img["arch"],
             runner=RUNNER))
 
-    man_only_images = testlib.list_images(arches=MANIFEST_ONLY_ARCHES)
+    man_only_images = testlib.core.list_images(arches=MANIFEST_ONLY_ARCHES)
     man_gen_stage = []
     for img in sort_configs(man_only_images):
         combo = (img["distro"], img["arch"])
@@ -196,7 +196,7 @@ def main():
 
     with open(config_path, "w", encoding="utf-8") as config_file:
         config_file.write(BASE_CONFIG.format(runner=RUNNER))
-        config_file.write(testlib.BASE_CONFIG)
+        config_file.write(testlib.core.BASE_CONFIG)
         config_file.write("\n".join(gen_stage))
         config_file.write("\n".join(trigger_stage))
         config_file.write("\n".join(ostree_gen_stage))

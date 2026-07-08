@@ -25,7 +25,7 @@ build/{distro}/{arch}/{image_type}/{config_name}:
 """
 
 
-@testlib.log_section("Generating manifests")
+@testlib.gitlab.log_section("Generating manifests")
 def generate_manifests(outputdir, distro, arch):
     """
     Generate all manifest using the default config list and return a dictionary mapping each manifest file to the
@@ -38,7 +38,7 @@ def generate_manifests(outputdir, distro, arch):
         distros = [distro]
 
     print(f"🗒️ Generating all manifests using the default config list for {target}")
-    err = testlib.gen_manifests(outputdir, arches=[arch], distros=distros)
+    err = testlib.core.gen_manifests(outputdir, arches=[arch], distros=distros)
 
     # print stderr in case there were errors or warnings about skipped configurations
     # but filter out the annoying ones
@@ -51,7 +51,7 @@ def generate_manifests(outputdir, distro, arch):
         print(line)
 
     print("✅ Manifest generation done!\n")
-    return testlib.read_manifests(outputdir)
+    return testlib.core.read_manifests(outputdir)
 
 
 def generate_configs(build_requests, pipeline_file):
@@ -64,13 +64,13 @@ def generate_configs(build_requests, pipeline_file):
 
         config_name = config["name"]
 
-        build_name = testlib.gen_build_name(distro, arch, image_type, config_name)
+        build_name = testlib.build.gen_build_name(distro, arch, image_type, config_name)
         image_path = f"./build/{build_name}"
 
-        runner = testlib.get_ci_runner_for(distro, arch, image_type)
-        tag = testlib.get_tag_for(runner)
+        runner = testlib.testenv.get_ci_runner_for(distro, arch, image_type)
+        tag = testlib.core.get_tag_for(runner)
 
-        config_path = os.path.join(testlib.CONFIGS_PATH, config_name+".json")
+        config_path = os.path.join(testlib.core.CONFIGS_PATH, config_name+".json")
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
                                                 runner=runner, tag=tag,
                                                 config_name=config_name, config=config_path,
@@ -80,26 +80,26 @@ def generate_configs(build_requests, pipeline_file):
 
 
 def main():
-    parser = testlib.clargs()
+    parser = testlib.core.clargs()
     args = parser.parse_args()
 
     config_path = args.config
     distro = args.distro
     arch = args.arch
 
-    testlib.check_config_names()
+    testlib.core.check_config_names()
 
     with TemporaryDirectory() as manifest_dir:
         manifests = generate_manifests(manifest_dir, distro, arch)
-        build_requests = testlib.filter_builds(manifests, distro=distro, arch=arch)
+        build_requests = testlib.core.filter_builds(manifests, distro=distro, arch=arch)
 
     with open(config_path, "w", encoding="utf-8") as config_file:
         if len(build_requests) == 0:
             print("⚫ No manifest changes detected. Generating null config.")
-            config_file.write(testlib.NULL_CONFIG)
+            config_file.write(testlib.core.NULL_CONFIG)
             return
 
-        config_file.write(testlib.BASE_CONFIG)
+        config_file.write(testlib.core.BASE_CONFIG)
         generate_configs(build_requests, config_file)
 
 
