@@ -43,7 +43,7 @@ def check_build_coverage(cachedir):
                 built_pr.add((distro, arch, image, config, commit))
 
     all_combos = set()
-    for config in testlib.list_images(arches=["x86_64", "aarch64"]):
+    for config in testlib.core.list_images(arches=["x86_64", "aarch64"]):
         distro = config["distro"]
         arch = config["arch"]
         image = config["image-type"]
@@ -60,7 +60,7 @@ def main():
     parser.add_argument("cachedir", type=str, help="path to download the build test cache")
     args = parser.parse_args()
     cachedir = args.cachedir
-    _, ok = testlib.dl_build_info(cachedir)
+    _, ok = testlib.cache.dl_build_info(cachedir)
     # fail the job if the sync failed
     if not ok:
         sys.exit(1)

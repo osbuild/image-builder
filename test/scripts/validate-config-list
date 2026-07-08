@@ -56,7 +56,7 @@ def validate_build_config(config_list):
         arches = filters.get("arches", ["*"])
         image_types = filters.get("image-types", ["*"])
 
-        matches = testlib.list_images(distros=distros, arches=arches, images=image_types)
+        matches = testlib.core.list_images(distros=distros, arches=arches, images=image_types)
         if not matches:
             no_matches.append((config, filters))
 

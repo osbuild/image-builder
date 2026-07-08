@@ -23,14 +23,14 @@ def can_sudo_nopw() -> bool:
 
 
 def test_runcmd():
-    stdout, stderr = testlib.runcmd(["/bin/echo", "hello"])
+    stdout, stderr = testlib.run.runcmd(["/bin/echo", "hello"])
     assert stdout == b"hello\n"
     assert stderr == b""
 
 
 def test_runcmd_env():
     os.environ["RUNCMD_GLOBAL_TEST_VAR"] = "global test value"
-    stdout, stderr = testlib.runcmd(["env"], extra_env={"RUNCMD_TEST_VAR": "the test value"})
+    stdout, stderr = testlib.run.runcmd(["env"], extra_env={"RUNCMD_TEST_VAR": "the test value"})
     assert b"RUNCMD_TEST_VAR=the test value\n" in stdout, "extra env var not set"
     assert b"RUNCMD_GLOBAL_TEST_VAR=global test value\n" in stdout, "global env vars not preserved"
     assert stderr == b""
@@ -38,7 +38,7 @@ def test_runcmd_env():
 
 def test_read_seed():
     # check that it's read without error - no need to test the value itself
-    seed_env = testlib.rng_seed_env()
+    seed_env = testlib.testenv.rng_seed_env()
     assert "OSBUILD_TESTING_RNG_SEED" in seed_env
 
 
@@ -121,7 +121,7 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
     # we need to patch the functions that were imported into the cache namespace, not the originals in .testenv
     with patch("imgtestlib.cache.get_host_distro", return_value="fedora-999"), \
          patch("imgtestlib.cache.get_osbuild_commit", return_value="abcdef123456"):
-        assert testlib.gen_build_info_dir_path_prefix(**kwargs) == expected
+        assert testlib.cache.gen_build_info_dir_path_prefix(**kwargs) == expected
 
 
 @pytest.mark.parametrize("kwargs,expected", (
@@ -133,7 +133,7 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "arch": "aarch64",
             "manifest_id": "abc123"
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX +
         "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/aarch64/manifest-id-abc123/",
     ),
     (
@@ -143,7 +143,7 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "distro": "fedora-41",
             "arch": "aarch64",
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX +
         "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/aarch64/",
     ),
     (
@@ -152,7 +152,7 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "runner_distro": "fedora-41",
             "distro": "fedora-41",
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX +
         "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/",
     ),
     (
@@ -160,7 +160,7 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "osbuild_ref": "abcdef123456",
             "runner_distro": "fedora-41",
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX +
         "/osbuild-ref-abcdef123456/runner-fedora-41/",
     ),
     # Optional arg 'distro' not specified, thus following optional args 'arch' and 'manifest_id' are ignored
@@ -171,7 +171,7 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "arch": "aarch64",
             "manifest_id": "abc123"
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX +
         "/osbuild-ref-abcdef123456/runner-fedora-41/",
     ),
     # Optional arg 'arch' not specified, thus following optional arg 'manifest_id' is ignored
@@ -182,7 +182,7 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
             "distro": "fedora-41",
             "manifest_id": "abc123"
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX +
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX +
         "/osbuild-ref-abcdef123456/runner-fedora-41/fedora-41/",
     ),
     # default osbuild_ref
@@ -190,26 +190,26 @@ def test_gen_build_info_dir_path_prefix(kwargs, expected):
         {
             "runner_distro": "fedora-41",
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + "/osbuild-ref-abcdef123456/runner-fedora-41/"
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX + "/osbuild-ref-abcdef123456/runner-fedora-41/"
     ),
     # default runner_distro
     (
         {
             "osbuild_ref": "abc123",
         },
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + "/osbuild-ref-abc123/runner-fedora-999/"
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX + "/osbuild-ref-abc123/runner-fedora-999/"
     ),
     # default osbuild_ref and runner_distro
     (
         {},
-        testlib.S3_BUCKET + "/" + testlib.S3_PREFIX + "/osbuild-ref-abcdef123456/runner-fedora-999/"
+        testlib.cache.S3_BUCKET + "/" + testlib.cache.S3_PREFIX + "/osbuild-ref-abcdef123456/runner-fedora-999/"
     ),
 ))
 def test_gen_build_info_s3_dir_path(kwargs, expected):
     # we need to patch the functions that were imported into the cache namespace, not the originals in .testenv
     with patch("imgtestlib.cache.get_host_distro", return_value="fedora-999"), \
          patch("imgtestlib.cache.get_osbuild_commit", return_value="abcdef123456"):
-        assert testlib.gen_build_info_s3_dir_path(**kwargs) == expected
+        assert testlib.cache.gen_build_info_s3_dir_path(**kwargs) == expected
 
 
 test_container = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
@@ -239,8 +239,8 @@ image_ids = {
 def test_skopeo_inspect_id_manifest_list(arch):
     transport = "docker://"
     image_id = image_ids[arch]
-    assert testlib.skopeo_inspect_id(f"{transport}{test_container}:latest", arch) == image_id
-    assert testlib.skopeo_inspect_id(f"{transport}{test_container}@{manifest_list_digest}", arch) == image_id
+    assert testlib.core.skopeo_inspect_id(f"{transport}{test_container}:latest", arch) == image_id
+    assert testlib.core.skopeo_inspect_id(f"{transport}{test_container}@{manifest_list_digest}", arch) == image_id
 
 
 @pytest.mark.parametrize("arch", TEST_ARCHES)
@@ -249,7 +249,7 @@ def test_skopeo_inspect_image_manifest(arch):
     manifest_id = manifest_ids[arch]
     image_id = image_ids[arch]
     # arch arg to skopeo_inspect_id doesn't matter here
-    assert testlib.skopeo_inspect_id(f"{transport}{test_container}@{manifest_id}", arch) == image_id
+    assert testlib.core.skopeo_inspect_id(f"{transport}{test_container}@{manifest_id}", arch) == image_id
 
 
 @pytest.mark.skipif(not can_sudo_nopw(), reason="requires passwordless sudo")
@@ -259,10 +259,11 @@ def test_skopeo_inspect_localstore(arch):
     transport = "containers-storage:"
     image = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test:latest"
     with tempfile.TemporaryDirectory() as tmpdir:
-        testlib.runcmd(["sudo", "podman", "pull", f"--arch={arch}", "--storage-driver=vfs", f"--root={tmpdir}", image])
+        testlib.run.runcmd(["sudo", "podman", "pull",
+                            f"--arch={arch}", "--storage-driver=vfs", f"--root={tmpdir}", image])
 
         # arch arg to skopeo_inspect_id doesn't matter here
-        assert testlib.skopeo_inspect_id(f"{transport}[vfs@{tmpdir}]{image}", arch) == image_ids[arch]
+        assert testlib.core.skopeo_inspect_id(f"{transport}[vfs@{tmpdir}]{image}", arch) == image_ids[arch]
 
 
 def test_find_image_file_single_export():
@@ -287,7 +288,7 @@ def test_find_image_file_single_export():
             f.write("fake image")
 
         # Test that it finds the correct file
-        result = testlib.find_image_file(tmpdir)
+        result = testlib.core.find_image_file(tmpdir)
         assert result == image_file
 
 
@@ -315,7 +316,7 @@ def test_find_image_file_multiple_pipelines_one_export():
             f.write("fake archive")
 
         # Test that it finds the correct file from the exported pipeline
-        result = testlib.find_image_file(tmpdir)
+        result = testlib.core.find_image_file(tmpdir)
         assert result == image_file
 
 
@@ -335,7 +336,7 @@ def test_find_image_file_no_export_directory():
 
         # Don't create any export directories
         with pytest.raises(RuntimeError, match="Expected exactly one exported pipeline directory"):
-            testlib.find_image_file(tmpdir)
+            testlib.core.find_image_file(tmpdir)
 
 
 def test_find_image_file_multiple_export_directories():
@@ -362,7 +363,7 @@ def test_find_image_file_multiple_export_directories():
 
         # Should raise error about multiple export directories
         with pytest.raises(RuntimeError, match="Expected exactly one exported pipeline directory"):
-            testlib.find_image_file(tmpdir)
+            testlib.core.find_image_file(tmpdir)
 
 
 def test_find_image_file_no_files_in_export():
@@ -385,7 +386,7 @@ def test_find_image_file_no_files_in_export():
 
         # Should raise error about no files
         with pytest.raises(RuntimeError, match="Expected exactly one file in export directory"):
-            testlib.find_image_file(tmpdir)
+            testlib.core.find_image_file(tmpdir)
 
 
 def test_find_image_file_multiple_files_in_export():
@@ -411,7 +412,7 @@ def test_find_image_file_multiple_files_in_export():
 
         # Should raise error about multiple files
         with pytest.raises(RuntimeError, match="Expected exactly one file in export directory"):
-            testlib.find_image_file(tmpdir)
+            testlib.core.find_image_file(tmpdir)
 
 
 def test_get_free_port():

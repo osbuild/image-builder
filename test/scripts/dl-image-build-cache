@@ -117,8 +117,8 @@ def main():
     if args.image_type and args.skip_image_type:
         parser.error("--image-type and --skip-image-type are mutually exclusive")
 
-    runner_distro = testlib.get_common_ci_runner_distro()
-    osbuild_ref = testlib.get_osbuild_commit(runner_distro)
+    runner_distro = testlib.testenv.get_common_ci_runner_distro()
+    osbuild_ref = testlib.testenv.get_osbuild_commit(runner_distro)
     if osbuild_ref is None:
         raise RuntimeError(f"Failed to determine osbuild commit for {runner_distro} from the Schutzfile")
 
@@ -128,7 +128,7 @@ def main():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         print("📜 Generating current manifests to determine their IDs")
-        err = testlib.gen_manifests(tmpdir, arches=args.arch, distros=args.distro, images=args.image_type)
+        err = testlib.core.gen_manifests(tmpdir, arches=args.arch, distros=args.distro, images=args.image_type)
         # print stderr in case there were errors or warnings about skipped configurations
         # but filter out the annoying ones
         stderr = err.decode().splitlines()
@@ -138,7 +138,7 @@ def main():
             if "Failed to load consumer certs" in line:
                 continue
             print(line)
-        manifest_gen_data = testlib.read_manifests(tmpdir)
+        manifest_gen_data = testlib.core.read_manifests(tmpdir)
 
     build_cache_infos = gen_manifest_data_to_build_cache_info(manifest_gen_data, args.config, args.skip_image_type)
 
@@ -162,9 +162,9 @@ def main():
         config = build_cache_info["config"]
         manifest_id = build_cache_info["manifest-id"]
 
-        target_dir = os.path.join(output_dir, testlib.gen_build_name(distro, arch, image_type, config))
+        target_dir = os.path.join(output_dir, testlib.build.gen_build_name(distro, arch, image_type, config))
 
-        out, dl_ok = testlib.dl_build_cache(
+        out, dl_ok = testlib.cache.dl_build_cache(
             target_dir, distro, arch, osbuild_ref, runner_distro, manifest_id, s3_include_only)
         if not dl_ok:
             failed_downloads.append(build_cache_info)

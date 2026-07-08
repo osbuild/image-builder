@@ -24,7 +24,8 @@ def _test_cases():
     boot_tests = set()
     for tcase in all_test_cases:
         _, arch, image_type, _ = tcase.split(",")
-        if not (image_type in testlib.CAN_BOOT_TEST["*"] or image_type in testlib.CAN_BOOT_TEST.get(arch, [])):
+        if not (image_type in testlib.core.CAN_BOOT_TEST["*"] or
+                image_type in testlib.core.CAN_BOOT_TEST.get(arch, [])):
             continue
         # XXX: we need to filter further here, i.e. not all qemu tests can be run currently, e.g.
         # if sshd is missing (see boot_image.ensure_can_run_qemu_test - however this needs
@@ -46,7 +47,7 @@ def test_build_only(distro, arch, image_type, config_name):
     config_path = f"test/configs/{config_name}.json"
     subprocess.check_call(
         ["./test/scripts/build-image", distro, image_type, config_path])
-    build_dir = os.path.join("build", testlib.gen_build_name(distro, arch, image_type, config_name))
+    build_dir = os.path.join("build", testlib.build.gen_build_name(distro, arch, image_type, config_name))
     subprocess.check_call(
         ["./test/scripts/boot-image", build_dir, config_path])
 
@@ -58,6 +59,6 @@ def test_build_and_boot(distro, arch, image_type, config_name):
     config_path = f"test/configs/{config_name}.json"
     subprocess.check_call(
         ["./test/scripts/build-image", distro, image_type, config_path])
-    build_dir = os.path.join("build", testlib.gen_build_name(distro, arch, image_type, config_name))
+    build_dir = os.path.join("build", testlib.build.gen_build_name(distro, arch, image_type, config_name))
     subprocess.check_call(
         ["./test/scripts/boot-image", build_dir, config_path])

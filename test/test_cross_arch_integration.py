@@ -29,6 +29,6 @@ def test_build_boot_cross_arch_smoke(arch):
     config_path = f"test/configs/{config_name}.json"
     subprocess.check_call(
         ["./test/scripts/build-image", f"--arch={arch}", distro, image_type, config_path])
-    build_dir = os.path.join("build", testlib.gen_build_name(distro, arch, image_type, config_name))
+    build_dir = os.path.join("build", testlib.build.gen_build_name(distro, arch, image_type, config_name))
     subprocess.check_call(
         ["./test/scripts/boot-image", build_dir, config_path])
