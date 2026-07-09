@@ -7,7 +7,7 @@ from typing import List, Optional
 from .build import (gen_build_name, get_manifest_id, read_build_info,
                     write_build_info)
 from .gitlab import log_section
-from .run import runcmd_nc
+from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit
 
 S3_BUCKET = "s3://" + os.environ.get("AWS_BUCKET", "images-ci-cache")
@@ -149,3 +149,32 @@ def upload_results(distro, arch, image_type, config_path):
     print(f"⬆️ Uploading info.json to {s3url}")
     runcmd_nc(["aws", "s3", "cp", "--no-progress", "--acl=private", "--recursive", build_dir+"/", s3url])
     print("✅ DONE!!")
+
+
+def s3ls(path):
+    """
+    Calls 'aws s3api list-objects-v2' and returns a list of S3 URLs for each object in the path.
+    Expects an S3 URL.
+    """
+    if not path.startswith("s3://"):
+        raise ValueError(f"unexpected path {path}: expected S3 URL (s3://)")
+
+    path = path.removeprefix("s3://")
+    bucket, prefix = path.split("/", 1)
+    response_json, _ = runcmd(["aws", "s3api", "list-objects-v2",
+                               "--output", "json",
+                               "--bucket", bucket,
+                               "--prefix", prefix])
+
+    response = json.loads(response_json)
+    if "Contents" not in response:
+        raise RuntimeError(f"unexpected or empty response: {response_json}")
+
+    item_paths = []
+    for item in response["Contents"]:
+        if "Key" in item:  # explicitly ignore items with no Key
+            key = item["Key"]
+            item_s3url = f"s3://{bucket}/{key}"
+            item_paths.append(item_s3url)
+
+    return item_paths
