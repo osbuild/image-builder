@@ -271,7 +271,7 @@ The following progress types are supported:
 * term: Terminal based output, spinner, progressbar and most details of osbuild are hidden
 * debug: Details how the progress is called, mostly useful for bugreports
 
-Note that when no value is given the progress is auto-detected baed on the environment. When `stdin` is a terminal the "term" progress is used, otherwise "verbose". The output of `verbose` is exactaly the same as it was before progress reporting was implemented.
+Note that when no value is given the progress is auto-detected based on the environment. When `stdin` is a terminal the "term" progress is used, otherwise "verbose". The output of `verbose` is exactly the same as it was before progress reporting was implemented.
 
 ## ☁️ Cloud uploaders
 
@@ -530,7 +530,7 @@ The `rootfs` option (or source container config, see [Detailed description of op
 
 ### Anaconda ISO (installer) options (`installer`, mapping)
 
-Users can include kickstart file content that will be added to an ISO build to configure the installation process. When using custom kickstart scripts the customization needs to be done via the custom kickstart script. For example using a `[customizations.user]` block alongside a `[customizations.installer.kickstart]` block is not supported. See this issue [https://github.com/osbuild/bootc-image-builder/issues/528] for additional detail.
+Users can include kickstart file content that will be added to an ISO build to configure the installation process. When using custom kickstart scripts the customization needs to be done via the custom kickstart script. For example using a `[customizations.user]` block alongside a `[customizations.installer.kickstart]` block is not supported. See [this issue](https://github.com/osbuild/bootc-image-builder/issues/528) for additional detail.
 
 Since multi-line strings are difficult to write and read in json, it's easier to use the toml format when adding kickstart contents:
 
