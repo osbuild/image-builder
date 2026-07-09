@@ -181,6 +181,24 @@ def default_ref(distro, arch):
     return f"{name}/{version}/{arch}/{product}"     # pylint: disable=possibly-used-before-assignment
 
 
+def find_container_tarball(path):
+    """
+    Since we changed to building images in CI with image-builder [1], exported images now have more meaningful names
+    that contain the distribution, architecture, and image type name. It's possible to determine this name from the
+    information, but for a while we're going to be in a transition where the cache might contain images from before the
+    PR that are still relevant, cached images. Use this function to get the first tarball in the given cache directory
+    to use.
+
+    https://github.com/osbuild/image-builder/pull/2462
+    """
+    items = testlib.cache.s3ls(path)
+    for item in items:
+        if item.endswith(".tar"):
+            return item
+
+    raise RuntimeError(f"failed to find container tarball in {path}")
+
+
 @contextmanager
 def setup_dependencies(manifests, config_list, distro, arch):
     # pylint: disable=too-many-statements
@@ -237,7 +255,7 @@ def setup_dependencies(manifests, config_list, distro, arch):
             dep_build_name = testlib.build.gen_build_name(ic_distro, ic_arch, dep_image_type, dep_config_name)
             manifest_id = manifests[dep_build_name + ".json"]["id"]
             container_s3_prefix = testlib.cache.gen_build_info_s3_dir_path(distro, arch, manifest_id)
-            container_s3_path = os.path.join(container_s3_prefix, "container", "container.tar")
+            container_s3_path = find_container_tarball(container_s3_prefix)
 
             # start each container once on an incremental port
             port = container_ports.get(container_s3_path)
