@@ -123,7 +123,7 @@ func TestUnmarshalNullPayload(t *testing.T) {
 func TestAllPayloadEntityExported(t *testing.T) {
 	modulePath := "."
 	cfg := &packages.Config{
-		Mode: packages.NeedTypes | packages.NeedTypesInfo,
+		Mode: packages.NeedTypes | packages.NeedTypesInfo | packages.NeedImports | packages.NeedDeps,
 	}
 	pkgs, err := packages.Load(cfg, modulePath)
 	assert.NoError(t, err)
