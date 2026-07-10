@@ -502,6 +502,11 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			[]string{prefix + ".buildlog"},
 			"{\"success\": true}\n",
 		},
+		{
+			[]string{"--with-upload-result"},
+			[]string{prefix + ".upload-result"},
+			"",
+		},
 	} {
 		t.Run(strings.Join(tc.args, ","), func(t *testing.T) {
 			outputDir := filepath.Join(t.TempDir(), "output")

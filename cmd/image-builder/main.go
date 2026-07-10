@@ -19,6 +19,7 @@ import (
 
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/cloud"
 	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
@@ -578,6 +579,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	withUploadResult, err := cmd.Flags().GetBool("with-upload-result")
+	if err != nil {
+		return err
+	}
 	withMetrics, err := cmd.Flags().GetBool("with-metrics")
 	if err != nil {
 		return err
@@ -683,9 +688,26 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintf(osStdout, "Image build successful: %s\n", imagePath)
 
+	// Default upload result to write out in case no uploader was specified
+	uploadResult := &cloud.UploadResult{
+		Provider: "LocalPath",
+		ImageID:  imagePath,
+	}
 	if uploader != nil {
 		// XXX: integrate better into the progress, see bib
-		if _, err := uploadImageWithProgress(uploader, imagePath); err != nil {
+		uploadResult, err = uploadImageWithProgress(uploader, imagePath)
+		if err != nil {
+			return err
+		}
+	}
+	if withUploadResult {
+		p := filepath.Join(outputDir, fmt.Sprintf("%s.upload-result", basenameFor(img, outputBasename)))
+		data, err := json.Marshal(uploadResult)
+		if err != nil {
+			return err
+		}
+		// #nosec: G306
+		if err := os.WriteFile(p, data, 0640); err != nil {
 			return err
 		}
 	}
@@ -940,6 +962,11 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	buildCmd.Flags().String("output-name", "", "set specific output basename")
 	buildCmd.Flags().Bool("in-vm", false, `run the osbuild pipeline in a virtual machine`)
 	buildCmd.Flags().String("format", "", "Output in a specific format (json)")
+	// hide this flag for now, this is only relevant for cockpit-image-builder
+	buildCmd.Flags().Bool("with-upload-result", false, `export upload result`)
+	if err := buildCmd.Flags().MarkHidden("with-upload-result"); err != nil {
+		return err
+	}
 	rootCmd.AddCommand(buildCmd)
 	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
 	// add after the rest of the uploadCmd flag set is added to avoid
