@@ -69,6 +69,42 @@ partition_table:
 
 - `type`, an `enum` that can be `gpt` or `dos` and sets the partition table format to use.
 - `partitions`, a list of objects each of which represents a partition.
+- `size`, an *optional* string with units to set the overall disk size (e.g. `"10 GiB"`). If omitted the disk will be sized to fit all partitions.
+- `grow_root_to_fill_disk`, an *optional* boolean (defaults to `true`). When `true` (or omitted), the partition containing the root filesystem (`/`) is automatically grown to fill any remaining disk space. Set to `false` to keep the root partition at its specified size, leaving unallocated space on the disk. This is useful when the image is expected to be grown at first boot (e.g. via `cloud-utils-growpart`) or when you want a compact disk image.
+
+Here's an example using `grow_root_to_fill_disk: false` to produce a 10 GiB disk where the root partition stays at 4 GiB, leaving the remaining space unallocated:
+
+```yaml
+mount_configuration: "units"
+partition_table:
+  type: "gpt"
+  size: "10 GiB"
+  grow_root_to_fill_disk: false
+  partitions:
+    - size: "1 MiB"
+      type: "21686148-6449-6e6F-744e-656564454649"
+      bootable: true
+    - size: "200 MiB"
+      type: "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
+      payload_type: "filesystem"
+      payload:
+        type: "vfat"
+        mountpoint: "/boot/efi"
+        label: "ESP"
+        fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+        fstab_freq: 0
+        fstab_passno: 2
+    - size: "4 GiB"
+      type: "0fc63daf-8483-4772-8e79-3d69d8477de4"
+      payload_type: "filesystem"
+      payload:
+        type: "ext4"
+        label: "root"
+        mountpoint: "/"
+        fstab_options: "defaults"
+        fstab_freq: 0
+        fstab_passno: 0
+```
 
 #### Partitions
 
