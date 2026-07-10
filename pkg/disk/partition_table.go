@@ -585,7 +585,7 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	// add the extra padding specified in the partition table
 	footer += datasizes.Size(pt.ExtraPadding)
 
-	// If the sum of all partitions is bigger then the specified size,
+	// If the sum of all partitions is bigger than the specified size,
 	// we use that instead. Grow the partition table size if needed.
 	end := pt.AlignUp(datasizes.Size(root.Start) + footer + root.Size)
 	if end > size {
