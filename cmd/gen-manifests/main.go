@@ -317,7 +317,7 @@ func makeManifestJob(
 		}()
 		msgq <- fmt.Sprintf("Starting job %s", filename)
 
-		manifest, _, err := imgType.Manifest(&bp, options, allRepos, &seedArg)
+		mf, _, err := imgType.Manifest(&bp, options, allRepos, &seedArg)
 		if err != nil {
 			err = fmt.Errorf("[%s] failed: %s", filename, err)
 			return
@@ -326,7 +326,7 @@ func makeManifestJob(
 		var depsolvedSets map[string]depsolvednf.DepsolveResult
 		if content["packages"] {
 			solver := depsolvednf.NewSolver(distribution.ModulePlatformID(), distribution.Releasever(), archName, distribution.Name(), cacheDir)
-			depsolvedSets, err = solver.DepsolveAll(common.Must(manifest.GetPackageSetChains()))
+			depsolvedSets, err = solver.DepsolveAll(common.Must(mf.GetPackageSetChains()))
 			if err != nil {
 				err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
 				return
@@ -338,7 +338,7 @@ func makeManifestJob(
 				}
 			}
 		} else {
-			depsolvedSets, err = manifestmock.Depsolve(common.Must(manifest.GetPackageSetChains()), archName, bc, false)
+			depsolvedSets, err = manifestmock.Depsolve(common.Must(mf.GetPackageSetChains()), archName, bc, false)
 			if err != nil {
 				err = fmt.Errorf("[%s] manifestmock depsolve failed: %s", filename, err.Error())
 				return
@@ -347,35 +347,35 @@ func makeManifestJob(
 
 		var containerSpecs map[string][]container.Spec
 		if content["containers"] {
-			containerSpecs, err = container.NewResolver(archName).ResolveAll(manifest.GetContainerSourceSpecs())
+			containerSpecs, err = container.NewResolver(archName).ResolveAll(mf.GetContainerSourceSpecs())
 			if err != nil {
 				return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
 			}
 		} else {
-			containerSpecs = manifestmock.ResolveContainers(manifest.GetContainerSourceSpecs())
+			containerSpecs = manifestmock.ResolveContainers(mf.GetContainerSourceSpecs())
 		}
 
 		var commitSpecs map[string][]ostree.CommitSpec
 		if content["commits"] {
-			commitSpecs, err = ostree.ResolveAll(manifest.GetOSTreeSourceSpecs())
+			commitSpecs, err = ostree.ResolveAll(mf.GetOSTreeSourceSpecs())
 			if err != nil {
 				return fmt.Errorf("[%s] ostree commit resolution failed: %s", filename, err.Error())
 			}
 		} else {
-			commitSpecs = manifestmock.ResolveCommits(manifest.GetOSTreeSourceSpecs())
+			commitSpecs = manifestmock.ResolveCommits(mf.GetOSTreeSourceSpecs())
 		}
 
 		var flatpakSpecs map[string][]flatpak.Spec
 		if content["flatpaks"] {
-			flatpakSpecs, err = flatpak.ResolveAll(manifest.GetFlatpakSourceSpecs())
+			flatpakSpecs, err = flatpak.ResolveAll(mf.GetFlatpakSourceSpecs())
 			if err != nil {
 				return fmt.Errorf("[%s] flatpak resolution failed: %s", filename, err.Error())
 			}
 		} else {
-			flatpakSpecs = manifestmock.ResolveFlatpaks(manifest.GetFlatpakSourceSpecs())
+			flatpakSpecs = manifestmock.ResolveFlatpaks(mf.GetFlatpakSourceSpecs())
 		}
 
-		mf, err := manifest.Serialize(depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, nil)
+		mfs, err := mf.Serialize(depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, nil)
 		if err != nil {
 			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
 		}
@@ -388,7 +388,7 @@ func makeManifestJob(
 			Config:       bc,
 		}
 		if cs != nil {
-			err = cs.recordManifestChecksum(mf, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, filename, metadata)
+			err = cs.recordManifestChecksum(mfs, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, filename, metadata)
 		} else {
 			fpath := filepath.Join(path, filename)
 			fp, createErr := os.Create(fpath)
@@ -396,7 +396,7 @@ func makeManifestJob(
 				return fmt.Errorf("failed to create output file %q: %s\n", fpath, createErr.Error())
 			}
 			defer fp.Close()
-			err = save(fp, true, mf, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, filename, metadata)
+			err = save(fp, true, mfs, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, filename, metadata)
 		}
 		return
 	}
