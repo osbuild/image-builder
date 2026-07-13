@@ -289,9 +289,9 @@ func makeManifestJob(
 		}
 	}
 
-	// add RHSM fact to detect changes
+	// add RHSM fact to match ./cmd/image-builder
 	options.Facts = &facts.ImageOptions{
-		APIType: facts.TEST_APITYPE,
+		APIType: facts.IBCLI_APITYPE,
 	}
 
 	// Extend the repositories with the custom repositories from the build config
