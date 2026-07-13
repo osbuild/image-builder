@@ -146,8 +146,15 @@ func cmdPkgSearch(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// XXX set sensible cache dir
-	cacheDir := ""
+	cacheDir, err := cmd.Flags().GetString("rpmmd-cache")
+	if err != nil {
+		return err
+	}
+
+	if cacheDir == "" {
+		cacheDir = defaultCacheDir()
+	}
+
 	solver := depsolvednf.NewSolver(d.ModulePlatformID(), d.Releasever(), archStr, d.Name(), cacheDir)
 	results, err := solver.SearchMetadata(searchRepos, args)
 	if err != nil {

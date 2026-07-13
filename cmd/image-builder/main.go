@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-
 	"strings"
 	"syscall"
 
@@ -593,7 +592,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 	// Fail early if the cache directory is not writable, instead of
 	// waiting for osbuild to fail after slow manifest generation.
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("cannot create cache directory %q: %w\nHint: use --cache to specify a writable path", cacheDir, err)
 	}
 
@@ -614,7 +613,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 	// Ensure the output directory exists before (file) progress starts.
 	outputDir = basenameFor(img, outputDir)
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return fmt.Errorf("cannot create output base directory %s: %w", outputDir, err)
 	}
 
@@ -888,6 +887,7 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	pkgSearchCmd.Flags().String("distro", "", "Search packages for a specific distro (e.g. centos-9)")
 	pkgSearchCmd.Flags().String("arch", "", "Search packages for a specific architecture")
 	pkgSearchCmd.Flags().String("type", "", "Narrow search to repos for a specific image type (e.g. qcow2)")
+	pkgSearchCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
 	rootCmd.AddCommand(pkgSearchCmd)
 
 	uploadCmd := &cobra.Command{
