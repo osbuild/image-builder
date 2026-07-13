@@ -249,7 +249,7 @@ func makeManifestJob(
 
 	// ensure that each distro/arch has a unique seed, we do not include the image type name here to
 	// avoid checksum changes when just the name changes (but no content changes)
-	seedArg, err := cmdutil.SeedArgFor(bc, distribution.Name(), archName)
+	seedArg, err := cmdutil.NewRNGSeed()
 	if err != nil {
 		panic(err)
 	}

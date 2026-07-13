@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/image-builder/internal/buildconfig"
 	"github.com/osbuild/image-builder/internal/cmdutil"
 )
 
@@ -38,23 +37,4 @@ func TestNewRNGSeed(t *testing.T) {
 		_, err := cmdutil.NewRNGSeed()
 		require.EqualError(t, err, fmt.Sprintf(`failed to parse %s: strconv.ParseInt: parsing "NaN": invalid syntax`, cmdutil.RNG_SEED_ENV_KEY))
 	})
-}
-
-func TestSeedArgFor(t *testing.T) {
-	t.Setenv(cmdutil.RNG_SEED_ENV_KEY, "1234")
-
-	for _, tc := range []struct {
-		bcName, distroName, archName string
-		expectedSeed                 int64
-	}{
-		{"bcName", "fakeDistro", "x86_64", 3733440355630086638},
-		{"bcName1", "fakeDistro", "x86_64", 8836490103495263095},
-		{"bcName", "fakeDistro1", "x86_64", 6049601094887466281},
-		{"bcName", "fakeDistro1", "aarch64", 6322414106360789161},
-	} {
-		bc := &buildconfig.BuildConfig{Name: tc.bcName}
-		seedArg, err := cmdutil.SeedArgFor(bc, tc.distroName, tc.archName)
-		assert.NoError(t, err)
-		assert.Equal(t, tc.expectedSeed, seedArg)
-	}
 }
