@@ -13,14 +13,15 @@ import (
 )
 
 var (
-	GetOneImage     = getOneImage
-	GetAllImages    = getAllImages
-	Run             = run
-	FindDistro      = findDistro
-	DescribeImage   = describeImage
-	ProgressFromCmd = progressFromCmd
-	BasenameFor     = basenameFor
-	CacheDirForUid  = cacheDirForUid
+	GetOneImage           = getOneImage
+	GetAllImages          = getAllImages
+	Run                   = run
+	FindDistro            = findDistro
+	DescribeImage         = describeImage
+	ProgressFromCmd       = progressFromCmd
+	BasenameFor           = basenameFor
+	CacheDirForUid        = cacheDirForUid
+	NewPkgSearchFormatter = newPkgSearchFormatter
 )
 
 type DescribeImgYAML describeImgYAML
