@@ -877,6 +877,19 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	}
 	rootCmd.AddCommand(manifestCmd)
 
+	pkgSearchCmd := &cobra.Command{
+		Use:          "pkgsearch [pkg1 pkg2 ...]",
+		Short:        "Search for packages available for the given distro (tip: combine with --distro, --arch, --type)",
+		RunE:         cmdPkgSearch,
+		SilenceUsage: true,
+		Hidden:       true,
+	}
+	pkgSearchCmd.Flags().String("format", "", "Output in a specific format (json)")
+	pkgSearchCmd.Flags().String("distro", "", "Search packages for a specific distro (e.g. centos-9)")
+	pkgSearchCmd.Flags().String("arch", "", "Search packages for a specific architecture")
+	pkgSearchCmd.Flags().String("type", "", "Narrow search to repos for a specific image type (e.g. qcow2)")
+	rootCmd.AddCommand(pkgSearchCmd)
+
 	uploadCmd := &cobra.Command{
 		Use:          "upload <image-path>",
 		Short:        "Upload the given image from <image-path>",
