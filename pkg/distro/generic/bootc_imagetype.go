@@ -159,8 +159,7 @@ func (t *bootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 }
 
 func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, options distro.ImageOptions) (*manifest.Manifest, []string, error) {
-	bd := t.arch.distro.(*BootcDistro)
-	seed, err := cmdutil.SeedArgFor(nil, t.arch.Name(), bd.Name())
+	seed, err := cmdutil.NewRNGSeed()
 	if err != nil {
 		return nil, nil, err
 	}
