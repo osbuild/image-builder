@@ -39,6 +39,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/flatpak"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/rhsm/facts"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
@@ -375,7 +376,10 @@ func makeManifestJob(
 			flatpakSpecs = manifestmock.ResolveFlatpaks(mf.GetFlatpakSourceSpecs())
 		}
 
-		mfs, err := mf.Serialize(depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, nil)
+		options := manifest.SerializeOptions{
+			RpmDownloader: osbuild.RpmDownloaderLibrepo,
+		}
+		mfs, err := mf.Serialize(depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, &options)
 		if err != nil {
 			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
 		}
