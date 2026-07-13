@@ -8,8 +8,10 @@ import (
 	"github.com/osbuild/image-builder/pkg/bootc"
 	"github.com/osbuild/image-builder/pkg/cloud"
 	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
+	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
 	"github.com/osbuild/image-builder/pkg/reporegistry"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 var (
@@ -116,5 +118,13 @@ func MockManifestgenContainerResolver(fn manifestgen.ContainerResolverFunc) (res
 	manifestgenContainerResolver = fn
 	return func() {
 		manifestgenContainerResolver = saved
+	}
+}
+
+func MockPkgSearcher(f func(distro.Distro, string, string, []rpmmd.RepoConfig, []string) (rpmmd.PackageList, error)) (restore func()) {
+	saved := pkgSearcher
+	pkgSearcher = f
+	return func() {
+		pkgSearcher = saved
 	}
 }
