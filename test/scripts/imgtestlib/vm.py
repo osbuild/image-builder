@@ -15,10 +15,11 @@ import uuid
 from io import StringIO
 
 try:
-    # Allow importing the module without boto3 since most times it's not needed.
-    from qemu import qmp
+    # import QEMUMonitorProtocol from qemu.qmp.legacy directly,
+    # as only importing qmp ends with qemu.qmp' has no attribute 'legacy' error.
+    from qemu.qmp.legacy import QEMUMonitorProtocol
 except ImportError:
-    qmp = None
+    QEMUMonitorProtocol = None
 
 try:
     # Allow importing the module without boto3 since most times it's not needed.
@@ -306,7 +307,7 @@ class QEMU(VM):
 
     def wait_qmp_event(self, qmp_event, timeout_sec=120):
         self._wait_qmp_socket(30)
-        mon = qmp.legacy.QEMUMonitorProtocol(os.fspath(self._qmp_socket))
+        mon = QEMUMonitorProtocol(os.fspath(self._qmp_socket))
         mon.connect()
         start = time.monotonic()
         while True:
