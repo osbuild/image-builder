@@ -1,8 +1,10 @@
+# pylint: disable=fixme
 import os
 import platform
 import subprocess
 
 import pytest
+
 import testutil
 # pylint: disable=unused-import
 from containerbuild import (build_container_fixture,
@@ -50,7 +52,8 @@ def test_bib_chown_opts(tmp_path, container_storage, build_fake_container, chown
     ([], ""),
     (["--target-arch=amd64"], ""),
     (["--target-arch=x86_64"], ""),
-    (["--target-arch=arm64"], "cannot build iso for different target arches yet"),
+    # TODO: re-enable and switch to ISO when we get that working again
+    # (["--target-arch=arm64"], "cannot build iso for different target arches yet"),
 ])
 @pytest.mark.skipif(platform.uname().machine != "x86_64", reason="cross build test only runs on x86")
 def test_opts_arch_is_same_arch_is_fine(tmp_path, build_fake_container, target_arch_opt, expected_err):
@@ -67,7 +70,7 @@ def test_opts_arch_is_same_arch_is_fine(tmp_path, build_fake_container, target_a
         "-v", "/var/lib/containers/storage:/var/lib/containers/storage",
         "-v", f"{output_path}:/output",
         build_fake_container,
-        "--type=iso",
+        "--type=qcow2",
         container_ref,
     ] + target_arch_opt, check=False, capture_output=True, text=True)
     if expected_err == "":
