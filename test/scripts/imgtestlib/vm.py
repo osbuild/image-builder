@@ -336,15 +336,23 @@ class QEMU(VM):
 
 class AWS(VM):
 
-    _instance_type = "t3.medium"  # set based on architecture when we add arm tests
+    @property
+    def _instance_type(self):
+        if self._arch == "x86_64":
+            return "t3.medium"
+        if self._arch == "aarch64":
+            return "m6g.large"
 
-    def __init__(self, ami_id):
+        raise RuntimeError(f"unsupported architecture {self._arch}")
+
+    def __init__(self, ami_id, arch):
         super().__init__()
         self._ssh_port = 22
         self._ami_id = ami_id
         self._ec2_instance = None
         self._ec2_security_group = None
         self._ec2_resource = boto3.resource("ec2", region_name=AWS_REGION)
+        self._arch = arch
 
     def start(self):
         if self.running():
