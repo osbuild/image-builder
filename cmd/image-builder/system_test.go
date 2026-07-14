@@ -139,7 +139,12 @@ func TestSystemSubcommandCacheMaxSizeZeroIsUnlimited(t *testing.T) {
 }
 
 func TestSystemSubcommandCacheMaxSizeNoFileIsUnknown(t *testing.T) {
-	restore := main.MockDirSize(func(string) (int64, error) {
+	restore := main.MockGetCacheDir(func() string {
+		return t.TempDir()
+	})
+	defer restore()
+
+	restore = main.MockDirSize(func(string) (int64, error) {
 		return 0, nil
 	})
 	defer restore()
@@ -150,7 +155,12 @@ func TestSystemSubcommandCacheMaxSizeNoFileIsUnknown(t *testing.T) {
 }
 
 func TestSystemSubcommandCacheDirNotExist(t *testing.T) {
-	restore := main.MockDirSize(func(string) (int64, error) {
+	restore := main.MockGetCacheDir(func() string {
+		return filepath.Join(t.TempDir(), "nonexistent")
+	})
+	defer restore()
+
+	restore = main.MockDirSize(func(string) (int64, error) {
 		return 0, os.ErrNotExist
 	})
 	defer restore()
