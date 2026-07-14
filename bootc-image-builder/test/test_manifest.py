@@ -10,6 +10,7 @@ import platform
 import subprocess
 import textwrap
 
+import imgtestlib as testlib
 import pytest
 
 import testutil
@@ -935,7 +936,15 @@ def test_manifest_image_customize_filesystem(tmp_path, build_container):
             f"localhost/{container_tag}",
         ], encoding="utf8")
         sfdisk_options = find_stage_options_from(manifest_str, "org.osbuild.sfdisk")
-        assert sfdisk_options["partitions"][2]["size"] == 3 * 1024 * 1024 * 1024 / 512
+        match arch := testlib.testenv.host_container_arch():
+            case "amd64":
+                bootidx = 2
+            case "arm64":
+                bootidx = 1
+            case _:
+                raise RuntimeError(f"test is not configured for {arch}: expected boot index value not set")
+
+        assert sfdisk_options["partitions"][bootidx]["size"] == 3 * 1024 * 1024 * 1024 / 512
 
 
 def test_manifest_image_customize_disk(tmp_path, build_container):
@@ -981,7 +990,15 @@ def test_manifest_image_customize_disk(tmp_path, build_container):
             f"localhost/{container_tag}",
         ], encoding="utf8")
         sfdisk_options = find_stage_options_from(manifest_str, "org.osbuild.sfdisk")
-        assert sfdisk_options["partitions"][2]["size"] == 3 * 1024 * 1024 * 1024 / 512
+        match arch := testlib.testenv.host_container_arch():
+            case "amd64":
+                bootidx = 2
+            case "arm64":
+                bootidx = 1
+            case _:
+                raise RuntimeError(f"test is not configured for {arch}: expected boot index value not set")
+
+        assert sfdisk_options["partitions"][bootidx]["size"] == 3 * 1024 * 1024 * 1024 / 512
 
 
 def test_manifest_image_disk_yaml(tmp_path, build_container):
