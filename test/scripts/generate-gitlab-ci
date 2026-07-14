@@ -139,7 +139,7 @@ MANIFEST_GEN_TEMPLATE = """
 """
 
 BOOTC_IMAGE_BUILDER_TEMPLATE = """
-"bootc-image-builder [{arch}]":
+"bootc-image-builder/test-build-disk [{arch}]":
   stage: gen
   extends: .terraform
   variables:
@@ -147,7 +147,7 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_disk.py::test_image_is_generated
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_disk.py
 """
 
 
