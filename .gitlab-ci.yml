@@ -1088,6 +1088,16 @@ fail:
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
     - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_manifest.py
 
+"bootc-image-builder/test-opts-and-progress [x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-x86_64
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_opts.py ./bootc-image-builder/test/test_progress.py
+
 
 "bootc-image-builder/test-build-disk [aarch64]":
   stage: gen
@@ -1108,6 +1118,16 @@ fail:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
     - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_manifest.py
+
+"bootc-image-builder/test-opts-and-progress [aarch64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-aarch64
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_opts.py ./bootc-image-builder/test/test_progress.py
 
 "generate-ostree-build-config: [centos-9, aarch64]":
   stage: ostree-gen
