@@ -597,7 +597,8 @@ def test_ami_boots_in_aws(image_type, force_aws_upload):
     # check that upload progress is in the output log. Uploads looks like:
     # 4.30 GiB / 10.00 GiB [------------>____________] 43.02% 58.04 MiB p/s
     assert "] 100.00%" in image_type.bib_output
-    with testlib.vm.AWS(image_type.metadata["ami_id"]) as test_vm:
+    arch = os.uname().machine
+    with testlib.vm.AWS(image_type.metadata["ami_id"], arch) as test_vm:
         test_vm.run("true", user=image_type.username, password=image_type.password)
         ret = test_vm.run(["echo", "hello"], user=image_type.username, password=image_type.password)
         assert "hello" in ret.stdout
