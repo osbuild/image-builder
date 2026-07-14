@@ -144,6 +144,12 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
   extends: .terraform
   variables:
     RUNNER: {runner}-{arch}
+  rules:
+    # 1. Skip the job if we're on the github merge queue
+    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
+      when: never
+    # 2. Fallback rule for any other branch name
+    - if: '$CI_COMMIT_BRANCH'
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
@@ -154,6 +160,12 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
   extends: .terraform
   variables:
     RUNNER: {runner}-{arch}
+  rules:
+    # 1. Skip the job if we're on the github merge queue
+    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
+      when: never
+    # 2. Fallback rule for any other branch name
+    - if: '$CI_COMMIT_BRANCH'
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
@@ -164,6 +176,12 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
   extends: .terraform
   variables:
     RUNNER: {runner}-{arch}
+  rules:
+    # 1. Skip the job if we're on the github merge queue
+    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
+      when: never
+    # 2. Fallback rule for any other branch name
+    - if: '$CI_COMMIT_BRANCH'
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
