@@ -158,6 +158,16 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
     - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_manifest.py
+
+"bootc-image-builder/test-opts-and-progress [{arch}]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: {runner}-{arch}
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_opts.py ./bootc-image-builder/test/test_progress.py
 """
 
 
