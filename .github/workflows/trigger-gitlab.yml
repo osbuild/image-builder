@@ -31,6 +31,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
+          allow-unsafe-pr-checkout: true
 
       - name: Get open PRs
         # Since this workflow doesn't run on a PR trigger, we need to find the
