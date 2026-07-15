@@ -30,7 +30,7 @@ def make_container(container_path, arch=None):
         "--arch", arch,
         container_path], encoding="utf8")
     yield container_tag
-    subprocess.check_call(["podman", "rmi", container_tag])
+    subprocess.run(["podman", "rmi", container_tag], check=False)
 
 
 @pytest.fixture(name="build_container", scope="session")
@@ -49,7 +49,7 @@ def build_container_fixture():
         ".",
     ])
     yield container_tag
-    subprocess.check_call(["podman", "rmi", container_tag])
+    subprocess.run(["podman", "rmi", container_tag], check=False)
 
 
 @pytest.fixture(name="build_fake_container", scope="session")
@@ -102,7 +102,7 @@ def build_fake_container_fixture(tmpdir_factory, build_container):
         tmp_path,
     ])
     yield container_tag
-    subprocess.check_call(["podman", "rmi", container_tag])
+    subprocess.run(["podman", "rmi", container_tag], check=False)
 
 
 @pytest.fixture(name="build_erroring_container", scope="session")
@@ -150,4 +150,4 @@ def build_erroring_container_fixture(tmpdir_factory, build_container):
         tmp_path,
     ])
     yield container_tag
-    subprocess.check_call(["podman", "rmi", container_tag])
+    subprocess.run(["podman", "rmi", container_tag], check=False)
