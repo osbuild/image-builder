@@ -3,6 +3,7 @@ package manifest_test
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/osbuild/image-builder/pkg/customizations/users"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/osbuild"
@@ -475,4 +477,164 @@ func TestRawBootcPXE(t *testing.T) {
 	}
 	assert.Contains(t, mkdirPaths, "/usr")
 	assert.Contains(t, mkdirPaths, "/proc")
+}
+
+func TestRawBootcImageSerializeSubscriptionManagerCommands(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+	rawBootcPipeline.OSCustomizations.Subscription = &subscription.ImageOptions{
+		Organization:  "2040324",
+		ActivationKey: "my-secret-key",
+		ServerUrl:     "subscription.rhsm.redhat.com",
+		BaseUrl:       "http://cdn.redhat.com/",
+	}
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+	CheckSystemdStageOptions(t, pipeline.Stages, []string{
+		"/usr/sbin/subscription-manager config --server.hostname 'subscription.rhsm.redhat.com'",
+		`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --baseurl 'http://cdn.redhat.com/'`,
+	})
+
+	// registration unit in /etc, not /usr (ostree commit content)
+	assert.Equal(t, osbuild.EtcUnitPath, registrationUnitPath(t, pipeline.Stages))
+}
+
+func TestRawBootcImageSerializeSubscriptionManagerInsightsCommands(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+	rawBootcPipeline.OSCustomizations.Subscription = &subscription.ImageOptions{
+		Organization:  "2040324",
+		ActivationKey: "my-secret-key",
+		ServerUrl:     "subscription.rhsm.redhat.com",
+		BaseUrl:       "http://cdn.redhat.com/",
+		Insights:      true,
+	}
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+	CheckSystemdStageOptions(t, pipeline.Stages, []string{
+		"/usr/sbin/subscription-manager config --server.hostname 'subscription.rhsm.redhat.com'",
+		`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --baseurl 'http://cdn.redhat.com/'`,
+		"/usr/bin/insights-client --register",
+	})
+
+	// InsightsOnBoot also materializes the insights-client drop-in
+	mkdirPaths := collectMkdirPaths(pipeline.Stages)
+	assert.Contains(t, mkdirPaths, "/etc/systemd/system/insights-client-boot.service.d")
+	destinationPaths := collectCopyDestinationPaths(pipeline.Stages)
+	assert.Contains(t, destinationPaths, "tree:///etc/systemd/system/insights-client-boot.service.d/override.conf")
+}
+
+func TestRawBootcImageSerializeRhcInsightsCommands(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+	rawBootcPipeline.OSCustomizations.Subscription = &subscription.ImageOptions{
+		Organization:  "2040324",
+		ActivationKey: "my-secret-key",
+		ServerUrl:     "subscription.rhsm.redhat.com",
+		BaseUrl:       "http://cdn.redhat.com/",
+		Insights:      false,
+		Rhc:           true,
+	}
+	rawBootcPipeline.OSCustomizations.PermissiveRHC = common.ToPtr(true)
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+	CheckSystemdStageOptions(t, pipeline.Stages, []string{
+		"/usr/sbin/subscription-manager config --server.hostname 'subscription.rhsm.redhat.com'",
+		`/usr/bin/rhc connect --organization="${ORG_ID}" --activation-key="${ACTIVATION_KEY}"`,
+		"/usr/sbin/semanage permissive --add rhcd_t",
+	})
+}
+
+func TestRawBootcImageSerializeSubscriptionEnablesService(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+	rawBootcPipeline.OSCustomizations.Subscription = &subscription.ImageOptions{
+		Organization:  "2040324",
+		ActivationKey: "my-secret-key",
+	}
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+
+	stage := findStage("org.osbuild.systemd", pipeline.Stages)
+	require.NotNil(t, stage)
+	opts := stage.Options.(*osbuild.SystemdStageOptions)
+	assert.Equal(t, []string{"osbuild-subscription-register.service"}, opts.EnabledServices)
+}
+
+// Mirrors TestAddInlineOS: the env file must be both a copy destination and an
+// inline source, and is written before the blueprint's own files.
+func TestRawBootcImageSerializeSubscriptionEnvFile(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+
+	require := require.New(t)
+
+	rawBootcPipeline.OSCustomizations.Files = createTestFilesForPipeline()
+	rawBootcPipeline.OSCustomizations.Subscription = &subscription.ImageOptions{
+		Organization:  "000",
+		ActivationKey: "111",
+	}
+
+	expectedPaths := []string{
+		"tree:///etc/osbuild-subscription-register.env", // from the subscription options
+		"tree:///etc/test/one",                          // directly from the OS customizations
+		"tree:///etc/test/two",
+	}
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(err)
+
+	destinationPaths := collectCopyDestinationPaths(pipeline.Stages)
+
+	// The order is significant. Do not use ElementsMatch() or similar.
+	require.Equal(expectedPaths, destinationPaths)
+
+	expectedContents := []string{
+		"ORG_ID=000\nACTIVATION_KEY=111",
+		"test 1",
+		"test 2",
+	}
+
+	fileContents := manifest.GetInline(rawBootcPipeline)
+	// These are used to define the 'sources' part of the manifest, so the
+	// order doesn't matter
+	require.ElementsMatch(expectedContents, fileContents)
+}
+
+func TestRawBootcImageSerializeURIFilesError(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+
+	localFile := filepath.Join(t.TempDir(), "local-file")
+	require.NoError(t, os.WriteFile(localFile, []byte("some content"), 0644))
+	uriFile := common.Must(fsnode.NewFileForURI("/etc/test/from-uri", nil, nil, nil, localFile))
+	rawBootcPipeline.OSCustomizations.Files = []*fsnode.File{uriFile}
+
+	_, err := rawBootcPipeline.Serialize()
+	assert.EqualError(t, err, fmt.Sprintf(
+		"cannot create file %q from %q: files from an URI are not supported for bootc disk images",
+		"/etc/test/from-uri", localFile))
+}
+
+// registrationUnitPath returns the UnitPath of the registration unit, found by
+// filename because mount units share the systemd.unit.create stage type.
+func registrationUnitPath(t *testing.T, stages []*osbuild.Stage) osbuild.SystemdUnitPath {
+	t.Helper()
+	for _, s := range findStages("org.osbuild.systemd.unit.create", stages) {
+		opts := s.Options.(*osbuild.SystemdUnitCreateStageOptions)
+		if opts.Filename == "osbuild-subscription-register.service" {
+			return opts.UnitPath
+		}
+	}
+	require.Fail(t, "no osbuild-subscription-register.service unit.create stage found")
+	return ""
+}
+
+func collectMkdirPaths(stages []*osbuild.Stage) []string {
+	mkdirPaths := make([]string, 0)
+	for _, mkdirStage := range findStages("org.osbuild.mkdir", stages) {
+		mkdirStageOptions := mkdirStage.Options.(*osbuild.MkdirStageOptions)
+		for _, path := range mkdirStageOptions.Paths {
+			mkdirPaths = append(mkdirPaths, path.Path)
+		}
+	}
+	return mkdirPaths
 }
