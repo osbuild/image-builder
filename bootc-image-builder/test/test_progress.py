@@ -55,7 +55,7 @@ def test_progress_term_works_without_tty(tmp_path, build_fake_container):
     assert "[|] Manifest generation step" in res.stderr
 
 
-@pytest.mark.skipif(not testutil.can_start_rootful_containers, reason="require a rootful containers (try: sudo)")
+@pytest.mark.skipif(not testutil.can_start_rootful_containers(), reason="require a rootful containers (try: sudo)")
 @pytest.mark.parametrize("progress", ["term", "verbose"])
 def test_progress_error_reporting(tmp_path, build_erroring_container, progress):
     output_path = tmp_path / "output"
