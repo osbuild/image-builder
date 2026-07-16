@@ -109,9 +109,9 @@ func TestCmdPkgSearch(t *testing.T) {
 			expectedErr: "not-a-type",
 		},
 		{
-			name:         "zero args (no packages)",
-			args:         []string{"pkgsearch", "--distro=centos-9", "--arch=x86_64"},
-			expectedPkgs: 2,
+			name:        "zero args (no packages)",
+			args:        []string{"pkgsearch", "--distro=centos-9", "--arch=x86_64"},
+			expectedErr: "at least one package name is required",
 		},
 		{
 			name:             "with rpmmd-cache",
