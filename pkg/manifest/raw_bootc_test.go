@@ -388,6 +388,73 @@ func TestRawBootcPipelineNoMountsStages(t *testing.T) {
 	checkStagesForNoMounts(t, common.Must(pipeline.Serialize()).Stages)
 }
 
+func TestRawBootcImageSerializeGrub2DStage(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		grub2Config  *osbuild.GRUB2Config
+		expectStage  bool
+		expectedPath string
+	}{
+		{
+			name:        "nil-config",
+			grub2Config: nil,
+			expectStage: false,
+		},
+		{
+			name:        "empty-config",
+			grub2Config: &osbuild.GRUB2Config{},
+			expectStage: false,
+		},
+		{
+			name: "only-unrelated-fields",
+			grub2Config: &osbuild.GRUB2Config{
+				Default: "saved",
+				Timeout: 5,
+			},
+			expectStage: false,
+		},
+		{
+			name: "serial-only",
+			grub2Config: &osbuild.GRUB2Config{
+				Serial: "serial --unit=0 --speed=115200",
+			},
+			expectStage:  true,
+			expectedPath: "tree:///boot/grub2/console.cfg",
+		},
+		{
+			name: "all-console-fields",
+			grub2Config: &osbuild.GRUB2Config{
+				TerminalInput:  []string{"serial", "console"},
+				TerminalOutput: []string{"serial", "console"},
+				Serial:         "serial --unit=0 --speed=115200",
+			},
+			expectStage:  true,
+			expectedPath: "tree:///boot/grub2/console.cfg",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rawBootcPipeline := makeFakeRawBootcPipeline()
+			rawBootcPipeline.OSCustomizations.Grub2Config = tc.grub2Config
+
+			pipeline, err := rawBootcPipeline.Serialize()
+			assert.NoError(t, err)
+
+			grub2dStage := findStage("org.osbuild.grub2.d", pipeline.Stages)
+			if tc.expectStage {
+				require.NotNil(t, grub2dStage)
+				opts := grub2dStage.Options.(*osbuild.Grub2DStageOptions)
+				assert.Equal(t, tc.expectedPath, opts.Path)
+				assert.NotNil(t, opts.Config)
+				// verify bootupd mounts are set up
+				assert.NotEmpty(t, grub2dStage.Devices)
+				assert.NotEmpty(t, grub2dStage.Mounts)
+			} else {
+				assert.Nil(t, grub2dStage)
+			}
+		})
+	}
+}
+
 func TestRawBootcPXE(t *testing.T) {
 	rawBootcPipeline := makeFakeRawBootcPipeline()
 	rawBootcPipeline.KernelVersion = "5.14.0-611.4.1.el9_7.x86_64"

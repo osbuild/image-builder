@@ -309,6 +309,23 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 			postStages = append(postStages, ignitionStage)
 		}
 
+		// Apply grub2 console configuration (terminal_input, terminal_output,
+		// serial) via the grub2.d stage which writes a drop-in config file
+		// under boot/grub2/. Like ignition, this writes to /boot so we use
+		// bootupd mounts.
+		if grub2dCfg := osbuild.NewGrub2DConfigFromGrub2Config(p.OSCustomizations.Grub2Config); grub2dCfg != nil {
+			grub2dOpts := &osbuild.Grub2DStageOptions{
+				Config: grub2dCfg,
+				Path:   "tree:///boot/grub2/console.cfg",
+			}
+			grub2dStage := osbuild.NewGrub2DStage(grub2dOpts)
+			grub2dStage.Devices, grub2dStage.Mounts, err = osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
+			if err != nil {
+				return osbuild.Pipeline{}, fmt.Errorf("gen devices for grub2.d stage failed %w", err)
+			}
+			postStages = append(postStages, grub2dStage)
+		}
+
 		pipeline.AddStages(postStages...)
 
 		// In case we created any files in the deploy directory we need to relabel
