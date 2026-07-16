@@ -135,6 +135,12 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	// 1. the bootc disk manifests contains exports for all supported image types
 	// 2. the bootc legacy types (iso, anaconda-iso) always do a single build
 	imgTypeStr := imageTypes[0]
+
+	// The anaconda-iso code is different enough for a separate function
+	if imgTypeStr == "anaconda-iso" || imgTypeStr == "iso" {
+		return manifestFromCobraForLegacyISO(imgref, buildImgref, imgTypeStr, rootFs, rpmCacheRoot, config, useLibrepo, cntArch)
+	}
+
 	bootcInfo, err := bootc.ResolveBootcInfo(imgref)
 	if err != nil {
 		return nil, nil, err
