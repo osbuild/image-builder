@@ -558,14 +558,19 @@
       - "net-lib"
       - "dbus-broker"
     default_menu: 1
-    lorax_template_package: lorax-templates-generic
-    lorax_templates:
-      - path: 99-generic/runtime-postinstall.tmpl
-      - path: 99-generic/runtime-cleanup.tmpl
-        after_dracut: true
-    lorax_logos_package: fedora-logos
-    lorax_release_package: fedora-release
     install_weak_deps: true
+    conditions: &default_installer_conditions
+      "below fedora 45 we use lorax":
+        when:
+          version_less_than: "45"
+        shallow_merge:
+          lorax_template_package: lorax-templates-generic
+          lorax_templates:
+            - path: 99-generic/runtime-postinstall.tmpl
+            - path: 99-generic/runtime-cleanup.tmpl
+              after_dracut: true
+          lorax_logos_package: fedora-logos
+          lorax_release_package: fedora-release
 
   iso_config: &default_iso_config
     preparer: "image-builder - https://osbuild.org/"
@@ -3080,6 +3085,7 @@ image_types:
             - "app/org.kde.skanpage/{{.Arch}}/stable"
             - "app/org.kde.qrca/{{.Arch}}/stable"
       conditions:
+        <<: *default_installer_conditions
         "there are no 45 runtimes":
           when:
             version_greater_or_equal: "45"
@@ -3142,6 +3148,7 @@ image_types:
             - "app/org.gnome.Papers/{{.Arch}}/stable"
             - "app/org.gnome.Weather/{{.Arch}}/stable"
       conditions:
+        <<: *default_installer_conditions
         "there are no 45 runtimes":
           when:
             version_greater_or_equal: "45"

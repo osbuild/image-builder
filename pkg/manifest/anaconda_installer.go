@@ -226,6 +226,10 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
 		packages = append(packages,
 			p.InstallerCustomizations.LoraxTemplatePackage,
 		)
+	} else {
+		// Lorax pulls this in as a dependency; we need it directly if we're not
+		// pulling in Lorax
+		packages = append(packages, "dosfstools")
 	}
 
 	if p.SELinux != "" {
