@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -65,6 +66,10 @@ var pkgSearcher = func(d distro.Distro, archStr, cacheDir string, repos []rpmmd.
 }
 
 func cmdPkgSearch(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return errors.New("at least one package name is required")
+	}
+
 	format, err := cmd.Flags().GetString("format")
 	if err != nil {
 		return err
