@@ -255,6 +255,20 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 		img.OSCustomizations.KernelOptionsAppend = append(img.OSCustomizations.KernelOptionsAppend, kopts.Append)
 	}
 
+	if bl := customizations.GetBootloader(); bl != nil && bl.Grub2 != nil {
+		grub2Cfg := &osbuild.GRUB2Config{}
+		if len(bl.Grub2.TerminalInput) > 0 {
+			grub2Cfg.TerminalInput = bl.Grub2.TerminalInput
+		}
+		if len(bl.Grub2.TerminalOutput) > 0 {
+			grub2Cfg.TerminalOutput = bl.Grub2.TerminalOutput
+		}
+		if bl.Grub2.Serial != nil {
+			grub2Cfg.Serial = *bl.Grub2.Serial
+		}
+		img.OSCustomizations.Grub2Config = grub2Cfg
+	}
+
 	rootfsMinSize := max(bd.rootfsMinSize, options.Size)
 
 	pt, err := t.genPartitionTable(customizations, rootfsMinSize, rng)

@@ -678,6 +678,21 @@ func getUserConfig() *blueprint.Blueprint {
 	}
 }
 
+func getBootloaderConfig() *blueprint.Blueprint {
+	serial := "serial --unit=0 --speed=115200"
+	return &blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Bootloader: &blueprint.BootloaderCustomization{
+				Grub2: &blueprint.Grub2Customization{
+					TerminalInput:  []string{"serial", "console"},
+					TerminalOutput: []string{"serial", "console"},
+					Serial:         &serial,
+				},
+			},
+		},
+	}
+}
+
 func TestManifestGenerationUserConfig(t *testing.T) {
 	userConfig := getUserConfig()
 	testCases := map[string]manifestTestCase{
@@ -868,6 +883,27 @@ func TestManifestSerialization(t *testing.T) {
 			imageType: "pxe-tar-xz",
 			err:       `cannot serialize pipeline "build": BuildrootFromContainer: serialization not started`,
 		},
+		"qcow2-bootloader-grub2": {
+			config:     getBootloaderConfig(),
+			imageType:  "qcow2",
+			containers: diskContainers,
+			expStages: map[string][]string{
+				"image": {
+					"org.osbuild.bootc.install-to-filesystem",
+					"org.osbuild.grub2.d",
+				},
+			},
+		},
+		"qcow2-no-bootloader": {
+			config:     baseConfig,
+			imageType:  "qcow2",
+			containers: diskContainers,
+			notExpectedStages: map[string][]string{
+				"image": {
+					"org.osbuild.grub2.d",
+				},
+			},
+		},
 	}
 
 	// Use an empty config: only the imgref is required
@@ -969,6 +1005,27 @@ func TestManifestGenerationBlueprintValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestManifestGenerationBootloaderValidation(t *testing.T) {
+	config := getBootloaderConfig()
+	imageOptions := distro.ImageOptions{}
+
+	// bootloader should be accepted for disk images
+	t.Run("qcow2-bootloader-accepted", func(t *testing.T) {
+		imgType := NewTestBootcImageType(t, "qcow2")
+		_, warnings, err := imgType.Manifest(config, imageOptions, nil, common.ToPtr(int64(0)))
+		assert.NoError(t, err)
+		assert.Empty(t, warnings)
+	})
+
+	// bootloader should be accepted for raw images
+	t.Run("raw-bootloader-accepted", func(t *testing.T) {
+		imgType := NewTestBootcImageType(t, "raw")
+		_, warnings, err := imgType.Manifest(config, imageOptions, nil, common.ToPtr(int64(0)))
+		assert.NoError(t, err)
+		assert.Empty(t, warnings)
+	})
 }
 
 func TestBootcIsoManifestSerialization(t *testing.T) {
