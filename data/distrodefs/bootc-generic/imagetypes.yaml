@@ -87,6 +87,7 @@
 
   supported_options_lists:
     supported_options_disk: &supported_options_disk
+      - "customizations.bootloader"
       - "customizations.directories"
       - "customizations.disk"
       - "customizations.files"
