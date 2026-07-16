@@ -727,6 +727,15 @@ func (p *AnacondaInstaller) dracutStageOptions() (*osbuild.DracutStageOptions, e
 
 	options.AddModules = append(options.AddModules, p.InstallerCustomizations.AdditionalDracutModules...)
 
+	// If Lorax is not in use we want to remove additional files from the initrd. Lorax handles this
+	// by removing them from the tree itself.
+	if len(p.InstallerCustomizations.LoraxTemplatePackage) == 0 {
+		options.Remove = []string{
+			"usr/lib/systemd/system-generators/lvm2-activation-generator",
+			"usr/lib/systemd/system-generators/systemd-gpt-auto-generator",
+		}
+	}
+
 	if p.Biosdevname {
 		options.AddModules = append(options.AddModules, "biosdevname")
 	}
