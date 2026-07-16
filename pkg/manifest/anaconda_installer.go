@@ -630,6 +630,13 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 		}))
 	}
 
+	if len(p.InstallerCustomizations.LoraxTemplatePackage) == 0 {
+		// Set the default target of the ISO to Anaconda if it is not being handled by Lorax.
+		stages = append(stages, osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
+			DefaultTarget: "anaconda.target",
+		}))
+	}
+
 	stages = append(stages, osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
 	// SELinux is not supported on the non-live-installers (see the previous
