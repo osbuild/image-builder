@@ -41,9 +41,6 @@ type PartitionTable struct {
 	// Treat StartOffset as an absolute minimum start position rather
 	// than an additive offset on top of the header.
 	AbsoluteStartOffset bool `json:"absolute_start_offset,omitempty" yaml:"absolute_start_offset,omitempty"`
-	// Align the GPT footer to the grain size, ensuring the last partition's
-	// size is also grain-aligned. Matches systemd-repart behavior.
-	AlignFooter bool `json:"align_footer,omitempty" yaml:"align_footer,omitempty"`
 
 	// Dictates if certain bits and bobs are required or not; uses the default
 	// policy if not set.
@@ -236,7 +233,6 @@ func (pt *PartitionTable) Clone() Entity {
 		ExtraPadding:        pt.ExtraPadding,
 		StartOffset:         pt.StartOffset,
 		AbsoluteStartOffset: pt.AbsoluteStartOffset,
-		AlignFooter:         pt.AlignFooter,
 		Policy:              pt.Policy,
 	}
 
@@ -528,9 +524,7 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	// The GPT header is also at the end of the partition table
 	if pt.Type == PT_GPT {
 		footer = header
-		if pt.AlignFooter {
-			footer = pt.AlignUp(footer)
-		}
+		footer = pt.AlignUp(footer)
 	}
 
 	startBase := header + pt.StartOffset

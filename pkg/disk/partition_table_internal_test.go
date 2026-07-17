@@ -303,7 +303,7 @@ func TestRelayout(t *testing.T) {
 							Mountpoint: "/",
 						},
 						Start: 11 * MiB,
-						Size:  89*MiB - (DefaultSectorSize + (128 * 128)), // Grows to fill the space, but gpt adds a footer the same size as the header (unaligned)
+						Size:  88 * MiB, // Grows to fill the space minus the grain-aligned GPT footer (1 MiB)
 					},
 				},
 			},
@@ -341,8 +341,8 @@ func TestRelayout(t *testing.T) {
 						Size:  30 * MiB,
 					},
 					{
-						Start: 51 * MiB,                                   // root gets moved to last position
-						Size:  49*MiB - (DefaultSectorSize + (128 * 128)), // Grows to fill the space, but gpt adds a footer the same size as the header (unaligned)
+						Start: 51 * MiB, // root gets moved to last position
+						Size:  48 * MiB, // Grows to fill the space minus the grain-aligned GPT footer (1 MiB)
 						Payload: &Filesystem{
 							Mountpoint: "/",
 						},
@@ -431,7 +431,7 @@ func TestRelayout(t *testing.T) {
 					},
 					{
 						Start: 21 * MiB,
-						Size:  79*MiB - (DefaultSectorSize + (128 * 128)), // Grows to fill the space, but gpt adds a footer the same size as the header (unaligned)
+						Size:  78 * MiB, // Grows to fill the space minus the grain-aligned GPT footer (1 MiB)
 						Payload: &LVMVolumeGroup{
 							LogicalVolumes: []LVMLogicalVolume{
 								{
@@ -483,7 +483,7 @@ func TestRelayout(t *testing.T) {
 					},
 					{
 						Start: 21 * MiB,
-						Size:  79*MiB - (DefaultSectorSize + (128 * 128)), // Grows to fill the space, but gpt adds a footer the same size as the header (unaligned)
+						Size:  78 * MiB, // Grows to fill the space minus the grain-aligned GPT footer (1 MiB)
 						Payload: &LVMVolumeGroup{
 							LogicalVolumes: []LVMLogicalVolume{
 								{
@@ -536,7 +536,7 @@ func TestRelayout(t *testing.T) {
 					},
 					{
 						Start: 21 * MiB,
-						Size:  79*MiB - (DefaultSectorSize + (128 * 128)), // Grows to fill the space, but gpt adds a footer the same size as the header (unaligned)
+						Size:  78 * MiB, // Grows to fill the space minus the grain-aligned GPT footer (1 MiB)
 						Payload: &Btrfs{
 							Subvolumes: []BtrfsSubvolume{
 								{
@@ -617,7 +617,7 @@ func TestRelayout(t *testing.T) {
 							Mountpoint: "/",
 						},
 						Start: 11 * MiB,
-						Size:  501*MiB - (DefaultSectorSize + (128 * 128)), // grows by (1 MiB - footer) so that the partition doesn't shrink below the desired root size
+						Size:  500 * MiB, // exact requested size: grain-aligned footer means no partial-MiB overshoot
 					},
 				},
 			},
@@ -659,7 +659,7 @@ func TestRelayout(t *testing.T) {
 					},
 					{
 						Start: 201 * MiB,
-						Size:  501*MiB - (DefaultSectorSize + (128 * 128)), // grows by (1 MiB - footer) so that the partition doesn't shrink below the desired root size
+						Size:  500 * MiB, // exact requested size: grain-aligned footer means no partial-MiB overshoot
 						Payload: &LVMVolumeGroup{
 							LogicalVolumes: []LVMLogicalVolume{
 								{
@@ -769,7 +769,7 @@ func TestRelayout(t *testing.T) {
 					},
 					{
 						Start: 201 * MiB,
-						Size:  125*MiB - (DefaultSectorSize + (128 * 128)), // grows to fit logical volumes and metadata, rounded up to default extent size + (1 MiB - footer) so that the no partitions shrink below the desired sizes
+						Size:  124 * MiB, // grows to fit logical volumes and metadata, rounded up to default extent size; grain-aligned footer is exactly 1 MiB
 						Payload: &LVMVolumeGroup{
 							LogicalVolumes: []LVMLogicalVolume{
 								{
@@ -789,10 +789,9 @@ func TestRelayout(t *testing.T) {
 		},
 		"gpt-4k-grain-align-footer": {
 			pt: &PartitionTable{
-				Type:        PT_GPT,
-				Size:        200*MiB + 2*GiB,
-				GrainSize:   4096,
-				AlignFooter: true,
+				Type:      PT_GPT,
+				Size:      200*MiB + 2*GiB,
+				GrainSize: 4096,
 				Partitions: []Partition{
 					{
 						Size: 200 * MiB,
@@ -812,10 +811,9 @@ func TestRelayout(t *testing.T) {
 			},
 			size: 200*MiB + 2*GiB,
 			expected: &PartitionTable{
-				Type:        PT_GPT,
-				Size:        200*MiB + 2*GiB + 10*4096, // header (5*4096) + footer (5*4096)
-				GrainSize:   4096,
-				AlignFooter: true,
+				Type:      PT_GPT,
+				Size:      200*MiB + 2*GiB + 10*4096, // header (5*4096) + footer (5*4096)
+				GrainSize: 4096,
 				Partitions: []Partition{
 					{
 						Start: 5 * 4096, // header (16896) aligned up to 4096 grain
@@ -843,7 +841,6 @@ func TestRelayout(t *testing.T) {
 				GrainSize:           4096,
 				StartOffset:         1 * MiB,
 				AbsoluteStartOffset: true,
-				AlignFooter:         true,
 				Partitions: []Partition{
 					{
 						Size: 200 * MiB,
@@ -868,7 +865,6 @@ func TestRelayout(t *testing.T) {
 				GrainSize:           4096,
 				StartOffset:         1 * MiB,
 				AbsoluteStartOffset: true,
-				AlignFooter:         true,
 				Partitions: []Partition{
 					{
 						Start: 1 * MiB, // StartOffset treated as absolute minimum, already grain-aligned
