@@ -1338,7 +1338,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    222 * datasizes.MiB,
-						Size:     1*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)),
+						Size:     0, // no remaining space after grain-aligned GPT footer
 						Type:     disk.RootPartitionX86_64GUID,
 						UUID:     "a178892e-e285-4ce1-9114-55780875d64e",
 						Bootable: false,
@@ -1427,7 +1427,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    226 * datasizes.MiB,
-						Size:     1*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     0, // no remaining space after grain-aligned GPT footer
 						Type:     disk.RootPartitionAarch64GUID,
 						UUID:     "f83b8e88-3bbf-457a-ab99-c5b252c7429c",
 						Bootable: false,
@@ -1521,7 +1521,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    226 * datasizes.MiB,
-						Size:     1*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     0, // no remaining space after grain-aligned GPT footer
 						Type:     disk.RootPartitionAarch64GUID,
 						UUID:     "32f3a8ae-b79e-4856-b659-c18f0dcecc77",
 						Bootable: false,
@@ -1837,7 +1837,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    (20 + 12 + 1) * datasizes.MiB,
-						Size:     3*datasizes.GiB + datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     3 * datasizes.GiB, // footer is grain-aligned so partition stays at exact requested size
 						Type:     disk.RootPartitionS390xGUID,
 						UUID:     "32f3a8ae-b79e-4856-b659-c18f0dcecc77",
 						Bootable: false,
@@ -1945,7 +1945,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					// root is aligned to the end but not reindexed
 					{
 						Start:    5 * datasizes.MiB,
-						Size:     3*datasizes.GiB + datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     3 * datasizes.GiB, // footer is grain-aligned so partition stays at exact requested size
 						Type:     disk.RootPartitionPpc64leGUID,
 						UUID:     "a178892e-e285-4ce1-9114-55780875d64e",
 						Bootable: false,
@@ -2217,7 +2217,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    1226 * datasizes.MiB,
-						Size:     200*datasizes.MiB + datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // the sum of the LVs (rounded to the next 4 MiB extent) grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     200 * datasizes.MiB, // the sum of the LVs (rounded to the next 4 MiB extent); footer is grain-aligned
 						Type:     disk.LVMPartitionGUID,
 						UUID:     "c75e7a81-bfde-475f-a7cf-e242cf3cc354",
 						Bootable: false,
@@ -2365,7 +2365,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    1226 * datasizes.MiB,
-						Size:     104 * datasizes.MiB, // the sum of the LVs (rounded to the next 4 MiB extent) grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     104 * datasizes.MiB, // the sum of the LVs (rounded to the next 4 MiB extent)
 						Type:     disk.LVMPartitionGUID,
 						UUID:     "32f3a8ae-b79e-4856-b659-c18f0dcecc77",
 						Bootable: false,
@@ -2388,8 +2388,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
-						Start:    1330 * datasizes.MiB,                                                                        // the root vg is moved to the end of the partition table by relayout()
-						Size:     3*datasizes.GiB + 16*datasizes.MiB + datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // the sum of the LVs (rounded to the next 4 MiB extent) grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Start:    1330 * datasizes.MiB,               // the root vg is moved to the end of the partition table by relayout()
+						Size:     3*datasizes.GiB + 16*datasizes.MiB, // the sum of the LVs (rounded to the next 4 MiB extent); footer is grain-aligned
 						Type:     disk.LVMPartitionGUID,
 						UUID:     "c75e7a81-bfde-475f-a7cf-e242cf3cc354",
 						Bootable: false,
@@ -2623,7 +2623,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    1346 * datasizes.MiB,
-						Size:     231*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     230 * datasizes.MiB, // fills remaining space minus the grain-aligned GPT footer
 						Type:     disk.FilesystemDataGUID,
 						UUID:     "32f3a8ae-b79e-4856-b659-c18f0dcecc77",
 						Bootable: false,
@@ -2726,7 +2726,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    322 * datasizes.MiB,
-						Size:     231*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     230 * datasizes.MiB, // fills remaining space minus the grain-aligned GPT footer
 						Type:     disk.FilesystemDataGUID,
 						UUID:     "e2d3d0d0-de6b-48f9-b44c-e85ff044c6b1",
 						Bootable: false,
@@ -2790,7 +2790,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start: 1025 * datasizes.MiB,
-						Size:  1*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)),
+						Size:  0, // no remaining space after grain-aligned GPT footer
 
 						Type:     disk.FilesystemDataGUID,
 						UUID:     "e2d3d0d0-de6b-48f9-b44c-e85ff044c6b1",
@@ -2905,7 +2905,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start: 330 * datasizes.MiB,
-						Size:  1*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:  0, // no remaining space after grain-aligned GPT footer
 						Type:  disk.RootPartitionX86_64GUID,
 						UUID:  "f83b8e88-3bbf-457a-ab99-c5b252c7429c",
 						Payload: &disk.Filesystem{
@@ -2961,7 +2961,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    501 * datasizes.MiB,
-						Size:     1*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)),
+						Size:     0, // no remaining space after grain-aligned GPT footer
 						Type:     disk.RootPartitionX86_64GUID,
 						UUID:     "e285ece1-5114-4578-8875-d64ee2d3d0d0",
 						Bootable: false,
