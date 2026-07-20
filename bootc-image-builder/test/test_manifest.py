@@ -56,7 +56,6 @@ def test_manifest_smoke(build_container, tc):
 
 
 @pytest.mark.parametrize("tc", gen_testcases("anaconda-iso"))
-@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_rpm_iso_manifest_smoke(build_container, tc):
     testutil.pull_container(tc.container_ref, tc.target_arch)
 
@@ -266,7 +265,6 @@ def test_manifest_user_customizations_toml(tmp_path, build_container):
     }
 
 
-@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_manifest_installer_customizations(tmp_path, build_container):
     container_ref = "quay.io/centos-bootc/centos-bootc:stream9"
     testutil.pull_container(container_ref)
@@ -398,7 +396,6 @@ def find_image_anaconda_stage(manifest_str):
 
 
 @pytest.mark.parametrize("tc", gen_testcases("anaconda-iso"))
-@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_manifest_anaconda_module_customizations(tmpdir_factory, build_container, tc):
     testutil.pull_container(tc.container_ref, tc.target_arch)
 
@@ -604,7 +601,6 @@ def find_grub2_iso_stage_from(manifest_str):
     raise ValueError(f"cannot find grub2.iso stage in manifest:\n{manifest_str}")
 
 
-@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_manifest_fips_customization(tmp_path, build_container):
     container_ref = "quay.io/centos-bootc/centos-bootc:stream9"
     testutil.pull_container(container_ref)
@@ -824,7 +820,6 @@ def test_manifest_disk_customization_lvm_swap(tmp_path, build_container):
 
 
 @pytest.mark.parametrize("use_librepo", [False, True])
-@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_iso_manifest_use_librepo(build_container, use_librepo):
     # no need to parameterize this test, --use-librepo behaves same for all containers
     container_ref = "quay.io/centos-bootc/centos-bootc:stream9"
@@ -1083,7 +1078,6 @@ def test_manifest_image_disk_yaml(tmp_path, build_container):
 
 
 @pytest.mark.parametrize("tc", gen_testcases("anaconda-iso"))
-@pytest.mark.skip(reason="anaconda-iso is not supported")
 def test_ova_manifest_smoke(build_container, tc):
     testutil.pull_container(tc.container_ref, tc.target_arch)
 
