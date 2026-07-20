@@ -1053,6 +1053,7 @@ func TestAnacondaISOTreeSerializeInstallRootfsType(t *testing.T) {
 func TestAnacondaInstallerISOTreeNewErofsStage(t *testing.T) {
 	pipeline := newTestAnacondaISOTreeErofs(manifest.Grub2UEFIOnlyISOBoot)
 	pipeline.RootfsType = manifest.ErofsRootfs
+	pipeline.ISOCustomizations.RootfsExcludes = []string{"/foo"}
 
 	stage, err := pipeline.NewErofsStage()
 	require.NoError(t, err)

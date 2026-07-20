@@ -579,10 +579,6 @@
       - "boot/loader/.*"
       - "boot/symvers-.*"
       - "boot/System.map-.*"
-      - "usr/lib/sysimage/rpm/.*"
-      - "var/lib/rpm/.*"
-      - "var/lib/yum/.*"
-      - "var/lib/dnf/.*"
 
     conditions: &default_iso_config_conditions
       "x86_64 uses grub2":
@@ -607,6 +603,22 @@
           arch: "s390x"
         shallow_merge:
           boot_type: "s390-iso"
+      "fedora < 45 excludes metadata":
+        when:
+          version_less_than: "45"
+        shallow_merge:
+          rootfs_excludes:
+            - "boot/efi/.*"
+            - "boot/grub2/.*"
+            - "boot/config-.*"
+            - "boot/initramfs-.*"
+            - "boot/loader/.*"
+            - "boot/symvers-.*"
+            - "boot/System.map-.*"
+            - "usr/lib/sysimage/rpm/.*"
+            - "var/lib/rpm/.*"
+            - "var/lib/yum/.*"
+            - "var/lib/dnf/.*"
 
   erofs_options: &default_erofs_options
     compression:
