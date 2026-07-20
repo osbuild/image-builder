@@ -370,6 +370,19 @@ func (t *bootcImageType) initAnacondaInstallerBaseFromSourceInfo(img *image.Anac
 
 	// see https://github.com/osbuild/bootc-image-builder/issues/733
 	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
+	img.ISOCustomizations.RootfsExcludes = []string{
+		"boot/efi/.*",
+		"boot/grub2/.*",
+		"boot/config-.*",
+		"boot/initramfs-.*",
+		"boot/loader/.*",
+		"boot/symvers-.*",
+		"boot/System.map-.*",
+		"usr/lib/sysimage/rpm/.*",
+		"var/lib/rpm/.*",
+		"var/lib/yum/.*",
+		"var/lib/dnf/.*",
+	}
 
 	// Enabled by default to keep backwards compatibility
 	img.InstallerCustomizations.InstallWeakDeps = true
@@ -481,6 +494,19 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 	}
 	img.RootfsCompression = "zstd"
 	img.RootfsType = manifest.SquashfsRootfs
+	img.RootfsExcludes = []string{
+		"boot/efi/.*",
+		"boot/grub2/.*",
+		"boot/config-.*",
+		"boot/initramfs-.*",
+		"boot/loader/.*",
+		"boot/symvers-.*",
+		"boot/System.map-.*",
+		"usr/lib/sysimage/rpm/.*",
+		"var/lib/rpm/.*",
+		"var/lib/yum/.*",
+		"var/lib/dnf/.*",
+	}
 
 	// Potentially KernelInfo is nil when we couldn't read it from the container; handle that so
 	// we don't panic

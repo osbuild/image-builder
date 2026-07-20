@@ -602,6 +602,10 @@ func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.IS
 			isc.RootfsType = *isoroot
 		}
 
+		if rootfsExcludes := isoConfig.RootfsExcludes; len(rootfsExcludes) > 0 {
+			isc.RootfsExcludes = rootfsExcludes
+		}
+
 		if preparer := isoConfig.Preparer; preparer != nil {
 			isc.Preparer = *preparer
 		}
