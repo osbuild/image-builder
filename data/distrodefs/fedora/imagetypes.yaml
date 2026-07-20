@@ -571,6 +571,19 @@
     preparer: "image-builder - https://osbuild.org/"
     publisher: "Fedora Project"
     rootfs_type: "squashfs"
+    rootfs_excludes:
+      - "boot/efi/.*"
+      - "boot/grub2/.*"
+      - "boot/config-.*"
+      - "boot/initramfs-.*"
+      - "boot/loader/.*"
+      - "boot/symvers-.*"
+      - "boot/System.map-.*"
+      - "usr/lib/sysimage/rpm/.*"
+      - "var/lib/rpm/.*"
+      - "var/lib/yum/.*"
+      - "var/lib/dnf/.*"
+
     conditions: &default_iso_config_conditions
       "x86_64 uses grub2":
         when:

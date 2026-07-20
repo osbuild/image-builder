@@ -945,6 +945,18 @@
 
   default_iso_config: &default_iso_config
     rootfs_type: "squashfs-ext4"
+    rootfs_excludes:
+      - "boot/efi/.*"
+      - "boot/grub2/.*"
+      - "boot/config-.*"
+      - "boot/initramfs-.*"
+      - "boot/loader/.*"
+      - "boot/symvers-.*"
+      - "boot/System.map-.*"
+      - "usr/lib/sysimage/rpm/.*"
+      - "var/lib/rpm/.*"
+      - "var/lib/yum/.*"
+      - "var/lib/dnf/.*"
     conditions:
       "x86_64 uses syslinux":
         when:
