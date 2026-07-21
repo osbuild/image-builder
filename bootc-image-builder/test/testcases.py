@@ -95,17 +95,12 @@ def gen_testcases(what):  # pylint: disable=too-many-return-statements
             TestCaseC10S(image="anaconda-iso"),
         ]
     if what == "qemu-cross":
-        test_cases = []
-        if platform.machine() == "x86_64":
-            # 2025-09-19: disabled because CI hangs, see
-            # https://github.com/osbuild/bootc-image-builder/actions/runs/17821609665
-            # test_cases.append(
-            #    TestCaseC9S(image="raw", target_arch="arm64"))
-            pass
-        elif platform.machine() == "arm64":
-            # TODO: add arm64->x86_64 cross build test too
-            pass
-        return test_cases
+        arch = platform.machine()
+        if arch == "x86_64":
+            return [TestCaseC10S(image="raw", target_arch="arm64")]
+        if arch == "aarch64":
+            return [TestCaseC10S(image="raw", target_arch="amd64")]
+        raise RuntimeError(f"unknown host plarform architecture for cross-arch testing: {arch}")
     if what == "qemu-boot":
         return [
             # test default partitioning
