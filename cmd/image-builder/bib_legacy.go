@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/image-builder/internal/cmdutil"
 	"github.com/osbuild/image-builder/pkg/arch"
@@ -22,6 +21,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
@@ -71,7 +71,7 @@ func manifestFromCobraForLegacyISO(imgref, buildImgref, imgTypeStr, rootFs, rpmC
 	}
 	defer func() {
 		if err := container.Stop(); err != nil {
-			logrus.Warnf("error stopping container: %v", err)
+			olog.Printf("ERROR: problem stopping container: %v", err)
 		}
 	}()
 
@@ -101,7 +101,7 @@ func manifestFromCobraForLegacyISO(imgref, buildImgref, imgTypeStr, rootFs, rpmC
 	defer func() {
 		if startedBuildContainer {
 			if err := buildContainer.Stop(); err != nil {
-				logrus.Warnf("error stopping container: %v", err)
+				olog.Printf("ERROR: problem stopping container: %v", err)
 			}
 		}
 	}()
@@ -437,7 +437,7 @@ func getDistroAndRunner(osRelease osinfo.OSRelease) (manifest.Distro, runner.Run
 		case 10:
 			return manifest.DISTRO_EL10, r, nil
 		default:
-			logrus.Warnf("Unknown CentOS version %d, using default distro for manifest generation", version)
+			olog.Printf("WARNING: Unknown CentOS version %d, using default distro for manifest generation", version)
 			return manifest.DISTRO_NULL, r, nil
 		}
 
@@ -464,11 +464,11 @@ func getDistroAndRunner(osRelease osinfo.OSRelease) (manifest.Distro, runner.Run
 		case 10:
 			return manifest.DISTRO_EL10, r, nil
 		default:
-			logrus.Warnf("Unknown RHEL version %d, using default distro for manifest generation", major)
+			olog.Printf("WARNING: Unknown RHEL version %d, using default distro for manifest generation", major)
 			return manifest.DISTRO_NULL, r, nil
 		}
 	}
 
-	logrus.Warnf("Unknown distro %s, using default runner", osRelease.ID)
+	olog.Printf("WARNING: Unknown distro %s, using default runner", osRelease.ID)
 	return manifest.DISTRO_NULL, &runner.Linux{}, nil
 }

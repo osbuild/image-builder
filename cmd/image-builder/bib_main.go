@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/exp/slices"
@@ -28,6 +28,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/experimentalflags"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
+	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/reporegistry"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
@@ -270,7 +271,7 @@ func handleAWSFlags(cmd *cobra.Command) (cloud.Uploader, error) {
 		return nil, err
 	}
 	status := io.Discard
-	if logrus.GetLevel() >= logrus.InfoLevel {
+	if rootLogLevel != "" {
 		status = os.Stderr
 	}
 	// check as many permission prerequisites as possible before starting
@@ -299,11 +300,9 @@ func bibCmdBuild(cmd *cobra.Command, args []string) error {
 	targetArch, _ := cmd.Flags().GetString("target-arch")
 	progressType, _ := cmd.Flags().GetString("progress")
 
-	logrus.Debug("Validating environment")
 	if err := setup.Validate(targetArch, false); err != nil {
 		return fmt.Errorf("cannot validate the setup: %w", err)
 	}
-	logrus.Debug("Ensuring environment setup")
 	switch setup.IsContainer() {
 	case false:
 		fmt.Fprintf(os.Stderr, "WARNING: running outside a container, this is an unsupported configuration\n")
@@ -423,15 +422,11 @@ func bibRootPreRunE(cmd *cobra.Command, _ []string) error {
 	progress, _ := cmd.Flags().GetString("progress")
 	switch {
 	case rootLogLevel != "":
-		level, err := logrus.ParseLevel(rootLogLevel)
-		if err != nil {
-			return err
-		}
-		logrus.SetLevel(level)
+		olog.SetDefault(log.New(os.Stderr, "", 0))
 	case verbose:
-		logrus.SetLevel(logrus.InfoLevel)
+		olog.SetDefault(log.New(os.Stderr, "", 0))
+		rootLogLevel = "verbose"
 	default:
-		logrus.SetLevel(logrus.ErrorLevel)
 	}
 	if verbose && progress == "auto" {
 		if err := cmd.Flags().Set("progress", "verbose"); err != nil {
@@ -460,7 +455,7 @@ func bibVersionFromBuildInfo() (string, error) {
 		case "vcs.modified":
 			bT, err := strconv.ParseBool(bs.Value)
 			if err != nil {
-				logrus.Errorf("Error parsing 'vcs.modified': %v", err)
+				olog.Printf("ERROR: parsing 'vcs.modified': %v", err)
 				bT = true
 			}
 			buildTainted = bT
