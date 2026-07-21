@@ -155,6 +155,38 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
     - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_disk.py
 
+"bootc-image-builder/test-build-iso [{arch}]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: {runner}-{arch}
+  rules:
+    # 1. Skip the job if we're on the github merge queue
+    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
+      when: never
+    # 2. Fallback rule for any other branch name
+    - if: '$CI_COMMIT_BRANCH'
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_iso.py
+
+"bootc-image-builder/test-build-cross [{arch}]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: {runner}-{arch}
+  rules:
+    # 1. Skip the job if we're on the github merge queue
+    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
+      when: never
+    # 2. Fallback rule for any other branch name
+    - if: '$CI_COMMIT_BRANCH'
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_cross.py
+
 "bootc-image-builder/test-manifest [{arch}]":
   stage: gen
   extends: .terraform
