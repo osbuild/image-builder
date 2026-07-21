@@ -123,18 +123,12 @@
           - *default_partition_prep
           - <<: *default_partition_root_xfs
             type: ""
-            payload:
-              <<: *default_partition_root_xfs_payload
-              label: ""
       s390x:
         type: "dos"
         partitions:
           - <<: *default_partition_root_xfs
             type: ""
             bootable: true
-            payload:
-              <<: *default_partition_root_xfs_payload
-              label: ""
 
     # The default partition tables for all images that use a XFS on LVM on the root partition. Note
     # that the layout for s390x and ppc64le diverges and that some default partition sizes, labels,
@@ -159,18 +153,12 @@
           - *default_partition_prep
           - <<: *default_partition_root_xfs
             type: ""
-            payload:
-              <<: *default_partition_root_xfs_payload
-              label: ""
       s390x:
         type: "dos"
         partitions:
           - <<: *default_partition_root_xfs
             type: ""
             bootable: true
-            payload:
-              <<: *default_partition_root_xfs_payload
-              label: ""
 
   s390x_zipl_platform: &s390x_zipl_platform
     arch: "s390x"
