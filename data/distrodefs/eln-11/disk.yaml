@@ -5,60 +5,191 @@
     guids:
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+      - &xbootldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
 
-    default_partition_tables: &default_partition_tables
+    # The default partitions used within the partition tables, this allows for slightly
+    # easier composability in the tables.
+    default_partitions:
+      - &default_partition_bios
+        size: "1 MiB"
+        bootable: true
+        type: *bios_boot_partition_guid
+      - &default_partition_prep
+        size: "4 MiB"
+        bootable: true
+        type: *prep_partition_dosid
+      - &default_partition_esp
+        size: "200 MiB"
+        type: *efi_system_partition_guid
+        payload_type: "filesystem"
+        payload: &default_partition_esp_payload
+          type: vfat
+          mountpoint: "/boot/efi"
+          label: "ESP"
+          fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+          fstab_freq: 0
+          fstab_passno: 2
+      - &default_partition_xbootldr
+        size: "2 GiB"
+        type: *xbootldr_partition_guid
+        payload_type: "filesystem"
+        payload: &default_partition_xbootldr_payload
+          type: "xfs"
+          label: "boot"
+          mountpoint: "/boot"
+          fstab_options: "defaults"
+          fstab_freq: 0
+          fstab_passno: 0
+      - &default_partition_root_xfs
+        size: "2 GiB"
+        type: *filesystem_data_guid
+        payload_type: "filesystem"
+        payload: &default_partition_root_xfs_payload
+          type: "xfs"
+          label: "root"
+          mountpoint: "/"
+          fstab_options: "defaults"
+          fstab_freq: 0
+          fstab_passno: 0
+      - &default_partition_root_xfs_lvm
+        size: "2 GiB"
+        type: *lvm_partition_guid
+        payload_type: "lvm"
+        payload:
+          name: "rootvg"
+          description: "built with lvm2 and image-builder"
+          logical_volumes:
+            - size: "1 GiB"
+              name: "homelv"
+              payload_type: "filesystem"
+              payload:
+                type: "xfs"
+                label: "home"
+                mountpoint: "/home"
+                fstab_options: "defaults"
+            - size: "2 GiB"
+              name: "rootlv"
+              payload_type: "filesystem"
+              payload:
+                type: "xfs"
+                label: "root"
+                mountpoint: "/"
+                fstab_options: "defaults"
+            - size: "2 GiB"
+              name: "tmplv"
+              payload_type: "filesystem"
+              payload:
+                type: "xfs"
+                label: "tmp"
+                mountpoint: "/tmp"
+                fstab_options: "defaults"
+            - size: "10 GiB"
+              name: "usrlv"
+              payload_type: "filesystem"
+              payload:
+                type: "xfs"
+                label: "usr"
+                mountpoint: "/usr"
+                fstab_options: "defaults"
+            - size: "10 GiB"
+              name: "varlv"
+              payload_type: "filesystem"
+              payload:
+                type: "xfs"
+                label: "var"
+                mountpoint: "/var"
+                fstab_options: "defaults"
+
+    # The default partition tables for all images that use a plain XFS root partition. In this
+    # case there is no separate XBOOTLDR partition. For ppc64le and s390x the respective necessary
+    # partitions are set.
+    default_partition_tables_xfs: &default_partition_tables_xfs
       x86_64:
         type: "gpt"
         partitions:
-          - size: "1 MiB"
-            bootable: true
-            type: *bios_boot_partition_guid
-          - &default_partition_table_part_efi
-            size: "200 MiB"
-            type: *efi_system_partition_guid
-            payload_type: "filesystem"
-            payload:
-              type: vfat
-              mountpoint: "/boot/efi"
-              label: "ESP"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
-              fstab_freq: 0
-              fstab_passno: 2
-          - &default_partition_table_part_root
-            size: "2 GiB"
-            type: *filesystem_data_guid
-            payload_type: "filesystem"
-            payload: &default_partition_table_part_root_payload
-              type: "xfs"
-              label: "root"
-              mountpoint: "/"
-              fstab_options: "defaults"
-              fstab_freq: 0
-              fstab_passno: 0
+          - *default_partition_bios
+          - *default_partition_esp
+          - *default_partition_root_xfs
       aarch64:
         type: "gpt"
         partitions:
-          - *default_partition_table_part_efi
-          - *default_partition_table_part_root
+          - *default_partition_esp
+          - *default_partition_root_xfs
       ppc64le:
         type: "dos"
         partitions:
-          - size: "4 MiB"
-            bootable: true
-            type: *prep_partition_dosid
-          - &default_partition_table_part_root_ppc64le
-            size: "2 GiB"
-            payload_type: "filesystem"
+          - *default_partition_prep
+          - <<: *default_partition_root_xfs
+            type: ""
             payload:
-              <<: *default_partition_table_part_root_payload
+              <<: *default_partition_root_xfs_payload
               label: ""
       s390x:
         type: "dos"
         partitions:
-          - <<: *default_partition_table_part_root_ppc64le
+          - <<: *default_partition_root_xfs
+            type: ""
             bootable: true
+            payload:
+              <<: *default_partition_root_xfs_payload
+              label: ""
+
+    # The default partition tables for all images that use a XFS on LVM on the root partition. Note
+    # that the layout for s390x and ppc64le diverges and that some default partition sizes, labels,
+    # and types, diverge more than necessary at the moment.
+    default_partition_tables_xfs_lvm: &default_partition_tables_xfs_lvm
+      x86_64: &default_partition_tables_xfs_lvm_x86_64
+        type: "gpt"
+        partitions:
+          - <<: *default_partition_esp
+            size: "500 MiB"
+            payload:
+              <<: *default_partition_esp_payload
+              label: ""
+          - <<: *default_partition_xbootldr
+            type: *filesystem_data_guid
+            size: "1 GiB"
+            payload:
+              <<: *default_partition_xbootldr_payload
+              label: ""
+          - <<: *default_partition_bios
+            size: "2 MiB"
+          - *default_partition_root_xfs_lvm
+      aarch64: &default_partition_tables_xfs_lvm_aarch64
+        type: "gpt"
+        partitions:
+          - <<: *default_partition_esp
+            size: "500 MiB"
+            payload:
+              <<: *default_partition_esp_payload
+              label: ""
+          - <<: *default_partition_xbootldr
+            type: *filesystem_data_guid
+            size: "1 GiB"
+            payload:
+              <<: *default_partition_xbootldr_payload
+              label: ""
+          - *default_partition_root_xfs_lvm
+      ppc64le:
+        type: "dos"
+        partitions:
+          - *default_partition_prep
+          - <<: *default_partition_root_xfs
+            type: ""
+            payload:
+              <<: *default_partition_root_xfs_payload
+              label: ""
+      s390x:
+        type: "dos"
+        partitions:
+          - <<: *default_partition_root_xfs
+            type: ""
+            bootable: true
+            payload:
+              <<: *default_partition_root_xfs_payload
+              label: ""
 
   s390x_zipl_platform: &s390x_zipl_platform
     arch: "s390x"
@@ -351,8 +482,7 @@ image_types:
                     enabled: false
                   subscription_manager:
                     enabled: false
-    partition_table:
-      <<: *default_partition_tables
+    partition_table: *default_partition_tables_xfs
     package_sets:
       os:
         - *common_disk_pkgset_exclude
@@ -508,8 +638,7 @@ image_types:
                 apply_network_config: false
             datasource_list:
               - "Azure"
-    partition_table:
-      <<: *default_partition_tables
+    partition_table: *default_partition_tables_xfs
     package_sets:
       os:
         - *common_disk_pkgset_exclude
@@ -522,90 +651,14 @@ image_types:
     exports: ["xz"]
     compression: "xz"
     filename: "disk.vhd.xz"
-    partition_table:
+    partition_table: 
+      <<: *default_partition_tables_xfs_lvm
       x86_64:
-        type: "gpt"
+        <<: *default_partition_tables_xfs_lvm_x86_64
         size: "64 GiB"
-        partitions:
-          - &azure_rhui_part_boot_efi
-            size: "500 MiB"
-            type: *efi_system_partition_guid
-            payload_type: "filesystem"
-            payload:
-              type: "vfat"
-              mountpoint: "/boot/efi"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
-              fstab_freq: 0
-              fstab_passno: 2
-          # NB: we currently don't support /boot on LVM
-          - &azure_rhui_part_boot
-            size: "1 GiB"
-            type: *filesystem_data_guid
-            payload_type: "filesystem"
-            payload:
-              type: "xfs"
-              mountpoint: "/boot"
-              fstab_options: "defaults"
-              fstab_freq: 0
-              fstab_passno: 0
-          - size: "2 MiB"
-            bootable: true
-            type: *bios_boot_partition_guid
-          - &azure_rhui_part_lvm
-            type: *lvm_partition_guid
-            payload_type: "lvm"
-            payload:
-              name: "rootvg"
-              description: "built with lvm2 and osbuild"
-              logical_volumes:
-                - size: "1 GiB"
-                  name: "homelv"
-                  payload_type: "filesystem"
-                  payload:
-                    type: "xfs"
-                    label: "home"
-                    mountpoint: "/home"
-                    fstab_options: "defaults"
-                - size: "2 GiB"
-                  name: "rootlv"
-                  payload_type: "filesystem"
-                  payload:
-                    type: "xfs"
-                    label: "root"
-                    mountpoint: "/"
-                    fstab_options: "defaults"
-                - size: "2 GiB"
-                  name: "tmplv"
-                  payload_type: "filesystem"
-                  payload:
-                    type: "xfs"
-                    label: "tmp"
-                    mountpoint: "/tmp"
-                    fstab_options: "defaults"
-                - size: "10 GiB"
-                  name: "usrlv"
-                  payload_type: "filesystem"
-                  payload:
-                    type: "xfs"
-                    label: "usr"
-                    mountpoint: "/usr"
-                    fstab_options: "defaults"
-                - size: "10 GiB"
-                  name: "varlv"
-                  payload_type: "filesystem"
-                  payload:
-                    type: "xfs"
-                    label: "var"
-                    mountpoint: "/var"
-                    fstab_options: "defaults"
       aarch64:
-        type: "gpt"
+        <<: *default_partition_tables_xfs_lvm_aarch64
         size: "64 GiB"
-        partitions:
-          - *azure_rhui_part_boot_efi
-          # NB: we currently don't support /boot on LVM
-          - *azure_rhui_part_boot
-          - *azure_rhui_part_lvm
     blueprint:
       supported_options: *supported_options_disk
 
@@ -624,8 +677,7 @@ image_types:
     image_config:
       kernel_options:
         - "ro"
-    partition_table:
-      <<: *default_partition_tables
+    partition_table: *default_partition_tables_xfs
     package_sets:
       os:
         - include:
@@ -752,8 +804,7 @@ image_types:
                   add_drivers:
                     - "nvme"
                     - "xen-blkfront"
-    partition_table:
-      <<: *default_partition_tables
+    partition_table: *default_partition_tables_xfs
     package_sets:
       os:
         - *common_disk_pkgset_exclude
@@ -879,10 +930,7 @@ image_types:
         config:
           "InstanceSetup":
             set_boto_config: false
-    partition_table:
-      # TODO: the base partition table still contains the BIOS boot
-      # partition, but the image is UEFI-only
-      <<: *default_partition_tables
+    partition_table: *default_partition_tables_xfs
     package_sets:
       os:
         - include:
