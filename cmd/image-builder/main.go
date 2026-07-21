@@ -349,6 +349,22 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		}
 		img = &imagefilter.Result{ImgType: imgType, Repos: nil}
 	} else {
+		var bpDistroName string
+		blueprintPath, err := cmd.Flags().GetString("blueprint")
+		if err != nil {
+			return nil, err
+		}
+		if blueprintPath != "" {
+			bp, err := blueprintload.Load(blueprintPath)
+			if err != nil {
+				return nil, err
+			}
+			bpDistroName = bp.Distro
+		}
+		distroStr, err = findDistro(distroStr, bpDistroName)
+		if err != nil {
+			return nil, err
+		}
 		repoOpts := &repoOptions{
 			RepoDir:      repoDir,
 			ExtraRepos:   extraRepos,
