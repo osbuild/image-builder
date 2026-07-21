@@ -670,6 +670,9 @@ func diskCustomizations(t *imageType) (manifest.DiskCustomizations, error) {
 		if diskConfig.PartitioningTool != nil {
 			diskCust.PartitioningTool = *diskConfig.PartitioningTool
 		}
+		if diskConfig.OVFVMWare != nil {
+			diskCust.OVFVMWare = *diskConfig.OVFVMWare
+		}
 	}
 
 	return diskCust, nil
