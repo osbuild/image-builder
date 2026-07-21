@@ -144,30 +144,25 @@
         type: "gpt"
         partitions:
           - <<: *default_partition_esp
-            size: "500 MiB"
             payload:
               <<: *default_partition_esp_payload
               label: ""
           - <<: *default_partition_xbootldr
             type: *filesystem_data_guid
-            size: "1 GiB"
             payload:
               <<: *default_partition_xbootldr_payload
               label: ""
-          - <<: *default_partition_bios
-            size: "2 MiB"
+          - *default_partition_bios
           - *default_partition_root_xfs_lvm
       aarch64: &default_partition_tables_xfs_lvm_aarch64
         type: "gpt"
         partitions:
           - <<: *default_partition_esp
-            size: "500 MiB"
             payload:
               <<: *default_partition_esp_payload
               label: ""
           - <<: *default_partition_xbootldr
             type: *filesystem_data_guid
-            size: "1 GiB"
             payload:
               <<: *default_partition_xbootldr_payload
               label: ""
