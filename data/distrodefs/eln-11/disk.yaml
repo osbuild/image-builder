@@ -102,39 +102,8 @@
                 mountpoint: "/var"
                 fstab_options: "defaults"
 
-    # The default partition tables for all images that use a plain XFS root partition. In this
-    # case there is no separate XBOOTLDR partition. For ppc64le and s390x the respective necessary
-    # partitions are set.
-    default_partition_tables_xfs: &default_partition_tables_xfs
-      x86_64:
-        type: "gpt"
-        partitions:
-          - *default_partition_bios
-          - *default_partition_esp
-          - <<: *default_partition_root_xfs
-            type: *root_partition_guid_x86_64
-      aarch64:
-        type: "gpt"
-        partitions:
-          - *default_partition_esp
-          - <<: *default_partition_root_xfs
-            type: *root_partition_guid_aarch64
-      ppc64le:
-        type: "dos"
-        partitions:
-          - *default_partition_prep
-          - <<: *default_partition_root_xfs
-            type: ""
-      s390x:
-        type: "dos"
-        partitions:
-          - <<: *default_partition_root_xfs
-            type: ""
-            bootable: true
-
-    # The default partition tables for all images that use a XFS on LVM on the root partition. Note
-    # that the layout for s390x and ppc64le diverges and that some default partition sizes, labels,
-    # and types, diverge more than necessary at the moment.
+    # The default partition tables for all disk images. It sets up a LVM root with various volumes
+    # inside it and a separate XBOOTLDR partition.
     default_partition_tables_xfs_lvm: &default_partition_tables_xfs_lvm
       x86_64: &default_partition_tables_xfs_lvm_x86_64
         type: "gpt"
@@ -453,7 +422,7 @@ image_types:
                     enabled: false
                   subscription_manager:
                     enabled: false
-    partition_table: *default_partition_tables_xfs
+    partition_table: *default_partition_tables_xfs_lvm
     package_sets:
       os:
         - *common_disk_pkgset_exclude
@@ -609,7 +578,7 @@ image_types:
                 apply_network_config: false
             datasource_list:
               - "Azure"
-    partition_table: *default_partition_tables_xfs
+    partition_table: *default_partition_tables_xfs_lvm
     package_sets:
       os:
         - *common_disk_pkgset_exclude
@@ -648,7 +617,7 @@ image_types:
     image_config:
       kernel_options:
         - "ro"
-    partition_table: *default_partition_tables_xfs
+    partition_table: *default_partition_tables_xfs_lvm
     package_sets:
       os:
         - include:
@@ -775,7 +744,7 @@ image_types:
                   add_drivers:
                     - "nvme"
                     - "xen-blkfront"
-    partition_table: *default_partition_tables_xfs
+    partition_table: *default_partition_tables_xfs_lvm
     package_sets:
       os:
         - *common_disk_pkgset_exclude
@@ -901,7 +870,7 @@ image_types:
         config:
           "InstanceSetup":
             set_boto_config: false
-    partition_table: *default_partition_tables_xfs
+    partition_table: *default_partition_tables_xfs_lvm
     package_sets:
       os:
         - include:
