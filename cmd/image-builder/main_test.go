@@ -224,6 +224,46 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	}
 }
 
+func TestManifestIntegrationAutoDetectDistro(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockDistroGetHostDistroName(func() (string, error) {
+		return "centos-9", nil
+	})
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"manifest",
+		"qcow2",
+		"--arch=x86_64",
+		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
+	})
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	var fakeStderr bytes.Buffer
+	restore = main.MockOsStderr(&fakeStderr)
+	defer restore()
+
+	err := main.Run()
+	require.NoError(t, err)
+
+	pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+	require.NoError(t, err)
+	assert.Contains(t, pipelineNames, "qcow2")
+	assert.Contains(t, fakeStderr.String(), `No distro name specified, selecting "centos-9" based on host`)
+}
+
 func TestManifestIntegrationCrossArch(t *testing.T) {
 	if testing.Short() {
 		t.Skip("manifest generation takes a while")
