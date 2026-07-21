@@ -2,6 +2,7 @@
 #
 # Create a job for each distro+arch to run test generators and triggers.
 import sys
+from glob import glob
 
 import imgtestlib as testlib
 
@@ -139,7 +140,7 @@ MANIFEST_GEN_TEMPLATE = """
 """
 
 BOOTC_IMAGE_BUILDER_TEMPLATE = """
-"bootc-image-builder/test-build-disk [{arch}]":
+"{test_file_path} [{arch}]":
   stage: gen
   extends: .terraform
   variables:
@@ -153,76 +154,20 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_disk.py
-
-"bootc-image-builder/test-build-iso [{arch}]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: {runner}-{arch}
-  rules:
-    # 1. Skip the job if we're on the github merge queue
-    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
-      when: never
-    # 2. Fallback rule for any other branch name
-    - if: '$CI_COMMIT_BRANCH'
-  script:
-    - sudo ./test/scripts/install-dependencies
-    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_iso.py
-
-"bootc-image-builder/test-build-cross [{arch}]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: {runner}-{arch}
-  rules:
-    # 1. Skip the job if we're on the github merge queue
-    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
-      when: never
-    # 2. Fallback rule for any other branch name
-    - if: '$CI_COMMIT_BRANCH'
-  script:
-    - sudo ./test/scripts/install-dependencies
-    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_build_cross.py
-
-"bootc-image-builder/test-manifest [{arch}]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: {runner}-{arch}
-  rules:
-    # 1. Skip the job if we're on the github merge queue
-    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
-      when: never
-    # 2. Fallback rule for any other branch name
-    - if: '$CI_COMMIT_BRANCH'
-  script:
-    - sudo ./test/scripts/install-dependencies
-    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_manifest.py
-
-"bootc-image-builder/test-opts-and-progress [{arch}]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: {runner}-{arch}
-  rules:
-    # 1. Skip the job if we're on the github merge queue
-    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
-      when: never
-    # 2. Fallback rule for any other branch name
-    - if: '$CI_COMMIT_BRANCH'
-  script:
-    - sudo ./test/scripts/install-dependencies
-    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests ./bootc-image-builder/test/test_opts.py ./bootc-image-builder/test/test_progress.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests {test_file_path}
 """
 
 
 def sort_configs(configs):
     return sorted(configs, key=lambda img: img["distro"]+img["arch"]+img["image-type"])
+
+
+def collect_bib_tests():
+    """
+    Collect test files for bootc-image-builder and return a list of test file paths.
+    """
+    bib_tests_path = "bootc-image-builder/test"
+    return sorted(glob(f"{bib_tests_path}/test_*.py"))
 
 
 def main():
@@ -278,10 +223,12 @@ def main():
 
     # Run bootc-image-builder tests on Fedora 44 only for now (both arches)
     for arch in ("x86_64", "aarch64"):
-        trigger_stage.append(BOOTC_IMAGE_BUILDER_TEMPLATE.format(
-            runner=RUNNER,
-            arch=arch,
-        ))
+        for test_file_path in collect_bib_tests():
+            trigger_stage.append(BOOTC_IMAGE_BUILDER_TEMPLATE.format(
+                runner=RUNNER,
+                arch=arch,
+                test_file_path=test_file_path,
+            ))
 
     with open(config_path, "w", encoding="utf-8") as config_file:
         config_file.write(BASE_CONFIG.format(runner=RUNNER))
