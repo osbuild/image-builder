@@ -1170,23 +1170,6 @@ fail:
     - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_opts.py
 
 
-"bootc-image-builder/test/test_progress.py [x86_64]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-x86_64
-  rules:
-    # 1. Skip the job if we're on the github merge queue
-    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
-      when: never
-    # 2. Fallback rule for any other branch name
-    - if: '$CI_COMMIT_BRANCH'
-  script:
-    - sudo ./test/scripts/install-dependencies
-    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_progress.py
-
-
 "bootc-image-builder/test/test_build_cross.py [aarch64]":
   stage: gen
   extends: .terraform
@@ -1287,23 +1270,6 @@ fail:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
     - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_opts.py
-
-
-"bootc-image-builder/test/test_progress.py [aarch64]":
-  stage: gen
-  extends: .terraform
-  variables:
-    RUNNER: aws/fedora-44-aarch64
-  rules:
-    # 1. Skip the job if we're on the github merge queue
-    - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
-      when: never
-    # 2. Fallback rule for any other branch name
-    - if: '$CI_COMMIT_BRANCH'
-  script:
-    - sudo ./test/scripts/install-dependencies
-    - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_progress.py
 
 "generate-ostree-build-config: [centos-9, aarch64]":
   stage: ostree-gen
