@@ -5,7 +5,6 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/image-builder/internal/cmdutil"
 	"github.com/osbuild/image-builder/pkg/arch"
@@ -20,6 +19,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
@@ -68,7 +68,7 @@ func manifestFromCobraForLegacyISO(imgref, buildImgref, imgTypeStr, rootFs, rpmC
 	}
 	defer func() {
 		if err := container.Stop(); err != nil {
-			logrus.Warnf("error stopping container: %v", err)
+			olog.Printf("ERROR: problem stopping container: %v", err)
 		}
 	}()
 
@@ -98,7 +98,7 @@ func manifestFromCobraForLegacyISO(imgref, buildImgref, imgTypeStr, rootFs, rpmC
 	defer func() {
 		if startedBuildContainer {
 			if err := buildContainer.Stop(); err != nil {
-				logrus.Warnf("error stopping container: %v", err)
+				olog.Printf("ERROR: problem stopping container: %v", err)
 			}
 		}
 	}()

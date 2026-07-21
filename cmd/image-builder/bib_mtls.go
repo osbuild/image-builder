@@ -5,8 +5,8 @@ import (
 	"os"
 	"path"
 
+	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/sirupsen/logrus"
 )
 
 type mTLSConfig struct {
@@ -68,7 +68,7 @@ func prepareOsbuildMTLSConfig(mTLS *mTLSConfig) (envVars []string, cleanup func(
 
 	cleanupFn := func() {
 		if err := os.RemoveAll(dir); err != nil {
-			logrus.Warnf("prepareOsbuildMTLSConfig: failed to remove temporary directory %s: %v", dir, err)
+			olog.Printf("WARNING: prepareOsbuildMTLSConfig: failed to remove temporary directory %s: %v", dir, err)
 		}
 	}
 
