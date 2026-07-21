@@ -19,18 +19,33 @@ from containerbuild import (  # pylint: disable=unused-import
     build_container_fixture, make_container)
 from test_build_disk import ImageBuildResult  # pylint: disable=unused-import
 from test_build_disk import (  # pylint: disable=unused-import
-    assert_kernel_args, gpg_conf_fixture, image_type_fixture,
-    registry_conf_fixture, shared_tmpdir_fixture)
+    assert_kernel_args, build_images, gpg_conf_fixture, registry_conf_fixture,
+    shared_tmpdir_fixture)
 from testcases import gen_testcases
 
 ISO_BOOT_TIMEOUT = 1800
 
 
+@pytest.fixture(name="anaconda_iso", scope="session")
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def anaconda_iso_fixture(shared_tmpdir, build_container, request, force_aws_upload, gpg_conf, registry_conf):
+    """
+    Build an anconda-iso image inside the passed build_container and return an ImageBuildResult with the resulting image
+    path and user/password. In the case an image is being built from a local container, the function will build the
+    required local container for the test.
+    """
+    testutil.pull_container(request.param.container_ref, request.param.target_arch)
+
+    with build_images(shared_tmpdir, build_container, request,
+                      force_aws_upload, gpg_conf, registry_conf) as build_results:
+        return build_results[0]
+
+
 @pytest.mark.skipif(platform.system() != "Linux", reason="boot test only runs on linux right now")
-@pytest.mark.parametrize("image_type", gen_testcases("anaconda-iso"), indirect=["image_type"])
+@pytest.mark.parametrize("anaconda_iso", gen_testcases("anaconda-iso"), indirect=["anaconda_iso"])
 @pytest.mark.skip(reason="kvm boot tests are currently disabled")
-def test_iso_installs(image_type):
-    installer_iso_path = image_type.img_path
+def test_iso_installs(anaconda_iso):
+    installer_iso_path = anaconda_iso.img_path
     test_disk_path = installer_iso_path.with_name("test-disk.img")
     with open(test_disk_path, "w", encoding="utf8") as fp:
         fp.truncate(10_1000_1000_1000)
@@ -41,10 +56,10 @@ def test_iso_installs(image_type):
     # boot test disk and do extremly simple check
     with testlib.vm.QEMU(test_disk_path) as vm:
         vm.start(use_ovmf=True)
-        vm.run("true", user=image_type.username, password=image_type.password)
-        assert_kernel_args(vm, image_type)
-        ret = vm.run(["bootc", "status"], user="root", keyfile=image_type.ssh_keyfile_private_path)
-        assert f"image: {image_type.container_ref}" in ret.stdout
+        vm.run("true", user=anaconda_iso.username, password=anaconda_iso.password)
+        assert_kernel_args(vm, anaconda_iso)
+        ret = vm.run(["bootc", "status"], user="root", keyfile=anaconda_iso.ssh_keyfile_private_path)
+        assert f"image: {anaconda_iso.container_ref}" in ret.stdout
 
 
 def osinfo_for(it: ImageBuildResult, arch: str) -> str:
@@ -60,10 +75,10 @@ def osinfo_for(it: ImageBuildResult, arch: str) -> str:
 
 
 @pytest.mark.skipif(platform.system() != "Linux", reason="osinfo detect test only runs on linux right now")
-@pytest.mark.parametrize("image_type", gen_testcases("anaconda-iso"), indirect=["image_type"])
-def test_iso_os_detection(image_type):
-    installer_iso_path = image_type.img_path
-    arch = image_type.img_arch
+@pytest.mark.parametrize("anaconda_iso", gen_testcases("anaconda-iso"), indirect=["anaconda_iso"])
+def test_iso_os_detection(anaconda_iso):
+    installer_iso_path = anaconda_iso.img_path
+    arch = anaconda_iso.img_arch
     if not arch:
         arch = platform.machine()
     result = subprocess.run([
@@ -71,15 +86,15 @@ def test_iso_os_detection(image_type):
         installer_iso_path,
     ], capture_output=True, text=True, check=True)
     osinfo_output = result.stdout
-    expected_output = f"Media is bootable.\n{osinfo_for(image_type, arch)}"
+    expected_output = f"Media is bootable.\n{osinfo_for(anaconda_iso, arch)}"
     assert osinfo_output == expected_output
 
 
 @pytest.mark.skipif(platform.system() != "Linux", reason="osinfo detect test only runs on linux right now")
 @pytest.mark.skipif(not testutil.has_executable("unsquashfs"), reason="need unsquashfs")
-@pytest.mark.parametrize("image_type", gen_testcases("anaconda-iso"), indirect=["image_type"])
-def test_iso_install_img_is_squashfs(tmp_path, image_type):
-    installer_iso_path = image_type.img_path
+@pytest.mark.parametrize("anaconda_iso", gen_testcases("anaconda-iso"), indirect=["anaconda_iso"])
+def test_iso_install_img_is_squashfs(tmp_path, anaconda_iso):
+    installer_iso_path = anaconda_iso.img_path
     with ExitStack() as cm:
         mount_point = tmp_path / "cdrom"
         mount_point.mkdir()
