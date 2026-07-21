@@ -269,6 +269,8 @@ def build_images(shared_tmpdir, build_container, request, force_aws_upload, gpg_
     container_ref = tc.container_ref
 
     if tc.sign:
+        if not registry_conf:
+            raise RuntimeError("testing signed containers requires configuring a local registry")
         container_ref = get_signed_container_ref(registry_conf.local_registry, tc.container_ref)
 
     # params can be long and the qmp socket (that has a limit of 100ish
