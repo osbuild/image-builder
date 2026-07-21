@@ -466,15 +466,8 @@ func TestRawBootcPXE(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check for mkdir stages
-	mkdirStages := findStages("org.osbuild.mkdir", pipeline.Stages)
-	require.Greater(t, len(mkdirStages), 0)
-	var mkdirPaths []string
-	for _, s := range mkdirStages {
-		opts := s.Options.(*osbuild.MkdirStageOptions)
-		for _, p := range opts.Paths {
-			mkdirPaths = append(mkdirPaths, p.Path)
-		}
-	}
+	mkdirPaths := collectMkdirPaths(pipeline.Stages)
+	require.NotEmpty(t, mkdirPaths)
 	assert.Contains(t, mkdirPaths, "/usr")
 	assert.Contains(t, mkdirPaths, "/proc")
 }
