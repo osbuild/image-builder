@@ -143,9 +143,9 @@
       x86_64: &default_partition_tables_xfs_lvm_x86_64
         type: "gpt"
         partitions:
+          - *default_partition_bios
           - *default_partition_esp
           - *default_partition_xbootldr
-          - *default_partition_bios
           - *default_partition_root_xfs_lvm
       aarch64: &default_partition_tables_xfs_lvm_aarch64
         type: "gpt"
