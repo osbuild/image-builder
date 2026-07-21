@@ -6,8 +6,9 @@
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &xbootldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
-      - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
+      - &root_partition_guid_x86_64 "4f68bce3-e8cd-4db1-96e7-fbcaf984b709"
+      - &root_partition_guid_aarch64 "b921b045-1df0-41c3-af44-4c6f280d3fae"
 
     # The default partitions used within the partition tables, this allows for slightly
     # easier composability in the tables.
@@ -44,7 +45,6 @@
           fstab_passno: 0
       - &default_partition_root_xfs
         size: "2 GiB"
-        type: *filesystem_data_guid
         payload_type: "filesystem"
         payload: &default_partition_root_xfs_payload
           type: "xfs"
@@ -111,12 +111,14 @@
         partitions:
           - *default_partition_bios
           - *default_partition_esp
-          - *default_partition_root_xfs
+          - <<: *default_partition_root_xfs
+            type: *root_partition_guid_x86_64
       aarch64:
         type: "gpt"
         partitions:
           - *default_partition_esp
-          - *default_partition_root_xfs
+          - <<: *default_partition_root_xfs
+            type: *root_partition_guid_aarch64
       ppc64le:
         type: "dos"
         partitions:
