@@ -634,7 +634,33 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 		}))
 	}
 
+	// These steps were historically performed by Lorax; we need to do them ourselves at least
+	// temporarily until they land in Anaconda or other relevant places.
 	if len(p.InstallerCustomizations.LoraxTemplatePackage) == 0 {
+		// This can likely in the future be replaced by an Alias in the anaconda-shell@.service
+		stages = append(stages, &osbuild.Stage{
+			Type: "org.osbuild.copy",
+			Options: &osbuild.CopyStageOptions{
+				Paths: []osbuild.CopyStagePath{{
+					From: "tree:///usr/lib/systemd/system/anaconda-shell@.service",
+					To:   "tree:///usr/lib/systemd/system/autovt@.service",
+				}},
+			},
+		})
+
+		// Because Anaconda starts wayland on tty6 and systemd by default reserves VTs until
+		// tty6 we need to lower the amount of reserved VTs. This can likely in the future be
+		// replaced by Anaconda starting wayland on a different tty.
+		reserveVT := 2
+		stages = append(stages, osbuild.NewSystemdLogindStage(&osbuild.SystemdLogindStageOptions{
+			Filename: "10-reserve-vt.conf",
+			Config: osbuild.SystemdLogindConfigDropin{
+				Login: osbuild.SystemdLogindConfigLoginSection{
+					ReserveVT: &reserveVT,
+				},
+			},
+		}))
+
 		// Set the default target of the ISO to Anaconda if it is not being handled by Lorax.
 		stages = append(stages, osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
 			DefaultTarget: "anaconda.target",
