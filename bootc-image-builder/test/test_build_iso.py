@@ -70,6 +70,9 @@ def osinfo_for(it: ImageBuildResult, arch: str) -> str:
         return f"{base} 'CentOS Stream 10 ({arch})'\n"
     if "/fedora/fedora-bootc:" in it.container_ref:
         ver = it.container_ref.rsplit(":", maxsplit=1)[1]
+        if ver == "44":
+            # This condition should be removed when osinfo is updated to include Fedora 44 detection
+            return f"{base} 'Fedora ({arch})'\n"
         return f"{base} 'Fedora Server {ver} ({arch})'\n"
     raise ValueError(f"unknown osinfo string for '{it.container_ref}'")
 
