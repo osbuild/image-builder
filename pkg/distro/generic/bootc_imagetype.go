@@ -936,6 +936,7 @@ func (t *bootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, 
 		DefaultFSType:    defaultFSType,
 		RequiredMinSizes: requiredMinSizes,
 		Architecture:     t.arch.arch,
+		ESPSize:          basept.ESPSize(),
 	}
 	return disk.NewCustomPartitionTable(diskCust, partOptions, nil, rng)
 }

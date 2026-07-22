@@ -367,6 +367,33 @@ func TestGenPartitionTableSetsRootfsForAllFilesystemsBtrfs(t *testing.T) {
 	mnt, _ = findMountableSizeableFor(pt, "/boot/efi")
 	assert.Equal(t, "vfat", mnt.GetFSType())
 }
+
+// the ESP size of the base partition table (501 MiB in the bootc-generic
+// definitions) must survive a disk customization that doesn't mention
+// /boot/efi
+func TestGenPartitionTableDiskCustomizationKeepsESPSize(t *testing.T) {
+	rng := createRand()
+
+	imgType := NewTestBootcImageType(t, "qcow2")
+
+	cus := &blueprint.Customizations{
+		Disk: &blueprint.DiskCustomization{
+			Partitions: []blueprint.PartitionCustomization{
+				{
+					Type: "plain",
+					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+						Mountpoint: "/",
+						FSType:     "xfs",
+					},
+				},
+			},
+		},
+	}
+	pt, err := imgType.genPartitionTable(cus, 0, rng)
+	assert.NoError(t, err)
+	assert.Equal(t, datasizes.Size(501*datasizes.MiB), pt.ESPSize())
+}
+
 func TestGenPartitionTableDiskCustomizationRunsValidateLayoutConstraints(t *testing.T) {
 	rng := createRand()
 
