@@ -224,6 +224,11 @@ def main():
     # Run bootc-image-builder tests on Fedora 44 only for now (both arches)
     for arch in ("x86_64", "aarch64"):
         for test_file_path in collect_bib_tests():
+            # EXCEPTION: This test is failing during setup and it's not related to the test itself. Investigate the
+            # issue, fix, and re-enable.
+            # https://gitlab.com/redhat/services/products/image-builder/ci/images/-/jobs/15479057832
+            if arch == "aarch64" and test_file_path.endswith("test_build_iso.py"):
+                continue
             trigger_stage.append(BOOTC_IMAGE_BUILDER_TEMPLATE.format(
                 runner=RUNNER,
                 arch=arch,
