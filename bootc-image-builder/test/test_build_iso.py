@@ -67,7 +67,7 @@ def osinfo_for(it: ImageBuildResult, arch: str) -> str:
     if it.container_ref.endswith("/centos-bootc/centos-bootc:stream9"):
         return f"{base} 'CentOS Stream 9 ({arch})'\n"
     if it.container_ref.endswith("/centos-bootc/centos-bootc:stream10"):
-        return f"Media is an installer for OS 'CentOS Stream 10 ({arch})'\n"
+        return f"{base} 'CentOS Stream 10 ({arch})'\n"
     if "/fedora/fedora-bootc:" in it.container_ref:
         ver = it.container_ref.rsplit(":", maxsplit=1)[1]
         return f"{base} 'Fedora Server {ver} ({arch})'\n"
