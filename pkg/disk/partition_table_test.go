@@ -936,10 +936,12 @@ func TestAddBootPartition(t *testing.T) {
 
 func TestAddPartitionsForBootMode(t *testing.T) {
 	type testCase struct {
-		pt       disk.PartitionTable
-		bootMode platform.BootMode
-		expected disk.PartitionTable
-		errmsg   string
+		pt           disk.PartitionTable
+		bootMode     platform.BootMode
+		architecture arch.Arch // ARCH_X86_64 if unset
+		espSize      datasizes.Size
+		expected     disk.PartitionTable
+		errmsg       string
 	}
 
 	testCases := map[string]testCase{
@@ -1093,6 +1095,87 @@ func TestAddPartitionsForBootMode(t *testing.T) {
 				},
 			},
 		},
+		"uefi-gpt-custom-esp-size": {
+			pt:       disk.PartitionTable{Type: disk.PT_GPT},
+			bootMode: platform.BOOT_UEFI,
+			espSize:  512 * datasizes.MiB,
+			expected: disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					{
+						Start: 0 * datasizes.MiB,
+						Size:  512 * datasizes.MiB,
+						Type:  disk.EFISystemPartitionGUID,
+						UUID:  disk.EFISystemPartitionUUID,
+						Payload: &disk.Filesystem{
+							Type:         "vfat",
+							UUID:         disk.EFIFilesystemUUID,
+							Mountpoint:   "/boot/efi",
+							Label:        "ESP",
+							FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+							FSTabFreq:    0,
+							FSTabPassNo:  2,
+						},
+					},
+				},
+			},
+		},
+		"hybrid-gpt-custom-esp-size": {
+			pt:       disk.PartitionTable{Type: disk.PT_GPT},
+			bootMode: platform.BOOT_HYBRID,
+			espSize:  512 * datasizes.MiB,
+			expected: disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					{
+						Size:     1 * datasizes.MiB,
+						Bootable: true,
+						Type:     disk.BIOSBootPartitionGUID,
+						UUID:     disk.BIOSBootPartitionUUID,
+					},
+					{
+						Size: 512 * datasizes.MiB,
+						Type: disk.EFISystemPartitionGUID,
+						UUID: disk.EFISystemPartitionUUID,
+						Payload: &disk.Filesystem{
+							Type:         "vfat",
+							UUID:         disk.EFIFilesystemUUID,
+							Mountpoint:   "/boot/efi",
+							Label:        "ESP",
+							FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+							FSTabFreq:    0,
+							FSTabPassNo:  2,
+						},
+					},
+				},
+			},
+		},
+		"aarch64-uefi-gpt-custom-esp-size": {
+			pt:           disk.PartitionTable{Type: disk.PT_GPT},
+			bootMode:     platform.BOOT_UEFI,
+			architecture: arch.ARCH_AARCH64,
+			espSize:      512 * datasizes.MiB,
+			expected: disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					{
+						Start: 0 * datasizes.MiB,
+						Size:  512 * datasizes.MiB,
+						Type:  disk.EFISystemPartitionGUID,
+						UUID:  disk.EFISystemPartitionUUID,
+						Payload: &disk.Filesystem{
+							Type:         "vfat",
+							UUID:         disk.EFIFilesystemUUID,
+							Mountpoint:   "/boot/efi",
+							Label:        "ESP",
+							FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+							FSTabFreq:    0,
+							FSTabPassNo:  2,
+						},
+					},
+				},
+			},
+		},
 		"bad-pttype-bios": {
 			pt:       disk.PartitionTable{Type: disk.PartitionTableType(911)},
 			bootMode: platform.BOOT_LEGACY,
@@ -1120,13 +1203,130 @@ func TestAddPartitionsForBootMode(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 			pt := tc.pt
-			err := disk.AddPartitionsForBootMode(&pt, nil, tc.bootMode, arch.ARCH_X86_64)
+			architecture := tc.architecture
+			if architecture == arch.ARCH_UNSET {
+				architecture = arch.ARCH_X86_64
+			}
+			options := &disk.CustomPartitionTableOptions{
+				BootMode:     tc.bootMode,
+				Architecture: architecture,
+				ESPSize:      tc.espSize,
+			}
+			err := disk.AddPartitionsForBootMode(&pt, nil, options)
 			if tc.errmsg == "" {
 				assert.NoError(err)
 				assert.Equal(tc.expected, pt)
 			} else {
 				assert.EqualError(err, tc.errmsg)
 			}
+		})
+	}
+}
+
+func TestPartitionTableESPSize(t *testing.T) {
+	type testCase struct {
+		pt       disk.PartitionTable
+		expected datasizes.Size
+	}
+
+	testCases := map[string]testCase{
+		"gpt": {
+			pt: disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					{Size: 1 * datasizes.MiB, Type: disk.BIOSBootPartitionGUID},
+					{Size: 512 * datasizes.MiB, Type: disk.EFISystemPartitionGUID},
+					{Size: 2 * datasizes.GiB, Type: disk.FilesystemDataGUID},
+				},
+			},
+			expected: 512 * datasizes.MiB,
+		},
+		"dos": {
+			pt: disk.PartitionTable{
+				Type: disk.PT_DOS,
+				Partitions: []disk.Partition{
+					{Size: 500 * datasizes.MiB, Type: disk.EFISystemPartitionDOSID},
+				},
+			},
+			expected: 500 * datasizes.MiB,
+		},
+		"dos-fat16": {
+			// the aarch64 DOS tables (IoT, minimal-raw) type their ESP as
+			// plain FAT16 instead of "ef"
+			pt: disk.PartitionTable{
+				Type: disk.PT_DOS,
+				Partitions: []disk.Partition{
+					{Size: 501 * datasizes.MiB, Type: disk.FAT16BDOSID, Bootable: true},
+					{Size: 2 * datasizes.GiB, Type: disk.FilesystemLinuxDOSID},
+				},
+			},
+			expected: 501 * datasizes.MiB,
+		},
+		"no-esp": {
+			pt: disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					{Size: 2 * datasizes.GiB, Type: disk.FilesystemDataGUID},
+				},
+			},
+			expected: 0,
+		},
+		"empty": {
+			pt:       disk.PartitionTable{Type: disk.PT_GPT},
+			expected: 0,
+		},
+	}
+
+	for name := range testCases {
+		tc := testCases[name]
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, tc.pt.ESPSize())
+		})
+	}
+}
+
+// The ESP size of the image type's own partition table must survive disk
+// customizations that don't mention /boot/efi themselves. Without this, an
+// image type such as azure-cvm, whose kernels live in the ESP because it is
+// UKI-based, would silently get the generic default instead.
+func TestNewCustomPartitionTableKeepsImageTypeESPSize(t *testing.T) {
+	customizations := &blueprint.DiskCustomization{
+		Partitions: []blueprint.PartitionCustomization{
+			{
+				Type: "plain",
+				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+					Mountpoint: "/",
+					FSType:     "ext4",
+				},
+			},
+		},
+	}
+
+	testCases := map[string]struct {
+		espSize  datasizes.Size
+		expected datasizes.Size
+	}{
+		"unset-falls-back-to-default": {espSize: 0, expected: 200 * datasizes.MiB},
+		"option-honoured":             {espSize: 512 * datasizes.MiB, expected: 512 * datasizes.MiB},
+	}
+
+	for name := range testCases {
+		tc := testCases[name]
+		t.Run(name, func(t *testing.T) {
+			options := &disk.CustomPartitionTableOptions{
+				PartitionTableType: disk.PT_GPT,
+				BootMode:           platform.BOOT_UEFI,
+				DefaultFSType:      disk.FS_EXT4,
+				Architecture:       arch.ARCH_X86_64,
+				ESPSize:            tc.espSize,
+			}
+			pt, err := disk.NewCustomPartitionTable(customizations, options, nil, rand.New(rand.NewSource(0))) // #nosec G404
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expected, pt.ESPSize())
+
+			esp := pt.FindMountable("/boot/efi")
+			require.NotNil(t, esp, "no ESP created for a UEFI boot mode")
 		})
 	}
 }

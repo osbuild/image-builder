@@ -8,6 +8,7 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/distro_test_common"
@@ -103,4 +104,34 @@ func TestESP(t *testing.T) {
 		it := i.(*imageType)
 		return it.getPartitionTable(&blueprint.Customizations{}, distro.ImageOptions{}, rng)
 	})
+}
+
+// ec2-cvm is UKI-based: its kernels live in the ESP, so the 512 MiB ESP of
+// its base partition table must survive a disk customization that doesn't
+// mention /boot/efi.
+func TestRhel10DiskCustomizationKeepsESPSize(t *testing.T) {
+	dist := DistroFactory("rhel-10.0")
+	require.NotNil(t, dist)
+	a, err := dist.GetArch("x86_64")
+	require.NoError(t, err)
+	imgType, err := a.GetImageType("ec2-cvm")
+	require.NoError(t, err)
+	it := imgType.(*imageType)
+
+	customizations := &blueprint.Customizations{
+		Disk: &blueprint.DiskCustomization{
+			Partitions: []blueprint.PartitionCustomization{
+				{
+					Type: "plain",
+					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+						Mountpoint: "/",
+						FSType:     "xfs",
+					},
+				},
+			},
+		},
+	}
+	pt, err := it.getPartitionTable(customizations, distro.ImageOptions{}, rng)
+	require.NoError(t, err)
+	assert.Equal(t, datasizes.Size(512*datasizes.MiB), pt.ESPSize())
 }
