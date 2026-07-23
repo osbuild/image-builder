@@ -154,7 +154,7 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests {test_file_path}
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests {test_file_path}
 """
 
 

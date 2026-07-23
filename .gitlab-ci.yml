@@ -1082,7 +1082,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_cross.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_cross.py
 
 
 "bootc-image-builder/test/test_build_disk.py [x86_64]":
@@ -1099,7 +1099,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_disk.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_disk.py
 
 
 "bootc-image-builder/test/test_build_iso.py [x86_64]":
@@ -1116,7 +1116,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_iso.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_iso.py
 
 
 "bootc-image-builder/test/test_manifest.py [x86_64]":
@@ -1133,7 +1133,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_manifest.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_manifest.py
 
 
 "bootc-image-builder/test/test_opts.py [x86_64]":
@@ -1150,7 +1150,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_opts.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_opts.py
 
 
 "bootc-image-builder/test/test_build_cross.py [aarch64]":
@@ -1167,7 +1167,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_cross.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_cross.py
 
 
 "bootc-image-builder/test/test_build_disk.py [aarch64]":
@@ -1184,7 +1184,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_disk.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_build_disk.py
 
 
 "bootc-image-builder/test/test_manifest.py [aarch64]":
@@ -1201,7 +1201,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_manifest.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_manifest.py
 
 
 "bootc-image-builder/test/test_opts.py [aarch64]":
@@ -1218,7 +1218,7 @@ fail:
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
-    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --setup-show --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_opts.py
+    - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests bootc-image-builder/test/test_opts.py
 
 "generate-ostree-build-config: [centos-9, aarch64]":
   stage: ostree-gen
