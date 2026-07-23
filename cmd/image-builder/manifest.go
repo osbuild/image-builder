@@ -76,11 +76,12 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 		}
 	}
 	if len(opts.ForceRepos) > 0 {
-		forcedRepos, err := parseRepoURLs(opts.ForceRepos, "forced")
+		forcedRepos, err := parseRepoURLs(opts.ForceRepos, "forced",
+			img.ImgType.Arch().Distro().Name(), img.ImgType.Arch().Name())
 		if err != nil {
 			return err
 		}
-		manifestGenOpts.OverrideRepos = forcedRepos
+		manifestGenOpts.ForceRepos = forcedRepos
 	}
 	if opts.IgnoreWarnings {
 		manifestGenOpts.WarningsOutput = os.Stderr

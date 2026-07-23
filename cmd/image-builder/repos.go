@@ -21,15 +21,10 @@ var defaultRepoDirs = []string{
 	"/usr/share/image-builder/repositories",
 }
 
-func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
+func parseRepoURLs(repoURLs []string, what, distroName, archName string) ([]rpmmd.RepoConfig, error) {
 	var repoConf []rpmmd.RepoConfig
 
 	for i, repoURL := range repoURLs {
-		// We want to eventually support more URIs repos here:
-		// - config:/path/to/repo.json
-		// - copr:@osbuild/osbuild (with full gpg retrival via the copr API)
-		// But for now just default to base-urls
-
 		baseURL, err := url.Parse(repoURL)
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse extra repo %w", err)
@@ -38,17 +33,28 @@ func parseRepoURLs(repoURLs []string, what string) ([]rpmmd.RepoConfig, error) {
 			return nil, fmt.Errorf(`scheme missing in %q, please prefix with e.g. file:// or https://`, repoURL)
 		}
 
-		// TODO: to support gpg checking we will need to add signing keys.
-		// We will eventually add support for our own "repo.json" format
-		// which is rich enough to contain gpg keys (and more).
-		checkGPG := false
-		repoConf = append(repoConf, rpmmd.RepoConfig{
-			Id:           fmt.Sprintf("%s-repo-%v", what, i),
-			Name:         fmt.Sprintf("%s repo#%v %s%s", what, i, baseURL.Host, baseURL.Path),
-			BaseURLs:     []string{baseURL.String()},
-			CheckGPG:     &checkGPG,
-			CheckRepoGPG: &checkGPG,
-		})
+		switch baseURL.Scheme {
+		case "copr":
+			rc, err := resolveCoprRepo(baseURL, what, i, distroName, archName)
+			if err != nil {
+				return nil, err
+			}
+			if rc != nil {
+				repoConf = append(repoConf, *rc)
+			}
+		default:
+			// TODO: to support gpg checking we will need to add signing keys.
+			// We will eventually add support for our own "repo.json" format
+			// which is rich enough to contain gpg keys (and more).
+			checkGPG := false
+			repoConf = append(repoConf, rpmmd.RepoConfig{
+				Id:           fmt.Sprintf("%s-repo-%v", what, i),
+				Name:         fmt.Sprintf("%s repo#%v %s%s", what, i, baseURL.Host, baseURL.Path),
+				BaseURLs:     []string{baseURL.String()},
+				CheckGPG:     &checkGPG,
+				CheckRepoGPG: &checkGPG,
+			})
+		}
 	}
 
 	return repoConf, nil
@@ -71,7 +77,7 @@ func newRepoRegistryImpl(repoDir string, extraRepos []string) (*reporegistry.Rep
 		builtins = []fs.FS{repos.FS}
 	}
 
-	conf, err := reporegistry.LoadAllRepositories(repoDirs, builtins)
+	reg, err := reporegistry.New(repoDirs, builtins)
 	if err != nil {
 		return nil, err
 	}
@@ -83,20 +89,18 @@ func newRepoRegistryImpl(repoDir string, extraRepos []string) (*reporegistry.Rep
 	//
 	// XXX: this should probably go into manifestgen.Options as a
 	// new Options.ExtraRepoConf eventually (just like
-	// OverrideRepos)
-	repoConf, err := parseRepoURLs(extraRepos, "extra")
-	if err != nil {
-		return nil, err
-	}
-	for _, repoArchConfigs := range conf {
-		for arch := range repoArchConfigs {
-			archCfg := repoArchConfigs[arch]
-			archCfg = append(archCfg, repoConf...)
-			repoArchConfigs[arch] = archCfg
+	// ForceRepos)
+	for _, distro := range reg.ListDistros() {
+		for _, arch := range reg.ListArches(distro) {
+			repoConf, err := parseRepoURLs(extraRepos, "extra", distro, arch)
+			if err != nil {
+				return nil, err
+			}
+			reg.AppendRepos(distro, arch, repoConf...)
 		}
 	}
 
-	return reporegistry.NewFromDistrosRepoConfigs(conf), nil
+	return reg, nil
 }
 
 // this is a variable to make it overridable in tests

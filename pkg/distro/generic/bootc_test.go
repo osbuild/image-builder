@@ -1127,7 +1127,7 @@ func genManifest(t *testing.T, imgType distro.ImageType) string {
 	var bp blueprint.Blueprint
 
 	mg, err := manifestgen.New(nil, &manifestgen.Options{
-		OverrideRepos: []rpmmd.RepoConfig{
+		ForceRepos: []rpmmd.RepoConfig{
 			{Id: "not-used", BaseURLs: []string{"not-used"}},
 		},
 	})

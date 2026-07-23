@@ -363,7 +363,7 @@ func TestManifestGeneratorDepsolveOutput(t *testing.T) {
 	assert.Equal(t, []byte("fake depsolve output"), depsolveWarningsOutput.Bytes())
 }
 
-func TestManifestGeneratorOverrideRepos(t *testing.T) {
+func TestManifestGeneratorForceRepos(t *testing.T) {
 	repos, err := testrepos.New()
 	assert.NoError(t, err)
 	fac := distrofactory.NewDefault()
@@ -374,13 +374,13 @@ func TestManifestGeneratorOverrideRepos(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(res))
 
-	for _, withOverrideRepos := range []bool{false, true} {
-		t.Run(fmt.Sprintf("withOverrideRepos: %v", withOverrideRepos), func(t *testing.T) {
+	for _, withForceRepos := range []bool{false, true} {
+		t.Run(fmt.Sprintf("withForceRepos: %v", withForceRepos), func(t *testing.T) {
 			opts := &manifestgen.Options{
 				Depsolve: fakeDepsolve,
 			}
-			if withOverrideRepos {
-				opts.OverrideRepos = []rpmmd.RepoConfig{
+			if withForceRepos {
+				opts.ForceRepos = []rpmmd.RepoConfig{
 					{
 						Name:     "overriden_repo",
 						BaseURLs: []string{"http://example.com/overriden-repo"},
@@ -394,7 +394,7 @@ func TestManifestGeneratorOverrideRepos(t *testing.T) {
 			var bp blueprint.Blueprint
 			osbuildManifest, err := mg.Generate(&bp, res[0].ImgType, nil)
 			assert.NoError(t, err)
-			if withOverrideRepos {
+			if withForceRepos {
 				assert.Contains(t, string(osbuildManifest), "http://example.com/overriden-repo/")
 			} else {
 				assert.NotContains(t, string(osbuildManifest), "http://example.com/overriden-repo/")

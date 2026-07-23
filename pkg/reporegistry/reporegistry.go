@@ -126,6 +126,31 @@ func (r *RepoRegistry) DistroHasRepos(distro, arch string) ([]rpmmd.RepoConfig, 
 	return r.reposByDistroArch(distro, arch)
 }
 
+// AppendRepos appends the given repos to the entry for the specified
+// distro and arch. If the distro/arch combination does not exist in
+// the registry the repos are silently ignored.
+func (r *RepoRegistry) AppendRepos(distro, arch string, repos ...rpmmd.RepoConfig) {
+	if archMap, ok := r.repos[distro]; ok {
+		if _, ok := archMap[arch]; ok {
+			archMap[arch] = append(archMap[arch], repos...)
+		}
+	}
+}
+
+// ListArches returns a list of all architectures which have a
+// repository defined for the given distro.
+func (r *RepoRegistry) ListArches(distro string) []string {
+	archMap, ok := r.repos[distro]
+	if !ok {
+		return nil
+	}
+	arches := make([]string, 0, len(archMap))
+	for arch := range archMap {
+		arches = append(arches, arch)
+	}
+	return arches
+}
+
 // ListDistros returns a list of all distros which have a repository defined
 // in the registry.
 func (r *RepoRegistry) ListDistros() []string {
