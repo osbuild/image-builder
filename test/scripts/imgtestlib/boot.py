@@ -624,7 +624,7 @@ def boot_image(search_path, build_config_path, keep_booted=False):
         boot_qemu(arch, image_path, build_config_path, keep_booted=keep_booted)
     elif image_type in ("image-installer", "minimal-installer"):
         boot_qemu_iso(arch, image_path, build_config_path)
-    elif image_type in ("network-installer", "everything-network-installer", "bootc-generic-iso"):
+    elif image_type in ("network-installer", "everything-network-installer", "generic-iso"):
         boot_qemu_iso_no_unattended_support(arch, image_path, build_config_path)
     elif image_type in ("pxe-tar-xz"):
         boot_qemu_pxe(arch, image_path)

@@ -3,6 +3,7 @@ package manifest
 import (
 	"fmt"
 
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 )
@@ -17,101 +18,45 @@ type ISOTree struct {
 	Version string
 
 	PartitionTable *disk.PartitionTable
+	bootloaders    []ISOBootloader
+	files          []*fsnode.File
 
-	treePipeline     Pipeline
-	bootTreePipeline *EFIBootTree
+	treePipeline TreePipeline
 
-	isoLabel string
-
-	RootfsCompression string
-	RootfsType        ISORootfsType
-	RootfsExcludes    []string
-	// set only when RootfsType is erofs
-	ErofsOptions *osbuild.ErofsStageOptions `yaml:"erofs_options,omitempty"`
-
-	// Kernel options for the ISO image
-	KernelOpts []string
-
-	// Kernel and initramfs paths in the tree pipeline
+	// Kernel, initramfs, and rootfs paths in the tree pipeline
 	KernelPath    string
 	InitramfsPath string
+	RootfsPath    string
+
+	// Optionally set the ostree= argument (substitute the boot path for @OSTREE@ in grub.cfg)
+	SetOSTREE bool
+	// What is RootfsPath's file type, so it can be mounted for ostree examination
+	RootfsType ISORootfsType
 }
 
-func NewISOTree(buildPipeline Build, treePipeline Pipeline, bootTreePipeline *EFIBootTree) *ISOTree {
+func NewISOTree(buildPipeline Build, treePipeline TreePipeline, bootloaders []ISOBootloader) *ISOTree {
 	// the pipelines should all belong to the same manifest
-	if treePipeline.Manifest() != bootTreePipeline.Manifest() {
-		panic("pipelines from different manifests")
+	for _, b := range bootloaders {
+		if b.Manifest() != nil {
+			if b.Manifest() != treePipeline.Manifest() {
+				panic("pipelines from different manifests")
+			}
+		}
 	}
+
 	p := &ISOTree{
-		Base:             NewBase("bootiso-tree", buildPipeline),
-		treePipeline:     treePipeline,
-		bootTreePipeline: bootTreePipeline,
-		isoLabel:         bootTreePipeline.ISOLabel,
+		Base:         NewBase("bootiso-tree", buildPipeline),
+		treePipeline: treePipeline,
+		bootloaders:  bootloaders,
 	}
 	buildPipeline.addDependent(p)
 	return p
-}
-
-// NewSquashfsStage returns an osbuild stage configured to build
-// the squashfs root filesystem for the ISO.
-func (p *ISOTree) NewSquashfsStage() (*osbuild.Stage, error) {
-	// TODO: We should somehow make this customizable, because non-live anaconda ISOs
-	// use images/install.img
-	squashfsOptions := osbuild.SquashfsStageOptions{
-		Filename: "LiveOS/squashfs.img",
-	}
-
-	if p.RootfsCompression != "" {
-		squashfsOptions.Compression.Method = p.RootfsCompression
-	} else {
-		// default to xz if not specified
-		squashfsOptions.Compression.Method = "xz"
-	}
-
-	if squashfsOptions.Compression.Method == "xz" {
-		// Try to get architecture from bootTreePipeline if available
-		arch := "x86_64" // default
-		if p.bootTreePipeline.Platform != nil {
-			arch = p.bootTreePipeline.Platform.GetArch().String()
-		}
-		squashfsOptions.Compression.Options = &osbuild.FSCompressionOptions{
-			BCJ: osbuild.BCJOption(arch),
-		}
-	}
-
-	// Clean up the root filesystem's /boot to save space
-	squashfsOptions.ExcludePaths = p.RootfsExcludes
-
-	return osbuild.NewSquashfsStage(&squashfsOptions, p.treePipeline.Name()), nil
-}
-
-// NewErofsStage returns an osbuild stage configured to build
-// the erofs root filesystem for the ISO.
-func (p *ISOTree) NewErofsStage() (*osbuild.Stage, error) {
-	// TODO: We should somehow make this customizable, because non-live anaconda ISOs
-	// use images/install.img
-	if p.RootfsType != ErofsRootfs || p.ErofsOptions == nil {
-		return nil, fmt.Errorf("Rootfs not set to Erofs or options set to nil for %s pipeline, can not create erofs stage", p.name)
-	}
-
-	erofsOptions := *p.ErofsOptions
-	erofsOptions.Filename = "LiveOS/squashfs.img"
-
-	// Clean up the root filesystem's /boot to save space
-	erofsOptions.ExcludePaths = p.RootfsExcludes
-
-	return osbuild.NewErofsStage(erofsOptions, p.treePipeline.Name()), nil
 }
 
 func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 	pipeline, err := p.Base.serialize()
 	if err != nil {
 		return osbuild.Pipeline{}, err
-	}
-
-	kernelOpts := []string{}
-	if len(p.KernelOpts) > 0 {
-		kernelOpts = append(kernelOpts, p.KernelOpts...)
 	}
 
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
@@ -129,8 +74,8 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 	}))
 
 	// Copy kernel and initramfs
-	if p.KernelPath == "" || p.InitramfsPath == "" {
-		return osbuild.Pipeline{}, fmt.Errorf("kernel and initramfs paths must be set")
+	if p.KernelPath == "" || p.InitramfsPath == "" || p.RootfsPath == "" {
+		return osbuild.Pipeline{}, fmt.Errorf("kernel, initramfs, and rootfs paths must be set")
 	}
 
 	inputName := "tree"
@@ -144,147 +89,68 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 				From: fmt.Sprintf("input://%s/%s", inputName, p.InitramfsPath),
 				To:   "tree:///images/pxeboot/initrd.img",
 			},
+			{
+				From: fmt.Sprintf("input://%s/%s", inputName, p.RootfsPath),
+				To:   "tree:///LiveOS/squashfs.img",
+			},
 		},
 	}
 	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
 	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
 	pipeline.AddStage(copyStage)
 
-	// Add the selected rootfs stage
-	switch p.RootfsType {
-	case SquashfsRootfs:
-		stage, err := p.NewSquashfsStage()
+	// Add bootloaders
+	for _, loader := range p.bootloaders {
+		stages, files, err := loader.GetISOBootStages(p.treePipeline.Name(), p.PartitionTable)
 		if err != nil {
-			return osbuild.Pipeline{}, fmt.Errorf("cannot create squashfs stage: %w", err)
+			return osbuild.Pipeline{}, fmt.Errorf("cannot add ISO bootloader: %w", err)
 		}
-		pipeline.AddStage(stage)
-	case ErofsRootfs:
-		stage, err := p.NewErofsStage()
-		if err != nil {
-			return osbuild.Pipeline{}, fmt.Errorf("cannot create erofs stage: %w", err)
-		}
-		pipeline.AddStage(stage)
-	default:
-		return osbuild.Pipeline{}, fmt.Errorf("unsupported rootfs type: %v (only SquashfsRootfs and ErofsRootfs are supported)", p.RootfsType)
+		pipeline.AddStages(stages...)
+		p.files = append(p.files, files...)
 	}
 
-	// Add grub2 boot configuration
-	product := p.Product
-	if product == "" {
-		product = "OS"
-	}
-	version := p.Version
-	if version == "" {
-		version = p.Release
-	}
-
-	var grub2config *osbuild.Grub2Config
-	var disableTestEntry bool
-	var disableTroubleshootingEntry bool
-
-	if p.bootTreePipeline != nil {
-		if p.bootTreePipeline.DefaultMenu > 0 {
-			grub2config = &osbuild.Grub2Config{
-				Default: p.bootTreePipeline.DefaultMenu,
-			}
-		}
-
-		if p.bootTreePipeline.MenuTimeout != nil {
-			if grub2config == nil {
-				grub2config = &osbuild.Grub2Config{
-					Timeout: *p.bootTreePipeline.MenuTimeout,
-				}
-			} else {
-				grub2config.Timeout = *p.bootTreePipeline.MenuTimeout
-			}
-		}
-
-		disableTestEntry = p.bootTreePipeline.DisableTestEntry
-		disableTroubleshootingEntry = p.bootTreePipeline.DisableTroubleshootingEntry
-	}
-	options := &osbuild.Grub2ISOLegacyStageOptions{
-		Product: osbuild.Product{
-			Name:    product,
-			Version: version,
-		},
-		Kernel: osbuild.ISOKernel{
-			Dir:  "/images/pxeboot",
-			Opts: kernelOpts,
-		},
-		ISOLabel:        p.isoLabel,
-		FIPS:            false,
-		Install:         true,
-		Test:            !disableTestEntry,
-		Troubleshooting: !disableTroubleshootingEntry,
-		Config:          grub2config,
-	}
-
-	// If any menu entries are defined we turn off all default
-	// entries and instead append our own
-	// entries only
-	if len(p.bootTreePipeline.MenuEntries) > 0 {
-		options.Troubleshooting = false
-		options.Test = false
-		options.Install = false
-
-		for _, entry := range p.bootTreePipeline.MenuEntries {
-			options.Custom = append(options.Custom, osbuild.Grub2ISOLegacyCustomEntryOptions{
-				Name:   entry.Name,
-				Linux:  entry.Linux,
-				Initrd: entry.Initrd,
-			})
-		}
-	}
-
-	if p.bootTreePipeline != nil && p.bootTreePipeline.Platform != nil {
-		options.FIPS = p.bootTreePipeline.Platform.GetFIPSMenu()
-	}
-
-	stage := osbuild.NewGrub2ISOLegacyStage(options)
-	pipeline.AddStage(stage)
-
-	// Add a stage to create the eltorito.img file for grub2 BIOS boot support
-	pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstISO9660StageOption("images/eltorito.img", "/boot/grub2")))
-
-	// Create EFI boot partition
-	filename := "images/efiboot.img"
-	pipeline.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{
-		Filename: filename,
-		Size:     fmt.Sprintf("%d", p.PartitionTable.Size),
-	}))
-
-	for _, stage := range osbuild.GenFsStages(p.PartitionTable, filename, p.treePipeline.Name()) {
-		pipeline.AddStage(stage)
-	}
-
-	inputName = "root-tree"
-	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.bootTreePipeline.Name())
-	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.bootTreePipeline.Name(), filename, p.PartitionTable)
-	pipeline.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
-
-	copyInputs = osbuild.NewPipelineTreeInputs(inputName, p.bootTreePipeline.Name())
-	pipeline.AddStage(osbuild.NewCopyStageSimple(
-		&osbuild.CopyStageOptions{
-			Paths: []osbuild.CopyStagePath{
-				{
-					From: fmt.Sprintf("input://%s/EFI", inputName),
-					To:   "tree:///",
-				},
+	// Optional stage to set the ostree= value in the bootloader
+	// This is used for bootc/ostree rootfs images
+	if p.SetOSTREE {
+		lodevice := osbuild.NewLoopbackDevice(
+			&osbuild.LoopbackDeviceOptions{
+				Filename: "LiveOS/squashfs.img",
 			},
-		},
-		copyInputs,
-	))
+		)
+		devices := map[string]osbuild.Device{"disk": *lodevice}
+		var mounts []osbuild.Mount
+		switch p.RootfsType {
+		case ErofsRootfs:
+			mounts = []osbuild.Mount{*osbuild.NewErofsMount("-", "disk", "/")}
+		case SquashfsRootfs:
+			mounts = []osbuild.Mount{*osbuild.NewSquashfsMount("-", "disk", "/")}
+		default:
+			return osbuild.Pipeline{}, fmt.Errorf("Unknown ISOTree rootfs type: %v", p.RootfsType)
+		}
 
-	// Determine architecture for discinfo
-	arch := "x86_64" // default
-	if p.bootTreePipeline != nil && p.bootTreePipeline.Platform != nil {
-		arch = p.bootTreePipeline.Platform.GetArch().String()
+		// Update the grub.cfg with the ostree boot uuid
+		ostreeStageOptions := &osbuild.OSTreeGrub2StageOptions{
+			Filename: "/EFI/BOOT/grub.cfg",
+			Source:   "mount://-/",
+		}
+		pipeline.AddStage(osbuild.NewOSTreeGrub2MountsStage(ostreeStageOptions, nil, devices, mounts))
 	}
 
 	pipeline.AddStage(osbuild.NewDiscinfoStage(&osbuild.DiscinfoStageOptions{
-		BaseArch: arch,
+		BaseArch: p.treePipeline.Platform().GetArch().String(),
 		Release:  p.Release,
 	}))
 
 	return pipeline, nil
+}
+
+func (p *ISOTree) getInline() []string {
+	inlineData := []string{}
+
+	// inline data for custom files
+	for _, file := range p.files {
+		inlineData = append(inlineData, string(file.Data()))
+	}
+
+	return inlineData
 }

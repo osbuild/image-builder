@@ -97,6 +97,9 @@ func (p *BootcRootFS) serialize() (osbuild.Pipeline, error) {
 			}
 		}
 
+		// TODO this is shared with the ISO, should it be?
+		// Clean up the root filesystem's /boot to save space
+		squashfsOptions.ExcludePaths = p.RootfsExcludes
 		// Compress the mounted ostree filesystem instead of a pipeline tree
 		squashfsOptions.Source = "mount://-/"
 		squashfsStage := osbuild.NewSquashfsWithMountsStage(&squashfsOptions, nil, devices, mounts)
