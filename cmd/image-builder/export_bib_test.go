@@ -1,9 +1,9 @@
 package main
 
 var (
-	CanChownInPath    = canChownInPath
-	BuildCobraCmdline = bibBuildCobraCmdline
-	HandleAWSFlags    = handleAWSFlags
+	CanChownInPath  = canChownInPath
+	SetupBibRootCmd = setupBibRootCmd
+	HandleAWSFlags  = handleAWSFlags
 )
 
 func MockOsGetuid(new func() int) (restore func()) {
