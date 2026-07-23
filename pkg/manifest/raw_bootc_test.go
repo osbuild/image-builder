@@ -188,14 +188,17 @@ func TestRawBootcImageSerializeMkdirOptions(t *testing.T) {
 		pipeline, err := rawBootcPipeline.Serialize()
 		assert.NoError(t, err)
 
-		mkdirStage := findStage("org.osbuild.mkdir", pipeline.Stages)
+		// Use findPostInstallStages to avoid matching pre-install mkdir
+		// stages (e.g. mountpoint SELinux labeling) if SELinux is ever
+		// set in this test.
+		postInstallMkdirStages := findPostInstallStages("org.osbuild.mkdir", pipeline.Stages)
 		if len(tc.expectedMkdirPaths) > 0 {
 			// ensure options got passed
-			require.NotNil(t, mkdirStage)
-			mkdirOptions := mkdirStage.Options.(*osbuild.MkdirStageOptions)
+			require.Greater(t, len(postInstallMkdirStages), 0)
+			mkdirOptions := postInstallMkdirStages[0].Options.(*osbuild.MkdirStageOptions)
 			assert.Equal(t, tc.expectedMkdirPaths, mkdirOptions.Paths)
 		} else {
-			require.Nil(t, mkdirStage)
+			assert.Equal(t, 0, len(postInstallMkdirStages))
 		}
 	}
 }
@@ -242,6 +245,29 @@ func assertBootcDeploymentAndBindMount(t *testing.T, stage *osbuild.Stage) {
 	assert.True(t, bindMntIdx > deploymentMntIdx)
 }
 
+// findPostInstallStages returns stages that come after the bootc install stage
+// and have the ostree deployment + bind mount (i.e. post-install customization stages).
+func findPostInstallStages(stageType string, stages []*osbuild.Stage) []*osbuild.Stage {
+	// Find the bootc install stage index
+	bootcIdx := -1
+	for i, s := range stages {
+		if s.Type == "org.osbuild.bootc.install-to-filesystem" {
+			bootcIdx = i
+			break
+		}
+	}
+	if bootcIdx < 0 {
+		return nil
+	}
+	var found []*osbuild.Stage
+	for _, s := range stages[bootcIdx+1:] {
+		if s.Type == stageType {
+			found = append(found, s)
+		}
+	}
+	return found
+}
+
 func TestRawBootcImageSerializeCustomizationGenCorrectStages(t *testing.T) {
 	rawBootcPipeline := makeFakeRawBootcPipeline()
 
@@ -255,18 +281,21 @@ func TestRawBootcImageSerializeCustomizationGenCorrectStages(t *testing.T) {
 		{nil, nil, "", nil},
 		{[]users.User{{Name: "foo"}}, nil, "", []string{"org.osbuild.mkdir", "org.osbuild.users"}},
 		{[]users.User{{Name: "foo"}}, nil, "targeted", []string{"org.osbuild.mkdir", "org.osbuild.users", "org.osbuild.selinux"}},
-		{[]users.User{{Name: "foo"}}, []users.Group{{Name: "bar"}}, "targeted", []string{"org.osbuild.mkdir", "org.osbuild.users", "org.osbuild.users", "org.osbuild.selinux"}},
+		{[]users.User{{Name: "foo"}}, []users.Group{{Name: "bar"}}, "targeted", []string{"org.osbuild.groups", "org.osbuild.mkdir", "org.osbuild.users", "org.osbuild.selinux"}},
 	} {
 		rawBootcPipeline.OSCustomizations.Users = tc.users
+		rawBootcPipeline.OSCustomizations.Groups = tc.groups
 		rawBootcPipeline.OSCustomizations.SELinux = tc.SELinux
 
 		pipeline, err := rawBootcPipeline.Serialize()
 		assert.NoError(t, err)
 
 		for _, expectedStage := range tc.expectedStages {
-			stage := findStage(expectedStage, pipeline.Stages)
-			assert.NotNil(t, stage)
-			assertBootcDeploymentAndBindMount(t, stage)
+			stages := findPostInstallStages(expectedStage, pipeline.Stages)
+			assert.Greater(t, len(stages), 0, "expected post-install stage %q not found", expectedStage)
+			for _, stage := range stages {
+				assertBootcDeploymentAndBindMount(t, stage)
+			}
 		}
 	}
 }
@@ -327,16 +356,15 @@ func TestRawBootcImageSerializeCreateFilesDirs(t *testing.T) {
 			pipeline, err := rawBootcPipeline.Serialize()
 			assert.NoError(t, err)
 
-			// check dirs
-			mkdirStage := findStage("org.osbuild.mkdir", pipeline.Stages)
+			// check dirs - look for post-install mkdir stages (with deployment mounts)
+			postInstallMkdirStages := findPostInstallStages("org.osbuild.mkdir", pipeline.Stages)
 			if len(tc.dirs) > 0 {
-				// ensure options got passed
-				require.NotNil(t, mkdirStage)
-				mkdirOptions := mkdirStage.Options.(*osbuild.MkdirStageOptions)
+				require.Greater(t, len(postInstallMkdirStages), 0)
+				mkdirOptions := postInstallMkdirStages[0].Options.(*osbuild.MkdirStageOptions)
 				assert.Equal(t, "/path/to/dir", mkdirOptions.Paths[0].Path)
-				assertBootcDeploymentAndBindMount(t, mkdirStage)
+				assertBootcDeploymentAndBindMount(t, postInstallMkdirStages[0])
 			} else {
-				assert.Nil(t, mkdirStage)
+				assert.Equal(t, 0, len(postInstallMkdirStages))
 			}
 
 			// check files
@@ -351,9 +379,15 @@ func TestRawBootcImageSerializeCreateFilesDirs(t *testing.T) {
 				assert.Nil(t, copyStage)
 			}
 
-			selinuxStage := findStage("org.osbuild.selinux", pipeline.Stages)
+			// Pre-install SELinux stages for mountpoint labeling
+			preInstallSELinuxStages := findPreInstallStages("org.osbuild.selinux", pipeline.Stages)
+			assert.Equal(t, 2, len(preInstallSELinuxStages), "expected 2 pre-install selinux stages (root + boot)")
 
-			assert.NotNil(t, selinuxStage)
+			// Post-install SELinux stages for relabeling customizations
+			if len(tc.dirs) > 0 || len(tc.files) > 0 {
+				postInstallSELinuxStages := findPostInstallStages("org.osbuild.selinux", pipeline.Stages)
+				assert.Greater(t, len(postInstallSELinuxStages), 0, "expected post-install selinux relabeling stages")
+			}
 
 			// XXX: we should really check that the inline
 			// source for files got generated but that is
@@ -455,6 +489,143 @@ func TestRawBootcImageSerializeGrub2DStage(t *testing.T) {
 			}
 		})
 	}
+}
+
+// findPreInstallStages returns stages of the given type that appear before
+// the bootc install stage.
+func findPreInstallStages(stageType string, stages []*osbuild.Stage) []*osbuild.Stage {
+	var found []*osbuild.Stage
+	for _, s := range stages {
+		if s.Type == "org.osbuild.bootc.install-to-filesystem" {
+			break
+		}
+		if s.Type == stageType {
+			found = append(found, s)
+		}
+	}
+	return found
+}
+
+func TestRawBootcImageSerializeMountpointSELinuxLabeling(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+	rawBootcPipeline.OSCustomizations.SELinux = "targeted"
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+
+	// Pre-install mkdir stages: one for /boot (root-only), one for /boot/efi (root+boot)
+	preInstallMkdirStages := findPreInstallStages("org.osbuild.mkdir", pipeline.Stages)
+	require.Equal(t, 2, len(preInstallMkdirStages))
+
+	// First mkdir stage creates /boot with only root mounted
+	bootMkdirOpts := preInstallMkdirStages[0].Options.(*osbuild.MkdirStageOptions)
+	require.Equal(t, 1, len(bootMkdirOpts.Paths))
+	assert.Equal(t, "mount://-/boot", bootMkdirOpts.Paths[0].Path)
+	assert.NotEmpty(t, preInstallMkdirStages[0].Devices)
+	bootMkdirMountTargets := make([]string, 0)
+	for _, mnt := range preInstallMkdirStages[0].Mounts {
+		bootMkdirMountTargets = append(bootMkdirMountTargets, mnt.Target)
+	}
+	assert.Contains(t, bootMkdirMountTargets, "/")
+	assert.NotContains(t, bootMkdirMountTargets, "/boot")
+
+	// Second mkdir stage creates /boot/efi with root+boot mounted
+	efiMkdirOpts := preInstallMkdirStages[1].Options.(*osbuild.MkdirStageOptions)
+	require.Equal(t, 1, len(efiMkdirOpts.Paths))
+	assert.Equal(t, "mount://boot/efi", efiMkdirOpts.Paths[0].Path)
+	assert.NotEmpty(t, preInstallMkdirStages[1].Devices)
+	efiMkdirMountTargets := make([]string, 0)
+	for _, mnt := range preInstallMkdirStages[1].Mounts {
+		efiMkdirMountTargets = append(efiMkdirMountTargets, mnt.Target)
+	}
+	assert.Contains(t, efiMkdirMountTargets, "/")
+	assert.Contains(t, efiMkdirMountTargets, "/boot")
+
+	// Pre-install selinux stages: one for root, one for /boot
+	preInstallSELinuxStages := findPreInstallStages("org.osbuild.selinux", pipeline.Stages)
+	require.Equal(t, 2, len(preInstallSELinuxStages))
+
+	// First SELinux stage: labels root mount (without boot mounted)
+	rootSELinuxOpts := preInstallSELinuxStages[0].Options.(*osbuild.SELinuxStageOptions)
+	assert.Equal(t, "mount://-/", rootSELinuxOpts.Target)
+	assert.Contains(t, rootSELinuxOpts.FileContexts, "input://tree/etc/selinux/targeted/contexts/files/file_contexts")
+	// Should have inputs (tree input from source pipeline)
+	assert.NotNil(t, preInstallSELinuxStages[0].Inputs)
+	// Should only mount root
+	rootMountTargets := make([]string, 0)
+	for _, mnt := range preInstallSELinuxStages[0].Mounts {
+		rootMountTargets = append(rootMountTargets, mnt.Target)
+	}
+	assert.Contains(t, rootMountTargets, "/")
+	assert.NotContains(t, rootMountTargets, "/boot")
+
+	// Second SELinux stage: labels /boot (with boot mounted)
+	bootSELinuxOpts := preInstallSELinuxStages[1].Options.(*osbuild.SELinuxStageOptions)
+	assert.Equal(t, "mount://-/boot/", bootSELinuxOpts.Target)
+	assert.Contains(t, bootSELinuxOpts.FileContexts, "input://tree/etc/selinux/targeted/contexts/files/file_contexts")
+	assert.NotNil(t, preInstallSELinuxStages[1].Inputs)
+	// Should mount both root and boot
+	bootMountTargets := make([]string, 0)
+	for _, mnt := range preInstallSELinuxStages[1].Mounts {
+		bootMountTargets = append(bootMountTargets, mnt.Target)
+	}
+	assert.Contains(t, bootMountTargets, "/")
+	assert.Contains(t, bootMountTargets, "/boot")
+}
+
+func TestRawBootcImageSerializeMountpointSELinuxLabelingNoSELinux(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+	// No SELinux set - no pre-install labeling stages should be generated
+	rawBootcPipeline.OSCustomizations.SELinux = ""
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+
+	preInstallSELinuxStages := findPreInstallStages("org.osbuild.selinux", pipeline.Stages)
+	assert.Equal(t, 0, len(preInstallSELinuxStages))
+	preInstallMkdirStages := findPreInstallStages("org.osbuild.mkdir", pipeline.Stages)
+	assert.Equal(t, 0, len(preInstallMkdirStages))
+}
+
+func TestRawBootcImageSerializeMountpointSELinuxLabelingNoBoot(t *testing.T) {
+	// Test the edge case where there is no separate /boot partition
+	// (only root + EFI). Only the root SELinux stage should be generated,
+	// no /boot labeling stage.
+	mani := manifest.New()
+	r := &runner.Linux{}
+	pf := &platform.Data{
+		Arch:       arch.ARCH_X86_64,
+		UEFIVendor: "test",
+	}
+	build := manifest.NewBuildFromContainer(&mani, r, nil, nil)
+	rawBootcPipeline := manifest.NewRawBootcImage(build, nil, pf)
+	rawBootcPipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot/efi")
+	err := rawBootcPipeline.SerializeStart(manifest.Inputs{Containers: []container.Spec{{Source: "foo"}}})
+	require.NoError(t, err)
+
+	rawBootcPipeline.OSCustomizations.SELinux = "targeted"
+
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+
+	// Pre-install mkdir stage should only create /boot (no /boot/efi since
+	// there's no separate boot partition to mount it on)
+	preInstallMkdirStages := findPreInstallStages("org.osbuild.mkdir", pipeline.Stages)
+	require.Equal(t, 1, len(preInstallMkdirStages))
+	mkdirOpts := preInstallMkdirStages[0].Options.(*osbuild.MkdirStageOptions)
+	var mkdirPaths []string
+	for _, p := range mkdirOpts.Paths {
+		mkdirPaths = append(mkdirPaths, p.Path)
+	}
+	assert.Contains(t, mkdirPaths, "mount://-/boot")
+	assert.NotContains(t, mkdirPaths, "mount://boot/efi")
+
+	// Only one pre-install selinux stage (root only, no /boot stage)
+	preInstallSELinuxStages := findPreInstallStages("org.osbuild.selinux", pipeline.Stages)
+	require.Equal(t, 1, len(preInstallSELinuxStages))
+
+	rootSELinuxOpts := preInstallSELinuxStages[0].Options.(*osbuild.SELinuxStageOptions)
+	assert.Equal(t, "mount://-/", rootSELinuxOpts.Target)
 }
 
 func TestRawBootcPXE(t *testing.T) {
