@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -730,6 +731,23 @@ func (pt *PartitionTable) FindMountableOnPlain(mountpoint string) Mountable {
 	return path[0].(Mountable)
 }
 
+// ESPSize returns the size of the EFI system partition in the PartitionTable.
+// Returns 0 if the table has no ESP. The ESP is identified by its partition
+// type, not by its mountpoint, so that tables which mount it somewhere other
+// than /boot/efi are still detected. Besides the GPT GUID and the DOS ID,
+// plain FAT16 ("06") also counts: the aarch64 DOS tables (IoT, minimal-raw)
+// type their ESP that way for firmware that reads the FAT partition directly.
+func (pt *PartitionTable) ESPSize() datasizes.Size {
+	for _, part := range pt.Partitions {
+		if strings.EqualFold(part.Type, EFISystemPartitionGUID) ||
+			strings.EqualFold(part.Type, EFISystemPartitionDOSID) ||
+			part.Type == FAT16BDOSID {
+			return part.Size
+		}
+	}
+	return 0
+}
+
 func clampFSSize(mountpoint string, size datasizes.Size) datasizes.Size {
 	// set a minimum size of 1GB for all mountpoints
 	// with the exception for '/boot' (= 500 MB)
@@ -1197,20 +1215,30 @@ func hasESP(disk *blueprint.DiskCustomization) bool {
 	return false
 }
 
+// defaultESPSize is the size of the automatically created EFI system partition
+// when the caller does not specify one in CustomPartitionTableOptions.
+const defaultESPSize = 200 * datasizes.MiB
+
 // addPartitionsForBootMode creates partitions to satisfy the boot mode requirements:
 //   - BIOS/legacy: adds a 1 MiB BIOS boot partition.
-//   - UEFI: adds a 200 MiB EFI system partition.
+//   - UEFI: adds an EFI system partition of options.ESPSize (or defaultESPSize).
 //   - Hybrid: adds both.
 //
 // The function will append the new partitions to the end of the existing
 // partition table therefore it is best to call this function early to put them
 // near the front (as is conventional).
-func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, bootMode platform.BootMode, architecture arch.Arch) error {
+func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, options *CustomPartitionTableOptions) error {
+	bootMode := options.BootMode
 	if bootMode == platform.BOOT_NONE {
 		return nil
 	}
 
-	switch architecture {
+	espSize := options.ESPSize
+	if espSize == 0 {
+		espSize = defaultESPSize
+	}
+
+	switch options.Architecture {
 	case arch.ARCH_PPC64LE:
 		// UEFI is not supported for PPC CPUs so we don't need to
 		// add an ESP partition there
@@ -1226,7 +1254,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 	case arch.ARCH_AARCH64, arch.ARCH_RISCV64:
 		// (our) aarch64/riscv64 only supports UEFI right now
 		if !hasESP(disk) {
-			part, err := mkESP(200*datasizes.MiB, pt.Type)
+			part, err := mkESP(espSize, pt.Type)
 			if err != nil {
 				return err
 			}
@@ -1246,7 +1274,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 		case platform.BOOT_UEFI:
 			// add ESP if needed
 			if !hasESP(disk) {
-				part, err := mkESP(200*datasizes.MiB, pt.Type)
+				part, err := mkESP(espSize, pt.Type)
 				if err != nil {
 					return err
 				}
@@ -1261,7 +1289,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 			}
 			pt.Partitions = append(pt.Partitions, bios)
 			if !hasESP(disk) {
-				esp, err := mkESP(200*datasizes.MiB, pt.Type)
+				esp, err := mkESP(espSize, pt.Type)
 				if err != nil {
 					return err
 				}
@@ -1272,7 +1300,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 			return fmt.Errorf("unknown or unsupported boot mode type with enum value %d", bootMode)
 		}
 	default:
-		return fmt.Errorf("unknown or unsupported architecture %v", architecture)
+		return fmt.Errorf("unknown or unsupported architecture %v", options.Architecture)
 	}
 }
 
@@ -1354,6 +1382,13 @@ type CustomPartitionTableOptions struct {
 	// enable automatic discovery. It has no effect and is not required when
 	// the PartitionTableType is PT_DOS.
 	Architecture arch.Arch
+
+	// ESPSize is the size of the EFI system partition that gets created
+	// automatically when the boot mode requires one and the customizations
+	// don't define one. Callers should set this to the ESP size of the image
+	// type's own partition table so that customizing the partitioning does not
+	// silently change it. If unset, defaultESPSize is used.
+	ESPSize datasizes.Size
 }
 
 // Returns the default filesystem type if the fstype is empty. If both are
@@ -1446,7 +1481,7 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 	// add any partition(s) that are needed for booting (like /boot/efi)
 	// if needed
 	//
-	if err := addPartitionsForBootMode(pt, customizations, options.BootMode, options.Architecture); err != nil {
+	if err := addPartitionsForBootMode(pt, customizations, options); err != nil {
 		return nil, fmt.Errorf("%s %w", errPrefix, err)
 	}
 	// add the /boot partition (if it is needed)
