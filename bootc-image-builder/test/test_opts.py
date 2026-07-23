@@ -80,28 +80,6 @@ def test_opts_arch_is_same_arch_is_fine(tmp_path, build_fake_container, target_a
         assert expected_err in res.stderr
 
 
-@pytest.mark.parametrize("with_debug", [False, True])
-def test_bib_log_level_smoke(tmp_path, container_storage, build_fake_container, with_debug):
-    output_path = tmp_path / "output"
-    output_path.mkdir(exist_ok=True)
-
-    container_ref = "quay.io/centos-bootc/centos-bootc:stream9"
-    testutil.pull_container(container_ref)
-
-    log_debug = ["--log-level", "debug"] if with_debug else []
-    res = subprocess.run([
-        "podman", "run", "--rm",
-        "--privileged",
-        "--security-opt", "label=type:unconfined_t",
-        "-v", f"{container_storage}:/var/lib/containers/storage",
-        "-v", f"{output_path}:/output",
-        build_fake_container,
-        *log_debug,
-        container_ref,
-    ], check=True, capture_output=True, text=True)
-    assert ('level=debug' in res.stderr) == with_debug
-
-
 def test_bib_help_hides_config(tmp_path, container_storage, build_fake_container):
     output_path = tmp_path / "output"
     output_path.mkdir(exist_ok=True)

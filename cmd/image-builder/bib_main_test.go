@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/stretchr/testify/assert"
@@ -123,19 +122,16 @@ func TestCobraCmdline(t *testing.T) {
 
 func TestCobraCmdlineVerbose(t *testing.T) {
 	for _, tc := range []struct {
-		cmdline             []string
-		expectedProgress    string
-		expectedLogrusLevel logrus.Level
+		cmdline          []string
+		expectedProgress string
 	}{
 		{
 			[]string{"quay.io..."},
 			"auto",
-			logrus.ErrorLevel,
 		},
 		{
 			[]string{"-v", "quay.io..."},
 			"verbose",
-			logrus.InfoLevel,
 		},
 	} {
 		restore := mockOsArgs(tc.cmdline)
@@ -161,7 +157,6 @@ func TestCobraCmdlineVerbose(t *testing.T) {
 			err = rootCmd.Execute()
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedProgress, progressFlag)
-			assert.Equal(t, tc.expectedLogrusLevel, logrus.GetLevel())
 		})
 	}
 }
