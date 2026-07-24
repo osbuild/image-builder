@@ -47,6 +47,12 @@ type PartitionTable struct {
 	// Dictates if certain bits and bobs are required or not; uses the default
 	// policy if not set.
 	Policy *PartitionTablePolicy `json:"policy,omitempty" yaml:"policy,omitempty"`
+
+	// Controls whether the root partition (the one containing "/") is
+	// grown to fill the remaining disk space during relayout. Defaults
+	// to true (nil means true) to preserve backward compatibility. Set
+	// to false to keep the root partition at its specified size.
+	GrowRootToFillDisk *bool `json:"grow_root_to_fill_disk,omitempty" yaml:"grow_root_to_fill_disk,omitempty"`
 }
 
 type PartitionTablePolicy struct {
@@ -54,6 +60,15 @@ type PartitionTablePolicy struct {
 	// readable by firmware (LVM, btrfs). When set to false an XBOOTLDR partition
 	// will not be created even for those filesystems.
 	EnsureXBOOTLDR bool `json:"ensure_xbootldr" yaml:"ensure_xbootldr"`
+}
+
+// growRootToFillDisk returns whether the root partition should be grown
+// to fill remaining disk space. Defaults to true when not explicitly set.
+func (pt *PartitionTable) growRootToFillDisk() bool {
+	if pt.GrowRootToFillDisk == nil {
+		return true
+	}
+	return *pt.GrowRootToFillDisk
 }
 
 var _ = MountpointCreator(&PartitionTable{})
@@ -130,8 +145,9 @@ func NewDefaultPartitionTablePolicy() *PartitionTablePolicy {
 //
 // In the case of raw partitioning (no LVM and no Btrfs), the partition
 // containing the root filesystem is grown to fill any left over space on the
-// partition table. Logical Volumes are not grown to fill the space in the
-// Volume Group since they are trivial to grow on a live system.
+// partition table, unless the base partition table has GrowRootToFillDisk set
+// to false. Logical Volumes are not grown to fill the space in the Volume
+// Group since they are trivial to grow on a live system.
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize datasizes.Size, mode partition.PartitioningMode, architecture arch.Arch, requiredSizes map[string]datasizes.Size, defaultFs string, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
@@ -237,6 +253,7 @@ func (pt *PartitionTable) Clone() Entity {
 		AbsoluteStartOffset: pt.AbsoluteStartOffset,
 		AlignFooter:         pt.AlignFooter,
 		Policy:              pt.Policy,
+		GrowRootToFillDisk:  common.ClonePtr(pt.GrowRootToFillDisk),
 	}
 
 	for idx, partition := range pt.Partitions {
@@ -519,7 +536,8 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 // Dynamically calculate and update the start point for each of the existing
 // partitions. Adjusts the overall size of image to either the supplied value
 // in `size` or to the sum of all partitions if that is larger. Will grow the
-// root partition if there is any empty space. Returns the updated start point.
+// root partition if there is any empty space, unless GrowRootToFillDisk is
+// set to false. Returns the updated start point.
 func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	header := pt.HeaderSize()
 	footer := datasizes.Size(0)
@@ -562,11 +580,12 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	root := &pt.Partitions[rootIdx]
 	root.Start = start
 	root.fitTo(root.Size)
+	root.Size = pt.AlignUp(root.Size)
 
 	// add the extra padding specified in the partition table
 	footer += datasizes.Size(pt.ExtraPadding)
 
-	// If the sum of all partitions is bigger then the specified size,
+	// If the sum of all partitions is bigger than the specified size,
 	// we use that instead. Grow the partition table size if needed.
 	end := pt.AlignUp(datasizes.Size(root.Start) + footer + root.Size)
 	if end > size {
@@ -577,12 +596,11 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 		pt.Size = datasizes.Size(size)
 	}
 
-	// If there is space left in the partition table, grow root
-	root.Size = pt.Size - datasizes.Size(root.Start)
-
-	// Finally we shrink the last partition, i.e. the root partition,
-	// to leave space for the footer, e.g. the secondary GPT header.
-	root.Size -= footer
+	if pt.growRootToFillDisk() {
+		// Grow root to fill remaining disk space, leaving room
+		// for the footer (e.g. the secondary GPT header).
+		root.Size = pt.Size - datasizes.Size(root.Start) - footer
+	}
 
 	// Sort partitions by start sector
 	pt.sortPartitions()

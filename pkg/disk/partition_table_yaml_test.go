@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
 )
@@ -195,4 +196,64 @@ partition_table:
 		},
 	}
 	assert.Equal(t, expected, ptWrapper.PartitionTable)
+}
+
+func TestPartitionTableUnmarshalYAMLGrowRootToFillDisk(t *testing.T) {
+	tests := map[string]struct {
+		yaml     string
+		expected *bool
+	}{
+		"absent": {
+			yaml: `
+partition_table:
+  type: "gpt"
+  partitions:
+    - size: "1 MiB"
+      payload_type: "filesystem"
+      payload:
+        type: "ext4"
+        mountpoint: "/"
+`,
+			expected: nil,
+		},
+		"true": {
+			yaml: `
+partition_table:
+  type: "gpt"
+  grow_root_to_fill_disk: true
+  partitions:
+    - size: "1 MiB"
+      payload_type: "filesystem"
+      payload:
+        type: "ext4"
+        mountpoint: "/"
+`,
+			expected: common.ToPtr(true),
+		},
+		"false": {
+			yaml: `
+partition_table:
+  type: "gpt"
+  grow_root_to_fill_disk: false
+  partitions:
+    - size: "1 MiB"
+      payload_type: "filesystem"
+      payload:
+        type: "ext4"
+        mountpoint: "/"
+`,
+			expected: common.ToPtr(false),
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			var ptWrapper struct {
+				PartitionTable disk.PartitionTable `yaml:"partition_table"`
+			}
+			err := yaml.Unmarshal([]byte(tc.yaml), &ptWrapper)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, ptWrapper.PartitionTable.GrowRootToFillDisk)
+		})
+	}
 }

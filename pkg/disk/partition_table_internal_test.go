@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/stretchr/testify/assert"
 )
@@ -882,6 +883,163 @@ func TestRelayout(t *testing.T) {
 					{
 						Start: 1*MiB + 200*MiB,
 						Size:  2 * GiB,
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+					},
+				},
+			},
+		},
+		"no-grow-dos": {
+			pt: &PartitionTable{
+				Type:               PT_DOS,
+				Size:               100 * MiB,
+				GrowRootToFillDisk: common.ToPtr(false),
+				Partitions: []Partition{
+					{
+						Size: 10 * MiB,
+					},
+					{
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+						Size: 20 * MiB,
+					},
+				},
+			},
+			size: 100 * MiB,
+			expected: &PartitionTable{
+				Type:               PT_DOS,
+				Size:               100 * MiB,
+				GrowRootToFillDisk: common.ToPtr(false),
+				Partitions: []Partition{
+					{
+						Start: 1 * MiB,
+						Size:  10 * MiB,
+					},
+					{
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+						Start: 11 * MiB,
+						Size:  20 * MiB, // does NOT grow to fill
+					},
+				},
+			},
+		},
+		"no-grow-gpt": {
+			pt: &PartitionTable{
+				Type:               PT_GPT,
+				Size:               100 * MiB,
+				GrowRootToFillDisk: common.ToPtr(false),
+				Partitions: []Partition{
+					{
+						Size: 10 * MiB,
+					},
+					{
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+						Size: 20 * MiB,
+					},
+				},
+			},
+			size: 100 * MiB,
+			expected: &PartitionTable{
+				Type:               PT_GPT,
+				Size:               100 * MiB,
+				GrowRootToFillDisk: common.ToPtr(false),
+				Partitions: []Partition{
+					{
+						Start: 1 * MiB,
+						Size:  10 * MiB,
+					},
+					{
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+						Start: 11 * MiB,
+						Size:  20 * MiB, // does NOT grow to fill
+					},
+				},
+			},
+		},
+		"no-grow-gpt-disk-grows-to-fit-partitions": {
+			// When the disk size is too small to fit all partitions,
+			// the disk grows to fit even with no-grow set.
+			pt: &PartitionTable{
+				Type:               PT_GPT,
+				Size:               10 * MiB,
+				GrowRootToFillDisk: common.ToPtr(false),
+				Partitions: []Partition{
+					{
+						Size: 10 * MiB,
+					},
+					{
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+						Size: 20 * MiB,
+					},
+				},
+			},
+			size: 10 * MiB,
+			expected: &PartitionTable{
+				Type:               PT_GPT,
+				Size:               32 * MiB, // grown to fit: 1 MiB header + 10 MiB + 20 MiB + footer, aligned up
+				GrowRootToFillDisk: common.ToPtr(false),
+				Partitions: []Partition{
+					{
+						Start: 1 * MiB,
+						Size:  10 * MiB,
+					},
+					{
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+						Start: 11 * MiB,
+						Size:  20 * MiB, // does NOT grow beyond specified size
+					},
+				},
+			},
+		},
+		"no-grow-gpt-root-first": {
+			pt: &PartitionTable{
+				Type:               PT_GPT,
+				Size:               100 * MiB,
+				GrowRootToFillDisk: common.ToPtr(false),
+				Partitions: []Partition{
+					{
+						Size: 10 * MiB,
+						Payload: &Filesystem{
+							Mountpoint: "/",
+						},
+					},
+					{
+						Size: 20 * MiB,
+					},
+					{
+						Size: 30 * MiB,
+					},
+				},
+			},
+			size: 100 * MiB,
+			expected: &PartitionTable{
+				Type:               PT_GPT,
+				Size:               100 * MiB,
+				GrowRootToFillDisk: common.ToPtr(false),
+				Partitions: []Partition{
+					{
+						Start: 1 * MiB,
+						Size:  20 * MiB,
+					},
+					{
+						Start: 21 * MiB,
+						Size:  30 * MiB,
+					},
+					{
+						Start: 51 * MiB, // root gets moved to last position
+						Size:  10 * MiB, // does NOT grow beyond specified size
 						Payload: &Filesystem{
 							Mountpoint: "/",
 						},
