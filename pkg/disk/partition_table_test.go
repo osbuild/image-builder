@@ -1256,11 +1256,48 @@ func TestPartitionTableESPSize(t *testing.T) {
 			pt: disk.PartitionTable{
 				Type: disk.PT_DOS,
 				Partitions: []disk.Partition{
-					{Size: 501 * datasizes.MiB, Type: disk.FAT16BDOSID, Bootable: true},
+					{
+						Size:     501 * datasizes.MiB,
+						Type:     disk.FAT16BDOSID,
+						Bootable: true,
+						Payload:  &disk.Filesystem{Type: "vfat", Mountpoint: "/boot/efi"},
+					},
 					{Size: 2 * datasizes.GiB, Type: disk.FilesystemLinuxDOSID},
 				},
 			},
 			expected: 501 * datasizes.MiB,
+		},
+		"dos-fat16-not-an-esp": {
+			// a FAT16 partition that is not mounted at /boot/efi is a data
+			// partition, not a mistyped ESP, and must not be picked up
+			pt: disk.PartitionTable{
+				Type: disk.PT_DOS,
+				Partitions: []disk.Partition{
+					{
+						Size:    128 * datasizes.MiB,
+						Type:    disk.FAT16BDOSID,
+						Payload: &disk.Filesystem{Type: "vfat", Mountpoint: "/data"},
+					},
+					{Size: 2 * datasizes.GiB, Type: disk.FilesystemLinuxDOSID},
+				},
+			},
+			expected: 0,
+		},
+		"dos-fat16-before-real-esp": {
+			// an unambiguously typed ESP wins over an earlier FAT16 partition
+			// wherever it appears in the table
+			pt: disk.PartitionTable{
+				Type: disk.PT_DOS,
+				Partitions: []disk.Partition{
+					{
+						Size:    128 * datasizes.MiB,
+						Type:    disk.FAT16BDOSID,
+						Payload: &disk.Filesystem{Type: "vfat", Mountpoint: "/data"},
+					},
+					{Size: 512 * datasizes.MiB, Type: disk.EFISystemPartitionDOSID},
+				},
+			},
+			expected: 512 * datasizes.MiB,
 		},
 		"no-esp": {
 			pt: disk.PartitionTable{
