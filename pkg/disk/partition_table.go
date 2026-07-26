@@ -732,20 +732,22 @@ func (pt *PartitionTable) FindMountableOnPlain(mountpoint string) Mountable {
 }
 
 // ESPSize returns the size of the EFI system partition in the PartitionTable.
-// Returns 0 if the table has no ESP. The ESP is identified by its partition
-// type, not by its mountpoint, so that tables which mount it somewhere other
-// than /boot/efi are still detected. Besides the GPT GUID and the DOS ID,
-// plain FAT16 ("06") also counts: the aarch64 DOS tables (IoT, minimal-raw)
-// type their ESP that way for firmware that reads the FAT partition directly.
+// Returns 0 if the table has no ESP.
+// For DOS partition tables we match type "ef" or "06" if mounted at /boot/efi.
 func (pt *PartitionTable) ESPSize() datasizes.Size {
+	var fat16ESP datasizes.Size
 	for _, part := range pt.Partitions {
 		if strings.EqualFold(part.Type, EFISystemPartitionGUID) ||
-			strings.EqualFold(part.Type, EFISystemPartitionDOSID) ||
-			part.Type == FAT16BDOSID {
+			strings.EqualFold(part.Type, EFISystemPartitionDOSID) {
 			return part.Size
 		}
+		if strings.EqualFold(part.Type, FAT16BDOSID) && fat16ESP == 0 {
+			if mnt, ok := part.Payload.(Mountable); ok && mnt.GetMountpoint() == "/boot/efi" {
+				fat16ESP = part.Size
+			}
+		}
 	}
-	return 0
+	return fat16ESP
 }
 
 func clampFSSize(mountpoint string, size datasizes.Size) datasizes.Size {
