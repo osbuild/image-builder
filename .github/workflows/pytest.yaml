@@ -22,7 +22,7 @@ jobs:
       - name: "Clone Repository"
         uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
       - name: Run linters
         run: make lint
 
