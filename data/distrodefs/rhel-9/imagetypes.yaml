@@ -1735,6 +1735,10 @@ image_types:
             system_info:
               default_user:
                 name: "opc"
+        - filename: "10_oracle.cfg"
+          config:
+            datasource_list:
+              - "Oracle"
       dracut_conf:
         - filename: "oci.conf"
           config:
