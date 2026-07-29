@@ -284,6 +284,16 @@ func TestFilenameAndExportsWithCompressionOverride(t *testing.T) {
 	assert.Equal(t, "disk.raw.xz", imgType.Filename("xz"))
 	assert.Equal(t, []string{"xz"}, imgType.Exports("xz"))
 
+	// image type with compression default "none" appends extension on override
+	r9 := generic.DistroFactory("rhel-9.6")
+	r9arch, err := r9.GetArch("x86_64")
+	require.NoError(t, err)
+	ami, err := r9arch.GetImageType("ami")
+	require.NoError(t, err)
+	assert.Equal(t, "image.raw", ami.Filename(""))
+	assert.Equal(t, "image.raw.xz", ami.Filename("xz"))
+	assert.Equal(t, "image.raw.zst", ami.Filename("zstd"))
+
 	// non-compressed image type should be unaffected
 	qcow2, err := arch.GetImageType("generic-qcow2")
 	require.NoError(t, err)

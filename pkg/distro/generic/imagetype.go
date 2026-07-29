@@ -102,8 +102,14 @@ func (t *imageType) Filename(compression manifest.Compression) string {
 		return t.ImageTypeYAML.Filename
 	}
 	defaultExt := t.ImageTypeYAML.Compression.Default.Extension()
+	if defaultExt == "" {
+		if t.ImageTypeYAML.Compression.Default == manifest.CompressionNone {
+			return t.ImageTypeYAML.Filename + "." + selected.Extension()
+		}
+		return t.ImageTypeYAML.Filename
+	}
 	suffix := "." + defaultExt
-	if defaultExt == "" || !strings.HasSuffix(t.ImageTypeYAML.Filename, suffix) {
+	if !strings.HasSuffix(t.ImageTypeYAML.Filename, suffix) {
 		return t.ImageTypeYAML.Filename
 	}
 	base := strings.TrimSuffix(t.ImageTypeYAML.Filename, suffix)
