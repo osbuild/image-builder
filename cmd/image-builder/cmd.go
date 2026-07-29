@@ -210,6 +210,7 @@ func setupManifestCmd() (*cobra.Command, error) {
 	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
 	manifestCmd.Flags().Bool("bootc-pull-container", false, `pull bootc container from remote location instead of using it from local container storage`)
 	manifestCmd.Flags().Uint64("image-size", 0, `override the default image size in bytes`)
+	manifestCmd.Flags().String("compression", "", `override the default compression for the image (e.g. xz, zstd, gzip, none)`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	if err := manifestCmd.Flags().MarkHidden("use-librepo"); err != nil {
 		return nil, err

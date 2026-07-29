@@ -23,6 +23,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
+	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/ostree"
@@ -484,6 +485,10 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if err != nil {
 		return err
 	}
+	compression, err := cmd.Flags().GetString("compression")
+	if err != nil {
+		return err
+	}
 
 	// no error check here as this is (deliberately) not defined on
 	// "manifest" (if "images" learn to set the output filename in
@@ -529,6 +534,7 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 		BootcOmitDefaultKernelArgs: bootcOmitDefaultKernelArgs,
 		BootcRemote:                bootcRemote,
 		ImageSize:                  imageSize,
+		Compression:                manifest.Compression(compression),
 		WithSBOM:                   withSBOM,
 		WithRPMList:                withRPMList,
 		IgnoreWarnings:             ignoreWarnings,
