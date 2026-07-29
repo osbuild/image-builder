@@ -80,6 +80,15 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	installerPayloadRef, _ := cmd.Flags().GetString("installer-payload-ref")
 	useLibrepo, _ := cmd.Flags().GetBool("use-librepo")
 
+	var customSeed *int64
+	if cmd.Flags().Changed("seed") {
+		seedFlagVal, err := cmd.Flags().GetInt64("seed")
+		if err != nil {
+			return nil, nil, err
+		}
+		customSeed = &seedFlagVal
+	}
+
 	// If --local was given, warn in the case of --local or --local=true (true is the default), error in the case of --local=false
 	if cmd.Flags().Changed("local") {
 		localStorage, _ := cmd.Flags().GetBool("local")
@@ -181,7 +190,8 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	}
 	var mTLS *mTLSConfig
 	mg, err := manifestgen.New(repos, &manifestgen.Options{
-		Cachedir: rpmCacheRoot,
+		Cachedir:   rpmCacheRoot,
+		CustomSeed: customSeed,
 		// XXX: hack to skip repo loading for the bootc image.
 		// We need to add a SkipRepositories or similar to
 		// manifestgen instead to make this clean

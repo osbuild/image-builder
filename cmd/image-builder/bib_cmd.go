@@ -139,6 +139,7 @@ func setupBibManifestCmd() (*cobra.Command, error) {
 	if err := manifestCmd.Flags().MarkHidden("config"); err != nil {
 		return nil, fmt.Errorf("cannot hide 'config' :%w", err)
 	}
+	manifestCmd.Flags().Int64("seed", 0, `rng seed, some values are derived randomly, pinning the seed allows more reproducibility if you need it. must be an integer. only used when changed.`)
 
 	return manifestCmd, nil
 }
