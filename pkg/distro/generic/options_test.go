@@ -1899,13 +1899,14 @@ func TestCheckOptions(t *testing.T) {
 			expErr: "blueprint validation failed for image type \"qcow2\": customizations.openscap.profile_id: unsupported profile xccdf_org.ssgproject.content_profile_ospp",
 		},
 
-		"f42/compression-empty-allowed-accepts-any": {
+		"f42/compression-empty-allowed-rejects-override": {
 			distro: "fedora-42",
 			it:     "generic-ami",
 			bp:     blueprint.Blueprint{},
 			options: distro.ImageOptions{
 				Compression: manifest.CompressionZstd,
 			},
+			expErr: `compression override not supported for "generic-ami"`,
 		},
 		"f42/compression-no-selection-ok": {
 			distro:  "fedora-42",
@@ -1970,7 +1971,7 @@ func TestCheckOptionsCompressionAllowed(t *testing.T) {
 	_, err = generic.ImageTypeCheckOptions(genit, &blueprint.Blueprint{}, distro.ImageOptions{
 		Compression: manifest.CompressionGzip,
 	})
-	assert.EqualError(t, err, `compression "gzip" not supported for "generic-ami"`)
+	assert.EqualError(t, err, `compression "gzip" not supported for "generic-ami", allowed: [xz zstd]`)
 
 	_, err = generic.ImageTypeCheckOptions(genit, &blueprint.Blueprint{}, distro.ImageOptions{})
 	assert.NoError(t, err)
