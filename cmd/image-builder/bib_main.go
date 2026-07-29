@@ -59,8 +59,8 @@ func saveManifest(ms manifest.OSBuildManifest, fpath string) error {
 // the progress bar (this function cannot know what else needs to happen
 // after manifest generation).
 //
-// This code is very similar to main.go:cmdManifestWrapper (which is
-// sad), but consolidate is hard because:
+// This code is very similar to main.go:generateManifest (which is sad), but
+// consolidate is hard because:
 //  1. We need to support anaconda-iso here which means we need to provide a custom
 //     depsolve function to extract the mTLS config from the container image, this is
 //     something we consider legacy so ibcli:main.go does not have it
