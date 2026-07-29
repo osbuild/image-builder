@@ -25,3 +25,11 @@ type CompressionConfig struct {
 	Default Compression   `yaml:"default"`
 	Allowed []Compression `yaml:"allowed"`
 }
+
+// Select returns the override compression if set, otherwise the default.
+func (cc CompressionConfig) Select(override Compression) Compression {
+	if override != "" {
+		return override
+	}
+	return cc.Default
+}

@@ -10,6 +10,16 @@ import (
 	"github.com/osbuild/image-builder/pkg/manifest"
 )
 
+func TestCompressionConfigSelect(t *testing.T) {
+	cc := manifest.CompressionConfig{
+		Default: manifest.CompressionXZ,
+	}
+
+	assert.Equal(t, manifest.CompressionXZ, cc.Select(""))
+	assert.Equal(t, manifest.CompressionZstd, cc.Select(manifest.CompressionZstd))
+	assert.Equal(t, manifest.CompressionGzip, cc.Select(manifest.CompressionGzip))
+}
+
 func TestCompressionConfigUnmarshalYAML(t *testing.T) {
 	tests := []struct {
 		name     string
