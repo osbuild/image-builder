@@ -2051,17 +2051,16 @@ image_types:
     blueprint:
       supported_options: *supported_options_ostree_commit
 
-  "minimal-raw-xz": &minimal_raw_xz
-    name_aliases: ["minimal-raw"]
-    filename: "disk.raw.xz"
+  "minimal-raw": &minimal_raw
+    filename: "disk.raw"
     compression:
-      default: "xz"
-      allowed: ["xz", "zstd"]
-    mime_type: "application/xz"
+      default: "none"
+      allowed: ["none", "xz", "zstd", "gzip"]
+    mime_type: "application/octet-stream"
     bootable: true
     default_size: "2 GiB"
     image_func: "disk"
-    exports: ["xz"]
+    exports: ["image"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_uefi_platform
@@ -2154,13 +2153,19 @@ image_types:
     blueprint:
       supported_options: *supported_options_disk
 
+  "minimal-raw-xz":
+    <<: *minimal_raw
+    filename: "disk.raw.xz"
+    compression:
+      default: "xz"
+    mime_type: "application/xz"
+    exports: ["xz"]
+
   "minimal-raw-zst":
-    <<: *minimal_raw_xz
-    name_aliases: []
+    <<: *minimal_raw
     filename: "disk.raw.zst"
     compression:
       default: "zstd"
-      allowed: ["xz", "zstd"]
     exports: ["zstd"]
 
   "iot-installer":

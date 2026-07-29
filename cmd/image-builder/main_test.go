@@ -244,13 +244,13 @@ name = "alice"
 		compression string
 		expectPipe  string
 	}{
-		{"default", "", "xz"},
+		{"default", "", "image"},
 		{"zstd", "zstd", "zstd"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			args := []string{
 				"manifest",
-				"minimal-raw-xz",
+				"minimal-raw",
 				"--arch=x86_64",
 				"--distro=fedora-43",
 				fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, simpleBP)),
