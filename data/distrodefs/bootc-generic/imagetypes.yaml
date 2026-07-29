@@ -214,7 +214,8 @@ image_types:
     <<: *raw_image_type
     filename: "pxe.tar.xz"
     mime_type: "application/x-tar"
-    compression: "xz"
+    compression:
+      default: "xz"
     image_func: "pxe_tar"
     exports: ["xz"]
     iso_config:

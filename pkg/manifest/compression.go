@@ -1,7 +1,5 @@
 package manifest
 
-import "fmt"
-
 type Compression string
 
 const (
@@ -23,21 +21,6 @@ var CompressionPipelines = map[Compression]CompressionPipelineFunc{
 	CompressionNone: func(_ Build, p FilePipeline) FilePipeline { return p },
 }
 
-func (c *Compression) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var s string
-	if err := unmarshal(&s); err != nil {
-		return err
-	}
-
-	v := Compression(s)
-	if v == "" {
-		v = CompressionNone
-	}
-
-	if _, ok := CompressionPipelines[v]; !ok {
-		return fmt.Errorf("unsupported compression type %q", s)
-	}
-
-	*c = v
-	return nil
+type CompressionConfig struct {
+	Default Compression `yaml:"default"`
 }

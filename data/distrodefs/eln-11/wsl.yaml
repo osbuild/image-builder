@@ -4,7 +4,8 @@ image_types:
     mime_type: "application/x-tar"
     image_func: "tar"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     platforms:
       - arch: "x86_64"
       - arch: "aarch64"

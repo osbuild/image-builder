@@ -788,7 +788,7 @@ func diskImage(t *imageType,
 	}
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Compression = t.ImageTypeYAML.Compression.Default
 
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(bp.Customizations, options, rng)
@@ -830,7 +830,7 @@ func tarImage(t *imageType,
 	d := t.arch.distro
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Compression = t.ImageTypeYAML.Compression.Default
 	img.OSVersion = d.OsVersion()
 
 	return img, nil
@@ -1232,7 +1232,7 @@ func ostreeDiskImage(t *imageType,
 	}
 	img.PartitionTable = pt
 
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Compression = t.ImageTypeYAML.Compression.Default
 
 	return img, nil
 }
@@ -1405,7 +1405,7 @@ func pxeTarImage(t *imageType,
 	d := t.arch.distro
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Compression = t.ImageTypeYAML.Compression.Default
 	img.OSVersion = d.OsVersion()
 
 	return img, nil

@@ -520,7 +520,8 @@ image_types:
   "azure": &azure
     <<: *vhd
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     filename: "disk.vhd.xz"
     partition_table:
       x86_64:
@@ -799,7 +800,8 @@ image_types:
     name_aliases: []
     exports: ["xz"]
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     blueprint:
       supported_options: *supported_options_disk
 

@@ -520,7 +520,7 @@ type ImageTypeYAML struct {
 
 	Filename    string                      `yaml:"filename"`
 	MimeType    string                      `yaml:"mime_type"`
-	Compression manifest.Compression        `yaml:"compression"`
+	Compression manifest.CompressionConfig  `yaml:"compression"`
 	Environment environment.EnvironmentConf `yaml:"environment"`
 	Bootable    bool                        `yaml:"bootable"`
 

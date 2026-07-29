@@ -1338,7 +1338,8 @@
   atomic_raw_common: &atomic_raw_common
     <<: *atomic_disk_common
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     exports: ["xz"]
     platforms:
@@ -1768,7 +1769,8 @@ image_types:
     <<: *ostree_imgtype_common
     name_aliases: ["iot-raw-image", "fedora-iot-raw-image"]
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     default_size: "6 GiB"
     bootable: true
@@ -2052,7 +2054,8 @@ image_types:
   "minimal-raw-xz": &minimal_raw_xz
     name_aliases: ["minimal-raw"]
     filename: "disk.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     bootable: true
     default_size: "2 GiB"
@@ -2154,7 +2157,8 @@ image_types:
     <<: *minimal_raw_xz
     name_aliases: []
     filename: "disk.raw.zst"
-    compression: zstd
+    compression:
+      default: "zstd"
     exports: ["zstd"]
 
   "iot-installer":
@@ -2454,7 +2458,8 @@ image_types:
     # correct suffix, see:
     # https://learn.microsoft.com/en-us/windows/wsl/build-custom-distro#what-are-wsl-root-filesystem-tar-files
     filename: "image.wsl"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/x-tar"
     image_func: "tar"
     exports: ["xz"]
@@ -2740,7 +2745,8 @@ image_types:
 
   "pxe-tar-xz":
     filename: "pxe.tar.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/x-tar"
     image_func: "pxe_tar"
     exports: ["xz"]
@@ -2847,7 +2853,8 @@ image_types:
   "cloud-ec2": &cloud_ec2
     <<: *cloud_base
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     exports: ["xz"]
     image_config:
