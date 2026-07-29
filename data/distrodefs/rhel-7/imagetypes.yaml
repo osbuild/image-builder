@@ -244,7 +244,8 @@ image_types:
     image_func: "disk"
     default_size: "64 GiB"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     bootable: true
     # RHEL 7 qemu vpc subformat does not support force_size
     disk_image_vpc_force_size: false
@@ -402,7 +403,8 @@ image_types:
     mime_type: "application/xz"
     image_func: "disk"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     bootable: true
     default_size: "10 GiB"
     required_partition_sizes: *default_required_dir_sizes

@@ -196,7 +196,7 @@ func (t *TestImageType) Arch() distro.Arch {
 	return t.architecture
 }
 
-func (t *TestImageType) Filename() string {
+func (t *TestImageType) Filename(_ manifest.Compression) string {
 	return "test.img"
 }
 
@@ -235,7 +235,7 @@ func (t *TestImageType) PayloadPackageSets() []string {
 	return []string{blueprintPkgsKey}
 }
 
-func (t *TestImageType) Exports() []string {
+func (t *TestImageType) Exports(_ manifest.Compression) []string {
 	return distro.ExportsFallback()
 }
 

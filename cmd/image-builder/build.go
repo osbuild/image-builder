@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/image-builder/pkg/imagefilter"
+	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/progress"
 )
 
@@ -20,6 +21,8 @@ type buildOptions struct {
 	WriteManifest bool
 	WriteBuildlog bool
 	Metrics       bool
+
+	Compression manifest.Compression
 }
 
 func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManifest []byte, opts *buildOptions) (string, error) {
@@ -59,15 +62,15 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 
 		osbuildOpts.BuildLog = f
 	}
-	if err := progress.RunOSBuild(pbar, osbuildManifest, res.ImgType.Exports(), osbuildOpts); err != nil {
+	if err := progress.RunOSBuild(pbar, osbuildManifest, res.ImgType.Exports(opts.Compression), osbuildOpts); err != nil {
 		return "", err
 	}
 	// Rename *sigh*, see https://github.com/osbuild/image-builder/pull/1039
 	// for my preferred way. Every frontend to images has to duplicate
 	// similar code like this.
-	pipelineDir := filepath.Join(opts.OutputDir, res.ImgType.Exports()[0])
-	srcName := filepath.Join(pipelineDir, res.ImgType.Filename())
-	imgExt := strings.SplitN(res.ImgType.Filename(), ".", 2)[1]
+	pipelineDir := filepath.Join(opts.OutputDir, res.ImgType.Exports(opts.Compression)[0])
+	srcName := filepath.Join(pipelineDir, res.ImgType.Filename(opts.Compression))
+	imgExt := strings.SplitN(res.ImgType.Filename(opts.Compression), ".", 2)[1]
 	dstName := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.%v", basename, imgExt))
 	if err := os.Rename(srcName, dstName); err != nil {
 		return "", fmt.Errorf("cannot rename artifact to final name: %w", err)

@@ -1338,7 +1338,8 @@
   atomic_raw_common: &atomic_raw_common
     <<: *atomic_disk_common
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     exports: ["xz"]
     platforms:
@@ -1768,7 +1769,8 @@ image_types:
     <<: *ostree_imgtype_common
     name_aliases: ["iot-raw-image", "fedora-iot-raw-image"]
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     default_size: "6 GiB"
     bootable: true
@@ -2049,15 +2051,16 @@ image_types:
     blueprint:
       supported_options: *supported_options_ostree_commit
 
-  "minimal-raw-xz": &minimal_raw_xz
-    name_aliases: ["minimal-raw"]
-    filename: "disk.raw.xz"
-    compression: "xz"
-    mime_type: "application/xz"
+  "minimal-raw": &minimal_raw
+    filename: "disk.raw"
+    compression:
+      default: "none"
+      allowed: ["none", "xz", "zstd", "gzip"]
+    mime_type: "application/octet-stream"
     bootable: true
     default_size: "2 GiB"
     image_func: "disk"
-    exports: ["xz"]
+    exports: ["image"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_uefi_platform
@@ -2150,11 +2153,19 @@ image_types:
     blueprint:
       supported_options: *supported_options_disk
 
+  "minimal-raw-xz":
+    <<: *minimal_raw
+    filename: "disk.raw.xz"
+    compression:
+      default: "xz"
+    mime_type: "application/xz"
+    exports: ["xz"]
+
   "minimal-raw-zst":
-    <<: *minimal_raw_xz
-    name_aliases: []
+    <<: *minimal_raw
     filename: "disk.raw.zst"
-    compression: zstd
+    compression:
+      default: "zstd"
     exports: ["zstd"]
 
   "iot-installer":
@@ -2454,7 +2465,8 @@ image_types:
     # correct suffix, see:
     # https://learn.microsoft.com/en-us/windows/wsl/build-custom-distro#what-are-wsl-root-filesystem-tar-files
     filename: "image.wsl"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/x-tar"
     image_func: "tar"
     exports: ["xz"]
@@ -2740,7 +2752,8 @@ image_types:
 
   "pxe-tar-xz":
     filename: "pxe.tar.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/x-tar"
     image_func: "pxe_tar"
     exports: ["xz"]
@@ -2847,7 +2860,8 @@ image_types:
   "cloud-ec2": &cloud_ec2
     <<: *cloud_base
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     exports: ["xz"]
     image_config:

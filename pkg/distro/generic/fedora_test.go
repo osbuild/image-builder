@@ -194,6 +194,14 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			want: wantResult{wantErr: true},
 		},
 		{
+			name: "minimal-raw",
+			args: args{"minimal-raw"},
+			want: wantResult{
+				filename: "disk.raw",
+				mimeType: "application/octet-stream",
+			},
+		},
+		{
 			name: "minimal-raw-xz",
 			args: args{"minimal-raw-xz"},
 			want: wantResult{
@@ -252,7 +260,7 @@ func TestFedoraFilenameFromType(t *testing.T) {
 					} else {
 						require.NoError(t, err)
 						require.NotNil(t, imgType)
-						gotFilename := imgType.Filename()
+						gotFilename := imgType.Filename("")
 						gotMIMEType := imgType.MIMEType()
 						if gotFilename != tt.want.filename {
 							t.Errorf("ImageType.Filename()  got = %v, want %v", gotFilename, tt.want.filename)
@@ -265,6 +273,50 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFilenameAndExportsWithCompressionOverride(t *testing.T) {
+	dist := fedoraFamilyDistros[len(fedoraFamilyDistros)-1]
+	arch, err := dist.GetArch("x86_64")
+	require.NoError(t, err)
+
+	// minimal-raw has default "none" and allows compression selection
+	imgType, err := arch.GetImageType("minimal-raw")
+	require.NoError(t, err)
+
+	assert.Equal(t, "disk.raw", imgType.Filename(""))
+	assert.Equal(t, []string{"image"}, imgType.Exports(""))
+
+	assert.Equal(t, "disk.raw.xz", imgType.Filename("xz"))
+	assert.Equal(t, []string{"xz"}, imgType.Exports("xz"))
+
+	assert.Equal(t, "disk.raw.zst", imgType.Filename("zstd"))
+	assert.Equal(t, []string{"zstd"}, imgType.Exports("zstd"))
+
+	assert.Equal(t, "disk.raw.gz", imgType.Filename("gzip"))
+	assert.Equal(t, []string{"gzip"}, imgType.Exports("gzip"))
+
+	// minimal-raw-xz has fixed compression, no override allowed
+	xzType, err := arch.GetImageType("minimal-raw-xz")
+	require.NoError(t, err)
+	assert.Equal(t, "disk.raw.xz", xzType.Filename(""))
+	assert.Equal(t, []string{"xz"}, xzType.Exports(""))
+
+	// image type with compression default "none" appends extension on override
+	r9 := generic.DistroFactory("rhel-9.6")
+	r9arch, err := r9.GetArch("x86_64")
+	require.NoError(t, err)
+	ami, err := r9arch.GetImageType("ami")
+	require.NoError(t, err)
+	assert.Equal(t, "image.raw", ami.Filename(""))
+	assert.Equal(t, "image.raw.xz", ami.Filename("xz"))
+	assert.Equal(t, "image.raw.zst", ami.Filename("zstd"))
+
+	// non-compressed image type should be unaffected
+	qcow2, err := arch.GetImageType("generic-qcow2")
+	require.NoError(t, err)
+	assert.Equal(t, "disk.qcow2", qcow2.Filename(""))
+	assert.Equal(t, "disk.qcow2", qcow2.Filename("zstd"))
 }
 
 func TestFedoraImageType_BuildPackages(t *testing.T) {
@@ -338,6 +390,7 @@ func TestFedoraImageType_Name(t *testing.T) {
 				"iot-qcow2",
 				"iot-raw-xz",
 				"workstation-live-installer",
+				"minimal-raw",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
 				"generic-oci",
@@ -381,6 +434,7 @@ func TestFedoraImageType_Name(t *testing.T) {
 				"iot-installer",
 				"iot-qcow2",
 				"iot-raw-xz",
+				"minimal-raw",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
 				"generic-oci",
@@ -521,6 +575,7 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"iot-qcow2",
 				"iot-raw-xz",
 				"workstation-live-installer",
+				"minimal-raw",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
 				"generic-oci",
@@ -565,6 +620,7 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"iot-qcow2",
 				"iot-raw-xz",
 				"workstation-live-installer",
+				"minimal-raw",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
 				"generic-oci",
@@ -620,6 +676,7 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 			arch: "riscv64",
 			imgNames: []string{
 				"generic-container",
+				"minimal-raw",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
 			},

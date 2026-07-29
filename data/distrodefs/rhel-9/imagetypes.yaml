@@ -1859,7 +1859,8 @@ image_types:
     <<: *vhd
     mime_type: "application/xz"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     filename: "disk.vhd.xz"
     partition_table:
       x86_64:
@@ -2087,7 +2088,8 @@ image_types:
     filename: "image.raw.xz"
     mime_type: "application/xz"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     image_func: "disk"
     bootable: true
     default_size: "10 GiB"
@@ -2234,7 +2236,8 @@ image_types:
     mime_type: "application/octet-stream"
     filename: "image.raw"
     exports: ["image"]
-    compression: ""
+    compression:
+      default: "none"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -2417,7 +2420,8 @@ image_types:
     mime_type: "application/x-tar"
     image_func: "tar"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     platforms:
       - arch: "x86_64"
       - arch: "aarch64"
@@ -2821,7 +2825,8 @@ image_types:
   "minimal-raw":
     filename: "disk.raw.xz"
     mime_type: "application/xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     bootable: true
     default_size: "2 GiB"
     image_func: "disk"
@@ -3188,7 +3193,8 @@ image_types:
   "edge-raw-image":
     name_aliases: ["rhel-edge-raw-image"]
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     exports: ["xz"]
     default_size: "10 GiB"
@@ -3481,7 +3487,8 @@ image_types:
     filename: "disk.vhd.xz"
     mime_type: "application/xz"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     default_size: "32 GiB"
     platforms:
       - arch: "x86_64"
@@ -3749,7 +3756,8 @@ image_types:
 
   "pxe-tar-xz":
     filename: "pxe.tar.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/x-tar"
     image_func: "pxe_tar"
     exports: ["xz"]

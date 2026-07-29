@@ -52,8 +52,24 @@ func (t *bootcImageType) Arch() distro.Arch {
 	return t.arch
 }
 
-func (t *bootcImageType) Filename() string {
-	return t.ImageTypeYAML.Filename
+func (t *bootcImageType) Filename(compression manifest.Compression) string {
+	selected := t.ImageTypeYAML.Compression.Select(compression)
+	if selected == "" || selected == manifest.CompressionNone {
+		return t.ImageTypeYAML.Filename
+	}
+	defaultExt := t.ImageTypeYAML.Compression.Default.Extension()
+	if defaultExt == "" {
+		if t.ImageTypeYAML.Compression.Default == manifest.CompressionNone {
+			return t.ImageTypeYAML.Filename + "." + selected.Extension()
+		}
+		return t.ImageTypeYAML.Filename
+	}
+	suffix := "." + defaultExt
+	if !strings.HasSuffix(t.ImageTypeYAML.Filename, suffix) {
+		return t.ImageTypeYAML.Filename
+	}
+	base := strings.TrimSuffix(t.ImageTypeYAML.Filename, suffix)
+	return base + "." + selected.Extension()
 }
 
 func (t *bootcImageType) MIMEType() string {
@@ -115,8 +131,15 @@ func (t *bootcImageType) PayloadPackageSets() []string {
 	return nil
 }
 
-func (t *bootcImageType) Exports() []string {
-	return t.ImageTypeYAML.Exports
+func (t *bootcImageType) Exports(compression manifest.Compression) []string {
+	selected := t.ImageTypeYAML.Compression.Select(compression)
+	if selected != "" && selected != manifest.CompressionNone {
+		return []string{string(selected)}
+	}
+	if len(t.ImageTypeYAML.Exports) > 0 {
+		return t.ImageTypeYAML.Exports
+	}
+	return []string{"assembler"}
 }
 
 func (t *bootcImageType) SupportedBlueprintOptions() []string {
@@ -215,7 +238,7 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	platform := PlatformFor(t.arch.Name(), bd.sourceInfo.UEFIVendor)
 	// For the bootc-disk image, the filename is the basename and
 	// the extension is added automatically for each disk format
-	filename := strings.Split(t.Filename(), ".")[0]
+	filename := strings.Split(t.Filename(options.Compression), ".")[0]
 
 	img := image.NewBootcDiskImage(platform, filename, containerSource, buildContainerSource)
 	if opts := buildOptions(t); opts != nil {
@@ -421,7 +444,7 @@ func (t *bootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 	platformi := PlatformFor(t.arch.Name(), sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
-	img := image.NewAnacondaContainerInstaller(platformi, t.Filename(), containerSource)
+	img := image.NewAnacondaContainerInstaller(platformi, t.Filename(options.Compression), containerSource)
 	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
 		return nil, nil, err
 	}
@@ -485,7 +508,7 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 	platformi := PlatformFor(t.arch.Name(), bd.sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
-	img := image.NewContainerBasedIso(platformi, t.Filename(), containerSource, nil)
+	img := image.NewContainerBasedIso(platformi, t.Filename(options.Compression), containerSource, nil)
 	if options.Bootc != nil && options.Bootc.InstallerPayloadRef != "" {
 		img.PayloadContainer = &container.SourceSpec{
 			Source: options.Bootc.InstallerPayloadRef,
@@ -625,7 +648,7 @@ func (t *bootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 	platformi := PlatformFor(archStr, sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
-	img := image.NewAnacondaContainerInstallerLegacy(platformi, t.Filename(), containerSource)
+	img := image.NewAnacondaContainerInstallerLegacy(platformi, t.Filename(options.Compression), containerSource)
 	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
 		return nil, nil, err
 	}
@@ -693,11 +716,11 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 	}
 
 	platform := PlatformFor(t.arch.Name(), bd.sourceInfo.UEFIVendor)
-	img := image.NewBootcPXEImage(platform, t.Filename(), containerSource, buildContainerSource)
+	img := image.NewBootcPXEImage(platform, t.Filename(options.Compression), containerSource, buildContainerSource)
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Compression = t.ImageTypeYAML.Compression.Select(options.Compression)
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
 
 	groups, err := customizations.GetGroups()

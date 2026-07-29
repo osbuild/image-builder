@@ -224,6 +224,58 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	}
 }
 
+func TestManifestIntegrationCompression(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	simpleBP := `
+[[customizations.user]]
+name = "alice"
+`
+
+	for _, tc := range []struct {
+		name        string
+		compression string
+		expectPipe  string
+	}{
+		{"default", "", "image"},
+		{"zstd", "zstd", "zstd"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			args := []string{
+				"manifest",
+				"minimal-raw",
+				"--arch=x86_64",
+				"--distro=fedora-43",
+				fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, simpleBP)),
+			}
+			if tc.compression != "" {
+				args = append(args, fmt.Sprintf("--compression=%s", tc.compression))
+			}
+
+			restore = main.MockOsArgs(args)
+			defer restore()
+
+			var fakeStdout bytes.Buffer
+			restore = main.MockOsStdout(&fakeStdout)
+			defer restore()
+
+			err := main.Run()
+			require.NoError(t, err)
+
+			pipelineNames, err := manifesttest.PipelineNamesFrom(fakeStdout.Bytes())
+			require.NoError(t, err)
+			assert.Contains(t, pipelineNames, tc.expectPipe)
+		})
+	}
+}
+
 func TestManifestIntegrationAutoDetectDistro(t *testing.T) {
 	restore := main.MockManifestgenDepsolver(fakeDepsolve)
 	defer restore()

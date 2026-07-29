@@ -30,7 +30,8 @@
 image_types:
   "pxe-tar-xz":
     filename: "pxe.tar.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/x-tar"
     image_func: "pxe_tar"
     exports: ["xz"]

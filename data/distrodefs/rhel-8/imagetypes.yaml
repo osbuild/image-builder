@@ -1446,7 +1446,8 @@ image_types:
     name_aliases: []
     filename: "image.raw.xz"
     mime_type: "application/xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     exports: ["xz"]
     image_config:
       <<: *ec2_image_config
@@ -1773,7 +1774,8 @@ image_types:
     image_func: "disk"
     default_size: "64 GiB"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     bootable: true
     platforms:
       - <<: *x86_64_bios_platform
@@ -2269,7 +2271,8 @@ image_types:
   "edge-raw-image":
     name_aliases: ["rhel-edge-raw-image"]
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     default_size: "10 GiB"
     bootable: true
@@ -2670,7 +2673,8 @@ image_types:
     mime_type: "application/x-tar"
     image_func: "tar"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     platforms:
       - arch: "x86_64"
       - arch: "aarch64"
@@ -2814,7 +2818,8 @@ image_types:
   "minimal-raw":
     filename: "disk.raw.xz"
     mime_type: "application/xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     bootable: true
     default_size: "2 GiB"
     image_func: "disk"

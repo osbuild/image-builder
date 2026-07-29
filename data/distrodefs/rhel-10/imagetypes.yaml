@@ -1320,7 +1320,8 @@ image_types:
   "azure": &azure
     <<: *vhd
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     filename: "disk.vhd.xz"
     partition_table:
       x86_64:
@@ -1716,14 +1717,16 @@ image_types:
     name_aliases: []
     exports: ["xz"]
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     blueprint:
       supported_options: *supported_options_disk
 
   "ec2-ha":
     <<: *ec2
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "raw"
@@ -1740,7 +1743,8 @@ image_types:
   "ec2-sap":
     <<: *ec2
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "raw"
@@ -1874,7 +1878,8 @@ image_types:
     mime_type: "application/x-tar"
     image_func: "tar"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     platforms:
       - arch: "x86_64"
       - arch: "aarch64"
@@ -2397,7 +2402,8 @@ image_types:
     filename: "disk.vhd.xz"
     mime_type: "application/xz"
     exports: ["xz"]
-    compression: "xz"
+    compression:
+      default: "xz"
     default_size: "32 GiB"
     platforms:
       - arch: "x86_64"
@@ -2625,7 +2631,8 @@ image_types:
 
   "minimal-raw-xz":
     filename: "image.raw.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/xz"
     image_func: "disk"
     exports: ["xz"]
@@ -2680,7 +2687,8 @@ image_types:
 
   "pxe-tar-xz":
     filename: "pxe.tar.xz"
-    compression: "xz"
+    compression:
+      default: "xz"
     mime_type: "application/x-tar"
     image_func: "pxe_tar"
     exports: ["xz"]

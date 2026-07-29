@@ -232,7 +232,7 @@ func TestRH8_FilenameFromType(t *testing.T) {
 					} else {
 						require.NoError(t, err)
 						require.NotNil(t, imgType)
-						gotFilename := imgType.Filename()
+						gotFilename := imgType.Filename("")
 						gotMIMEType := imgType.MIMEType()
 						if gotFilename != tt.want.filename {
 							t.Errorf("ImageType.Filename()  got = %v, want %v", gotFilename, tt.want.filename)

@@ -35,18 +35,26 @@ func NewBase(name string, platform platform.Platform, filename string) Base {
 	}
 }
 
-func GetCompressionPipeline(compression string, buildPipeline manifest.Build, inputPipeline manifest.FilePipeline) manifest.FilePipeline {
-	switch compression {
-	case "xz":
-		return manifest.NewXZ(buildPipeline, inputPipeline)
-	case "zstd":
-		return manifest.NewZstd(buildPipeline, inputPipeline)
-	case "gzip":
-		return manifest.NewGzip(buildPipeline, inputPipeline)
-	case "":
-		return inputPipeline
-	default:
-		// panic on unknown strings
+func GetCompressionPipeline(compression manifest.Compression, buildPipeline manifest.Build, inputPipeline manifest.FilePipeline) manifest.FilePipeline {
+	if compression == "" {
+		compression = manifest.CompressionNone
+	}
+	fn, ok := manifest.CompressionPipelines[compression]
+	if !ok {
 		panic(fmt.Sprintf("unsupported compression type %q", compression))
 	}
+
+	// Create non-selected compression pipelines first so the selected
+	// one ends up last in the manifest pipeline order. This is some form
+	// of backwards compatibility with code that uses the last pipeline.
+	// Unsure about it; it'll still break for non-compressed exports since
+	// they still get all the compression types appended.
+	for _, c := range manifest.CompressionTypes {
+		if c == compression {
+			continue
+		}
+		manifest.CompressionPipelines[c](buildPipeline, inputPipeline)
+	}
+
+	return fn(buildPipeline, inputPipeline)
 }

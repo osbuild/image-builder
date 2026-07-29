@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
+	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/ostree"
@@ -33,6 +34,7 @@ type manifestOptions struct {
 	BootcOmitDefaultKernelArgs bool
 	BootcRemote                bool
 	ImageSize                  uint64
+	Compression                manifest.Compression
 	Subscription               *subscription.ImageOptions
 	RpmDownloader              osbuild.RpmDownloader
 	WithSBOM                   bool
@@ -109,6 +111,7 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 		OSTree:       opts.Ostree,
 		Subscription: opts.Subscription,
 		Size:         opts.ImageSize,
+		Compression:  opts.Compression,
 		Bootc: &distro.BootcImageOptions{
 			InstallerPayloadRef:      opts.BootcInstallerPayloadRef,
 			OmitDefaultKernelArgs:    opts.BootcOmitDefaultKernelArgs,
