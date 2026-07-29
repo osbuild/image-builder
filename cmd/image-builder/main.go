@@ -514,34 +514,17 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	pbar.SetPulseMsgf("Manifest generation step")
 	pbar.SetMessagef("Building manifest for %s-%s", distroStr, imgTypeStr)
 
-	opts := &manifestOptions{
-		ManifestgenOptions: manifestgen.Options{
-			Cachedir:               rpmmdCacheDir,
-			CustomSeed:             customSeed,
-			RpmDownloader:          rpmDownloader,
-			DepsolveWarningsOutput: wd,
-			Depsolve:               manifestgenDepsolver,
-			ContainerResolver:      manifestgenContainerResolver,
-		},
-		OutputDir:                  outputDir,
-		OutputFilename:             outputFilename,
-		BlueprintPath:              blueprintPath,
-		Ostree:                     ostreeImgOpts,
-		BootcRef:                   bootcRef,
-		BootcInstallerPayloadRef:   bootcInstallerPayloadRef,
-		BootcOmitDefaultKernelArgs: bootcOmitDefaultKernelArgs,
-		BootcRemote:                bootcRemote,
-		ImageSize:                  imageSize,
-		WithSBOM:                   withSBOM,
-		WithRPMList:                withRPMList,
-		IgnoreWarnings:             ignoreWarnings,
-		Subscription:               subscription,
-		Preview:                    preview,
-
-		ForceRepos: forceRepos,
+	mgOptions := manifestgen.Options{
+		Cachedir:               rpmmdCacheDir,
+		CustomSeed:             customSeed,
+		RpmDownloader:          rpmDownloader,
+		DepsolveWarningsOutput: wd,
+		Depsolve:               manifestgenDepsolver,
+		ContainerResolver:      manifestgenContainerResolver,
 	}
-	opts.ManifestgenOptions.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.ImgType.Arch().Name() != arch.Current().String())
-	if opts.ManifestgenOptions.UseBootstrapContainer {
+
+	mgOptions.UseBootstrapContainer = wrapperOpts.useBootstrapIfNeeded && (img.ImgType.Arch().Name() != arch.Current().String())
+	if mgOptions.UseBootstrapContainer {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
 
@@ -549,49 +532,48 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	if err != nil {
 		return nil, err
 	}
-	manifestGenOpts := &opts.ManifestgenOptions
-	if opts.WithSBOM {
-		outputDir := basenameFor(img, opts.OutputDir)
-		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
-			filename = fmt.Sprintf("%s.%s", basenameFor(img, opts.OutputFilename), strings.SplitN(filename, ".", 2)[1])
+	if withSBOM {
+		outputDir := basenameFor(img, outputDir)
+		mgOptions.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
+			filename = fmt.Sprintf("%s.%s", basenameFor(img, outputFilename), strings.SplitN(filename, ".", 2)[1])
 			return fileWriter(outputDir, filename, content)
 		}
 	}
-	if len(opts.ForceRepos) > 0 {
-		forcedRepos, err := parseRepoURLs(opts.ForceRepos, "forced")
+	if len(forceRepos) > 0 {
+		forcedRepos, err := parseRepoURLs(forceRepos, "forced")
 		if err != nil {
 			return nil, err
 		}
-		manifestGenOpts.OverrideRepos = forcedRepos
+		mgOptions.OverrideRepos = forcedRepos
 	}
-	if opts.IgnoreWarnings {
-		manifestGenOpts.WarningsOutput = os.Stderr
+	if ignoreWarnings {
+		mgOptions.WarningsOutput = os.Stderr
 	}
 
-	if opts.WithRPMList {
-		outputDir := basenameFor(img, opts.OutputDir)
-		manifestGenOpts.RPMListWriter = func(filename string, content io.Reader) error {
-			filename = fmt.Sprintf("%s.%s", basenameFor(img, opts.OutputFilename), filename)
+	if withRPMList {
+		outputDir := basenameFor(img, outputDir)
+		mgOptions.RPMListWriter = func(filename string, content io.Reader) error {
+			filename = fmt.Sprintf("%s.%s", basenameFor(img, outputFilename), filename)
 			return fileWriter(outputDir, filename, content)
 		}
 	}
 
-	mg, err := manifestgen.New(repos, manifestGenOpts)
+	mg, err := manifestgen.New(repos, &mgOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	imgOpts := &distro.ImageOptions{
 		Facts:        &facts.ImageOptions{APIType: facts.IBCLI_APITYPE},
-		OSTree:       opts.Ostree,
-		Subscription: opts.Subscription,
-		Size:         opts.ImageSize,
+		OSTree:       ostreeImgOpts,
+		Subscription: subscription,
+		Size:         imageSize,
 		Bootc: &distro.BootcImageOptions{
-			InstallerPayloadRef:      opts.BootcInstallerPayloadRef,
-			OmitDefaultKernelArgs:    opts.BootcOmitDefaultKernelArgs,
-			UseRemoteContainerSource: opts.BootcRemote,
+			InstallerPayloadRef:      bootcInstallerPayloadRef,
+			OmitDefaultKernelArgs:    bootcOmitDefaultKernelArgs,
+			UseRemoteContainerSource: bootcRemote,
 		},
-		Preview: opts.Preview,
+		Preview: preview,
 	}
 
 	mf, err := mg.Generate(bp, img.ImgType, imgOpts)
