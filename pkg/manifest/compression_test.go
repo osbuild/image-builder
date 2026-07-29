@@ -51,6 +51,21 @@ func TestCompressionConfigUnmarshalYAML(t *testing.T) {
 				Default: "",
 			},
 		},
+		{
+			name:  "with-allowed",
+			input: "default: xz\nallowed: [xz, zstd]",
+			expected: manifest.CompressionConfig{
+				Default: manifest.CompressionXZ,
+				Allowed: []manifest.Compression{manifest.CompressionXZ, manifest.CompressionZstd},
+			},
+		},
+		{
+			name:  "allowed-without-default",
+			input: "allowed: [gzip]",
+			expected: manifest.CompressionConfig{
+				Allowed: []manifest.Compression{manifest.CompressionGzip},
+			},
+		},
 	}
 
 	for _, tt := range tests {

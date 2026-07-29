@@ -22,5 +22,6 @@ var CompressionPipelines = map[Compression]CompressionPipelineFunc{
 }
 
 type CompressionConfig struct {
-	Default Compression `yaml:"default"`
+	Default Compression   `yaml:"default"`
+	Allowed []Compression `yaml:"allowed"`
 }
