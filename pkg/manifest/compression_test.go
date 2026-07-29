@@ -10,6 +10,14 @@ import (
 	"github.com/osbuild/image-builder/pkg/manifest"
 )
 
+func TestCompressionExtension(t *testing.T) {
+	assert.Equal(t, "xz", manifest.CompressionXZ.Extension())
+	assert.Equal(t, "zst", manifest.CompressionZstd.Extension())
+	assert.Equal(t, "gz", manifest.CompressionGzip.Extension())
+	assert.Equal(t, "", manifest.CompressionNone.Extension())
+	assert.Equal(t, "", manifest.Compression("").Extension())
+}
+
 func TestCompressionConfigSelect(t *testing.T) {
 	cc := manifest.CompressionConfig{
 		Default: manifest.CompressionXZ,

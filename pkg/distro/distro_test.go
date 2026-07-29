@@ -169,9 +169,9 @@ func TestImageTypePipelineNames(t *testing.T) {
 					}
 
 					// The export pipeline must exist in the manifest.
-					assert.True(slices.Contains(pmNames, imageType.Exports()[0]),
+					assert.True(slices.Contains(pmNames, imageType.Exports("")[0]),
 						"export pipeline %q not found in manifest pipelines %v",
-						imageType.Exports()[0], pmNames)
+						imageType.Exports("")[0], pmNames)
 
 					// The pipelines named in allPipelines must exist in the manifest, and in the
 					// order specified (eg. 'build' first) but it does not need to be an exact

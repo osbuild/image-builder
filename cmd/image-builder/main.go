@@ -73,7 +73,7 @@ func basenameFor(img *imagefilter.Result, userBasename string) string {
 		//
 		// This code assumes that all our ImgType filesnames have
 		// $name.$ext.$extraExt (e.g. disk.qcow2 or disk.raw.xz)
-		l := strings.SplitN(img.ImgType.Filename(), ".", 2)
+		l := strings.SplitN(img.ImgType.Filename(""), ".", 2)
 		if len(l) > 1 && l[1] != "" {
 			imgExt := fmt.Sprintf(".%s", l[1])
 			userBasename = strings.TrimSuffix(userBasename, imgExt)
@@ -375,7 +375,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 			return nil, err
 		}
 	}
-	if len(img.ImgType.Exports()) > 1 {
+	if len(img.ImgType.Exports("")) > 1 {
 		return nil, fmt.Errorf("image %q has multiple exports: this is current unsupport: please report this as a bug", basenameFor(img, ""))
 	}
 	return img, err
@@ -687,6 +687,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	compression, err := cmd.Flags().GetString("compression")
+	if err != nil {
+		return err
+	}
 	buildOpts := &buildOptions{
 		OutputDir:      outputDir,
 		OutputBasename: outputBasename,
@@ -695,6 +699,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		WriteBuildlog:  withBuildlog,
 		Metrics:        withMetrics,
 		JSONOutput:     format == "json",
+		Compression:    manifest.Compression(compression),
 	}
 	if runInVm {
 		buildOpts.InVm = []string{"image"}

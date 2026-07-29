@@ -210,7 +210,7 @@ image_types:
 	assert.NoError(t, err)
 	it, err := ar.GetImageType("test_type")
 	assert.NoError(t, err)
-	assert.Equal(t, "foo", it.Filename())
+	assert.Equal(t, "foo", it.Filename(""))
 }
 
 func TestLoadYamlMergingWorks(t *testing.T) {

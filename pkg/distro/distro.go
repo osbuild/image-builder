@@ -111,7 +111,9 @@ type ImageType interface {
 	Arch() Arch
 
 	// Returns the canonical filename for the image type.
-	Filename() string
+	// When compression is non-empty, it overrides the default
+	// compression and the filename extension is adjusted.
+	Filename(compression manifest.Compression) string
 
 	// Retrns the MIME-type for the image type.
 	MIMEType() string
@@ -142,7 +144,9 @@ type ImageType interface {
 	PayloadPackageSets() []string
 
 	// Returns the names of the stages that will produce the build output.
-	Exports() []string
+	// When compression is non-empty, it overrides the default
+	// compression and the export pipeline name is adjusted.
+	Exports(compression manifest.Compression) []string
 
 	// A list of customization options that this image requires.
 	RequiredBlueprintOptions() []string

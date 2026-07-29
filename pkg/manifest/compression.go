@@ -26,6 +26,20 @@ type CompressionConfig struct {
 	Allowed []Compression `yaml:"allowed"`
 }
 
+// Extension returns the file extension for this compression type.
+func (c Compression) Extension() string {
+	switch c {
+	case CompressionXZ:
+		return "xz"
+	case CompressionZstd:
+		return "zst"
+	case CompressionGzip:
+		return "gz"
+	default:
+		return ""
+	}
+}
+
 // Select returns the override compression if set, otherwise the default.
 func (cc CompressionConfig) Select(override Compression) Compression {
 	if override != "" {

@@ -252,7 +252,7 @@ func TestFedoraFilenameFromType(t *testing.T) {
 					} else {
 						require.NoError(t, err)
 						require.NotNil(t, imgType)
-						gotFilename := imgType.Filename()
+						gotFilename := imgType.Filename("")
 						gotMIMEType := imgType.MIMEType()
 						if gotFilename != tt.want.filename {
 							t.Errorf("ImageType.Filename()  got = %v, want %v", gotFilename, tt.want.filename)
@@ -265,6 +265,30 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFilenameAndExportsWithCompressionOverride(t *testing.T) {
+	dist := fedoraFamilyDistros[len(fedoraFamilyDistros)-1]
+	arch, err := dist.GetArch("x86_64")
+	require.NoError(t, err)
+
+	imgType, err := arch.GetImageType("minimal-raw-xz")
+	require.NoError(t, err)
+
+	assert.Equal(t, "disk.raw.xz", imgType.Filename(""))
+	assert.Equal(t, []string{"xz"}, imgType.Exports(""))
+
+	assert.Equal(t, "disk.raw.zst", imgType.Filename("zstd"))
+	assert.Equal(t, []string{"zstd"}, imgType.Exports("zstd"))
+
+	assert.Equal(t, "disk.raw.xz", imgType.Filename("xz"))
+	assert.Equal(t, []string{"xz"}, imgType.Exports("xz"))
+
+	// non-compressed image type should be unaffected
+	qcow2, err := arch.GetImageType("generic-qcow2")
+	require.NoError(t, err)
+	assert.Equal(t, "disk.qcow2", qcow2.Filename(""))
+	assert.Equal(t, "disk.qcow2", qcow2.Filename("zstd"))
 }
 
 func TestFedoraImageType_BuildPackages(t *testing.T) {

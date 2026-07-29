@@ -771,7 +771,7 @@ func diskImage(t *imageType,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewDiskImage(t.platform, t.Filename())
+	img := image.NewDiskImage(t.platform, t.Filename(options.Compression))
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -815,7 +815,7 @@ func tarImage(t *imageType,
 	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
-	img := image.NewArchive(t.platform, t.Filename())
+	img := image.NewArchive(t.platform, t.Filename(options.Compression))
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -843,7 +843,7 @@ func containerImage(t *imageType,
 	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
-	img := image.NewBaseContainer(t.platform, t.Filename())
+	img := image.NewBaseContainer(t.platform, t.Filename(options.Compression))
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -869,7 +869,7 @@ func liveInstallerImage(t *imageType,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewAnacondaLiveInstaller(t.platform, t.Filename())
+	img := image.NewAnacondaLiveInstaller(t.platform, t.Filename(options.Compression))
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -909,7 +909,7 @@ func imageInstallerImage(t *imageType,
 
 	customizations := bp.Customizations
 
-	img := image.NewAnacondaTarInstaller(t.platform, t.Filename())
+	img := image.NewAnacondaTarInstaller(t.platform, t.Filename(options.Compression))
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -976,7 +976,7 @@ func ostreeCommitImage(t *imageType,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
-	img := image.NewOSTreeArchive(t.platform, t.Filename(), commitRef)
+	img := image.NewOSTreeArchive(t.platform, t.Filename(options.Compression), commitRef)
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -1017,7 +1017,7 @@ func bootableContainerImage(t *imageType,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
-	img := image.NewOSTreeArchive(t.platform, t.Filename(), commitRef)
+	img := image.NewOSTreeArchive(t.platform, t.Filename(options.Compression), commitRef)
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -1057,7 +1057,7 @@ func ostreeContainerImage(t *imageType,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
-	img := image.NewOSTreeContainer(t.platform, t.Filename(), commitRef)
+	img := image.NewOSTreeContainer(t.platform, t.Filename(options.Compression), commitRef)
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -1101,7 +1101,7 @@ func ostreeInstallerImage(t *imageType,
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
 
-	img := image.NewAnacondaOSTreeInstaller(t.platform, t.Filename(), commit)
+	img := image.NewAnacondaOSTreeInstaller(t.platform, t.Filename(options.Compression), commit)
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -1201,7 +1201,7 @@ func ostreeDiskImage(t *imageType,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
-	img := image.NewOSTreeDiskImageFromCommit(t.platform, t.Filename(), commit)
+	img := image.NewOSTreeDiskImageFromCommit(t.platform, t.Filename(options.Compression), commit)
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -1249,7 +1249,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
-	rawImg := image.NewOSTreeDiskImageFromCommit(t.platform, t.Filename(), commit)
+	rawImg := image.NewOSTreeDiskImageFromCommit(t.platform, t.Filename(options.Compression), commit)
 	if opts := buildOptions(t); opts != nil {
 		rawImg.BuildOptions = opts
 	}
@@ -1283,7 +1283,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 	}
 
 	// XXX: can we take platform/filename in NewOSTreeSimplifiedInstaller from rawImg instead?
-	img := image.NewOSTreeSimplifiedInstaller(t.platform, t.Filename(), rawImg, customizations.InstallationDevice)
+	img := image.NewOSTreeSimplifiedInstaller(t.platform, t.Filename(options.Compression), rawImg, customizations.InstallationDevice)
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -1333,7 +1333,7 @@ func networkInstallerImage(t *imageType,
 
 	customizations := bp.Customizations
 
-	img := image.NewAnacondaNetInstaller(t.platform, t.Filename())
+	img := image.NewAnacondaNetInstaller(t.platform, t.Filename(options.Compression))
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -1390,7 +1390,7 @@ func pxeTarImage(t *imageType,
 	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
-	img := image.NewPXETar(t.platform, t.Filename())
+	img := image.NewPXETar(t.platform, t.Filename(options.Compression))
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}

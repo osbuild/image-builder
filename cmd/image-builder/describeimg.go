@@ -147,7 +147,7 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 		Type:             img.ImgType.Name(),
 		Bootmode:         img.ImgType.BootMode().String(),
 		PartitionType:    img.ImgType.PartitionType().String(),
-		DefaultFilename:  img.ImgType.Filename(),
+		DefaultFilename:  img.ImgType.Filename(""),
 		BuildPipelines:   m.BuildPipelines(),
 		PayloadPipelines: m.PayloadPipelines(),
 		Packages:         pkgSets,

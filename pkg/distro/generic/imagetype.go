@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"slices"
+	"strings"
 	"text/template"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
@@ -95,8 +96,18 @@ func (t *imageType) Arch() distro.Arch {
 	return t.arch
 }
 
-func (t *imageType) Filename() string {
-	return t.ImageTypeYAML.Filename
+func (t *imageType) Filename(compression manifest.Compression) string {
+	selected := t.ImageTypeYAML.Compression.Select(compression)
+	if selected == "" || selected == manifest.CompressionNone {
+		return t.ImageTypeYAML.Filename
+	}
+	defaultExt := t.ImageTypeYAML.Compression.Default.Extension()
+	suffix := "." + defaultExt
+	if defaultExt == "" || !strings.HasSuffix(t.ImageTypeYAML.Filename, suffix) {
+		return t.ImageTypeYAML.Filename
+	}
+	base := strings.TrimSuffix(t.ImageTypeYAML.Filename, suffix)
+	return base + "." + selected.Extension()
 }
 
 func (t *imageType) MIMEType() string {
@@ -141,7 +152,11 @@ func (t *imageType) PayloadPackageSets() []string {
 	return []string{blueprintPkgsKey}
 }
 
-func (t *imageType) Exports() []string {
+func (t *imageType) Exports(compression manifest.Compression) []string {
+	selected := t.ImageTypeYAML.Compression.Select(compression)
+	if selected != "" && selected != manifest.CompressionNone {
+		return []string{string(selected)}
+	}
 	if len(t.ImageTypeYAML.Exports) > 0 {
 		return t.ImageTypeYAML.Exports
 	}
