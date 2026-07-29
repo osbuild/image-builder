@@ -101,7 +101,8 @@ def check_config_names():
 
 
 def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images=None,
-                  commits=False, flatpaks=False, skip_no_config=False):
+                  commits=False, flatpaks=False, skip_no_config=False, bootc_refs=None,
+                  bootc_remote=False, bootc_installer_ref=None):
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     cmd = ["go", "run", "./cmd/gen-manifests",
            "--cache", os.path.join(TEST_CACHE_ROOT, "rpmmd"),
@@ -115,6 +116,12 @@ def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images
         cmd.extend(["--arches", ",".join(arches)])
     if images:
         cmd.extend(["--types", ",".join(images)])
+    if bootc_refs:
+        cmd.extend(["--bootc-refs", ",".join(bootc_refs)])
+    if bootc_remote:
+        cmd.append("--bootc-remote")
+    if bootc_installer_ref:
+        cmd.extend(["--bootc-installer-ref", bootc_installer_ref])
     if commits:
         cmd.append("--commits")
     if flatpaks:
