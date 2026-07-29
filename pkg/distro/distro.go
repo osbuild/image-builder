@@ -188,6 +188,7 @@ type ImageOptions struct {
 	Subscription     *subscription.ImageOptions `json:"subscription,omitempty"`
 	Facts            *facts.ImageOptions        `json:"facts,omitempty"`
 	PartitioningMode partition.PartitioningMode `json:"partitioning-mode,omitempty"`
+	Compression      manifest.Compression       `json:"compression,omitempty"`
 
 	UseBootstrapContainer bool `json:"use_bootstrap_container,omitempty"`
 
