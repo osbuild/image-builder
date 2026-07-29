@@ -2056,6 +2056,7 @@ image_types:
     filename: "disk.raw.xz"
     compression:
       default: "xz"
+      allowed: ["xz", "zstd"]
     mime_type: "application/xz"
     bootable: true
     default_size: "2 GiB"
@@ -2159,6 +2160,7 @@ image_types:
     filename: "disk.raw.zst"
     compression:
       default: "zstd"
+      allowed: ["xz", "zstd"]
     exports: ["zstd"]
 
   "iot-installer":
