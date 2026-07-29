@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,12 +21,15 @@ import (
 	"github.com/osbuild/image-builder/pkg/bootc"
 	"github.com/osbuild/image-builder/pkg/cloud"
 	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/progress"
+	"github.com/osbuild/image-builder/pkg/rhsm/facts"
+	"github.com/osbuild/image-builder/pkg/sbom"
 
 	"github.com/osbuild/image-builder/internal/blueprintload"
 	"github.com/osbuild/image-builder/pkg/setup"
@@ -379,7 +383,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	return img, err
 }
 
-func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []string, img *imagefilter.Result, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) ([]byte, error) {
+func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []string, img *imagefilter.Result, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) ([]byte, error) {
 	if wrapperOpts == nil {
 		wrapperOpts = &cmdManifestWrapperOptions{}
 	}
@@ -540,7 +544,66 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if opts.ManifestgenOptions.UseBootstrapContainer {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
-	return generateManifest(repoDir, extraRepos, img, opts)
+
+	repos, err := newRepoRegistry(repoDir, extraRepos)
+	if err != nil {
+		return nil, err
+	}
+	manifestGenOpts := &opts.ManifestgenOptions
+	if opts.WithSBOM {
+		outputDir := basenameFor(img, opts.OutputDir)
+		manifestGenOpts.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
+			filename = fmt.Sprintf("%s.%s", basenameFor(img, opts.OutputFilename), strings.SplitN(filename, ".", 2)[1])
+			return fileWriter(outputDir, filename, content)
+		}
+	}
+	if len(opts.ForceRepos) > 0 {
+		forcedRepos, err := parseRepoURLs(opts.ForceRepos, "forced")
+		if err != nil {
+			return nil, err
+		}
+		manifestGenOpts.OverrideRepos = forcedRepos
+	}
+	if opts.IgnoreWarnings {
+		manifestGenOpts.WarningsOutput = os.Stderr
+	}
+
+	if opts.WithRPMList {
+		outputDir := basenameFor(img, opts.OutputDir)
+		manifestGenOpts.RPMListWriter = func(filename string, content io.Reader) error {
+			filename = fmt.Sprintf("%s.%s", basenameFor(img, opts.OutputFilename), filename)
+			return fileWriter(outputDir, filename, content)
+		}
+	}
+
+	mg, err := manifestgen.New(repos, manifestGenOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	imgOpts := &distro.ImageOptions{
+		Facts:        &facts.ImageOptions{APIType: facts.IBCLI_APITYPE},
+		OSTree:       opts.Ostree,
+		Subscription: opts.Subscription,
+		Size:         opts.ImageSize,
+		Bootc: &distro.BootcImageOptions{
+			InstallerPayloadRef:      opts.BootcInstallerPayloadRef,
+			OmitDefaultKernelArgs:    opts.BootcOmitDefaultKernelArgs,
+			UseRemoteContainerSource: opts.BootcRemote,
+		},
+		Preview: opts.Preview,
+	}
+
+	mf, err := mg.Generate(bp, img.ImgType, imgOpts)
+	if err != nil {
+		return nil, err
+	}
+	var pretty bytes.Buffer
+	if err := json.Indent(&pretty, []byte(mf), "", "    "); err != nil {
+		return nil, err
+	}
+
+	return append(pretty.Bytes(), '\n'), nil
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
@@ -552,7 +615,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	mf, err := cmdManifestWrapper(pbar, cmd, args, img, io.Discard, nil)
+	mf, err := generateManifest(pbar, cmd, args, img, io.Discard, nil)
 	if err != nil {
 		return err
 	}
@@ -662,7 +725,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	// We discard any warnings from the depsolver until we figure out a better
 	// idea (likely in manifestgen)
-	mf, err := cmdManifestWrapper(pbar, cmd, args, img, io.Discard, opts)
+	mf, err := generateManifest(pbar, cmd, args, img, io.Discard, opts)
 	if err != nil {
 		return err
 	}
