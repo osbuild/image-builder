@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/disk/partition"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/ostree"
 )
 
@@ -1897,6 +1898,21 @@ func TestCheckOptions(t *testing.T) {
 			// NOTE (validation-warnings): temporary change in error message due to change from errors to warnings in distro.ValidateConfig()
 			expErr: "blueprint validation failed for image type \"qcow2\": customizations.openscap.profile_id: unsupported profile xccdf_org.ssgproject.content_profile_ospp",
 		},
+
+		"f42/compression-empty-allowed-accepts-any": {
+			distro: "fedora-42",
+			it:     "generic-ami",
+			bp:     blueprint.Blueprint{},
+			options: distro.ImageOptions{
+				Compression: manifest.CompressionZstd,
+			},
+		},
+		"f42/compression-no-selection-ok": {
+			distro:  "fedora-42",
+			it:      "generic-ami",
+			bp:      blueprint.Blueprint{},
+			options: distro.ImageOptions{},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -1929,4 +1945,33 @@ func TestCheckOptions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCheckOptionsCompressionAllowed(t *testing.T) {
+	d := generic.DistroFactory("fedora-42")
+	arch, err := d.GetArch("x86_64")
+	assert.NoError(t, err)
+	it, err := arch.GetImageType("generic-ami")
+	assert.NoError(t, err)
+	genit := it.(*generic.ImageType)
+
+	genit.Compression.Allowed = []manifest.Compression{manifest.CompressionXZ, manifest.CompressionZstd}
+
+	_, err = generic.ImageTypeCheckOptions(genit, &blueprint.Blueprint{}, distro.ImageOptions{
+		Compression: manifest.CompressionXZ,
+	})
+	assert.NoError(t, err)
+
+	_, err = generic.ImageTypeCheckOptions(genit, &blueprint.Blueprint{}, distro.ImageOptions{
+		Compression: manifest.CompressionZstd,
+	})
+	assert.NoError(t, err)
+
+	_, err = generic.ImageTypeCheckOptions(genit, &blueprint.Blueprint{}, distro.ImageOptions{
+		Compression: manifest.CompressionGzip,
+	})
+	assert.EqualError(t, err, `compression "gzip" not supported for "generic-ami"`)
+
+	_, err = generic.ImageTypeCheckOptions(genit, &blueprint.Blueprint{}, distro.ImageOptions{})
+	assert.NoError(t, err)
 }

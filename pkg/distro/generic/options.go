@@ -21,6 +21,10 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		return nil, fmt.Errorf("partitioning mode %s not supported for %q", options.PartitioningMode, t.Name())
 	}
 
+	if options.Compression != "" && len(t.ImageTypeYAML.Compression.Allowed) > 0 && !slices.Contains(t.ImageTypeYAML.Compression.Allowed, options.Compression) {
+		return nil, fmt.Errorf("compression %q not supported for %q", options.Compression, t.Name())
+	}
+
 	customizations := bp.Customizations
 
 	var warnings []string
