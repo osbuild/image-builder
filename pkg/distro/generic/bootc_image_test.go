@@ -699,23 +699,26 @@ func TestGenPartitionTableFromOSInfo(t *testing.T) {
 	assert.Contains(t, string(manifestJson), "01010101-01011-01011-01011-01010101")
 }
 
-// Each bootc manifestFor* variant hand-copies customizations, so pin that the
-// disk variant does not forget to pass Subscription through.
+// Each bootc manifestFor* variant hand-copies customizations, so pin that
+// every variant does not forget to pass Subscription through.
 func TestManifestSubscriptionCustomization(t *testing.T) {
-	imgType := NewTestBootcImageType(t, "qcow2")
-	imgOpts := distro.ImageOptions{
-		Subscription: &subscription.ImageOptions{
-			Organization:  "2040324",
-			ActivationKey: "my-secret-key",
-		},
+	for _, imgTypeName := range []string{"qcow2", "pxe-tar-xz"} {
+		t.Run(imgTypeName, func(t *testing.T) {
+			imgType := NewTestBootcImageType(t, imgTypeName)
+			imgOpts := distro.ImageOptions{
+				Subscription: &subscription.ImageOptions{
+					Organization:  "2040324",
+					ActivationKey: "my-secret-key",
+				},
+			}
+
+			mf, _, err := imgType.Manifest(&blueprint.Blueprint{}, imgOpts, nil, common.ToPtr(int64(0)))
+			assert.NoError(t, err)
+			manifestJson, err := mf.Serialize(nil, diskContainers, nil, nil, nil)
+			assert.NoError(t, err)
+
+			assert.Contains(t, string(manifestJson), "osbuild-subscription-register.service")
+			assert.Contains(t, string(manifestJson), "/etc/osbuild-subscription-register.env")
+		})
 	}
-
-	mf, _, err := imgType.Manifest(&blueprint.Blueprint{}, imgOpts, nil, common.ToPtr(int64(0)))
-	assert.NoError(t, err)
-	manifestJson, err := mf.Serialize(nil, diskContainers, nil, nil, nil)
-	assert.NoError(t, err)
-
-	// assert on names, not stage types: mount units share them
-	assert.Contains(t, string(manifestJson), "osbuild-subscription-register.service")
-	assert.Contains(t, string(manifestJson), "/etc/osbuild-subscription-register.env")
 }

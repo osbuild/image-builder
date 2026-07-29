@@ -694,6 +694,7 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 		img.BuildOptions = opts
 	}
 	img.Compression = t.ImageTypeYAML.Compression
+	img.OSCustomizations.Subscription = options.Subscription
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
 
 	groups, err := customizations.GetGroups()
