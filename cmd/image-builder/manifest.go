@@ -61,11 +61,10 @@ func fileWriter(outputDir, filename string, content io.Reader) error {
 	return f.Sync()
 }
 
-// XXX: just return []byte instead of using output writer
-func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Result, output io.Writer, opts *manifestOptions) error {
+func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Result, opts *manifestOptions) ([]byte, error) {
 	repos, err := newRepoRegistry(repoDir, extraRepos)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	manifestGenOpts := &opts.ManifestgenOptions
 	if opts.WithSBOM {
@@ -78,7 +77,7 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 	if len(opts.ForceRepos) > 0 {
 		forcedRepos, err := parseRepoURLs(opts.ForceRepos, "forced")
 		if err != nil {
-			return err
+			return nil, err
 		}
 		manifestGenOpts.OverrideRepos = forcedRepos
 	}
@@ -96,12 +95,12 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 
 	mg, err := manifestgen.New(repos, manifestGenOpts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	bp, err := blueprintload.Load(opts.BlueprintPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	imgOpts := &distro.ImageOptions{
@@ -119,18 +118,12 @@ func generateManifest(repoDir string, extraRepos []string, img *imagefilter.Resu
 
 	mf, err := mg.Generate(bp, img.ImgType, imgOpts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var pretty bytes.Buffer
 	if err := json.Indent(&pretty, []byte(mf), "", "    "); err != nil {
-		return err
+		return nil, err
 	}
 
-	if _, err := pretty.WriteTo(output); err != nil {
-		return err
-	}
-	if _, err := output.Write([]byte{'\n'}); err != nil {
-		return err
-	}
-	return nil
+	return append(pretty.Bytes(), '\n'), nil
 }

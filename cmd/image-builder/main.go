@@ -541,7 +541,12 @@ func cmdManifestWrapper(pbar progress.ProgressBar, cmd *cobra.Command, args []st
 	if opts.ManifestgenOptions.UseBootstrapContainer {
 		fmt.Fprintf(os.Stderr, "WARNING: using experimental cross-architecture building to build %q\n", img.ImgType.Arch().Name())
 	}
-	return generateManifest(repoDir, extraRepos, img, w, opts)
+	mf, err := generateManifest(repoDir, extraRepos, img, opts)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(mf)
+	return err
 }
 
 func cmdManifest(cmd *cobra.Command, args []string) error {
