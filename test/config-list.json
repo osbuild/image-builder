@@ -758,19 +758,5 @@
         "qcow2"
       ]
     }
-  },
-  {
-    "path": "./configs/f42-x86-cuda-drivers.json",
-    "filters": {
-      "distros": [
-        "fedora-42"
-      ],
-      "arches": [
-        "x86_64"
-      ],
-      "image-types": [
-        "generic-ami"
-      ]
-    }
   }
 ]
