@@ -197,3 +197,11 @@ func TestSizeTextMarshaling(t *testing.T) {
 		})
 	}
 }
+
+func TestSizeUnmarshalTextUnhappy(t *testing.T) {
+	var size datasizes.Size
+
+	err := size.UnmarshalText([]byte("20 KG"))
+
+	assert.EqualError(t, err, "error decoding size: unknown data size units in string: 20 KG")
+}

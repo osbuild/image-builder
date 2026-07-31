@@ -23,7 +23,7 @@ func (si Size) Uint64() uint64 {
 func (si *Size) UnmarshalText(data []byte) error {
 	value, err := Parse(string(data))
 	if err != nil {
-		return err
+		return fmt.Errorf("error decoding size: %w", err)
 	}
 	*si = Size(value)
 	return nil
