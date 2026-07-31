@@ -59,6 +59,39 @@ def test_config_to_cli_args_bootc():
     assert "--bootc-pull-container" in args
 
 
+def test_resolve_bootc_options_from_bootcrefs():
+    config = {
+        "name": "bootc-empty",
+        "blueprint": {},
+        "options": {
+            "bootc": {
+                "use_remote_container_source": True,
+            },
+        },
+    }
+
+    bootc = testlib.build.resolve_bootc_options(config, "bootc-centos-10", "x86_64")
+
+    assert bootc["ref"] == "quay.io/centos-bootc/centos-bootc:stream10"
+    assert bootc["use_remote_container_source"] is True
+
+
+def test_resolve_bootc_options_prefers_config_over_bootcrefs():
+    config = {
+        "name": "bootc-empty",
+        "blueprint": {},
+        "options": {
+            "bootc": {
+                "ref": "quay.io/example/bootc:latest",
+            },
+        },
+    }
+
+    bootc = testlib.build.resolve_bootc_options(config, "bootc-centos-10", "x86_64")
+
+    assert bootc["ref"] == "quay.io/example/bootc:latest"
+
+
 def test_resolve_bootc_source():
     entry = testlib.bootcsource.resolve_bootc_source("centos-10", "x86_64")
     assert entry["ref"] == "quay.io/centos-bootc/centos-bootc:stream10"

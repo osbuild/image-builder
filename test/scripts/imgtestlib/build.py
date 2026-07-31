@@ -3,12 +3,22 @@ import os
 import tempfile
 from typing import Dict, List
 
+from .bootcsource import resolve_bootc_source
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
 
 
-def config_to_cli_args(config: dict) -> List[str]:
+def resolve_bootc_options(config: dict, distro: str, arch: str) -> dict:
+    bootc = dict(config.get("options", {}).get("bootc", {}))
+    if not distro.startswith("bootc-"):
+        return bootc
+
+    source_data = resolve_bootc_source(distro.removeprefix("bootc-"), arch)
+    return {**source_data, **bootc}
+
+
+def config_to_cli_args(config: dict, bootc: dict) -> List[str]:
     args: List[str] = []
 
     blueprint = config.get("blueprint", {})
@@ -25,7 +35,10 @@ def config_to_cli_args(config: dict) -> List[str]:
     if parent := ostree.get("parent"):
         args.append(f"--ostree-parent={parent}")
 
-    bootc = options.get("bootc", {})
+    if ref := bootc.get("ref"):
+        args.append(f"--bootc-ref={ref}")
+    if build_ref := bootc.get("build_ref"):
+        args.append(f"--bootc-build-ref={build_ref}")
     if payload_ref := bootc.get("installer_payload_ref"):
         args.append(f"--bootc-installer-payload-ref={payload_ref}")
     if bootc.get("use_remote_container_source"):
@@ -47,6 +60,7 @@ def build_image(distro, arch, image_type, config_path):
         config = json.load(config_file)
 
     config_name = config["name"]
+    bootc = resolve_bootc_options(config, distro, arch)
     build_name = gen_build_name(distro, arch, image_type, config_name)
     build_dir = os.path.join("build", build_name)
 
@@ -59,7 +73,6 @@ def build_image(distro, arch, image_type, config_path):
     seed = rng_seed_env()["OSBUILD_TESTING_RNG_SEED"]
     cmd = [
         "sudo", "-E", "./bin/image-builder", "build", image_type,
-        "--distro", distro,
         "--arch", arch,
         "--force-repo-dir", "test/data/repositories",
         "--output-dir", build_dir,
@@ -68,7 +81,10 @@ def build_image(distro, arch, image_type, config_path):
         "--ignore-warnings",
         "--seed", str(seed),
     ]
-    cmd.extend(config_to_cli_args(config))
+    # bootc builds derive the distro from the container and reject --distro.
+    if not bootc.get("ref"):
+        cmd.extend(["--distro", distro])
+    cmd.extend(config_to_cli_args(config, bootc))
     runcmd_nc(cmd)
 
     print("✅ Build finished!!")
