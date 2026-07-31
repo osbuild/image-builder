@@ -39,3 +39,11 @@ func TestManifestImageSizeFlag(t *testing.T) {
 		})
 	}
 }
+
+func TestManifestCommandDocumentsImageSizeUsage(t *testing.T) {
+	manifestCmd, err := setupManifestCmd()
+	require.NoError(t, err)
+
+	assert.Contains(t, manifestCmd.Long, "--image-size")
+	assert.Contains(t, manifestCmd.Example, `--image-size "1 GiB"`)
+}

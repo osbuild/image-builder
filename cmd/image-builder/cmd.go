@@ -192,6 +192,8 @@ func setupManifestCmd() (*cobra.Command, error) {
 	manifestCmd := &cobra.Command{
 		Use:          "manifest <image-type>",
 		Short:        "Build manifest for the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
+		Long:         "Build a manifest for the selected image type. The --image-size flag accepts bytes or a value with a data-size unit.",
+		Example:      "  image-builder manifest qcow2 --image-size \"1 GiB\"",
 		RunE:         cmdManifest,
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
