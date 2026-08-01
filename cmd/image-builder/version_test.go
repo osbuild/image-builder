@@ -85,7 +85,6 @@ func TestVersionSubcommandJSON(t *testing.T) {
 
 	deps, ok := ib["dependencies"].(map[string]interface{})
 	require.True(t, ok, "must have dependencies key")
-	assert.Contains(t, deps, "images")
 	assert.Contains(t, deps, "osbuild")
 }
 

@@ -20,7 +20,6 @@ type versionDescription struct {
 		Version      string `yaml:"version" json:"version"`
 		Commit       string `yaml:"commit" json:"commit"`
 		Dependencies struct {
-			Images  string `yaml:"images" json:"images"`
 			OSBuild string `yaml:"osbuild" json:"osbuild"`
 		} `yaml:"dependencies" json:"dependencies"`
 	} `yaml:"image-builder" json:"image-builder"`
@@ -34,7 +33,6 @@ func readVersionInfo() *versionDescription {
 	// be defined by whatever is building this project.
 	vd.ImageBuilder.Commit = "unknown"
 	vd.ImageBuilder.Version = version
-	vd.ImageBuilder.Dependencies.Images = "unknown"
 	vd.ImageBuilder.Dependencies.OSBuild = "unknown"
 
 	if bi, ok := debug.ReadBuildInfo(); ok {
@@ -42,12 +40,6 @@ func readVersionInfo() *versionDescription {
 			switch bs.Key {
 			case "vcs.revision":
 				vd.ImageBuilder.Commit = bs.Value
-			}
-		}
-
-		for _, dep := range bi.Deps {
-			if dep.Path == "github.com/osbuild/image-builder" {
-				vd.ImageBuilder.Dependencies.Images = dep.Version
 			}
 		}
 	}
