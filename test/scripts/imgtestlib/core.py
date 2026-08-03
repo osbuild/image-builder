@@ -3,23 +3,17 @@ import json
 import os
 import pathlib
 import sys
-from glob import glob
 from typing import Dict
 
 from .build import get_manifest_id
 from .cache import dl_build_info, gen_build_info_dir_path_prefix
 from .gitlab import log_section
 from .run import runcmd
-from .testenv import get_bib_ref, host_container_arch, rng_seed_env
+from .testenv import rng_seed_env
 
 TEST_CACHE_ROOT = ".cache/osbuild-images"
 CONFIGS_PATH = "./test/configs"
 CONFIG_LIST = "./test/config-list.json"
-
-BIB_TYPES = [
-    "iot-bootable-container"
-]
-
 
 # image types that can be boot tested
 # Keep in sync with test/scripts/boot-image which has the same checks again
@@ -30,7 +24,6 @@ CAN_BOOT_TEST = {
         "ec2-ha",
         "ec2-sap",
         "edge-ami",
-        "iot-bootable-container",
         "vhd",
         "cloud-ec2",
     ],
@@ -199,26 +192,6 @@ def check_for_build(manifest_fname, build_request, manifest_data, build_info_dir
     # boot testing supported: check if it's been tested, otherwise queue it for rebuild and boot
     if dl_config.get("boot-success", False):
         print("  This image was successfully boot tested")
-
-        # check if it's a BIB type and compare image IDs
-        if image_type in BIB_TYPES:
-            # Successful boot tests with BIB add a file to the directory as bib-<image ID>. Collect them and compare.
-            bib_ids = glob("bib-*", root_dir=build_info_dir)
-            # add the _old_ bib ID that we used to keep in the info.json
-            config_bib_id = dl_config.get("bib-id")
-            if config_bib_id:
-                bib_ids.append(f"bib-{config_bib_id}")
-            bib_ref = get_bib_ref()
-            current_id = skopeo_inspect_id(f"docker://{bib_ref}", host_container_arch())
-            if f"bib-{current_id}" not in bib_ids:
-                if bib_ids:
-                    print("  Container disk image was built with the following bootc-image-builder images:")
-                    print("    - " + "\n    -".join(bib_ids))
-                else:
-                    print("  No bib IDs found.")
-                print(f"  Testing {current_id}")
-                print("  Adding config to build pipeline.")
-                return True
 
         return False
     print("  Boot test success not found.")

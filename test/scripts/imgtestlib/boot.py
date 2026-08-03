@@ -13,11 +13,9 @@ from tempfile import TemporaryDirectory
 from typing import Generator
 
 from .build import read_build_info, write_build_info
-from .core import (can_boot_test, find_image_file, read_manifest,
-                   skopeo_inspect_id)
+from .core import can_boot_test, find_image_file, read_manifest
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
-from .testenv import get_bib_ref, host_container_arch
 from .vm import QEMU, get_free_port
 
 BASE_TEST_EXEC = "check-host-config-"  # + arch
@@ -25,9 +23,6 @@ WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
 # We need up to 15 minutes for full Anaconda ISO installations
 # But in some cases the CI systems are even slower, so use 1800s
 ISO_BOOT_TIMEOUT = 1800
-
-REGISTRY = "registry.gitlab.com/redhat/services/products/image-builder/ci/images"
-
 
 def get_aws_config():
     return {
@@ -454,67 +449,6 @@ def boot_ami(distro, arch, image_type, image_path, config):
             cmd_boot_aws(distro, arch, image_type, image_name, privkey, pubkey, raw_image_path, cmd)
 
 
-# pylint: disable=too-many-arguments,too-many-positional-arguments
-def boot_container(distro, arch, image_type, image_path, manifest_id, host_config):
-    """
-    Use bootc-image-builder to build an AMI and boot it.
-    """
-    # push container to registry so we can build it with BIB
-    # remove when BIB can pull from containers-storage: https://github.com/osbuild/bootc-image-builder/pull/120
-    container_name = f"iot-bootable-container:{distro}-{arch}-{manifest_id}"
-    cmd = ["./tools/ci/push-container.sh", image_path, container_name]
-    runcmd_nc(cmd)
-    container_ref = f"{REGISTRY}/{container_name}"
-
-    with TemporaryDirectory() as tmpdir:
-        with create_ssh_key() as (privkey_file, pubkey_file):
-            with open(pubkey_file, encoding="utf-8") as pubkey_fp:
-                pubkey = pubkey_fp.read()
-
-            # write a config to create a user
-            config_file = os.path.join(tmpdir, "config.json")
-            with open(config_file, "w", encoding="utf-8") as cfg_fp:
-                config = {
-                    "blueprint": {
-                        "customizations": {
-                            "user": [
-                                {
-                                    "name": "osbuild",
-                                    "key": pubkey,
-                                    "groups": [
-                                        "wheel"
-                                    ]
-                                }
-                            ]
-                        }
-                    }
-                }
-                json.dump(config, cfg_fp)
-
-            # build an AMI
-            cmd = ["sudo", "podman", "run",
-                   "--rm", "-it",
-                   "--privileged",
-                   "--pull=newer",
-                   "--security-opt", "label=type:unconfined_t",
-                   "-v", f"{tmpdir}:/output",
-                   "-v", f"{config_file}:/config.json",
-                   get_bib_ref(),
-                   "--type=ami",
-                   "--config=/config.json",
-                   container_ref]
-            runcmd_nc(cmd)
-
-            # boot it
-            image_name = f"image-boot-test-{distro}-{arch}-{image_type}-" + str(uuid.uuid4())
-
-            # Build artifacts are owned by root. Make them world accessible.
-            runcmd(["sudo", "chmod", "a+rwX", "-R", tmpdir])
-            raw_image_path = f"{tmpdir}/image/disk.raw"
-            cmd_boot_aws(distro, arch, image_type, image_name, privkey_file, pubkey_file, raw_image_path,
-                         [BASE_TEST_EXEC+arch, host_config])
-
-
 def upload_to_azure(arch, image_name, image_path):
     """Upload an image to Azure via image-builder and return the image ref."""
     az_config = get_azure_config()
@@ -617,14 +551,13 @@ def boot_image(search_path, build_config_path, keep_booted=False):
         return
 
     print(f"Testing image at {image_path}")
-    bib_image_id = ""
     if image_type in ("qcow2", "generic-qcow2", "cloud-qcow2"):
         # Not all qcow2 types can be boot-tested, for example `server-qcow2` uses
         # initial-setup and this blocks the boot.
         boot_qemu(arch, image_path, build_config_path, keep_booted=keep_booted)
     elif image_type in ("image-installer", "minimal-installer"):
         boot_qemu_iso(arch, image_path, build_config_path)
-    elif image_type in ("network-installer", "everything-network-installer", "bootc-generic-iso"):
+    elif image_type in ("network-installer", "everything-network-installer", "generic-iso"):
         boot_qemu_iso_no_unattended_support(arch, image_path, build_config_path)
     elif image_type in ("pxe-tar-xz"):
         boot_qemu_pxe(arch, image_path)
@@ -632,11 +565,6 @@ def boot_image(search_path, build_config_path, keep_booted=False):
         boot_ami(distro, arch, image_type, image_path, build_config_path)
     elif image_type in ("vhd"):
         boot_vhd(distro, arch, image_path, build_config_path)
-    elif image_type in ("iot-bootable-container"):
-        manifest_id = build_info["manifest-checksum"]
-        boot_container(distro, arch, image_type, image_path, manifest_id, build_config_path)
-        bib_ref = get_bib_ref()
-        bib_image_id = skopeo_inspect_id(f"docker://{bib_ref}", host_container_arch())
     elif image_type in ("wsl", "generic-wsl"):
         if distro == "fedora-41":
             print(f"{distro} {image_type} boot tests are not supported, fails on wsl import")
@@ -650,9 +578,3 @@ def boot_image(search_path, build_config_path, keep_booted=False):
     # search_path is the root of the build path (build/build_name)
     build_info["boot-success"] = True
     write_build_info(search_path, build_info)
-    if bib_image_id:
-        # write a separate file with the bib image ID as filename to mark the boot success with that image
-        bib_id_file = os.path.join(search_path, f"bib-{bib_image_id}")
-        print(f"Writing bib image ID file: {bib_id_file}")
-        with open(bib_id_file, "w", encoding="utf-8") as fp:
-            fp.write("")
