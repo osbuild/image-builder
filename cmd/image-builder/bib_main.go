@@ -147,7 +147,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 
 	// The anaconda-iso code is different enough for a separate function
 	if imgTypeStr == "anaconda-iso" || imgTypeStr == "iso" {
-		return manifestForLegacyISO(imgref, buildImgref, imgTypeStr, rootFs, rpmCacheRoot, config, useLibrepo, cntArch)
+		return manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot, config, useLibrepo, cntArch)
 	}
 
 	bootcInfo, err := bootc.ResolveBootcInfo(imgref)
