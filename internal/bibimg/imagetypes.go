@@ -20,6 +20,7 @@ var supportedImageTypes = map[string]imageType{
 	"ami":             imageType{Export: "image"},
 	"qcow2":           imageType{Export: "qcow2"},
 	"raw":             imageType{Export: "image"},
+	"raw-xz":          imageType{Export: "image"},
 	"vmdk":            imageType{Export: "vmdk"},
 	"vhd":             imageType{Export: "vpc"},
 	"gce":             imageType{Export: "gce"},
