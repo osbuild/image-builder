@@ -7,7 +7,6 @@ Let's take a look at the available `x86_64` image types for Fedora 43 and build 
 ```console
 $ image-builder list --filter arch:x86_64 --filter distro:fedora-43
 fedora-43 type:container arch:x86_64
-fedora-43 type:iot-bootable-container arch:x86_64
 fedora-43 type:iot-commit arch:x86_64
 fedora-43 type:iot-container arch:x86_64
 fedora-43 type:iot-installer arch:x86_64

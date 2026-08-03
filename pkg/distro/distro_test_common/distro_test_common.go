@@ -181,11 +181,10 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 func TestDistro_OSTreeOptions(t *testing.T, d distro.Distro) {
 	// test that ostree parameters are properly resolved by image functions that should support them
 	typesWithParent := map[string]bool{ // image types that support specifying a parent commit
-		"edge-commit":            true,
-		"edge-container":         true,
-		"iot-commit":             true,
-		"iot-container":          true,
-		"iot-bootable-container": true,
+		"edge-commit":    true,
+		"edge-container": true,
+		"iot-commit":     true,
+		"iot-container":  true,
 	}
 
 	typesWithPayload := map[string]bool{

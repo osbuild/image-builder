@@ -263,7 +263,6 @@
         "generic-vagrant-virtualbox",
         "generic-wsl",
         "server-qcow2",
-        "iot-bootable-container",
         "iot-container",
         "everything-network-installer",
         "server-network-installer",

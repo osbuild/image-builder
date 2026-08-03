@@ -205,14 +205,6 @@ func TestFedoraFilenameFromType(t *testing.T) {
 	verTypes := map[string][]testCfg{
 		"40": {
 			{
-				name: "iot-bootable-container",
-				args: args{"iot-bootable-container"},
-				want: wantResult{
-					filename: "iot-bootable-container.tar",
-					mimeType: "application/x-tar",
-				},
-			},
-			{
 				name: "iot-simplified-installer",
 				args: args{"iot-simplified-installer"},
 				want: wantResult{
@@ -222,14 +214,6 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			},
 		},
 		"41": {
-			{
-				name: "iot-bootable-container",
-				args: args{"iot-bootable-container"},
-				want: wantResult{
-					filename: "iot-bootable-container.tar",
-					mimeType: "application/x-tar",
-				},
-			},
 			{
 				name: "iot-simplified-installer",
 				args: args{"iot-simplified-installer"},
@@ -362,11 +346,9 @@ func TestFedoraImageType_Name(t *testing.T) {
 			},
 			verTypes: map[string][]string{
 				"40": {
-					"iot-bootable-container",
 					"iot-simplified-installer",
 				},
 				"41": {
-					"iot-bootable-container",
 					"iot-simplified-installer",
 				},
 			},
@@ -400,11 +382,9 @@ func TestFedoraImageType_Name(t *testing.T) {
 			},
 			verTypes: map[string][]string{
 				"40": {
-					"iot-bootable-container",
 					"iot-simplified-installer",
 				},
 				"41": {
-					"iot-bootable-container",
 					"iot-simplified-installer",
 				},
 			},
@@ -537,7 +517,6 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"cloud-ec2",
 				"cloud-gce",
 				"cloud-qcow2",
-				"iot-bootable-container",
 				"iot-simplified-installer",
 				"everything-network-installer",
 				"server-network-installer",
@@ -576,7 +555,6 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"cloud-ec2",
 				"cloud-gce",
 				"cloud-qcow2",
-				"iot-bootable-container",
 				"iot-simplified-installer",
 				"everything-network-installer",
 				"server-network-installer",
@@ -599,7 +577,6 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"generic-qcow2",
 				"server-qcow2",
 				"cloud-qcow2",
-				"iot-bootable-container",
 				"everything-network-installer",
 				"server-network-installer",
 			},
@@ -613,7 +590,6 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"server-network-installer",
 				"server-qcow2",
 				"cloud-qcow2",
-				"iot-bootable-container",
 			},
 		},
 		{
