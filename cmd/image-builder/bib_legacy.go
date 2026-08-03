@@ -61,7 +61,7 @@ type ManifestConfig struct {
 	UseLibrepo bool
 }
 
-func manifestForLegacyISO(imgref, buildImgref, imgTypeStr, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch) ([]byte, *mTLSConfig, error) {
+func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch) ([]byte, *mTLSConfig, error) {
 	container, err := podman_container.NewContainer(imgref)
 	if err != nil {
 		return nil, nil, err
