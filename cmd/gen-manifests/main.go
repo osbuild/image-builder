@@ -593,7 +593,7 @@ func main() {
 
 				for _, itConfig := range imgTypeConfigs {
 					if needsSkipping, reason := configs.needsSkipping(distribution.Name(), itConfig); needsSkipping {
-						fmt.Printf("Skipping %s for %s/%s (reason: %v)\n", itConfig.Name, imgTypeName, distribution.Name(), reason)
+						fmt.Fprintf(os.Stderr, "Skipping %s for %s/%s (reason: %v)\n", itConfig.Name, imgTypeName, distribution.Name(), reason)
 						continue
 					}
 
@@ -659,7 +659,7 @@ func main() {
 				}
 				for _, itConfig := range imgTypeConfigs {
 					if needsSkipping, reason := configs.needsSkipping(distribution.Name(), itConfig); needsSkipping {
-						fmt.Printf("Skipping %s for %s/%s (reason: %v)\n", itConfig.Name, imgTypeName, distribution.Name(), reason)
+						fmt.Fprintf(os.Stderr, "Skipping %s for %s/%s (reason: %v)\n", itConfig.Name, imgTypeName, distribution.Name(), reason)
 						continue
 					}
 
@@ -751,7 +751,7 @@ func main() {
 					}
 					for _, itConfig := range imgTypeConfigs {
 						if needsSkipping, reason := configs.needsSkipping(distribution.Name(), itConfig); needsSkipping {
-							fmt.Printf("Skipping %s for %s/%s (reason: %v)\n", itConfig.Name, imgTypeName, distribution.Name(), reason)
+							fmt.Fprintf(os.Stderr, "Skipping %s for %s/%s (reason: %v)\n", itConfig.Name, imgTypeName, distribution.Name(), reason)
 							continue
 						}
 
