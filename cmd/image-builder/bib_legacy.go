@@ -94,21 +94,17 @@ func manifestFromCobraForLegacyISO(imgref, buildImgref, imgTypeStr, rootFs, rpmC
 
 	buildContainer := container
 	buildSourceinfo := sourceinfo
-	startedBuildContainer := false
-	defer func() {
-		if startedBuildContainer {
-			if err := buildContainer.Stop(); err != nil {
-				olog.Printf("ERROR: problem stopping container: %v", err)
-			}
-		}
-	}()
 
 	if buildImgref != "" {
 		buildContainer, err = podman_container.NewContainer(buildImgref)
 		if err != nil {
 			return nil, nil, err
 		}
-		startedBuildContainer = true
+		defer func() {
+			if err := buildContainer.Stop(); err != nil {
+				olog.Printf("ERROR: problem stopping container: %v", err)
+			}
+		}()
 
 		// Gather some data from the containers distro
 		buildSourceinfo, err = osinfo.Load(buildContainer.Root())
