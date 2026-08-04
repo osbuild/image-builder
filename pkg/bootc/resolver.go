@@ -59,13 +59,39 @@ type Container struct {
 	storeOpts []string
 }
 
-// New creates a new running container from the given image reference.
-//
-// NB:
-// - --net host is used to make networking work in a nested container
-// - /run/secrets is mounted from the host to make sure RHSM credentials are available
+// Initialise a new container from the given image reference.
 func NewContainer(ref string) (*Container, error) {
-	var storeOpts []string
+	cnt := &Container{
+		ref: ref,
+	}
+	if err := cnt.start("none", false); err != nil {
+		return nil, err
+	}
+	return cnt, nil
+}
+
+// Initialise a new container from the given image reference and configure it
+// to support initialising DNF repositories. The container will be started with
+// host networking and mount secrets from the host if available.
+func NewContainerWithRepos(ref string) (*Container, error) {
+	cnt := &Container{
+		ref: ref,
+	}
+	if err := cnt.start("host", true); err != nil {
+		return nil, err
+	}
+	return cnt, nil
+}
+
+func (cnt *Container) start(network string, mountSecrets bool) error {
+	args := []string{
+		"run",
+		"--rm",
+		"--init", // If sleep infinity is run as PID 1, it doesn't get signals, thus we cannot easily stop the container
+		"--detach",
+		"--entrypoint", "sleep", // The entrypoint might be arbitrary, so let's just override it with sleep, we don't want to run anything
+	}
+
 	if isRootless, _ := isPodmanRootless(); isRootless {
 		// When running bc-i-b In a rootless container, its typically the case that /var/lib/containers/storage
 		// is a bind-mount of ~/.local/share/containers/storage, and we can't use this directly with podman
@@ -74,76 +100,68 @@ func NewContainer(ref string) (*Container, error) {
 		//     static dir "/var/lib/containers/storage/libpod": database configuration mismatch
 		// To avoid this we use an empty graphroot, and point --imagestore at /var/lib/containers/storage.
 		// This means the database is in the right place, and we only look at the image layers in the real store.
-		storeOpts = []string{
+		cnt.storeOpts = []string{
 			"--root=/run/osbuild/containers/store",
 			"--imagestore=/var/lib/containers/storage",
 		}
 	}
 
-	const secretDir = "/run/secrets"
-	secretVolume := fmt.Sprintf("%s:%s", secretDir, secretDir)
+	args = append(args, cnt.storeOpts...)
 
-	args := []string{
-		"run",
-		"--rm",
-		"--init", // If sleep infinity is run as PID 1, it doesn't get signals, thus we cannot easily stop the container
-		"--detach",
-		"--net", "host", // Networking in a nested container doesn't work without re-using this container's network
-		"--entrypoint", "sleep", // The entrypoint might be arbitrary, so let's just override it with sleep, we don't want to run anything
+	if network != "" {
+		args = append(args, "--network", network)
 	}
 
-	// Re-mount the secret directory if it exists
-	if _, err := os.Stat(secretDir); err == nil {
-		args = append(args, "--volume", secretVolume)
+	if mountSecrets {
+		const secretDir = "/run/secrets"
+		secretVolume := fmt.Sprintf("%s:%s", secretDir, secretDir)
+
+		// Mount the secrets directory only if it exists
+		if _, err := os.Stat(secretDir); err == nil {
+			args = append(args, "--volume", secretVolume)
+		}
 	}
 
-	args = append(args, storeOpts...)
-
-	args = append(args, ref, "infinity")
+	args = append(args, cnt.ref, "infinity")
 
 	output, err := exec.Command("podman", args...).Output()
 	if err != nil {
 		if e, ok := err.(*exec.ExitError); ok {
-			return nil, fmt.Errorf("running %s container failed: %w\nstderr:\n%s", ref, e, e.Stderr)
+			return fmt.Errorf("running %s container failed: %w\nstderr:\n%s", cnt.ref, e, e.Stderr)
 		}
-		return nil, fmt.Errorf("running %s container failed with generic error: %w", ref, err)
+		return fmt.Errorf("running %s container failed with generic error: %w", cnt.ref, err)
 	}
 
-	c := &Container{
-		ref:       ref,
-		storeOpts: storeOpts,
-	}
-	c.id = strings.TrimSpace(string(output))
+	cnt.id = strings.TrimSpace(string(output))
 	// Ensure that the container is stopped when this function errors
 	defer func() {
 		if err != nil {
-			if stopErr := c.Stop(); stopErr != nil {
+			if stopErr := cnt.Stop(); stopErr != nil {
 				err = fmt.Errorf("%w\nstopping the container failed too: %s", err, stopErr)
 			}
-			c = nil
 		}
 	}()
 	// not all containers set {{.Architecture}} so fallback
-	c.arch, err = findContainerArchInspect(c.id, ref, storeOpts)
+	cnt.arch, err = findContainerArchInspect(cnt.id, cnt.ref, cnt.storeOpts)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	args = []string{"mount"}
-	args = append(args, storeOpts...)
-	args = append(args, c.id)
+	args = append(args, cnt.storeOpts...)
+	args = append(args, cnt.id)
 
 	/* #nosec G204 */
 	output, err = exec.Command("podman", args...).Output()
 	if err != nil {
 		if err, ok := err.(*exec.ExitError); ok {
-			return nil, fmt.Errorf("mounting %s container failed: %w\nstderr:\n%s", ref, err, err.Stderr)
+			return fmt.Errorf("mounting %s container failed: %w\nstderr:\n%s", cnt.ref, err, err.Stderr)
 		}
-		return nil, fmt.Errorf("mounting %s container failed with generic error: %w", ref, err)
+		return fmt.Errorf("mounting %s container failed with generic error: %w", cnt.ref, err)
 	}
-	c.root = strings.TrimSpace(string(output))
+	cnt.root = strings.TrimSpace(string(output))
 
-	return c, err
+	return err
 }
 
 // Stop stops the container. Since New() creates a container with --rm, this
