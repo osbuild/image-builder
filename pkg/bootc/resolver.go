@@ -56,7 +56,7 @@ type Container struct {
 	id        string
 	root      string
 	arch      string
-	extraOpts []string
+	storeOpts []string
 }
 
 // New creates a new running container from the given image reference.
@@ -65,7 +65,7 @@ type Container struct {
 // - --net host is used to make networking work in a nested container
 // - /run/secrets is mounted from the host to make sure RHSM credentials are available
 func NewContainer(ref string) (*Container, error) {
-	extraOpts := []string{}
+	var storeOpts []string
 	if isRootless, _ := isPodmanRootless(); isRootless {
 		// When running bc-i-b In a rootless container, its typically the case that /var/lib/containers/storage
 		// is a bind-mount of ~/.local/share/containers/storage, and we can't use this directly with podman
@@ -74,9 +74,10 @@ func NewContainer(ref string) (*Container, error) {
 		//     static dir "/var/lib/containers/storage/libpod": database configuration mismatch
 		// To avoid this we use an empty graphroot, and point --imagestore at /var/lib/containers/storage.
 		// This means the database is in the right place, and we only look at the image layers in the real store.
-		extraOpts = append(extraOpts,
+		storeOpts = []string{
 			"--root=/run/osbuild/containers/store",
-			"--imagestore=/var/lib/containers/storage")
+			"--imagestore=/var/lib/containers/storage",
+		}
 	}
 
 	const secretDir = "/run/secrets"
@@ -96,7 +97,7 @@ func NewContainer(ref string) (*Container, error) {
 		args = append(args, "--volume", secretVolume)
 	}
 
-	args = append(args, extraOpts...)
+	args = append(args, storeOpts...)
 
 	args = append(args, ref, "infinity")
 
@@ -110,7 +111,7 @@ func NewContainer(ref string) (*Container, error) {
 
 	c := &Container{
 		ref:       ref,
-		extraOpts: extraOpts,
+		storeOpts: storeOpts,
 	}
 	c.id = strings.TrimSpace(string(output))
 	// Ensure that the container is stopped when this function errors
@@ -123,13 +124,13 @@ func NewContainer(ref string) (*Container, error) {
 		}
 	}()
 	// not all containers set {{.Architecture}} so fallback
-	c.arch, err = findContainerArchInspect(c.id, ref, extraOpts)
+	c.arch, err = findContainerArchInspect(c.id, ref, storeOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	args = []string{"mount"}
-	args = append(args, extraOpts...)
+	args = append(args, storeOpts...)
 	args = append(args, c.id)
 
 	/* #nosec G204 */
@@ -150,7 +151,7 @@ func NewContainer(ref string) (*Container, error) {
 func (c *Container) Stop() error {
 
 	args := []string{"stop"}
-	args = append(args, c.extraOpts...)
+	args = append(args, c.storeOpts...)
 	args = append(args, c.id)
 
 	/* #nosec G204 */
@@ -159,7 +160,7 @@ func (c *Container) Stop() error {
 	}
 
 	args = []string{"rm"}
-	args = append(args, c.extraOpts...)
+	args = append(args, c.storeOpts...)
 	args = append(args, "--ignore", c.id)
 
 	// when the container is stopped by podman it may not honor the "--rm"
@@ -206,7 +207,7 @@ func (c *Container) ResolveInfo() (*Info, error) {
 	}
 	bootcInfo.UnifiedKernel = unifiedKernel
 
-	size, err := getContainerSize(c.ref, c.extraOpts)
+	size, err := getContainerSize(c.ref, c.storeOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +240,7 @@ func (c *Container) Arch() string {
 // Reads a file from the container
 func (c *Container) ReadFile(path string) ([]byte, error) {
 	args := []string{"exec"}
-	args = append(args, c.extraOpts...)
+	args = append(args, c.storeOpts...)
 	args = append(args, c.id, "cat", path)
 
 	/* #nosec G204 */
@@ -257,7 +258,7 @@ func (c *Container) ReadFile(path string) ([]byte, error) {
 // CopyInto copies a file into the container.
 func (c *Container) CopyInto(src, dest string) error {
 	args := []string{"cp"}
-	args = append(args, c.extraOpts...)
+	args = append(args, c.storeOpts...)
 	args = append(args, src, c.id+":"+dest)
 
 	/* #nosec G204 */
@@ -270,7 +271,7 @@ func (c *Container) CopyInto(src, dest string) error {
 
 func (c *Container) ExecArgv() []string {
 	args := []string{"podman", "exec"}
-	args = append(args, c.extraOpts...)
+	args = append(args, c.storeOpts...)
 	args = append(args, "-i", c.id)
 	return args
 }
@@ -289,7 +290,7 @@ type BootcInstallConfiguration struct {
 // as given by `bootc install print-configuration`
 func (c *Container) InstallConfiguration() (BootcInstallConfiguration, error) {
 	args := []string{"exec"}
-	args = append(args, c.extraOpts...)
+	args = append(args, c.storeOpts...)
 	args = append(args, c.id, "bootc", "install", "print-configuration")
 
 	/* #nosec G204 */
@@ -330,7 +331,7 @@ func (c *Container) InstallConfiguration() (BootcInstallConfiguration, error) {
 // InitrdModules gets the list of modules from the container's initrd
 func (c *Container) InitrdModules(kver string) ([]string, error) {
 	args := []string{"exec"}
-	args = append(args, c.extraOpts...)
+	args = append(args, c.storeOpts...)
 	args = append(args, c.id, "lsinitrd", "--mod", "--kver", kver)
 
 	/* #nosec G204 */
@@ -348,7 +349,7 @@ func (c *Container) InitrdModules(kver string) ([]string, error) {
 // UnifiedKernel finds out if the kernel inside the bootc container is unified
 func (c *Container) UnifiedKernel() (bool, error) {
 	args := []string{"exec"}
-	args = append(args, c.extraOpts...)
+	args = append(args, c.storeOpts...)
 	args = append(args, c.id, "bootc", "container", "inspect", "--json")
 
 	/* #nosec G204 */
