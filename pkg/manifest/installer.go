@@ -134,7 +134,10 @@ type InstallerCustomizations struct {
 	// Install weak dependencies in the installer environment
 	InstallWeakDeps bool
 
+	// Grub2 default menu
 	DefaultMenu int
+	// Grub2 menu timeout (0 == default)
+	MenuTimeout int
 
 	Product   string
 	Variant   string
