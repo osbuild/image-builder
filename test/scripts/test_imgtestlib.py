@@ -97,6 +97,11 @@ def test_resolve_bootc_source():
     assert entry["ref"] == "quay.io/centos-bootc/centos-bootc:stream10"
 
 
+def test_list_bootc_source_arches():
+    arches = testlib.bootcsource.list_bootc_source_arches("centos-10")
+    assert arches == ["aarch64", "ppc64le", "s390x", "x86_64"]
+
+
 def test_resolve_bootc_source_rejects_string_entry(tmp_path, monkeypatch):
     source_dir = tmp_path / "bootcrefs"
     source_dir.mkdir()

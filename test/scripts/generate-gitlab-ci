@@ -10,6 +10,7 @@ ARCHITECTURES = ["x86_64", "aarch64"]
 MANIFEST_ONLY_ARCHES = ["ppc64le", "s390x"]
 RUNNER = testlib.testenv.get_common_ci_runner()
 OSTREE_DISTROS = ["fedora", "rhel-8", "rhel-9", "centos-9"]
+BOOTC_SOURCES = ["centos-10"]
 
 
 BASE_CONFIG = """---
@@ -19,6 +20,8 @@ stages:
   - build
   - ostree-gen
   - ostree-build
+  - bootc-gen
+  - bootc-build
   - verify
   - finish
 
@@ -113,6 +116,34 @@ OSTREE_TRIGGER_TEMPLATE = """
     - "generate-ostree-build-config: [{distro}, {arch}]"
 """
 
+BOOTC_GEN_TEMPLATE = """
+"generate-bootc-config: [{bootc_source}, {arch}]":
+  stage: bootc-gen
+  extends: .terraform
+  variables:
+    RUNNER: {runner}-{arch}
+    INTERNAL_NETWORK: "false"
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-bootc-config --bootc-source {bootc_source} --arch {arch} boot-config.yml
+  artifacts:
+    paths:
+      - boot-config.yml
+"""
+
+BOOTC_TRIGGER_TEMPLATE = """
+"bootc-build-trigger: [{bootc_source}, {arch}]":
+  stage: bootc-build
+  trigger:
+    include:
+      - artifact: boot-config.yml
+        job: "generate-bootc-config: [{bootc_source}, {arch}]"
+    strategy: depend
+  needs:
+    - "generate-bootc-config: [{bootc_source}, {arch}]"
+"""
+
 
 MANIFEST_GEN_TEMPLATE = """
 "generate-manifests: [{distro}, {arch}]":
@@ -179,6 +210,8 @@ def main():
     trigger_stage = []
     ostree_gen_stage = []
     ostree_trigger_stage = []
+    bootc_gen_stage = []
+    bootc_trigger_stage = []
     for img in sort_configs(images):
         combo = (img["distro"], img["arch"])
         if combo in combos:
@@ -235,6 +268,24 @@ def main():
                 test_file_path=test_file_path,
             ))
 
+    for bootc_source in BOOTC_SOURCES:
+        # Build/boot only arches that are both in the bootcref and supported for
+        # full image CI (skip manifest-only arches like ppc64le/s390x).
+        bootc_arches = [
+            arch for arch in testlib.bootcsource.list_bootc_source_arches(bootc_source)
+            if arch in ARCHITECTURES
+        ]
+        for arch in bootc_arches:
+            bootc_gen_stage.append(BOOTC_GEN_TEMPLATE.format(
+                bootc_source=bootc_source,
+                arch=arch,
+                runner=RUNNER,
+            ))
+            bootc_trigger_stage.append(BOOTC_TRIGGER_TEMPLATE.format(
+                bootc_source=bootc_source,
+                arch=arch,
+            ))
+
     with open(config_path, "w", encoding="utf-8") as config_file:
         config_file.write(BASE_CONFIG.format(runner=RUNNER))
         config_file.write(testlib.core.BASE_CONFIG)
@@ -242,6 +293,8 @@ def main():
         config_file.write("\n".join(trigger_stage))
         config_file.write("\n".join(ostree_gen_stage))
         config_file.write("\n".join(ostree_trigger_stage))
+        config_file.write("\n".join(bootc_gen_stage))
+        config_file.write("\n".join(bootc_trigger_stage))
         config_file.write("\n".join(man_gen_stage))
 
 

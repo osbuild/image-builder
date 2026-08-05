@@ -5,6 +5,8 @@ stages:
   - build
   - ostree-gen
   - ostree-build
+  - bootc-gen
+  - bootc-build
   - verify
   - finish
 
@@ -2029,6 +2031,56 @@ fail:
     strategy: depend
   needs:
     - "generate-ostree-build-config: [rhel-9.9, x86_64]"
+
+"generate-bootc-config: [centos-10, aarch64]":
+  stage: bootc-gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-aarch64
+    INTERNAL_NETWORK: "false"
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-bootc-config --bootc-source centos-10 --arch aarch64 boot-config.yml
+  artifacts:
+    paths:
+      - boot-config.yml
+
+
+"generate-bootc-config: [centos-10, x86_64]":
+  stage: bootc-gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-x86_64
+    INTERNAL_NETWORK: "false"
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-bootc-config --bootc-source centos-10 --arch x86_64 boot-config.yml
+  artifacts:
+    paths:
+      - boot-config.yml
+
+"bootc-build-trigger: [centos-10, aarch64]":
+  stage: bootc-build
+  trigger:
+    include:
+      - artifact: boot-config.yml
+        job: "generate-bootc-config: [centos-10, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-bootc-config: [centos-10, aarch64]"
+
+
+"bootc-build-trigger: [centos-10, x86_64]":
+  stage: bootc-build
+  trigger:
+    include:
+      - artifact: boot-config.yml
+        job: "generate-bootc-config: [centos-10, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-bootc-config: [centos-10, x86_64]"
 
 "generate-manifests: [centos-10, ppc64le]":
   stage: gen

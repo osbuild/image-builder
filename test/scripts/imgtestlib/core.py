@@ -281,6 +281,19 @@ def clargs():
     return parser
 
 
+def bootc_clargs():
+    default_arch = os.uname().machine
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str, help="path to write config")
+    parser.add_argument("--bootc-source", type=str, required=True,
+                        help="bootc source name (test/data/bootcrefs/<name>.json)")
+    parser.add_argument("--arch", type=str, default=default_arch,
+                        help="architecture to generate configs for (defaults to host architecture)")
+    parser.add_argument("--bootc-installer-ref", type=str, default=None,
+                        help="installer payload container ref for manifest generation")
+    return parser
+
+
 def is_manifest_list(data):
     """Inspect a manifest determine if it's a multi-image manifest-list."""
     media_type = data.get("mediaType")
