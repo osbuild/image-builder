@@ -62,21 +62,70 @@ type ManifestConfig struct {
 }
 
 func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch) ([]byte, *mTLSConfig, error) {
-	container, err := bootc.NewContainer(imgref)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer func() {
-		if err := container.Stop(); err != nil {
-			olog.Printf("ERROR: problem stopping container: %v", err)
+	var baseCnt, buildCnt *bootc.Container
+	var sourceinfo, buildSourceinfo *osinfo.Info
+	if buildImgref == "" {
+		// no build container: start the base container and also treat it as a
+		// build container
+		container, err := bootc.NewContainerWithRepos(imgref)
+		if err != nil {
+			return nil, nil, err
 		}
-	}()
+		defer func() {
+			if err := container.Stop(); err != nil {
+				olog.Printf("error stopping container: %v", err)
+			}
+		}()
+
+		baseCnt = container
+		buildCnt = container
+
+		sourceinfo, err = osinfo.Load(container.Root())
+		if err != nil {
+			return nil, nil, err
+		}
+		buildSourceinfo = sourceinfo
+
+		buildImgref = imgref
+	} else {
+		var err error
+		// separate build container: start both, but only start the build
+		// container with repos support
+		baseCnt, err = bootc.NewContainer(imgref)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer func() {
+			if err := baseCnt.Stop(); err != nil {
+				olog.Printf("error stopping base container: %v", err)
+			}
+		}()
+
+		buildCnt, err = bootc.NewContainerWithRepos(buildImgref)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer func() {
+			if err := buildCnt.Stop(); err != nil {
+				olog.Printf("error stopping build container: %v", err)
+			}
+		}()
+
+		sourceinfo, err = osinfo.Load(baseCnt.Root())
+		if err != nil {
+			return nil, nil, err
+		}
+		buildSourceinfo, err = osinfo.Load(buildCnt.Root())
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 
 	var rootfsType string
 	if rootFs != "" {
 		rootfsType = rootFs
 	} else {
-		bic, err := container.InstallConfiguration()
+		bic, err := baseCnt.InstallConfiguration()
 		if err != nil {
 			return nil, nil, fmt.Errorf("cannot get rootfs type for container: %w", err)
 		}
@@ -86,41 +135,12 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 		}
 	}
 
-	// Gather some data from the containers distro
-	sourceinfo, err := osinfo.Load(container.Root())
-	if err != nil {
-		return nil, nil, err
-	}
-
-	buildContainer := container
-	buildSourceinfo := sourceinfo
-
-	if buildImgref != "" {
-		buildContainer, err = bootc.NewContainer(buildImgref)
-		if err != nil {
-			return nil, nil, err
-		}
-		defer func() {
-			if err := buildContainer.Stop(); err != nil {
-				olog.Printf("ERROR: problem stopping container: %v", err)
-			}
-		}()
-
-		// Gather some data from the containers distro
-		buildSourceinfo, err = osinfo.Load(buildContainer.Root())
-		if err != nil {
-			return nil, nil, err
-		}
-	} else {
-		buildImgref = imgref
-	}
-
 	// This is needed just for RHEL and RHSM in most cases, but let's run it every time in case
 	// the image has some non-standard dnf plugins.
-	if err := buildContainer.InitDNF(); err != nil {
+	if err := buildCnt.InitDNF(); err != nil {
 		return nil, nil, err
 	}
-	solver, err := buildContainer.NewContainerSolver(rpmCacheRoot, cntArch, sourceinfo)
+	solver, err := buildCnt.NewContainerSolver(rpmCacheRoot, cntArch, sourceinfo)
 	if err != nil {
 		return nil, nil, err
 	}
