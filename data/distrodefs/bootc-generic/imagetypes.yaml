@@ -34,8 +34,7 @@
       x86_64:
         type: "gpt"
         partitions:
-          -
-            size: "1 MiB"
+          - size: "1 MiB"
             bootable: true
             type: *bios_boot_partition_guid
           - &default_partition_table_part_efi
@@ -123,6 +122,12 @@ image_types:
       kernel_options: *bootc_kernel_options
     blueprint:
       supported_options: *supported_options_disk
+
+  "raw-xz":
+    <<: *raw_image_type
+    filename: "disk.raw.xz"
+    compression: "xz"
+    mime_type: "application/xz"
 
   "ami":
     <<: *raw_image_type
