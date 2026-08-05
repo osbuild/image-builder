@@ -14,7 +14,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
 	"github.com/osbuild/image-builder/pkg/disk"
-	"github.com/osbuild/image-builder/pkg/distro/bootc"
+	bootcdistro "github.com/osbuild/image-builder/pkg/distro/bootc"
 	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/image"
@@ -24,7 +24,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 
-	podman_container "github.com/osbuild/image-builder/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/bootc"
 )
 
 // all possible locations for the bib's distro definitions
@@ -62,7 +62,7 @@ type ManifestConfig struct {
 }
 
 func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch) ([]byte, *mTLSConfig, error) {
-	container, err := podman_container.NewContainer(imgref)
+	container, err := bootc.NewContainer(imgref)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -96,7 +96,7 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 	buildSourceinfo := sourceinfo
 
 	if buildImgref != "" {
-		buildContainer, err = podman_container.NewContainer(buildImgref)
+		buildContainer, err = bootc.NewContainer(buildImgref)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -298,7 +298,7 @@ func manifestForISO(c *ManifestConfig, rng *rand.Rand) (*manifest.Manifest, erro
 	if isoCust != nil && isoCust.VolumeID != "" {
 		img.ISOCustomizations.Label = isoCust.VolumeID
 	} else {
-		img.ISOCustomizations.Label = bootc.LabelForISO(&c.SourceInfo.OSRelease, c.Architecture.String())
+		img.ISOCustomizations.Label = bootcdistro.LabelForISO(&c.SourceInfo.OSRelease, c.Architecture.String())
 	}
 	img.InstallerCustomizations.FIPS = customizations.GetFIPS()
 	img.Kickstart, err = kickstart.New(customizations)
@@ -333,8 +333,8 @@ func manifestForISO(c *ManifestConfig, rng *rand.Rand) (*manifest.Manifest, erro
 	img.Kickstart.OSTree = &kickstart.OSTree{
 		OSName: "default",
 	}
-	img.InstallerCustomizations.LoraxTemplates = bootc.LoraxTemplates(c.SourceInfo.OSRelease)
-	img.InstallerCustomizations.LoraxTemplatePackage = bootc.LoraxTemplatePackage(c.SourceInfo.OSRelease)
+	img.InstallerCustomizations.LoraxTemplates = bootcdistro.LoraxTemplates(c.SourceInfo.OSRelease)
+	img.InstallerCustomizations.LoraxTemplatePackage = bootcdistro.LoraxTemplatePackage(c.SourceInfo.OSRelease)
 
 	// see https://github.com/osbuild/bootc-image-builder/issues/733
 	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
@@ -347,7 +347,7 @@ func manifestForISO(c *ManifestConfig, rng *rand.Rand) (*manifest.Manifest, erro
 
 	mf := manifest.New()
 
-	foundDistro, foundRunner, err := bootc.GetDistroAndRunner(c.SourceInfo.OSRelease)
+	foundDistro, foundRunner, err := bootcdistro.GetDistroAndRunner(c.SourceInfo.OSRelease)
 	if err != nil {
 		return nil, fmt.Errorf("failed to infer distro and runner: %w", err)
 	}
