@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/osbuild/image-builder/internal/olog"
+	"github.com/osbuild/image-builder/pkg/datasizes"
 	ilog "github.com/osbuild/image-builder/pkg/olog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -191,6 +192,8 @@ func setupManifestCmd() (*cobra.Command, error) {
 	manifestCmd := &cobra.Command{
 		Use:          "manifest <image-type>",
 		Short:        "Build manifest for the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
+		Long:         "Build a manifest for the selected image type. The --image-size flag accepts bytes or a value with a data-size unit.",
+		Example:      "  image-builder manifest qcow2 --image-size \"1 GiB\"",
 		RunE:         cmdManifest,
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
@@ -209,7 +212,8 @@ func setupManifestCmd() (*cobra.Command, error) {
 	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
 	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
 	manifestCmd.Flags().Bool("bootc-pull-container", false, `pull bootc container from remote location instead of using it from local container storage`)
-	manifestCmd.Flags().Uint64("image-size", 0, `override the default image size in bytes`)
+	var imageSize datasizes.Size
+	manifestCmd.Flags().TextVar(&imageSize, "image-size", imageSize, `override the default image size (e.g. 1 GiB)`)
 	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
 	if err := manifestCmd.Flags().MarkHidden("use-librepo"); err != nil {
 		return nil, err

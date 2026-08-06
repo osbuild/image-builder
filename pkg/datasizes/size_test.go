@@ -166,3 +166,42 @@ func TestSizeUnmarshalHappy(t *testing.T) {
 func TestSizeUint64(t *testing.T) {
 	assert.Equal(t, datasizes.Size(1234).Uint64(), uint64(1234))
 }
+
+func TestSizeTextMarshaling(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    string
+		expected datasizes.Size
+	}{
+		{
+			name:     "bytes",
+			input:    "1073741824",
+			expected: datasizes.Size(datasizes.GiB),
+		},
+		{
+			name:     "with-unit",
+			input:    "1 GiB",
+			expected: datasizes.Size(datasizes.GiB),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var size datasizes.Size
+			assert.NoError(t, size.UnmarshalText([]byte(tc.input)))
+			assert.Equal(t, tc.expected, size)
+
+			text, err := size.MarshalText()
+			assert.NoError(t, err)
+			assert.Equal(t, "1073741824", string(text))
+		})
+	}
+}
+
+func TestSizeUnmarshalTextUnhappy(t *testing.T) {
+	var size datasizes.Size
+
+	err := size.UnmarshalText([]byte("20 KG"))
+
+	assert.EqualError(t, err, "error decoding size: unknown data size units in string: 20 KG")
+}
