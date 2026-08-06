@@ -128,6 +128,9 @@ def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images
         cmd.append("--flatpaks")
     if skip_no_config:
         cmd.append("--skip-noconfig")
+    # Bootc needs rootful "podman mount".
+    if bootc_refs and os.geteuid() != 0:
+        cmd = ["sudo", *cmd]
     env = rng_seed_env()
     env["GOPROXY"] = "https://proxy.golang.org,direct"
     print("⌨️" + " ".join(cmd) + " ENV: " + str(env))
