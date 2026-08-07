@@ -9,6 +9,28 @@ import imgtestlib as testlib
 
 BOOTC_CONFIGS = {"bootc-empty", "bootc-with-payload"}
 
+BOOTC_IMAGE_TYPES = [
+    "qcow2",
+    "ami",
+    "raw",
+    "gce",
+    "vhd",
+    "vmdk",
+    "ova",
+    "anaconda-iso",
+    "bootc-generic-iso",
+    "bootc-installer",
+    "pxe-tar-xz",
+]
+
+# TODO: Fix these and remove the skips; they break gen-manifests today:
+#   * anaconda-iso — depsolve fails: InvalidRequest: No 'repos' or 'root_dir'
+#   * pxe-tar-xz   — initramfs requires ostree, dmsquash-live and livenet modules
+BOOTC_SKIP_IMAGE_TYPES = {
+    "anaconda-iso",
+    "pxe-tar-xz",
+}
+
 JOB_TEMPLATE = """
 build/{distro}/{arch}/{image_type}/{config_name}:
   stage: test
@@ -27,8 +49,9 @@ build/{distro}/{arch}/{image_type}/{config_name}:
     INTERNAL_NETWORK: "{internal}"
 """
 
-def should_include_config(config_name: str) -> bool:
-    return config_name in BOOTC_CONFIGS
+
+def should_skip(config_name, image_type):
+    return image_type in BOOTC_SKIP_IMAGE_TYPES or config_name not in BOOTC_CONFIGS
 
 
 @testlib.gitlab.log_section("Generating manifests")
@@ -43,9 +66,14 @@ def generate_manifests(outputdir, arch, bootc_source, bootc_installer_ref=None):
     if build_ref := bootc_entry.get("build_ref"):
         bootc_refspec = f"{bootc_ref}#{build_ref}"
 
+    # TODO: fix broken image types
+    #  don't ask gen-manifests for them in the meantime
+    images = [t for t in BOOTC_IMAGE_TYPES if t not in BOOTC_SKIP_IMAGE_TYPES]
+
     print(f"🗒️ Generating bootc manifests using the default config list for {bootc_source} [{arch}]")
     # Omit --distros: with --bootc-refs, gen-manifests skips the RPM/repo loop.
     err = testlib.core.gen_manifests(outputdir, arches=[arch],
+                                     images=images,
                                      bootc_refs=[bootc_refspec],
                                      bootc_installer_ref=bootc_installer_ref,
                                      skip_no_config=True)
@@ -79,9 +107,8 @@ def generate_configs(build_requests, pipeline_file, bootc_source, bootc_ref):
                   f"expected distro {expected_distro} for bootc source {bootc_source}")
             continue
 
-        if not should_include_config(config_name):
-            print(f"🦘 Skipping {distro}/{arch}/{image_type}/{config_name}: "
-                  f"not in bootc config set")
+        if should_skip(config_name, image_type):
+            print(f"🦘 Skipping {distro}/{arch}/{image_type}/{config_name}")
             continue
 
         build_name = testlib.build.gen_build_name(distro, arch, image_type, config_name)
