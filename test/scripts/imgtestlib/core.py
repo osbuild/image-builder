@@ -101,7 +101,8 @@ def check_config_names():
 
 
 def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images=None,
-                  commits=False, flatpaks=False, skip_no_config=False):
+                  commits=False, flatpaks=False, skip_no_config=False, bootc_refs=None,
+                  bootc_remote=False, bootc_installer_ref=None):
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     cmd = ["go", "run", "./cmd/gen-manifests",
            "--cache", os.path.join(TEST_CACHE_ROOT, "rpmmd"),
@@ -115,12 +116,21 @@ def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images
         cmd.extend(["--arches", ",".join(arches)])
     if images:
         cmd.extend(["--types", ",".join(images)])
+    if bootc_refs:
+        cmd.extend(["--bootc-refs", ",".join(bootc_refs)])
+    if bootc_remote:
+        cmd.append("--bootc-remote")
+    if bootc_installer_ref:
+        cmd.extend(["--bootc-installer-ref", bootc_installer_ref])
     if commits:
         cmd.append("--commits")
     if flatpaks:
         cmd.append("--flatpaks")
     if skip_no_config:
         cmd.append("--skip-noconfig")
+    # Bootc needs rootful "podman mount".
+    if bootc_refs and os.geteuid() != 0:
+        cmd = ["sudo", *cmd]
     env = rng_seed_env()
     env["GOPROXY"] = "https://proxy.golang.org,direct"
     print("⌨️" + " ".join(cmd) + " ENV: " + str(env))
@@ -271,6 +281,19 @@ def clargs():
     parser.add_argument("--arch", type=str, default=default_arch,
                         help="architecture to generate configs for (defaults to host architecture)")
 
+    return parser
+
+
+def bootc_clargs():
+    default_arch = os.uname().machine
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str, help="path to write config")
+    parser.add_argument("--bootc-source", type=str, required=True,
+                        help="bootc source name (test/data/bootcrefs/<name>.json)")
+    parser.add_argument("--arch", type=str, default=default_arch,
+                        help="architecture to generate configs for (defaults to host architecture)")
+    parser.add_argument("--bootc-installer-ref", type=str, default=None,
+                        help="installer payload container ref for manifest generation")
     return parser
 
 

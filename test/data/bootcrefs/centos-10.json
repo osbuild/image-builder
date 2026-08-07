@@ -1,0 +1,14 @@
+{
+  "aarch64": {
+    "ref": "quay.io/centos-bootc/centos-bootc:stream10"
+  },
+  "ppc64le": {
+    "ref": "quay.io/centos-bootc/centos-bootc:stream10"
+  },
+  "s390x": {
+    "ref": "quay.io/centos-bootc/centos-bootc:stream10"
+  },
+  "x86_64": {
+    "ref": "quay.io/centos-bootc/centos-bootc:stream10"
+  }
+}

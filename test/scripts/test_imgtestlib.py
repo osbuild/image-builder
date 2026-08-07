@@ -35,6 +35,94 @@ def test_runcmd_env():
     assert stderr == b""
 
 
+def test_config_to_cli_args_bootc():
+    config = {
+        "name": "bootc-empty",
+        "blueprint": {},
+        "options": {
+            "bootc": {
+                "ref": "quay.io/example/bootc:latest",
+                "build_ref": "quay.io/example/toolbox:latest",
+                "installer_payload_ref": "quay.io/example/payload:latest",
+                "use_remote_container_source": True,
+            },
+        },
+    }
+
+    bootc = testlib.build.resolve_bootc_options(config, "centos-10", "x86_64")
+    args = testlib.build.config_to_cli_args(config, bootc)
+
+    assert any(arg.startswith("--blueprint=") for arg in args)
+    assert "--bootc-ref=quay.io/example/bootc:latest" in args
+    assert "--bootc-build-ref=quay.io/example/toolbox:latest" in args
+    assert "--bootc-installer-payload-ref=quay.io/example/payload:latest" in args
+    assert "--bootc-pull-container" in args
+
+
+def test_resolve_bootc_options_from_bootcrefs():
+    config = {
+        "name": "bootc-empty",
+        "blueprint": {},
+        "options": {
+            "bootc": {
+                "use_remote_container_source": True,
+            },
+        },
+    }
+
+    bootc = testlib.build.resolve_bootc_options(config, "bootc-centos-10", "x86_64")
+
+    assert bootc["ref"] == "quay.io/centos-bootc/centos-bootc:stream10"
+    assert bootc["use_remote_container_source"] is True
+
+
+def test_resolve_bootc_options_prefers_config_over_bootcrefs():
+    config = {
+        "name": "bootc-empty",
+        "blueprint": {},
+        "options": {
+            "bootc": {
+                "ref": "quay.io/example/bootc:latest",
+            },
+        },
+    }
+
+    bootc = testlib.build.resolve_bootc_options(config, "bootc-centos-10", "x86_64")
+
+    assert bootc["ref"] == "quay.io/example/bootc:latest"
+
+
+def test_resolve_bootc_source():
+    entry = testlib.bootcsource.resolve_bootc_source("centos-10", "x86_64")
+    assert entry["ref"] == "quay.io/centos-bootc/centos-bootc:stream10"
+
+
+def test_list_bootc_source_arches():
+    arches = testlib.bootcsource.list_bootc_source_arches("centos-10")
+    assert arches == ["aarch64", "ppc64le", "s390x", "x86_64"]
+
+
+def test_resolve_bootc_source_rejects_string_entry(tmp_path, monkeypatch):
+    source_dir = tmp_path / "bootcrefs"
+    source_dir.mkdir()
+    (source_dir / "bad.json").write_text('{"x86_64": "quay.io/example/bootc:latest"}', encoding="utf-8")
+    monkeypatch.setattr(testlib.bootcsource, "BOOTCREFS_PATH", os.fspath(source_dir))
+
+    with pytest.raises(TypeError, match="must be an object"):
+        testlib.bootcsource.resolve_bootc_source("bad", "x86_64")
+
+
+def test_resolve_bootc_source_requires_ref(tmp_path, monkeypatch):
+    source_dir = tmp_path / "bootcrefs"
+    source_dir.mkdir()
+    (source_dir / "bad.json").write_text('{"x86_64": {"build_ref": "quay.io/example/toolbox:latest"}}',
+                                         encoding="utf-8")
+    monkeypatch.setattr(testlib.bootcsource, "BOOTCREFS_PATH", os.fspath(source_dir))
+
+    with pytest.raises(ValueError, match="must define a non-empty 'ref' string"):
+        testlib.bootcsource.resolve_bootc_source("bad", "x86_64")
+
+
 def test_read_seed():
     # check that it's read without error - no need to test the value itself
     seed_env = testlib.testenv.rng_seed_env()

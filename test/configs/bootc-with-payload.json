@@ -7,7 +7,7 @@
   },
   "options": {
     "bootc": {
-      "installer_payload_ref": "payload-container-fake-ref"
+      "installer_payload_ref": "quay.io/centos-bootc/centos-bootc:stream10"
     }
   }
 }
