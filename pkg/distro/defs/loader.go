@@ -578,6 +578,19 @@ type ImageTypeYAML struct {
 }
 
 type extrasYAML struct {
+	Sysexts map[string]sysextDef `yaml:"sysexts,omitempty"`
+}
+
+type packageConfDef struct {
+	Standalone bool `yaml:"standalone,omitempty"`
+}
+
+type sysextDef struct {
+	Format       string         `yaml:"format"`
+	Paths        []string       `yaml:"paths,omitempty"`
+	ExcludePaths []string       `yaml:"exclude_paths,omitempty"`
+	PackageSets  []packageSet   `yaml:"package_sets"`
+	PackageConf  packageConfDef `yaml:"package_conf,omitempty"`
 }
 
 func (it *ImageTypeYAML) IsOSTreeBasedImageType() bool {
@@ -861,6 +874,64 @@ func (imgType *ImageTypeYAML) PackageSets(id distro.ID, archName string) map[str
 		res[key] = rpmmdPkgSet
 	}
 
+	return res
+}
+
+// SysextDef holds a resolved sysext definition with its name and packages.
+type SysextDef struct {
+	Name         string
+	Format       string
+	Paths        []string
+	ExcludePaths []string
+	Packages     rpmmd.PackageSet
+	Standalone   bool
+}
+
+// Sysexts returns the resolved sysext definitions for this image type.
+func (imgType *ImageTypeYAML) Sysexts(id distro.ID, archName string) []SysextDef {
+	names := make([]string, 0, len(imgType.Extras.Sysexts))
+	for name := range imgType.Extras.Sysexts {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+
+	var res []SysextDef
+	for _, name := range names {
+		sysext := imgType.Extras.Sysexts[name]
+		var pkgSet rpmmd.PackageSet
+		for _, ps := range sysext.PackageSets {
+			pkgSet = pkgSet.Append(rpmmd.PackageSet{
+				Include: ps.Include,
+				Exclude: ps.Exclude,
+			})
+			for _, cond := range ps.Conditions {
+				if cond.When.Eval(id, archName) {
+					pkgSet = pkgSet.Append(rpmmd.PackageSet{
+						Include: cond.Append.Include,
+						Exclude: cond.Append.Exclude,
+					})
+				}
+			}
+		}
+		slices.Sort(pkgSet.Include)
+		slices.Sort(pkgSet.Exclude)
+		format := sysext.Format
+		if format == "" {
+			format = "erofs"
+		}
+		paths := sysext.Paths
+		if len(paths) == 0 {
+			paths = []string{"/usr", "/opt"}
+		}
+		res = append(res, SysextDef{
+			Name:         name,
+			Format:       format,
+			Paths:        paths,
+			ExcludePaths: sysext.ExcludePaths,
+			Packages:     pkgSet,
+			Standalone:   sysext.PackageConf.Standalone,
+		})
+	}
 	return res
 }
 
