@@ -16,6 +16,17 @@ import (
 	"github.com/osbuild/image-builder/pkg/runner"
 )
 
+type SysextConfig struct {
+	Name                      string
+	Format                    string
+	ExtensionReleaseID        string
+	ExtensionReleaseVersionID string
+	Paths                     []string
+	ExcludePaths              []string
+	PackageSet                rpmmd.PackageSet
+	Standalone                bool
+}
+
 type DiskImage struct {
 	Base
 
@@ -24,6 +35,8 @@ type DiskImage struct {
 	DiskCustomizations manifest.DiskCustomizations
 	Environment        environment.Environment
 	Compression        string
+
+	Sysexts []SysextConfig
 
 	// Control the VPC subformat use of force_size
 	VPCForceSize *bool
@@ -58,6 +71,29 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSProduct = img.OSProduct
 	osPipeline.OSVersion = img.OSVersion
 	osPipeline.OSNick = img.OSNick
+
+	for _, sysext := range img.Sysexts {
+		var depsolveRef manifest.Pipeline
+		if !sysext.Standalone {
+			depsolveRef = osPipeline
+		}
+		sp := manifest.NewSysextPipelines(buildPipeline, img.platform, repos, osPipeline, depsolveRef, sysext.Name)
+		sp.Tree.Customizations.PackageSet = sysext.PackageSet
+		sp.Tree.Customizations.BaseRPMOptions = img.OSCustomizations.BaseRPMOptions.Clone()
+		sp.Prep.Customizations.Paths = sysext.Paths
+		sp.Prep.Customizations.ExcludePaths = sysext.ExcludePaths
+		sp.Prep.Customizations.ExtensionRelease.Vars.ID = sysext.ExtensionReleaseID
+		sp.Prep.Customizations.ExtensionRelease.Vars.VersionID = sysext.ExtensionReleaseVersionID
+
+		switch sysext.Format {
+		case "erofs":
+			erofsPipeline := manifest.NewErofs(buildPipeline, sp.Prep, SysextPipelineName(sysext.Name, sysext.Format))
+			erofsPipeline.SetFilename("sysext-" + sysext.Name + ".erofs")
+			erofsPipeline.Export()
+		default:
+			return nil, fmt.Errorf("unsupported sysext format %q for %q", sysext.Format, sysext.Name)
+		}
+	}
 
 	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline, img.DiskCustomizations)
 
