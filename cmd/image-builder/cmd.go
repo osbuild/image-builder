@@ -291,6 +291,7 @@ func setupBuildCmd() (*cobra.Command, error) {
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
 	}
+	buildCmd.Flags().StringArray("with-extra", nil, `include an extra by type:name in the build (e.g. --with-extra sysext:nginx)`)
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
 	buildCmd.Flags().String("cache", defaultCacheDir(), `osbuild directory to cache intermediate build artifacts"`)

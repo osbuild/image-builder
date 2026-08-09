@@ -76,8 +76,9 @@ type outputTmplData struct {
 	Image struct {
 		Type string
 	}
-	Pipeline struct {
-		ExportName string
+	Extra struct {
+		Type string
+		Name string
 	}
 	Architecture string
 }
@@ -90,7 +91,6 @@ func outputTmplDataFor(img *imagefilter.Result) outputTmplData {
 	data.Distribution.MajorVersion = id.MajorVersion
 	data.Distribution.MinorVersion = id.MinorVersion
 	data.Image.Type = img.ImgType.Name()
-	data.Pipeline.ExportName = strings.SplitN(img.ImgType.Filename(), ".", 2)[0]
 	data.Architecture = img.ImgType.Arch().Name()
 	return data
 }
@@ -110,7 +110,12 @@ func expandOutputTmpl(tmplStr string, data outputTmplData) (string, error) {
 	return buf.String(), nil
 }
 
-const defaultOutputTmpl = "{{.Distribution.Identifier}}-{{.Image.Type}}-{{.Architecture}}"
+const defaultOutputTmpl = `
+{{- .Distribution.Identifier -}}-
+{{- .Image.Type -}}-
+{{- if .Extra.Name -}}{{- .Extra.Name -}}-{{- end -}}
+{{- .Architecture -}}
+`
 
 // basenameFor returns the basename for directory and filenames
 // for the given imageType. This can be user overriden via userBasename.
@@ -492,7 +497,8 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 			return nil, err
 		}
 	}
-	if len(img.ImgType.Exports()) > 1 {
+	withExtras, _ := cmd.Flags().GetStringArray("with-extra")
+	if len(img.ImgType.Exports()) > 1 && len(withExtras) == 0 {
 		name, _ := basenameFor(img, "")
 		return nil, fmt.Errorf("image %q has multiple exports: this is currently unsupported: please report this as a bug", name)
 	}
@@ -765,6 +771,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	withExtras, err := cmd.Flags().GetStringArray("with-extra")
+	if err != nil {
+		return err
+	}
 	withManifest, err := cmd.Flags().GetBool("with-manifest")
 	if err != nil {
 		return err
@@ -873,17 +883,21 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		WriteBuildlog:  withBuildlog,
 		Metrics:        withMetrics,
 		JSONOutput:     format == "json",
+		WithExtras:     withExtras,
 	}
 	if runInVm {
 		buildOpts.InVm = []string{"image"}
 	}
 	pbar.SetPulseMsgf("Image building step")
-	imagePath, err := buildImage(pbar, img, mf, buildOpts)
+	outputPaths, err := buildImage(pbar, img, mf, buildOpts)
 	if err != nil {
 		return err
 	}
 	pbar.Stop()
-	fmt.Fprintf(osStdout, "Image build successful: %s\n", imagePath)
+	for _, p := range outputPaths {
+		fmt.Fprintf(osStdout, "Image build successful: %s\n", p)
+	}
+	imagePath := outputPaths[0]
 
 	pbar, err = progressFromCmd(cmd, progress.ProgressConfig{
 		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basename)),
