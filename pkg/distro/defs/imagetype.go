@@ -77,6 +77,8 @@ type imageType struct {
 	diskImageVPCForceSize *bool
 	diskImageGiBAligned   bool
 
+	sysexts []SysextDef
+
 	supportedPartitioningModes []partition.PartitioningMode
 
 	blueprint blueprintOptions
@@ -196,6 +198,7 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 	}
 
 	it.partitionTable = basePT
+	it.sysexts = imgYAML.Sysexts(d.ID(), ar.Name())
 
 	it.packageSets = imgYAML.PackageSets(d.ID(), ar.Name())
 
