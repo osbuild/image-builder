@@ -2759,6 +2759,7 @@ image_types:
 
   "cloud-gce": &cloud_gce
     <<: *cloud_base
+    name_aliases: ["gcp", "gce"]
     filename: "image.tar.gz"
     mime_type: "application/gzip"
     exports: ["archive"]
