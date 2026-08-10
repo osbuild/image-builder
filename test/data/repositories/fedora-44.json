@@ -1,50 +1,74 @@
 {
   "x86_64": [
     {
-      "title": "fedora",
       "name": "fedora",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-x86_64-fedora-20260430"
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-x86_64-fedora-20260430",
+      "check_gpg": true,
+      "gpgkeys": [
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGa23M8BEAC47NwKLi/g2S9I2p5JtUbJ0y3m2St9zqkSENmYw/+R+WKvaP3S\nKSFQF3Qi6pqGXJ88ADJUkFYpOGGyoc0dieLCmIPqtWbwGvBVMxBRBeU3+hClwbSQ\nsysVnr8VxUwidfsIjNJavCZwB0ZoZbxdCPMQMOgQyTLX4OI/uKlPUzeymDHwxjb/\ntllflSTOGtdYe3giRzidxN+xbCb6UoXkl0+lJEFbsmp41O5D/Ur5N05lBrsEXoDu\nFr99Kfv3Av7f3JfzDlkqC/EhmfxZEZvWj3hRdAfi2fFmtVcrdLfGIpQg6Y2Baphp\nPhaHqKl9zD5GWqu5GSXGoLaGXusBvwBKjS/g+VLo7pJfMsUF3sUduJNG3UThAsrp\nQLV3wQz0AMHVElRErOWdBDY0ddAKLPL7/mtxj39pGEpZ/dNtQkzgm7VCdP10QnQZ\nrwR2l8k7CPu0pylPCXmXvKFWV1uv9RnztlWY6BRmufKn+lJsN3Blh7ndi5rlCjR6\nmHVrQD/l6+8VmSD3/mDnbEXPyzBkSY5D1wpR7M5VXN5jVHROc4ZA5M88SyI48ESG\nNmeAwtGar45/X+wG47+EC4+JXpNO7BQrEvHgJxBdyoQ6KLDrEaqn/OQpxB4Gfmcv\nSwkWDpSk8wFm/pGlFK6J4b+ba7eOetW+aXrWSiFB1sTAg0OY+gds67OpWQARAQAB\ntDFGZWRvcmEgKDQzKSA8ZmVkb3JhLTQzLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEExufwgc+A4TFGZ26IgptgZjFkVTEFAma23M8CGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJEIKbYGYxZFUxagQP/RYWw5j0Gfvv\nlWkDQTjTVAnHtbKuQLYM13Lx5d3W1k0g6Xdrolf4yPjh4YPYVQDXksB4i6ULLbMo\n8u46UCPMQwCXTd3Ax9imYn+V74Isl/CkBbKQD9YfSJjhW3mSlPa27jo2uhqpdV0S\nxp05NWYnWrZN+GbtCUs1+rNTBevagOURtlZ8f0iPVRA/PxWzpjbRaGrCHlIYc3JO\nGKLUuQueLvOUg2pP8dtpll7S3xUe5Abyq2ifT34T0wHi6hJA3bfpXo1uNXRvGrNw\ngbJ7V6P7ioTcvyhS1h4zjelKFyvTnOKOy5D08HKmvTMWZQWEL7kDNymh1jMV7Abg\n4TPp808EiPF1GGAzXU56feaURSvIuix3MkjhGZsSQQH2kkkEIzq6j/EwmpyEMW38\ndtql4T2bVS/cTk/hRaqUKZlyrsL657g/4mFA1wDDM3895fYkHOpYF4JZ9SeDrhuc\nTgpC7/TW55l6vSiFtnQvcMfjpfCA6mCA4b75k+/xG9RxxBnYU0qVuUo/8pON31yQ\nD2AM2v7WbJBYVRYLlqPrkAZU5fe7+2wY7P7N0IAPwVA0TFJ1x6as3Kezdi/304mg\noC98DBLjHaUpX2bTxKMtCzlmeqPiwtyNkA9O9IQO7qQzArBKxmAgof4wblN5SL8i\nfsjiJUqsK/gTYwJ744I/tzxOy5FXjA7z\n=Bqds\n-----END PGP PUBLIC KEY BLOCK-----\n"
+      ]
     },
     {
-      "title": "fedora-updates",
       "name": "fedora-updates",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-x86_64-updates-released-20260607"
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-x86_64-updates-released-20260607",
+      "check_gpg": true,
+      "gpgkeys": [
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGeGrzsBEAC4UV5Ij9oz6h6abEKIRoiezttFfnLhwOAfE9tWtfIFMRmhY91u\nL88PKf12n2xHBd3oc5ahBzGeTBhaMV+VJAppoQMSOIMI5q966D9GQ0LkJT+E5bwn\nxGRJKp7qccevh2KFOUt2vHtFskhDOuAIupoKfo5FgI9PkvAVBsrUpO/22yjNv0V/\naeDXxZhRX8m/8FKJ77VcZtBRPcp7M41bCmW9gV9IDpD81hAdTjYoQr1Y3KU0FTm5\nW4l1mf9mZcKMskOk08TyzQeC2YRB20EYRK439XCGJ4P7BFiOl96EbPpky2pHe2FV\nAvX474o3QEecTK3KxZrsRjmXOqpjRPy5YyMfKEYBM9j3zBDvpDFk79Mfuw5n2Nr5\nU4Wn/rqfhKLUKkfpfCow97nzq8NqynwS09yVobIfjHCKRtjwun6ife+s7R4L2nAu\nrTWPAHqzIjjW5nnjaFtoSulIadVKx+KibKajA6gRAc6K7xMyMTHfqZeTAIcawvX6\nh2d/nd8xCfogM5FTI5obNSUVNaMv5vQg6vcV1fb6oRgodF0Bi+1dssq5EMQpHFJM\nnIQ5NVwuzSjCLt3X2mWUp0mfIt2K9oBpBct12uXho7Nm1bSC5UFNYsvw+rj6vTqZ\nilK9pyfcYmELv7a/NPkyuACsBFGoc66nBfrEvk57kW9FaJK9mjSqGftykQARAQAB\ntDFGZWRvcmEgKDQ0KSA8ZmVkb3JhLTQ0LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEENvYS3PJ/fRpIqDXk2/z3HG2fkKYFAmeGrzsCGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJENv89xxtn5CmIU0P/iaFVxJjVi4P\nyu8A04PbdGy2vuBBCceIjYn5HaMDwJMRjdJT6uMS494pSKNEl/JJ8K5rRdigfUV1\n2Z22X3kI5aNb4k2wpaPg5Xq0JQS9FvG4Pjm//kNy5WplmEA8HVg4MVkvySWiXay4\n+tkCelhE8aQDstYEm3uh+lZ6udgoInfprwFMn6H+8RXkakTW1z5NkuAA8PpMDA9o\nSOFc4Hk6bhE6exEp4VNwBEkxwh4z9CGjarlXL4QEyM1UK60vtbXIHVjITjFfKVQP\nj6ifdn5X69oSuK+1mUFXEV+l9pc1mVjTVTwOrG3EMBsoekFyICp1pPtfMo1dxBed\nR8BFHqQFsFdmIG+59ycFznFOXzDRfaVn6OTEAk7T8nDqnpe/T4GlybLYic6KMKcM\nnbMLaJZjHZ97qJb5Scpsd1TWB5TDERi4VPB7NAVC/EwxMPC3IJUbRej/s05gNjg0\n+2yyuV/U/DDnNGWnLTJDFLUaE8HhQBMvNSfmdMA47mo5CCuYmpzX/3M9vlVsv8/R\nxJBxFLIj9VFCPFNgXPeu9gyyytXeWgsIpDzMNJil9tgbBuQ1dX5GFMkWtK/kPexM\nKfiSU0JgJFfFSm0OKI/KXcRlbA1zP3IF+2YwbL+P5ePinHsDiAPLCQt/dWgw2tfB\nZZLj9c3Ukew6Qobuy3V1knl564qQ6wjf\n=1m7R\n-----END PGP PUBLIC KEY BLOCK-----\n"
+      ]
     }
   ],
   "aarch64": [
     {
-      "title": "fedora",
       "name": "fedora",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-aarch64-fedora-20260430"
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-aarch64-fedora-20260430",
+      "check_gpg": true,
+      "gpgkeys": [
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGeGrzsBEAC4UV5Ij9oz6h6abEKIRoiezttFfnLhwOAfE9tWtfIFMRmhY91u\nL88PKf12n2xHBd3oc5ahBzGeTBhaMV+VJAppoQMSOIMI5q966D9GQ0LkJT+E5bwn\nxGRJKp7qccevh2KFOUt2vHtFskhDOuAIupoKfo5FgI9PkvAVBsrUpO/22yjNv0V/\naeDXxZhRX8m/8FKJ77VcZtBRPcp7M41bCmW9gV9IDpD81hAdTjYoQr1Y3KU0FTm5\nW4l1mf9mZcKMskOk08TyzQeC2YRB20EYRK439XCGJ4P7BFiOl96EbPpky2pHe2FV\nAvX474o3QEecTK3KxZrsRjmXOqpjRPy5YyMfKEYBM9j3zBDvpDFk79Mfuw5n2Nr5\nU4Wn/rqfhKLUKkfpfCow97nzq8NqynwS09yVobIfjHCKRtjwun6ife+s7R4L2nAu\nrTWPAHqzIjjW5nnjaFtoSulIadVKx+KibKajA6gRAc6K7xMyMTHfqZeTAIcawvX6\nh2d/nd8xCfogM5FTI5obNSUVNaMv5vQg6vcV1fb6oRgodF0Bi+1dssq5EMQpHFJM\nnIQ5NVwuzSjCLt3X2mWUp0mfIt2K9oBpBct12uXho7Nm1bSC5UFNYsvw+rj6vTqZ\nilK9pyfcYmELv7a/NPkyuACsBFGoc66nBfrEvk57kW9FaJK9mjSqGftykQARAQAB\ntDFGZWRvcmEgKDQ0KSA8ZmVkb3JhLTQ0LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEENvYS3PJ/fRpIqDXk2/z3HG2fkKYFAmeGrzsCGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJENv89xxtn5CmIU0P/iaFVxJjVi4P\nyu8A04PbdGy2vuBBCceIjYn5HaMDwJMRjdJT6uMS494pSKNEl/JJ8K5rRdigfUV1\n2Z22X3kI5aNb4k2wpaPg5Xq0JQS9FvG4Pjm//kNy5WplmEA8HVg4MVkvySWiXay4\n+tkCelhE8aQDstYEm3uh+lZ6udgoInfprwFMn6H+8RXkakTW1z5NkuAA8PpMDA9o\nSOFc4Hk6bhE6exEp4VNwBEkxwh4z9CGjarlXL4QEyM1UK60vtbXIHVjITjFfKVQP\nj6ifdn5X69oSuK+1mUFXEV+l9pc1mVjTVTwOrG3EMBsoekFyICp1pPtfMo1dxBed\nR8BFHqQFsFdmIG+59ycFznFOXzDRfaVn6OTEAk7T8nDqnpe/T4GlybLYic6KMKcM\nnbMLaJZjHZ97qJb5Scpsd1TWB5TDERi4VPB7NAVC/EwxMPC3IJUbRej/s05gNjg0\n+2yyuV/U/DDnNGWnLTJDFLUaE8HhQBMvNSfmdMA47mo5CCuYmpzX/3M9vlVsv8/R\nxJBxFLIj9VFCPFNgXPeu9gyyytXeWgsIpDzMNJil9tgbBuQ1dX5GFMkWtK/kPexM\nKfiSU0JgJFfFSm0OKI/KXcRlbA1zP3IF+2YwbL+P5ePinHsDiAPLCQt/dWgw2tfB\nZZLj9c3Ukew6Qobuy3V1knl564qQ6wjf\n=1m7R\n-----END PGP PUBLIC KEY BLOCK-----\n"
+      ]
     },
     {
-      "title": "fedora-updates",
       "name": "fedora-updates",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-aarch64-updates-released-20260607"
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-aarch64-updates-released-20260607",
+      "check_gpg": true,
+      "gpgkeys": [
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGeGrzsBEAC4UV5Ij9oz6h6abEKIRoiezttFfnLhwOAfE9tWtfIFMRmhY91u\nL88PKf12n2xHBd3oc5ahBzGeTBhaMV+VJAppoQMSOIMI5q966D9GQ0LkJT+E5bwn\nxGRJKp7qccevh2KFOUt2vHtFskhDOuAIupoKfo5FgI9PkvAVBsrUpO/22yjNv0V/\naeDXxZhRX8m/8FKJ77VcZtBRPcp7M41bCmW9gV9IDpD81hAdTjYoQr1Y3KU0FTm5\nW4l1mf9mZcKMskOk08TyzQeC2YRB20EYRK439XCGJ4P7BFiOl96EbPpky2pHe2FV\nAvX474o3QEecTK3KxZrsRjmXOqpjRPy5YyMfKEYBM9j3zBDvpDFk79Mfuw5n2Nr5\nU4Wn/rqfhKLUKkfpfCow97nzq8NqynwS09yVobIfjHCKRtjwun6ife+s7R4L2nAu\nrTWPAHqzIjjW5nnjaFtoSulIadVKx+KibKajA6gRAc6K7xMyMTHfqZeTAIcawvX6\nh2d/nd8xCfogM5FTI5obNSUVNaMv5vQg6vcV1fb6oRgodF0Bi+1dssq5EMQpHFJM\nnIQ5NVwuzSjCLt3X2mWUp0mfIt2K9oBpBct12uXho7Nm1bSC5UFNYsvw+rj6vTqZ\nilK9pyfcYmELv7a/NPkyuACsBFGoc66nBfrEvk57kW9FaJK9mjSqGftykQARAQAB\ntDFGZWRvcmEgKDQ0KSA8ZmVkb3JhLTQ0LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEENvYS3PJ/fRpIqDXk2/z3HG2fkKYFAmeGrzsCGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJENv89xxtn5CmIU0P/iaFVxJjVi4P\nyu8A04PbdGy2vuBBCceIjYn5HaMDwJMRjdJT6uMS494pSKNEl/JJ8K5rRdigfUV1\n2Z22X3kI5aNb4k2wpaPg5Xq0JQS9FvG4Pjm//kNy5WplmEA8HVg4MVkvySWiXay4\n+tkCelhE8aQDstYEm3uh+lZ6udgoInfprwFMn6H+8RXkakTW1z5NkuAA8PpMDA9o\nSOFc4Hk6bhE6exEp4VNwBEkxwh4z9CGjarlXL4QEyM1UK60vtbXIHVjITjFfKVQP\nj6ifdn5X69oSuK+1mUFXEV+l9pc1mVjTVTwOrG3EMBsoekFyICp1pPtfMo1dxBed\nR8BFHqQFsFdmIG+59ycFznFOXzDRfaVn6OTEAk7T8nDqnpe/T4GlybLYic6KMKcM\nnbMLaJZjHZ97qJb5Scpsd1TWB5TDERi4VPB7NAVC/EwxMPC3IJUbRej/s05gNjg0\n+2yyuV/U/DDnNGWnLTJDFLUaE8HhQBMvNSfmdMA47mo5CCuYmpzX/3M9vlVsv8/R\nxJBxFLIj9VFCPFNgXPeu9gyyytXeWgsIpDzMNJil9tgbBuQ1dX5GFMkWtK/kPexM\nKfiSU0JgJFfFSm0OKI/KXcRlbA1zP3IF+2YwbL+P5ePinHsDiAPLCQt/dWgw2tfB\nZZLj9c3Ukew6Qobuy3V1knl564qQ6wjf\n=1m7R\n-----END PGP PUBLIC KEY BLOCK-----\n"
+      ]
     }
   ],
   "ppc64le": [
     {
-      "title": "fedora",
       "name": "fedora",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-ppc64le-fedora-20260430"
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-ppc64le-fedora-20260430",
+      "check_gpg": true,
+      "gpgkeys": [
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGeGrzsBEAC4UV5Ij9oz6h6abEKIRoiezttFfnLhwOAfE9tWtfIFMRmhY91u\nL88PKf12n2xHBd3oc5ahBzGeTBhaMV+VJAppoQMSOIMI5q966D9GQ0LkJT+E5bwn\nxGRJKp7qccevh2KFOUt2vHtFskhDOuAIupoKfo5FgI9PkvAVBsrUpO/22yjNv0V/\naeDXxZhRX8m/8FKJ77VcZtBRPcp7M41bCmW9gV9IDpD81hAdTjYoQr1Y3KU0FTm5\nW4l1mf9mZcKMskOk08TyzQeC2YRB20EYRK439XCGJ4P7BFiOl96EbPpky2pHe2FV\nAvX474o3QEecTK3KxZrsRjmXOqpjRPy5YyMfKEYBM9j3zBDvpDFk79Mfuw5n2Nr5\nU4Wn/rqfhKLUKkfpfCow97nzq8NqynwS09yVobIfjHCKRtjwun6ife+s7R4L2nAu\nrTWPAHqzIjjW5nnjaFtoSulIadVKx+KibKajA6gRAc6K7xMyMTHfqZeTAIcawvX6\nh2d/nd8xCfogM5FTI5obNSUVNaMv5vQg6vcV1fb6oRgodF0Bi+1dssq5EMQpHFJM\nnIQ5NVwuzSjCLt3X2mWUp0mfIt2K9oBpBct12uXho7Nm1bSC5UFNYsvw+rj6vTqZ\nilK9pyfcYmELv7a/NPkyuACsBFGoc66nBfrEvk57kW9FaJK9mjSqGftykQARAQAB\ntDFGZWRvcmEgKDQ0KSA8ZmVkb3JhLTQ0LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEENvYS3PJ/fRpIqDXk2/z3HG2fkKYFAmeGrzsCGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJENv89xxtn5CmIU0P/iaFVxJjVi4P\nyu8A04PbdGy2vuBBCceIjYn5HaMDwJMRjdJT6uMS494pSKNEl/JJ8K5rRdigfUV1\n2Z22X3kI5aNb4k2wpaPg5Xq0JQS9FvG4Pjm//kNy5WplmEA8HVg4MVkvySWiXay4\n+tkCelhE8aQDstYEm3uh+lZ6udgoInfprwFMn6H+8RXkakTW1z5NkuAA8PpMDA9o\nSOFc4Hk6bhE6exEp4VNwBEkxwh4z9CGjarlXL4QEyM1UK60vtbXIHVjITjFfKVQP\nj6ifdn5X69oSuK+1mUFXEV+l9pc1mVjTVTwOrG3EMBsoekFyICp1pPtfMo1dxBed\nR8BFHqQFsFdmIG+59ycFznFOXzDRfaVn6OTEAk7T8nDqnpe/T4GlybLYic6KMKcM\nnbMLaJZjHZ97qJb5Scpsd1TWB5TDERi4VPB7NAVC/EwxMPC3IJUbRej/s05gNjg0\n+2yyuV/U/DDnNGWnLTJDFLUaE8HhQBMvNSfmdMA47mo5CCuYmpzX/3M9vlVsv8/R\nxJBxFLIj9VFCPFNgXPeu9gyyytXeWgsIpDzMNJil9tgbBuQ1dX5GFMkWtK/kPexM\nKfiSU0JgJFfFSm0OKI/KXcRlbA1zP3IF+2YwbL+P5ePinHsDiAPLCQt/dWgw2tfB\nZZLj9c3Ukew6Qobuy3V1knl564qQ6wjf\n=1m7R\n-----END PGP PUBLIC KEY BLOCK-----\n"
+      ]
     },
     {
-      "title": "fedora-updates",
       "name": "fedora-updates",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-ppc64le-updates-released-20260607"
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-ppc64le-updates-released-20260607",
+      "check_gpg": true,
+      "gpgkeys": [
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGeGrzsBEAC4UV5Ij9oz6h6abEKIRoiezttFfnLhwOAfE9tWtfIFMRmhY91u\nL88PKf12n2xHBd3oc5ahBzGeTBhaMV+VJAppoQMSOIMI5q966D9GQ0LkJT+E5bwn\nxGRJKp7qccevh2KFOUt2vHtFskhDOuAIupoKfo5FgI9PkvAVBsrUpO/22yjNv0V/\naeDXxZhRX8m/8FKJ77VcZtBRPcp7M41bCmW9gV9IDpD81hAdTjYoQr1Y3KU0FTm5\nW4l1mf9mZcKMskOk08TyzQeC2YRB20EYRK439XCGJ4P7BFiOl96EbPpky2pHe2FV\nAvX474o3QEecTK3KxZrsRjmXOqpjRPy5YyMfKEYBM9j3zBDvpDFk79Mfuw5n2Nr5\nU4Wn/rqfhKLUKkfpfCow97nzq8NqynwS09yVobIfjHCKRtjwun6ife+s7R4L2nAu\nrTWPAHqzIjjW5nnjaFtoSulIadVKx+KibKajA6gRAc6K7xMyMTHfqZeTAIcawvX6\nh2d/nd8xCfogM5FTI5obNSUVNaMv5vQg6vcV1fb6oRgodF0Bi+1dssq5EMQpHFJM\nnIQ5NVwuzSjCLt3X2mWUp0mfIt2K9oBpBct12uXho7Nm1bSC5UFNYsvw+rj6vTqZ\nilK9pyfcYmELv7a/NPkyuACsBFGoc66nBfrEvk57kW9FaJK9mjSqGftykQARAQAB\ntDFGZWRvcmEgKDQ0KSA8ZmVkb3JhLTQ0LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEENvYS3PJ/fRpIqDXk2/z3HG2fkKYFAmeGrzsCGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJENv89xxtn5CmIU0P/iaFVxJjVi4P\nyu8A04PbdGy2vuBBCceIjYn5HaMDwJMRjdJT6uMS494pSKNEl/JJ8K5rRdigfUV1\n2Z22X3kI5aNb4k2wpaPg5Xq0JQS9FvG4Pjm//kNy5WplmEA8HVg4MVkvySWiXay4\n+tkCelhE8aQDstYEm3uh+lZ6udgoInfprwFMn6H+8RXkakTW1z5NkuAA8PpMDA9o\nSOFc4Hk6bhE6exEp4VNwBEkxwh4z9CGjarlXL4QEyM1UK60vtbXIHVjITjFfKVQP\nj6ifdn5X69oSuK+1mUFXEV+l9pc1mVjTVTwOrG3EMBsoekFyICp1pPtfMo1dxBed\nR8BFHqQFsFdmIG+59ycFznFOXzDRfaVn6OTEAk7T8nDqnpe/T4GlybLYic6KMKcM\nnbMLaJZjHZ97qJb5Scpsd1TWB5TDERi4VPB7NAVC/EwxMPC3IJUbRej/s05gNjg0\n+2yyuV/U/DDnNGWnLTJDFLUaE8HhQBMvNSfmdMA47mo5CCuYmpzX/3M9vlVsv8/R\nxJBxFLIj9VFCPFNgXPeu9gyyytXeWgsIpDzMNJil9tgbBuQ1dX5GFMkWtK/kPexM\nKfiSU0JgJFfFSm0OKI/KXcRlbA1zP3IF+2YwbL+P5ePinHsDiAPLCQt/dWgw2tfB\nZZLj9c3Ukew6Qobuy3V1knl564qQ6wjf\n=1m7R\n-----END PGP PUBLIC KEY BLOCK-----\n"
+      ]
     }
   ],
   "s390x": [
     {
-      "title": "fedora",
       "name": "fedora",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-s390x-fedora-20260430"
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-s390x-fedora-20260430",
+      "check_gpg": true,
+      "gpgkeys": [
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGeGrzsBEAC4UV5Ij9oz6h6abEKIRoiezttFfnLhwOAfE9tWtfIFMRmhY91u\nL88PKf12n2xHBd3oc5ahBzGeTBhaMV+VJAppoQMSOIMI5q966D9GQ0LkJT+E5bwn\nxGRJKp7qccevh2KFOUt2vHtFskhDOuAIupoKfo5FgI9PkvAVBsrUpO/22yjNv0V/\naeDXxZhRX8m/8FKJ77VcZtBRPcp7M41bCmW9gV9IDpD81hAdTjYoQr1Y3KU0FTm5\nW4l1mf9mZcKMskOk08TyzQeC2YRB20EYRK439XCGJ4P7BFiOl96EbPpky2pHe2FV\nAvX474o3QEecTK3KxZrsRjmXOqpjRPy5YyMfKEYBM9j3zBDvpDFk79Mfuw5n2Nr5\nU4Wn/rqfhKLUKkfpfCow97nzq8NqynwS09yVobIfjHCKRtjwun6ife+s7R4L2nAu\nrTWPAHqzIjjW5nnjaFtoSulIadVKx+KibKajA6gRAc6K7xMyMTHfqZeTAIcawvX6\nh2d/nd8xCfogM5FTI5obNSUVNaMv5vQg6vcV1fb6oRgodF0Bi+1dssq5EMQpHFJM\nnIQ5NVwuzSjCLt3X2mWUp0mfIt2K9oBpBct12uXho7Nm1bSC5UFNYsvw+rj6vTqZ\nilK9pyfcYmELv7a/NPkyuACsBFGoc66nBfrEvk57kW9FaJK9mjSqGftykQARAQAB\ntDFGZWRvcmEgKDQ0KSA8ZmVkb3JhLTQ0LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEENvYS3PJ/fRpIqDXk2/z3HG2fkKYFAmeGrzsCGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJENv89xxtn5CmIU0P/iaFVxJjVi4P\nyu8A04PbdGy2vuBBCceIjYn5HaMDwJMRjdJT6uMS494pSKNEl/JJ8K5rRdigfUV1\n2Z22X3kI5aNb4k2wpaPg5Xq0JQS9FvG4Pjm//kNy5WplmEA8HVg4MVkvySWiXay4\n+tkCelhE8aQDstYEm3uh+lZ6udgoInfprwFMn6H+8RXkakTW1z5NkuAA8PpMDA9o\nSOFc4Hk6bhE6exEp4VNwBEkxwh4z9CGjarlXL4QEyM1UK60vtbXIHVjITjFfKVQP\nj6ifdn5X69oSuK+1mUFXEV+l9pc1mVjTVTwOrG3EMBsoekFyICp1pPtfMo1dxBed\nR8BFHqQFsFdmIG+59ycFznFOXzDRfaVn6OTEAk7T8nDqnpe/T4GlybLYic6KMKcM\nnbMLaJZjHZ97qJb5Scpsd1TWB5TDERi4VPB7NAVC/EwxMPC3IJUbRej/s05gNjg0\n+2yyuV/U/DDnNGWnLTJDFLUaE8HhQBMvNSfmdMA47mo5CCuYmpzX/3M9vlVsv8/R\nxJBxFLIj9VFCPFNgXPeu9gyyytXeWgsIpDzMNJil9tgbBuQ1dX5GFMkWtK/kPexM\nKfiSU0JgJFfFSm0OKI/KXcRlbA1zP3IF+2YwbL+P5ePinHsDiAPLCQt/dWgw2tfB\nZZLj9c3Ukew6Qobuy3V1knl564qQ6wjf\n=1m7R\n-----END PGP PUBLIC KEY BLOCK-----\n"
+      ]
     },
     {
-      "title": "fedora-updates",
       "name": "fedora-updates",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-s390x-updates-released-20260607"
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f44/f44-s390x-updates-released-20260607",
+      "check_gpg": true,
+      "gpgkeys": [
+        "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGeGrzsBEAC4UV5Ij9oz6h6abEKIRoiezttFfnLhwOAfE9tWtfIFMRmhY91u\nL88PKf12n2xHBd3oc5ahBzGeTBhaMV+VJAppoQMSOIMI5q966D9GQ0LkJT+E5bwn\nxGRJKp7qccevh2KFOUt2vHtFskhDOuAIupoKfo5FgI9PkvAVBsrUpO/22yjNv0V/\naeDXxZhRX8m/8FKJ77VcZtBRPcp7M41bCmW9gV9IDpD81hAdTjYoQr1Y3KU0FTm5\nW4l1mf9mZcKMskOk08TyzQeC2YRB20EYRK439XCGJ4P7BFiOl96EbPpky2pHe2FV\nAvX474o3QEecTK3KxZrsRjmXOqpjRPy5YyMfKEYBM9j3zBDvpDFk79Mfuw5n2Nr5\nU4Wn/rqfhKLUKkfpfCow97nzq8NqynwS09yVobIfjHCKRtjwun6ife+s7R4L2nAu\nrTWPAHqzIjjW5nnjaFtoSulIadVKx+KibKajA6gRAc6K7xMyMTHfqZeTAIcawvX6\nh2d/nd8xCfogM5FTI5obNSUVNaMv5vQg6vcV1fb6oRgodF0Bi+1dssq5EMQpHFJM\nnIQ5NVwuzSjCLt3X2mWUp0mfIt2K9oBpBct12uXho7Nm1bSC5UFNYsvw+rj6vTqZ\nilK9pyfcYmELv7a/NPkyuACsBFGoc66nBfrEvk57kW9FaJK9mjSqGftykQARAQAB\ntDFGZWRvcmEgKDQ0KSA8ZmVkb3JhLTQ0LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJSBBMBCAA8FiEENvYS3PJ/fRpIqDXk2/z3HG2fkKYFAmeGrzsCGw8FCwkI\nBwIDIgIBBhUKCQgLAgQWAgMBAh4HAheAAAoJENv89xxtn5CmIU0P/iaFVxJjVi4P\nyu8A04PbdGy2vuBBCceIjYn5HaMDwJMRjdJT6uMS494pSKNEl/JJ8K5rRdigfUV1\n2Z22X3kI5aNb4k2wpaPg5Xq0JQS9FvG4Pjm//kNy5WplmEA8HVg4MVkvySWiXay4\n+tkCelhE8aQDstYEm3uh+lZ6udgoInfprwFMn6H+8RXkakTW1z5NkuAA8PpMDA9o\nSOFc4Hk6bhE6exEp4VNwBEkxwh4z9CGjarlXL4QEyM1UK60vtbXIHVjITjFfKVQP\nj6ifdn5X69oSuK+1mUFXEV+l9pc1mVjTVTwOrG3EMBsoekFyICp1pPtfMo1dxBed\nR8BFHqQFsFdmIG+59ycFznFOXzDRfaVn6OTEAk7T8nDqnpe/T4GlybLYic6KMKcM\nnbMLaJZjHZ97qJb5Scpsd1TWB5TDERi4VPB7NAVC/EwxMPC3IJUbRej/s05gNjg0\n+2yyuV/U/DDnNGWnLTJDFLUaE8HhQBMvNSfmdMA47mo5CCuYmpzX/3M9vlVsv8/R\nxJBxFLIj9VFCPFNgXPeu9gyyytXeWgsIpDzMNJil9tgbBuQ1dX5GFMkWtK/kPexM\nKfiSU0JgJFfFSm0OKI/KXcRlbA1zP3IF+2YwbL+P5ePinHsDiAPLCQt/dWgw2tfB\nZZLj9c3Ukew6Qobuy3V1knl564qQ6wjf\n=1m7R\n-----END PGP PUBLIC KEY BLOCK-----\n"
+      ]
     }
   ]
 }
