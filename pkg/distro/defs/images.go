@@ -384,6 +384,10 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.RPMKeysBinary = tweaks.RPMKeys.BinPath
 	}
 
+	distroID := t.arch.distro.ID()
+	osc.ImageID = distroID.ImageID
+	osc.ImageVersion = distroID.ImageVersion
+
 	if sshdCust := c.GetSshd(); sshdCust != nil && imageConfig.SshdConfig != nil {
 		if sshdCust.PasswordAuthentication != nil {
 			osc.SshdConfig.Config.PasswordAuthentication = sshdCust.PasswordAuthentication
