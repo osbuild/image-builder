@@ -466,6 +466,10 @@ def cmd_boot_aws(distro, arch, image_type, image_name, privkey, pubkey, image_pa
     # for image-builder
     if distro == "rhel-7.9" and image_type == "ec2":
         boot_mode = "legacy-bios"
+    # bootc images aren't defined as distros so we can't request the boot mode and we
+    # have no inspection capabilities, try to boot as hybrid
+    elif distro.startswith("bootc"):
+        boot_mode = "uefi-preferred"
     else:
         # otherwise ask for the boot mode
         boot_mode = get_boot_mode(distro, arch, image_type)
