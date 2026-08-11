@@ -288,6 +288,8 @@ func (l *Loader) LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error
 		return nil, err
 	}
 	foundDistro.ID = *id
+	foundDistro.ID.ImageID = experimentalflags.String("image-id")
+	foundDistro.ID.ImageVersion = experimentalflags.String("image-version")
 	foundDistro.loader = l
 	if err := foundDistro.runTemplates(*id); err != nil {
 		return nil, err

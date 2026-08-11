@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/bootc"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/experimentalflags"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/runner"
 )
@@ -122,6 +123,8 @@ func NewBootcWithLoader(loader *Loader, name string, cinfo *bootc.Info) (*BootcD
 	if err != nil {
 		return nil, err
 	}
+	id.ImageID = experimentalflags.String("image-id")
+	id.ImageVersion = experimentalflags.String("image-version")
 
 	d := &BootcDistro{
 		// the ID is technically not allowed by the ID parser, as it doesn't
