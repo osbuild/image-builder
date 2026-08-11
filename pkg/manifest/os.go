@@ -203,6 +203,13 @@ type OSCustomizations struct {
 
 	// Use this RPMKeysBinary from the tree instead of the default one
 	RPMKeysBinary string
+
+	// Environmental bits that can be set during the RPM stage to affect
+	// the installation of certain packages, for example when a distros
+	// `-release` package uses this to adjust what it writes into
+	// `os-release` or if we want to adjust `os-release ourselves.
+	ImageID      string
+	ImageVersion string
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -552,6 +559,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	}
 
 	baseRPMOptions := &osbuild.RPMStageOptions{}
+
 	if p.OSCustomizations.ExcludeDocs {
 		baseRPMOptions.Exclude = &osbuild.Exclude{Docs: true}
 	}
@@ -573,6 +581,22 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		baseRPMOptions.DisableDracut = true
 	}
 	baseRPMOptions.InstallLangs = p.OSCustomizations.InstallLangs
+
+	if len(p.OSCustomizations.ImageID) > 0 {
+		if baseRPMOptions.GenericEnv == nil {
+			baseRPMOptions.GenericEnv = make(map[string]string)
+		}
+
+		baseRPMOptions.GenericEnv["IMAGE_ID"] = p.OSCustomizations.ImageID
+	}
+
+	if len(p.OSCustomizations.ImageVersion) > 0 {
+		if baseRPMOptions.GenericEnv == nil {
+			baseRPMOptions.GenericEnv = make(map[string]string)
+		}
+
+		baseRPMOptions.GenericEnv["IMAGE_VERSION"] = p.OSCustomizations.ImageVersion
+	}
 
 	bootloader := p.platform.GetBootloader()
 
