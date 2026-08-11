@@ -35,6 +35,7 @@ func TestRPMStageOptionsClone(t *testing.T) {
 				OSTreeBooted:     common.ToPtr(true),
 				KernelInstallEnv: &KernelInstallEnv{BootRoot: "/boot"},
 				InstallLangs:     []string{"en_US", "de_DE"},
+				GenericEnv:       map[string]string{"IMAGE_ID": "my-image", "IMAGE_VERSION": "1.0"},
 			},
 		},
 		{
@@ -51,6 +52,12 @@ func TestRPMStageOptionsClone(t *testing.T) {
 				Exclude:          &Exclude{Docs: false},
 				OSTreeBooted:     common.ToPtr(false),
 				KernelInstallEnv: &KernelInstallEnv{BootRoot: ""},
+			},
+		},
+		{
+			name: "only-generic-env",
+			opts: &RPMStageOptions{
+				GenericEnv: map[string]string{"FOO": "bar", "BAZ": "qux"},
 			},
 		},
 		{
@@ -102,6 +109,15 @@ func TestRPMStageOptionsClone(t *testing.T) {
 				assert.NotSame(t, tt.opts.KernelInstallEnv, clone.KernelInstallEnv)
 				clone.KernelInstallEnv.BootRoot = "modified"
 				assert.NotEqual(t, tt.opts.KernelInstallEnv.BootRoot, clone.KernelInstallEnv.BootRoot)
+			}
+
+			// Verify deep copy of GenericEnv map
+			if len(clone.GenericEnv) > 0 {
+				for k := range clone.GenericEnv {
+					clone.GenericEnv[k] = "modified"
+					assert.NotEqual(t, tt.opts.GenericEnv[k], clone.GenericEnv[k])
+					break
+				}
 			}
 		})
 	}
@@ -420,6 +436,7 @@ func TestGenRPMStagesFromTransactions(t *testing.T) {
 				Exclude:          &Exclude{Docs: true},
 				KernelInstallEnv: &KernelInstallEnv{BootRoot: "/boot/efi"},
 				InstallLangs:     []string{"cs_CZ", "sk_SK"},
+				GenericEnv:       map[string]string{"IMAGE_ID": "my-image"},
 			},
 			expectStages: 2,
 			validate: func(t *testing.T, stages []*Stage) {
@@ -433,6 +450,7 @@ func TestGenRPMStagesFromTransactions(t *testing.T) {
 					assert.Empty(t, opts.GPGKeys, "stage %d", idx)
 					assert.Equal(t, "/boot/efi", opts.KernelInstallEnv.BootRoot, "stage %d", idx)
 					assert.Equal(t, []string{"cs_CZ", "sk_SK"}, opts.InstallLangs, "stage %d", idx)
+					assert.Equal(t, map[string]string{"IMAGE_ID": "my-image"}, opts.GenericEnv, "stage %d", idx)
 				}
 			},
 		},
