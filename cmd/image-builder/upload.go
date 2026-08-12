@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cheggaaa/pb/v3"
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v3"
 
@@ -44,7 +43,7 @@ var (
 	ibmNewUploader       = ibmcloud.NewUploader
 )
 
-func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) (*cloud.UploadResult, error) {
+func uploadImageWithProgress(uploader cloud.Uploader, pbar progress.ProgressBar, imagePath string) (*cloud.UploadResult, error) {
 	f, err := os.Open(imagePath)
 	if err != nil {
 		return nil, err
@@ -60,13 +59,14 @@ func uploadImageWithProgress(uploader cloud.Uploader, imagePath string) (*cloud.
 	if sizei64 < 0 {
 		return nil, fmt.Errorf("invalid size read for %s: %d", imagePath, sizei64)
 	}
+	sizei := int(sizei64)
 	size := uint64(sizei64)
-	pbar := pb.New64(st.Size())
-	pbar.Set(pb.Bytes, true)
-	pbar.SetWriter(osStderr)
-	r := pbar.NewProxyReader(f)
+	r, err := progress.NewProxyReader(f, sizei, pbar)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create proxy reader: %w", err)
+	}
 	pbar.Start()
-	defer pbar.Finish()
+	pbar.SetPulseMsgf("Uploading step")
 
 	return uploader.UploadAndRegister(r, size, osStderr)
 }
@@ -372,7 +372,16 @@ func cmdUpload(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	result, err := uploadImageWithProgress(uploader, imagePath)
+	pbar, err := progress.New("auto", progress.ProgressConfig{
+		Bytes: true,
+		Speed: true,
+	})
+	if err != nil {
+		return err
+	}
+	pbar.Start()
+	defer pbar.Stop()
+	result, err := uploadImageWithProgress(uploader, pbar, imagePath)
 	if err != nil {
 		return err
 	}
