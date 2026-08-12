@@ -750,20 +750,30 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	pbar.Stop()
-
 	fmt.Fprintf(osStdout, "Image build successful: %s\n", imagePath)
 
+	pbar, err = progressFromCmd(cmd, progress.ProgressConfig{
+		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basenameFor(img, outputBasename))),
+		Bytes:    true,
+		Speed:    true,
+	})
+	if err != nil {
+		return err
+	}
 	// Default upload result to write out in case no uploader was specified
 	uploadResult := &cloud.UploadResult{
 		Provider: "LocalPath",
 		ImageID:  imagePath,
 	}
 	if uploader != nil {
+		pbar.Start()
+		pbar.SetPulseMsgf("Uploading")
 		// XXX: integrate better into the progress, see bib
-		uploadResult, err = uploadImageWithProgress(uploader, imagePath)
+		uploadResult, err = uploadImageWithProgress(uploader, pbar, imagePath)
 		if err != nil {
 			return err
 		}
+		pbar.Stop()
 	}
 	if withUploadResult {
 		p := filepath.Join(outputDir, fmt.Sprintf("%s.upload-result", basenameFor(img, outputBasename)))
