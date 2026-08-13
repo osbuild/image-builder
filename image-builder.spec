@@ -81,11 +81,6 @@ export GOFLAGS+=" -mod=vendor"
 %undefine gomodulesmode
 %endif
 
-# btrfs-progs-devel is not available on RHEL
-%if 0%{?rhel}
-GOTAGS="exclude_graphdriver_btrfs"
-%endif
-
 export LDFLAGS="${LDFLAGS} -X 'main.version=%{version}'"
 %gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/image-builder %{goipath}/cmd/image-builder
 
@@ -104,7 +99,7 @@ install -m 0644 -vp man/man1/image-builder*.1       %{buildroot}%{_mandir}/man1/
 %check
 export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
-export GOFLAGS+=" -mod=vendor -tags=exclude_graphdriver_btrfs"
+export GOFLAGS+=" -mod=vendor"
 export GOPATH=$PWD/_build:%{gopath}
 # cd inside GOPATH, otherwise go with GO111MODULE=off ignores vendor directory
 cd $PWD/_build/src/%{goipath}

@@ -170,9 +170,6 @@ def make_check_host_config(arch):
            "./cmd/check-host-config"]
     tags = [
         "containers_image_openpgp",
-        "exclude_graphdriver_btrfs",
-        "exclude_graphdriver_devicemapper",
-        "exclude_graphdriver_overlay",
     ]
     runcmd_nc(
         cmd,
