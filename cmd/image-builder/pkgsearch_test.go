@@ -72,6 +72,7 @@ func TestCmdPkgSearch(t *testing.T) {
 		expectedErr      string
 		expectedCacheDir string
 		mockHostDistro   string
+		mockHostArch     string
 	}{
 		{
 			name:         "with type",
@@ -129,12 +130,20 @@ func TestCmdPkgSearch(t *testing.T) {
 			name:         "default arch from host",
 			args:         []string{"pkgsearch", "bash", "--distro=centos-9"},
 			expectedPkgs: 2,
+			mockHostArch: "x86_64",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.mockHostDistro != "" {
 				restore := main.MockDistroGetHostDistroName(func() (string, error) {
 					return tc.mockHostDistro, nil
+				})
+				defer restore()
+			}
+
+			if tc.mockHostArch != "" {
+				restore := main.MockGetHostArch(func() string {
+					return tc.mockHostArch
 				})
 				defer restore()
 			}
