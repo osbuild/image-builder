@@ -102,7 +102,7 @@ help:  ## Print this usage information
 
 # keep in sync with:
 # https://github.com/containers/podman/blob/2981262215f563461d449b9841741339f4d9a894/Makefile#L51
-TAGS := containers_image_openpgp,exclude_graphdriver_btrfs,exclude_graphdriver_devicemapper
+TAGS := containers_image_openpgp
 ifneq ($(DEBUG),)
 TAGS := $(TAGS),profiling
 endif
@@ -227,8 +227,7 @@ test: ## run all tests locally
 	# Run unit tests
 	go test -timeout 20m -race  ./...
 	# Run unit tests without CGO
-	# keep tags in sync with BUILDTAGS_CROSS in https://github.com/containers/podman/blob/2981262215f563461d449b9841741339f4d9a894/Makefile#L85
-	CGO_ENABLED=0 go test -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper exclude_graphdriver_overlay" ./...
+	CGO_ENABLED=0 go test -tags "containers_image_openpgp" ./...
 	# Run depsolver tests with force-dnf to make sure it's not skipped for any reason
 	go test -race ./pkg/depsolvednf/... -force-dnf
 	# ensure our tags are consistent
@@ -236,7 +235,7 @@ test: ## run all tests locally
 
 .PHONY: host-check-test
 host-check-test: container_built_$(CONTAINER_IMAGE).info ## run all host checks in a container
-	CGO_ENABLED=0 go test -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper exclude_graphdriver_overlay" \
+	CGO_ENABLED=0 go test -tags "containers_image_openpgp" \
 		-c -o check-host-config.test ./cmd/check-host-config
 	podman run -v .:/app:z --rm --user root -e OSBUILD_TEST_CONTAINER=true -t $(CONTAINER_IMAGE) \
 		/app/check-host-config.test -test.v -test.run ^TestSmokeAll$$
