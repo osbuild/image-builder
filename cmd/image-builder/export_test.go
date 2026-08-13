@@ -121,6 +121,14 @@ func MockManifestgenContainerResolver(fn manifestgen.ContainerResolverFunc) (res
 	}
 }
 
+func MockGetHostArch(f func() string) (restore func()) {
+	saved := getHostArch
+	getHostArch = f
+	return func() {
+		getHostArch = saved
+	}
+}
+
 func MockPkgSearcher(f func(distro.Distro, string, string, []rpmmd.RepoConfig, []string) (rpmmd.PackageList, error)) (restore func()) {
 	saved := pkgSearcher
 	pkgSearcher = f

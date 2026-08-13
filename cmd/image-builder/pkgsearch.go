@@ -60,6 +60,10 @@ func (*jsonPkgFormatter) Output(w io.Writer, pkgs rpmmd.PackageList) error {
 
 // pkgSearcher performs the actual package search. It is a variable so
 // tests can replace it with a fake that doesn't require osbuild-depsolve-dnf.
+var getHostArch = func() string {
+	return arch.Current().String()
+}
+
 var pkgSearcher = func(d distro.Distro, archStr, cacheDir string, repos []rpmmd.RepoConfig, packages []string) (rpmmd.PackageList, error) {
 	solver := depsolvednf.NewSolver(d.ModulePlatformID(), d.Releasever(), archStr, d.Name(), cacheDir)
 	return solver.SearchMetadata(repos, packages)
@@ -111,7 +115,7 @@ func cmdPkgSearch(cmd *cobra.Command, args []string) error {
 	}
 
 	if archStr == "" {
-		archStr = arch.Current().String()
+		archStr = getHostArch()
 	}
 
 	imageType, err := cmd.Flags().GetString("type")
