@@ -51,6 +51,7 @@ jobs:
       - fedora-all-aarch64
       - fedora-all-s390x
       - fedora-all-ppc64le
+      - fedora-all-riscv64
       - fedora-all
       - rhel-9-aarch64
       - rhel-9-x86_64
