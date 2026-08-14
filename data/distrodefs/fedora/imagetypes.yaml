@@ -60,7 +60,6 @@
       - "anaconda"
       - "anaconda-dracut"
       - "anaconda-install-img-deps"
-      - "anaconda-widgets"
       - "atheros-firmware"
       - "audit"
       - "bind-utils"
@@ -195,7 +194,6 @@
   network_installer_pkgset: &network_installer_pkgset
     include:
       - anaconda
-      - anaconda-widgets
       - anaconda-install-img-deps
       - ostree
       - rpm-ostree
@@ -2798,7 +2796,6 @@ image_types:
             - anaconda
             - anaconda-dracut
             - anaconda-install-img-deps
-            - anaconda-widgets
             - atheros-firmware
             - audit
             - bind-utils
