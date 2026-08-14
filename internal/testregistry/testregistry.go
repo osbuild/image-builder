@@ -15,12 +15,46 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 )
 
+type credentials struct {
+	username string
+	password string
+}
+
 type Registry struct {
 	server *httptest.Server
 }
 
 func New() *Registry {
+	return newRegistry(nil)
+}
+
+func NewWithCredentials(user, pass string) *Registry {
+	return newRegistry(
+		&credentials{
+			username: user,
+			password: pass,
+		},
+	)
+}
+
+// basicAuthMiddleware intercepts requests to enforce credentials
+func basicAuthMiddleware(next http.Handler, creds credentials) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if !ok || user != creds.username || pass != creds.password {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Registry"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func newRegistry(creds *credentials) *Registry {
 	handler := registry.New()
+	if creds != nil {
+		handler = basicAuthMiddleware(handler, *creds)
+	}
 
 	ts := httptest.NewTLSServer(handler)
 
