@@ -184,11 +184,24 @@ func TestNewFakedUnhappy(t *testing.T) {
 	}
 
 	fakePodman := `#!/bin/sh
-if [ "$1" = "mount" ]; then
-    >&2 echo "forced-crash"
-    exit 2
-fi
-exec /usr/bin/podman "$@"
+case "$1" in
+    run)
+        echo "fake-container-id"
+        ;;
+    inspect)
+        echo "amd64"
+        ;;
+    mount)
+        >&2 echo "forced-crash"
+        exit 2
+        ;;
+    stop|rm)
+        exit 0
+        ;;
+    *)
+        exec /usr/bin/podman "$@"
+        ;;
+esac
 `
 	makeFakePodman(t, fakePodman)
 	_, err := bootc.NewContainer(testingImage)
