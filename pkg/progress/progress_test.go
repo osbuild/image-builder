@@ -109,22 +109,63 @@ func TestTermProgress(t *testing.T) {
 	restore := progress.MockOsStderr(&buf)
 	defer restore()
 
-	pbar, err := progress.NewTerminalProgressBar()
-	assert.NoError(t, err)
+	for _, tc := range []struct {
+		name     string
+		conf     progress.ProgressConfig
+		expected []string
+	}{
+		{
+			name: "default options",
+			conf: progress.ProgressConfig{},
+			expected: []string{
+				"[1 / 6] set-progress-msg",
+				"[|] pulse-msg\n",
+			},
+		},
+		{
+			name: "with message",
+			conf: progress.ProgressConfig{
+				WithMsg: true,
+			},
+			expected: []string{
+				"[1 / 6] set-progress-msg",
+				"[|] pulse-msg\n",
+				"Message: some-message\n",
+			},
+		},
+		{
+			name: "with speed & bytes",
+			conf: progress.ProgressConfig{
+				Bytes: true,
+				Speed: true,
+			},
+			expected: []string{
+				"[1 B / 6 B] set-progress-msg",
+				"p/s\n",
+				"[|] pulse-msg\n",
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			buf.Reset()
 
-	pbar.Start()
-	pbar.SetPulseMsgf("pulse-msg")
-	pbar.SetMessagef("some-message")
-	err = pbar.SetProgress(0, "set-progress-msg", 0, 5)
-	assert.NoError(t, err)
-	pbar.Stop()
-	assert.NoError(t, pbar.(*progress.TerminalProgressBar).Err())
+			pbar, err := progress.NewTerminalProgressBar(&tc.conf)
+			assert.NoError(t, err)
 
-	assert.Contains(t, buf.String(), "[1 / 6] set-progress-msg")
-	assert.Contains(t, buf.String(), "[|] pulse-msg\n")
-	assert.Contains(t, buf.String(), "Message: some-message\n")
-	// check shutdown
-	assert.Contains(t, buf.String(), progress.CURSOR_SHOW)
+			pbar.Start()
+			pbar.SetPulseMsgf("pulse-msg")
+			pbar.SetMessagef("some-message")
+			err = pbar.SetProgress(0, "set-progress-msg", 0, 5)
+			assert.NoError(t, err)
+			pbar.Stop()
+			assert.NoError(t, pbar.(*progress.TerminalProgressBar).Err())
+			for _, exp := range tc.expected {
+				assert.Contains(t, buf.String(), exp)
+			}
+			// check shutdown
+			assert.Contains(t, buf.String(), progress.CURSOR_SHOW)
+		})
+	}
 }
 
 func TestProgressNewAutoselect(t *testing.T) {
@@ -160,7 +201,9 @@ func TestFileProgress(t *testing.T) {
 	testDir := t.TempDir()
 	progressFile := filepath.Join(testDir, "progress")
 
-	pbar, err := progress.NewFileProgressBar(progressFile)
+	pbar, err := progress.NewFileProgressBar(&progress.ProgressConfig{
+		FilePath: progressFile,
+	})
 	assert.NoError(t, err)
 	pbar.Start()
 	_, err = os.Stat(progressFile)
