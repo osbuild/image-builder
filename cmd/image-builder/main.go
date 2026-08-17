@@ -689,6 +689,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 
 	pbar, err := progressFromCmd(cmd, progress.ProgressConfig{
 		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basenameFor(img, outputBasename))),
+		WithMsg:  true,
 	})
 	if err != nil {
 		return err
