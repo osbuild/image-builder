@@ -741,7 +741,7 @@ func TestFedoraDistroBootstrapRef(t *testing.T) {
 				if distroArch.Name() == "riscv64" {
 					bootstrapRef, err := imgType.Arch().Distro().BootstrapContainer(distroArch.Name())
 					require.NoError(t, err)
-					require.Equal(t, "ghcr.io/mvo5/fedora-buildroot:"+fedoraDistro.OsVersion(), bootstrapRef)
+					require.Equal(t, "ghcr.io/mvo5/fedora-buildroot:43", bootstrapRef)
 				} else {
 					bootstrapRef, err := imgType.Arch().Distro().BootstrapContainer(distroArch.Name())
 					require.NoError(t, err)
