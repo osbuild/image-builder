@@ -62,6 +62,9 @@ jobs:
         # They are tested separately (see below: requires root)
         run: go test -count=1 -race -timeout 20m ./... -test.skip 'TestBlockingResolverLocalManifest|TestResolverLocalManifest|TestGetManifestLocal'
 
+      - name: Run tests for bootc container
+        run: sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...
+
       - name: Run depsolver tests with force-dnf to make sure it's not skipped
         run: go test -count=1 -race ./pkg/depsolvednf/... -force-dnf
 
@@ -106,9 +109,6 @@ jobs:
 
       - name: Run unit tests for bib container
         run: sudo go test -count=1 ./pkg/bootc/... --fail-if-podman-missing
-
-      - name: Run tests for bootc container
-        run: sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...
 
   unit-tests-cs:
     strategy:
