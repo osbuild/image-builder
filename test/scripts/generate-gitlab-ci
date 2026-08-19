@@ -15,6 +15,7 @@ OSTREE_DISTROS = ["fedora", "rhel-8", "rhel-9", "centos-9"]
 BASE_CONFIG = """---
 stages:
   - init
+  - test
   - gen
   - build
   - ostree-gen
@@ -68,6 +69,8 @@ GEN_TEMPLATE = """
   artifacts:
     paths:
       - build-config.yml
+  needs:
+    - init
 """
 
 TRIGGER_TEMPLATE = """
@@ -137,11 +140,13 @@ MANIFEST_GEN_TEMPLATE = """
       fi;
     done
     exit "$errors"
+  needs:
+    - init
 """
 
 BOOTC_IMAGE_BUILDER_TEMPLATE = """
 "{test_file_path} [{arch}]":
-  stage: gen
+  stage: test
   extends: .terraform
   variables:
     RUNNER: {runner}-{arch}
@@ -155,6 +160,8 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
     - sudo ./test/scripts/install-dependencies
     - sudo mkdir -pv /var/tmp/bootc-image-builder-tests
     - sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/var/tmp/bootc-image-builder-tests {test_file_path}
+  needs:
+    - init
 """
 
 
