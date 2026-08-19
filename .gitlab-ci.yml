@@ -3113,3 +3113,34 @@ fail:
     exit "$errors"
   needs:
     - init
+
+# The unit tests that require root and/or access to the host root container storage and sometimes misbehave on GitHub
+# runners
+"Unit tests [x86_64]":
+  stage: test
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-x86_64
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...
+    - sudo go test -count=1 ./pkg/container/... --force-local-resolver
+    - sudo go test -count=1 ./pkg/bootc/... --fail-if-podman-missing
+  needs:
+    - init
+
+
+# The unit tests that require root and/or access to the host root container storage and sometimes misbehave on GitHub
+# runners
+"Unit tests [aarch64]":
+  stage: test
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-aarch64
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...
+    - sudo go test -count=1 ./pkg/container/... --force-local-resolver
+    - sudo go test -count=1 ./pkg/bootc/... --fail-if-podman-missing
+  needs:
+    - init

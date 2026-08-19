@@ -164,6 +164,23 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
     - init
 """
 
+UNIT_TESTS_TEMPLATE = """
+# The unit tests that require root and/or access to the host root container storage and sometimes misbehave on GitHub
+# runners
+"Unit tests [{arch}]":
+  stage: test
+  extends: .terraform
+  variables:
+    RUNNER: {runner}-{arch}
+  script:
+    - sudo ./test/scripts/install-dependencies
+    - sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...
+    - sudo go test -count=1 ./pkg/container/... --force-local-resolver
+    - sudo go test -count=1 ./pkg/bootc/... --fail-if-podman-missing
+  needs:
+    - init
+"""
+
 
 def sort_configs(configs):
     return sorted(configs, key=lambda img: img["distro"]+img["arch"]+img["image-type"])
@@ -242,6 +259,14 @@ def main():
                 test_file_path=test_file_path,
             ))
 
+    # run select unit tests on the default runner for both arches
+    test_stage = []
+    for arch in ARCHITECTURES:
+        test_stage.append(UNIT_TESTS_TEMPLATE.format(
+            runner=RUNNER,
+            arch=arch,
+        ))
+
     with open(config_path, "w", encoding="utf-8") as config_file:
         config_file.write(BASE_CONFIG.format(runner=RUNNER))
         config_file.write(testlib.core.BASE_CONFIG)
@@ -250,6 +275,7 @@ def main():
         config_file.write("\n".join(ostree_gen_stage))
         config_file.write("\n".join(ostree_trigger_stage))
         config_file.write("\n".join(man_gen_stage))
+        config_file.write("\n".join(test_stage))
 
 
 if __name__ == "__main__":
