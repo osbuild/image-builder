@@ -175,7 +175,6 @@ func makeFakePodman(t *testing.T, content string) {
 	err := os.WriteFile(filepath.Join(tmpdir, "podman"), []byte(content), 0755)
 	assert.NoError(t, err)
 }
-
 func TestNewFakedUnhappy(t *testing.T) {
 	if os.Geteuid() != 0 {
 		t.Skip("skipping test; not running as root")
@@ -193,10 +192,8 @@ exec /usr/bin/podman "$@"
 `
 	makeFakePodman(t, fakePodman)
 	_, err := bootc.NewContainer(testingImage)
-	// Exact error message matching fails in GitHub Actions because of changes
-	// in the podman package in the ubuntu runner. Checking only that it
-	// failed.
-	assert.Error(t, err)
+	assert.ErrorContains(t, err, fmt.Sprintf("mounting %s container failed: ", testingImage))
+	assert.ErrorContains(t, err, "stderr:\nforced-crash")
 }
 
 func TestRootfsTypeHappy(t *testing.T) {
