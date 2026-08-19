@@ -122,6 +122,19 @@ func TestResolverFail(t *testing.T) {
 	assert.Len(t, specs, 0)
 }
 
+func TestResolverErrorIncludesSource(t *testing.T) {
+	resolver := container.NewResolver("amd64")
+	missing := "localhost/image-builder-missing-payload:debug"
+	_, err := resolver.Resolve(container.SourceSpec{
+		Source: missing,
+		Name:   missing,
+		Local:  true,
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), missing)
+	assert.NotRegexp(t, `failed to resolve container: '':`, err.Error())
+}
+
 func TestResolverLocalManifest(t *testing.T) {
 	currentUser, err := user.Current()
 	assert.NoError(t, err)
