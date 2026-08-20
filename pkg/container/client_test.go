@@ -413,46 +413,6 @@ func TestSetArchitectureChoice(t *testing.T) {
 	}
 }
 
-func TestParseImageName(t *testing.T) {
-	testCases := []struct {
-		name      string
-		input     string
-		expectErr string
-	}{
-		{
-			name:      "no-colon",
-			input:     "nocolon",
-			expectErr: "invalid image name 'nocolon'",
-		},
-		{
-			name:      "unknown-transport",
-			input:     "invalid:/some/path",
-			expectErr: "unknown transport 'invalid'",
-		},
-		{
-			name:  "valid-oci-archive",
-			input: "oci-archive:/dev/null",
-		},
-		{
-			name:  "valid-oci",
-			input: "oci:/dev/null",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ref, err := container.ParseImageName(tc.input)
-			if tc.expectErr != "" {
-				assert.Nil(t, ref)
-				assert.EqualError(t, err, tc.expectErr)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, ref)
-			}
-		})
-	}
-}
-
 func TestGetManifest(t *testing.T) {
 	require := require.New(t)
 
