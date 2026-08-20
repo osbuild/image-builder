@@ -1,5 +1,5 @@
 FROM registry.fedoraproject.org/fedora:44 AS builder
-RUN dnf install -y git-core golang gpgme-devel libassuan-devel && mkdir -p /build/
+RUN dnf install -y git-core golang && mkdir -p /build/
 WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download

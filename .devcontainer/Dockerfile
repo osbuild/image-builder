@@ -3,7 +3,6 @@ FROM fedora:latest
 # Install:
 #  - a few packages for convenient usage
 #  - the go compiler
-#  - gpgme-devel
 #  - osbuild
 RUN dnf install -y \
   fish \
@@ -11,7 +10,6 @@ RUN dnf install -y \
   ripgrep \
   jq \
   go \
-  gpgme-devel \
   osbuild \
   osbuild-lvm2 \
   osbuild-luks2 \
