@@ -2,6 +2,7 @@ package testregistry
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/distribution/distribution/v3/configuration"
+	"github.com/distribution/distribution/v3/registry/handlers"
 	"github.com/opencontainers/go-digest"
 
 	"github.com/containers/image/v5/docker/reference"
@@ -21,6 +24,8 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/container"
+
+	_ "github.com/distribution/distribution/v3/registry/storage/driver/inmemory"
 )
 
 /*
@@ -423,4 +428,27 @@ func (reg *Registry) Resolve(target string, imgArch arch.Arch) (container.Spec, 
 
 func (reg *Registry) Close() {
 	reg.server.Close()
+}
+
+func NewDistributionRegistry() *Registry {
+	cfg := &configuration.Configuration{
+		Storage: configuration.Storage{
+			"inmemory": configuration.Parameters{}, // use inmemory storage driver
+		},
+	}
+
+	ctx := context.Background()
+	regHandler := handlers.NewApp(ctx, cfg)
+
+	ts := httptest.NewTLSServer(regHandler)
+
+	r := &Registry{
+		server: ts,
+	}
+
+	return r
+}
+
+func (r *Registry) Host() string {
+	return r.server.Listener.Addr().String()
 }
