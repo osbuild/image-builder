@@ -70,13 +70,6 @@ the normal `go` command or use
 $ make build
 ```
 
-To compile without go build tags you will need to install
-the required RPMs:
-
-```console
-$ sudo dnf install gpgme-devel
-```
-
 ## Prerequisites
 
 Make sure to have the required `osbuild` RPMs installed:
