@@ -29,7 +29,7 @@ func TestResolver(t *testing.T) {
 	registry := testregistry.NewGoContainerRegistry()
 	defer registry.Close()
 
-	digests := make(map[string]map[string]string) // ref -> arch -> digest
+	digests := make(map[string]map[string]testregistry.Image) // ref -> arch -> digest
 
 	// add 10 manifest lists and then resolve them, verifying the digests we
 	// get from the resolver
@@ -41,7 +41,7 @@ func TestResolver(t *testing.T) {
 	}
 
 	for ref, images := range digests {
-		for arch, digest := range images {
+		for arch, image := range images {
 			resolver := container.NewResolver(arch)
 			resolver.Add(container.SourceSpec{
 				Source:    registry.GetRef(ref),
@@ -54,7 +54,7 @@ func TestResolver(t *testing.T) {
 			have, err := resolver.Finish()
 			require.NoError(err)
 			require.NotNil(have)
-			require.Equal(digest, have[0].Digest)
+			require.Equal(image.Digest(), have[0].Digest)
 		}
 	}
 }
