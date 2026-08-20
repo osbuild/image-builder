@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/opencontainers/go-digest"
 
 	"github.com/containers/image/v5/docker/reference"
@@ -423,4 +424,20 @@ func (reg *Registry) Resolve(target string, imgArch arch.Arch) (container.Spec, 
 
 func (reg *Registry) Close() {
 	reg.server.Close()
+}
+
+func NewGoContainerRegistry() *Registry {
+	handler := registry.New()
+
+	ts := httptest.NewTLSServer(handler)
+
+	r := &Registry{
+		server: ts,
+	}
+
+	return r
+}
+
+func (r *Registry) Host() string {
+	return r.server.Listener.Addr().String()
 }
