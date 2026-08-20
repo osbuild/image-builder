@@ -8,6 +8,13 @@ DISK_IMAGE_TYPES = VANILLA_REF_IMAGE_TYPES | CLOUD_IMAGE_TYPES
 INSTALLER_IMAGE_TYPES = {"bootc-generic-iso", "bootc-installer"}
 
 
+# Dynamic bootc CI scope is currently limited to fedora-44 / x86_64 / qcow2+ami.
+BOOTC_SOURCES = ["fedora-44"]
+BOOTC_ARCHES = ["x86_64"]
+BOOTC_IMAGE_TYPES = ["qcow2", "ami"]
+BOOTC_CONFIGS = {"bootc-empty"}
+
+
 def load_bootc_source(source_name):
     path = os.path.join(BOOTCREFS_PATH, source_name + ".json")
     with open(path, encoding="utf-8") as source_file:
@@ -30,6 +37,13 @@ def resolve_bootc_source(source_name, arch):
         raise TypeError(f"bootc source {source_name} entry for arch {arch} must be an object")
 
     return entry
+
+
+def bootc_source_from_distro(distro):
+    """Remove the bootc prefix from the distro name."""
+    if not distro.startswith("bootc-"):
+        return None
+    return distro.removeprefix("bootc-").rsplit(".", 1)[0]
 
 
 def resolve_ref_from_entry(entry, source_name, arch, image_type=None):
