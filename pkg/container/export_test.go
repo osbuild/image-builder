@@ -23,5 +23,3 @@ func NewBlockingResolverWithTestClient(arch string, f func(string) (*Client, err
 func ClientSysctx(cl *Client) *types.SystemContext {
 	return cl.sysCtx
 }
-
-var ParseImageName = parseImageName

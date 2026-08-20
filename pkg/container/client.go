@@ -21,8 +21,6 @@ import (
 
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/signature"
-	"github.com/containers/image/v5/transports"
 	"github.com/containers/image/v5/types"
 	"github.com/opencontainers/go-digest"
 
@@ -33,8 +31,7 @@ import (
 )
 
 const (
-	DefaultUserAgent  = "osbuild-composer/1.0"
-	DefaultPolicyPath = "/etc/containers/policy.json"
+	DefaultUserAgent = "osbuild-composer/1.0"
 )
 
 // GetDefaultAuthFile returns the authentication file to use for the
@@ -107,7 +104,6 @@ type Client struct {
 	UserAgent string // user agent string to use for requests, defaults to DefaultUserAgent
 
 	// internal state
-	policy *signature.Policy
 	sysCtx *types.SystemContext
 
 	store string // another store location other than the main one, useful for testing
@@ -120,20 +116,6 @@ func NewClient(target string) (*Client, error) {
 	ref, err := reference.ParseNormalizedNamed(target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse '%s': %w", target, err)
-	}
-
-	var policy *signature.Policy
-	if _, err := os.Stat(DefaultPolicyPath); err == nil {
-		policy, err = signature.NewPolicyFromFile(DefaultPolicyPath)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		policy = &signature.Policy{
-			Default: []signature.PolicyRequirement{
-				signature.NewPRInsecureAcceptAnything(),
-			},
-		}
 	}
 
 	client := Client{
@@ -153,8 +135,7 @@ func NewClient(target string) (*Client, error) {
 
 			AuthFilePath: GetDefaultAuthFile(),
 		},
-		policy: policy,
-		store:  "/var/lib/containers/storage",
+		store: "/var/lib/containers/storage",
 	}
 
 	// default to the host architecture
@@ -248,21 +229,6 @@ func (cl *Client) GetTLSVerify() *bool {
 // SetTLSVerify with false
 func (cl *Client) SkipTLSVerify() {
 	cl.SetTLSVerify(common.ToPtr(false))
-}
-
-func parseImageName(name string) (types.ImageReference, error) {
-
-	parts := strings.SplitN(name, ":", 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid image name '%s'", name)
-	}
-
-	transport := transports.Get(parts[0])
-	if transport == nil {
-		return nil, fmt.Errorf("unknown transport '%s'", parts[0])
-	}
-
-	return transport.ParseReference(parts[1])
 }
 
 // UploadImage takes a container image located at from and uploads it to the
