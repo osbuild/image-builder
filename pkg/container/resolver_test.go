@@ -59,6 +59,51 @@ func TestResolver(t *testing.T) {
 	}
 }
 
+func TestResolverResolveAll(t *testing.T) {
+	// Similar test as above but resolving all containers at the same time
+	require := require.New(t)
+
+	registry := testregistry.NewDistributionRegistry()
+	defer registry.Close()
+
+	allImages := make(map[string]map[string]testregistry.Image) // ref -> arch -> digest
+
+	for i := range 10 {
+		ref := fmt.Sprintf("library/osbuild:%d", i)
+		_, images, err := registry.PopulateWithManifestList(ref)
+		require.NoError(err)
+		refWithHost := registry.GetRef(ref)
+		allImages[refWithHost] = images
+	}
+
+	// make one resolver for each arch and resolve all container refs for that
+	// architecture
+	for _, arch := range []string{"amd64", "arm64", "s390x", "ppc64le"} {
+		resolver := container.NewResolver(arch)
+
+		for refWithHost := range allImages {
+			resolver.Add(container.SourceSpec{
+				Source:    refWithHost,
+				Name:      refWithHost,
+				Digest:    common.ToPtr(""),
+				TLSVerify: common.ToPtr(false),
+				Local:     false,
+			})
+		}
+
+		results, err := resolver.Finish()
+		require.NoError(err)
+		require.NotNil(results)
+
+		for _, result := range results {
+			// the LocalName should be the Name we added to the source spec, which is refWithHost
+			expImage := allImages[result.LocalName][arch]
+			require.Equal(expImage.Digest(), result.Digest)
+			require.Equal(expImage.ImageID(), result.ImageID)
+		}
+	}
+}
+
 func TestResolverFail(t *testing.T) {
 	resolver := container.NewResolver("amd64")
 
