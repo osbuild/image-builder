@@ -60,7 +60,6 @@ sudo ./test/scripts/install-dependencies
 The minimal dependencies are:
 
 - `go`
-- `gpgme-devel`
 - `libvirt-devel`
 
 Other dependencies only needed in some cases are:

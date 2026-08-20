@@ -1,5 +1,5 @@
 FROM registry.fedoraproject.org/fedora:44 AS builder
-RUN dnf install -y git-core golang gpgme-devel libassuan-devel libvirt-devel && mkdir -p /build/bib
+RUN dnf install -y git-core golang libvirt-devel && mkdir -p /build/bib
 COPY go.mod go.sum /build/bib/
 RUN cd /build/bib && go mod download
 # Copy the entire dir to avoid having to conditionally include ".git" as that

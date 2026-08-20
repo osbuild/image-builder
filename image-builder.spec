@@ -30,15 +30,8 @@ BuildRequires:  skopeo
 
 # Build requirements of the `kerby/kerby` package
 BuildRequires:  krb5-devel
-# Build requirements of 'theproglottis/gpgme' package
-BuildRequires:  gpgme-devel
-BuildRequires:  libassuan-devel
-# Build requirements of 'github.com/containers/storage' package
-BuildRequires:  device-mapper-devel
 BuildRequires:  libxcrypt-devel
 %if 0%{?fedora}
-# Build requirements of 'github.com/containers/storage' package
-BuildRequires:  btrfs-progs-devel
 # for _tmpfilesdir macro
 BuildRequires:  systemd-rpm-macros
 # DO NOT REMOVE the BUNDLE_START and BUNDLE_END markers as they are used by 'tools/rpm_spec_add_provides_bundle.sh' to generate the Provides: bundled list

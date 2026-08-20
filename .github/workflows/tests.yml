@@ -106,7 +106,7 @@ jobs:
         run: ./test/scripts/setup-osbuild-repo
 
       - name: Install build and test dependencies
-        run: dnf -y install krb5-devel libvirt-devel gcc git-core go gpgme-devel osbuild-depsolve-dnf device-mapper-devel
+        run: ./test/scripts/install-dependencies
 
       - name: Mark the working directory as safe for git
         run: git config --global --add safe.directory "$(pwd)"
@@ -147,10 +147,6 @@ jobs:
       # This is needed to lint pkg/cloud/libvirt package
       - name: Install libvirt devel package
         run: sudo apt install -y libvirt-dev
-
-      # This is needed for the container resolver dependencies
-      - name: Install libgpgme devel package
-        run: sudo apt install -y libgpgme-dev libbtrfs-dev libdevmapper-dev podman
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
