@@ -26,7 +26,7 @@ var forceLocal = flag.Bool(
 func TestResolver(t *testing.T) {
 	require := require.New(t)
 
-	registry := testregistry.NewDistributionRegistry()
+	registry := testregistry.New()
 	defer registry.Close()
 
 	digests := make(map[string]map[string]testregistry.Image) // ref -> arch -> digest
@@ -63,7 +63,7 @@ func TestResolverResolveAll(t *testing.T) {
 	// Similar test as above but resolving all containers at the same time
 	require := require.New(t)
 
-	registry := testregistry.NewDistributionRegistry()
+	registry := testregistry.New()
 	defer registry.Close()
 
 	allImages := make(map[string]map[string]testregistry.Image) // ref -> arch -> digest
@@ -118,7 +118,7 @@ func TestResolverFail(t *testing.T) {
 	assert.Error(t, err)
 	assert.Len(t, specs, 0)
 
-	registry := testregistry.NewDistributionRegistry()
+	registry := testregistry.New()
 	defer registry.Close()
 
 	badRef := fmt.Sprintf("%s/org/notarepo", registry.Host())

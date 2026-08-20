@@ -19,7 +19,7 @@ import (
 func TestBlockingResolver(t *testing.T) {
 	require := require.New(t)
 
-	registry := testregistry.NewDistributionRegistry()
+	registry := testregistry.New()
 	defer registry.Close()
 
 	allImages := make(map[string]map[string]testregistry.Image) // ref -> arch -> digest
@@ -56,7 +56,7 @@ func TestBlockingResolverResolveAll(t *testing.T) {
 	// Similar test as above but resolving all containers at the same time
 	require := require.New(t)
 
-	registry := testregistry.NewDistributionRegistry()
+	registry := testregistry.New()
 	defer registry.Close()
 
 	allImages := make(map[string]map[string]testregistry.Image) // ref -> arch -> digest
@@ -111,7 +111,7 @@ func TestBlockingResolverFail(t *testing.T) {
 	assert.Error(t, err)
 	assert.Len(t, specs, 0)
 
-	registry := testregistry.NewDistributionRegistry()
+	registry := testregistry.New()
 	defer registry.Close()
 
 	resolver.Add(container.SourceSpec{
