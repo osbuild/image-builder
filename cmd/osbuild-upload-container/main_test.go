@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -104,6 +105,66 @@ func TestSimpleUpload(t *testing.T) {
 
 	// use our own resolver to verify the uploaded image
 	resolver := container.NewBlockingResolver("arm64")
+	spec := container.SourceSpec{
+		Source:    pushRef,
+		TLSVerify: common.ToPtr(false),
+	}
+	res, err := resolver.Resolve(spec)
+	require.NoError(err)
+	require.NotNil(res)
+
+	digest, err := image.Digest()
+	require.NoError(err)
+	require.Equal(digest.String(), res.Digest)
+
+	config, err := image.ConfigName()
+	require.NoError(err)
+	require.Equal(config.String(), res.ImageID)
+}
+
+// writeAuthFile shells out to skopeo to write the auth file in the
+// containers-auth.json format.
+func writeAuthFile(t *testing.T, path, registry, user, pass string) {
+	t.Helper()
+	cmd := exec.Command(
+		"skopeo",
+		"login",
+		"--tls-verify=false",
+		"--authfile", path,
+		"--username", user,
+		"--password", pass,
+		registry,
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("failed to write auth file: %s (%v)", string(out), err)
+	}
+}
+
+func TestUploadWithCredentials(t *testing.T) {
+	ref := "test2/osbuild:latest"
+	user := "me"
+	pass := "osbuild1337"
+
+	require := require.New(t)
+	registry := testregistry.NewWithCredentials(user, pass)
+	defer registry.Close()
+
+	pushRef := registry.GetRef(ref)
+
+	tmpdir := t.TempDir()
+	archivePath := filepath.Join(tmpdir, "container.tar")
+
+	image := randOCIArchive(t, archivePath)
+	require.NoError(upload(archivePath, pushRef, "latest", user, pass, true))
+
+	// use our own resolver to verify the uploaded image
+	resolver := container.NewBlockingResolver("arm64")
+
+	authFilePath := filepath.Join(tmpdir, "auth.json")
+	writeAuthFile(t, authFilePath, registry.Host(), user, pass)
+	resolver.SetAuthFilePath(authFilePath)
+
 	spec := container.SourceSpec{
 		Source:    pushRef,
 		TLSVerify: common.ToPtr(false),
