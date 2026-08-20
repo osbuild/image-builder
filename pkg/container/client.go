@@ -19,9 +19,6 @@ import (
 	_ "github.com/containers/image/v5/oci/layout"
 	"golang.org/x/sys/unix"
 
-	"github.com/containers/common/pkg/retry"
-	"github.com/containers/image/v5/copy"
-	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/containers/image/v5/manifest"
 	"github.com/containers/image/v5/signature"
@@ -302,75 +299,81 @@ func parseImageName(name string) (types.ImageReference, error) {
 	return transport.ParseReference(parts[1])
 }
 
-// UploadImage takes an container image located at from and uploads it
-// to the Target of Client. If tag is set, i.e. not the empty string,
-// it will replace any previously set tag or digest of the target.
-// Returns the digest of the manifest that was written to the server.
+// UploadImage takes a container image located at from and uploads it to the
+// Target of Client. If tag is set, i.e. not the empty string, it will replace
+// any previously set tag or digest of the target. Returns the digest of the
+// manifest that was written to the server.
 func (cl *Client) UploadImage(ctx context.Context, from, tag string) (digest.Digest, error) {
-
-	targetCtx := *cl.sysCtx
-	targetCtx.DockerRegistryPushPrecomputeDigests = cl.PrecomputeDigests
-
-	policyContext, err := signature.NewPolicyContext(cl.policy)
-
-	if err != nil {
-		return "", err
-	}
-
-	srcRef, err := parseImageName(from)
-	if err != nil {
-		return "", fmt.Errorf("invalid source name '%s': %w", from, err)
-	}
-
 	target := cl.Target
 
 	if tag != "" {
 		target = reference.TrimNamed(target)
+
+		var err error
 		target, err = reference.WithTag(target, tag)
 		if err != nil {
-			return "", fmt.Errorf("error creating reference with tag '%s': %w", tag, err)
+			return "", fmt.Errorf("failed to create reference with tag '%s': %w", tag, err)
 		}
 	}
 
-	destRef, err := docker.NewReference(target)
+	// start building skopeo copy command
+	cmd := exec.CommandContext(ctx, "skopeo")
+	cmd.Args = append(cmd.Args, "copy", "--all")
+
+	// write the digest to a file so we can return it
+	digestFile, err := os.CreateTemp("", "image-builder-container-upload-digest-*")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create digest file for upload: %w", err)
+	}
+	defer os.Remove(digestFile.Name())
+	digestFile.Close()
+	cmd.Args = append(cmd.Args, fmt.Sprintf("--digestfile=%s", digestFile.Name()))
+
+	if cl.PrecomputeDigests {
+		cmd.Args = append(cmd.Args, "--dest-precompute-digests")
 	}
 
-	retryOpts := retry.RetryOptions{
-		MaxRetry: cl.MaxRetries,
+	if cl.MaxRetries > 0 {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--retry-times=%d", cl.MaxRetries))
 	}
 
-	var manifestDigest digest.Digest
+	if tls := cl.GetTLSVerify(); tls != nil && !*tls {
+		cmd.Args = append(cmd.Args, "--dest-tls-verify=false")
+	}
 
-	err = retry.RetryIfNecessary(ctx, func() error {
-		manifestBytes, err := copy.Image(ctx, policyContext, destRef, srcRef, &copy.Options{
-			RemoveSignatures:      false,
-			SignBy:                "",
-			SignPassphrase:        "",
-			ReportWriter:          cl.ReportWriter,
-			SourceCtx:             cl.sysCtx,
-			DestinationCtx:        &targetCtx,
-			ForceManifestMIMEType: "",
-			ImageListSelection:    copy.CopyAllImages,
-			PreserveDigests:       false,
-		})
+	if authfile := cl.GetAuthFilePath(); authfile != "" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--authfile=%s", authfile))
+	}
 
-		if err != nil {
-			return err
-		}
+	if dockerAuth := cl.sysCtx.DockerAuthConfig; dockerAuth != nil {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--dest-creds=%s:%s", dockerAuth.Username, dockerAuth.Password))
+	}
 
-		manifestDigest, err = manifest.Digest(manifestBytes)
+	if certPath := cl.sysCtx.DockerCertPath; certPath != "" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--dest-cert-dir=%s", certPath))
+	}
 
-		return err
+	cmd.Args = append(cmd.Args, from, fmt.Sprintf("docker://%s", target.String()))
 
-	}, &retryOpts)
+	cmd.Stdout = cl.ReportWriter
+	cmd.Stderr = cl.ReportWriter
 
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("skopeo copy (upload) failed: %w", err)
+	}
+
+	digestData, err := os.ReadFile(digestFile.Name())
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to read digest file: %w", err)
 	}
 
-	return manifestDigest, nil
+	// parse the digest to verify it's valid
+	uploadedDigest, err := digest.Parse(strings.TrimSpace(string(digestData)))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse digest after upload %q: %w", string(digestData), err)
+	}
+
+	return uploadedDigest, nil
 }
 
 // A RawManifest contains the raw manifest Data and its MimeType
