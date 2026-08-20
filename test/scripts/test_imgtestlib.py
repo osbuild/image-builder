@@ -35,6 +35,12 @@ def test_runcmd_env():
     assert stderr == b""
 
 
+def test_bootc_source_from_distro():
+    assert testlib.bootcsource.bootc_source_from_distro("bootc-rhel-10.2") == "rhel-10"
+    assert testlib.bootcsource.bootc_source_from_distro("bootc-fedora-44") == "fedora-44"
+    assert testlib.bootcsource.bootc_source_from_distro("fedora-41") is None
+
+
 def test_resolve_fedora_44_bootc_refs():
     ref = "quay.io/fedora/fedora-bootc:44"
     assert testlib.bootcsource.resolve_bootc_source_ref("fedora-44", "x86_64", "qcow2") == ref

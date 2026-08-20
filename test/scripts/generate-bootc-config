@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+#
+# Generates gitlab child pipelines for building bootc images.
+# Each pipeline should build a single image configuration test.
+import os
+from tempfile import TemporaryDirectory
+
+import imgtestlib as testlib
+
+JOB_TEMPLATE = """
+build/{distro}/{arch}/{image_type}/{config_name}:
+  stage: test
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - podman pull {bootc_ref}
+    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"
+    - ./test/scripts/boot-image "{image_path}" "{config}"
+    - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"
+  extends: .terraform
+  tags:
+    - {tag}
+  variables:
+    RUNNER: {runner}-{arch}
+    INTERNAL_NETWORK: "false"
+"""
+
+
+def should_skip(config_name, image_type):
+    return (image_type not in testlib.bootcsource.BOOTC_IMAGE_TYPES
+            or config_name not in testlib.bootcsource.BOOTC_CONFIGS)
+
+
+def group_image_types_by_ref(bootc_source, arch):
+    """Group active image types by their resolved bootc refspec."""
+    groups = {}
+    bootc_entry = testlib.bootcsource.resolve_bootc_source(bootc_source, arch)
+    base_ref = bootc_entry.get("ref")
+    build_ref = bootc_entry.get("build_ref")
+    for image_type in testlib.bootcsource.BOOTC_IMAGE_TYPES:
+        ref = testlib.bootcsource.resolve_ref_from_entry(bootc_entry, bootc_source, arch, image_type=image_type)
+        if ref is None:
+            continue
+        refspec = ref
+        if ref == base_ref and build_ref:
+            refspec = f"{ref}#{build_ref}"
+        groups.setdefault(refspec, []).append(image_type)
+    return groups
+
+
+@testlib.gitlab.log_section("Generating manifests")
+def generate_manifests(outputdir, arch, bootc_source):
+    """Generate bootc manifests and return a dict mapping each manifest to its data and ID."""
+    print(f"🗒️ Generating bootc manifests using the default config list for {bootc_source} [{arch}]")
+
+    for bootc_refspec, image_types in group_image_types_by_ref(bootc_source, arch).items():
+        print(f"  using {bootc_refspec} for image types: {', '.join(image_types)}")
+        err = testlib.core.gen_manifests(outputdir, arches=[arch],
+                                         images=image_types,
+                                         bootc_refs=[bootc_refspec],
+                                         skip_no_config=True)
+
+        stderr = err.decode().splitlines()
+        for line in stderr:
+            if "No match for group package" in line:
+                continue
+            if "Failed to load consumer certs" in line:
+                continue
+            print(line)
+
+    print("✅ Manifest generation done!\n")
+    return testlib.core.read_manifests(outputdir)
+
+
+def generate_configs(build_requests, pipeline_file, bootc_source):
+    print(f"🧪 Generating dynamic pipelines for {len(build_requests)} builds")
+    bootc_entries = {}
+    for build in build_requests:
+        distro = build["distro"]
+        arch = build["arch"]
+        image_type = build["image-type"]
+        config = build["config"]
+        config_name = config["name"]
+
+        if testlib.bootcsource.bootc_source_from_distro(distro) != bootc_source:
+            print(f"🦘 Skipping {distro}/{arch}/{image_type}/{config_name}: "
+                  f"does not match bootc source {bootc_source}")
+            continue
+
+        if should_skip(config_name, image_type):
+            print(f"🦘 Skipping {distro}/{arch}/{image_type}/{config_name}")
+            continue
+
+        build_name = testlib.build.gen_build_name(distro, arch, image_type, config_name)
+        image_path = f"./build/{build_name}"
+
+        runner = testlib.testenv.get_ci_runner_for(distro, arch, image_type)
+        tag = testlib.core.get_tag_for(runner)
+        if arch not in bootc_entries:
+            bootc_entries[arch] = testlib.bootcsource.resolve_bootc_source(bootc_source, arch)
+        bootc_ref = testlib.bootcsource.resolve_ref_from_entry(bootc_entries[arch], bootc_source, arch,
+                                                               image_type=image_type)
+
+        if bootc_ref is None:
+            print(f"🦘 Skipping {distro}/{arch}/{image_type}/{config_name}: no derived ref")
+            continue
+
+        config_path = os.path.join(testlib.core.CONFIGS_PATH, config_name + ".json")
+        pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
+                                                runner=runner, tag=tag,
+                                                config_name=config_name, config=config_path,
+                                                image_path=image_path, bootc_ref=bootc_ref))
+    print("✅ DONE!")
+
+
+def main():
+    parser = testlib.core.bootc_clargs()
+    args = parser.parse_args()
+
+    arch = args.arch
+    bootc_source = args.bootc_source
+
+    testlib.core.check_config_names()
+
+    with TemporaryDirectory[str]() as manifest_dir:
+        manifests = generate_manifests(manifest_dir, arch, bootc_source)
+
+    s3_distro = None
+    for manifest in manifests.values():
+        s3_distro = manifest["data"]["build-request"]["distro"]
+        break
+    build_requests = testlib.core.filter_builds(manifests, distro=s3_distro, arch=arch)
+
+    build_requests = [b for b in build_requests
+                      if not should_skip(b["config"]["name"], b["image-type"])]
+    with open(args.config, "w", encoding="utf-8") as config_file:
+        if len(build_requests) == 0:
+            print("⚫ No manifest changes detected. Generating null config.")
+            config_file.write(testlib.core.NULL_CONFIG)
+            return
+
+        config_file.write(testlib.core.BASE_CONFIG)
+        generate_configs(build_requests, config_file, bootc_source)
+
+
+if __name__ == "__main__":
+    main()

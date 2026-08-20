@@ -5,6 +5,7 @@ import pathlib
 import sys
 from typing import Dict
 
+from .bootcsource import bootc_source_from_distro, resolve_bootc_source_ref
 from .build import get_manifest_id
 from .cache import dl_build_info, gen_build_info_dir_path_prefix
 from .gitlab import log_section
@@ -284,6 +285,17 @@ def clargs():
     return parser
 
 
+def bootc_clargs():
+    default_arch = os.uname().machine
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str, help="path to write config")
+    parser.add_argument("--bootc-source", type=str, required=True,
+                        help="bootc source name (test/data/bootcrefs/<name>.json)")
+    parser.add_argument("--arch", type=str, default=default_arch,
+                        help="architecture to generate configs for (defaults to host architecture)")
+    return parser
+
+
 def is_manifest_list(data):
     """Inspect a manifest determine if it's a multi-image manifest-list."""
     media_type = data.get("mediaType")
@@ -398,6 +410,13 @@ def read_manifest(build_path: str) -> Dict:
 def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, blueprint):
     if image_type not in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
         return False
+
+    if distro.startswith("bootc-"):
+        source_name = bootc_source_from_distro(distro)
+        ref = resolve_bootc_source_ref(source_name, arch, image_type)
+        if not ref:
+            print(f"  not bootable: bootc source {source_name} has no usable ref for {image_type}")
+            return False
 
     if image_type in ["image-installer", "minimal-installer"]:
         if not blueprint.get("customizations", {}).get("installer", {}).get("unattended"):
