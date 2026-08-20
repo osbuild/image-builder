@@ -3,12 +3,35 @@ import os
 import tempfile
 from typing import Dict, List
 
+from .bootcsource import bootc_source_from_distro, resolve_bootc_source, resolve_bootc_source_ref
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
 
 
-def config_to_cli_args(config: dict) -> List[str]:
+def resolve_bootc_options(config: dict, distro: str, arch: str, image_type: str = None) -> dict:
+    bootc = dict(config.get("options", {}).get("bootc", {}))
+    if not distro.startswith("bootc-"):
+        return bootc
+
+    source_name = bootc_source_from_distro(distro)
+    source_data = dict(resolve_bootc_source(source_name, arch))
+    ref = resolve_bootc_source_ref(source_name, arch, image_type=image_type)
+    if ref is not None:
+        source_data["ref"] = ref
+    else:
+        # cloud/installer types without derived_refs must not fall back to the
+        # vanilla bootc image from the source file.
+        source_data.pop("ref", None)
+    merged = {**source_data, **bootc}
+    # bootc-with-payload.json hardcodes centos-bootc
+    # use the distro's bootc image so rhel-10 installer jobs resolve locally
+    if merged.get("installer_payload_ref") and not merged.get("use_remote_container_source") and merged.get("ref"):
+        merged["installer_payload_ref"] = merged["ref"]
+    return merged
+
+
+def config_to_cli_args(config: dict, bootc: dict) -> List[str]:
     args: List[str] = []
 
     blueprint = config.get("blueprint", {})
@@ -25,7 +48,10 @@ def config_to_cli_args(config: dict) -> List[str]:
     if parent := ostree.get("parent"):
         args.append(f"--ostree-parent={parent}")
 
-    bootc = options.get("bootc", {})
+    if ref := bootc.get("ref"):
+        args.append(f"--bootc-ref={ref}")
+    if build_ref := bootc.get("build_ref"):
+        args.append(f"--bootc-build-ref={build_ref}")
     if payload_ref := bootc.get("installer_payload_ref"):
         args.append(f"--bootc-installer-payload-ref={payload_ref}")
     if bootc.get("use_remote_container_source"):
@@ -47,6 +73,7 @@ def build_image(distro, arch, image_type, config_path):
         config = json.load(config_file)
 
     config_name = config["name"]
+    bootc = resolve_bootc_options(config, distro, arch, image_type=image_type)
     build_name = gen_build_name(distro, arch, image_type, config_name)
     build_dir = os.path.join("build", build_name)
 
@@ -59,7 +86,6 @@ def build_image(distro, arch, image_type, config_path):
     seed = rng_seed_env()["OSBUILD_TESTING_RNG_SEED"]
     cmd = [
         "sudo", "-E", "./bin/image-builder", "build", image_type,
-        "--distro", distro,
         "--arch", arch,
         "--force-repo-dir", "test/data/repositories",
         "--output-dir", build_dir,
@@ -68,7 +94,10 @@ def build_image(distro, arch, image_type, config_path):
         "--ignore-warnings",
         "--seed", str(seed),
     ]
-    cmd.extend(config_to_cli_args(config))
+    # bootc builds derive the distro from the container and reject --distro.
+    if not bootc.get("ref"):
+        cmd.extend(["--distro", distro])
+    cmd.extend(config_to_cli_args(config, bootc))
     runcmd_nc(cmd)
 
     print("✅ Build finished!!")
