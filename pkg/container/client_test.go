@@ -24,7 +24,7 @@ import (
 func TestClientResolve(t *testing.T) {
 	require := require.New(t)
 
-	registry := testregistry.NewGoContainerRegistry()
+	registry := testregistry.New()
 	defer registry.Close()
 
 	listDigest, images, err := registry.PopulateWithManifestList("library/osbuild")
@@ -456,7 +456,7 @@ func TestParseImageName(t *testing.T) {
 func TestGetManifest(t *testing.T) {
 	require := require.New(t)
 
-	registry := testregistry.NewGoContainerRegistry()
+	registry := testregistry.New()
 	defer registry.Close()
 
 	listDigest, images, err := registry.PopulateWithManifestList("library/image-builder")
