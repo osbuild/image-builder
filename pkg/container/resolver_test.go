@@ -7,9 +7,9 @@ import (
 	"os/exec"
 	"os/user"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/testregistry"
@@ -24,51 +24,39 @@ var forceLocal = flag.Bool(
 )
 
 func TestResolver(t *testing.T) {
+	require := require.New(t)
 
-	registry := testregistry.New()
+	registry := testregistry.NewDistributionRegistry()
 	defer registry.Close()
-	repo := registry.AddRepo("library/osbuild")
-	ref := registry.GetRef("library/osbuild")
 
-	refs := make([]string, 10)
-	for i := 0; i < len(refs); i++ {
-		checksum := repo.AddImage(
-			[]testregistry.Blob{testregistry.NewDataBlobFromBase64(testregistry.RootLayer)},
-			[]string{"amd64", "ppc64le"},
-			fmt.Sprintf("image %d", i),
-			time.Time{})
+	digests := make(map[string]map[string]string) // ref -> arch -> digest
 
-		tag := fmt.Sprintf("%d", i)
-		repo.AddTag(checksum, tag)
-		refs[i] = fmt.Sprintf("%s:%s", ref, tag)
+	// add 10 manifest lists and then resolve them, verifying the digests we
+	// get from the resolver
+	for i := range 10 {
+		ref := fmt.Sprintf("library/osbuild:%d", i)
+		_, images, err := registry.PopulateWithManifestList(ref)
+		require.NoError(err)
+		digests[ref] = images
 	}
 
-	resolver := container.NewResolver("amd64")
+	for ref, images := range digests {
+		for arch, digest := range images {
+			resolver := container.NewResolver(arch)
+			resolver.Add(container.SourceSpec{
+				Source:    registry.GetRef(ref),
+				Name:      "",
+				Digest:    common.ToPtr(""),
+				TLSVerify: common.ToPtr(false),
+				Local:     false,
+			})
 
-	for _, r := range refs {
-		resolver.Add(container.SourceSpec{
-			Source:    r,
-			Name:      "",
-			Digest:    common.ToPtr(""),
-			TLSVerify: common.ToPtr(false),
-			Local:     false,
-		})
+			have, err := resolver.Finish()
+			require.NoError(err)
+			require.NotNil(have)
+			require.Equal(digest, have[0].Digest)
+		}
 	}
-
-	have, err := resolver.Finish()
-	assert.NoError(t, err)
-	assert.NotNil(t, have)
-
-	assert.Len(t, have, len(refs))
-
-	want := make([]container.Spec, len(refs))
-	for i, r := range refs {
-		spec, err := registry.Resolve(r, arch.ARCH_X86_64)
-		assert.NoError(t, err)
-		want[i] = spec
-	}
-
-	assert.ElementsMatch(t, have, want)
 }
 
 func TestResolverFail(t *testing.T) {
@@ -85,33 +73,13 @@ func TestResolverFail(t *testing.T) {
 	assert.Error(t, err)
 	assert.Len(t, specs, 0)
 
-	registry := testregistry.New()
+	registry := testregistry.NewDistributionRegistry()
 	defer registry.Close()
 
-	resolver.Add(container.SourceSpec{
-		Source:    registry.GetRef("repo"),
-		Name:      "",
-		Digest:    common.ToPtr(""),
-		TLSVerify: common.ToPtr(false),
-		Local:     false,
-	})
-	specs, err = resolver.Finish()
-	assert.Error(t, err)
-	assert.Len(t, specs, 0)
+	badRef := fmt.Sprintf("%s/org/notarepo", registry.Host())
 
 	resolver.Add(container.SourceSpec{
-		Source:    registry.GetRef("repo"),
-		Name:      "",
-		Digest:    common.ToPtr(""),
-		TLSVerify: common.ToPtr(false),
-		Local:     false,
-	})
-	specs, err = resolver.Finish()
-	assert.Error(t, err)
-	assert.Len(t, specs, 0)
-
-	resolver.Add(container.SourceSpec{
-		Source:    registry.GetRef("repo"),
+		Source:    badRef,
 		Name:      "",
 		Digest:    common.ToPtr(""),
 		TLSVerify: common.ToPtr(false),
