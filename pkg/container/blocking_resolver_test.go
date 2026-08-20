@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"os/user"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/testregistry"
@@ -17,95 +17,84 @@ import (
 )
 
 func TestBlockingResolver(t *testing.T) {
-	registry := testregistry.New()
+	require := require.New(t)
+
+	registry := testregistry.NewDistributionRegistry()
 	defer registry.Close()
-	repo := registry.AddRepo("library/osbuild")
-	ref := registry.GetRef("library/osbuild")
 
-	refs := make([]string, 10)
-	for i := 0; i < len(refs); i++ {
-		checksum := repo.AddImage(
-			[]testregistry.Blob{testregistry.NewDataBlobFromBase64(testregistry.RootLayer)},
-			[]string{"amd64", "ppc64le"},
-			fmt.Sprintf("image %d", i),
-			time.Time{})
+	allImages := make(map[string]map[string]testregistry.Image) // ref -> arch -> digest
 
-		tag := fmt.Sprintf("%d", i)
-		repo.AddTag(checksum, tag)
-		refs[i] = fmt.Sprintf("%s:%s", ref, tag)
+	// add 10 manifest lists and then resolve them, verifying the digests we
+	// get from the resolver
+	for i := range 10 {
+		ref := fmt.Sprintf("library/osbuild:%d", i)
+		_, images, err := registry.PopulateWithManifestList(ref)
+		require.NoError(err)
+		allImages[ref] = images
 	}
 
-	resolver := container.NewBlockingResolver("amd64")
-
-	for _, r := range refs {
-		resolver.Add(container.SourceSpec{
-			Source:    r,
-			Name:      "",
-			Digest:    common.ToPtr(""),
-			TLSVerify: common.ToPtr(false),
-			Local:     false,
-		})
-	}
-
-	have, err := resolver.Finish()
-	assert.NoError(t, err)
-	assert.NotNil(t, have)
-
-	assert.Len(t, have, len(refs))
-
-	want := make([]container.Spec, len(refs))
-	for i, r := range refs {
-		spec, err := registry.Resolve(r, arch.ARCH_X86_64)
-		assert.NoError(t, err)
-		want[i] = spec
-	}
-
-	assert.ElementsMatch(t, have, want)
-}
-
-func TestBlockingResolverResolveAll(t *testing.T) {
-	assert := assert.New(t)
-	registry := testregistry.New()
-	defer registry.Close()
-	repo := registry.AddRepo("library/osbuild")
-	ref := registry.GetRef("library/osbuild")
-
-	sources := make(map[string][]container.SourceSpec, 2)
-	expected := make(map[string][]container.Spec, 2)
-	for _, name := range []string{"pipeline-one", "pipeline-two"} {
-		for idx := 0; idx < 10; idx++ {
-			checksum := repo.AddImage(
-				[]testregistry.Blob{testregistry.NewDataBlobFromBase64(testregistry.RootLayer)},
-				[]string{"amd64", "ppc64le"},
-				fmt.Sprintf("image %s %d", name, idx),
-				time.Time{})
-
-			tag := fmt.Sprintf("%s%d", name, idx)
-			repo.AddTag(checksum, tag)
-
-			plSources := sources[name]
-			refTag := fmt.Sprintf("%s:%s", ref, tag)
-			sources[name] = append(plSources, container.SourceSpec{
-				Source:    refTag,
+	for ref, images := range allImages {
+		for arch, image := range images {
+			resolver := container.NewBlockingResolver(arch)
+			resolver.Add(container.SourceSpec{
+				Source:    registry.GetRef(ref),
 				Name:      "",
 				Digest:    common.ToPtr(""),
 				TLSVerify: common.ToPtr(false),
 				Local:     false,
 			})
 
-			expSpec, err := registry.Resolve(refTag, arch.ARCH_X86_64)
-			assert.NoError(err)
-			expSpecs := expected[name]
-			expected[name] = append(expSpecs, expSpec)
+			have, err := resolver.Finish()
+			require.NoError(err)
+			require.NotNil(have)
+			require.Equal(image.Digest(), have[0].Digest)
 		}
 	}
+}
 
-	resolver := container.NewBlockingResolver("amd64")
+func TestBlockingResolverResolveAll(t *testing.T) {
+	// Similar test as above but resolving all containers at the same time
+	require := require.New(t)
 
-	have, err := resolver.ResolveAll(sources)
-	assert.NoError(err)
-	assert.NotNil(have)
-	assert.Equal(have, expected)
+	registry := testregistry.NewDistributionRegistry()
+	defer registry.Close()
+
+	allImages := make(map[string]map[string]testregistry.Image) // ref -> arch -> digest
+
+	for i := range 10 {
+		ref := fmt.Sprintf("library/osbuild:%d", i)
+		_, images, err := registry.PopulateWithManifestList(ref)
+		require.NoError(err)
+		refWithHost := registry.GetRef(ref)
+		allImages[refWithHost] = images
+	}
+
+	// make one resolver for each arch and resolve all container refs for that
+	// architecture
+	for _, arch := range []string{"amd64", "arm64", "s390x", "ppc64le"} {
+		resolver := container.NewBlockingResolver(arch)
+
+		for refWithHost := range allImages {
+			resolver.Add(container.SourceSpec{
+				Source:    refWithHost,
+				Name:      refWithHost,
+				Digest:    common.ToPtr(""),
+				TLSVerify: common.ToPtr(false),
+				Local:     false,
+			})
+		}
+
+		results, err := resolver.Finish()
+		require.NoError(err)
+		require.NotNil(results)
+
+		for _, result := range results {
+			// the LocalName should be the Name we added to the source spec, which is refWithHost
+			expImage := allImages[result.LocalName][arch]
+			require.Equal(expImage.Digest(), result.Digest)
+			require.Equal(expImage.ImageID(), result.ImageID)
+		}
+	}
 }
 
 func TestBlockingResolverFail(t *testing.T) {
@@ -122,30 +111,8 @@ func TestBlockingResolverFail(t *testing.T) {
 	assert.Error(t, err)
 	assert.Len(t, specs, 0)
 
-	registry := testregistry.New()
+	registry := testregistry.NewDistributionRegistry()
 	defer registry.Close()
-
-	resolver.Add(container.SourceSpec{
-		Source:    registry.GetRef("repo"),
-		Name:      "",
-		Digest:    common.ToPtr(""),
-		TLSVerify: common.ToPtr(false),
-		Local:     false,
-	})
-	specs, err = resolver.Finish()
-	assert.Error(t, err)
-	assert.Len(t, specs, 0)
-
-	resolver.Add(container.SourceSpec{
-		Source:    registry.GetRef("repo"),
-		Name:      "",
-		Digest:    common.ToPtr(""),
-		TLSVerify: common.ToPtr(false),
-		Local:     false,
-	})
-	specs, err = resolver.Finish()
-	assert.Error(t, err)
-	assert.Len(t, specs, 0)
 
 	resolver.Add(container.SourceSpec{
 		Source:    registry.GetRef("repo"),
