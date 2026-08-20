@@ -168,15 +168,11 @@ def make_check_host_config(arch):
     # build without CGO so no dependencies are needed
     cmd = ["go", "build", "-o", "check-host-config-" + arch,
            "./cmd/check-host-config"]
-    tags = [
-        "containers_image_openpgp",
-    ]
     runcmd_nc(
         cmd,
         extra_env={
             "GOARCH": goarch,
             "CGO_ENABLED": "0",
-            "GOFLAGS": "-tags=" + ",".join(tags),
         },
     )
 
