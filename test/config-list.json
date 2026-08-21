@@ -731,6 +731,26 @@
     }
   },
   {
+    "path": "./configs/bootc-user.json",
+    "filters": {
+      "distros": [
+        "bootc-*"
+      ],
+      "image-types": [
+        "qcow2",
+        "ami",
+        "raw",
+        "gce",
+        "vhd",
+        "vmdk",
+        "ova",
+        "anaconda-iso",
+        "bootc-generic-iso",
+        "pxe-tar-xz"
+      ]
+    }
+  },
+  {
     "path": "./configs/bootc-with-payload.json",
     "filters": {
       "distros": [
@@ -744,6 +764,26 @@
   },
   {
     "path": "./configs/bootc-remote-empty.json",
+    "filters": {
+      "distros": [
+        "bootc-*"
+      ],
+      "image-types": [
+        "qcow2",
+        "ami",
+        "raw",
+        "gce",
+        "vhd",
+        "vmdk",
+        "ova",
+        "anaconda-iso",
+        "bootc-generic-iso",
+        "pxe-tar-xz"
+      ]
+    }
+  },
+  {
+    "path": "./configs/bootc-remote-user.json",
     "filters": {
       "distros": [
         "bootc-*"
