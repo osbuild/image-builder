@@ -27,6 +27,8 @@ Source0:        https://github.com/osbuild/image-builder/releases/download/v%{ve
 BuildRequires:  %{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
 BuildRequires:  libvirt-devel
 BuildRequires:  skopeo
+# We rely on systemd-escape to generate mount unit names. On install, it is pulled in by osbuild.
+BuildRequires:  systemd
 
 # Build requirements of the `kerby/kerby` package
 BuildRequires:  krb5-devel
