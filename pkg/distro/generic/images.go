@@ -932,12 +932,24 @@ func imageInstallerImage(t *imageType,
 	img.Kickstart.Keyboard = img.OSCustomizations.Keyboard
 	img.Kickstart.Timezone = &img.OSCustomizations.Timezone
 
+	// customizations.kernel.append (and image-type defaults) belong on the
+	// *installed* system. For image-installer the OS payload is a tar with no
+	// partition table, so org.osbuild.kernel-cmdline is never emitted for it.
+	// Pass the options through kickstart `bootloader --append` instead.
+	img.Kickstart.KernelOptionsAppend = append(img.Kickstart.KernelOptionsAppend, kernelOptions(t, customizations)...)
+
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)
 	if err != nil {
 		return nil, err
 	}
+
+	// installerCustomizations() currently copies OS kernel options into
+	// InstallerCustomizations.KernelOptionsAppend, which anaconda_tar_installer
+	// then places on the ISO GRUB cmdline. Clear those so blueprint/OS kargs
+	// are not applied to the installer media itself.
+	img.InstallerCustomizations.KernelOptionsAppend = nil
 
 	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
 	if err != nil {
@@ -954,6 +966,7 @@ func imageInstallerImage(t *imageType,
 	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleUsers)
 
 	if img.Kickstart.Unattended {
+		// These remain ISO-only installer boot options (not installed-system kargs).
 		img.InstallerCustomizations.KernelOptionsAppend = append(installerConfig.KickstartUnattendedExtraKernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
 	}
 

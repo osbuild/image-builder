@@ -882,6 +882,17 @@ func (p *AnacondaInstallerISOTree) makeKickstartStages(stageOptions *osbuild.Kic
 	if sudoersPost := makeKickstartSudoersPost(kickstartOptions.SudoNopasswd); sudoersPost != nil {
 		stageOptions.Post = append(stageOptions.Post, *sudoersPost)
 	}
+
+	// Apply installed-system kernel arguments via kickstart. This is the
+	// supported path for liveimg/tar payload installers (image-installer),
+	// where the OS tree has no partition table and therefore never runs the
+	// org.osbuild.kernel-cmdline stage.
+	if len(kickstartOptions.KernelOptionsAppend) > 0 {
+		stageOptions.Bootloader = &osbuild.BootloaderOptions{
+			Append: strings.Join(kickstartOptions.KernelOptionsAppend, " "),
+		}
+	}
+
 	stages = append(stages, osbuild.NewKickstartStage(stageOptions))
 
 	if p.SubscriptionPipeline != nil {
