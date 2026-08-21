@@ -696,28 +696,15 @@
     "filters": {
       "distros": [
         "rhel-8*",
-        "rhel-9.6",
-        "rhel-9.7",
-        "rhel-9.8",
-        "rhel-9.9",
+        "rhel-9*",
+        "rhel-9*",
+        "rhel-9*",
+        "rhel-9*",
         "rhel-10*",
         "centos-*",
         "eln*"
       ],
       "arches": [],
-      "image-types": [
-        "vhd"
-      ]
-    }
-  },
-  {
-    "path": "./configs/disable-nm-cloud-setup.json",
-    "filters": {
-      "distros": [
-        "rhel-9.0",
-        "rhel-9.2",
-        "rhel-9.4"
-      ],
       "image-types": [
         "vhd"
       ]
