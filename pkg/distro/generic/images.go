@@ -531,6 +531,10 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 			isc.DisabledAnacondaModules = append(isc.DisabledAnacondaModules, installerCust.Modules.Disable...)
 		}
 
+		if installerCust.Bootloader != nil && installerCust.Bootloader.Grub2 != nil {
+			isc.MenuTimeout = installerCust.Bootloader.Grub2.MenuTimeout
+		}
+
 		if installerCust.Payload != nil && installerCust.Payload.Flatpaks != nil {
 			flatpakMeta := installerCust.Payload.Flatpaks
 
