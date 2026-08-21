@@ -91,7 +91,7 @@ jobs:
 
     steps:
       - name: Install dnf plugins
-        run: dnf -y install dnf-plugins-core
+        run: dnf -y install dnf-plugins-core git-core
 
       - name: Enable crb repo
         run: dnf config-manager --set-enabled crb
