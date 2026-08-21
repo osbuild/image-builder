@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/osbuild/image-builder/pkg/customizations/users"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/experimentalflags"
 	"github.com/osbuild/image-builder/pkg/flatpak"
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
@@ -376,6 +377,13 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 
 	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
 		osc.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	if imageID := experimentalflags.String("image-id"); imageID != "" {
+		osc.ImageID = imageID
+	}
+	if imageVersion := experimentalflags.String("image-version"); imageVersion != "" {
+		osc.ImageVersion = imageVersion
 	}
 
 	if sshdCust := c.GetSshd(); sshdCust != nil && imageConfig.SshdConfig != nil {
