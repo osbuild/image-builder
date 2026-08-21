@@ -5,6 +5,7 @@ import pathlib
 import sys
 from typing import Dict
 
+from .bootcsource import bootc_source_from_distro, resolve_bootc_source_ref
 from .build import get_manifest_id
 from .cache import dl_build_info, gen_build_info_dir_path_prefix
 from .gitlab import log_section
@@ -32,7 +33,7 @@ CAN_BOOT_TEST = {
         "qcow2", "generic-qcow2", "cloud-qcow2",
         "wsl", "generic-wsl",
         "bootc-generic-iso",
-    ]
+    ],
 }
 
 
@@ -101,7 +102,8 @@ def check_config_names():
 
 
 def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images=None,
-                  commits=False, flatpaks=False, skip_no_config=False):
+                  commits=False, flatpaks=False, skip_no_config=False, bootc_refs=None,
+                  bootc_remote=False, bootc_installer_ref=None):
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     cmd = ["go", "run", "./cmd/gen-manifests",
            "--cache", os.path.join(TEST_CACHE_ROOT, "rpmmd"),
@@ -115,12 +117,21 @@ def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images
         cmd.extend(["--arches", ",".join(arches)])
     if images:
         cmd.extend(["--types", ",".join(images)])
+    if bootc_refs:
+        cmd.extend(["--bootc-refs", ",".join(bootc_refs)])
+    if bootc_remote:
+        cmd.append("--bootc-remote")
+    if bootc_installer_ref:
+        cmd.extend(["--bootc-installer-ref", bootc_installer_ref])
     if commits:
         cmd.append("--commits")
     if flatpaks:
         cmd.append("--flatpaks")
     if skip_no_config:
         cmd.append("--skip-noconfig")
+    # Bootc needs rootful "podman mount".
+    if bootc_refs and os.geteuid() != 0:
+        cmd = ["sudo", "-E", *cmd]
     env = rng_seed_env()
     env["GOPROXY"] = "https://proxy.golang.org,direct"
     print("⌨️" + " ".join(cmd) + " ENV: " + str(env))
@@ -184,9 +195,13 @@ def check_for_build(manifest_fname, build_request, manifest_data, build_info_dir
         print("  No PR/branch info available")
 
     image_type = dl_config["image-type"]
-    if not can_boot_test(manifest_fname, manifest_data, build_request["image-type"], build_request["arch"],
+    req_type = build_request["image-type"]
+    if req_type != image_type:
+        print(f"  Cached image-type {image_type} does not match {req_type}. Adding config to build pipeline.")
+        return True
+    if not can_boot_test(manifest_fname, manifest_data, req_type, build_request["arch"],
                          build_request["distro"], build_request["config"].get("blueprint", {})):
-        print(f"  Boot testing for {image_type} is not yet supported")
+        print(f"  Boot testing for {req_type} is not yet supported")
         return False
 
     # boot testing supported: check if it's been tested, otherwise queue it for rebuild and boot
@@ -271,6 +286,17 @@ def clargs():
     parser.add_argument("--arch", type=str, default=default_arch,
                         help="architecture to generate configs for (defaults to host architecture)")
 
+    return parser
+
+
+def bootc_clargs():
+    default_arch = os.uname().machine
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str, help="path to write config")
+    parser.add_argument("--bootc-source", type=str, required=True,
+                        help="bootc source name (test/data/bootcrefs/<name>.json)")
+    parser.add_argument("--arch", type=str, default=default_arch,
+                        help="architecture to generate configs for (defaults to host architecture)")
     return parser
 
 
@@ -388,6 +414,19 @@ def read_manifest(build_path: str) -> Dict:
 def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, blueprint):
     if image_type not in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
         return False
+
+    if distro.startswith("bootc-"):
+        source_name = bootc_source_from_distro(distro)
+        ref = resolve_bootc_source_ref(source_name, arch, image_type)
+        if not ref:
+            print(f"  not bootable: bootc source {source_name} has no usable ref for {image_type}")
+            return False
+        # empty blueprints cannot inject an SSH user at first boot
+        users = ((blueprint or {}).get("customizations") or {}).get("user") or []
+        has_ssh_user = any(isinstance(u, dict) and u.get("name") and u.get("key") for u in users)
+        if not has_ssh_user:
+            print("  not bootable: bootc config has no SSH user")
+            return False
 
     if image_type in ["image-installer", "minimal-installer"]:
         if not blueprint.get("customizations", {}).get("installer", {}).get("unattended"):

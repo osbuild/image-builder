@@ -536,7 +536,12 @@ func main() {
 
 	fmt.Fprintln(os.Stderr, "Collecting jobs")
 
-	distros, invalidDistros := distros.ResolveArgValues(testedRepoRegistry.ListDistros())
+	// With --bootc-refs and no --distros, skip loop to get repositories
+	repoDistros := testedRepoRegistry.ListDistros()
+	if len(distros) == 0 && len(bootcRefs) > 0 {
+		repoDistros = nil
+	}
+	distros, invalidDistros := distros.ResolveArgValues(repoDistros)
 	if len(invalidDistros) > 0 {
 		fmt.Fprintf(os.Stderr, "WARNING: invalid distro names: [%s]\n", strings.Join(invalidDistros, ","))
 	}
@@ -639,11 +644,13 @@ func main() {
 			}
 		}
 
+		arches, _ := arches.ResolveArgValues(distribution.ListArches())
 		for _, archName := range arches {
 			archi, err := distribution.GetArch(archName)
 			if err != nil {
 				panic(err)
 			}
+			imgTypes, _ := imgTypes.ResolveArgValues(archi.ListImageTypes())
 			for _, imgTypeName := range imgTypes {
 				imgType, err := archi.GetImageType(imgTypeName)
 				if err != nil {

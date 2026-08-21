@@ -35,6 +35,118 @@ def test_runcmd_env():
     assert stderr == b""
 
 
+def test_bootc_source_from_distro():
+    assert testlib.bootcsource.bootc_source_from_distro("bootc-rhel-10.2") == "rhel-10"
+    assert testlib.bootcsource.bootc_source_from_distro("bootc-fedora-44") == "fedora-44"
+    assert testlib.bootcsource.bootc_source_from_distro("fedora-41") is None
+
+
+def test_resolve_fedora_44_bootc_refs():
+    ref = "quay.io/fedora/fedora-bootc:44"
+    assert testlib.bootcsource.resolve_bootc_source_ref("fedora-44", "x86_64", "qcow2") == ref
+    assert testlib.bootcsource.resolve_bootc_source_ref("fedora-44", "x86_64", "ami") == ref
+
+
+def test_resolve_bootc_source():
+    entry = testlib.bootcsource.resolve_bootc_source("fedora-44", "x86_64")
+    assert entry["ref"] == "quay.io/fedora/fedora-bootc:44"
+    assert entry["default_fs"] == "ext4"
+
+
+def test_resolve_bootc_options_includes_default_fs():
+    opts = testlib.build.resolve_bootc_options({}, "bootc-fedora-44", "x86_64", "ami")
+    assert opts["ref"] == "quay.io/fedora/fedora-bootc:44"
+    assert opts["default_fs"] == "ext4"
+
+
+def test_config_to_cli_args_bootc_default_fs():
+    args = testlib.build.config_to_cli_args({"blueprint": {}}, {
+        "ref": "quay.io/fedora/fedora-bootc:44",
+        "default_fs": "ext4",
+    })
+    assert "--bootc-ref=quay.io/fedora/fedora-bootc:44" in args
+    assert "--bootc-default-fs=ext4" in args
+
+
+def test_list_bootc_source_arches():
+    arches = testlib.bootcsource.list_bootc_source_arches("fedora-44")
+    assert arches == ["x86_64"]
+
+
+def test_resolve_bootc_source_rejects_string_entry(tmp_path, monkeypatch):
+    source_dir = tmp_path / "bootcrefs"
+    source_dir.mkdir()
+    (source_dir / "bad.json").write_text('{"x86_64": "quay.io/example/bootc:latest"}', encoding="utf-8")
+    monkeypatch.setattr(testlib.bootcsource, "BOOTCREFS_PATH", os.fspath(source_dir))
+
+    with pytest.raises(TypeError, match="must be an object"):
+        testlib.bootcsource.resolve_bootc_source("bad", "x86_64")
+
+
+def test_resolve_bootc_source_requires_ref(tmp_path, monkeypatch):
+    source_dir = tmp_path / "bootcrefs"
+    source_dir.mkdir()
+    (source_dir / "bad.json").write_text('{"x86_64": {"build_ref": "quay.io/example/toolbox:latest"}}',
+                                         encoding="utf-8")
+    monkeypatch.setattr(testlib.bootcsource, "BOOTCREFS_PATH", os.fspath(source_dir))
+
+    with pytest.raises(ValueError, match="must define a non-empty 'ref' string"):
+        testlib.bootcsource.resolve_bootc_source_ref("bad", "x86_64")
+
+
+def test_resolve_ref_from_entry_returns_derived_refs():
+    entry = {
+        "ref": "quay.io/example/base:latest",
+        "derived_refs": {
+            "disk": "quay.io/example/disk:latest",
+            "installer": "quay.io/example/installer:latest",
+        },
+    }
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "qcow2") == "quay.io/example/disk:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "raw") == "quay.io/example/disk:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(
+        entry, "src", "x86_64", "bootc-installer") == "quay.io/example/installer:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "ami") == "quay.io/example/disk:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "gce") == "quay.io/example/disk:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "vhd") == "quay.io/example/disk:latest"
+
+
+def test_resolve_ref_from_entry_cloud_specific_derived_refs():
+    entry = {
+        "ref": "registry.redhat.io/rhel10/rhel-bootc:latest",
+        "derived_refs": {
+            "disk": "quay.io/example/disk:latest",
+            "installer": "quay.io/example/installer:latest",
+            "ami": "quay.io/example/ami:latest",
+            "vhd": "quay.io/example/vhd:latest",
+            "gce": "quay.io/example/gce:latest",
+        },
+    }
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "ami") == "quay.io/example/ami:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "gce") == "quay.io/example/gce:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "vhd") == "quay.io/example/vhd:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "qcow2") == "quay.io/example/disk:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "raw") == "quay.io/example/disk:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(
+        entry, "src", "x86_64", "bootc-installer") == "quay.io/example/installer:latest"
+
+
+def test_resolve_ref_from_entry_no_derived_refs():
+    entry = {"ref": "quay.io/example/base:latest"}
+    assert testlib.bootcsource.resolve_ref_from_entry(
+        entry, "src", "x86_64", "qcow2") == "quay.io/example/base:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(
+        entry, "src", "x86_64", "raw") == "quay.io/example/base:latest"
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "vhd") is None
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "ami") is None
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64", "gce") is None
+    assert testlib.bootcsource.resolve_ref_from_entry(
+        entry, "src", "x86_64", "bootc-installer") is None
+    assert testlib.bootcsource.resolve_ref_from_entry(
+        entry, "src", "x86_64", "bootc-generic-iso") is None
+    assert testlib.bootcsource.resolve_ref_from_entry(entry, "src", "x86_64") == "quay.io/example/base:latest"
+
+
 def test_read_seed():
     # check that it's read without error - no need to test the value itself
     seed_env = testlib.testenv.rng_seed_env()
