@@ -115,7 +115,12 @@ jobs:
         run: dnf -y install openssl
 
       - name: Run unit tests
-        run: make test
+        # Skip tests that resolve manifests from local container storage.
+        # They are tested separately (see gitlab-ci.yml)
+        run: go test -count=1 -race -timeout 20m ./... -test.skip 'TestBlockingResolverLocalManifest|TestResolverLocalManifest|TestGetManifestLocal'
+
+      - name: Run depsolver tests with force-dnf to make sure it's not skipped
+        run: go test -count=1 -race ./pkg/depsolvednf/... -force-dnf
 
   lint:
     name: "⌨ Lint"
