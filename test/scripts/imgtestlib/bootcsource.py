@@ -12,7 +12,7 @@ INSTALLER_IMAGE_TYPES = {"bootc-generic-iso", "bootc-installer"}
 BOOTC_SOURCES = ["fedora-44"]
 BOOTC_ARCHES = ["x86_64"]
 BOOTC_IMAGE_TYPES = ["ami"]
-BOOTC_CONFIGS = {"bootc-empty"}
+BOOTC_CONFIGS = {"bootc-user"}
 
 
 def load_bootc_source(source_name):

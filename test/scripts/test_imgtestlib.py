@@ -50,6 +50,22 @@ def test_resolve_fedora_44_bootc_refs():
 def test_resolve_bootc_source():
     entry = testlib.bootcsource.resolve_bootc_source("fedora-44", "x86_64")
     assert entry["ref"] == "quay.io/fedora/fedora-bootc:44"
+    assert entry["default_fs"] == "ext4"
+
+
+def test_resolve_bootc_options_includes_default_fs():
+    opts = testlib.build.resolve_bootc_options({}, "bootc-fedora-44", "x86_64", "ami")
+    assert opts["ref"] == "quay.io/fedora/fedora-bootc:44"
+    assert opts["default_fs"] == "ext4"
+
+
+def test_config_to_cli_args_bootc_default_fs():
+    args = testlib.build.config_to_cli_args({"blueprint": {}}, {
+        "ref": "quay.io/fedora/fedora-bootc:44",
+        "default_fs": "ext4",
+    })
+    assert "--bootc-ref=quay.io/fedora/fedora-bootc:44" in args
+    assert "--bootc-default-fs=ext4" in args
 
 
 def test_list_bootc_source_arches():

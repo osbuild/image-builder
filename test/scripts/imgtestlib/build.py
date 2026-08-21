@@ -54,6 +54,8 @@ def config_to_cli_args(config: dict, bootc: dict) -> List[str]:
         args.append(f"--bootc-build-ref={build_ref}")
     if payload_ref := bootc.get("installer_payload_ref"):
         args.append(f"--bootc-installer-payload-ref={payload_ref}")
+    if default_fs := bootc.get("default_fs"):
+        args.append(f"--bootc-default-fs={default_fs}")
     if bootc.get("use_remote_container_source"):
         args.append("--bootc-pull-container")
 

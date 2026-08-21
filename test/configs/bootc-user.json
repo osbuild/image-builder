@@ -1,0 +1,22 @@
+{
+  "name": "bootc-user",
+  "blueprint": {
+    "name": "bootc-user",
+    "description": "Blueprint for boot-testing bootc images. bootc containers have no cloud-init, so the test SSH user must be added.",
+    "version": "1.0",
+    "customizations": {
+      "user": [
+        {
+          "groups": [
+            "wheel"
+          ],
+          "key": "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNCP83Bls0eAZnMzIOTDtRFnbVZVbebfshwpilYUQ8kwLNHCiKFcdu9KjDPe0BacACP0Mna83puuH/H92BF3jlc= github.com/osbuild/images",
+          "name": "osbuild"
+        }
+      ]
+    }
+  },
+  "solver": {
+    "use_root_dir": true
+  }
+}
