@@ -27,18 +27,13 @@ Source0:        https://github.com/osbuild/image-builder/releases/download/v%{ve
 BuildRequires:  %{?go_compiler:compiler(go-compiler)}%{!?go_compiler:golang}
 BuildRequires:  libvirt-devel
 BuildRequires:  skopeo
+# We rely on systemd-escape to generate mount unit names. On install, it is pulled in by osbuild.
+BuildRequires:  systemd
 
 # Build requirements of the `kerby/kerby` package
 BuildRequires:  krb5-devel
-# Build requirements of 'theproglottis/gpgme' package
-BuildRequires:  gpgme-devel
-BuildRequires:  libassuan-devel
-# Build requirements of 'github.com/containers/storage' package
-BuildRequires:  device-mapper-devel
 BuildRequires:  libxcrypt-devel
 %if 0%{?fedora}
-# Build requirements of 'github.com/containers/storage' package
-BuildRequires:  btrfs-progs-devel
 # for _tmpfilesdir macro
 BuildRequires:  systemd-rpm-macros
 # DO NOT REMOVE the BUNDLE_START and BUNDLE_END markers as they are used by 'tools/rpm_spec_add_provides_bundle.sh' to generate the Provides: bundled list
@@ -81,11 +76,6 @@ export GOFLAGS+=" -mod=vendor"
 %undefine gomodulesmode
 %endif
 
-# btrfs-progs-devel is not available on RHEL
-%if 0%{?rhel}
-GOTAGS="exclude_graphdriver_btrfs"
-%endif
-
 export LDFLAGS="${LDFLAGS} -X 'main.version=%{version}'"
 %gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/image-builder %{goipath}/cmd/image-builder
 
@@ -104,7 +94,7 @@ install -m 0644 -vp man/man1/image-builder*.1       %{buildroot}%{_mandir}/man1/
 %check
 export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
-export GOFLAGS+=" -mod=vendor -tags=exclude_graphdriver_btrfs"
+export GOFLAGS+=" -mod=vendor"
 export GOPATH=$PWD/_build:%{gopath}
 # cd inside GOPATH, otherwise go with GO111MODULE=off ignores vendor directory
 cd $PWD/_build/src/%{goipath}

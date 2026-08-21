@@ -60,20 +60,13 @@ sudo ./test/scripts/install-dependencies
 The minimal dependencies are:
 
 - `go`
-- `gpgme-devel`
 - `libvirt-devel`
 
 Other dependencies only needed in some cases are:
 
-- `btrfs-progs-devel`, `device-mapper-devel`  
-  build dependencies for the unit tests and projects that import `pkg/container`, which even in that case can be skipped using exclude_graphdriver_btrfs and exclude_graphdriver_devicemapper (see bootc-image-builder).
-- `krb5-devel`  
-  build dependency for the unit tests and projects that import `pkg/upload/koji`
-- `osbuild-depsolve-dnf`  
-  runtime dependency for the unit tests and projects that import `pkg/depsolvednf`.
-  or to run `cmd/gen-manifests` and `cmd/build`
-- `osbuild` (and subpackages)  
-  runtime dependencies for `cmd/build`.
+- `krb5-devel`: build dependency for the unit tests and projects that import `pkg/upload/koji`.
+- `osbuild-depsolve-dnf`: runtime dependency for the unit tests and projects that import `pkg/depsolvednf`, or to run `cmd/gen-manifests`.
+- `osbuild` (and subpackages): runtime dependencies for building images (processing manifests).
 
 
 ### Repository:

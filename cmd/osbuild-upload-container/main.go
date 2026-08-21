@@ -11,6 +11,49 @@ import (
 	"github.com/osbuild/image-builder/pkg/container"
 )
 
+func upload(filename, destination, tag, username, password string, ignoreTLS bool) error {
+	absPath, err := filepath.Abs(filename)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Container to upload is:", filename)
+
+	client, err := container.NewClient(destination)
+
+	if err != nil {
+		return fmt.Errorf("error creating the upload client: %w", err)
+	}
+
+	if password != "" {
+		if username == "" {
+			u, err := user.Current()
+			if err != nil {
+				return fmt.Errorf("error looking up current user: %w", err)
+			}
+			username = u.Username
+		}
+		client.SetCredentials(username, password)
+	}
+
+	if ignoreTLS {
+		client.SkipTLSVerify()
+	}
+
+	ctx := context.Background()
+
+	from := fmt.Sprintf("oci-archive://%s", absPath)
+
+	digest, err := client.UploadImage(ctx, from, tag)
+
+	if err != nil {
+		return fmt.Errorf("error uploading: %w", err)
+	}
+
+	fmt.Printf("upload done; destination manifest: %s\n", digest.String())
+	return nil
+}
+
 func main() {
 	var filename string
 	var destination string
@@ -32,47 +75,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	absPath, err := filepath.Abs(filename)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		return
-	}
-
-	fmt.Println("Container to upload is:", filename)
-
-	client, err := container.NewClient(destination)
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error creating the upload client: %v\n", err)
+	if err := upload(filename, destination, tag, username, password, ignoreTLS); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
-	if password != "" {
-		if username == "" {
-			u, err := user.Current()
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "error looking up current user: %v\n", err)
-				os.Exit(1)
-			}
-			username = u.Username
-		}
-		client.SetCredentials(username, password)
-	}
-
-	if ignoreTLS {
-		client.SkipTLSVerify()
-	}
-
-	ctx := context.Background()
-
-	from := fmt.Sprintf("oci-archive://%s", absPath)
-
-	digest, err := client.UploadImage(ctx, from, tag)
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error uploading: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("upload done; destination manifest: %s\n", digest.String())
 }

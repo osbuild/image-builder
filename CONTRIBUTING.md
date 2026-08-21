@@ -14,9 +14,6 @@ However, there are several command line tools defined in
 [`cmd/`](https://pkg.go.dev/github.com/osbuild/images@main/cmd) that can help
 during development and testing.
 
-The build-requirements for Fedora and rpm-based distributions are:
-- `gpgme-devel`, `btrfs-progs-devel`, `device-mapper-devel`
-
 To build images, you will also need to install `osbuild` and its sub-packages.
 
 See the [HACKING guide](HACKING.md) for more information on development

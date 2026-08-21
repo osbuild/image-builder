@@ -5,7 +5,7 @@
 To build most binaries defined in `cmd` and run tests you will need to install
 the following dependencies:
 
-    dnf -y install gpgme-devel btrfs-progs-devel krb5-devel
+    dnf -y install krb5-devel
 
 To generate manifests, you will need to install the following dependencies:
 

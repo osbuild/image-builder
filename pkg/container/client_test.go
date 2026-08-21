@@ -9,7 +9,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
@@ -23,22 +22,19 @@ import (
 //
 
 func TestClientResolve(t *testing.T) {
+	require := require.New(t)
 
 	registry := testregistry.New()
 	defer registry.Close()
 
-	repo := registry.AddRepo("library/osbuild")
-	listDigest := repo.AddImage(
-		[]testregistry.Blob{testregistry.NewDataBlobFromBase64(testregistry.RootLayer)},
-		[]string{"amd64", "ppc64le"},
-		"cool container",
-		time.Time{})
+	listDigest, images, err := registry.PopulateWithManifestList("library/osbuild")
+	require.NoError(err)
 
 	ref := registry.GetRef("library/osbuild")
 	client, err := container.NewClient(ref)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, client)
+	require.NoError(err)
+	require.NotNil(client)
 
 	client.SkipTLSVerify()
 
@@ -47,11 +43,11 @@ func TestClientResolve(t *testing.T) {
 	client.SetArchitectureChoice("amd64")
 	spec, err := client.Resolve(ctx, "", false)
 
-	assert.NoError(t, err)
-	assert.Equal(t, container.Spec{
+	require.NoError(err)
+	require.Equal(container.Spec{
 		Source:     ref,
-		Digest:     "sha256:f29b6cd42a94a574583439addcd6694e6224f0e4b32044c9e3aee4c4856c2a50",
-		ImageID:    "sha256:c2ecf25cf190e76b12b07436ad5140d4ba53d8a136d498705e57a006837a720f",
+		Digest:     images["amd64"].Digest(),
+		ImageID:    images["amd64"].ImageID(),
 		TLSVerify:  client.GetTLSVerify(),
 		LocalName:  client.Target.String(),
 		ListDigest: listDigest,
@@ -61,11 +57,11 @@ func TestClientResolve(t *testing.T) {
 	client.SetArchitectureChoice("ppc64le")
 	spec, err = client.Resolve(ctx, "", false)
 
-	assert.NoError(t, err)
-	assert.Equal(t, container.Spec{
+	require.NoError(err)
+	require.Equal(container.Spec{
 		Source:     ref,
-		Digest:     "sha256:d49eebefb6c7ce5505594bef652bd4adc36f413861bd44209d9b9486310b1264",
-		ImageID:    "sha256:d2ab8fea7f08a22f03b30c13c6ea443121f25e87202a7496e93736efa6fe345a",
+		Digest:     images["ppc64le"].Digest(),
+		ImageID:    images["ppc64le"].ImageID(),
 		TLSVerify:  client.GetTLSVerify(),
 		LocalName:  client.Target.String(),
 		ListDigest: listDigest,
@@ -73,10 +69,10 @@ func TestClientResolve(t *testing.T) {
 	}, spec)
 
 	// don't have that architecture
-	client.SetArchitectureChoice("s390x")
+	client.SetArchitectureChoice("riscv64")
 	_, err = client.Resolve(ctx, "", false)
 
-	assert.Error(t, err)
+	require.Error(err)
 }
 
 func TestClientAuthFilePath(t *testing.T) {
@@ -417,71 +413,24 @@ func TestSetArchitectureChoice(t *testing.T) {
 	}
 }
 
-func TestParseImageName(t *testing.T) {
-	testCases := []struct {
-		name      string
-		input     string
-		expectErr string
-	}{
-		{
-			name:      "no-colon",
-			input:     "nocolon",
-			expectErr: "invalid image name 'nocolon'",
-		},
-		{
-			name:      "unknown-transport",
-			input:     "invalid:/some/path",
-			expectErr: "unknown transport 'invalid'",
-		},
-		{
-			name:  "valid-oci-archive",
-			input: "oci-archive:/dev/null",
-		},
-		{
-			name:  "valid-oci",
-			input: "oci:/dev/null",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ref, err := container.ParseImageName(tc.input)
-			if tc.expectErr != "" {
-				assert.Nil(t, ref)
-				assert.EqualError(t, err, tc.expectErr)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, ref)
-			}
-		})
-	}
-}
-
 func TestGetManifest(t *testing.T) {
 	require := require.New(t)
 
 	registry := testregistry.New()
 	defer registry.Close()
 
-	repo := registry.AddRepo("library/osbuild")
-	listDigest := repo.AddImage(
-		[]testregistry.Blob{testregistry.NewDataBlobFromBase64(testregistry.RootLayer)},
-		[]string{"amd64", "arm64"},
-		"some kind of container",
-		time.Time{},
-	)
+	listDigest, images, err := registry.PopulateWithManifestList("library/image-builder")
+	require.NoError(err)
 
-	// These digests were retrieved by manually inspecting the manifest list in
-	// the registry after adding the images above.
-	amd64Digest := "sha256:505fe73a6102a624a46a1732e14e47034b9cca6f1ceaa3ef728aefbb2390f026"
-	arm64Digest := "sha256:28ddcb768b2624aac065aaa4feccb1be3e340054954183c2908a607b1f133478"
+	amd64Digest := images["amd64"].Digest()
+	arm64Digest := images["arm64"].Digest()
 
-	ref := registry.GetRef("library/osbuild")
+	ref := registry.GetRef("library/image-builder")
 	client, err := container.NewClient(ref)
 	client.SkipTLSVerify()
 
 	require.NoError(err)
-	require.NotNil(t, client)
+	require.NotNil(client)
 
 	ctx := t.Context()
 

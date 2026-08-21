@@ -7,12 +7,9 @@ set -e
 install_deps() {
     dnf -y install \
         awscli2 \
-        btrfs-progs-devel \
         cloud-utils \
-        device-mapper-devel \
         gcc \
         go \
-        gpgme-devel \
         iproute \
         krb5-devel \
         libvirt-devel \
@@ -39,10 +36,8 @@ install_deps() {
 install_deps_el() {
     dnf -y install \
         awscli2 \
-        device-mapper-devel \
         gcc \
         go \
-        gpgme-devel \
         krb5-devel \
         libvirt-devel \
         lorax \

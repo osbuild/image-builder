@@ -32,7 +32,7 @@ While most of this document describes our automatic setup, here are some useful 
 testing/inspection of images is required.
 
 Install required packages:
-dnf install -y cloud-utils-cloud-localds gpgme-devel btrfs-progs-devel krb5-devel
+dnf install -y cloud-utils-cloud-localds krb5-devel
 
 To build an image just run `build-image`, then it can be booted with `boot-image` and the
 switch `--keep-booted` will keep it around for inspection via ssh (not all image types support
@@ -57,13 +57,13 @@ vm accordingly.
 
 ## Running image build tests locally
 
-Some image build tests are available to run locally via qemu. The easiest way to discover them is to 
+Some image build tests are available to run locally via qemu. The easiest way to discover them is to
 run:
 ```console
 $ sudo pytest --collect-only ./test/test_build_integration.py
 ```
 This wil give a list of tests and their distro/arch/image-type permuations. Currently there are
-two tests: 
+two tests:
 1. Build the artifact (usually a disk image but can be a container)
 2. Build the image and boot test it
 
