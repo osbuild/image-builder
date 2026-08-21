@@ -421,6 +421,12 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
         if not ref:
             print(f"  not bootable: bootc source {source_name} has no usable ref for {image_type}")
             return False
+        # empty blueprints cannot inject an SSH user at first boot
+        users = ((blueprint or {}).get("customizations") or {}).get("user") or []
+        has_ssh_user = any(isinstance(u, dict) and u.get("name") and u.get("key") for u in users)
+        if not has_ssh_user:
+            print("  not bootable: bootc config has no SSH user")
+            return False
 
     if image_type in ["image-installer", "minimal-installer"]:
         if not blueprint.get("customizations", {}).get("installer", {}).get("unattended"):
