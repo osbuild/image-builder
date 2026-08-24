@@ -442,7 +442,7 @@ func TestHostnameDoesNotIncludeHostnameStage(t *testing.T) {
 
 func TestRpmlang(t *testing.T) {
 	os := manifest.NewTestOS()
-	os.OSCustomizations.InstallLangs = []string{"nl"}
+	os.OSCustomizations.BaseRPMOptions.InstallLangs = []string{"nl"}
 
 	pipeline, err := os.Serialize()
 	assert.NoError(t, err)
@@ -465,7 +465,7 @@ func TestRpmKeys(t *testing.T) {
 	assert.Equal(t, &osbuild.RPMStageOptions{}, st.Options)
 
 	os = manifest.NewTestOS()
-	os.OSCustomizations.RPMKeysBinary = "chickens"
+	os.OSCustomizations.BaseRPMOptions.RPMKeys = &osbuild.RPMKeys{BinPath: "chickens"}
 	pipeline, err = os.Serialize()
 	assert.NoError(t, err)
 
