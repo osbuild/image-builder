@@ -598,6 +598,8 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"generic-container",
 				"minimal-raw-xz",
 				"minimal-raw-zst",
+				"everything-network-installer",
+				"server-network-installer",
 			},
 		},
 	}
