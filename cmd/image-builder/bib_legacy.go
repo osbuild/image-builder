@@ -80,7 +80,7 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 		baseCnt = container
 		buildCnt = container
 
-		sourceinfo, err = osinfo.Load(container.Root())
+		sourceinfo, err = osinfo.Load(container.RootFS())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -111,11 +111,11 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 			}
 		}()
 
-		sourceinfo, err = osinfo.Load(baseCnt.Root())
+		sourceinfo, err = osinfo.Load(baseCnt.RootFS())
 		if err != nil {
 			return nil, nil, err
 		}
-		buildSourceinfo, err = osinfo.Load(buildCnt.Root())
+		buildSourceinfo, err = osinfo.Load(buildCnt.RootFS())
 		if err != nil {
 			return nil, nil, err
 		}
