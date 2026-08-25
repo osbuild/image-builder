@@ -113,7 +113,41 @@ type Client struct {
 	policy *signature.Policy
 	sysCtx *types.SystemContext
 
-	store string // another store location other than the main one, useful for testing
+	store   string // graphroot of the container storage
+	runroot string // runroot of the container storage
+}
+
+func getXdgDataDir() string {
+	dataHome := os.Getenv("XDG_DATA_HOME")
+	if dataHome == "" {
+		home := os.Getenv("HOME")
+		if home != "" {
+			dataHome = filepath.Join(home, ".local", "share")
+		}
+	}
+	return dataHome
+}
+
+func getXdgRuntimeDir() string {
+	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
+	if runtimeDir == "" {
+		runtimeDir = fmt.Sprintf("/run/user/%d", os.Getuid())
+	}
+	return runtimeDir
+}
+
+func defaultStorePaths() (string, string) {
+	graphRoot := "/var/lib/containers/storage"
+	runRoot := "/run/containers/storage"
+	if os.Geteuid() != 0 {
+		dataDir := getXdgDataDir()
+		if dataDir != "" {
+			graphRoot = filepath.Join(dataDir, "containers", "storage")
+			runRoot = filepath.Join(getXdgRuntimeDir(), "containers")
+		}
+	}
+
+	return graphRoot, runRoot
 }
 
 // NewClient constructs a new Client for target with default options.
@@ -157,8 +191,8 @@ func NewClient(target string) (*Client, error) {
 			AuthFilePath: GetDefaultAuthFile(),
 		},
 		policy: policy,
-		store:  "/var/lib/containers/storage",
 	}
+	client.store, client.runroot = defaultStorePaths()
 
 	// default to the host architecture
 	client.SetArchitectureChoice(arch.Current().String())
@@ -397,7 +431,7 @@ func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Di
 		}
 		target = fmt.Sprintf("@%s", imageId)
 	}
-	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+/run/containers/storage]%s", cl.store, target))
+	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
 	if err != nil {
 		return RawManifest{}, err
 	}
@@ -564,7 +598,7 @@ func (cl *Client) getLocalImageID(digest string) (string, error) {
 	// up the image ID and use that instead.
 	store := cl.store
 
-	cmd := exec.Command("podman", "--root", store, "image", "ls", "--format=json")
+	cmd := exec.Command("podman", "--root", store, "--runroot", cl.runroot, "image", "ls", "--format=json")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = os.Stderr
