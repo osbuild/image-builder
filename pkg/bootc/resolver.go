@@ -48,21 +48,27 @@ func isPodmanRootless() (bool, error) {
 	return false, nil
 }
 
+func isUnprivileged() bool {
+	return os.Geteuid() != 0
+}
+
 // Container is a simpler wrapper around a running podman container.
 // This type isn't meant as a general-purpose container management tool, but
 // as an opinonated library for bootc-image-builder.
 type Container struct {
-	ref       string
-	id        string
-	root      string
-	arch      string
-	storeOpts []string
+	ref          string
+	id           string
+	root         string
+	arch         string
+	storeOpts    []string
+	unprivileged bool
 }
 
 // Initialise a new container from the given image reference.
 func NewContainer(ref string) (*Container, error) {
 	cnt := &Container{
-		ref: ref,
+		ref:          ref,
+		unprivileged: isUnprivileged(),
 	}
 	if err := cnt.start("none", false); err != nil {
 		return nil, err
@@ -75,7 +81,8 @@ func NewContainer(ref string) (*Container, error) {
 // host networking and mount secrets from the host if available.
 func NewContainerWithRepos(ref string) (*Container, error) {
 	cnt := &Container{
-		ref: ref,
+		ref:          ref,
+		unprivileged: isUnprivileged(),
 	}
 	if err := cnt.start("host", true); err != nil {
 		return nil, err
@@ -147,7 +154,11 @@ func (cnt *Container) start(network string, mountSecrets bool) error {
 		return err
 	}
 
-	args = []string{"mount"}
+	args = []string{}
+	if cnt.unprivileged {
+		args = append(args, "unshare", "podman")
+	}
+	args = append(args, "mount")
 	args = append(args, cnt.storeOpts...)
 	args = append(args, cnt.id)
 
@@ -245,12 +256,10 @@ func (c *Container) ResolveBuildInfo() (*Info, error) {
 	}, nil
 }
 
-// Root returns the root directory of the container as available on the host.
-func (c *Container) Root() string {
-	return c.root
-}
-
 func (c *Container) RootFS() fs.FS {
+	if c.unprivileged {
+		return newPodmanUnshareFS(c.root)
+	}
 	return os.DirFS(c.root)
 }
 
@@ -554,6 +563,10 @@ func (cnt *Container) setupRunSecrets() error {
 }
 
 func (cnt *Container) NewContainerSolver(cacheRoot string, architecture arch.Arch, sourceInfo *osinfo.Info) (*depsolvednf.Solver, error) {
+	if cnt.unprivileged {
+		return nil, errors.New("Container depsolver is only supported when running as root")
+	}
+
 	solver := depsolvednf.NewSolver(
 		sourceInfo.OSRelease.PlatformID,
 		sourceInfo.OSRelease.VersionID,

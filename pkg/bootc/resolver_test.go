@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
@@ -112,8 +113,7 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, testingImage, info.Image)
 	assert.Equal(t, "running", info.State)
 
-	root := c.Root()
-	osRelease, err := os.ReadFile(path.Join(root, "etc/os-release"))
+	osRelease, err := fs.ReadFile(c.RootFS(), "etc/os-release")
 	require.NoError(t, err)
 
 	assert.Contains(t, string(osRelease), `ID="rhel"`)
@@ -161,9 +161,7 @@ func TestCopyInto(t *testing.T) {
 	err = c.CopyInto(testfile, "/testfile")
 	require.NoError(t, err)
 
-	root := c.Root()
-	testfileInContainer := path.Join(root, "testfile")
-	testfileContent, err := os.ReadFile(testfileInContainer)
+	testfileContent, err := fs.ReadFile(c.RootFS(), "testfile")
 	require.NoError(t, err)
 	require.Equal(t, "Hello, world!", string(testfileContent))
 }
