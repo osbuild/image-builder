@@ -53,8 +53,10 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		// an argument as fallback or make it not return the standard "kernel"
 		// when it's unset.
 		osc.KernelName = c.GetKernel().Name
+		osc.KernelVersion = c.GetKernel().Version
 		if imageConfig.DefaultKernelName != nil {
 			osc.KernelName = *imageConfig.DefaultKernelName
+			osc.KernelVersion = ""
 		}
 		osc.KernelOptionsAppend = kernelOptions(t, c)
 		if imageConfig.KernelOptionsBootloader != nil {

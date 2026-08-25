@@ -34,6 +34,19 @@ func kernelCheck(meta *Metadata, config *buildconfig.BuildConfig) error {
 		log.Printf("Kernel name check passed: %s is installed\n", expected.Name)
 	}
 
+	if expected.Version != "" {
+		stdout, _, _, err := ExecString("rpm", "-q", "--queryformat", "%{VERSION}-%{RELEASE}", expected.Name)
+		if err != nil {
+			return Fail("failed to query kernel version:", err)
+		}
+
+		if !strings.HasPrefix(stdout, expected.Version) {
+			return Fail("kernel version mismatch: expected", expected.Version, "got", stdout)
+		}
+
+		log.Printf("Kernel version check passed: %s matches %s\n", stdout, expected.Version)
+	}
+
 	if len(expected.Append) > 0 {
 		cmdline, err := ReadFile("/proc/cmdline")
 		if err != nil {
