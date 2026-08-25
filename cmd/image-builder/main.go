@@ -23,7 +23,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
 	"github.com/osbuild/image-builder/pkg/osbuild"
@@ -328,7 +328,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 			bootcInfo.DefaultRootFs = bootcDefaultFs
 		}
 
-		distro, err := generic.NewBootc("bootc", bootcInfo)
+		distro, err := defs.NewBootc("bootc", bootcInfo)
 		if err != nil {
 			return nil, err
 		}

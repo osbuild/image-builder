@@ -1,4 +1,4 @@
-package generic
+package defs
 
 import (
 	"errors"
@@ -12,7 +12,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/bootc"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/runner"
 )
@@ -51,10 +50,10 @@ const (
 // ref, use the [github.com/osbuild/image-builder/pkg/bootc.Container] type and its
 // methods.
 func NewBootc(name string, cinfo *bootc.Info) (*BootcDistro, error) {
-	return NewBootcWithLoader(defs.BuiltinLoader(), name, cinfo)
+	return NewBootcWithLoader(BuiltinLoader(), name, cinfo)
 }
 
-func NewBootcWithLoader(loader *defs.Loader, name string, cinfo *bootc.Info) (*BootcDistro, error) {
+func NewBootcWithLoader(loader *Loader, name string, cinfo *bootc.Info) (*BootcDistro, error) {
 	if cinfo == nil {
 		return nil, errors.New("failed to initialize bootc distro: container info is empty")
 	}

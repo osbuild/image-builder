@@ -1,4 +1,4 @@
-package generic
+package defs
 
 import (
 	"bytes"
@@ -13,7 +13,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/platform"
@@ -28,7 +27,7 @@ type isoLabelFunc func(t *imageType) string
 var _ = distro.ImageType(&imageType{})
 
 type imageType struct {
-	defs.ImageTypeYAML
+	ImageTypeYAML
 
 	arch     *architecture
 	platform platform.Platform
@@ -39,7 +38,7 @@ type imageType struct {
 	ostreeRef string
 }
 
-func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeYAML) (imageType, error) {
+func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) (imageType, error) {
 	it := imageType{
 		ImageTypeYAML: imgYAML,
 		isoLabel:      d.getISOLabelFunc(imgYAML.ISOLabel),
@@ -239,7 +238,7 @@ func (t *imageType) getDefaultDiskConfig() (*distro.DiskConfig, error) {
 
 func (t *imageType) PartitionType() disk.PartitionTableType {
 	basePartitionTable, err := t.BasePartitionTable()
-	if errors.Is(err, defs.ErrNoPartitionTableForImgType) {
+	if errors.Is(err, ErrNoPartitionTableForImgType) {
 		return disk.PT_NONE
 	}
 	if err != nil {

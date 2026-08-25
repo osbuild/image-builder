@@ -1,4 +1,4 @@
-package generic_test
+package defs_test
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,9 +19,9 @@ func TestBootstrapContainers(t *testing.T) {
 
 	for _, distroName := range repos.ListDistros() {
 		t.Run(distroName, func(t *testing.T) {
-			d := generic.DistroFactory(distroName)
+			d := defs.DistroFactory(distroName)
 			assert.NotNil(t, d)
-			assert.NotEmpty(t, d.(*generic.Distribution).DistroYAML.BootstrapContainers)
+			assert.NotEmpty(t, d.(*defs.Distribution).DistroYAML.BootstrapContainers)
 		})
 	}
 }
@@ -41,7 +41,7 @@ func TestManifestError(t *testing.T) {
 
 	// use a single image type from each distro
 	for _, distroName := range repos.ListDistros() {
-		df := generic.DistroFactory(distroName)
+		df := defs.DistroFactory(distroName)
 		require.NotNil(df)
 
 		dist := fedoraFamilyDistros[len(fedoraFamilyDistros)-1]

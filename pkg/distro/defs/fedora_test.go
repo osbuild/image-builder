@@ -1,4 +1,4 @@
-package generic_test
+package defs_test
 
 import (
 	"fmt"
@@ -11,14 +11,14 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/distro/distro_test_common"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
 )
 
 var fedoraFamilyDistros = []distro.Distro{
-	generic.DistroFactory("fedora-40"),
-	generic.DistroFactory("fedora-41"),
-	generic.DistroFactory("fedora-42"),
+	defs.DistroFactory("fedora-40"),
+	defs.DistroFactory("fedora-41"),
+	defs.DistroFactory("fedora-42"),
 }
 
 func TestFedoraFilenameFromType(t *testing.T) {
@@ -697,7 +697,7 @@ func TestFedoraDistroFactory(t *testing.T) {
 	testCases := []testCase{
 		{
 			strID:    "fedora-40",
-			expected: generic.DistroFactory("fedora-40"),
+			expected: defs.DistroFactory("fedora-40"),
 		},
 		{
 			strID:    "fedora-40.1",
@@ -715,7 +715,7 @@ func TestFedoraDistroFactory(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.strID, func(t *testing.T) {
-			d := generic.DistroFactory(tc.strID)
+			d := defs.DistroFactory(tc.strID)
 			if tc.expected == nil {
 				assert.Nil(t, d)
 			} else {
@@ -728,7 +728,7 @@ func TestFedoraDistroFactory(t *testing.T) {
 
 func TestFedoraESP(t *testing.T) {
 	distro_test_common.TestESP(t, fedoraFamilyDistros, func(it distro.ImageType) (*disk.PartitionTable, error) {
-		return generic.GetPartitionTable(it)
+		return defs.GetPartitionTable(it)
 	})
 }
 

@@ -768,7 +768,7 @@ type partitionTablesOverwriteCondition struct {
 // version for our version compare (centos is always "rolling").
 //
 // TODO: this should become an explicit chose in "imagetypes.yaml" but until
-// we have everything converted to generic.Distro accessing the properites
+// we have everything converted to defs.Distro accessing the properites
 // from an image type is very hard so we start here.
 func versionStringForVerCmp(u distro.ID) string {
 	if u.MinorVersion == -1 {

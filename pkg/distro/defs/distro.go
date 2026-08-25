@@ -1,4 +1,4 @@
-package generic
+package defs
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/runner"
@@ -41,16 +40,16 @@ var (
 var _ = distro.Distro(&distribution{})
 
 type distribution struct {
-	defs.DistroYAML
+	DistroYAML
 
 	arches map[string]*architecture
 }
 
 func New(nameVer string) (distro.Distro, error) {
-	return NewWithLoader(defs.BuiltinLoader(), nameVer)
+	return NewWithLoader(BuiltinLoader(), nameVer)
 }
 
-func NewWithLoader(loader *defs.Loader, nameVer string) (distro.Distro, error) {
+func NewWithLoader(loader *Loader, nameVer string) (distro.Distro, error) {
 	distroYAML, err := loader.NewDistroYAML(nameVer)
 	if err != nil {
 		return nil, err
@@ -257,10 +256,10 @@ func (a *architecture) Distro() distro.Distro {
 }
 
 func DistroFactory(idStr string) distro.Distro {
-	return DistroFactoryWithLoader(defs.BuiltinLoader())(idStr)
+	return DistroFactoryWithLoader(BuiltinLoader())(idStr)
 }
 
-func DistroFactoryWithLoader(loader *defs.Loader) func(string) distro.Distro {
+func DistroFactoryWithLoader(loader *Loader) func(string) distro.Distro {
 	return func(idStr string) distro.Distro {
 		d, err := NewWithLoader(loader, idStr)
 		if errors.Is(err, ErrDistroNotFound) {

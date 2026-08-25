@@ -1,32 +1,30 @@
-package generic_test
+package defs_test
 
 import (
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/distro/distro_test_common"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
 )
 
-type rhel10FamilyDistro struct {
+type rhelFamilyDistro struct {
 	name   string
 	distro distro.Distro
 }
 
-var rhel10FamilyDistros = []rhel10FamilyDistro{
+var rhel7_FamilyDistros = []rhelFamilyDistro{
 	{
-		name:   "rhel-10.0",
-		distro: generic.DistroFactory("rhel-10.0"),
+		name:   "rhel-79",
+		distro: defs.DistroFactory("rhel-7.9"),
 	},
 }
 
-func TestRH10FilenameFromType(t *testing.T) {
+func TestRhel7FilenameFromType(t *testing.T) {
 	type args struct {
 		outputFormat string
 	}
@@ -41,14 +39,6 @@ func TestRH10FilenameFromType(t *testing.T) {
 		want wantResult
 	}{
 		{
-			name: "ami",
-			args: args{"ami"},
-			want: wantResult{
-				filename: "image.raw",
-				mimeType: "application/octet-stream",
-			},
-		},
-		{
 			name: "qcow2",
 			args: args{"qcow2"},
 			want: wantResult{
@@ -57,35 +47,19 @@ func TestRH10FilenameFromType(t *testing.T) {
 			},
 		},
 		{
-			name: "vhd",
-			args: args{"vhd"},
+			name: "azure-rhui",
+			args: args{"azure-rhui"},
 			want: wantResult{
-				filename: "disk.vhd",
-				mimeType: "application/x-vhd",
+				filename: "disk.vhd.xz",
+				mimeType: "application/xz",
 			},
 		},
 		{
-			name: "vmdk",
-			args: args{"vmdk"},
+			name: "ec2",
+			args: args{"ec2"},
 			want: wantResult{
-				filename: "disk.vmdk",
-				mimeType: "application/x-vmdk",
-			},
-		},
-		{
-			name: "ova",
-			args: args{"ova"},
-			want: wantResult{
-				filename: "image.ova",
-				mimeType: "application/ovf",
-			},
-		},
-		{
-			name: "tar",
-			args: args{"tar"},
-			want: wantResult{
-				filename: "root.tar.xz",
-				mimeType: "application/x-tar",
+				filename: "image.raw.xz",
+				mimeType: "application/xz",
 			},
 		},
 		{
@@ -94,12 +68,14 @@ func TestRH10FilenameFromType(t *testing.T) {
 			want: wantResult{wantErr: true},
 		},
 	}
-	for _, dist := range rhel10FamilyDistros {
+	for _, dist := range rhel7_FamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, tt := range tests {
 				t.Run(tt.name, func(t *testing.T) {
 					dist := dist.distro
-					arch, _ := dist.GetArch("x86_64")
+					require.NotNil(t, dist)
+					arch, err := dist.GetArch("x86_64")
+					require.NoError(t, err)
 					imgType, err := arch.GetImageType(tt.args.outputFormat)
 					if tt.want.wantErr {
 						require.Error(t, err)
@@ -121,7 +97,7 @@ func TestRH10FilenameFromType(t *testing.T) {
 	}
 }
 
-func TestRH10ImageType_BuildPackages(t *testing.T) {
+func TestRhel7ImageType_BuildPackages(t *testing.T) {
 	x8664BuildPackages := []string{
 		"dnf",
 		"dosfstools",
@@ -135,21 +111,10 @@ func TestRH10ImageType_BuildPackages(t *testing.T) {
 		"qemu-img",
 		"xz",
 	}
-	aarch64BuildPackages := []string{
-		"dnf",
-		"dosfstools",
-		"e2fsprogs",
-		"policycoreutils",
-		"qemu-img",
-		"systemd",
-		"tar",
-		"xz",
-	}
 	buildPackages := map[string][]string{
-		"x86_64":  x8664BuildPackages,
-		"aarch64": aarch64BuildPackages,
+		"x86_64": x8664BuildPackages,
 	}
-	for _, dist := range rhel10FamilyDistros {
+	for _, dist := range rhel7_FamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			d := dist.distro
 			for _, archLabel := range d.ListArches() {
@@ -176,7 +141,7 @@ func TestRH10ImageType_BuildPackages(t *testing.T) {
 	}
 }
 
-func TestRH10ImageType_Name(t *testing.T) {
+func TestRhel7ImageType_Name(t *testing.T) {
 	imgMap := []struct {
 		arch     string
 		imgNames []string
@@ -184,45 +149,16 @@ func TestRH10ImageType_Name(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
+				"ec2",
 				"qcow2",
-				"vhd",
-				"vmdk",
-				"ova",
-				"ami",
-				"tar",
-			},
-		},
-		{
-			arch: "aarch64",
-			imgNames: []string{
-				"qcow2",
-				"ami",
-				"tar",
-				"vhd",
-			},
-		},
-		{
-			arch: "ppc64le",
-			imgNames: []string{
-				"qcow2",
-				"tar",
-			},
-		},
-		{
-			arch: "s390x",
-			imgNames: []string{
-				"qcow2",
-				"tar",
+				"azure-rhui",
 			},
 		},
 	}
 
-	for _, dist := range rhel10FamilyDistros {
+	for _, dist := range rhel7_FamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
-				if mapping.arch == arch.ARCH_S390X.String() && dist.name == "centos" {
-					continue
-				}
 				arch, err := dist.distro.GetArch(mapping.arch)
 				if assert.NoError(t, err) {
 					for _, imgName := range mapping.imgNames {
@@ -237,7 +173,7 @@ func TestRH10ImageType_Name(t *testing.T) {
 	}
 }
 
-func TestRH10Architecture_ListImageTypes(t *testing.T) {
+func TestRhel7Architecture_ListImageTypes(t *testing.T) {
 	imgMap := []struct {
 		arch                     string
 		imgNames                 []string
@@ -246,69 +182,14 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
-				"qcow2",
-				"oci",
-				"vhd",
-				"vmdk",
-				"ova",
-				"ami",
-				"tar",
-				"wsl",
-				"gce",
-				"image-installer",
-				"network-installer",
-				"azure-cvm",
-				"azure-rhui",
-				"azure-sap-rhui",
-				"azure-sapapps-rhui",
 				"ec2",
-				"ec2-cvm",
-				"ec2-ha",
-				"ec2-sap",
-				"vagrant-libvirt",
-				"vagrant-virtualbox",
-				"pxe-tar-xz",
-				"minimal-raw-xz",
-			},
-		},
-		{
-			arch: "aarch64",
-			imgNames: []string{
-				"ami",
+				"qcow2",
 				"azure-rhui",
-				"ec2",
-				"image-installer",
-				"network-installer",
-				"pxe-tar-xz",
-				"qcow2",
-				"tar",
-				"vagrant-libvirt",
-				"vhd",
-				"wsl",
-				"minimal-raw-xz",
-			},
-		},
-		{
-			arch: "ppc64le",
-			imgNames: []string{
-				"image-installer",
-				"network-installer",
-				"qcow2",
-				"tar",
-			},
-		},
-		{
-			arch: "s390x",
-			imgNames: []string{
-				"image-installer",
-				"network-installer",
-				"qcow2",
-				"tar",
 			},
 		},
 	}
 
-	for _, dist := range rhel10FamilyDistros {
+	for _, dist := range rhel7_FamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
 				arch, err := dist.distro.GetArch(mapping.arch)
@@ -321,20 +202,18 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 					expectedImageTypes = append(expectedImageTypes, mapping.rhelAdditionalImageTypes...)
 				}
 
-				slices.Sort(expectedImageTypes)
-				slices.Sort(imageTypes)
-				require.Equal(t, expectedImageTypes, imageTypes)
+				require.ElementsMatch(t, expectedImageTypes, imageTypes)
 			}
 		})
 	}
 }
 
-func TestRH10Rhel10_ListArches(t *testing.T) {
-	arches := rhel10FamilyDistros[0].distro.ListArches()
-	assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
+func TestRhel7Rhel7_ListArches(t *testing.T) {
+	arches := rhel7_FamilyDistros[0].distro.ListArches()
+	assert.Equal(t, []string{"x86_64"}, arches)
 }
 
-func TestRH10Rhel10_GetArch(t *testing.T) {
+func TestRhel7Rhel7_GetArch(t *testing.T) {
 	arches := []struct {
 		name                  string
 		errorExpected         bool
@@ -344,21 +223,12 @@ func TestRH10Rhel10_GetArch(t *testing.T) {
 			name: "x86_64",
 		},
 		{
-			name: "aarch64",
-		},
-		{
-			name: "ppc64le",
-		},
-		{
-			name: "s390x",
-		},
-		{
 			name:          "foo-arch",
 			errorExpected: true,
 		},
 	}
 
-	for _, dist := range rhel10FamilyDistros {
+	for _, dist := range rhel7_FamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, a := range arches {
 				actualArch, err := dist.distro.GetArch(a.name)
@@ -374,34 +244,56 @@ func TestRH10Rhel10_GetArch(t *testing.T) {
 	}
 }
 
-func TestRH10Rhel10_Name(t *testing.T) {
-	distro := rhel10FamilyDistros[0].distro
-	assert.Equal(t, "rhel-10.0", distro.Name())
+func TestRhel7Rhel7_Name(t *testing.T) {
+	distro := rhel7_FamilyDistros[0].distro
+	assert.Equal(t, "rhel-7.9", distro.Name())
 }
 
-func TestRH10Rhel10_ModulePlatformID(t *testing.T) {
-	distro := rhel10FamilyDistros[0].distro
-	assert.Equal(t, "platform:el10", distro.ModulePlatformID())
+func TestRhel7Rhel7_ModulePlatformID(t *testing.T) {
+	distro := rhel7_FamilyDistros[0].distro
+	assert.Equal(t, "platform:el7", distro.ModulePlatformID())
 }
 
-func TestRH10Rhel10_KernelOption(t *testing.T) {
-	distro_test_common.TestDistro_KernelOption(t, rhel10FamilyDistros[0].distro)
+func TestRhel7Rhel7_KernelOption(t *testing.T) {
+	distro_test_common.TestDistro_KernelOption(t, rhel7_FamilyDistros[0].distro)
 }
 
-func TestRH10Rhel10_KernelOption_NoIfnames(t *testing.T) {
-	for _, distroName := range []string{"rhel-10.0", "centos-10"} {
-		distro := generic.DistroFactory(distroName)
-		for _, archName := range distro.ListArches() {
-			arch, err := distro.GetArch(archName)
-			assert.NoError(t, err)
-			for _, imgTypeName := range arch.ListImageTypes() {
-				imgType, err := arch.GetImageType(imgTypeName)
-				assert.NoError(t, err)
-				imgCfg := imgType.(*generic.ImageType).GetDefaultImageConfig()
-				if imgCfg != nil {
-					assert.NotContains(t, imgCfg.KernelOptions, "net.ifnames=0", "type %s contains unwanted net.ifnames=0", imgType.Name())
-				}
+func TestRhel7DistroFactory(t *testing.T) {
+	type testCase struct {
+		strID    string
+		expected distro.Distro
+	}
+
+	testCases := []testCase{
+		{
+			strID:    "rhel-7",
+			expected: nil,
+		},
+		{
+			// the latest RHEL-7 is 7.9 and there won't be any newer one
+			strID:    "rhel-7.10",
+			expected: nil,
+		},
+		{
+			// this is intentionally not supported for el7
+			strID:    "rhel-79",
+			expected: nil,
+		},
+		{
+			strID:    "rhel-7.9",
+			expected: defs.DistroFactory("rhel-7.9"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.strID, func(t *testing.T) {
+			d := defs.DistroFactory(tc.strID)
+			if tc.expected == nil {
+				assert.Nil(t, d)
+			} else {
+				assert.NotNil(t, d)
+				assert.Equal(t, tc.expected.Name(), d.Name())
 			}
-		}
+		})
 	}
 }

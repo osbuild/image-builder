@@ -1,4 +1,4 @@
-package generic
+package defs
 
 import (
 	"errors"
@@ -20,7 +20,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/disk/partition"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/bootc"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/osbuild"
@@ -34,7 +33,7 @@ import (
 var _ = distro.ImageType(&bootcImageType{})
 
 type bootcImageType struct {
-	defs.ImageTypeYAML
+	ImageTypeYAML
 
 	arch *architecture
 }
@@ -77,7 +76,7 @@ func (t *bootcImageType) Size(size uint64) uint64 {
 func (t *bootcImageType) PartitionType() disk.PartitionTableType {
 	// XXX: duplicated from generic/imagetype.go
 	basePartitionTable, err := t.BasePartitionTable()
-	if errors.Is(err, defs.ErrNoPartitionTableForImgType) {
+	if errors.Is(err, ErrNoPartitionTableForImgType) {
 		return disk.PT_NONE
 	}
 	if err != nil {
@@ -562,7 +561,7 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 // if no direct match can be found it will it will use the ID_LIKE.
 // This should ensure we work on every bootc image that puts a correct
 // ID_LIKE= in /etc/os-release
-func NewDistroYAMLFrom(loader *defs.Loader, sourceInfo *osinfo.Info) (*defs.DistroYAML, *distro.ID, error) {
+func NewDistroYAMLFrom(loader *Loader, sourceInfo *osinfo.Info) (*DistroYAML, *distro.ID, error) {
 	for _, distroID := range append([]string{sourceInfo.OSRelease.ID}, sourceInfo.OSRelease.IDLike...) {
 		nameVer := fmt.Sprintf("%s-%s", distroID, sourceInfo.OSRelease.VersionID)
 		id, err := distro.ParseID(nameVer)
@@ -596,7 +595,7 @@ func (t *bootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 	archStr := t.arch.Name()
 	sourceInfo := bd.sourceInfo
 
-	distroYAML, id, err := NewDistroYAMLFrom(defs.BuiltinLoader(), bd.sourceInfo)
+	distroYAML, id, err := NewDistroYAMLFrom(BuiltinLoader(), bd.sourceInfo)
 	if err != nil {
 		return nil, nil, err
 	}
