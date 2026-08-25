@@ -23,7 +23,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/experimentalflags"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
@@ -157,7 +157,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	if rootFs != "" {
 		bootcInfo.DefaultRootFs = rootFs
 	}
-	distri, err := generic.NewBootc("bootc", bootcInfo)
+	distri, err := defs.NewBootc("bootc", bootcInfo)
 	if err != nil {
 		return nil, nil, err
 	}

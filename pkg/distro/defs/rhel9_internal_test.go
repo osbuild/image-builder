@@ -1,4 +1,4 @@
-package generic
+package defs
 
 import (
 	"fmt"
