@@ -65,20 +65,24 @@ func newClientFromArgs(flags *pflag.FlagSet) (*awscloud.AWS, error) {
 	if err != nil {
 		return nil, err
 	}
-	keyID, err := flags.GetString("access-key-id")
-	if err != nil {
-		return nil, err
-	}
-	secretKey, err := flags.GetString("secret-access-key")
-	if err != nil {
-		return nil, err
-	}
-	sessionToken, err := flags.GetString("session-token")
-	if err != nil {
-		return nil, err
-	}
+	if flags.Changed("access-key-id") {
+		keyID, err := flags.GetString("access-key-id")
+		if err != nil {
+			return nil, err
+		}
+		secretKey, err := flags.GetString("secret-access-key")
+		if err != nil {
+			return nil, err
+		}
+		sessionToken, err := flags.GetString("session-token")
+		if err != nil {
+			return nil, err
+		}
 
-	return awscloud.New(region, keyID, secretKey, sessionToken)
+		return awscloud.New(region, keyID, secretKey, sessionToken)
+	} else {
+		return awscloud.NewDefault(region, "")
+	}
 }
 
 func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
@@ -363,8 +367,6 @@ func setupCLI() *cobra.Command {
 	rootFlags.String("ssh-pubkey", "", "path to user's public ssh key")
 	rootFlags.String("ssh-privkey", "", "path to user's private ssh key")
 
-	exitCheck(rootCmd.MarkPersistentFlagRequired("access-key-id"))
-	exitCheck(rootCmd.MarkPersistentFlagRequired("secret-access-key"))
 	exitCheck(rootCmd.MarkPersistentFlagRequired("region"))
 	exitCheck(rootCmd.MarkPersistentFlagRequired("ami"))
 	exitCheck(rootCmd.MarkPersistentFlagRequired("arch"))
