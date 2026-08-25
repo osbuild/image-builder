@@ -16,7 +16,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/disk"
 	bootcdistro "github.com/osbuild/image-builder/pkg/distro/bootc"
 	"github.com/osbuild/image-builder/pkg/distro/defs"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/olog"
@@ -243,7 +242,7 @@ func manifestForISO(c *ManifestConfig, rng *rand.Rand) (*manifest.Manifest, erro
 	}
 
 	// This gets the installer package set from the distro reported by the bootc container
-	distroYAML, id, err := generic.NewDistroYAMLFrom(defs.BuiltinLoader(), c.SourceInfo)
+	distroYAML, id, err := defs.NewDistroYAMLFrom(defs.BuiltinLoader(), c.SourceInfo)
 	if err != nil {
 		return nil, err
 	}

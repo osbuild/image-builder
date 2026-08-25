@@ -1,11 +1,10 @@
-package generic
+package defs
 
 import (
 	"testing"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +15,7 @@ func TestISOLabel(t *testing.T) {
 		},
 	}
 	d := &distribution{
-		DistroYAML: defs.DistroYAML{
+		DistroYAML: DistroYAML{
 			Name:         "rhel-9.1",
 			Product:      "some-product",
 			ISOLabelTmpl: "name:{{.Distro.Name}},major:{{.Distro.MajorVersion}},minor:{{.Distro.MinorVersion}},product:{{.Product}},arch:{{.Arch}},iso-label:{{.ISOLabel}}",

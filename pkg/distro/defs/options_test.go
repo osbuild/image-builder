@@ -1,4 +1,4 @@
-package generic_test
+package defs_test
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/disk/partition"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/ostree"
 )
 
@@ -1903,7 +1903,7 @@ func TestCheckOptions(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			d := generic.DistroFactory(tc.distro)
+			d := defs.DistroFactory(tc.distro)
 			archName := tc.arch
 			if archName == "" {
 				archName = "x86_64"
@@ -1913,9 +1913,9 @@ func TestCheckOptions(t *testing.T) {
 			it, err := arch.GetImageType(tc.it)
 			assert.NoError(err)
 
-			genit, ok := it.(*generic.ImageType) // checkOptions() function is defined on generic.ImageType
+			genit, ok := it.(*defs.ImageType) // checkOptions() function is defined on defs.ImageType
 			assert.True(ok, "image type %q for distro %q does not appear to be valid", tc.it, d.Name())
-			warnings, err := generic.ImageTypeCheckOptions(genit, &tc.bp, tc.options)
+			warnings, err := defs.ImageTypeCheckOptions(genit, &tc.bp, tc.options)
 			if tc.expErr == "" {
 				assert.NoError(err)
 			} else {

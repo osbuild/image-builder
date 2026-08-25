@@ -3002,7 +3002,7 @@ fail:
     RUNNER: aws/fedora-44-x86_64
   script:
     - sudo ./test/scripts/install-dependencies
-    - sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...
+    - sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/defs/...
     - sudo go test -count=1 ./pkg/container/... --force-local-resolver
     - sudo go test -count=1 ./pkg/bootc/... --fail-if-podman-missing
   needs:
@@ -3018,7 +3018,7 @@ fail:
     RUNNER: aws/fedora-44-aarch64
   script:
     - sudo ./test/scripts/install-dependencies
-    - sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...
+    - sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/defs/...
     - sudo go test -count=1 ./pkg/container/... --force-local-resolver
     - sudo go test -count=1 ./pkg/bootc/... --fail-if-podman-missing
   needs:

@@ -1,4 +1,4 @@
-package generic
+package defs
 
 import (
 	"encoding/json"
@@ -19,9 +19,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/bootc/bootctest"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/manifest"
-	"github.com/osbuild/image-builder/pkg/manifestgen"
 	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/osbuild/manifesttest"
@@ -593,7 +591,7 @@ func loadImageTypes(t *testing.T, d *BootcDistro) {
 
 	require := require.New(t)
 
-	distroYAML, err := defs.LoadDistroWithoutImageTypes("bootc-generic-1")
+	distroYAML, err := LoadDistroWithoutImageTypes("bootc-generic-1")
 	require.NoError(err)
 
 	fs, err := disk.NewFSType(d.defaultFs)
@@ -1124,23 +1122,21 @@ func canRunIntegration(t *testing.T) {
 }
 
 func genManifest(t *testing.T, imgType distro.ImageType) string {
-	var bp blueprint.Blueprint
+	t.Helper()
+	var bp *blueprint.Blueprint
 
-	mg, err := manifestgen.New(nil, &manifestgen.Options{
-		OverrideRepos: []rpmmd.RepoConfig{
-			{Id: "not-used", BaseURLs: []string{"not-used"}},
-		},
-	})
-	assert.NoError(t, err)
-	manifestJson, err := mg.Generate(&bp, imgType, nil)
-	assert.NoError(t, err)
+	repos := []rpmmd.RepoConfig{
+		{Id: "not-used", BaseURLs: []string{"not-used"}},
+	}
+	preManifest, _, err := imgType.Manifest(bp, distro.ImageOptions{}, repos, nil)
+	require.NoError(t, err)
 
-	// XXX: it would be nice to return an *osbuild.Manifest here
-	// and do all of this more structed, however this is not
-	// working currently as osbuild.NewManifestsFromBytes() cannot
-	// unmarshal our manifests because of:
-	// "unexpected source name: org.osbuild.containers-storage"
-	return string(manifestJson)
+	containerSpecs, err := container.NewBlockingResolver(imgType.Arch().Name()).ResolveAll(preManifest.GetContainerSourceSpecs())
+	require.NoError(t, err)
+
+	mf, err := preManifest.Serialize(nil, containerSpecs, nil, nil, nil)
+	require.NoError(t, err)
+	return string(mf)
 }
 
 func TestBuildContainerHandling(t *testing.T) {

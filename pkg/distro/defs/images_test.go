@@ -1,4 +1,4 @@
-package generic
+package defs
 
 import (
 	"fmt"
@@ -11,7 +11,6 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/defs"
 )
 
 func isoTestImageType() *imageType {
@@ -19,7 +18,7 @@ func isoTestImageType() *imageType {
 		arch: &architecture{
 			distro: &distribution{},
 		},
-		ImageTypeYAML: defs.ImageTypeYAML{
+		ImageTypeYAML: ImageTypeYAML{
 			BootISO: true,
 		},
 		isoLabel: func(*imageType) string { return "iso-label" },

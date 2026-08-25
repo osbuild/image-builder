@@ -20,7 +20,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/defs"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/platform"
@@ -204,7 +203,7 @@ image_types:
 	fakeBaseDir := makeFakeDistrosYAML(t, "", fakeImgTypesYAML)
 
 	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", fmt.Sprintf("yamldir=%s", fakeBaseDir))
-	dist := generic.DistroFactory("test-distro-1")
+	dist := defs.DistroFactory("test-distro-1")
 	assert.NotNil(t, dist)
 	ar, err := dist.GetArch("x86_64")
 	assert.NoError(t, err)
@@ -1267,7 +1266,7 @@ distros:
 			// this layer. XXX: consolidate it to the YAML level
 			// already?
 
-			distro := generic.DistroFactory(tc.distroNameVer)
+			distro := defs.DistroFactory(tc.distroNameVer)
 			require.NotNil(t, distro)
 			assert.Equal(t, tc.distroNameVer, distro.Name())
 			a, err := distro.GetArch("x86_64")
@@ -1360,7 +1359,7 @@ distros:
 		{"s390x", []string{"container", "ec2"}},
 	} {
 		t.Run(tc.arch, func(t *testing.T) {
-			distro := generic.DistroFactory("rhel-8")
+			distro := defs.DistroFactory("rhel-8")
 			require.NotNil(t, distro)
 			a, err := distro.GetArch(tc.arch)
 			require.NoError(t, err)

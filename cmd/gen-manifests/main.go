@@ -33,7 +33,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/distrofactory"
 	"github.com/osbuild/image-builder/pkg/experimentalflags"
 	"github.com/osbuild/image-builder/pkg/flatpak"
@@ -627,7 +627,7 @@ func main() {
 			bootcInfo.DefaultRootFs = "ext4"
 		}
 
-		distribution, err := generic.NewBootc("bootc", bootcInfo)
+		distribution, err := defs.NewBootc("bootc", bootcInfo)
 		if err != nil {
 			panic(err)
 		}
@@ -716,7 +716,7 @@ func main() {
 				DefaultRootFs: fakeBootcCnt.DefaultFs,
 				Size:          fakeBootcCnt.ContainerSize,
 			}
-			distribution, err := generic.NewBootc("bootc", fakeBootcInfo)
+			distribution, err := defs.NewBootc("bootc", fakeBootcInfo)
 			if err != nil {
 				panic(err)
 			}
