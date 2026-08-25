@@ -68,21 +68,7 @@
         booting:
           - "biosdevname"
         firmware:
-          - "amd-gpu-firmware"
-          - "amd-ucode-firmware"
-          - "atheros-firmware"
-          - "brcmfmac-firmware"
-          - "intel-gpu-firmware"
-          - "iwlegacy-firmware"
-          - "iwlwifi-dvm-firmware"
-          - "iwlwifi-mvm-firmware"
-          - "libertas-firmware"
           - "linux-firmware"
-          - "mt7xxx-firmware"
-          - "nvidia-gpu-firmware"
-          - "nxpwireless-firmware"
-          - "realtek-firmware"
-          - "tiwilink-firmware"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       bootloader: "grub2"
@@ -104,21 +90,7 @@
         booting:
           - "grub2-efi-aa64-cdboot"
         firmware:
-          - "amd-gpu-firmware"
-          - "amd-ucode-firmware"
-          - "atheros-firmware"
-          - "brcmfmac-firmware"
-          - "intel-gpu-firmware"
-          - "iwlegacy-firmware"
-          - "iwlwifi-dvm-firmware"
-          - "iwlwifi-mvm-firmware"
-          - "libertas-firmware"
           - "linux-firmware"
-          - "mt7xxx-firmware"
-          - "nvidia-gpu-firmware"
-          - "nxpwireless-firmware"
-          - "realtek-firmware"
-          - "tiwilink-firmware"
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bootloader: "grub2"
@@ -2227,6 +2199,25 @@ image_types:
               append:
                 include:
                   - "redhat-release-eula"
+            "include split firmware when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "amd-gpu-firmware"
+                  - "amd-ucode-firmware"
+                  - "atheros-firmware"
+                  - "brcmfmac-firmware"
+                  - "intel-gpu-firmware"
+                  - "iwlegacy-firmware"
+                  - "iwlwifi-dvm-firmware"
+                  - "iwlwifi-mvm-firmware"
+                  - "libertas-firmware"
+                  - "mt7xxx-firmware"
+                  - "nvidia-gpu-firmware"
+                  - "nxpwireless-firmware"
+                  - "realtek-firmware"
+                  - "tiwilink-firmware"
     blueprint:
       supported_options:
         - "distro"
@@ -2642,6 +2633,26 @@ image_types:
             - "sg3_utils"
             - "perl-interpreter"
             - "restore"
+          conditions:
+            "include split firmware when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "amd-gpu-firmware"
+                  - "amd-ucode-firmware"
+                  - "atheros-firmware"
+                  - "brcmfmac-firmware"
+                  - "intel-gpu-firmware"
+                  - "iwlegacy-firmware"
+                  - "iwlwifi-dvm-firmware"
+                  - "iwlwifi-mvm-firmware"
+                  - "libertas-firmware"
+                  - "mt7xxx-firmware"
+                  - "nvidia-gpu-firmware"
+                  - "nxpwireless-firmware"
+                  - "realtek-firmware"
+                  - "tiwilink-firmware"
     blueprint:
       supported_options:
         - "distro"
