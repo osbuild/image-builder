@@ -199,7 +199,7 @@ func (c *Container) ResolveInfo() (*Info, error) {
 		Arch:    c.Arch(),
 	}
 
-	os, err := osinfo.Load(c.Root())
+	os, err := osinfo.Load(c.RootFS())
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +248,10 @@ func (c *Container) ResolveBuildInfo() (*Info, error) {
 // Root returns the root directory of the container as available on the host.
 func (c *Container) Root() string {
 	return c.root
+}
+
+func (c *Container) RootFS() fs.FS {
+	return os.DirFS(c.root)
 }
 
 // Arch returns the architecture of the container

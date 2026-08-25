@@ -58,7 +58,7 @@ func TestDepsolveDNFWorks(t *testing.T) {
 	err = cnt.InitDNF()
 	require.NoError(t, err)
 
-	sourceInfo, err := osinfo.Load(cnt.Root())
+	sourceInfo, err := osinfo.Load(cnt.RootFS())
 	require.NoError(t, err)
 	solver, err := cnt.NewContainerSolver(cacheRoot, arch.Current(), sourceInfo)
 	require.NoError(t, err)
@@ -136,7 +136,7 @@ func TestDepsolveDNFWorkWithSubscribedContent(t *testing.T) {
 	err = cnt.InitDNF()
 	require.NoError(t, err)
 
-	sourceInfo, err := osinfo.Load(cnt.Root())
+	sourceInfo, err := osinfo.Load(cnt.RootFS())
 	require.NoError(t, err)
 	solver, err := cnt.NewContainerSolver(cacheRoot, arch.ARCH_X86_64, sourceInfo)
 	require.NoError(t, err)

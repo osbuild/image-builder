@@ -123,7 +123,7 @@ func TestLoadInfo(t *testing.T) {
 		{"sad-no-id", "", "40", "Fedora Linux", "fedora", "platform:f40", "", "", "json", "missing ID in os-release"},
 		{"sad-no-id", "fedora", "", "Fedora Linux", "fedora", "platform:f40", "", "", "json", "missing VERSION_ID in os-release"},
 		{"sad-no-id", "fedora", "40", "", "fedora", "platform:f40", "", "", "json", "missing NAME in os-release"},
-		{"sad-broken-json", "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos", "", "broken", "cannot decode \"$ROOT/usr/lib/bootc-image-builder/config.json\": unexpected EOF"},
+		{"sad-broken-json", "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos", "", "broken", "cannot decode \"usr/lib/bootc-image-builder/config.json\": unexpected EOF"},
 	}
 
 	for _, c := range cases {
@@ -139,7 +139,7 @@ func TestLoadInfo(t *testing.T) {
 
 			}
 
-			info, err := Load(root)
+			info, err := Load(os.DirFS(root))
 
 			if c.errorStr != "" {
 				require.EqualError(t, err, strings.ReplaceAll(c.errorStr, "$ROOT", root))
@@ -207,7 +207,7 @@ func TestLoadInfoKernel(t *testing.T) {
 				filePath := path.Join(baseDir, file)
 				require.NoError(t, os.WriteFile(filePath, nil, 0644))
 			}
-			info, err := readKernelInfo(root)
+			info, err := readKernelInfo(os.DirFS(root))
 			if c.expected == nil {
 				require.Error(t, err)
 				assert.Nil(t, info)
@@ -256,7 +256,7 @@ func TestLoadInfoPartitionTableHappy(t *testing.T) {
 		writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
 		createPartitionTable(t, root, fakePartitionTableYAML, dest)
 
-		info, err := Load(root)
+		info, err := Load(os.DirFS(root))
 		require.NoError(t, err)
 		assert.Equal(t, &disk.PartitionTable{
 			Type: disk.PT_GPT,
@@ -277,8 +277,8 @@ func TestLoadInfoPartitionTableSad(t *testing.T) {
 	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
 	createPartitionTable(t, root, "@invalidYAML", "/usr/lib/bootc-image-builder/disk.yaml")
 
-	_, err := Load(root)
-	assert.EqualError(t, err, fmt.Sprintf(`cannot parse disk definitions from "%s/usr/lib/bootc-image-builder/disk.yaml": yaml: found character that cannot start any token`, root))
+	_, err := Load(os.DirFS(root))
+	assert.EqualError(t, err, `cannot parse disk definitions from "usr/lib/bootc-image-builder/disk.yaml": yaml: found character that cannot start any token`)
 }
 
 var fakeISOYAML = `
@@ -319,7 +319,7 @@ func TestLoadInfoISOHappy(t *testing.T) {
 		writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
 		createISO(t, root, fakeISOYAML, dest)
 
-		info, err := Load(root)
+		info, err := Load(os.DirFS(root))
 		require.NoError(t, err)
 
 		assert.Equal(t, "My-ISO", info.ISOInfo.Label)
@@ -345,8 +345,8 @@ func TestLoadInfoISOSad(t *testing.T) {
 	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
 	createISO(t, root, "@invalidYAML", "/usr/lib/bootc-image-builder/iso.yaml")
 
-	_, err := Load(root)
-	assert.EqualError(t, err, fmt.Sprintf(`cannot parse iso definitions from "%s/usr/lib/bootc-image-builder/iso.yaml": yaml: found character that cannot start any token`, root))
+	_, err := Load(os.DirFS(root))
+	assert.EqualError(t, err, `cannot parse iso definitions from "usr/lib/bootc-image-builder/iso.yaml": yaml: found character that cannot start any token`)
 }
 
 func TestLoadInfoUEFIVendorSearchPath(t *testing.T) {
@@ -356,7 +356,7 @@ func TestLoadInfoUEFIVendorSearchPath(t *testing.T) {
 	err := os.MkdirAll(path.Join(root, "usr/lib/efi/shim/1.64/EFI/fedora"), 0755)
 	assert.NoError(t, err)
 
-	info, err := Load(root)
+	info, err := Load(os.DirFS(root))
 	assert.NoError(t, err)
 	assert.Equal(t, "fedora", info.UEFIVendor)
 }
