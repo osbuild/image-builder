@@ -438,6 +438,7 @@ type whenCondition struct {
 	DistroName            string `yaml:"distro_name,omitempty"`
 	NotDistroName         string `yaml:"not_distro_name,omitempty"`
 	Architecture          string `yaml:"arch,omitempty"`
+	NotArchitecture       string `yaml:"not_arch,omitempty"`
 	VersionLessThan       string `yaml:"version_less_than,omitempty"`
 	VersionGreaterOrEqual string `yaml:"version_greater_or_equal,omitempty"`
 	VersionEqual          string `yaml:"version_equal,omitempty"`
@@ -454,6 +455,9 @@ func (wc *whenCondition) Eval(id distro.ID, archStr string) bool {
 	}
 	if wc.Architecture != "" {
 		match = match && (wc.Architecture == archStr)
+	}
+	if wc.NotArchitecture != "" {
+		match = match && (wc.NotArchitecture != archStr)
 	}
 	if wc.VersionLessThan != "" {
 		match = match && (common.VersionLessThan(versionStringForVerCmp(id), wc.VersionLessThan))
