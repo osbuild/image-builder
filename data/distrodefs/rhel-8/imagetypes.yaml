@@ -2415,7 +2415,7 @@ image_types:
 
   "edge-container":
     name_aliases: ["rhel-edge-container"]
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "ostree_container"
     exports: ["container"]
