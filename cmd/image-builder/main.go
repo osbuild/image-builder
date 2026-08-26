@@ -673,10 +673,6 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if runInVm && !setup.IsContainer() {
-		return fmt.Errorf("running in VM outside container is not supported yet")
-	}
-
 	img, err := getImage(cmd, args)
 	if err != nil {
 		return err
