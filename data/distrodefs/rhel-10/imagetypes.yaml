@@ -1142,7 +1142,7 @@ image_types:
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    filename: "vagrant-libvirt.box"
+    filename: "image.vagrant-libvirt.box"
     mime_type: "application/x-tar"
     bootable: true
     default_size: "10 GiB"
@@ -1173,7 +1173,7 @@ image_types:
 
   "vagrant-virtualbox":
     <<: *vagrant_libvirt
-    filename: "vagrant-virtualbox.box"
+    filename: "image.vagrant-virtualbox.box"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
@@ -2831,7 +2831,7 @@ image_types:
             - xz
 
   container: &container
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false
