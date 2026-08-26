@@ -2069,7 +2069,7 @@ image_types:
     iso_config: *default_iso_config
     platforms:
       - *x86_64_installer_platform
-      - *aarch64_platform
+      - *aarch64_installer_platform
     platforms_override:
       conditions:
         "RHEL 10.1+ adds FIPS menu":
@@ -2078,7 +2078,7 @@ image_types:
           override:
             - <<: *x86_64_installer_platform
               fips_menu: true
-            - <<: *aarch64_platform
+            - <<: *aarch64_installer_platform
               fips_menu: true
     package_sets:
       <<: *bare_metal_pkgset
