@@ -80,7 +80,7 @@ image_types:
 
   container-minimal:
     <<: *container
-    filename: "container-minimal.tar"
+    filename: "container-minimal.oci.tar"
     package_sets:
       os:
         - *common_container_exclude
