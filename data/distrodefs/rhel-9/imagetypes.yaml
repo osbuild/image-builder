@@ -3971,7 +3971,7 @@ image_types:
 
   container-minimal:
     <<: *container
-    filename: "container-minimal.tar"
+    filename: "container-minimal.oci.tar"
     package_sets:
       os:
         - include:
