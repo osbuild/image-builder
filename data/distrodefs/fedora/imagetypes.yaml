@@ -1347,7 +1347,7 @@
 
 image_types:
   "generic-vagrant-libvirt": &generic_vagrant_libvirt
-    filename: "vagrant-libvirt.box"
+    filename: "image.vagrant-libvirt.box"
     mime_type: "application/x-tar"
     environment: *kvm_env
     bootable: true
@@ -1402,7 +1402,7 @@ image_types:
 
   "generic-vagrant-virtualbox": &generic_vagrant_virtualbox
     <<: *generic_vagrant_libvirt
-    filename: "vagrant-virtualbox.box"
+    filename: "image.vagrant-virtualbox.box"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
@@ -1735,7 +1735,7 @@ image_types:
   "iot-container":
     <<: *iot_commit
     name_aliases: ["fedora-iot-container"]
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "ostree_container"
     exports: ["container"]
@@ -2218,7 +2218,7 @@ image_types:
 
   "generic-container": &generic_container
     name_aliases: ["container"]
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false

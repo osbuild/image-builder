@@ -1114,7 +1114,7 @@ image_types:
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    filename: "vagrant-libvirt.box"
+    filename: "image.vagrant-libvirt.box"
     mime_type: "application/x-tar"
     bootable: true
     default_size: "10 GiB"
@@ -1145,7 +1145,7 @@ image_types:
 
   "vagrant-virtualbox":
     <<: *vagrant_libvirt
-    filename: "vagrant-virtualbox.box"
+    filename: "image.vagrant-virtualbox.box"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
@@ -2041,7 +2041,7 @@ image_types:
     iso_config: *default_iso_config
     platforms:
       - *x86_64_installer_platform
-      - *aarch64_platform
+      - *aarch64_installer_platform
     platforms_override:
       conditions:
         "RHEL 10.1+ adds FIPS menu":
@@ -2050,7 +2050,7 @@ image_types:
           override:
             - <<: *x86_64_installer_platform
               fips_menu: true
-            - <<: *aarch64_platform
+            - <<: *aarch64_installer_platform
               fips_menu: true
     package_sets:
       <<: *bare_metal_pkgset
@@ -2842,7 +2842,7 @@ image_types:
             - xz
 
   container: &container
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false
@@ -2899,7 +2899,7 @@ image_types:
 
   container-minimal:
     <<: *container
-    filename: "container-minimal.tar"
+    filename: "container-minimal.oci.tar"
     package_sets:
       os:
         - include:

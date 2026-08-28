@@ -160,7 +160,7 @@ func TestRH8_FilenameFromType(t *testing.T) {
 			name: "edge-container",
 			args: args{"edge-container"},
 			want: wantResult{
-				filename: "container.tar",
+				filename: "container.oci.tar",
 				mimeType: "application/x-tar",
 			},
 		},
@@ -169,7 +169,7 @@ func TestRH8_FilenameFromType(t *testing.T) {
 			name: "rhel-edge-container",
 			args: args{"rhel-edge-container"},
 			want: wantResult{
-				filename: "container.tar",
+				filename: "container.oci.tar",
 				mimeType: "application/x-tar",
 			},
 		},

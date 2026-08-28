@@ -1251,7 +1251,7 @@ distros:
 	imageTypesYAML := `---
 image_types:
   "container":
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false

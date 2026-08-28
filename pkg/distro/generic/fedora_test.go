@@ -56,7 +56,7 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			name: "generic-vagrant-libvirt",
 			args: args{"generic-vagrant-libvirt"},
 			want: wantResult{
-				filename: "vagrant-libvirt.box",
+				filename: "image.vagrant-libvirt.box",
 				mimeType: "application/x-tar",
 			},
 		},
@@ -64,7 +64,7 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			name: "generic-vagrant-virtualbox",
 			args: args{"generic-vagrant-virtualbox"},
 			want: wantResult{
-				filename: "vagrant-virtualbox.box",
+				filename: "image.vagrant-virtualbox.box",
 				mimeType: "application/x-tar",
 			},
 		},
@@ -104,7 +104,7 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			name: "generic-container",
 			args: args{"generic-container"},
 			want: wantResult{
-				filename: "container.tar",
+				filename: "container.oci.tar",
 				mimeType: "application/x-tar",
 			},
 		},
@@ -136,7 +136,7 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			name: "iot-container",
 			args: args{"iot-container"},
 			want: wantResult{
-				filename: "container.tar",
+				filename: "container.oci.tar",
 				mimeType: "application/x-tar",
 			},
 		},
@@ -144,7 +144,7 @@ func TestFedoraFilenameFromType(t *testing.T) {
 			name: "fedora-iot-container",
 			args: args{"fedora-iot-container"},
 			want: wantResult{
-				filename: "container.tar",
+				filename: "container.oci.tar",
 				mimeType: "application/x-tar",
 			},
 		},

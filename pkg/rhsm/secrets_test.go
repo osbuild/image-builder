@@ -1,6 +1,8 @@
 package rhsm
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -130,6 +132,23 @@ func TestGetSecretsForBaseurlFallback(t *testing.T) {
 	secrets, err := subscriptions.GetSecretsForBaseurl([]string{"https://unrelated.example.com/some/path"})
 	require.NoError(t, err, "expected fallback secrets to be returned")
 	assert.Equal(t, "/etc/pki/entitlement/fallback-key.pem", secrets.SSLClientKey)
+}
+
+// defaultCACert prefers the Katello CA when it exists (Satellite-registered
+// host) and otherwise falls back to redhat-uep.pem.
+func TestDefaultCACert(t *testing.T) {
+	orig := katelloCACert
+	t.Cleanup(func() { katelloCACert = orig })
+
+	// Katello CA absent: fall back to the Red Hat CDN CA.
+	katelloCACert = filepath.Join(t.TempDir(), "does-not-exist.pem")
+	assert.Equal(t, "/etc/rhsm/ca/redhat-uep.pem", defaultCACert())
+
+	// Katello CA present: prefer it.
+	present := filepath.Join(t.TempDir(), "katello-server-ca.pem")
+	require.NoError(t, os.WriteFile(present, []byte("ca"), 0600))
+	katelloCACert = present
+	assert.Equal(t, present, defaultCACert())
 }
 
 // mirrors the cases in osbuild's test_util_rhsm.py::TestUrlMatching.

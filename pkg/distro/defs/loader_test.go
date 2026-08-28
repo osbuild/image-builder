@@ -1304,6 +1304,71 @@ func TestWhenConditionEvalAnd(t *testing.T) {
 	assert.Equal(t, wc.Eval(distro.ID{Name: "distro"}, "arch"), true)
 }
 
+func TestWhenConditionEvalNotArch(t *testing.T) {
+	wc := &defs.WhenCondition{NotArchitecture: "s390x"}
+	assert.Equal(t, wc.Eval(distro.ID{Name: "foo"}, "x86_64"), true)
+	assert.Equal(t, wc.Eval(distro.ID{Name: "foo"}, "s390x"), false)
+}
+
+func TestWhenConditionEvalNotArchAnd(t *testing.T) {
+	wc := &defs.WhenCondition{DistroName: "rhel", NotArchitecture: "s390x"}
+	assert.Equal(t, wc.Eval(distro.ID{Name: "rhel"}, "x86_64"), true)
+	assert.Equal(t, wc.Eval(distro.ID{Name: "rhel"}, "s390x"), false)
+	assert.Equal(t, wc.Eval(distro.ID{Name: "centos"}, "x86_64"), false)
+	assert.Equal(t, wc.Eval(distro.ID{Name: "centos"}, "s390x"), false)
+}
+
+func TestDistroYAMLConditionNotArch(t *testing.T) {
+	fakeImageTypesYaml := `
+image_types:
+  ec2:
+    filename: "disk.raw"
+    image_func: "disk"
+    exports: ["image"]
+    platforms:
+      - arch: x86_64
+      - arch: s390x
+  container:
+    filename: "container.tar.gz"
+    image_func: "container"
+    exports: ["archive"]
+    platforms:
+      - arch: x86_64
+      - arch: s390x
+`
+
+	fakeDistrosYAML := `
+distros:
+ - name: rhel-8
+   conditions:
+     "ec2 not available on s390x":
+       when:
+         not_arch: "s390x"
+       ignore_image_types:
+         - ec2
+   defs_path: test-distro/
+`
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYAML, fakeImageTypesYaml)
+	restore := defs.MockDataFS(baseDir)
+	defer restore()
+
+	for _, tc := range []struct {
+		arch             string
+		expectedImgTypes []string
+	}{
+		{"x86_64", []string{"container"}},
+		{"s390x", []string{"container", "ec2"}},
+	} {
+		t.Run(tc.arch, func(t *testing.T) {
+			distro := generic.DistroFactory("rhel-8")
+			require.NotNil(t, distro)
+			a, err := distro.GetArch(tc.arch)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedImgTypes, a.ListImageTypes())
+		})
+	}
+}
+
 func TestImageTypesPlatformOverrides(t *testing.T) {
 	fakeImageTypesYaml := `
 image_types:
