@@ -230,6 +230,11 @@ func TestV2HandlerMakeDepsolveRequest(t *testing.T) {
 		SSLClientCert: "/cert",
 		SSLClientKey:  "/key",
 	}
+	priorityRepo := rpmmd.RepoConfig{
+		Name:     "priority-repo",
+		BaseURLs: []string{"https://example.org/priority"},
+		Priority: common.ToPtr(10),
+	}
 
 	testCases := []struct {
 		name        string
@@ -481,6 +486,35 @@ func TestV2HandlerMakeDepsolveRequest(t *testing.T) {
 					"optional-metadata": ["filelists"]
 				}
 			}`, baseOS.Hash(), appstream.Hash(), mtlsRepo.Hash()),
+		},
+		{
+			name: "priority passed",
+			packageSets: []rpmmd.PackageSet{
+				{
+					Include:      []string{"pkg1"},
+					Repositories: []rpmmd.RepoConfig{baseOS, appstream, priorityRepo},
+				},
+			},
+			wantJSON: fmt.Sprintf(`{
+				"api_version": 2,
+				"command": "depsolve",
+				"module_platform_id": "platform:el8",
+				"releasever": "8",
+				"arch": "x86_64",
+				"cachedir": "/cache",
+				"arguments": {
+					"repos": [
+						{"id": %[1]q, "name": "baseos", "baseurl": ["https://example.org/baseos"]},
+						{"id": %[2]q, "name": "appstream", "baseurl": ["https://example.org/appstream"]},
+						{"id": %[3]q, "name": "priority-repo", "baseurl": ["https://example.org/priority"], "priority": 10}
+					],
+					"transactions": [
+						{"package-specs": ["pkg1"], "repo-ids": [%[1]q, %[2]q, %[3]q], "install_weak_deps": false}
+					],
+					"root_dir": "/root",
+					"optional-metadata": ["filelists"]
+				}
+			}`, baseOS.Hash(), appstream.Hash(), priorityRepo.Hash()),
 		},
 		{
 			name: "2 transactions + withSbom flag",
