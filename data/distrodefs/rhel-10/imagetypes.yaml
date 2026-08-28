@@ -35,6 +35,31 @@
       "/": "1 GiB"
       "/usr": "2 GiB"
 
+    installer_split_firmware_pkgset: &installer_split_firmware_pkgset
+      - "amd-gpu-firmware"
+      - "amd-ucode-firmware"
+      - "atheros-firmware"
+      - "brcmfmac-firmware"
+      - "intel-gpu-firmware"
+      - "iwlegacy-firmware"
+      - "iwlwifi-dvm-firmware"
+      - "libertas-firmware"
+      - "mt7xxx-firmware"
+      - "nvidia-gpu-firmware"
+      - "nxpwireless-firmware"
+      - "tiwilink-firmware"
+      - "iwlwifi-mvm-firmware"
+      - "realtek-firmware"
+
+    installer_split_firmware_condition: &installer_split_firmware_condition
+      "include split firmware when not Oracle Linux or s390x":
+        when:
+          not_distro_name: "ol"
+          not_arch: "s390x"
+        append:
+          include:
+            - *installer_split_firmware_pkgset
+
   platforms:
     x86_64_uefi_platform: &x86_64_uefi_platform
       arch: "x86_64"
@@ -69,6 +94,7 @@
           - "biosdevname"
         firmware:
           - "linux-firmware"
+
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       bootloader: "grub2"
@@ -120,21 +146,8 @@
           - "grub2-tools-minimal"
           - "grub2-tools-extra"
         firmware:
-          - "amd-gpu-firmware"
-          - "amd-ucode-firmware"
-          - "atheros-firmware"
-          - "brcmfmac-firmware"
-          - "intel-gpu-firmware"
-          - "iwlegacy-firmware"
-          - "iwlwifi-dvm-firmware"
-          - "iwlwifi-mvm-firmware"
-          - "libertas-firmware"
           - "linux-firmware"
-          - "mt7xxx-firmware"
-          - "nvidia-gpu-firmware"
-          - "nxpwireless-firmware"
-          - "realtek-firmware"
-          - "tiwilink-firmware"
+          - *installer_split_firmware_pkgset
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       # XXX: merge zipl_support/bootloader
@@ -971,6 +984,7 @@ image_types:
                   - "redhat-release-eula"
                 exclude:
                   - "dracut-config-rescue"
+            <<: *installer_split_firmware_condition
   qcow2: &qcow2
     name_aliases: ["guest-image"]
     filename: "disk.qcow2"
@@ -2199,25 +2213,6 @@ image_types:
               append:
                 include:
                   - "redhat-release-eula"
-            "include split firmware when not Oracle Linux":
-              when:
-                not_distro_name: "ol"
-              append:
-                include:
-                  - "amd-gpu-firmware"
-                  - "amd-ucode-firmware"
-                  - "atheros-firmware"
-                  - "brcmfmac-firmware"
-                  - "intel-gpu-firmware"
-                  - "iwlegacy-firmware"
-                  - "iwlwifi-dvm-firmware"
-                  - "iwlwifi-mvm-firmware"
-                  - "libertas-firmware"
-                  - "mt7xxx-firmware"
-                  - "nvidia-gpu-firmware"
-                  - "nxpwireless-firmware"
-                  - "realtek-firmware"
-                  - "tiwilink-firmware"
     blueprint:
       supported_options:
         - "distro"
@@ -2633,26 +2628,7 @@ image_types:
             - "sg3_utils"
             - "perl-interpreter"
             - "restore"
-          conditions:
-            "include split firmware when not Oracle Linux":
-              when:
-                not_distro_name: "ol"
-              append:
-                include:
-                  - "amd-gpu-firmware"
-                  - "amd-ucode-firmware"
-                  - "atheros-firmware"
-                  - "brcmfmac-firmware"
-                  - "intel-gpu-firmware"
-                  - "iwlegacy-firmware"
-                  - "iwlwifi-dvm-firmware"
-                  - "iwlwifi-mvm-firmware"
-                  - "libertas-firmware"
-                  - "mt7xxx-firmware"
-                  - "nvidia-gpu-firmware"
-                  - "nxpwireless-firmware"
-                  - "realtek-firmware"
-                  - "tiwilink-firmware"
+          conditions: *installer_split_firmware_condition
     blueprint:
       supported_options:
         - "distro"
