@@ -57,8 +57,7 @@
           not_distro_name: "ol"
           not_arch: "s390x"
         append:
-          include:
-            - *installer_split_firmware_pkgset
+          include: *installer_split_firmware_pkgset
 
   platforms:
     x86_64_uefi_platform: &x86_64_uefi_platform
@@ -147,7 +146,6 @@
           - "grub2-tools-extra"
         firmware:
           - "linux-firmware"
-          - *installer_split_firmware_pkgset
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       # XXX: merge zipl_support/bootloader
