@@ -122,7 +122,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		panic("invalid image format for image kind")
 	}
 
-	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, imagePipeline)
+	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, imagePipeline, "")
 	compressionPipeline.SetFilename(img.filename)
 
 	return compressionPipeline.Export(), nil

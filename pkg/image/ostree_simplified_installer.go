@@ -64,7 +64,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	imageFilename := "image.raw.xz"
 
 	// image in simplified installer is always compressed
-	compressedImage := manifest.NewXZ(buildPipeline, baseRawOstreeImage(img.rawImage, buildPipeline, nil))
+	compressedImage := manifest.NewXZ(buildPipeline, baseRawOstreeImage(img.rawImage, buildPipeline, nil), "")
 	compressedImage.SetFilename(imageFilename)
 
 	coiPipeline := manifest.NewCoreOSInstaller(
