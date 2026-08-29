@@ -17,7 +17,7 @@ func TestZstdSerialize(t *testing.T) {
 
 	// setup
 	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
-	zstdPipeline := manifest.NewZstd(build, rawImage)
+	zstdPipeline := manifest.NewZstd(build, rawImage, "")
 	zstdPipeline.SetFilename("filename.zst")
 
 	// run
@@ -31,4 +31,19 @@ func TestZstdSerialize(t *testing.T) {
 	assert.Equal(t, &osbuild.ZstdStageOptions{
 		Filename: "filename.zst",
 	}, zstdStage.Options.(*osbuild.ZstdStageOptions))
+}
+
+func TestZstdSerializeCustomName(t *testing.T) {
+	mani := manifest.New()
+	runner := &runner.Linux{}
+	build := manifest.NewBuild(&mani, runner, nil, nil)
+
+	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
+	zstdPipeline := manifest.NewZstd(build, rawImage, "my-zstd")
+	zstdPipeline.SetFilename("filename.zst")
+
+	osbuildPipeline, err := manifest.Serialize(zstdPipeline)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "my-zstd", osbuildPipeline.Name)
 }
