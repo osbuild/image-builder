@@ -79,6 +79,7 @@ def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key
                     append_arg = (
                         f"rd.live.image root={root_arg} rw console=ttyS0 "
                         f"systemd.debug-shell=ttyS0 "
+                        "fstab=no "  # Do not allow mounts to be created from fstab
                         f"{ostree_path}"
                     )
                     extra_args = [
