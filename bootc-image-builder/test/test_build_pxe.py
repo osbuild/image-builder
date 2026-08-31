@@ -79,6 +79,7 @@ def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key
                     append_arg = (
                         f"rd.live.image root={root_arg} rw console=ttyS0 "
                         f"systemd.debug-shell=ttyS0 "
+                        "systemd.mask=boot.mount "  # boot isn't a separate volume but bootc creates an /etc/fstab
                         f"{ostree_path}"
                     )
                     extra_args = [
@@ -150,10 +151,29 @@ def test_bootc_pxe_tar_xz(keep_tmpdir, tmp_path, build_container, container_ref)
     cntf_path = tmp_path / "Containerfile"
     cntf_path.write_text(textwrap.dedent(f"""\n
     FROM {container_ref}
-    RUN dnf install -y \
-         dracut-live \
-         squashfs-tools \
-         && dnf clean all
+    RUN dnf -y install dracut-live squashfs-tools && dnf clean all
+    # Override using composefs for ostree (it is incompatible with the squashfs rootfs)
+    RUN cat <<EOF > /usr/lib/ostree/prepare-root.conf
+    [composefs]
+    enabled = no
+    [sysroot]
+    readonly = true
+    EOF
+
+    # Include the dmsquash-live module in the initramfs
+    RUN cat <<EOF > /usr/lib/dracut/dracut.conf.d/40-pxe.conf
+    compress="xz"
+    add_dracutmodules+=" qemu qemu-net livenet dmsquash-live "
+    early_microcode="no"
+    EOF
+
+    # Rebuild the initrd
+    RUN set -xe; \
+        kver=$(ls /usr/lib/modules); \
+        env DRACUT_NO_XATTR=1 dracut -vf /usr/lib/modules/$kver/initramfs.img "$kver"
+
+    # Mask services that aren't compatible with running from the rootfs
+    RUN systemctl mask bootc-generic-growpart.service bootc-publish-rhsm-facts.service
     RUN bootc container lint
     """), encoding="utf8")
     output_path = tmp_path / "output"
