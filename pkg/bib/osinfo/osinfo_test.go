@@ -142,7 +142,7 @@ func TestLoadInfo(t *testing.T) {
 
 			}
 
-			info, err := Load(os.DirFS(root))
+			info, err := Load(os.DirFS(root), "")
 
 			if c.errorStr != "" {
 				require.EqualError(t, err, strings.ReplaceAll(c.errorStr, "$ROOT", root))
@@ -259,7 +259,7 @@ func TestLoadInfoPartitionTableHappy(t *testing.T) {
 		writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
 		createPartitionTable(t, root, fakePartitionTableYAML, dest)
 
-		info, err := Load(os.DirFS(root))
+		info, err := Load(os.DirFS(root), "")
 		require.NoError(t, err)
 		assert.Equal(t, &disk.PartitionTable{
 			Type: disk.PT_GPT,
@@ -280,7 +280,7 @@ func TestLoadInfoPartitionTableSad(t *testing.T) {
 	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
 	createPartitionTable(t, root, "@invalidYAML", "/usr/lib/bootc-image-builder/disk.yaml")
 
-	_, err := Load(os.DirFS(root))
+	_, err := Load(os.DirFS(root), "")
 	assert.EqualError(t, err, `cannot parse disk definitions from "usr/lib/bootc-image-builder/disk.yaml": yaml: found character that cannot start any token`)
 }
 
@@ -322,7 +322,7 @@ func TestLoadInfoISOHappy(t *testing.T) {
 		writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
 		createISO(t, root, fakeISOYAML, dest)
 
-		info, err := Load(os.DirFS(root))
+		info, err := Load(os.DirFS(root), "")
 		require.NoError(t, err)
 
 		assert.Equal(t, "My-ISO", info.ISOInfo.Label)
@@ -348,7 +348,7 @@ func TestLoadInfoISOSad(t *testing.T) {
 	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
 	createISO(t, root, "@invalidYAML", "/usr/lib/bootc-image-builder/iso.yaml")
 
-	_, err := Load(os.DirFS(root))
+	_, err := Load(os.DirFS(root), "")
 	assert.EqualError(t, err, `cannot parse iso definitions from "usr/lib/bootc-image-builder/iso.yaml": yaml: found character that cannot start any token`)
 }
 
@@ -359,7 +359,7 @@ func TestLoadInfoUEFIVendorSearchPath(t *testing.T) {
 	err := os.MkdirAll(path.Join(root, "usr/lib/efi/shim/1.64/EFI/fedora"), 0755)
 	assert.NoError(t, err)
 
-	info, err := Load(os.DirFS(root))
+	info, err := Load(os.DirFS(root), "")
 	assert.NoError(t, err)
 	assert.Equal(t, "fedora", info.UEFIVendor)
 }
@@ -387,7 +387,7 @@ func TestLoadInfoOldPrefixWarning(t *testing.T) {
 			olog.SetDefault(log.New(&buf, "", 0))
 			defer olog.SetDefault(nil)
 
-			_, err := Load(os.DirFS(root))
+			_, err := Load(os.DirFS(root), "")
 			require.NoError(t, err)
 
 			if tc.warning {
@@ -409,7 +409,7 @@ func TestNewPrefixNoFallback(t *testing.T) {
 
 	createPartitionTable(t, root, fakePartitionTableYAML, "/usr/lib/bootc-image-builder/disk.yaml")
 
-	info, err := Load(os.DirFS(root))
+	info, err := Load(os.DirFS(root), "")
 	require.NoError(t, err)
 
 	// old prefix disk.yaml must NOT be picked up since the new prefix exists
@@ -452,4 +452,109 @@ func TestHasModules(t *testing.T) {
 			assert.Equal(t, err, c.err)
 		})
 	}
+}
+
+func TestListVariants(t *testing.T) {
+	t.Run("no-variant-dir", func(t *testing.T) {
+		root := t.TempDir()
+		variants, err := ListVariants(os.DirFS(root))
+		require.NoError(t, err)
+		assert.Empty(t, variants)
+	})
+
+	t.Run("with-variants", func(t *testing.T) {
+		root := t.TempDir()
+		variantDir := path.Join(root, "usr/lib/image-builder/bootc/variant.d")
+		require.NoError(t, os.MkdirAll(path.Join(variantDir, "btrfs"), 0755))
+		require.NoError(t, os.MkdirAll(path.Join(variantDir, "secure-execution"), 0755))
+		// files should be ignored
+		require.NoError(t, os.WriteFile(path.Join(variantDir, "not-a-variant"), nil, 0644))
+
+		variants, err := ListVariants(os.DirFS(root))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"btrfs", "secure-execution"}, variants)
+	})
+
+	t.Run("old-prefix-ignored-when-new-exists", func(t *testing.T) {
+		root := t.TempDir()
+		require.NoError(t, os.MkdirAll(path.Join(root, "usr/lib/image-builder/bootc/variant.d/plain"), 0755))
+		require.NoError(t, os.MkdirAll(path.Join(root, "usr/lib/bootc-image-builder/variant.d/plain"), 0755))
+		require.NoError(t, os.MkdirAll(path.Join(root, "usr/lib/bootc-image-builder/variant.d/extra"), 0755))
+
+		variants, err := ListVariants(os.DirFS(root))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"plain"}, variants)
+	})
+
+	t.Run("falls-back-to-old-prefix", func(t *testing.T) {
+		root := t.TempDir()
+		require.NoError(t, os.MkdirAll(path.Join(root, "usr/lib/bootc-image-builder/variant.d/legacy"), 0755))
+
+		variants, err := ListVariants(os.DirFS(root))
+		require.NoError(t, err)
+		assert.Equal(t, []string{"legacy"}, variants)
+	})
+}
+
+func TestLoadVariantNotFound(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "", "", "")
+
+	_, err := Load(os.DirFS(root), "nonexistent")
+	assert.EqualError(t, err, `variant "nonexistent" not found`)
+}
+
+func TestLoadVariantDiskYaml(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "", "", "")
+
+	// Create default disk.yaml
+	createPartitionTable(t, root, fakePartitionTableYAML, "/usr/lib/image-builder/bootc/disk.yaml")
+
+	// Create variant with a different disk.yaml
+	variantDiskYAML := `
+partition_table:
+  type: "gpt"
+  partitions:
+    - size: 2 MiB
+      uuid: 11111111-1111-1111-1111-111111111111
+      bootable: false
+`
+	createPartitionTable(t, root, variantDiskYAML, "/usr/lib/image-builder/bootc/variant.d/test-variant/disk.yaml")
+
+	// Without variant: should get default
+	info, err := Load(os.DirFS(root), "")
+	require.NoError(t, err)
+	assert.Equal(t, datasizes.Size(1*datasizes.MiB), info.PartitionTable.Partitions[0].Size)
+
+	// With variant: should get variant's disk.yaml
+	info, err = Load(os.DirFS(root), "test-variant")
+	require.NoError(t, err)
+	assert.Equal(t, datasizes.Size(2*datasizes.MiB), info.PartitionTable.Partitions[0].Size)
+}
+
+func TestLoadVariantFallback(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "", "", "")
+
+	// Create default disk.yaml and iso.yaml
+	createPartitionTable(t, root, fakePartitionTableYAML, "/usr/lib/image-builder/bootc/disk.yaml")
+	createISO(t, root, fakeISOYAML, "/usr/lib/image-builder/bootc/iso.yaml")
+
+	// Create variant with only disk.yaml (no iso.yaml)
+	variantDiskYAML := `
+partition_table:
+  type: "gpt"
+  partitions:
+    - size: 2 MiB
+      uuid: 11111111-1111-1111-1111-111111111111
+      bootable: false
+`
+	createPartitionTable(t, root, variantDiskYAML, "/usr/lib/image-builder/bootc/variant.d/disk-only/disk.yaml")
+
+	// Variant overrides disk.yaml but falls back to default iso.yaml
+	info, err := Load(os.DirFS(root), "disk-only")
+	require.NoError(t, err)
+	assert.Equal(t, datasizes.Size(2*datasizes.MiB), info.PartitionTable.Partitions[0].Size)
+	assert.Equal(t, "My-ISO", info.ISOInfo.Label)
 }
