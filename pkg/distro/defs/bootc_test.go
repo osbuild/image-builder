@@ -1268,7 +1268,7 @@ func TestBuildContainerHandling(t *testing.T) {
 
 			bootcContainer, err := bootc.NewContainer(imgTag)
 			require.NoError(err)
-			bootcInfo, err := bootcContainer.ResolveInfo()
+			bootcInfo, err := bootcContainer.ResolveInfo("")
 			require.NoError(err)
 
 			distri, err := NewBootc("bootc", bootcInfo)
@@ -1276,7 +1276,7 @@ func TestBuildContainerHandling(t *testing.T) {
 			if withBuildContainer {
 				buildContainer, err := bootc.NewContainer(buildImgTag)
 				require.NoError(err)
-				buildInfo, err := buildContainer.ResolveInfo()
+				buildInfo, err := buildContainer.ResolveInfo("")
 				require.NoError(err)
 				err = distri.SetBuildContainer(buildInfo)
 				require.NoError(err)
@@ -1346,14 +1346,14 @@ partition_table:
 
 			bootcContainer, err := bootc.NewContainer(imgTag)
 			require.NoError(err)
-			bootcInfo, err := bootcContainer.ResolveInfo()
+			bootcInfo, err := bootcContainer.ResolveInfo("")
 			require.NoError(err)
 			distri, err := NewBootc("bootc", bootcInfo)
 			require.NoError(err)
 			if withBuildContainer {
 				buildContainer, err := bootc.NewContainer(buildImgTag)
 				require.NoError(err)
-				buildInfo, err := buildContainer.ResolveInfo()
+				buildInfo, err := buildContainer.ResolveInfo("")
 				require.NoError(err)
 				err = distri.SetBuildContainer(buildInfo)
 				require.NoError(err)
