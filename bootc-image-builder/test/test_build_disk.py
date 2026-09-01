@@ -145,7 +145,7 @@ def registry_conf_fixture(shared_tmpdir, request):
             "--restart", "always",
             "--name", registry_container_name,
             # We use a copy of docker.io registry to avoid running into docker.io pull rate limits
-            "ghcr.io/osbuild/bootc-image-builder/registry:2"
+            "ghcr.io/osbuild/image-builder/registry:2"
         ], check=True)
 
     registry_container_state = subprocess.run([
