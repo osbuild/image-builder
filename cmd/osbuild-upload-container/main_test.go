@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -122,25 +121,6 @@ func TestSimpleUpload(t *testing.T) {
 	require.Equal(config.String(), res.ImageID)
 }
 
-// writeAuthFile shells out to skopeo to write the auth file in the
-// containers-auth.json format.
-func writeAuthFile(t *testing.T, path, registry, user, pass string) {
-	t.Helper()
-	cmd := exec.Command(
-		"skopeo",
-		"login",
-		"--tls-verify=false",
-		"--authfile", path,
-		"--username", user,
-		"--password", pass,
-		registry,
-	)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("failed to write auth file: %s (%v)", string(out), err)
-	}
-}
-
 func TestUploadWithCredentials(t *testing.T) {
 	ref := "test2/osbuild:latest"
 	user := "me"
@@ -161,9 +141,10 @@ func TestUploadWithCredentials(t *testing.T) {
 	// use our own resolver to verify the uploaded image
 	resolver := container.NewBlockingResolver("arm64")
 
-	authFilePath := filepath.Join(tmpdir, "auth.json")
-	writeAuthFile(t, authFilePath, registry.Host(), user, pass)
-	resolver.SetAuthFilePath(authFilePath)
+	authfile, err := container.CreateTempAuthFile(registry.Host(), user, pass)
+	require.NoError(err)
+	defer os.Remove(authfile.Name())
+	resolver.SetAuthFilePath(authfile.Name())
 
 	spec := container.SourceSpec{
 		Source:    pushRef,
