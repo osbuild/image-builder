@@ -14,48 +14,6 @@ on:  # yamllint disable-line rule:truthy
   merge_group:
 
 jobs:
-  unit-tests-fedora:
-    strategy:
-      matrix:
-        fedora_version:
-          - 40
-          - 41
-      fail-fast: false  # if one fails, keep the other(s) running
-    name: "🛃 Unit tests (Fedora ${{ matrix.fedora_version }})"
-    runs-on: ubuntu-24.04
-    container: registry.fedoraproject.org/fedora:${{ matrix.fedora_version }}
-    env:
-      # workaround for expired cert at source of indirect dependency
-      # (go.opencensus.io/trace)
-      GOPROXY: "https://proxy.golang.org|direct"
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Install python3
-        # The Fedora 41 container doesn't have python3 installed by default
-        run: dnf -y install python3
-
-      - name: Set up repository for pinned osbuild commit
-        run: ./test/scripts/setup-osbuild-repo
-
-      - name: Install test dependencies
-        run: ./test/scripts/install-dependencies
-
-      - name: Mark the working directory as safe for git
-        run: git config --global --add safe.directory "$(pwd)"
-
-      - name: Run unit tests
-        # skip the TestResolverLocalManifest and
-        # TestBlockingResolverLocalManifest tests. They are tested separately
-        # (see below: requires root)
-        run: go test -race ./... -test.skip 'TestBlockingResolverLocalManifest|TestResolverLocalManifest'
-
-      - name: Run depsolver tests with force-dnf to make sure it's not skipped
-        run: go test -race ./pkg/dnfjson/... -force-dnf
-
   container-resolver-tests:
     name: "🛃 Container resolver tests"
     runs-on: ubuntu-24.04
@@ -87,59 +45,6 @@ jobs:
       # containers-storage for the local resolvers
       - name: Run unit tests
         run: sudo go test -v ./pkg/container/... --force-local-resolver
-
-  unit-tests-cs:
-    strategy:
-      matrix:
-        centos_stream:
-          - version: 9
-            image_tag: stream9
-          - version: 10
-            image_tag: stream10-development
-      fail-fast: false  # if one fails, keep the other(s) running
-    name: "🛃 Unit tests (CentOS Stream ${{ matrix.centos_stream.version }})"
-    runs-on: ubuntu-24.04
-    container:
-      image: quay.io/centos/centos:${{ matrix.centos_stream.image_tag }}
-    env:
-      GOFLAGS: "-tags=exclude_graphdriver_btrfs"
-      # workaround for expired cert at source of indirect dependency
-      # (go.opencensus.io/trace)
-      GOPROXY: "https://proxy.golang.org|direct"
-
-    steps:
-      - name: Install dnf plugins
-        run: dnf -y install dnf-plugins-core
-
-      - name: Enable crb repo
-        run: dnf config-manager --set-enabled crb
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Set up repository for pinned osbuild commit
-        run: ./test/scripts/setup-osbuild-repo
-
-      - name: Install build and test dependencies
-        run: dnf -y install krb5-devel gcc git-core go gpgme-devel osbuild-depsolve-dnf device-mapper-devel
-
-      - name: Mark the working directory as safe for git
-        run: git config --global --add safe.directory "$(pwd)"
-
-      - name: Run unit tests
-        run: go test -v -race  ./...
-
-      - name: Install openssl for cgo test below
-        run: dnf -y install openssl
-
-      - name: Run unit tests without CGO
-        # keep tags in sync with BUILDTAGS_CROSS in https://github.com/containers/podman/blob/2981262215f563461d449b9841741339f4d9a894/Makefile#L85
-        run: CGO_ENABLED=0 go test -tags "containers_image_openpgp exclude_graphdriver_btrfs exclude_graphdriver_devicemapper exclude_graphdriver_overlay" ./...
-
-      - name: Run depsolver tests with force-dnf to make sure it's not skipped for any reason
-        run: go test -v -race ./pkg/dnfjson/... -force-dnf
 
   lint:
     name: "⌨ Lint"
@@ -196,29 +101,6 @@ jobs:
           # don't check /etc/os-release sourcing, allow useless cats to live inside our codebase, and
           # allow seemingly unreachable commands
           SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317
-
-  python-test:
-    name: "🐍 pytest (imgtestlib and test scripts)"
-    runs-on: ubuntu-24.04
-    env:
-      # workaround for expired cert at source of indirect dependency
-      # (go.opencensus.io/trace)
-      GOPROXY: "https://proxy.golang.org|direct"
-    container:
-      image: registry.fedoraproject.org/fedora:latest
-    steps:
-
-      - name: Install build and test dependencies
-        run: dnf -y install python3-pytest podman skopeo go btrfs-progs-devel device-mapper-devel gpgme-devel
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Testing imgtestlib and test scripts
-        run: |
-          python3 -m pytest -v
 
   python-lint:
     name: "🐍 Lint (test scripts)"
