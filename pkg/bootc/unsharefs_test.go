@@ -204,7 +204,7 @@ PLATFORM_ID="platform:f40"
 	writeFile("usr/lib/modules/6.1.0-1.fc40.x86_64/vmlinuz", "kernel")
 	require.NoError(t, os.MkdirAll(filepath.Join(root, "usr/lib/bootupd/updates/EFI/fedora"), 0755))
 
-	info, err := osinfo.Load(fsys)
+	info, err := osinfo.Load(fsys, "")
 	require.NoError(t, err)
 	assert.Equal(t, "fedora", info.OSRelease.ID)
 	assert.Equal(t, "40", info.OSRelease.VersionID)

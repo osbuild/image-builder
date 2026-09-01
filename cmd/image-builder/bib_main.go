@@ -150,7 +150,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 		return manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot, config, useLibrepo, cntArch)
 	}
 
-	bootcInfo, err := bootc.ResolveBootcInfo(imgref)
+	bootcInfo, err := bootc.ResolveBootcInfo(imgref, "")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -162,7 +162,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 		return nil, nil, err
 	}
 	if buildImgref != "" {
-		buildBootcInfo, err := bootc.ResolveBootcInfo(buildImgref)
+		buildBootcInfo, err := bootc.ResolveBootcInfo(buildImgref, "")
 		if err != nil {
 			return nil, nil, err
 		}
