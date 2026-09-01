@@ -2564,6 +2564,13 @@ image_types:
         - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
         - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
       install_weak_deps: false
+      conditions:
+        <<: *default_installer_conditions
+        "riscv64 needs device tree blobs on the ISO":
+          when:
+            arch: "riscv64"
+          shallow_merge:
+            copy_dtbs: true
     iso_config:
       <<: *default_iso_config
       rootfs_type: "erofs"

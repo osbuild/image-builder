@@ -477,6 +477,10 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 
 		isc.ISOFiles = append(isc.ISOFiles, installerConfig.ISOFiles...)
 
+		if copyDTBs := installerConfig.CopyDTBs; copyDTBs != nil && *copyDTBs {
+			isc.CopyDTBs = true
+		}
+
 		if installerConfig.Payload != nil {
 			if location := installerConfig.Payload.Location; location != nil {
 				isc.Payload.Location = *location
