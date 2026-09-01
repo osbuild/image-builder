@@ -22,7 +22,7 @@ func mockBootcInfo() *bootc.Info {
 }
 
 func TestBootcInspectDefaultYAML(t *testing.T) {
-	restore := main.MockBootcResolveInfo(func(ref string) (*bootc.Info, error) {
+	restore := main.MockBootcResolveInfo(func(ref, variant string) (*bootc.Info, error) {
 		assert.Equal(t, "quay.io/test/bootc:latest", ref)
 		return mockBootcInfo(), nil
 	})
@@ -45,7 +45,7 @@ func TestBootcInspectDefaultYAML(t *testing.T) {
 }
 
 func TestBootcInspectExplicitYAML(t *testing.T) {
-	restore := main.MockBootcResolveInfo(func(ref string) (*bootc.Info, error) {
+	restore := main.MockBootcResolveInfo(func(ref, variant string) (*bootc.Info, error) {
 		return mockBootcInfo(), nil
 	})
 	defer restore()
@@ -65,7 +65,7 @@ func TestBootcInspectExplicitYAML(t *testing.T) {
 }
 
 func TestBootcInspectJSON(t *testing.T) {
-	restore := main.MockBootcResolveInfo(func(ref string) (*bootc.Info, error) {
+	restore := main.MockBootcResolveInfo(func(ref, variant string) (*bootc.Info, error) {
 		return mockBootcInfo(), nil
 	})
 	defer restore()
@@ -89,7 +89,7 @@ func TestBootcInspectJSON(t *testing.T) {
 }
 
 func TestBootcInspectUnsupportedFormat(t *testing.T) {
-	restore := main.MockBootcResolveInfo(func(ref string) (*bootc.Info, error) {
+	restore := main.MockBootcResolveInfo(func(ref, variant string) (*bootc.Info, error) {
 		return mockBootcInfo(), nil
 	})
 	defer restore()
@@ -106,7 +106,7 @@ func TestBootcInspectUnsupportedFormat(t *testing.T) {
 }
 
 func TestBootcInspectResolveError(t *testing.T) {
-	restore := main.MockBootcResolveInfo(func(ref string) (*bootc.Info, error) {
+	restore := main.MockBootcResolveInfo(func(ref, variant string) (*bootc.Info, error) {
 		return nil, fmt.Errorf("cannot resolve %q", ref)
 	})
 	defer restore()
@@ -123,7 +123,7 @@ func TestBootcInspectResolveError(t *testing.T) {
 }
 
 func TestBootcInspectMissingRef(t *testing.T) {
-	restore := main.MockBootcResolveInfo(func(ref string) (*bootc.Info, error) {
+	restore := main.MockBootcResolveInfo(func(ref, variant string) (*bootc.Info, error) {
 		return mockBootcInfo(), nil
 	})
 	defer restore()

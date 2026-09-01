@@ -143,8 +143,22 @@ func setupBootcCmd() (*cobra.Command, error) {
 	if err := bootcInspectCommand.MarkFlagRequired("ref"); err != nil {
 		return nil, err
 	}
+	bootcInspectCommand.Flags().String("variant", "", `deployment variant to inspect`)
 	bootcInspectCommand.Flags().String("format", "", "Output in a specific format (yaml, json)")
 	bootcCmd.AddCommand(bootcInspectCommand)
+
+	bootcVariantsCommand := &cobra.Command{
+		Use:   "variants",
+		Short: "List available deployment variants for a container",
+		RunE:  cmdBootcVariants,
+		Args:  cobra.NoArgs,
+	}
+	bootcVariantsCommand.Flags().String("ref", "", `bootc container ref`)
+	if err := bootcVariantsCommand.MarkFlagRequired("ref"); err != nil {
+		return nil, err
+	}
+	bootcVariantsCommand.Flags().String("format", "", "Output in a specific format (text, json, yaml)")
+	bootcCmd.AddCommand(bootcVariantsCommand)
 
 	return bootcCmd, nil
 }
@@ -207,6 +221,7 @@ func setupManifestCmd() (*cobra.Command, error) {
 	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
 	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
 	manifestCmd.Flags().String("bootc-ref", "", `bootc container ref`)
+	manifestCmd.Flags().String("bootc-variant", "", `deployment variant to use for the bootc container`)
 	manifestCmd.Flags().String("bootc-build-ref", "", `bootc build container ref`)
 	manifestCmd.Flags().String("bootc-installer-payload-ref", "", `bootc installer payload ref`)
 	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)

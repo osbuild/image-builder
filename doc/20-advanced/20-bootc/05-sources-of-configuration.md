@@ -275,6 +275,37 @@ partition_table:
 > [!WARNING]
 > *LUKS configurations currently do not work with bootable containers in `image-builder`. See [here](https://github.com/osbuild/images/issues/2228).*
 
+### Deployment Variants
+
+Containers can ship multiple `disk.yaml` and/or `iso.yaml` configurations as *deployment variants*. Variants allow a single container image to produce different disk layouts depending on the target environment, for example a `secure-execution` variant with verity partitions for s390x, or `btrfs` vs `ext4` variants for Fedora images.
+
+Variants are placed in the `variant.d/` subdirectory, with each variant in its own named directory:
+
+```
+/usr/lib/image-builder/bootc/
+├── disk.yaml              # default configuration
+├── iso.yaml               # default ISO configuration
+└── variant.d/
+    ├── btrfs/
+    │   └── disk.yaml      # btrfs partition layout
+    └── secure-execution/
+        └── disk.yaml      # s390x SE partition layout
+```
+
+Each variant directory may contain a `disk.yaml` and/or `iso.yaml`. When a variant is selected at build time with `--bootc-variant`, `image-builder` uses the variant's configuration files. If a variant provides only `disk.yaml` but not `iso.yaml` (or vice versa), `image-builder` falls back to the default configuration for the missing file.
+
+Users can list available variants and select one at build time:
+
+```console
+$ image-builder bootc variants --ref quay.io/fedora/fedora-bootc:latest
+btrfs
+plain
+$ sudo image-builder build --bootc-ref quay.io/fedora/fedora-bootc:latest --bootc-variant btrfs qcow2
+# ...
+```
+
+Container publishers can use `$TARGETARCH` or other Containerfile logic to include different variants for different architectures.
+
 ### `iso.yaml`
 
 A YAML file containing instructions for constructing an ISO. This YAML file is only used for the `bootc-generic-iso` image type which makes as few assumptions as possible and thus needs extra instructions to tell it what to do. Read [more about the `bootc-generic-iso`](./10-isos.md) to see what you can do with this file.
