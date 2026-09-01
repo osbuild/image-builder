@@ -5,6 +5,7 @@ package container
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -262,6 +263,37 @@ func (cl *Client) SkipTLSVerify() {
 	cl.SetTLSVerify(common.ToPtr(false))
 }
 
+// CreateTempAuthFile creates a temporary authfile from a username and password
+// for a given registry.
+func CreateTempAuthFile(registry, username, password string) (*os.File, error) {
+	authFile, err := os.CreateTemp("", "image-builder-container-upload-auth-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create auth file for container registry: %w", err)
+	}
+	authEncoded := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	authObject := map[string]map[string]map[string]string{
+		"auths": map[string]map[string]string{
+			registry: map[string]string{
+				"auth": authEncoded,
+			},
+		},
+	}
+
+	authJson, err := json.Marshal(authObject)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal credentials for container registry auth file: %w", err)
+	}
+
+	if _, err := authFile.Write(authJson); err != nil {
+		return nil, fmt.Errorf("failed to write credentials for container registry auth file: %w", err)
+	}
+	if err := authFile.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close auth file after writing: %w", err)
+	}
+
+	return authFile, err
+}
+
 // UploadImage takes a container image located at from and uploads it to the
 // Target of Client. If tag is set, i.e. not the empty string, it will replace
 // any previously set tag or digest of the target. Returns the digest of the
@@ -309,7 +341,13 @@ func (cl *Client) UploadImage(ctx context.Context, from, tag string) (digest.Dig
 	}
 
 	if dockerAuth := cl.sysCtx.DockerAuthConfig; dockerAuth != nil {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("--dest-creds=%s:%s", dockerAuth.Username, dockerAuth.Password))
+		registry := reference.Domain(target)
+		authfile, err := CreateTempAuthFile(registry, dockerAuth.Username, dockerAuth.Password)
+		if err != nil {
+			return "", err
+		}
+		defer os.Remove(authfile.Name())
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--authfile=%s", authfile.Name()))
 	}
 
 	if certPath := cl.sysCtx.DockerCertPath; certPath != "" {
