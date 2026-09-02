@@ -303,6 +303,10 @@ func Load(fsys fs.FS) (*Info, error) {
 		return nil, err
 	}
 
+	if _, err := fs.Stat(fsys, searchPaths[1]); err == nil {
+		olog.Printf("WARNING: /%s found in container, this path is deprecated, please use /%s", searchPaths[1], searchPaths[0])
+	}
+
 	vendor, err := uefiVendor(fsys)
 	if err != nil {
 		olog.Printf("cannot read UEFI vendor: %v, setting it to none", err)
