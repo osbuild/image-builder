@@ -138,6 +138,15 @@ func defaultStorePaths() (string, string) {
 		}
 	}
 
+	// Allow callers to point us at a custom store (e.g. a build-image store)
+	// via the environment, overriding the computed defaults.
+	if v := os.Getenv("CONTAINERS_GRAPHROOT"); v != "" {
+		graphRoot = v
+	}
+	if v := os.Getenv("CONTAINERS_RUNROOT"); v != "" {
+		runRoot = v
+	}
+
 	return graphRoot, runRoot
 }
 

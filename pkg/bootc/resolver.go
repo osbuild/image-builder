@@ -99,7 +99,10 @@ func (cnt *Container) start(network string, mountSecrets bool) error {
 		"--entrypoint", "sleep", // The entrypoint might be arbitrary, so let's just override it with sleep, we don't want to run anything
 	}
 
-	if isRootless, _ := isPodmanRootless(); isRootless {
+	// If the store location is overridden via the environment (CONTAINERS_GRAPHROOT
+	// / CONTAINERS_RUNROOT), podman picks those up on its own, so leave storeOpts
+	// empty and don't add flags that would override them.
+	if isRootless, _ := isPodmanRootless(); isRootless && os.Getenv("CONTAINERS_GRAPHROOT") == "" {
 		// When running bc-i-b In a rootless container, its typically the case that /var/lib/containers/storage
 		// is a bind-mount of ~/.local/share/containers/storage, and we can't use this directly with podman
 		// because it will complain:
@@ -107,6 +110,7 @@ func (cnt *Container) start(network string, mountSecrets bool) error {
 		//     static dir "/var/lib/containers/storage/libpod": database configuration mismatch
 		// To avoid this we use an empty graphroot, and point --imagestore at /var/lib/containers/storage.
 		// This means the database is in the right place, and we only look at the image layers in the real store.
+		// We don't do this if a custom CONTAINERS_GRAPHROOT is in use though.
 		cnt.storeOpts = []string{
 			"--root=/run/osbuild/containers/store",
 			"--imagestore=/var/lib/containers/storage",
