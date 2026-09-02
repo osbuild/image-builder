@@ -100,7 +100,7 @@ def gen_testcases(what):  # pylint: disable=too-many-return-statements
             return [TestCaseC10S(image="ami", target_arch="arm64")]
         if arch == "aarch64":
             return [TestCaseC10S(image="ami", target_arch="amd64")]
-        raise RuntimeError(f"unknown host plarform architecture for cross-arch testing: {arch}")
+        raise RuntimeError(f"unknown host platform architecture for cross-arch testing: {arch}")
     if what == "qemu-boot":
         return [
             # test default partitioning
