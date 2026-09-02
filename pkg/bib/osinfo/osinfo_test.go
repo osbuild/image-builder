@@ -1,7 +1,9 @@
 package osinfo
 
 import (
+	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/olog"
 )
 
 func writeOSRelease(t *testing.T, root, id, versionID, name, platformID, variantID, idLike string) {
@@ -361,6 +364,42 @@ func TestLoadInfoUEFIVendorSearchPath(t *testing.T) {
 	assert.Equal(t, "fedora", info.UEFIVendor)
 }
 
+func TestLoadInfoOldPrefixWarning(t *testing.T) {
+	for _, tc := range []struct {
+		desc    string
+		dirs    []string
+		warning bool
+	}{
+		{"old-prefix-only", []string{"usr/lib/bootc-image-builder"}, true},
+		{"both-prefixes", []string{"usr/lib/image-builder/bootc", "usr/lib/bootc-image-builder"}, true},
+		{"new-prefix-only", []string{"usr/lib/image-builder/bootc"}, false},
+		{"no-prefix", nil, false},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			root := t.TempDir()
+			writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "", "", "")
+
+			for _, dir := range tc.dirs {
+				require.NoError(t, os.MkdirAll(path.Join(root, dir), 0755))
+			}
+
+			var buf bytes.Buffer
+			olog.SetDefault(log.New(&buf, "", 0))
+			defer olog.SetDefault(nil)
+
+			_, err := Load(os.DirFS(root))
+			require.NoError(t, err)
+
+			if tc.warning {
+				assert.Contains(t, buf.String(), "usr/lib/bootc-image-builder")
+				assert.Contains(t, buf.String(), "deprecated")
+			} else {
+				assert.NotContains(t, buf.String(), "deprecated")
+			}
+		})
+	}
+}
+
 func TestNewPrefixNoFallback(t *testing.T) {
 	root := t.TempDir()
 	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
@@ -375,6 +414,7 @@ func TestNewPrefixNoFallback(t *testing.T) {
 
 	// old prefix disk.yaml must NOT be picked up since the new prefix exists
 	assert.Nil(t, info.PartitionTable)
+
 }
 
 func TestHasModules(t *testing.T) {
