@@ -153,7 +153,7 @@ func validateCanRunTargetArch(targetArch string) error {
 
 func ValidateHasContainerTags(imgref string) error {
 	extraOpts := []string{}
-	if isRootless, _ := podmanutil.IsRootless(); isRootless {
+	if isRootless, _ := podmanutil.IsRootless(); isRootless && os.Getenv("CONTAINERS_GRAPHROOT") == "" {
 		// When running image-builder in a rootless container, its typically the case that /var/lib/containers/storage
 		// is a bind-mount of ~/.local/share/containers/storage, and we can't use this directly with podman
 		// because it will complain:
@@ -161,6 +161,7 @@ func ValidateHasContainerTags(imgref string) error {
 		//     static dir "/var/lib/containers/storage/libpod": database configuration mismatch
 		// To avoid this we use an empty graphroot, and point --imagestore at /var/lib/containers/storage.
 		// This means the database is in the right place, and we only look at the image layers in the real store.
+		// We don't do this if a custom CONTAINERS_GRAPHROOT is in use though.
 		extraOpts = append(extraOpts,
 			"--root=/run/osbuild/containers/store",
 			"--imagestore=/var/lib/containers/storage")
