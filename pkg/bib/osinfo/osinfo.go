@@ -20,11 +20,17 @@ import (
 	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
-// paths we check for configuration files, first one to match is the
-// the one used.
 var searchPaths = [2]string{
 	"usr/lib/image-builder/bootc",
 	"usr/lib/bootc-image-builder",
+}
+
+func resolvePrefix(fsys fs.FS) string {
+	_, err := fs.Stat(fsys, searchPaths[0])
+	if err == nil {
+		return searchPaths[0]
+	}
+	return searchPaths[1]
 }
 
 type OSRelease struct {
@@ -203,27 +209,23 @@ type diskYAML struct {
 	PartitionTable     *disk.PartitionTable        `json:"partition_table" yaml:"partition_table"`
 }
 
-func readDiskYaml(fsys fs.FS) (*diskYAML, error) {
-	for _, prefixPath := range searchPaths {
-		var disk diskYAML
-		p := path.Join(prefixPath, "disk.yaml")
-		f, err := fsys.Open(p)
-		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, fmt.Errorf("cannot load disk definitions from %q: %w", p, err)
+func readDiskYaml(fsys fs.FS, prefix string) (*diskYAML, error) {
+	var disk diskYAML
+	p := path.Join(prefix, "disk.yaml")
+	f, err := fsys.Open(p)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
 		}
-		defer f.Close()
+		return nil, fmt.Errorf("cannot load disk definitions from %q: %w", p, err)
+	}
+	defer f.Close()
 
-		if err := yaml.NewDecoder(f).Decode(&disk); err != nil {
-			return nil, fmt.Errorf("cannot parse disk definitions from %q: %w", p, err)
-		}
-
-		return &disk, nil
+	if err := yaml.NewDecoder(f).Decode(&disk); err != nil {
+		return nil, fmt.Errorf("cannot parse disk definitions from %q: %w", p, err)
 	}
 
-	return nil, nil
+	return &disk, nil
 }
 
 type isoYAML struct {
@@ -240,27 +242,23 @@ type isoYAML struct {
 	} `json:"grub2" yaml:"grub2"`
 }
 
-func readISOYaml(fsys fs.FS) (*isoYAML, error) {
-	for _, prefixPath := range searchPaths {
-		var iso isoYAML
-		p := path.Join(prefixPath, "iso.yaml")
-		f, err := fsys.Open(p)
-		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, fmt.Errorf("cannot load iso definitions from %q: %w", p, err)
+func readISOYaml(fsys fs.FS, prefix string) (*isoYAML, error) {
+	var iso isoYAML
+	p := path.Join(prefix, "iso.yaml")
+	f, err := fsys.Open(p)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
 		}
-		defer f.Close()
+		return nil, fmt.Errorf("cannot load iso definitions from %q: %w", p, err)
+	}
+	defer f.Close()
 
-		if err := yaml.NewDecoder(f).Decode(&iso); err != nil {
-			return nil, fmt.Errorf("cannot parse iso definitions from %q: %w", p, err)
-		}
-
-		return &iso, nil
+	if err := yaml.NewDecoder(f).Decode(&iso); err != nil {
+		return nil, fmt.Errorf("cannot parse iso definitions from %q: %w", p, err)
 	}
 
-	return nil, nil
+	return &iso, nil
 }
 
 func readKernelInfo(fsys fs.FS) (*KernelInfo, error) {
@@ -310,12 +308,14 @@ func Load(fsys fs.FS) (*Info, error) {
 		olog.Printf("cannot read UEFI vendor: %v, setting it to none", err)
 	}
 
+	prefix := resolvePrefix(fsys)
+
 	customization, err := readImageCustomization(fsys)
 	if err != nil {
 		return nil, err
 	}
 
-	diskYaml, err := readDiskYaml(fsys)
+	diskYaml, err := readDiskYaml(fsys, prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +326,7 @@ func Load(fsys fs.FS) (*Info, error) {
 		pt = diskYaml.PartitionTable
 	}
 
-	isoYaml, err := readISOYaml(fsys)
+	isoYaml, err := readISOYaml(fsys, prefix)
 	if err != nil {
 		return nil, err
 	}

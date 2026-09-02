@@ -10,6 +10,9 @@ In `bootc`-land it is preferred for the source of truth to be the container itse
 
 For historical reasons `image-builder` will also see if these files exist in the `/usr/lib/bootc-image-builder` directory. The `/usr/lib/image-builder/bootc` directory has preference and any containers using the `/usr/lib/bootc-image-builder` path should be changed to use `/usr/lib/image-builder/bootc` instead.
 
+> [!IMPORTANT]
+> The prefix is resolved once, not per file. If the `/usr/lib/image-builder/bootc` directory exists, all files are read from there and the old `/usr/lib/bootc-image-builder` directory is never consulted. There is no per-file fallback between the two prefixes. If you have a mix of files across both directories, move everything to `/usr/lib/image-builder/bootc`.
+
 ### `disk.yaml`
 
 A YAML file containing the partition layout to use when turning the container image into a disk image. The canonical location for this file is `/usr/lib/image-builder/bootc/disk.yaml`.

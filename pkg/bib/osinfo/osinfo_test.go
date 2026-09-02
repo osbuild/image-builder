@@ -361,6 +361,22 @@ func TestLoadInfoUEFIVendorSearchPath(t *testing.T) {
 	assert.Equal(t, "fedora", info.UEFIVendor)
 }
 
+func TestNewPrefixNoFallback(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+
+	err := os.MkdirAll(path.Join(root, "usr/lib/image-builder/bootc"), 0755)
+	require.NoError(t, err)
+
+	createPartitionTable(t, root, fakePartitionTableYAML, "/usr/lib/bootc-image-builder/disk.yaml")
+
+	info, err := Load(os.DirFS(root))
+	require.NoError(t, err)
+
+	// old prefix disk.yaml must NOT be picked up since the new prefix exists
+	assert.Nil(t, info.PartitionTable)
+}
+
 func TestHasModules(t *testing.T) {
 	type testCase struct {
 		desc    string
