@@ -49,6 +49,12 @@ func makeFakeISOTree(bootType manifest.ISOBootType, ostree bool) *manifest.ISOTr
 	return isoTree
 }
 
+// copyPaths is used to check org.osbuild.copy
+type copyPath struct {
+	from string
+	to   string
+}
+
 func TestISOTreeNoOSTREE(t *testing.T) {
 	isoTree := makeFakeISOTree(manifest.Grub2UEFIOnlyISOBoot, false)
 
@@ -57,25 +63,18 @@ func TestISOTreeNoOSTREE(t *testing.T) {
 
 	copyStages := findStages("org.osbuild.copy", pipeline.Stages)
 	require.Greater(t, len(copyStages), 0)
-	var fromPaths []string
-	var toPaths []string
+	var paths []copyPath
 	for _, s := range copyStages {
 		copyOptions := s.Options.(*osbuild.CopyStageOptions)
 		for _, p := range copyOptions.Paths {
-			fromPaths = append(fromPaths, p.From)
-			toPaths = append(toPaths, p.To)
+			paths = append(paths, copyPath{from: p.From, to: p.To})
 		}
 	}
 	// Check for the kernel/initrd/rootfs from the ostree deployment
-	assert.Contains(t, fromPaths, "input://tree/vmlinuz")
-	assert.Contains(t, fromPaths, "input://tree/initrd.img")
-	assert.Contains(t, fromPaths, "input://tree/rootfs.img")
-	assert.Contains(t, fromPaths, "input://root-tree/EFI")
-
-	// Check for final paths for kernel, initrd, rootfs (squashfs.img)
-	assert.Contains(t, toPaths, "tree:///images/pxeboot/vmlinuz")
-	assert.Contains(t, toPaths, "tree:///images/pxeboot/initrd.img")
-	assert.Contains(t, toPaths, "tree:///LiveOS/squashfs.img")
+	assert.Contains(t, paths, copyPath{from: "input://tree/vmlinuz", to: "tree:///images/pxeboot/vmlinuz"})
+	assert.Contains(t, paths, copyPath{from: "input://tree/initrd.img", to: "tree:///images/pxeboot/initrd.img"})
+	assert.Contains(t, paths, copyPath{from: "input://tree/rootfs.img", to: "tree:///LiveOS/squashfs.img"})
+	assert.Contains(t, paths, copyPath{from: "input://root-tree/EFI", to: "tree:///"})
 
 	// No ostree.grub2 stage
 	require.Nil(t, findStage("org.osbuild.ostree.grub2", pipeline.Stages))
