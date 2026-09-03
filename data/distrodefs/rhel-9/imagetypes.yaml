@@ -1775,7 +1775,7 @@ image_types:
     package_sets:
       os:
         - *qcow2_pkgset
-        - packages:
+        - include:
             # Required so dracut iscsi module check passes during kernel-core %posttrans.
             - "iscsi-initiator-utils"
         - conditions:
