@@ -28,6 +28,10 @@ func Test_crypt_PasswordIsCrypted(t *testing.T) {
 			password: "$6$1234567890123456$d.pgKQFaiD8bRiExg5NesbGR/3u51YvxeYaQXPzx4C6oSYREw8VoReiuYZjx0V9OhGVTZFqhc6emAxT1RC5BV.",
 			want:     true,
 		}, {
+			name:     "yescrypt",
+			password: "$y$j9T$1234567890123456$A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0U1v2",
+			want:     true,
+		}, {
 			name:     "scrypt",
 			password: "$7$123456789012345", //not actual hash output from scrypt
 			want:     false,
