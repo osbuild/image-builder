@@ -500,10 +500,7 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 		return nil, err
 	}
 	if bootcRef == "" {
-		distroStr, err = findDistro(distroStr, bp.Distro)
-		if err != nil {
-			return nil, err
-		}
+		distroStr = img.ImgType.Arch().Distro().Name()
 	} else {
 		distroStr = "bootc-based"
 		// XXX: hack to skip repo loading for the bootc image.
