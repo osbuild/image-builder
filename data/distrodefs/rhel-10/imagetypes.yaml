@@ -1289,6 +1289,12 @@ image_types:
                     label: "root"
                     mountpoint: "/"
                     fstab_options: "defaults"
+    package_sets:
+      os:
+        - *qcow2_pkgset
+        - packages:
+            # Required so dracut iscsi module check passes during kernel-core %posttrans.
+            - "iscsi-initiator-utils"
     blueprint:
       supported_options: *supported_options_disk
 
