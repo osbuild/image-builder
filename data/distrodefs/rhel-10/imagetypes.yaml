@@ -1048,7 +1048,8 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
-        - include:
+        - &qcow2_pkgset
+          include:
             - "@core"
             - "chrony"
             - "cloud-init"
