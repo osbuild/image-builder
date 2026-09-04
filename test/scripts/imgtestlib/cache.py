@@ -1,7 +1,7 @@
 import json
 import os
 import subprocess as sp
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from .build import (gen_build_name, get_manifest_id, read_build_info,
@@ -10,8 +10,11 @@ from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_ci_runner_for, get_osbuild_commit
 
-S3_BUCKET = "s3://" + os.environ.get("AWS_BUCKET", "images-ci-cache")
+S3_BUCKET_NAME = os.environ.get("AWS_BUCKET", "images-ci-cache")
+S3_BUCKET = "s3://" + S3_BUCKET_NAME
 S3_PREFIX = "images/builds"
+
+DELETE_AFTER_TD = timedelta(days=14)
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -109,16 +112,20 @@ def gen_build_info_s3_dir_path(distro=None, arch=None, manifest_id=None, osbuild
 
 def touch_s3(distro, arch, manifest_id, osbuild_ref=None, runner_distro=None):
     """
-    Update the timestamps of a path in S3 by adding a metadata field to each file recursively. This can be used to
-    "freshen up" relevant files in the build cache so that images that are still current but haven't been updated in a
-    while don't get garbage collected.
+    Update the DeleteAfter tag of a path in S3 to the current time + 14 days (DELETE_AFTER_TD). The tag is used by the
+    cloud cleaner to garbage-collect old images. Only the info.json of a prefix containing an image needs to be tagged.
     """
-    # NOTE: we can make this async - updating the objects can take a few seconds and can be done in parallel
-    s3url = gen_build_info_s3_dir_path(distro, arch, manifest_id, osbuild_ref, runner_distro)
-    # the exact key and value don't matter, but let's add the current datetime to make it a bit more meaningful
-    now = str(datetime.now())
-    print(f"⌚ Updating timestamps for {s3url} ({now})")
-    cmd = ["aws", "s3", "cp", "--recursive", "--metadata", f"touched={now}", s3url, s3url]
+    s3path = os.path.join(S3_PREFIX,
+                          gen_build_info_dir_path_prefix(distro, arch, manifest_id, osbuild_ref, runner_distro),
+                          "info.json")
+    s3url = os.path.join(S3_BUCKET, s3path)
+    delete_after = datetime.now() + DELETE_AFTER_TD
+    delete_after_iso = delete_after.isoformat()
+    print(f"⌚ Setting DeleteAfter tag for {s3url} ({delete_after_iso})")
+    cmd = ["aws", "s3api", "put-object-tagging",
+           "--bucket", S3_BUCKET_NAME,
+           "--key", s3path,
+           "--tagging", f"TagSet=[{{Key=DeleteAfter,Value={delete_after_iso}}}]"]
     runcmd_nc(cmd)
 
 
