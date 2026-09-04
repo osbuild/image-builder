@@ -2765,6 +2765,7 @@ image_types:
     filename: "image.tar.gz"
     mime_type: "application/gzip"
     exports: ["archive"]
+    disk_image_gib_aligned: true
     # Note the larger size here, upstream descriptions mention that GCE has bad perf with small disks
     default_size: "10 GiB"
     package_sets:

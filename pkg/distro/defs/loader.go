@@ -558,6 +558,7 @@ type ImageTypeYAML struct {
 	InstallWeakDeps *bool `yaml:"install_weak_deps"`
 
 	DiskImageVPCForceSize *bool `yaml:"disk_image_vpc_force_size"`
+	DiskImageGiBAligned   bool  `yaml:"disk_image_gib_aligned"`
 
 	SupportedPartitioningModes []partition.PartitioningMode `yaml:"supported_partitioning_modes"`
 

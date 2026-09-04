@@ -2267,6 +2267,7 @@ image_types:
     exports: ["archive"]
     bootable: true
     default_size: "20 GiB"
+    disk_image_gib_aligned: true
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_uefi_platform
