@@ -68,7 +68,16 @@ func uploadImageWithProgress(uploader cloud.Uploader, pbar progress.ProgressBar,
 	pbar.Start()
 	pbar.SetPulseMsgf("Uploading step")
 
-	return uploader.UploadAndRegister(r, size, osStderr)
+	pr, pw := io.Pipe()
+	defer pw.Close()
+	go func() {
+		scanner := bufio.NewScanner(pr)
+		for scanner.Scan() {
+			pbar.SetPulseMsgf("%s", scanner.Text())
+		}
+	}()
+
+	return uploader.UploadAndRegister(r, size, pw)
 }
 
 func uploaderCheckWithProgress(pbar progress.ProgressBar, uploader cloud.Uploader) error {
