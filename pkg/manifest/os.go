@@ -72,6 +72,11 @@ type OSCustomizations struct {
 	// package.
 	KernelName string
 
+	// KernelVersion optionally pins the kernel to a specific version.
+	// When set, the version is appended to KernelName as a DNF version
+	// constraint for depsolving (e.g. "kernel-6.12.0-211").
+	KernelVersion string
+
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
 
@@ -283,8 +288,11 @@ func (p *OS) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 	}
 
 	if p.OSCustomizations.KernelName != "" {
-		// kernel is considered part of the platform package set
-		platformPackages = append(platformPackages, p.OSCustomizations.KernelName)
+		kernelSpec := p.OSCustomizations.KernelName
+		if p.OSCustomizations.KernelVersion != "" {
+			kernelSpec += "-" + p.OSCustomizations.KernelVersion
+		}
+		platformPackages = append(platformPackages, kernelSpec)
 	}
 
 	customizationPackages := make([]string, 0)
