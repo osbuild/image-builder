@@ -161,6 +161,7 @@ def upload_results(distro, arch, image_type, config_path):
                build_dir+"/", s3url])
     print(f"⬆️ Uploading info.json to {s3url}")
     runcmd_nc(["aws", "s3", "cp", "--no-progress", "--acl=private", "--recursive", build_dir+"/", s3url])
+    touch_s3(distro, arch, manifest_id)
     print("✅ DONE!!")
 
 
