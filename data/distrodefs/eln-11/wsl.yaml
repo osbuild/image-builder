@@ -18,7 +18,7 @@ image_types:
             enabled: true
             icon: /usr/share/pixmaps/fedora-logo.ico
           oobe:
-            default_name: Fedora-ELN-%s
+            default_name: "Fedora-ELN-{{.Distro.VersionString}}"
             default_uid: 1000
     package_sets:
       os:

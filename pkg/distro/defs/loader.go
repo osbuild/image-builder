@@ -830,7 +830,7 @@ func (imgType *ImageTypeYAML) PartitionTable(id distro.ID, archName string) (*di
 }
 
 // ImageConfig returns the image type specific ImageConfig
-func (imgType *ImageTypeYAML) ImageConfig(id distro.ID, archName string) *distro.ImageConfig {
+func (imgType *ImageTypeYAML) ImageConfig(id distro.ID, archName string) (*distro.ImageConfig, error) {
 	imgConfig := imgType.ImageConfigYAML.ImageConfig
 	for _, cond := range imgType.ImageConfigYAML.Conditions {
 		if cond.When.Eval(id, archName) {
@@ -839,7 +839,10 @@ func (imgType *ImageTypeYAML) ImageConfig(id distro.ID, archName string) *distro
 		}
 	}
 
-	return imgConfig
+	if err := imgConfig.ExpandTemplates(id, archName); err != nil {
+		return nil, err
+	}
+	return imgConfig, nil
 }
 
 // InstallerConfig returns the InstallerConfig for the given imgType

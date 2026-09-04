@@ -1009,13 +1009,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	}
 
 	if p.OSCustomizations.WSLDistributionConfig != nil {
-		// Format version into the name field; if there's no %s nothing special happens.
-		wslDistConfig := *p.OSCustomizations.WSLDistributionConfig
-		wslDistConfig.OOBE.DefaultName = fmt.Sprintf(
-			wslDistConfig.OOBE.DefaultName,
-			p.OSVersion,
-		)
-		pipeline.AddStage(osbuild.NewWSLDistributionConfStage(&wslDistConfig))
+		pipeline.AddStage(osbuild.NewWSLDistributionConfStage(p.OSCustomizations.WSLDistributionConfig))
 	}
 
 	if p.OSCustomizations.FIPS {
