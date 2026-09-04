@@ -201,6 +201,9 @@ type OSCustomizations struct {
 	// InstallLangs determines which locale files are installed by RPMs
 	InstallLangs []string
 
+	// RPMMacros defines persistent RPM macro files to write into the image
+	RPMMacros []osbuild.RPMMacrosStageOptions
+
 	// Use this RPMKeysBinary from the tree instead of the default one
 	RPMKeysBinary string
 }
@@ -616,6 +619,10 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 	pipeline.AddStages(rpmStages...)
+
+	for idx := range p.OSCustomizations.RPMMacros {
+		pipeline.AddStage(osbuild.NewRPMMacrosStage(&p.OSCustomizations.RPMMacros[idx]))
+	}
 
 	if !p.OSCustomizations.NoBLS {
 		fixBLSOptions := &osbuild.FixBLSStageOptions{}
