@@ -100,7 +100,7 @@ export GOPATH=$PWD/_build:%{gopath}
 cd $PWD/_build/src/%{goipath}
 %gotest ./...
 %else
-%gocheck
+%gocheck2
 %endif
 
 %files
