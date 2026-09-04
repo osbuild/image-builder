@@ -962,6 +962,9 @@ func (t *bootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fs
 	if basept.Size != 0 {
 		imageSize = basept.Size
 	}
+	if t.ImageTypeYAML.DiskImageGiBAligned {
+		imageSize = datasizes.Size((uint64(imageSize) + uint64(datasizes.GiB) - 1) &^ (uint64(datasizes.GiB) - 1))
+	}
 
 	return disk.NewPartitionTable(basept, fsCustomizations, imageSize, partitioningMode, t.arch.arch, nil, bd.defaultFs, rng)
 }

@@ -134,6 +134,9 @@ func (t *imageType) Size(size uint64) uint64 {
 	if size == 0 {
 		size = t.ImageTypeYAML.DefaultSize.Uint64()
 	}
+	if t.ImageTypeYAML.DiskImageGiBAligned {
+		size = (size + datasizes.GibiByte - 1) &^ (datasizes.GibiByte - 1)
+	}
 	return size
 }
 
