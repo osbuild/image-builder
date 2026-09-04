@@ -431,7 +431,6 @@ def get_boot_mode(distro, arch, image_type):
     raise RuntimeError(f"bootmode not found in describe output for {distro}/{arch}/{image_type}")
 
 
-# pylint: disable=too-many-arguments,too-many-positional-arguments
 def upload_to_aws(arch, image_name, image_path, boot_mode=None):
     """Upload an image to AWS via image-builder and return the AMI ID."""
     aws_config = get_aws_config()
