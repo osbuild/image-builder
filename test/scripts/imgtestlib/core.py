@@ -7,7 +7,7 @@ from typing import Dict
 
 from .bootcsource import bootc_source_from_distro, resolve_bootc_source_ref
 from .build import get_manifest_id
-from .cache import dl_build_info, gen_build_info_dir_path_prefix
+from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_s3
 from .gitlab import log_section
 from .run import runcmd
 from .testenv import rng_seed_env
@@ -258,11 +258,9 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
         if check_for_build(manifest_fname, build_request, data["manifest"], build_info_dir, errors):
             build_requests.append(build_request)
         else:
-            # The specific build configuration exists in the cache and wont be rebuilt. Update the file timestamps to
+            # The specific build configuration exists in the cache and wont be rebuilt. Update the DeleteAfter tag to
             # keep them fresh in the cache.
-            # touch_s3(distro, arch, manifest_id)
-            # NOTE(2026-06-18): Disabling this temporarily since it slows down the filtering process by a lot
-            print("WARNING: timestamp updating has been temporarily disabled", file=sys.stderr)
+            touch_s3(distro, arch, manifest_id)
 
     print("✅ Config filtering done!\n")
     if errors:
