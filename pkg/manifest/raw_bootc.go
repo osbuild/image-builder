@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/osbuild/image-builder/internal/common"
@@ -95,6 +96,26 @@ func (p *RawBootcImage) serializeEnd() {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.containerSpecs = nil
+}
+
+// bootcHomedirs sets explicit home directories for users that don't
+// have one. Without this, useradd --root follows the ostree symlink
+// chain (/home -> var/home -> ../../var) and records the physical
+// deployment path in /etc/passwd instead of the runtime path.
+func bootcHomedirs(uu []users.User) []users.User {
+	out := make([]users.User, len(uu))
+	copy(out, uu)
+	for i := range out {
+		if out[i].Home != nil {
+			continue
+		}
+		if out[i].Name == "root" {
+			out[i].Home = common.ToPtr("/var/roothome")
+		} else {
+			out[i].Home = common.ToPtr(filepath.Join("/var/home", out[i].Name))
+		}
+	}
+	return out
 }
 
 func buildHomedirPaths(users []users.User) []osbuild.MkdirStagePath {
@@ -221,8 +242,8 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 			mkdirStage.Devices = devices
 			postStages = append(postStages, mkdirStage)
 
-			// add the users
-			usersStage, err := osbuild.GenUsersStage(p.OSCustomizations.Users, false)
+			// add the users with explicit home dirs to avoid ostree symlink issues
+			usersStage, err := osbuild.GenUsersStage(bootcHomedirs(p.OSCustomizations.Users), false)
 			if err != nil {
 				return osbuild.Pipeline{}, fmt.Errorf("user stage failed %w", err)
 			}
