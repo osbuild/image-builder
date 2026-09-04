@@ -444,7 +444,8 @@ def upload_to_aws(arch, image_name, image_path, boot_mode=None):
     if boot_mode:
         cmd += ["--aws-boot-mode", boot_mode]
     cmd.append(image_path)
-    stdout, _ = runcmd(cmd)
+    stdout, stderr = runcmd(cmd)
+    print(stderr.decode())  # status messages
     result = json.loads(stdout)
     return result["image_id"]
 
@@ -503,7 +504,8 @@ def upload_to_azure(arch, image_name, image_path):
            "--azure-resource-group", az_config["resource_group"],
            "--azure-image-name", image_name,
            image_path]
-    stdout, _ = runcmd(cmd)
+    stdout, stderr = runcmd(cmd)
+    print(stderr.decode())  # status messages
     result = json.loads(stdout)
     return result["image_id"]
 
