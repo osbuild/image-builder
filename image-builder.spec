@@ -36,6 +36,8 @@ BuildRequires:  libxcrypt-devel
 %if 0%{?fedora}
 # for _tmpfilesdir macro
 BuildRequires:  systemd-rpm-macros
+# for gocheck2 macro
+BuildRequires:  go-vendor-tools
 # DO NOT REMOVE the BUNDLE_START and BUNDLE_END markers as they are used by 'tools/rpm_spec_add_provides_bundle.sh' to generate the Provides: bundled list
 # BUNDLE_START
 # BUNDLE_END
@@ -100,7 +102,7 @@ export GOPATH=$PWD/_build:%{gopath}
 cd $PWD/_build/src/%{goipath}
 %gotest ./...
 %else
-%gocheck
+%gocheck2
 %endif
 
 %files
