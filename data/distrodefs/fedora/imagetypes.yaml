@@ -529,9 +529,9 @@
       bootloader: "zipl"
     riscv64_uefi_platform: &riscv64_uefi_platform
       arch: "riscv64"
-      uefi_vendor: "uefi"
+      uefi_vendor: "fedor"
       image_format: "raw"
-      packages:
+      packages: &riscv64_uefi_platform_packages
         # XXX: this is needed to get a generic bootkernel,
         # this should probably be part of any bootable img
         # packagelist
@@ -541,7 +541,23 @@
           - "grub2-efi-riscv64-modules"
           - "shim-unsigned-riscv64"
       bootloader: "grub2"
-
+    riscv64_installer_platform: &riscv64_installer_platform
+      arch: "riscv64"
+      uefi_vendor: "fedora"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        <<: *riscv64_uefi_platform_packages
+        booting:
+          - "grub2-efi-riscv64-cdboot"
+        firmware:
+          - "linux-firmware"
+      build_packages:
+        booting:
+          - "shim-unsigned-riscv64"
+          - "grub2-efi-riscv64"
+          - "grub2-efi-riscv64-cdboot"
+          - "grub2-efi-riscv64-modules"
 
   installer_config: &default_installer_config
     enabled_anaconda_modules: &install_config_enabled_anaconda_modules
@@ -569,6 +585,7 @@
               after_dracut: true
           lorax_logos_package: fedora-logos
           lorax_release_package: fedora-release
+
 
   iso_config: &default_iso_config
     preparer: "image-builder - https://osbuild.org/"
@@ -2547,6 +2564,13 @@ image_types:
         - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
         - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
       install_weak_deps: false
+      conditions:
+        <<: *default_installer_conditions
+        "riscv64 needs device tree blobs on the ISO":
+          when:
+            arch: "riscv64"
+          shallow_merge:
+            copy_dtbs: true
     iso_config:
       <<: *default_iso_config
       rootfs_type: "erofs"
@@ -2561,6 +2585,7 @@ image_types:
       - *aarch64_installer_platform
       - *ppc64le_installer_platform
       - *s390x_installer_platform
+      - *riscv64_installer_platform
     platforms_override:
       conditions:
         "Fedora 45 and up no longer have zd1211-firmware":
@@ -2571,6 +2596,7 @@ image_types:
             - *aarch64_installer_platform_compat
             - *ppc64le_installer_platform_compat
             - *s390x_installer_platform
+            - *riscv64_installer_platform
     blueprint:
       supported_options:
         - "distro"
