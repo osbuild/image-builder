@@ -30,21 +30,27 @@ import (
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
-func kernelOptions(t *imageType, c *blueprint.Customizations) []string {
-	imageConfig := t.getDefaultImageConfig()
+func kernelOptions(t *imageType, c *blueprint.Customizations) ([]string, error) {
+	imageConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return nil, err
+	}
 
 	kernelOptions := imageConfig.KernelOptions
 	if bpKernel := c.GetKernel(); bpKernel.Append != "" {
 		kernelOptions = append(kernelOptions, bpKernel.Append)
 	}
-	return kernelOptions
+	return kernelOptions, nil
 }
 
 func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distro.ImageOptions, containers []container.SourceSpec, bp *blueprint.Blueprint) (manifest.OSCustomizations, error) {
 	c := bp.Customizations
 	osc := manifest.OSCustomizations{}
 
-	imageConfig := t.getDefaultImageConfig()
+	imageConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return osc, err
+	}
 	if t.ImageTypeYAML.Bootable || t.ImageTypeYAML.IsOSTreeBasedImageType() {
 		// TODO: for now the only image types that define a default kernel are
 		// ones that use UKIs and don't allow overriding, so this works.
@@ -56,7 +62,11 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		if imageConfig.DefaultKernelName != nil {
 			osc.KernelName = *imageConfig.DefaultKernelName
 		}
-		osc.KernelOptionsAppend = kernelOptions(t, c)
+		kopts, err := kernelOptions(t, c)
+		if err != nil {
+			return osc, err
+		}
+		osc.KernelOptionsAppend = kopts
 		if imageConfig.KernelOptionsBootloader != nil {
 			osc.KernelOptionsBootloader = *imageConfig.KernelOptionsBootloader
 		}
@@ -197,7 +207,6 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.RHSMFacts = options.Facts
 	}
 
-	var err error
 	osc.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
 	if err != nil {
 		// In theory this should never happen, because the blueprint directory customizations
@@ -396,16 +405,22 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	return osc, nil
 }
 
-func ociContainerCustomizations(t *imageType) manifest.OCIContainerCustomizations {
-	imageConfig := t.getDefaultImageConfig()
+func ociContainerCustomizations(t *imageType) (manifest.OCIContainerCustomizations, error) {
+	imageConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return manifest.OCIContainerCustomizations{}, err
+	}
 
 	return manifest.OCIContainerCustomizations{
 		OCIArchiveConfig: osbuild.NewOCIArchiveConfig(imageConfig.OCI),
-	}
+	}, nil
 }
 
-func ostreeCommitServerCustomizations(t *imageType) manifest.OSTreeCommitServerCustomizations {
-	imageConfig := t.getDefaultImageConfig()
+func ostreeCommitServerCustomizations(t *imageType) (manifest.OSTreeCommitServerCustomizations, error) {
+	imageConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return manifest.OSTreeCommitServerCustomizations{}, err
+	}
 
 	c := manifest.OSTreeCommitServerCustomizations{}
 
@@ -413,7 +428,7 @@ func ostreeCommitServerCustomizations(t *imageType) manifest.OSTreeCommitServerC
 		c.OSTreeServer = imageConfig.OSTreeServer
 	}
 
-	return c
+	return c, nil
 }
 
 // We need a lock around applying/retrieving installer customizations as we run our test cases
@@ -572,7 +587,11 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 		}
 	}
 
-	isc.KernelOptionsAppend = kernelOptions(t, c)
+	kopts, err := kernelOptions(t, c)
+	if err != nil {
+		return isc, err
+	}
+	isc.KernelOptionsAppend = kopts
 
 	return isc, nil
 }
@@ -691,7 +710,10 @@ func ostreeDeploymentCustomizations(
 	}
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
 
-	imageConfig := t.getDefaultImageConfig()
+	imageConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return deploymentConf, err
+	}
 	kernelOptions := imageConfig.KernelOptions
 	if bpKernel := c.GetKernel(); bpKernel != nil && bpKernel.Append != "" {
 		kernelOptions = append(kernelOptions, bpKernel.Append)
@@ -717,7 +739,6 @@ func ostreeDeploymentCustomizations(
 
 	deploymentConf.Users = users.UsersFromBP(c.GetUsers())
 
-	var err error
 	groups, err := c.GetGroups()
 	if err != nil {
 		return manifest.OSTreeDeploymentCustomizations{}, err
@@ -863,7 +884,11 @@ func containerImage(t *imageType,
 	img.OSCustomizations.PayloadRepos = payloadRepos
 	img.Environment = &t.ImageTypeYAML.Environment
 
-	img.OCIContainerCustomizations = ociContainerCustomizations(t)
+	ociCust, err := ociContainerCustomizations(t)
+	if err != nil {
+		return nil, err
+	}
+	img.OCIContainerCustomizations = ociCust
 
 	return img, nil
 }
@@ -883,12 +908,14 @@ func liveInstallerImage(t *imageType,
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
-	imgConfig := t.getDefaultImageConfig()
+	imgConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return nil, err
+	}
 	if locale := imgConfig.Locale; locale != nil {
 		img.Locale = *locale
 	}
 
-	var err error
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)
 	if err != nil {
 		return nil, err
@@ -997,7 +1024,10 @@ func ostreeCommitImage(t *imageType,
 	}
 	img.OSCustomizations.PayloadRepos = payloadRepos
 
-	imgConfig := t.getDefaultImageConfig()
+	imgConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return nil, err
+	}
 	img.OSCustomizations.Presets = imgConfig.Presets
 	if imgConfig.InstallWeakDeps != nil {
 		img.InstallWeakDeps = *imgConfig.InstallWeakDeps
@@ -1076,7 +1106,10 @@ func ostreeContainerImage(t *imageType,
 		return nil, err
 	}
 
-	imgConfig := t.getDefaultImageConfig()
+	imgConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return nil, err
+	}
 	img.OSCustomizations.Presets = imgConfig.Presets
 	if imgConfig.InstallWeakDeps != nil {
 		img.OSCustomizations.InstallWeakDeps = *imgConfig.InstallWeakDeps
@@ -1089,8 +1122,16 @@ func ostreeContainerImage(t *imageType,
 	img.OSVersion = d.OsVersion()
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
 
-	img.OCIContainerCustomizations = ociContainerCustomizations(t)
-	img.OSTreeCommitServerCustomizations = ostreeCommitServerCustomizations(t)
+	ociCust, err := ociContainerCustomizations(t)
+	if err != nil {
+		return nil, err
+	}
+	img.OCIContainerCustomizations = ociCust
+	commitServerCust, err := ostreeCommitServerCustomizations(t)
+	if err != nil {
+		return nil, err
+	}
+	img.OSTreeCommitServerCustomizations = commitServerCust
 
 	return img, nil
 }
@@ -1184,7 +1225,10 @@ func ostreeInstallerImage(t *imageType,
 		img.RootfsCompression = "xz"
 	}
 
-	imgConfig := t.getDefaultImageConfig()
+	imgConfig, err := t.getDefaultImageConfig()
+	if err != nil {
+		return nil, err
+	}
 	if locale := imgConfig.Locale; locale != nil {
 		img.Locale = *locale
 	}

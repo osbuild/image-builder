@@ -21,7 +21,7 @@ type (
 	Distribution = distribution
 )
 
-func (t *imageType) GetDefaultImageConfig() *distro.ImageConfig {
+func (t *imageType) GetDefaultImageConfig() (*distro.ImageConfig, error) {
 	return t.getDefaultImageConfig()
 }
 

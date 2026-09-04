@@ -207,10 +207,13 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 	return disk.NewPartitionTable(basePartitionTable, mountpoints, datasizes.Size(imageSize), options.PartitioningMode, t.platform.GetArch(), t.ImageTypeYAML.RequiredPartitionSizes, defaultFsType.String(), rng)
 }
 
-func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
+func (t *imageType) getDefaultImageConfig() (*distro.ImageConfig, error) {
 	d := t.Arch().Distro()
-	imageConfig := t.ImageConfig(d.ID(), t.arch.arch.String())
-	return imageConfig.InheritFrom(d.ImageConfig())
+	imageConfig, err := t.ImageConfig(d.ID(), t.arch.arch.String())
+	if err != nil {
+		return nil, err
+	}
+	return imageConfig.InheritFrom(d.ImageConfig()), nil
 }
 
 func (t *imageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error) {

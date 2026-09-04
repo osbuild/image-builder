@@ -1,8 +1,10 @@
 package distro
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
+	"text/template"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
@@ -156,6 +158,34 @@ type ImageConfig struct {
 	// /usr/lib/ostree-boot into bootupd-compatible update metadata.
 	// Only set this to true if the bootupd package is available in the image.
 	BootupdGenMetadata *bool `yaml:"bootupd_gen_metadata,omitempty"`
+}
+
+func (c *ImageConfig) ExpandTemplates(id ID, archName string) error {
+	if c == nil || c.WSL == nil || c.WSL.DistributionConfig == nil || c.WSL.DistributionConfig.OOBE == nil {
+		return nil
+	}
+	if c.WSL.DistributionConfig.OOBE.DefaultName == "" {
+		return nil
+	}
+
+	data := struct {
+		Arch   string
+		Distro ID
+	}{
+		Arch:   archName,
+		Distro: id,
+	}
+
+	tmpl, err := template.New("image-config").Parse(c.WSL.DistributionConfig.OOBE.DefaultName)
+	if err != nil {
+		return fmt.Errorf("cannot parse WSL default_name template: %w", err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return fmt.Errorf("cannot execute WSL default_name template: %w", err)
+	}
+	c.WSL.DistributionConfig.OOBE.DefaultName = buf.String()
+	return nil
 }
 
 // shallowMerge creates a new struct by merging a child and a parent.
