@@ -2848,6 +2848,8 @@ image_types:
       install_weak_deps: false
       locale: "C.UTF-8"
       timezone: "Etc/UTC"
+      install_langs:
+        - "C.UTF-8"
     package_sets:
       os:
         - include:
