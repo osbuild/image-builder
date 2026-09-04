@@ -2846,6 +2846,7 @@ image_types:
     image_config:
       no_selinux: true
       exclude_docs: true
+      install_weak_deps: false
       locale: "C.UTF-8"
       timezone: "Etc/UTC"
     package_sets:
