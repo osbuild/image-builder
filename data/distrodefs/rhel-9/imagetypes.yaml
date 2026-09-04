@@ -3935,8 +3935,16 @@ image_types:
       install_weak_deps: false
       locale: "C.UTF-8"
       timezone: "Etc/UTC"
+      # build-time macros
       install_langs:
         - "C.UTF-8"
+      # installed rpm config
+      rpm:
+        macros:
+          - filename: "/etc/rpm/macros.image-language-conf"
+            macros:
+              _install_langs:
+                - "C.UTF-8"
     package_sets:
       os:
         - include:
