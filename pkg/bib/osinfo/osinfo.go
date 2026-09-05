@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"slices"
+	"sort"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -209,23 +210,34 @@ type diskYAML struct {
 	PartitionTable     *disk.PartitionTable        `json:"partition_table" yaml:"partition_table"`
 }
 
-func readDiskYaml(fsys fs.FS, prefix string) (*diskYAML, error) {
-	var disk diskYAML
-	p := path.Join(prefix, "disk.yaml")
-	f, err := fsys.Open(p)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
+func readDiskYaml(fsys fs.FS, prefix, variant string) (*diskYAML, error) {
+	paths := []string{path.Join(prefix, "disk.yaml")}
+	if variant != "" {
+		paths = []string{
+			path.Join(prefix, "variant.d", variant, "disk.yaml"),
+			path.Join(prefix, "disk.yaml"),
 		}
-		return nil, fmt.Errorf("cannot load disk definitions from %q: %w", p, err)
-	}
-	defer f.Close()
-
-	if err := yaml.NewDecoder(f).Decode(&disk); err != nil {
-		return nil, fmt.Errorf("cannot parse disk definitions from %q: %w", p, err)
 	}
 
-	return &disk, nil
+	for _, p := range paths {
+		var disk diskYAML
+		f, err := fsys.Open(p)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, fmt.Errorf("cannot load disk definitions from %q: %w", p, err)
+		}
+		defer f.Close()
+
+		if err := yaml.NewDecoder(f).Decode(&disk); err != nil {
+			return nil, fmt.Errorf("cannot parse disk definitions from %q: %w", p, err)
+		}
+
+		return &disk, nil
+	}
+
+	return nil, nil
 }
 
 type isoYAML struct {
@@ -242,23 +254,34 @@ type isoYAML struct {
 	} `json:"grub2" yaml:"grub2"`
 }
 
-func readISOYaml(fsys fs.FS, prefix string) (*isoYAML, error) {
-	var iso isoYAML
-	p := path.Join(prefix, "iso.yaml")
-	f, err := fsys.Open(p)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
+func readISOYaml(fsys fs.FS, prefix, variant string) (*isoYAML, error) {
+	paths := []string{path.Join(prefix, "iso.yaml")}
+	if variant != "" {
+		paths = []string{
+			path.Join(prefix, "variant.d", variant, "iso.yaml"),
+			path.Join(prefix, "iso.yaml"),
 		}
-		return nil, fmt.Errorf("cannot load iso definitions from %q: %w", p, err)
-	}
-	defer f.Close()
-
-	if err := yaml.NewDecoder(f).Decode(&iso); err != nil {
-		return nil, fmt.Errorf("cannot parse iso definitions from %q: %w", p, err)
 	}
 
-	return &iso, nil
+	for _, p := range paths {
+		var iso isoYAML
+		f, err := fsys.Open(p)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, fmt.Errorf("cannot load iso definitions from %q: %w", p, err)
+		}
+		defer f.Close()
+
+		if err := yaml.NewDecoder(f).Decode(&iso); err != nil {
+			return nil, fmt.Errorf("cannot parse iso definitions from %q: %w", p, err)
+		}
+
+		return &iso, nil
+	}
+
+	return nil, nil
 }
 
 func readKernelInfo(fsys fs.FS) (*KernelInfo, error) {
@@ -294,7 +317,36 @@ func readKernelInfo(fsys fs.FS) (*KernelInfo, error) {
 	return nil, fmt.Errorf("no valid kernel modules directory")
 }
 
-func Load(fsys fs.FS) (*Info, error) {
+func variantExists(fsys fs.FS, prefix, variant string) bool {
+	variantDir := path.Join(prefix, "variant.d", variant)
+	fi, err := fs.Stat(fsys, variantDir)
+	return err == nil && fi.IsDir()
+}
+
+// ListVariants returns the names of available deployment variants by
+// scanning the variant.d/ directory under the resolved search path.
+func ListVariants(fsys fs.FS) ([]string, error) {
+	prefix := resolvePrefix(fsys)
+	variantDir := path.Join(prefix, "variant.d")
+	entries, err := fs.ReadDir(fsys, variantDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("cannot read variant directory %q: %w", variantDir, err)
+	}
+
+	var variants []string
+	for _, e := range entries {
+		if e.IsDir() {
+			variants = append(variants, e.Name())
+		}
+	}
+	sort.Strings(variants)
+	return variants, nil
+}
+
+func Load(fsys fs.FS, variant string) (*Info, error) {
 	osrelease, err := distro.ReadOSReleaseFromFS(fsys)
 	if err != nil {
 		return nil, err
@@ -314,12 +366,16 @@ func Load(fsys fs.FS) (*Info, error) {
 
 	prefix := resolvePrefix(fsys)
 
+	if variant != "" && !variantExists(fsys, prefix, variant) {
+		return nil, fmt.Errorf("variant %q not found", variant)
+	}
+
 	customization, err := readImageCustomization(fsys)
 	if err != nil {
 		return nil, err
 	}
 
-	diskYaml, err := readDiskYaml(fsys, prefix)
+	diskYaml, err := readDiskYaml(fsys, prefix, variant)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +386,7 @@ func Load(fsys fs.FS) (*Info, error) {
 		pt = diskYaml.PartitionTable
 	}
 
-	isoYaml, err := readISOYaml(fsys, prefix)
+	isoYaml, err := readISOYaml(fsys, prefix, variant)
 	if err != nil {
 		return nil, err
 	}
