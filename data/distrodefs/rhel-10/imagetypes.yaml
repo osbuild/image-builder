@@ -2211,6 +2211,7 @@ image_types:
               append:
                 include:
                   - "redhat-release-eula"
+            <<: *installer_split_firmware_condition
     blueprint:
       supported_options:
         - "distro"
