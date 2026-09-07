@@ -20,7 +20,7 @@ build/{distro}/{arch}/{image_type}/{config_name}:
     - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"
   extends: .terraform
   variables:
-    RUNNER: {runner}-{arch}
+    RUNNER: {runner}
     INTERNAL_NETWORK: "{internal}"
   needs:
     - pipeline: "$PARENT_PIPELINE_ID"

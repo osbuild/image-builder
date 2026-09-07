@@ -60,7 +60,7 @@ GEN_TEMPLATE = """
   stage: gen
   extends: .terraform
   variables:
-    RUNNER: {runner}-{arch}
+    RUNNER: {runner}
     INTERNAL_NETWORK: "true"
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo
@@ -90,7 +90,7 @@ OSTREE_GEN_TEMPLATE = """
   stage: ostree-gen
   extends: .terraform
   variables:
-    RUNNER: {runner}-{arch}
+    RUNNER: {runner}
     INTERNAL_NETWORK: "true"
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo
@@ -121,7 +121,7 @@ BOOTC_GEN_TEMPLATE = """
   stage: gen
   extends: .terraform
   variables:
-    RUNNER: {runner}-{arch}
+    RUNNER: {runner}
     INTERNAL_NETWORK: "false"
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo
@@ -152,7 +152,7 @@ MANIFEST_GEN_TEMPLATE = """
   stage: gen
   extends: .terraform
   variables:
-    RUNNER: {runner}-x86_64
+    RUNNER: {runner}
     INTERNAL_NETWORK: "true"
   script: |
     sudo -E ./test/scripts/setup-osbuild-repo
@@ -179,7 +179,7 @@ BOOTC_IMAGE_BUILDER_TEMPLATE = """
   stage: test
   extends: .terraform
   variables:
-    RUNNER: {runner}-{arch}
+    RUNNER: {runner}
   rules:
     # 1. Skip the job if we're on the github merge queue
     - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
@@ -201,7 +201,7 @@ UNIT_TESTS_TEMPLATE = """
   stage: test
   extends: .terraform
   variables:
-    RUNNER: {runner}-{arch}
+    RUNNER: {runner}
   script:
     - sudo ./test/scripts/install-dependencies
     - sudo go test -count=1 ./pkg/distro/bootc/... ./pkg/distro/generic/...

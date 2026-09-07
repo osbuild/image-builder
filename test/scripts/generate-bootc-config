@@ -21,7 +21,7 @@ build/{distro}/{arch}/{image_type}/{config_name}:
   tags:
     - {tag}
   variables:
-    RUNNER: {runner}-{arch}
+    RUNNER: {runner}
     INTERNAL_NETWORK: "false"
 """
 

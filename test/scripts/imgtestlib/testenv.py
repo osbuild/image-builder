@@ -123,5 +123,5 @@ def get_ci_runner_distro_for(distro, arch, image_type):
     the Schutzfile.
     """
     runner = get_ci_runner_for(distro, arch, image_type)
-    # given a runner like 'aws/fedora-44' we want 'fedora-44'
-    return runner.split("/")[1]
+    # given a runner like 'aws/fedora-44-x86_64' we want 'fedora-44'
+    return "-".join(runner.split("/")[1].split("-")[:-1])
