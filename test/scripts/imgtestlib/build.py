@@ -3,7 +3,8 @@ import os
 import tempfile
 from typing import Dict, List
 
-from .bootcsource import bootc_source_from_distro, resolve_bootc_source, resolve_bootc_source_ref
+from .bootcsource import (bootc_source_from_distro, resolve_bootc_source,
+                          resolve_bootc_source_ref)
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
@@ -119,7 +120,7 @@ def build_image(distro, arch, image_type, config_path):
     osbuild_ver, _ = runcmd(["osbuild", "--version"])
 
     distro_version = get_host_distro()
-    osbuild_commit = get_osbuild_commit(distro_version)
+    osbuild_commit = get_osbuild_commit()
     if osbuild_commit is None:
         osbuild_commit = "RELEASE"
 

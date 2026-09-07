@@ -366,7 +366,7 @@ fail:
   stage: gen
   extends: .terraform
   variables:
-    RUNNER: aws/fedora-44-x86_64
+    RUNNER: aws/centos-stream-9-x86_64
     INTERNAL_NETWORK: "true"
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo

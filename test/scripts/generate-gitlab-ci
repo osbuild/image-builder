@@ -8,7 +8,6 @@ import imgtestlib as testlib
 
 ARCHITECTURES = ["x86_64", "aarch64"]
 MANIFEST_ONLY_ARCHES = ["ppc64le", "s390x"]
-RUNNER = testlib.testenv.get_common_ci_runner()
 OSTREE_DISTROS = ["fedora", "rhel-8", "rhel-9", "centos-9"]
 BOOTC_SOURCES = testlib.bootcsource.BOOTC_SOURCES
 
@@ -241,16 +240,17 @@ def main():
         if combo in combos:
             continue
 
+        runner = testlib.testenv.get_ci_runner_for(img["distro"], img["arch"], image_type="*")
         combos.add(combo)
         gen_stage.append(GEN_TEMPLATE.format(
             distro=img["distro"],
             arch=img["arch"],
-            runner=RUNNER))
+            runner=runner))
 
         trigger_stage.append(TRIGGER_TEMPLATE.format(
             distro=img["distro"],
             arch=img["arch"],
-            runner=RUNNER))
+            runner=runner))
 
         for ostree_distro_prefix in OSTREE_DISTROS:
             if img["distro"].startswith(ostree_distro_prefix):
@@ -261,13 +261,15 @@ def main():
         ostree_gen_stage.append(OSTREE_GEN_TEMPLATE.format(
             distro=img["distro"],
             arch=img["arch"],
-            runner=RUNNER))
+            runner=runner))
 
         ostree_trigger_stage.append(OSTREE_TRIGGER_TEMPLATE.format(
             distro=img["distro"],
             arch=img["arch"],
-            runner=RUNNER))
+            runner=runner))
 
+    # generate manifests for s390x and ppc64le on the base x86_64 runners
+    man_only_runner = testlib.testenv.get_ci_runner_for(distro="*", arch="x86_64", image_type="*")
     man_only_images = testlib.core.list_images(arches=MANIFEST_ONLY_ARCHES)
     man_gen_stage = []
     for img in sort_configs(man_only_images):
@@ -276,31 +278,35 @@ def main():
             continue
 
         combos.add(combo)
-        man_gen_stage.append(MANIFEST_GEN_TEMPLATE.format(distro=img["distro"], arch=img["arch"], runner=RUNNER))
+        man_gen_stage.append(MANIFEST_GEN_TEMPLATE.format(distro=img["distro"], arch=img["arch"],
+                                                          runner=man_only_runner))
 
-    # Run bootc-image-builder tests on Fedora 44 only for now (both arches)
+    # bootc-image-builder tests on both arches
     for arch in ("x86_64", "aarch64"):
+        runner = testlib.testenv.get_ci_runner_for(distro="*", arch=arch, image_type="*")
         for test_file_path in collect_bib_tests():
             trigger_stage.append(BOOTC_IMAGE_BUILDER_TEMPLATE.format(
-                runner=RUNNER,
+                runner=runner,
                 arch=arch,
                 test_file_path=test_file_path,
             ))
 
-    # run select unit tests on the default runner for both arches
+    # select unit tests for both arches
     test_stage = []
     for arch in ARCHITECTURES:
+        runner = testlib.testenv.get_ci_runner_for(distro="*", arch=arch, image_type="*")
         test_stage.append(UNIT_TESTS_TEMPLATE.format(
-            runner=RUNNER,
+            runner=runner,
             arch=arch,
         ))
 
     for bootc_source in BOOTC_SOURCES:
         for arch in testlib.bootcsource.BOOTC_ARCHES:
+            runner = testlib.testenv.get_ci_runner_for(distro="*", arch=arch, image_type="*")
             bootc_gen_stage.append(BOOTC_GEN_TEMPLATE.format(
                 bootc_source=bootc_source,
                 arch=arch,
-                runner=RUNNER,
+                runner=runner,
             ))
             bootc_trigger_stage.append(BOOTC_TRIGGER_TEMPLATE.format(
                 bootc_source=bootc_source,
@@ -308,7 +314,7 @@ def main():
             ))
 
     with open(config_path, "w", encoding="utf-8") as config_file:
-        config_file.write(BASE_CONFIG.format(runner=RUNNER))
+        config_file.write(BASE_CONFIG)
         config_file.write(testlib.core.BASE_CONFIG)
         config_file.write("\n".join(gen_stage))
         config_file.write("\n".join(trigger_stage))

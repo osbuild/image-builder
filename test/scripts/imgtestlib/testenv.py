@@ -22,7 +22,7 @@ def get_host_distro():
     return f"{osrelease['ID']}-{osrelease['VERSION_ID']}"
 
 
-def get_osbuild_commit(distro_version):
+def get_osbuild_commit():
     """
     Get the osbuild commit defined in the Schutzfile for the host distro or common.
     If not set, returns None.
@@ -30,10 +30,7 @@ def get_osbuild_commit(distro_version):
     with open(SCHUTZFILE, encoding="utf-8") as schutzfile:
         data = json.load(schutzfile)
 
-    commit = data.get(distro_version, {}).get("dependencies", {}).get("osbuild", {}).get("commit", None)
-    if commit is None:
-        commit = data.get("common", {}).get("dependencies", {}).get("osbuild", {}).get("commit", None)
-    return commit
+    return data.get("common", {}).get("dependencies", {}).get("osbuild", {}).get("commit", None)
 
 
 def get_bib_ref():
@@ -94,6 +91,9 @@ def host_container_arch():
 
 
 def get_ci_runner_for(distro, arch, image_type):
+    """
+    Get the CI runner string for a given distribution, architecture, and image type from the Schutzfile.
+    """
     with open(SCHUTZFILE, encoding="utf-8") as schutzfile:
         data = json.load(schutzfile)
 
@@ -114,31 +114,14 @@ def get_ci_runner_for(distro, arch, image_type):
     if runner is not None:
         return runner
 
-    # fall back to global common
-    return get_common_ci_runner()
+    raise RuntimeError(f"no runner configured for distro {distro} architecture {arch} and image type {image_type}")
 
 
-def get_common_ci_runner():
+def get_ci_runner_distro_for(distro, arch, image_type):
     """
-    CI runner for common tasks.
-
-    Currently this is used for all gitlab CI jobs. In the future, we might switch to running build jobs on the same host
-    distro as the target image, but this CI runner will still be used for generic tasks like check-build-coverage.
+    Get only the distro component of the CI runner string for a given distribution, architecture, and image type from
+    the Schutzfile.
     """
-    with open(SCHUTZFILE, encoding="utf-8") as schutzfile:
-        data = json.load(schutzfile)
-
-    if (runner := data.get("common", {}).get("gitlab-ci-runner")) is None:
-        raise KeyError(f"gitlab-ci-runner not defined in {SCHUTZFILE}")
-
-    return runner
-
-
-def get_common_ci_runner_distro():
-    """
-    CI runner distro for common tasks.
-
-    Returns the distro part from the value of the common.gitlab-ci-runner key in the Schutzfile.
-    For example, if the value is "aws/fedora-999", this function will return "fedora-999".
-    """
-    return get_common_ci_runner().split("/")[1]
+    runner = get_ci_runner_for(distro, arch, image_type)
+    # given a runner like 'aws/fedora-44' we want 'fedora-44'
+    return runner.split("/")[1]

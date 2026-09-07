@@ -9,10 +9,10 @@
         "commit": "05d245c8e9a4615bc05b9bbcd79324625d24cfbc"
       }
     },
-    "gitlab-ci-runner": "aws/fedora-44",
     "gitlab-ci-runner-for": {
       "*": {
         "x86_64": {
+          "*": "aws/fedora-44",
           "qcow2": "rhos-01/fedora-44",
           "server-qcow2": "rhos-01/fedora-44",
           "generic-qcow2": "rhos-01/fedora-44",
@@ -23,6 +23,9 @@
           "everything-network-installer": "rhos-01/fedora-44",
           "server-network-installer": "rhos-01/fedora-44",
           "pxe-tar-xz": "rhos-01/fedora-44"
+        },
+        "aarch64": {
+          "*": "aws/fedora-44"
         }
       },
       "rhel-7.9": {

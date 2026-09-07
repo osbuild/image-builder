@@ -346,7 +346,7 @@ def generate_configs(build_requests, container_configs, pipeline_file, configs_d
         run_container_cmd = f"sudo podman run -d --rm -p{container_port}:8080 oci-archive:container.tar"
 
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
-                                                runner=testlib.testenv.get_common_ci_runner(),
+                                                runner=testlib.testenv.get_ci_runner_for(distro, arch, image_type),
                                                 config_name=config_name, config=build_config_path,
                                                 dl_container=dl_container_cmd,
                                                 start_container=run_container_cmd,

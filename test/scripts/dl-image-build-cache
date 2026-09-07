@@ -63,7 +63,7 @@ def get_argparser():
     parser.add_argument(
         "--output", type=str, metavar="DIR",
         help="Directory to download the image build cache to. " +
-             "If not provided, `./s3cache_osbuild-<ref>_runner-<runner-distro>` is used.",
+             "If not provided, `./s3cache_osbuild-<ref>` is used.",
     )
     parser.add_argument(
         "--dl-image", action="store_true", default=False,
@@ -117,14 +117,13 @@ def main():
     if args.image_type and args.skip_image_type:
         parser.error("--image-type and --skip-image-type are mutually exclusive")
 
-    runner_distro = testlib.testenv.get_common_ci_runner_distro()
-    osbuild_ref = testlib.testenv.get_osbuild_commit(runner_distro)
+    osbuild_ref = testlib.testenv.get_osbuild_commit()
     if osbuild_ref is None:
-        raise RuntimeError(f"Failed to determine osbuild commit for {runner_distro} from the Schutzfile")
+        raise RuntimeError("Failed to determine osbuild commit from the Schutzfile")
 
     output_dir = args.output
     if output_dir is None:
-        output_dir = f"./s3cache_osbuild-{osbuild_ref}_runner-{runner_distro}"
+        output_dir = f"./s3cache_osbuild-{osbuild_ref}"
 
     with tempfile.TemporaryDirectory() as tmpdir:
         print("📜 Generating current manifests to determine their IDs")
@@ -146,7 +145,7 @@ def main():
         print("⚠️ No image build cache files found for the specified configurations", file=sys.stderr)
         sys.exit(1)
 
-    print(f"📥 Downloading the image build cache files for osbuild-ref:{osbuild_ref} and ci-runner:{runner_distro}")
+    print(f"📥 Downloading the image build cache files for osbuild-ref:{osbuild_ref}")
     print(f"📥 Will download files for {len(build_cache_infos)} configurations into {output_dir}")
 
     s3_include_only = None
@@ -162,6 +161,7 @@ def main():
         config = build_cache_info["config"]
         manifest_id = build_cache_info["manifest-id"]
 
+        runner_distro = testlib.testenv.get_ci_runner_distro_for(distro, arch, image_type)
         target_dir = os.path.join(output_dir, testlib.build.gen_build_name(distro, arch, image_type, config))
 
         out, dl_ok = testlib.cache.dl_build_cache(

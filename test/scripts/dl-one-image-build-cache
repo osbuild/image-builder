@@ -48,7 +48,7 @@ def main():
     runner_distro = build_info.get("runner-distro")
 
     if runner_distro is None:
-        runner_distro = testlib.testenv.get_common_ci_runner_distro()
+        runner_distro = testlib.testenv.get_ci_runner_distro_for(distro, arch, image_type="*")
         print("⚠️ Runner distro not found in the build info. " +
               f"Using the CI runner distro from the current branch: {runner_distro}", file=sys.stderr)
 
