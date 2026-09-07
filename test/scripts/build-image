@@ -14,6 +14,8 @@ def main():
     parser.add_argument("config", type=str, help="config used to build the image")
     parser.add_argument("--arch", type=str, default=default_arch,
                         help="architecture for image (defaults to host architecture)")
+    parser.add_argument("--export-pipeline", type=str, required=True,
+                        help="osbuild export pipeline name (from gen-manifests build-request)")
 
     args = parser.parse_args()
     distro = args.distro
@@ -21,7 +23,8 @@ def main():
     arch = args.arch
     config_path = args.config
 
-    testlib.build.build_image(distro, arch, image_type, config_path)
+    testlib.build.build_image(distro, arch, image_type, config_path,
+                              export_pipeline=args.export_pipeline)
 
 
 if __name__ == "__main__":

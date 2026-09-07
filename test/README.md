@@ -38,7 +38,7 @@ To build an image just run `build-image`, then it can be booted with `boot-image
 switch `--keep-booted` will keep it around for inspection via ssh (not all image types support
 this yet). E.g.:
 ```console
-$ ./test/scripts/build-image centos-10 qcow2 ./test/configs/empty.json
+$ ./test/scripts/build-image centos-10 qcow2 ./test/configs/empty.json --export-pipeline qcow2
 $ ./test/scripts/boot-image --keep-booted ./build/centos_10-x86_64-qcow2-empty/ ./test/configs/empty.json
 ...
 ***********************************
@@ -50,7 +50,7 @@ The ssh command can just be copy/pasted and gives access to the vm running the i
 `check-host-config` binary and configuration will be available inside /tmp to inspect/run.
 
 If qemu-user-static/qemu-system-$arch is installed `build-image --arch <arch>` is also supported,
-e.g. `build-image --arch ppc64le centos-10 qcow2 ./test/configs/empty.json` will create a
+e.g. `build-image --arch ppc64le centos-10 qcow2 ./test/configs/empty.json --export-pipeline qcow2` will create a
 ppc64le qcow2 image. The `boot-image` script will auto-detect the architecture and boot the
 vm accordingly.
 
@@ -227,5 +227,5 @@ Each build job runs in parallel. For each image that is successfully built, a fi
 - `<image type>`: name of the image type (e.g. `qcow2`).
 - `<config name>`: name of a build configuration like the ones found in `./test/configs/` (e.g. `all-customizations`).
 - `<build name>`: a concatenation of all the elements that define a unique build configuration. It is created as `<distro>-<arch>-<image type>-<config name>` with dashes `-` in each component replaced by underscores `_` (e.g. `fedora_38-x86_64-qcow2-all_customizations`).
-- `<manifest ID>`: the ID of the last stage of the manifest. The manifest ID is unaffected by content sources (RPM or commit URLs for example) but not by content hashes.
+- `<manifest ID>`: the ID of the last stage of the export pipeline for the image type (from `export-pipeline` in the build request).
 - `<osbuild commit ID>`: the commit ID specified in the `Schutzfile` under `<distro>.dependencies.osbuild.commit`. If not specified, it defaults to `RELEASE` and means that osbuild version was installed from the distribution repositories and the `<osbuild version>` is the released version for the given distribution.

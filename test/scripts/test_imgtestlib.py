@@ -35,6 +35,26 @@ def test_runcmd_env():
     assert stderr == b""
 
 
+def test_export_pipeline_from_build_request():
+    manifest_data = {
+        "build-request": {
+            "image-type": "qcow2",
+            "export-pipeline": "qcow2",
+        },
+        "manifest": {"version": "2", "pipelines": []},
+    }
+    assert testlib.core.export_pipeline_from_build_request(manifest_data) == "qcow2"
+
+
+def test_export_pipeline_from_build_request_missing():
+    with pytest.raises(ValueError, match="missing export-pipeline"):
+        testlib.core.export_pipeline_from_build_request({"build-request": {}})
+
+
+def test_export_pipeline_shell_flag():
+    assert testlib.core.export_pipeline_shell_flag("archive") == ' --export-pipeline "archive"'
+
+
 def test_bootc_source_from_distro():
     assert testlib.bootcsource.bootc_source_from_distro("bootc-rhel-10.2") == "rhel-10"
     assert testlib.bootcsource.bootc_source_from_distro("bootc-fedora-44") == "fedora-44"

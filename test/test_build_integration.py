@@ -23,7 +23,7 @@ def _test_cases():
     ], text=True).strip().split("\n")
     boot_tests = set()
     for tcase in all_test_cases:
-        _, arch, image_type, _ = tcase.split(",")
+        _, arch, image_type, _, _ = tcase.split(",")
         if not (image_type in testlib.core.CAN_BOOT_TEST["*"] or
                 image_type in testlib.core.CAN_BOOT_TEST.get(arch, [])):
             continue
@@ -41,24 +41,26 @@ def _test_cases():
 
 
 @pytest.mark.images_integration
-@pytest.mark.parametrize("distro,arch,image_type,config_name",
+@pytest.mark.parametrize("distro,arch,image_type,config_name,export_pipeline",
                          [tcase.split(",") for tcase in _test_cases()["build_only"]])
-def test_build_only(distro, arch, image_type, config_name):
+def test_build_only(distro, arch, image_type, config_name, export_pipeline):
     config_path = f"test/configs/{config_name}.json"
     subprocess.check_call(
-        ["./test/scripts/build-image", distro, image_type, config_path])
+        ["./test/scripts/build-image", distro, image_type, config_path,
+         "--export-pipeline", export_pipeline])
     build_dir = os.path.join("build", testlib.build.gen_build_name(distro, arch, image_type, config_name))
     subprocess.check_call(
         ["./test/scripts/boot-image", build_dir, config_path])
 
 
 @pytest.mark.images_integration
-@pytest.mark.parametrize("distro,arch,image_type,config_name",
+@pytest.mark.parametrize("distro,arch,image_type,config_name,export_pipeline",
                          [tcase.split(",") for tcase in _test_cases()["build_and_boot"]])
-def test_build_and_boot(distro, arch, image_type, config_name):
+def test_build_and_boot(distro, arch, image_type, config_name, export_pipeline):
     config_path = f"test/configs/{config_name}.json"
     subprocess.check_call(
-        ["./test/scripts/build-image", distro, image_type, config_path])
+        ["./test/scripts/build-image", distro, image_type, config_path,
+         "--export-pipeline", export_pipeline])
     build_dir = os.path.join("build", testlib.build.gen_build_name(distro, arch, image_type, config_name))
     subprocess.check_call(
         ["./test/scripts/boot-image", build_dir, config_path])
