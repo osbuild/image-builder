@@ -128,7 +128,7 @@ def touch_s3(distro, arch, manifest_id, osbuild_ref=None, runner_distro=None):
 
 
 @log_section("Uploading results")
-def upload_results(distro, arch, image_type, config_path):
+def upload_results(distro, arch, image_type, config_path, export_pipeline=None):
     with open(config_path, "r", encoding="utf-8") as config_file:
         config = json.load(config_file)
         config_name = config["name"]
@@ -139,13 +139,21 @@ def upload_results(distro, arch, image_type, config_path):
     manifest_path = os.path.join(build_dir, "manifest.json")
     with open(manifest_path, "r", encoding="utf-8") as manifest_fp:
         manifest_data = json.load(manifest_fp)
-    manifest_id = get_manifest_id(manifest_data)
+    info_file_path = os.path.join(build_dir, "info.json")
+    if export_pipeline is None and os.path.exists(info_file_path):
+        export_pipeline = read_build_info(build_dir).get("export-pipeline")
+    if not export_pipeline:
+        raise ValueError(
+            "export-pipeline is required for cache uploads; pass --export-pipeline or rebuild with it"
+        )
+    manifest_id = get_manifest_id(manifest_data, export_pipeline=export_pipeline)
 
     # add the PR number (gitlab branch name) to the info.json if available
     if pr_number := os.environ.get("CI_COMMIT_BRANCH"):
         build_info = read_build_info(build_dir)
         # strip the PR prefix
         build_info["pr"] = pr_number.removeprefix("PR-")
+        build_info["export-pipeline"] = export_pipeline
         write_build_info(build_dir, build_info)
 
     s3url = gen_build_info_s3_dir_path(distro, arch, manifest_id)

@@ -11,6 +11,8 @@ def main():
     parser.add_argument("distro", type=str, default=None, help="distro for the image to boot test")
     parser.add_argument("image_type", type=str, default=None, help="type of the image to boot test")
     parser.add_argument("config", type=str, help="config used to build the image")
+    parser.add_argument("--export-pipeline", type=str, default=None,
+                        help="osbuild export pipeline name (from gen-manifests build-request)")
 
     args = parser.parse_args()
     distro = args.distro
@@ -18,7 +20,8 @@ def main():
     config_path = args.config
     arch = os.uname().machine
 
-    testlib.cache.upload_results(distro, arch, image_type, config_path)
+    testlib.cache.upload_results(distro, arch, image_type, config_path,
+                                 export_pipeline=args.export_pipeline)
 
 
 if __name__ == "__main__":

@@ -13,9 +13,9 @@ build/{distro}/{arch}/{image_type}/{config_name}:
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"
+    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
     - ./test/scripts/boot-image "{image_path}" "{config}"
-    - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"
+    - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
   extends: .terraform
   tags:
     - {tag}
@@ -71,11 +71,14 @@ def generate_configs(build_requests, pipeline_file):
         tag = testlib.core.get_tag_for(runner)
 
         config_path = os.path.join(testlib.core.CONFIGS_PATH, config_name+".json")
+        export_pipeline_flag = testlib.core.export_pipeline_shell_flag(
+            build.get("export-pipeline"))
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
                                                 runner=runner, tag=tag,
                                                 config_name=config_name, config=config_path,
                                                 internal="true" if "rhel" in distro else "false",
-                                                image_path=image_path))
+                                                image_path=image_path,
+                                                export_pipeline_flag=export_pipeline_flag))
     print("✅ DONE!")
 
 

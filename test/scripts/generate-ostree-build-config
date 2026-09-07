@@ -15,9 +15,9 @@ build/{distro}/{arch}/{image_type}/{config_name}:
     - sudo ./test/scripts/install-dependencies
     - {dl_container}
     - {start_container}
-    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"
+    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
     - ./test/scripts/boot-image "{image_path}" "{config}"
-    - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"
+    - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
   extends: .terraform
   variables:
     RUNNER: {runner}
@@ -345,13 +345,16 @@ def generate_configs(build_requests, container_configs, pipeline_file, configs_d
         dl_container_cmd = f"aws s3 cp --no-progress {container_s3_path} container.tar"
         run_container_cmd = f"sudo podman run -d --rm -p{container_port}:8080 oci-archive:container.tar"
 
+        export_pipeline_flag = testlib.core.export_pipeline_shell_flag(
+            build.get("export-pipeline"))
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
                                                 runner=testlib.testenv.get_ci_runner_for(distro, arch, image_type),
                                                 config_name=config_name, config=build_config_path,
                                                 dl_container=dl_container_cmd,
                                                 start_container=run_container_cmd,
                                                 internal="true" if "rhel" in distro else "false",
-                                                image_path=image_path))
+                                                image_path=image_path,
+                                                export_pipeline_flag=export_pipeline_flag))
     print("✅ DONE!")
 
 
