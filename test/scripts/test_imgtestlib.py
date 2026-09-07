@@ -35,6 +35,37 @@ def test_runcmd_env():
     assert stderr == b""
 
 
+def test_resolve_export_pipeline_from_build_request():
+    manifest_data = {
+        "build-request": {
+            "image-type": "qcow2",
+            "export-pipeline": "qcow2",
+        },
+        "manifest": {"version": "2", "pipelines": []},
+    }
+    assert testlib.build.resolve_export_pipeline(manifest_data) == "qcow2"
+
+
+def test_resolve_export_pipeline_from_image_type():
+    assert testlib.build.resolve_export_pipeline({}, image_type="ami") == "image"
+    assert testlib.build.resolve_export_pipeline({}, image_type="vhd") == "vpc"
+    assert testlib.build.resolve_export_pipeline({}, image_type="gce") == "archive"
+
+
+def test_resolve_export_pipeline_gce_from_manifest():
+    disk_manifest = {
+        "version": "2",
+        "pipelines": [{"name": "build"}, {"name": "archive"}],
+    }
+    assert testlib.build.resolve_export_pipeline(disk_manifest, image_type="gce") == "archive"
+
+    bootc_manifest = {
+        "version": "2",
+        "pipelines": [{"name": "build"}, {"name": "gce"}],
+    }
+    assert testlib.build.resolve_export_pipeline(bootc_manifest, image_type="gce") == "gce"
+
+
 def test_bootc_source_from_distro():
     assert testlib.bootcsource.bootc_source_from_distro("bootc-rhel-10.2") == "rhel-10"
     assert testlib.bootcsource.bootc_source_from_distro("bootc-fedora-44") == "fedora-44"

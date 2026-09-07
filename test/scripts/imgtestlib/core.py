@@ -6,7 +6,7 @@ import sys
 from typing import Dict
 
 from .bootcsource import bootc_source_from_distro, resolve_bootc_source_ref
-from .build import get_manifest_id
+from .build import get_manifest_id, resolve_export_pipeline
 from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_s3
 from .gitlab import log_section
 from .run import runcmd
@@ -150,15 +150,21 @@ def read_manifests(path):
         manifest_path = os.path.join(path, manifest_fname)
         with open(manifest_path, encoding="utf-8") as manifest_file:
             manifest_data = json.load(manifest_file)
+        build_request = manifest_data.get("build-request", {})
+        export_pipeline = resolve_export_pipeline(
+            manifest_data,
+            image_type=build_request.get("image-type"),
+        )
         manifests[manifest_fname] = {
             "data": manifest_data,
-            "id": get_manifest_id(manifest_data["manifest"]),
+            "id": get_manifest_id(manifest_data, export_pipeline=export_pipeline),
+            "export-pipeline": export_pipeline,
         }
     print("✅ Done")
     return manifests
 
 
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-return-statements
 def check_for_build(manifest_fname, build_request, manifest_data, build_info_dir, errors):
     """
     Checks if a manifest was built (and optionally booted) successfully.
@@ -193,6 +199,18 @@ def check_for_build(manifest_fname, build_request, manifest_data, build_info_dir
         print(f"  PR-{pr}: https://github.com/osbuild/images/pull/{pr}")
     else:
         print("  No PR/branch info available")
+
+    req_export = build_request.get("export-pipeline")
+    cached_export = dl_config.get("export-pipeline")
+    if req_export:
+        if not cached_export:
+            print("  Cached build info missing export-pipeline")
+            print("  Adding config to build pipeline.")
+            return True
+        if cached_export != req_export:
+            print(f"  Cached export-pipeline {cached_export!r} does not match requested {req_export!r}")
+            print("  Adding config to build pipeline.")
+            return True
 
     image_type = dl_config["image-type"]
     if not can_boot_test(manifest_fname, manifest_data, build_request["image-type"], build_request["arch"],
@@ -230,16 +248,21 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
         print(out)
 
     errors: list[str] = []
-    for manifest_fname, data in manifests.items():
-        manifest_id = data["id"]
-        data = data.get("data")
-        build_request = data["build-request"]
+    for manifest_fname, entry in manifests.items():
+        manifest_id = entry["id"]
+        manifest_data = entry["data"]
+        build_request = manifest_data["build-request"]
         distro = build_request["distro"]
         arch = build_request["arch"]
         image_type = build_request["image-type"]
         config = build_request["config"]
         config_name = config["name"]
         options = config.get("options", {})
+
+        export_pipeline = entry.get("export-pipeline") or resolve_export_pipeline(
+            manifest_data, image_type=image_type)
+        if export_pipeline:
+            build_request["export-pipeline"] = export_pipeline
 
         # check if the config specifies an ostree URL and skip it if requested
         if skip_ostree_pull and options.get("ostree", {}).get("url"):
@@ -255,7 +278,7 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
             gen_build_info_dir_path_prefix(distro, arch, manifest_id)
         )
 
-        if check_for_build(manifest_fname, build_request, data["manifest"], build_info_dir, errors):
+        if check_for_build(manifest_fname, build_request, manifest_data["manifest"], build_info_dir, errors):
             build_requests.append(build_request)
         else:
             # The specific build configuration exists in the cache and wont be rebuilt. Update the DeleteAfter tag to
