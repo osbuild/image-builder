@@ -57,11 +57,12 @@ func (e *panicError) Error() string {
 }
 
 type buildRequest struct {
-	Distro       string                   `json:"distro,omitempty"`
-	Arch         string                   `json:"arch,omitempty"`
-	ImageType    string                   `json:"image-type,omitempty"`
-	Repositories []rpmmd.RepoConfig       `json:"repositories,omitempty"`
-	Config       *buildconfig.BuildConfig `json:"config"`
+	Distro         string                   `json:"distro,omitempty"`
+	Arch           string                   `json:"arch,omitempty"`
+	ImageType      string                   `json:"image-type,omitempty"`
+	ExportPipeline string                   `json:"export-pipeline,omitempty"`
+	Repositories   []rpmmd.RepoConfig       `json:"repositories,omitempty"`
+	Config         *buildconfig.BuildConfig `json:"config"`
 }
 
 type BuildDependency struct {
@@ -384,12 +385,18 @@ func makeManifestJob(
 			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
 		}
 
+		exports := imgType.Exports()
+		exportPipeline := ""
+		if len(exports) > 0 {
+			exportPipeline = exports[0]
+		}
 		request := buildRequest{
-			Distro:       distribution.Name(),
-			Arch:         archName,
-			ImageType:    imgType.Name(),
-			Repositories: allRepos,
-			Config:       bc,
+			Distro:         distribution.Name(),
+			Arch:           archName,
+			ImageType:      imgType.Name(),
+			ExportPipeline: exportPipeline,
+			Repositories:   allRepos,
+			Config:         bc,
 		}
 		if cs != nil {
 			err = cs.recordManifestChecksum(mfs, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, filename, metadata)
