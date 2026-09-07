@@ -268,6 +268,9 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
         print("⚠️ Errors:")
         print("\n".join(errors))
 
+    # sorting the requests should have no functional impact but is good for reproducibility
+    build_requests = sorted(build_requests, key=lambda a: json.dumps(a, sort_keys=True))
+
     return build_requests
 
 
