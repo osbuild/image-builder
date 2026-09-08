@@ -800,7 +800,8 @@ image_types:
 `
 	it := makeTestImageType(t, fakeDistroYaml)
 
-	imgConfig := it.ImageConfig(distro.ID{Name: "test-distro", MajorVersion: 1, MinorVersion: -1}, "test_arch")
+	imgConfig, err := it.ImageConfig(distro.ID{Name: "test-distro", MajorVersion: 1, MinorVersion: -1}, "test_arch")
+	require.NoError(t, err)
 	assert.Equal(t, &distro.ImageConfig{
 		Hostname:      common.ToPtr("test-arch-hn"),
 		Locale:        common.ToPtr("en_US.UTF-8"),

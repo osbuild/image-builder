@@ -1918,7 +1918,7 @@ image_types:
                 <<: *wsl_distribution_config
                 oobe:
                   <<: *wsl_distribution_oobe_config
-                  default_name: RedHatEnterpriseLinux-%s
+                  default_name: "RedHatEnterpriseLinux-{{.Distro.VersionString}}"
         "wsl config for almalinux":
           when:
             distro_name: "almalinux"
@@ -1929,7 +1929,7 @@ image_types:
                 <<: *wsl_distribution_config
                 oobe:
                   <<: *wsl_distribution_oobe_config
-                  default_name: AlmaLinux-%s
+                  default_name: "AlmaLinux-{{.Distro.VersionString}}"
         "wsl config for rocky":
           when:
             distro_name: "rocky"
@@ -1940,7 +1940,7 @@ image_types:
                 <<: *wsl_distribution_config
                 oobe:
                   <<: *wsl_distribution_oobe_config
-                  default_name: Rocky-%s
+                  default_name: "Rocky-{{.Distro.VersionString}}"
         "wsl config for almalinuxkitten":
           when:
             distro_name: "almalinux_kitten"

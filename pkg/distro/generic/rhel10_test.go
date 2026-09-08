@@ -395,7 +395,8 @@ func TestRH10Rhel10_KernelOption_NoIfnames(t *testing.T) {
 			for _, imgTypeName := range arch.ListImageTypes() {
 				imgType, err := arch.GetImageType(imgTypeName)
 				assert.NoError(t, err)
-				imgCfg := imgType.(*generic.ImageType).GetDefaultImageConfig()
+				imgCfg, err := imgType.(*generic.ImageType).GetDefaultImageConfig()
+				assert.NoError(t, err)
 				if imgCfg != nil {
 					assert.NotContains(t, imgCfg.KernelOptions, "net.ifnames=0", "type %s contains unwanted net.ifnames=0", imgType.Name())
 				}
