@@ -30,6 +30,7 @@ CAN_BOOT_TEST = {
     ],
     "x86_64": [
         "image-installer", "minimal-installer", "network-installer",
+        "everything-network-installer", "server-network-installer",
         "qcow2", "generic-qcow2", "cloud-qcow2",
         "wsl", "generic-wsl",
         "bootc-generic-iso",
@@ -434,10 +435,6 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
         if distro in ["rhel-10.1", "rhel-10.3"]:  # 10.1 should be removed soon
             print("  not bootable: rhel network-installer tests have incomplete repos in nightly snapshot"
                   "and won't install")
-            return False
-        if distro.startswith("fedora"):
-            print("  not bootable: fedora network-installer crashes in sshd,"
-                  "see https://bugzilla.redhat.com/show_bug.cgi?id=2415883")
             return False
         if distro == "centos-9":
             print("  not bootable: centos-9 will not start an install and waits on source selection")
