@@ -76,7 +76,7 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 	}
 
 	if err := it.expandOSTreeRefTemplate(ar, d.ID()); err != nil {
-		return imageType{}, nil
+		return imageType{}, err
 	}
 
 	return it, nil
