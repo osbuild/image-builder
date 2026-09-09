@@ -128,9 +128,9 @@ func (t *bootcImageType) RequiredBlueprintOptions() []string {
 	return nil
 }
 
-func (t *bootcImageType) getDefaultISOConfig() (*distro.ISOConfig, error) {
+func (t *bootcImageType) getDefaultISOConfig() *distro.ISOConfig {
 	d := t.Arch().Distro()
-	return t.ISOConfig(d.ID(), t.arch.arch.String()), nil
+	return t.ISOConfig(d.ID(), t.arch.arch.String())
 }
 
 // keep in sync with "generic/imagetype.go:checkOptions()"

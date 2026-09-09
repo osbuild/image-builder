@@ -452,11 +452,7 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 		Variant:                 t.variant,
 	}
 
-	installerConfig, err := t.getDefaultInstallerConfig()
-	if err != nil {
-		return isc, err
-	}
-
+	installerConfig := t.getDefaultInstallerConfig()
 	if installerConfig != nil {
 		isc.EnabledAnacondaModules = append(isc.EnabledAnacondaModules, installerConfig.EnabledAnacondaModules...)
 		isc.AdditionalDracutModules = append(isc.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
@@ -585,7 +581,7 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 
 type ISOImageType interface {
 	ISOLabel() (string, error)
-	getDefaultISOConfig() (*distro.ISOConfig, error)
+	getDefaultISOConfig() *distro.ISOConfig
 }
 
 func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.ISOCustomizations, error) {
@@ -598,10 +594,7 @@ func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.IS
 		Label: isoLabel,
 	}
 
-	isoConfig, err := t.getDefaultISOConfig()
-	if err != nil {
-		return isc, err
-	}
+	isoConfig := t.getDefaultISOConfig()
 
 	if isoConfig != nil {
 		if isoboot := isoConfig.BootType; isoboot != nil {
@@ -667,10 +660,7 @@ func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.IS
 func diskCustomizations(t *imageType) (manifest.DiskCustomizations, error) {
 	diskCust := manifest.NewDiskCustomizations()
 
-	diskConfig, err := t.getDefaultDiskConfig()
-	if err != nil {
-		return diskCust, err
-	}
+	diskConfig := t.getDefaultDiskConfig()
 
 	if diskConfig != nil {
 		if diskConfig.MountConfiguration != nil {
@@ -954,10 +944,7 @@ func imageInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	installerConfig, err := t.getDefaultInstallerConfig()
-	if err != nil {
-		return nil, err
-	}
+	installerConfig := t.getDefaultInstallerConfig()
 
 	// XXX these bits should move into the `installerCustomization` function
 	// XXX directly
