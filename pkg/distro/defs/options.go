@@ -17,7 +17,7 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		return nil, fmt.Errorf("OSTree is not supported for %q", t.Name())
 	}
 
-	if len(t.ImageTypeYAML.SupportedPartitioningModes) > 0 && !slices.Contains(t.ImageTypeYAML.SupportedPartitioningModes, options.PartitioningMode) {
+	if len(t.supportedPartitioningModes) > 0 && !slices.Contains(t.supportedPartitioningModes, options.PartitioningMode) {
 		return nil, fmt.Errorf("partitioning mode %s not supported for %q", options.PartitioningMode, t.Name())
 	}
 
