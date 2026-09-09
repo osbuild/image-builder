@@ -1161,8 +1161,8 @@ func ostreeInstallerImage(t *imageType,
 		// located on the ISO root; this makes it non-empty even when no customizations
 		// are put into it
 		img.Kickstart.OSTree = &kickstart.OSTree{
-			OSName: t.ImageTypeYAML.OSTree.Name,
-			Remote: t.ImageTypeYAML.OSTree.RemoteName,
+			OSName: t.ostree.Name,
+			Remote: t.ostree.RemoteName,
 		}
 	} else {
 		// otherwise they go into the interactive defaults kickstart
@@ -1172,8 +1172,8 @@ func ostreeInstallerImage(t *imageType,
 		}
 
 		img.InteractiveDefaultsKickstart.OSTree = &kickstart.OSTree{
-			OSName: t.ImageTypeYAML.OSTree.Name,
-			Remote: t.ImageTypeYAML.OSTree.RemoteName,
+			OSName: t.ostree.Name,
+			Remote: t.ostree.RemoteName,
 		}
 	}
 
@@ -1228,7 +1228,7 @@ func ostreeDiskImage(t *imageType,
 	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	img.Remote = ostree.Remote{
-		Name: t.ImageTypeYAML.OSTree.RemoteName,
+		Name: t.ostree.RemoteName,
 	}
 	// XXX: can we do better?
 	if t.useOstreeRemotes {
@@ -1236,7 +1236,7 @@ func ostreeDiskImage(t *imageType,
 		img.Remote.ContentURL = options.OSTree.ContentURL
 	}
 
-	img.OSName = t.ImageTypeYAML.OSTree.Name
+	img.OSName = t.ostree.Name
 
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations, options, rng)
@@ -1276,13 +1276,13 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 
 	rawImg.OSCustomizations.PayloadRepos = payloadRepos
 	rawImg.Remote = ostree.Remote{
-		Name: t.ImageTypeYAML.OSTree.RemoteName,
+		Name: t.ostree.RemoteName,
 	}
 	if t.useOstreeRemotes {
 		rawImg.Remote.URL = options.OSTree.URL
 		rawImg.Remote.ContentURL = options.OSTree.ContentURL
 	}
-	rawImg.OSName = t.ImageTypeYAML.OSTree.Name
+	rawImg.OSName = t.ostree.Name
 
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations, options, rng)
@@ -1326,7 +1326,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.OSName = t.ImageTypeYAML.OSTree.Name
+	img.OSName = t.ostree.Name
 
 	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
 		img.OSCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
