@@ -132,6 +132,30 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 	}
 	it.isoLabel = isoLabel
 
+	imageConfig := imgYAML.ImageConfig(d.ID(), ar.Name()).InheritFrom(d.ImageConfig())
+	if imageConfig == nil {
+		return imageType{}, fmt.Errorf("image type initialisation failed: nil image config for %s %s %s", d.Name(), ar.Name(), imgYAML.Name())
+	}
+	it.imageConfig = *imageConfig
+
+	installerConfig, err := imgYAML.InstallerConfig(d.ID(), ar.Name())
+	if err != nil {
+		return imageType{}, err
+	}
+	if installerConfig != nil {
+		it.installerConfig = *installerConfig
+	}
+
+	isoConfig := imgYAML.ISOConfig(d.ID(), ar.Name())
+	if isoConfig != nil {
+		it.isoConfig = *isoConfig
+	}
+
+	diskConfig := imgYAML.DiskConfig(d.ID(), ar.Name())
+	if diskConfig != nil {
+		it.diskConfig = *diskConfig
+	}
+
 	switch imgYAML.Image {
 	case "disk":
 		it.image = diskImage
@@ -299,30 +323,19 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
-	d := t.Arch().Distro()
-	imageConfig := t.ImageTypeYAML.ImageConfig(d.ID(), t.arch.arch.String())
-	return imageConfig.InheritFrom(d.ImageConfig())
+	return &t.imageConfig
 }
 
-func (t *imageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error) {
-	if !t.bootISO {
-		return nil, fmt.Errorf("image type %q is not an ISO", t.Name())
-	}
-	d := t.Arch().Distro()
-	return t.ImageTypeYAML.InstallerConfig(d.ID(), t.arch.arch.String())
+func (t *imageType) getDefaultInstallerConfig() *distro.InstallerConfig {
+	return &t.installerConfig
 }
 
-func (t *imageType) getDefaultISOConfig() (*distro.ISOConfig, error) {
-	if !t.bootISO {
-		return nil, fmt.Errorf("image type %q is not an ISO", t.Name())
-	}
-	d := t.Arch().Distro()
-	return t.ImageTypeYAML.ISOConfig(d.ID(), t.arch.arch.String()), nil
+func (t *imageType) getDefaultISOConfig() *distro.ISOConfig {
+	return &t.isoConfig
 }
 
-func (t *imageType) getDefaultDiskConfig() (*distro.DiskConfig, error) {
-	d := t.Arch().Distro()
-	return t.ImageTypeYAML.DiskConfig(d.ID(), t.arch.arch.String()), nil
+func (t *imageType) getDefaultDiskConfig() *distro.DiskConfig {
+	return &t.diskConfig
 }
 
 func (t *imageType) PartitionType() disk.PartitionTableType {

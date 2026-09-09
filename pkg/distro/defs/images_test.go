@@ -59,7 +59,9 @@ func TestInstallerCustomizationsHonorKernelOptions(t *testing.T) {
 		},
 	} {
 		it := isoTestImageType()
-		it.ImageTypeYAML.ImageConfigYAML.ImageConfig = tc.imageConfig
+		if ic := tc.imageConfig; ic != nil {
+			it.imageConfig = *ic
+		}
 		c := &blueprint.Customizations{Kernel: tc.kernelCustomizations}
 
 		isc, err := installerCustomizations(it, c, distro.ImageOptions{})
