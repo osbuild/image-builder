@@ -9,9 +9,11 @@ import (
 	"text/template"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/image-builder/internal/environment"
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/disk/partition"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
@@ -26,8 +28,61 @@ type isoLabelFunc func(t *imageType) string
 // imageType implements the distro.ImageType interface
 var _ = distro.ImageType(&imageType{})
 
+type ostreeConfig struct {
+	Name       string
+	RemoteName string
+	Ref        string
+	URL        string
+}
+
+type blueprintOptions struct {
+	SupportedOptions []string
+	RequiredOptions  []string
+}
+
 type imageType struct {
 	ImageTypeYAML
+
+	name        string
+	nameAliases []string
+
+	filename    string
+	mimeType    string
+	compression string
+
+	packageSets map[string]rpmmd.PackageSet
+
+	partitionTable *disk.PartitionTable
+
+	imageConfig     distro.ImageConfig
+	installerConfig distro.InstallerConfig
+	isoConfig       distro.ISOConfig
+	diskConfig      distro.DiskConfig
+
+	environment environment.EnvironmentConf
+	bootable    bool
+
+	bootISO                 bool
+	useLegacyAnacondaConfig bool
+
+	variant string
+
+	ostree ostreeConfig
+
+	useOstreeRemotes bool
+
+	defaultSize            datasizes.Size
+	exports                []string
+	requiredPartitionSizes map[string]datasizes.Size
+
+	installWeakDeps *bool
+
+	diskImageVPCForceSize *bool
+	diskImageGiBAligned   bool
+
+	supportedPartitioningModes []partition.PartitioningMode
+
+	blueprint blueprintOptions
 
 	arch     *architecture
 	platform platform.Platform
