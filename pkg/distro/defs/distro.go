@@ -96,30 +96,27 @@ func NewWithLoader(loader *Loader, nameVer string) (distro.Distro, error) {
 	return rd, nil
 }
 
-func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
+func (d *distribution) resolveISOLabel(isoLabel, archName string) (string, error) {
 	id := common.Must(distro.ParseID(d.Name()))
 
-	return func(t *imageType) string {
-		type inputs struct {
-			Distro   *distro.ID
-			Product  string
-			Arch     string
-			ISOLabel string
-		}
-		templ := common.Must(template.New("iso-label").Parse(d.DistroYAML.ISOLabelTmpl))
-		var buf bytes.Buffer
-		err := templ.Execute(&buf, inputs{
-			Distro:   id,
-			Product:  d.Product(),
-			Arch:     t.Arch().Name(),
-			ISOLabel: isoLabel,
-		})
-		if err != nil {
-			// XXX: cleanup isoLabelFunc to allow error
-			panic(err)
-		}
-		return buf.String()
+	type inputs struct {
+		Distro   *distro.ID
+		Product  string
+		Arch     string
+		ISOLabel string
 	}
+	templ := common.Must(template.New("iso-label").Parse(d.DistroYAML.ISOLabelTmpl))
+	var buf bytes.Buffer
+	err := templ.Execute(&buf, inputs{
+		Distro:   id,
+		Product:  d.Product(),
+		Arch:     archName,
+		ISOLabel: isoLabel,
+	})
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 func (d *distribution) ID() distro.ID {
