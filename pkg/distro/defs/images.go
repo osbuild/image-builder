@@ -45,7 +45,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc := manifest.OSCustomizations{}
 
 	imageConfig := t.getDefaultImageConfig()
-	if t.ImageTypeYAML.Bootable || t.ImageTypeYAML.IsOSTreeBasedImageType() {
+	if t.bootable || t.ImageTypeYAML.IsOSTreeBasedImageType() {
 		// TODO: for now the only image types that define a default kernel are
 		// ones that use UKIs and don't allow overriding, so this works.
 		// However, if we ever need to specify default kernels for image types
@@ -444,12 +444,12 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 
 	isc := manifest.InstallerCustomizations{
 		FIPS:                    c.GetFIPS(),
-		UseLegacyAnacondaConfig: t.ImageTypeYAML.UseLegacyAnacondaConfig,
+		UseLegacyAnacondaConfig: t.useLegacyAnacondaConfig,
 		Product:                 d.Product(),
 		OSVersion:               d.OsVersion(),
 		Release:                 fmt.Sprintf("%s %s", d.Product(), d.OsVersion()),
 		Preview:                 preview,
-		Variant:                 t.ImageTypeYAML.Variant,
+		Variant:                 t.variant,
 	}
 
 	installerConfig, err := t.getDefaultInstallerConfig()
@@ -692,7 +692,7 @@ func ostreeDeploymentCustomizations(
 	t *imageType,
 	c *blueprint.Customizations) (manifest.OSTreeDeploymentCustomizations, error) {
 
-	if !t.ImageTypeYAML.IsOSTreeBasedImageType() || !t.ImageTypeYAML.Bootable {
+	if !t.ImageTypeYAML.IsOSTreeBasedImageType() || !t.bootable {
 		return manifest.OSTreeDeploymentCustomizations{}, fmt.Errorf("ostree deployment customizations are only supported for bootable rpm-ostree images")
 	}
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
@@ -800,8 +800,8 @@ func diskImage(t *imageType,
 		return nil, err
 	}
 
-	img.Environment = &t.ImageTypeYAML.Environment
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Environment = &t.environment
+	img.Compression = t.compression
 
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(bp.Customizations, options, rng)
@@ -810,7 +810,7 @@ func diskImage(t *imageType,
 	}
 	img.PartitionTable = pt
 
-	img.VPCForceSize = t.ImageTypeYAML.DiskImageVPCForceSize
+	img.VPCForceSize = t.diskImageVPCForceSize
 
 	if img.OSCustomizations.NoBLS {
 		img.OSProduct = t.Arch().Distro().Product()
@@ -842,8 +842,8 @@ func tarImage(t *imageType,
 
 	d := t.arch.distro
 
-	img.Environment = &t.ImageTypeYAML.Environment
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Environment = &t.environment
+	img.Compression = t.compression
 	img.OSVersion = d.OsVersion()
 
 	return img, nil
@@ -867,7 +867,7 @@ func containerImage(t *imageType,
 		return nil, err
 	}
 	img.OSCustomizations.PayloadRepos = payloadRepos
-	img.Environment = &t.ImageTypeYAML.Environment
+	img.Environment = &t.environment
 
 	img.OCIContainerCustomizations = ociContainerCustomizations(t)
 
@@ -1009,7 +1009,7 @@ func ostreeCommitImage(t *imageType,
 		img.InstallWeakDeps = *imgConfig.InstallWeakDeps
 	}
 
-	img.Environment = &t.ImageTypeYAML.Environment
+	img.Environment = &t.environment
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
 
@@ -1044,7 +1044,7 @@ func bootableContainerImage(t *imageType,
 	}
 	img.OSCustomizations.PayloadRepos = payloadRepos
 
-	img.Environment = &t.ImageTypeYAML.Environment
+	img.Environment = &t.environment
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
 	img.InstallWeakDeps = false
@@ -1090,7 +1090,7 @@ func ostreeContainerImage(t *imageType,
 	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	img.ContainerLanguage = img.OSCustomizations.Language
-	img.Environment = &t.ImageTypeYAML.Environment
+	img.Environment = &t.environment
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
@@ -1231,7 +1231,7 @@ func ostreeDiskImage(t *imageType,
 		Name: t.ImageTypeYAML.OSTree.RemoteName,
 	}
 	// XXX: can we do better?
-	if t.ImageTypeYAML.UseOstreeRemotes {
+	if t.useOstreeRemotes {
 		img.Remote.URL = options.OSTree.URL
 		img.Remote.ContentURL = options.OSTree.ContentURL
 	}
@@ -1245,7 +1245,7 @@ func ostreeDiskImage(t *imageType,
 	}
 	img.PartitionTable = pt
 
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Compression = t.compression
 
 	return img, nil
 }
@@ -1278,7 +1278,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 	rawImg.Remote = ostree.Remote{
 		Name: t.ImageTypeYAML.OSTree.RemoteName,
 	}
-	if t.ImageTypeYAML.UseOstreeRemotes {
+	if t.useOstreeRemotes {
 		rawImg.Remote.URL = options.OSTree.URL
 		rawImg.Remote.ContentURL = options.OSTree.ContentURL
 	}
@@ -1417,8 +1417,8 @@ func pxeTarImage(t *imageType,
 
 	d := t.arch.distro
 
-	img.Environment = &t.ImageTypeYAML.Environment
-	img.Compression = t.ImageTypeYAML.Compression
+	img.Environment = &t.environment
+	img.Compression = t.compression
 	img.OSVersion = d.OsVersion()
 
 	return img, nil

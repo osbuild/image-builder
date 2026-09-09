@@ -232,7 +232,7 @@ func (a *architecture) addImageType(platform platform.Platform, it imageType) er
 	it.arch = a
 	it.platform = platform
 	a.imageTypes[it.Name()] = &it
-	for _, alias := range it.ImageTypeYAML.NameAliases {
+	for _, alias := range it.Aliases() {
 		if a.imageTypeAliases == nil {
 			a.imageTypeAliases = map[string]string{}
 		}

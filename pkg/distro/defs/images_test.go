@@ -18,9 +18,7 @@ func isoTestImageType() *imageType {
 		arch: &architecture{
 			distro: &distribution{},
 		},
-		ImageTypeYAML: ImageTypeYAML{
-			BootISO: true,
-		},
+		bootISO:  true,
 		isoLabel: func(*imageType) string { return "iso-label" },
 	}
 }
