@@ -19,7 +19,7 @@ func isoTestImageType() *imageType {
 			distro: &distribution{},
 		},
 		bootISO:  true,
-		isoLabel: func(*imageType) string { return "iso-label" },
+		isoLabel: "iso-label",
 	}
 }
 

@@ -22,6 +22,7 @@ func TestISOLabel(t *testing.T) {
 		},
 	}
 
-	isoLabelFunc := d.getISOLabelFunc("iso-label")
-	assert.Equal(t, "name:rhel,major:9,minor:1,product:some-product,arch:s390x,iso-label:iso-label", isoLabelFunc(imgType))
+	isoLabel, err := d.resolveISOLabel("iso-label", imgType.arch.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, "name:rhel,major:9,minor:1,product:some-product,arch:s390x,iso-label:iso-label", isoLabel)
 }
