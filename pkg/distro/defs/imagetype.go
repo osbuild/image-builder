@@ -162,6 +162,16 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 		return imageType{}, err
 	}
 
+	basePT, err := imgYAML.PartitionTable(d.ID(), ar.Name())
+	// If the image type does not define a partition table, ignore the
+	// error. If a partition table is required, the pipeline generator will
+	// raise an error.
+	if err != nil && !errors.Is(err, ErrNoPartitionTableForImgType) && !errors.Is(err, ErrNoPartitionTableForArch) {
+		return imageType{}, err
+	}
+
+	it.partitionTable = basePT
+
 	return it, nil
 }
 
@@ -242,8 +252,13 @@ func (t *imageType) BootMode() platform.BootMode {
 }
 
 func (t *imageType) BasePartitionTable() (*disk.PartitionTable, error) {
-	d := t.Arch().Distro()
-	return t.ImageTypeYAML.PartitionTable(d.ID(), t.arch.arch.String())
+	// TODO: make this a direct accessor that just returns the partitionTable
+	// property even if it's nil. The caller can decide if not having one (nil)
+	// is an error or not.
+	if t.partitionTable == nil {
+		return nil, fmt.Errorf("%w: %q", ErrNoPartitionTableForImgType, t.name)
+	}
+	return t.partitionTable, nil
 }
 
 func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, options distro.ImageOptions, rng *rand.Rand) (*disk.PartitionTable, error) {

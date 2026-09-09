@@ -75,7 +75,7 @@ func TestRhel10_NoBootPartition(t *testing.T) {
 				imgType, err := arch.GetImageType(imgTypeName)
 				assert.NoError(t, err)
 				it := imgType.(*imageType)
-				if it.ImageTypeYAML.PartitionTables == nil {
+				if it.partitionTable == nil {
 					continue
 				}
 				switch it.Name() {
