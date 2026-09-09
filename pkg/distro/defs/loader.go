@@ -813,7 +813,7 @@ func (imgType *ImageTypeYAML) PackageSets(id distro.ID, archName string) map[str
 // PartitionTable returns the partionTable for the given distro/imgType.
 func (imgType *ImageTypeYAML) PartitionTable(id distro.ID, archName string) (*disk.PartitionTable, error) {
 	if imgType.PartitionTables == nil {
-		return nil, fmt.Errorf("%w: %q", ErrNoPartitionTableForImgType, id)
+		return nil, fmt.Errorf("%w: %q", ErrNoPartitionTableForImgType, imgType.name)
 	}
 	pt, ok := imgType.PartitionTables[archName]
 	if !ok {
