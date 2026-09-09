@@ -449,7 +449,7 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 		OSVersion:               d.OsVersion(),
 		Release:                 fmt.Sprintf("%s %s", d.Product(), d.OsVersion()),
 		Preview:                 preview,
-		Variant:                 t.Variant,
+		Variant:                 t.ImageTypeYAML.Variant,
 	}
 
 	installerConfig, err := t.getDefaultInstallerConfig()
@@ -1161,8 +1161,8 @@ func ostreeInstallerImage(t *imageType,
 		// located on the ISO root; this makes it non-empty even when no customizations
 		// are put into it
 		img.Kickstart.OSTree = &kickstart.OSTree{
-			OSName: t.OSTree.Name,
-			Remote: t.OSTree.RemoteName,
+			OSName: t.ImageTypeYAML.OSTree.Name,
+			Remote: t.ImageTypeYAML.OSTree.RemoteName,
 		}
 	} else {
 		// otherwise they go into the interactive defaults kickstart
@@ -1172,8 +1172,8 @@ func ostreeInstallerImage(t *imageType,
 		}
 
 		img.InteractiveDefaultsKickstart.OSTree = &kickstart.OSTree{
-			OSName: t.OSTree.Name,
-			Remote: t.OSTree.RemoteName,
+			OSName: t.ImageTypeYAML.OSTree.Name,
+			Remote: t.ImageTypeYAML.OSTree.RemoteName,
 		}
 	}
 
@@ -1276,13 +1276,13 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 
 	rawImg.OSCustomizations.PayloadRepos = payloadRepos
 	rawImg.Remote = ostree.Remote{
-		Name: t.OSTree.RemoteName,
+		Name: t.ImageTypeYAML.OSTree.RemoteName,
 	}
 	if t.ImageTypeYAML.UseOstreeRemotes {
 		rawImg.Remote.URL = options.OSTree.URL
 		rawImg.Remote.ContentURL = options.OSTree.ContentURL
 	}
-	rawImg.OSName = t.OSTree.Name
+	rawImg.OSName = t.ImageTypeYAML.OSTree.Name
 
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations, options, rng)
@@ -1326,7 +1326,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.OSName = t.OSTree.Name
+	img.OSName = t.ImageTypeYAML.OSTree.Name
 
 	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
 		img.OSCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
