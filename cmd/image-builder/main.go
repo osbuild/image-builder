@@ -596,7 +596,10 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	mf, err := generateManifest(pbar, cmd, args, img, io.Discard, nil)
+	opts := &cmdManifestWrapperOptions{
+		useBootstrapIfNeeded: true,
+	}
+	mf, err := generateManifest(pbar, cmd, args, img, io.Discard, opts)
 	if err != nil {
 		return err
 	}
