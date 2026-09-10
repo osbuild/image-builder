@@ -58,6 +58,7 @@ type BuildrootFromPackages struct {
 	selinuxPolicy string
 
 	rpmStageIgnoreGPGImportFailures bool
+	ignoreArch                      bool
 }
 
 type BuildOptions struct {
@@ -88,6 +89,10 @@ type BuildOptions struct {
 
 	// Ignore gpg import failures
 	RPMStageIgnoreGPGImportFailures bool
+
+	// IgnoreArch allows installing packages for a different
+	// architecture than the host, used for cross-arch builds
+	IgnoreArch bool
 }
 
 // policy or default returns the selinuxPolicy or (if unset) the
@@ -119,6 +124,7 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 		disableSelinux:                  opts.DisableSELinux,
 		selinuxPolicy:                   policyOrDefault(opts.SELinuxPolicy),
 		rpmStageIgnoreGPGImportFailures: opts.RPMStageIgnoreGPGImportFailures,
+		ignoreArch:                      opts.IgnoreArch,
 	}
 
 	m.addPipeline(pipeline)
@@ -207,7 +213,9 @@ func (p *BuildrootFromPackages) serialize() (osbuild.Pipeline, error) {
 
 	pipeline.Runner = p.runner.String()
 
-	baseOptions := osbuild.RPMStageOptions{}
+	baseOptions := osbuild.RPMStageOptions{
+		IgnoreArch: p.ignoreArch,
+	}
 	if p.rpmStageIgnoreGPGImportFailures {
 		baseOptions.RPMKeys = &osbuild.RPMKeys{
 			IgnoreImportFailures: true,
