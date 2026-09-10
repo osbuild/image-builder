@@ -179,6 +179,14 @@ func (d *distribution) BootstrapContainer(a string) (string, error) {
 	return d.DistroYAML.BootstrapContainers[aa], nil
 }
 
+func (d *distribution) BootstrapPackages(a string) ([]string, error) {
+	aa, err := arch.FromString(a)
+	if err != nil {
+		return nil, err
+	}
+	return d.DistroYAML.BootstrapPkgs[aa], nil
+}
+
 // architecture implements the distro.Arch interface
 var _ = distro.Arch(&architecture{})
 

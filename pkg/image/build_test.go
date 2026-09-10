@@ -27,23 +27,23 @@ var (
 
 func TestNewBuildWithExperimentalOverride(t *testing.T) {
 	for _, tc := range []struct {
-		name                       string
-		env                        string
-		manifestDistroBootstrapRef string
+		name      string
+		env       string
+		bootstrap *manifest.BootstrapConfig
 
 		expectBootstrap bool
 	}{
-		{"no-buildroot-env", "", "", false},
-		{"buildroot-env-set", "bootstrap=ghcr.io/ondrejbudai/cool:stuff", "", true},
-		{"manifest-opt-set", "", "ghcr.io/ondrej/cool:stuff", true},
+		{"no-buildroot-env", "", nil, false},
+		{"buildroot-env-set", "bootstrap=ghcr.io/ondrejbudai/cool:stuff", nil, true},
+		{"manifest-opt-set", "", &manifest.BootstrapConfig{ContainerRef: "ghcr.io/ondrej/cool:stuff"}, true},
 		// XXX: add test that ensures that env wins
-		{"env-set-manifest-set", "ghcr.io/from-env", "ghcr.io/from-manifest", true},
+		{"env-set-manifest-set", "ghcr.io/from-env", &manifest.BootstrapConfig{ContainerRef: "ghcr.io/from-manifest"}, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", tc.env)
 			mf := manifest.New()
 			runner := &runner.Fedora{Version: 42}
-			mf.DistroBootstrapRef = tc.manifestDistroBootstrapRef
+			mf.Bootstrap = tc.bootstrap
 			buildIf := image.AddBuildBootstrapPipelines(&mf, runner, nil, nil)
 			require.NotNil(t, buildIf)
 

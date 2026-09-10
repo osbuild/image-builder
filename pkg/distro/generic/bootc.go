@@ -309,3 +309,7 @@ func (d *BootcDistro) BootstrapContainer(a string) (string, error) {
 
 	return d.buildImgref, nil
 }
+
+func (d *BootcDistro) BootstrapPackages(a string) ([]string, error) {
+	return nil, nil
+}

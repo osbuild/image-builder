@@ -321,11 +321,25 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		return nil, nil, fmt.Errorf("no distro_like set in yaml for %q", d.Name())
 	}
 	if options.UseBootstrapContainer {
-		bootstrapContainerRef, err := t.Arch().Distro().BootstrapContainer(t.arch.Name())
+		bootstrapPkgs, err := t.Arch().Distro().BootstrapPackages(t.arch.Name())
 		if err != nil {
 			return nil, nil, err
 		}
-		mf.DistroBootstrapRef = bootstrapContainerRef
+		if len(bootstrapPkgs) > 0 {
+			mf.Bootstrap = &manifest.BootstrapConfig{
+				Packages: bootstrapPkgs,
+			}
+		} else {
+			bootstrapContainerRef, err := t.Arch().Distro().BootstrapContainer(t.arch.Name())
+			if err != nil {
+				return nil, nil, err
+			}
+			if bootstrapContainerRef != "" {
+				mf.Bootstrap = &manifest.BootstrapConfig{
+					ContainerRef: bootstrapContainerRef,
+				}
+			}
+		}
 	}
 	runner := d.Runner()
 	_, err = img.InstantiateManifest(&mf, repos, &runner, rng)

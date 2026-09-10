@@ -103,7 +103,8 @@ type DistroYAML struct {
 	// image types file/directory.
 	DefsPath string `yaml:"defs_path"`
 
-	BootstrapContainers map[arch.Arch]string `yaml:"bootstrap_containers"`
+	BootstrapContainers map[arch.Arch]string   `yaml:"bootstrap_containers"`
+	BootstrapPkgs       map[arch.Arch][]string `yaml:"bootstrap_packages"`
 
 	OscapProfilesAllowList []oscap.Profile `yaml:"oscap_profiles_allowlist"`
 
