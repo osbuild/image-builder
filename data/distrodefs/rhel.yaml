@@ -31,6 +31,8 @@ distros:
           - ec2-sap
           - ec2-ha
           - ec2-cvm
+          - rhivos-qcow2
+          - rhivos-core-qcow2
       "some image types are non-rhel-only":
         when:
           distro_name: "rhel"
