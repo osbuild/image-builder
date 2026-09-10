@@ -39,7 +39,7 @@
     },
     {
       "name": "rhivos-2.0-core",
-      "baseurl": "https://rhivos.auto-toolchain.redhat.com/in-vehicle-os/RHIVOS-2/RHIVOS-2.0-Core/repos/RHIVOS/compose/RHIVOS/aarch64/os/",
+      "baseurl": "http://rhivos.auto-toolchain.redhat.com/in-vehicle-os/RHIVOS-2/RHIVOS-2.0-Core/repos/RHIVOS/compose/RHIVOS/aarch64/os/",
       "check_gpg": false,
       "image_type_tags": [
         "rhivos-core-qcow2"
@@ -188,7 +188,7 @@
     },
     {
       "name": "rhivos-2.0-core",
-      "baseurl": "https://rhivos.auto-toolchain.redhat.com/in-vehicle-os/RHIVOS-2/RHIVOS-2.0-Core/repos/RHIVOS/compose/RHIVOS/x86_64/os/",
+      "baseurl": "http://rhivos.auto-toolchain.redhat.com/in-vehicle-os/RHIVOS-2/RHIVOS-2.0-Core/repos/RHIVOS/compose/RHIVOS/x86_64/os/",
       "check_gpg": false,
       "image_type_tags": [
         "rhivos-core-qcow2"
