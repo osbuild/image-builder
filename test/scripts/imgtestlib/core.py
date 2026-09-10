@@ -450,14 +450,12 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
                   "FATAL: FIPS integrity test failed")
             return False
         if not image_type.startswith("bootc-") and not _is_bootc_manifest(manifest_data):
-            # Note that this needs adjustment when we switch to librepo
-            curl_items = manifest_data.get("sources", {}).get("org.osbuild.curl", {}).get("items", {})
-            if not curl_items:
-                print(f"  not bootable: no org.osbuild.curl source in manifest {manifest_fname} ({arch} {image_type})")
-                print("   (parsing librepo sources not implemented yet")
+            pkg_names = _get_source_package_names(manifest_data)
+            if not pkg_names:
+                print(f"  not bootable: no org.osbuild.curl or org.osbuild.librepo source"
+                      f" in manifest {manifest_fname} ({arch} {image_type})")
                 return False
-            urls = [src["url"] for src in curl_items.values()]
-            if not any("ssh-server" in url for url in urls):
+            if not any("ssh-server" in name for name in pkg_names):
                 # This can happen e.g. when an image is build with the "minimal: true" customization.
                 # We could use guestfs to inject keys, see PR#1995
                 print(f"  not bootable: ssh-server not found in manifest {manifest_fname} ({arch} {image_type})")
@@ -465,11 +463,26 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
 
             # We need jq in the image many images do not have it
             # (e.g. centos-9/rhel-9 with releasever config) so skip those too
-            if not any("jq" in url for url in urls):
+            if not any("jq" in name for name in pkg_names):
                 print(f"  not bootable: jq not found in {manifest_fname} ({arch} {image_type})")
                 return False
 
     return True
+
+
+def _get_source_package_names(manifest_data):
+    """Get package names from manifest sources."""
+    sources = manifest_data.get("sources", {})
+
+    curl_items = sources.get("org.osbuild.curl", {}).get("items", {})
+    if curl_items:
+        return [item["url"] for item in curl_items.values()]
+
+    librepo_items = sources.get("org.osbuild.librepo", {}).get("items", {})
+    if librepo_items:
+        return [item["path"] for item in librepo_items.values()]
+
+    return []
 
 
 def _is_bootc_manifest(manifest_data):
