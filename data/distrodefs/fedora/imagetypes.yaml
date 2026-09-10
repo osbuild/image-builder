@@ -72,11 +72,9 @@
       - "dejavu-sans-fonts"
       - "dejavu-sans-mono-fonts"
       - "device-mapper-persistent-data"
-      - "dmidecode"
       - "dnf"
       - "dracut-config-generic"
       - "dracut-network"
-      - "efibootmgr"
       - "ethtool"
       - "fcoe-utils"
       - "ftp"
@@ -85,9 +83,6 @@
       - "glibc-all-langpacks"
       - "gnome-kiosk"
       - "google-noto-sans-cjk-ttc-fonts"
-      - "grub2-tools"
-      - "grub2-tools-extra"
-      - "grub2-tools-minimal"
       - "grubby"
       - "gsettings-desktop-schemas"
       - "hdparm"
@@ -175,6 +170,15 @@
       - "xrdb"
       - "xz"
     conditions:
+      "grub common packages anaconda pkgs":
+        when:
+          # grub2 is used on all architectures, except s390x
+          not_arch: "s390x"
+        append:
+          include:
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
       "x86_64 specific anaconda pkgs":
         when:
           arch: "x86_64"
@@ -182,6 +186,7 @@
           include:
             - "biosdevname"
             - "dmidecode"
+            - "efibootmgr"
             - "grub2-tools-efi"
             - "memtest86+"
       "aarch64 specific anaconda pkgs":
@@ -190,6 +195,7 @@
         append:
           include:
             - "dmidecode"
+            - "efibootmgr"
 
   network_installer_pkgset: &network_installer_pkgset
     include:
@@ -1982,7 +1988,6 @@ image_types:
             - "@core"
             - "bash-completion"
             - "grubby"
-            - "fwupd-efi"
             - "initial-setup"
             - "libxkbcommon"
             - "NetworkManager-wifi"
@@ -1999,6 +2004,18 @@ image_types:
               append:
                 exclude:
                   - "firewalld"
+            "x86_64 uefi packages":
+              when:
+                arch: "x86_64"
+              append:
+                include:
+                  - "fwupd-efi"
+            "aarch64 uefi packages":
+              when:
+                arch: "aarch64"
+              append:
+                include:
+                  - "fwupd-efi"
     blueprint:
       supported_options: *supported_options_disk
 
