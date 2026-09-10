@@ -35,6 +35,7 @@ func TestRPMStageOptionsClone(t *testing.T) {
 				OSTreeBooted:     common.ToPtr(true),
 				KernelInstallEnv: &KernelInstallEnv{BootRoot: "/boot"},
 				InstallLangs:     []string{"en_US", "de_DE"},
+				IgnoreArch:       true,
 				GenericEnv:       map[string]string{"IMAGE_ID": "my-image", "IMAGE_VERSION": "1.0"},
 			},
 		},
@@ -485,6 +486,22 @@ func TestGenRPMStagesFromTransactions(t *testing.T) {
 				assert.Empty(t, opts0.GPGKeysFromTree, "tx0 should not have key")
 				assert.Equal(t, []string{"/etc/pki/rpm-gpg/key1"}, opts1.GPGKeysFromTree, "tx1 should have key")
 				assert.Empty(t, opts2.GPGKeysFromTree, "tx2 should not have key")
+			},
+		},
+		"ignorearch-propagated-to-all-stages": {
+			transactions: depsolvednf.TransactionList{
+				{{Name: "pkg-a", Repo: repoNoKeys, Checksum: rpmmd.Checksum{Type: "sha256", Value: "aaa"}}},
+				{{Name: "pkg-b", Repo: repoNoKeys, Checksum: rpmmd.Checksum{Type: "sha256", Value: "bbb"}}},
+			},
+			baseOpts: &RPMStageOptions{
+				IgnoreArch: true,
+			},
+			expectStages: 2,
+			validate: func(t *testing.T, stages []*Stage) {
+				for idx, stage := range stages {
+					opts := stage.Options.(*RPMStageOptions)
+					assert.True(t, opts.IgnoreArch, "stage %d", idx)
+				}
 			},
 		},
 		"gpgkeys-from-tree-not-found-error": {
