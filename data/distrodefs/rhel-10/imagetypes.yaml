@@ -416,6 +416,15 @@
 
   anaconda_boot_pkgset: &anaconda_boot_pkgset
     conditions:
+      "grub common packages for the anaconda boot pkgset":
+        when:
+          # grub2 is used on all architectures, except s390x
+          not_arch: "s390x"
+        append:
+          include:
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
       "x86 specific packages for the anaconda boot pkgset":
         when:
           arch: "x86_64"
@@ -423,16 +432,12 @@
           include:
             # eficommon
             - "efibootmgr"
-            # XXX: de-dup?
-            # grub-common
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
             # arch specific
             - "grub2-efi-x64"
             - "grub2-efi-x64-cdboot"
             - "grub2-pc"
             - "grub2-pc-modules"
+            - "grub2-tools-efi"
             - "shim-x64"
             - "syslinux"
             - "syslinux-nonlinux"
@@ -443,11 +448,6 @@
           include:
             # eficommon
             - "efibootmgr"
-            # XXX: de-dup?
-            # grub-common
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
             # arch specific
             - "grub2-efi-aa64-cdboot"
             - "grub2-efi-aa64"
@@ -2104,11 +2104,9 @@ image_types:
             - "dejavu-sans-fonts"
             - "dejavu-sans-mono-fonts"
             - "device-mapper-persistent-data"
-            - "dmidecode"
             - "dnf"
             - "dracut-config-generic"
             - "dracut-network"
-            - "efibootmgr"
             - "ethtool"
             - "fcoe-utils"
             - "ftp"
@@ -2116,9 +2114,6 @@ image_types:
             - "glibc-all-langpacks"
             - "gnome-kiosk"
             - "google-noto-sans-cjk-ttc-fonts"
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
             - "grubby"
             - "gsettings-desktop-schemas"
             - "hdparm"
@@ -2201,7 +2196,6 @@ image_types:
                 include:
                   - "biosdevname"
                   - "dmidecode"
-                  - "grub2-tools-efi"
                   - "memtest86+"
             "aarch64 specific pkgs for image installer":
               when:
