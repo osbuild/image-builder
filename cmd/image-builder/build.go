@@ -27,7 +27,10 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		opts = &buildOptions{}
 	}
 
-	basename := basenameFor(res, opts.OutputBasename)
+	basename, err := basenameFor(res, opts.OutputBasename)
+	if err != nil {
+		return "", err
+	}
 	if opts.WriteManifest {
 		p := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.osbuild-manifest.json", basename))
 		if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {

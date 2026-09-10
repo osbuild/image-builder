@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"text/template"
 
 	"github.com/spf13/cobra"
 
@@ -65,9 +66,65 @@ func defaultCacheDir() string {
 	return cacheDirForUid(os.Getuid())
 }
 
+type outputTmplData struct {
+	Distribution struct {
+		Identifier   string
+		Name         string
+		MajorVersion int
+		MinorVersion int
+	}
+	Image struct {
+		Type string
+	}
+	Pipeline struct {
+		ExportName string
+	}
+	Architecture string
+}
+
+func outputTmplDataFor(img *imagefilter.Result) outputTmplData {
+	id := img.ImgType.Arch().Distro().ID()
+	var data outputTmplData
+	data.Distribution.Identifier = img.ImgType.Arch().Distro().Name()
+	data.Distribution.Name = id.Name
+	data.Distribution.MajorVersion = id.MajorVersion
+	data.Distribution.MinorVersion = id.MinorVersion
+	data.Image.Type = img.ImgType.Name()
+	data.Pipeline.ExportName = strings.SplitN(img.ImgType.Filename(), ".", 2)[0]
+	data.Architecture = img.ImgType.Arch().Name()
+	return data
+}
+
+func expandOutputTmpl(tmplStr string, data outputTmplData) (string, error) {
+	if !strings.Contains(tmplStr, "{{") {
+		return tmplStr, nil
+	}
+	tmpl, err := template.New("output").Parse(tmplStr)
+	if err != nil {
+		return "", fmt.Errorf("invalid output template %q: %w", tmplStr, err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("expanding output template %q: %w", tmplStr, err)
+	}
+	return buf.String(), nil
+}
+
+const defaultOutputTmpl = "{{.Distribution.Identifier}}-{{.Image.Type}}-{{.Architecture}}"
+
 // basenameFor returns the basename for directory and filenames
 // for the given imageType. This can be user overriden via userBasename.
-func basenameFor(img *imagefilter.Result, userBasename string) string {
+func basenameFor(img *imagefilter.Result, userBasename string) (string, error) {
+	nameTmpl := defaultOutputTmpl
+	if userBasename != "" {
+		nameTmpl = userBasename
+	}
+
+	result, err := expandOutputTmpl(nameTmpl, outputTmplDataFor(img))
+	if err != nil {
+		return "", err
+	}
+
 	if userBasename != "" {
 		// If the user provided a basename that already has the
 		// image extension just strip that off. I.e. when
@@ -79,13 +136,18 @@ func basenameFor(img *imagefilter.Result, userBasename string) string {
 		l := strings.SplitN(img.ImgType.Filename(), ".", 2)
 		if len(l) > 1 && l[1] != "" {
 			imgExt := fmt.Sprintf(".%s", l[1])
-			userBasename = strings.TrimSuffix(userBasename, imgExt)
+			result = strings.TrimSuffix(result, imgExt)
 		}
-		return userBasename
 	}
-	arch := img.ImgType.Arch()
-	distro := arch.Distro()
-	return fmt.Sprintf("%s-%s-%s", distro.Name(), img.ImgType.Name(), arch.Name())
+
+	return result, nil
+}
+
+func resolveOutputDir(outputDir string, img *imagefilter.Result) (string, error) {
+	if outputDir == "" {
+		return basenameFor(img, "")
+	}
+	return expandOutputTmpl(outputDir, outputTmplDataFor(img))
 }
 
 func cmdSystem(cmd *cobra.Command, args []string) error {
@@ -379,7 +441,8 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		}
 	}
 	if len(img.ImgType.Exports()) > 1 {
-		return nil, fmt.Errorf("image %q has multiple exports: this is current unsupport: please report this as a bug", basenameFor(img, ""))
+		name, _ := basenameFor(img, "")
+		return nil, fmt.Errorf("image %q has multiple exports: this is currently unsupported: please report this as a bug", name)
 	}
 	return img, err
 }
@@ -532,10 +595,17 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 		return nil, err
 	}
 	if withSBOM {
-		outputDir := basenameFor(img, outputDir)
+		sbomDir, err := resolveOutputDir(outputDir, img)
+		if err != nil {
+			return nil, err
+		}
+		sbomBasename, err := basenameFor(img, outputFilename)
+		if err != nil {
+			return nil, err
+		}
 		mgOptions.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
-			filename = fmt.Sprintf("%s.%s", basenameFor(img, outputFilename), strings.SplitN(filename, ".", 2)[1])
-			return fileWriter(outputDir, filename, content)
+			filename = fmt.Sprintf("%s.%s", sbomBasename, strings.SplitN(filename, ".", 2)[1])
+			return fileWriter(sbomDir, filename, content)
 		}
 	}
 	if len(forceRepos) > 0 {
@@ -550,10 +620,17 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	}
 
 	if withRPMList {
-		outputDir := basenameFor(img, outputDir)
+		rpmDir, err := resolveOutputDir(outputDir, img)
+		if err != nil {
+			return nil, err
+		}
+		rpmBasename, err := basenameFor(img, outputFilename)
+		if err != nil {
+			return nil, err
+		}
 		mgOptions.RPMListWriter = func(filename string, content io.Reader) error {
-			filename = fmt.Sprintf("%s.%s", basenameFor(img, outputFilename), filename)
-			return fileWriter(outputDir, filename, content)
+			filename = fmt.Sprintf("%s.%s", rpmBasename, filename)
+			return fileWriter(rpmDir, filename, content)
 		}
 	}
 
@@ -678,13 +755,21 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	// Ensure the output directory exists before (file) progress starts.
-	outputDir = basenameFor(img, outputDir)
+	outputDir, err = resolveOutputDir(outputDir, img)
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return fmt.Errorf("cannot create output base directory %s: %w", outputDir, err)
 	}
 
+	basename, err := basenameFor(img, outputBasename)
+	if err != nil {
+		return err
+	}
+
 	pbar, err := progressFromCmd(cmd, progress.ProgressConfig{
-		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basenameFor(img, outputBasename))),
+		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basename)),
 		WithMsg:  true,
 	})
 	if err != nil {
@@ -749,7 +834,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	fmt.Fprintf(osStdout, "Image build successful: %s\n", imagePath)
 
 	pbar, err = progressFromCmd(cmd, progress.ProgressConfig{
-		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basenameFor(img, outputBasename))),
+		FilePath: filepath.Join(outputDir, fmt.Sprintf("%s.progress", basename)),
 		Bytes:    true,
 		Speed:    true,
 	})
@@ -772,7 +857,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		pbar.Stop()
 	}
 	if withUploadResult {
-		p := filepath.Join(outputDir, fmt.Sprintf("%s.upload-result", basenameFor(img, outputBasename)))
+		p := filepath.Join(outputDir, fmt.Sprintf("%s.upload-result", basename))
 		data, err := json.Marshal(uploadResult)
 		if err != nil {
 			return err
