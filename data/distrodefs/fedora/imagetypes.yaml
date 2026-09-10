@@ -2192,6 +2192,8 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+      - *ppc64le_installer_platform
+      - *s390x_installer_platform
     platforms_override:
       conditions:
         "Fedora 45 and up no longer have zd1211-firmware":
@@ -2200,6 +2202,8 @@ image_types:
           override:
             - *x86_64_installer_platform_compat
             - *aarch64_installer_platform_compat
+            - *ppc64le_installer_platform_compat
+            - *s390x_installer_platform
     package_sets:
       os:
         - *minimal_raw_pkgset

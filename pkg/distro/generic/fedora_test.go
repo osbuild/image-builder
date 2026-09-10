@@ -579,6 +579,7 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"cloud-qcow2",
 				"everything-network-installer",
 				"server-network-installer",
+				"minimal-installer",
 			},
 		},
 		{
@@ -590,6 +591,7 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 				"server-network-installer",
 				"server-qcow2",
 				"cloud-qcow2",
+				"minimal-installer",
 			},
 		},
 		{
