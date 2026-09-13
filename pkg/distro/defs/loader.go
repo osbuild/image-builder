@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"text/template"
 
 	"go.yaml.in/yaml/v3"
@@ -638,6 +639,52 @@ func (it *ImageTypeYAML) runTemplates(distro *DistroYAML) error {
 					return err
 				}
 				cond.Override[idx].UEFIVendor = newVendor
+			}
+		}
+	}
+
+	if err := it.templatePartitionLabels(distro); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (it *ImageTypeYAML) templatePartitionLabels(d *DistroYAML) error {
+	subsLabels := func(pts map[string]*disk.PartitionTable) error {
+		for archName, pt := range pts {
+			subs := struct {
+				Arch   string
+				Distro distro.ID
+			}{
+				Arch:   archName,
+				Distro: d.ID,
+			}
+			for idx := range pt.Partitions {
+				p := &pt.Partitions[idx]
+				if !strings.Contains(p.Label, "{{") {
+					continue
+				}
+				templ, err := template.New("part-label").Option("missingkey=error").Parse(p.Label)
+				if err != nil {
+					return fmt.Errorf("cannot parse template for partition label %q: %w", p.Label, err)
+				}
+				var buf bytes.Buffer
+				if err := templ.Execute(&buf, subs); err != nil {
+					return fmt.Errorf("cannot execute template for partition label %q: %w", p.Label, err)
+				}
+				p.Label = buf.String()
+			}
+		}
+		return nil
+	}
+	if err := subsLabels(it.PartitionTables); err != nil {
+		return err
+	}
+	if it.PartitionTablesOverrides != nil {
+		for _, cond := range it.PartitionTablesOverrides.Conditions {
+			if err := subsLabels(cond.Override); err != nil {
+				return err
 			}
 		}
 	}

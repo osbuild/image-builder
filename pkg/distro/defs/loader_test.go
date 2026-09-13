@@ -454,6 +454,192 @@ image_types:
 	}, partTable)
 }
 
+func TestDefsPartitionTablePartitionLabelTemplate(t *testing.T) {
+	fakeDistrosYaml := `
+distros:
+  - name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: "rhel-9.*"
+    vendor: test-vendor
+    defs_path: test-distro/
+    default_fs_type: xfs
+`
+	fakeImageTypesYaml := `
+image_types:
+  test_type:
+    filename: test.img
+    platforms:
+      - arch: x86_64
+    partition_table:
+      x86_64:
+        partitions:
+          - label: "EFI System"
+            payload_type: filesystem
+            payload:
+              mountpoint: "/boot/efi"
+              type: vfat
+          - label: "root_{{.Distro.Name}}{{.Distro.MajorVersion}}"
+            payload_type: filesystem
+            payload:
+              mountpoint: "/"
+`
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYaml, fakeImageTypesYaml)
+	restore := defs.MockDataFS(baseDir)
+	defer restore()
+	td, err := defs.NewDistroYAML("rhel-9.4")
+	require.NoError(t, err)
+	it := td.ImageTypes()["test_type"]
+	require.NotNil(t, it)
+
+	partTable, err := it.PartitionTable(distro.ID{Name: "rhel", MajorVersion: 9, MinorVersion: 4}, "x86_64")
+	require.NoError(t, err)
+	assert.Equal(t, &disk.PartitionTable{
+		Partitions: []disk.Partition{
+			{
+				Label: "EFI System",
+				Payload: &disk.Filesystem{
+					Type:       "vfat",
+					Mountpoint: "/boot/efi",
+				},
+			},
+			{
+				Label: "root_rhel9",
+				Payload: &disk.Filesystem{
+					Type:       "xfs",
+					Mountpoint: "/",
+				},
+			},
+		},
+	}, partTable)
+}
+
+func TestDefsPartitionTablePartitionLabelTemplateOverride(t *testing.T) {
+	fakeDistrosYaml := `
+distros:
+  - name: test-distro-1
+    vendor: test-vendor
+    defs_path: test-distro/
+    default_fs_type: ext4
+`
+	fakeImageTypesYaml := `
+image_types:
+  test_type:
+    filename: test.img
+    platforms:
+      - arch: x86_64
+    partition_table:
+      x86_64:
+        partitions:
+    partition_tables_override:
+      conditions:
+        "test condition":
+          when:
+            distro_name: test-distro
+          override:
+            x86_64:
+              partitions:
+                - label: "root_{{.Distro.Name}}"
+                  payload_type: filesystem
+                  payload:
+                    mountpoint: "/"
+`
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYaml, fakeImageTypesYaml)
+	restore := defs.MockDataFS(baseDir)
+	defer restore()
+	td, err := defs.NewDistroYAML("test-distro-1")
+	require.NoError(t, err)
+	it := td.ImageTypes()["test_type"]
+	require.NotNil(t, it)
+
+	partTable, err := it.PartitionTable(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+	require.NoError(t, err)
+	assert.Equal(t, &disk.PartitionTable{
+		Partitions: []disk.Partition{
+			{
+				Label: "root_test-distro",
+				Payload: &disk.Filesystem{
+					Type:       "ext4",
+					Mountpoint: "/",
+				},
+			},
+		},
+	}, partTable)
+}
+
+func TestDefsPartitionTablePartitionLabelTemplateArch(t *testing.T) {
+	fakeDistrosYaml := `
+distros:
+  - name: test-distro-1
+    vendor: test-vendor
+    defs_path: test-distro/
+    default_fs_type: ext4
+`
+	fakeImageTypesYaml := `
+image_types:
+  test_type:
+    filename: test.img
+    platforms:
+      - arch: x86_64
+    partition_table:
+      x86_64:
+        partitions:
+          - label: "root_{{.Distro.Name}}_{{.Arch}}"
+            payload_type: filesystem
+            payload:
+              mountpoint: "/"
+`
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYaml, fakeImageTypesYaml)
+	restore := defs.MockDataFS(baseDir)
+	defer restore()
+	td, err := defs.NewDistroYAML("test-distro-1")
+	require.NoError(t, err)
+	it := td.ImageTypes()["test_type"]
+	require.NotNil(t, it)
+
+	partTable, err := it.PartitionTable(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+	require.NoError(t, err)
+	assert.Equal(t, &disk.PartitionTable{
+		Partitions: []disk.Partition{
+			{
+				Label: "root_test-distro_x86_64",
+				Payload: &disk.Filesystem{
+					Type:       "ext4",
+					Mountpoint: "/",
+				},
+			},
+		},
+	}, partTable)
+}
+
+func TestDefsPartitionTablePartitionLabelTemplateError(t *testing.T) {
+	fakeDistrosYaml := `
+distros:
+  - name: test-distro-1
+    vendor: test-vendor
+    defs_path: test-distro/
+`
+	fakeImageTypesYaml := `
+image_types:
+  test_type:
+    filename: test.img
+    platforms:
+      - arch: x86_64
+    partition_table:
+      x86_64:
+        partitions:
+          - label: "root_{{.NoSuchField}}"
+            payload_type: filesystem
+            payload:
+              type: ext4
+              mountpoint: "/"
+`
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYaml, fakeImageTypesYaml)
+	restore := defs.MockDataFS(baseDir)
+	defer restore()
+	_, err := defs.NewDistroYAML("test-distro-1")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, `cannot execute template for partition label`)
+}
+
 func TestDefsPartitionTableFilesystemDistroDefaultErr(t *testing.T) {
 	fakeDistrosYaml := `
 distros:
