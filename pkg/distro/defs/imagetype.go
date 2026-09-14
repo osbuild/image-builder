@@ -201,6 +201,8 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 
 	it.partitionTable = basePT
 
+	it.packageSets = imgYAML.PackageSets(d.ID(), ar.Name())
+
 	return it, nil
 }
 
@@ -366,7 +368,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	staticPackageSets := make(map[string]rpmmd.PackageSet)
 
 	d := t.Arch().Distro()
-	pkgSets := t.ImageTypeYAML.PackageSets(d.ID(), t.arch.arch.String())
+	pkgSets := t.packageSets
 	for name, pkgSet := range pkgSets {
 		staticPackageSets[name] = pkgSet
 	}
