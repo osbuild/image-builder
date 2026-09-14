@@ -13,7 +13,7 @@ import (
 )
 
 func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
-	if !t.ImageTypeYAML.IsOSTreeBasedImageType() && options.OSTree != nil {
+	if !t.isOSTreeBasedImageType() && options.OSTree != nil {
 		return nil, fmt.Errorf("OSTree is not supported for %q", t.Name())
 	}
 
@@ -40,7 +40,7 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		}
 	}
 
-	if (t.ImageTypeYAML.BootISO || t.ImageTypeYAML.Bootable) && t.ImageTypeYAML.IsOSTreeBasedImageType() {
+	if (t.bootISO || t.bootable) && t.isOSTreeBasedImageType() {
 		// ostree-based ISOs require a URL from which to pull a payload commit, this can either be a default URL or one
 		// supplied through options
 		if t.OSTreeURL() == "" && (options.OSTree == nil || options.OSTree.URL == "") {
@@ -123,7 +123,7 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 	dcp := policies.CustomDirectoriesPolicies
 	fcp := policies.CustomFilesPolicies
 
-	if t.ImageTypeYAML.IsOSTreeBasedImageType() {
+	if t.isOSTreeBasedImageType() {
 		dcp = policies.OstreeCustomDirectoriesPolicies
 		fcp = policies.OstreeCustomFilesPolicies
 	}

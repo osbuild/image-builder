@@ -490,36 +490,40 @@ func (t *imageType) SupportedBlueprintOptions() []string {
 }
 
 func (t *imageType) expandOSTreeRefTemplate(ar *architecture, id distro.ID) error {
-	if t.ImageTypeYAML.IsOSTreeBasedImageType() {
-		subs := struct {
-			Arch   string
-			Distro distro.ID
-		}{
-			Arch:   ar.Name(),
-			Distro: id,
-		}
-
-		var buf bytes.Buffer
-
-		tmpl, err := template.New("ostree-ref").Parse(t.ImageTypeYAML.OSTree.Ref)
-		if err != nil {
-			return err
-		}
-
-		if err := tmpl.Execute(&buf, subs); err != nil {
-			return err
-		}
-
-		t.ostreeRef = buf.String()
-
-		// if we're empty after templating that's an error as we can't
-		// have an empty commit
-		if t.ostreeRef == "" {
-			return fmt.Errorf("empty ostree ref after expansion")
-		}
-
+	if !t.isOSTreeBasedImageType() {
 		return nil
 	}
 
+	subs := struct {
+		Arch   string
+		Distro distro.ID
+	}{
+		Arch:   ar.Name(),
+		Distro: id,
+	}
+
+	var buf bytes.Buffer
+
+	tmpl, err := template.New("ostree-ref").Parse(t.ostree.Ref)
+	if err != nil {
+		return err
+	}
+
+	if err := tmpl.Execute(&buf, subs); err != nil {
+		return err
+	}
+
+	t.ostreeRef = buf.String()
+
+	// if we're empty after templating that's an error as we can't
+	// have an empty commit
+	if t.ostreeRef == "" {
+		return fmt.Errorf("empty ostree ref after expansion")
+	}
+
 	return nil
+}
+
+func (t *imageType) isOSTreeBasedImageType() bool {
+	return t.ostree.Name != "" || t.ostree.RemoteName != "" || t.ostree.Ref != "" || t.ostree.URL != ""
 }
