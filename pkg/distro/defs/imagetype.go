@@ -39,8 +39,6 @@ type blueprintOptions struct {
 }
 
 type imageType struct {
-	ImageTypeYAML ImageTypeYAML
-
 	name        string
 	nameAliases []string
 
@@ -93,8 +91,6 @@ type imageType struct {
 
 func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) (imageType, error) {
 	it := imageType{
-		ImageTypeYAML: imgYAML,
-
 		name:                       imgYAML.Name(),
 		nameAliases:                imgYAML.NameAliases,
 		arch:                       ar,
