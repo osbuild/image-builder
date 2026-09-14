@@ -45,7 +45,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc := manifest.OSCustomizations{}
 
 	imageConfig := t.getDefaultImageConfig()
-	if t.bootable || t.ImageTypeYAML.IsOSTreeBasedImageType() {
+	if t.bootable || t.isOSTreeBasedImageType() {
 		// TODO: for now the only image types that define a default kernel are
 		// ones that use UKIs and don't allow overriding, so this works.
 		// However, if we ever need to specify default kernels for image types
@@ -88,7 +88,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.Hostonly = *imageConfig.Hostonly
 	}
 
-	if !t.ImageTypeYAML.BootISO {
+	if !t.bootISO {
 		// don't put users and groups in the payload of an installer
 		// add them via kickstart instead
 		groups, err := c.GetGroups()
@@ -222,7 +222,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	// deployment, rather than the commit. Therefore the containers need to be
 	// stored in a different location, like `/usr/share`, and the container
 	// storage engine configured accordingly.
-	if t.ImageTypeYAML.IsOSTreeBasedImageType() && len(containers) > 0 {
+	if t.isOSTreeBasedImageType() && len(containers) > 0 {
 		storagePath := "/usr/share/containers/storage"
 		osc.ContainersStorage = &storagePath
 	}
@@ -260,7 +260,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	}
 
 	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
-		if t.ImageTypeYAML.IsOSTreeBasedImageType() {
+		if t.isOSTreeBasedImageType() {
 			panic("unexpected oscap options for ostree image type")
 		}
 
@@ -682,7 +682,7 @@ func ostreeDeploymentCustomizations(
 	t *imageType,
 	c *blueprint.Customizations) (manifest.OSTreeDeploymentCustomizations, error) {
 
-	if !t.ImageTypeYAML.IsOSTreeBasedImageType() || !t.bootable {
+	if !t.isOSTreeBasedImageType() || !t.bootable {
 		return manifest.OSTreeDeploymentCustomizations{}, fmt.Errorf("ostree deployment customizations are only supported for bootable rpm-ostree images")
 	}
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
