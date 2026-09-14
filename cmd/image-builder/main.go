@@ -125,8 +125,12 @@ func cmdBootcInspect(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	variant, err := cmd.Flags().GetString("variant")
+	if err != nil {
+		return err
+	}
 
-	info, err := bootcResolveInfo(ref)
+	info, err := bootcResolveInfo(ref, variant)
 	if err != nil {
 		return err
 	}
@@ -153,6 +157,46 @@ func cmdBootcInspect(cmd *cobra.Command, args []string) error {
 		fmt.Fprint(cmd.OutOrStdout(), string(output))
 	default:
 		return fmt.Errorf("unsupported format %q, supported formats: yaml, json", format)
+	}
+
+	return nil
+}
+
+func cmdBootcVariants(cmd *cobra.Command, args []string) error {
+	ref, err := cmd.Flags().GetString("ref")
+	if err != nil {
+		return err
+	}
+
+	variants, err := bootc.ResolveBootcVariants(ref)
+	if err != nil {
+		return err
+	}
+
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+
+	switch format {
+	case "", "text":
+		for _, v := range variants {
+			fmt.Fprintln(cmd.OutOrStdout(), v)
+		}
+	case "json":
+		output, err := json.Marshal(variants)
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(cmd.OutOrStdout(), string(output))
+	case "yaml":
+		output, err := yaml.Marshal(variants)
+		if err != nil {
+			return err
+		}
+		fmt.Fprint(cmd.OutOrStdout(), string(output))
+	default:
+		return fmt.Errorf("unsupported format %q, supported formats: text, json, yaml", format)
 	}
 
 	return nil
@@ -282,6 +326,10 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	if bootcRef != "" && distroStr != "" {
 		return nil, fmt.Errorf("cannot use --distro with --bootc-ref")
 	}
+	bootcVariant, err := cmd.Flags().GetString("bootc-variant")
+	if err != nil {
+		return nil, err
+	}
 	bootcBuildRef, err := cmd.Flags().GetString("bootc-build-ref")
 	if err != nil {
 		return nil, err
@@ -292,6 +340,10 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	}
 	imgTypeStr := args[0]
 
+	if bootcVariant != "" && bootcRef == "" {
+		return nil, fmt.Errorf("cannot use --bootc-variant without --bootc-ref")
+	}
+
 	var img *imagefilter.Result
 	if bootcRef != "" {
 		// The behavior of anaconda-iso without special mTLS setup is different
@@ -300,7 +352,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		if imgTypeStr == "anaconda-iso" {
 			return nil, fmt.Errorf(`image type bootc "anaconda-iso" is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`)
 		}
-		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef)
+		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef, bootcVariant)
 		if err != nil {
 			return nil, err
 		}

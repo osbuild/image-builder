@@ -617,7 +617,7 @@ func main() {
 		l := strings.SplitN(bootcRefTuple, "#", 2)
 		bootcRef := l[0]
 
-		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef)
+		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef, "")
 		if err != nil {
 			panic(err)
 		}
