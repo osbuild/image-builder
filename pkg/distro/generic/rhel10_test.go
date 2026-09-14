@@ -269,6 +269,8 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 				"vagrant-virtualbox",
 				"pxe-tar-xz",
 				"minimal-raw-xz",
+				"rhivos-qcow2",
+				"rhivos-core-qcow2",
 			},
 		},
 		{
@@ -286,6 +288,8 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 				"vhd",
 				"wsl",
 				"minimal-raw-xz",
+				"rhivos-qcow2",
+				"rhivos-core-qcow2",
 			},
 		},
 		{
