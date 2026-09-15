@@ -13,16 +13,16 @@
       "*": {
         "x86_64": {
           "*": "aws/fedora-44-x86_64",
-          "qcow2": "rhos-01/fedora-44-x86_64",
-          "server-qcow2": "rhos-01/fedora-44-x86_64",
-          "generic-qcow2": "rhos-01/fedora-44-x86_64",
-          "cloud-qcow2": "rhos-01/fedora-44-x86_64",
-          "image-installer": "rhos-01/fedora-44-x86_64",
-          "minimal-installer": "rhos-01/fedora-44-x86_64",
-          "network-installer": "rhos-01/fedora-44-x86_64",
-          "everything-network-installer": "rhos-01/fedora-44-x86_64",
-          "server-network-installer": "rhos-01/fedora-44-x86_64",
-          "pxe-tar-xz": "rhos-01/fedora-44-x86_64"
+          "qcow2": "aws/fedora-44-x86_64-kvm",
+          "server-qcow2": "aws/fedora-44-x86_64-kvm",
+          "generic-qcow2": "aws/fedora-44-x86_64-kvm",
+          "cloud-qcow2": "aws/fedora-44-x86_64-kvm",
+          "image-installer": "aws/fedora-44-x86_64-kvm",
+          "minimal-installer": "aws/fedora-44-x86_64-kvm",
+          "network-installer": "aws/fedora-44-x86_64-kvm",
+          "everything-network-installer": "aws/fedora-44-x86_64-kvm",
+          "server-network-installer": "aws/fedora-44-x86_64-kvm",
+          "pxe-tar-xz": "aws/fedora-44-x86_64-kvm"
         },
         "aarch64": {
           "*": "aws/fedora-44-aarch64"
