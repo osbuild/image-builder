@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from .build import (gen_build_name, get_manifest_id, read_build_info,
-                    write_build_info)
+                    resolve_export_pipeline, write_build_info)
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_ci_runner_distro_for, get_osbuild_commit
@@ -139,7 +139,8 @@ def upload_results(distro, arch, image_type, config_path):
     manifest_path = os.path.join(build_dir, "manifest.json")
     with open(manifest_path, "r", encoding="utf-8") as manifest_fp:
         manifest_data = json.load(manifest_fp)
-    manifest_id = get_manifest_id(manifest_data)
+    export_pipeline = resolve_export_pipeline(manifest_data, image_type=image_type)
+    manifest_id = get_manifest_id(manifest_data, export_pipeline=export_pipeline)
 
     # add the PR number (gitlab branch name) to the info.json if available
     if pr_number := os.environ.get("CI_COMMIT_BRANCH"):

@@ -1,13 +1,30 @@
 import json
 import os
 import tempfile
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .bootcsource import (bootc_source_from_distro, resolve_bootc_source,
                           resolve_bootc_source_ref)
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
+
+# keep in sync with internal/bibimg/imagetypes.go and distrodefs imagetypes.yaml
+# (disk gce exports via "archive"; bootc gce uses "gce")
+EXPORT_PIPELINE_BY_IMAGE_TYPE = {
+    "ami": "image",
+    "qcow2": "qcow2",
+    "raw": "image",
+    "vmdk": "vmdk",
+    "vhd": "vpc",
+    "gce": "archive",
+    "ova": "archive",
+    "bootc-installer": "bootiso",
+    "bootc-generic-iso": "bootiso",
+    "anaconda-iso": "bootiso",
+    "iso": "bootiso",
+    "pxe-tar-xz": "xz",
+}
 
 
 def resolve_bootc_options(config: dict, distro: str, arch: str, image_type: str = None) -> dict:
@@ -115,7 +132,8 @@ def build_image(distro, arch, image_type, config_path):
 
     with open(manifest_path, "r", encoding="utf-8") as manifest_fp:
         manifest_data = json.load(manifest_fp)
-    manifest_id = get_manifest_id(manifest_data)
+    export_pipeline = resolve_export_pipeline(manifest_data, image_type=image_type)
+    manifest_id = get_manifest_id(manifest_data, export_pipeline=export_pipeline)
 
     osbuild_ver, _ = runcmd(["osbuild", "--version"])
 
@@ -130,6 +148,7 @@ def build_image(distro, arch, image_type, config_path):
         "image-type": image_type,
         "config": config_name,
         "manifest-checksum": manifest_id,
+        "export-pipeline": export_pipeline,
         "osbuild-version": osbuild_ver.decode().strip(),
         "osbuild-commit": osbuild_commit,
         "commit": os.environ.get("CI_COMMIT_SHA", "N/A"),
@@ -156,11 +175,47 @@ def write_build_info(build_path: str, data: Dict):
         json.dump(data, info_fp, indent=2)
 
 
-def get_manifest_id(manifest_data):
-    md = json.dumps(manifest_data).encode()
+def osbuild_manifest_body(manifest_data):
+    if isinstance(manifest_data, dict) and "manifest" in manifest_data:
+        return manifest_data["manifest"]
+    return manifest_data
+
+
+def manifest_pipeline_names(manifest_data) -> set:
+    manifest_body = osbuild_manifest_body(manifest_data)
+    return {pipeline["name"] for pipeline in manifest_body.get("pipelines", [])}
+
+
+def resolve_export_pipeline(manifest_data, image_type: Optional[str] = None) -> Optional[str]:
+    export_pipeline = manifest_data.get("build-request", {}).get("export-pipeline")
+    if export_pipeline:
+        return export_pipeline
+    if image_type == "gce":
+        pipeline_names = manifest_pipeline_names(manifest_data)
+        for name in ("archive", "gce"):
+            if name in pipeline_names:
+                return name
+    if image_type:
+        return EXPORT_PIPELINE_BY_IMAGE_TYPE.get(image_type)
+    return None
+
+
+def get_manifest_id(manifest_data, export_pipeline: Optional[str] = None):
+    if export_pipeline is None:
+        export_pipeline = resolve_export_pipeline(manifest_data)
+    manifest_body = osbuild_manifest_body(manifest_data)
+    md = json.dumps(manifest_body).encode()
     out, _ = runcmd(["osbuild", "--inspect", "-"], stdin=md)
     data = json.loads(out)
-    # last stage ID depends on all previous stage IDs, so we can use it as a manifest ID
+    if export_pipeline:
+        for pipeline in data["pipelines"]:
+            if pipeline["name"] == export_pipeline:
+                stages = pipeline.get("stages", [])
+                if not stages:
+                    raise ValueError(f"export pipeline {export_pipeline!r} has no stages")
+                return stages[-1]["id"]
+        raise ValueError(f"export pipeline {export_pipeline!r} not found in manifest")
+    # fallback for manifests without export pipeline metadata
     return data["pipelines"][-1]["stages"][-1]["id"]
 
 
