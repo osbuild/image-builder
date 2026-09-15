@@ -1048,6 +1048,105 @@ func TestBootcIsoManifestSerialization(t *testing.T) {
 	assert.NoError(t, checkStages(manifestJson, expStages, nil))
 }
 
+func NewTestBootcDistroAarch64(t *testing.T) *BootcDistro {
+	t.Helper()
+	distro, err := NewBootc("bootc", &bootc.Info{
+		Imgref:        "example.com/containers/distro-bootc:version12",
+		ImageID:       "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+		Arch:          "aarch64",
+		DefaultRootFs: "xfs",
+		Size:          100 * datasizes.MiB,
+		OSInfo: &osinfo.Info{
+			OSRelease: osinfo.OSRelease{
+				Name:      "DistroID",
+				ID:        "distroID",
+				VersionID: "83",
+			},
+			KernelInfo: &osinfo.KernelInfo{
+				Version: "6.17.7-300.fc43.aarch64",
+			},
+			InitrdModules: []string{"ostree", "livenet", "dmsquash-live"},
+		},
+	})
+	require.NoError(t, err)
+	return distro
+}
+
+func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
+	type testCase struct {
+		distro          *BootcDistro
+		archName        string
+		hasGrub2Inst    bool
+		hasGrub2MBR     bool
+		hasEltoritoBoot bool
+	}
+
+	testCases := map[string]testCase{
+		"x86_64": {
+			distro:          NewTestBootcDistro(t),
+			archName:        "x86_64",
+			hasGrub2Inst:    true,
+			hasGrub2MBR:     true,
+			hasEltoritoBoot: true,
+		},
+		"aarch64": {
+			distro:          NewTestBootcDistroAarch64(t),
+			archName:        "aarch64",
+			hasGrub2Inst:    false,
+			hasGrub2MBR:     false,
+			hasEltoritoBoot: false,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			imgType, err := tc.distro.arches[tc.archName].GetImageType("bootc-generic-iso")
+			require.NoError(t, err)
+
+			mf, _, err := imgType.Manifest(&blueprint.Blueprint{}, distro.ImageOptions{}, nil, common.ToPtr(int64(0)))
+			require.NoError(t, err)
+
+			manifestJson, err := mf.Serialize(nil, isoContainers, nil, nil, nil)
+			require.NoError(t, err)
+
+			mani, err := manifesttest.NewManifestFromBytes(manifestJson)
+			require.NoError(t, err)
+
+			// check bootiso-tree pipeline for grub2.inst stage
+			isoTreePipeline := mani.Pipeline("bootiso-tree")
+			require.NotNil(t, isoTreePipeline)
+			grub2InstStage := isoTreePipeline.Stage("org.osbuild.grub2.inst")
+			if tc.hasGrub2Inst {
+				assert.NotNil(t, grub2InstStage, "expected grub2.inst stage for %s", tc.archName)
+			} else {
+				assert.Nil(t, grub2InstStage, "unexpected grub2.inst stage for %s", tc.archName)
+			}
+
+			// check bootiso pipeline for xorrisofs options
+			bootisoPipeline := mani.Pipeline("bootiso")
+			require.NotNil(t, bootisoPipeline)
+			xorrisoStage := bootisoPipeline.Stage("org.osbuild.xorrisofs")
+			require.NotNil(t, xorrisoStage)
+			var xorrisoOpts osbuild.XorrisofsStageOptions
+			err = json.Unmarshal(xorrisoStage.Options, &xorrisoOpts)
+			require.NoError(t, err)
+
+			if tc.hasGrub2MBR {
+				assert.Equal(t, "/usr/lib/grub/i386-pc/boot_hybrid.img", xorrisoOpts.Grub2MBR)
+			} else {
+				assert.Empty(t, xorrisoOpts.Grub2MBR, "unexpected i386-pc grub2 MBR for %s", tc.archName)
+			}
+
+			if tc.hasEltoritoBoot {
+				require.NotNil(t, xorrisoOpts.Boot)
+				assert.Equal(t, "images/eltorito.img", xorrisoOpts.Boot.Image)
+			} else {
+				assert.Nil(t, xorrisoOpts.Boot, "unexpected BIOS boot entry for %s", tc.archName)
+			}
+		})
+	}
+}
+
 func TestContainerSourceLocality(t *testing.T) {
 	bd := NewTestBootcDistro(t)
 	archi, err := bd.GetArch("x86_64")
