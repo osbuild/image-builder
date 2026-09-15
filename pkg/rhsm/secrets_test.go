@@ -81,6 +81,8 @@ func TestGetSecretsForBaseurlMatching(t *testing.T) {
 	}{
 		{"rolling", base + "/10/x86_64/baseos/os", true},
 		{"point release", base + "/10.2/x86_64/baseos/os", true},
+		{"cross major 9.8", "https://satellite.example.com/pulp/content/dist/rhel9/9.8/x86_64/baseos/os", true},
+		{"cross major 9 rolling", "https://satellite.example.com/pulp/content/dist/rhel9/9/x86_64/baseos/os", true},
 		{"wrong path structure", base + "/10/x86_64/appstream/os", false},
 		{"different host", "https://cdn.redhat.com/content/dist/rhel10/10/x86_64/baseos/os", false},
 	} {
@@ -116,6 +118,26 @@ func TestGetSecretsForBaseurlPointReleasePrefersSubscriptionCA(t *testing.T) {
 	require.NoError(t, err, "Failed to get secrets for a point-release baseurl")
 	assert.Equal(t, "/etc/rhsm/ca/katello-server-ca.pem", secrets.SSLCACert,
 		"must prefer the subscription's Katello CA over the redhat-uep.pem fallback")
+}
+
+func TestGetSecretsForBaseurlCrossMajorPrefersSubscriptionCA(t *testing.T) {
+	repoFileContent, err := parseRepoFile([]byte(SATELLITE_REPO))
+	require.NoError(t, err, "Failed to parse the .repo file")
+	subscriptions := Subscriptions{
+		available: repoFileContent,
+		secrets: &RHSMSecrets{
+			SSLCACert:     "/etc/rhsm/ca/redhat-uep.pem",
+			SSLClientKey:  "/etc/pki/entitlement/fallback-key.pem",
+			SSLClientCert: "/etc/pki/entitlement/fallback.pem",
+		},
+	}
+	secrets, err := subscriptions.GetSecretsForBaseurl(
+		[]string{"https://satellite.example.com/pulp/content/dist/rhel9/9.8/x86_64/baseos/os"})
+	require.NoError(t, err, "Failed to get secrets for a cross-major baseurl")
+	assert.Equal(t, "/etc/rhsm/ca/katello-server-ca.pem", secrets.SSLCACert,
+		"must prefer the subscription's Katello CA over the redhat-uep.pem fallback")
+	assert.Equal(t, "/etc/pki/entitlement/517534911145439618.pem", secrets.SSLClientCert)
+	assert.Equal(t, "/etc/pki/entitlement/517534911145439618-key.pem", secrets.SSLClientKey)
 }
 
 func TestGetSecretsForBaseurlFallback(t *testing.T) {
@@ -165,6 +187,7 @@ func TestBaseurlToRegex(t *testing.T) {
 		{"wrong path structure", "https://cdn.redhat.com/$releasever/repo/$basearch/os", "https://cdn.redhat.com/9/different/x86_64/os/test.rpm", false},
 		{"different host", "https://cdn.redhat.com/1.0/$basearch/os", "https://other.host.com/1.0/x86_64/os/test.rpm", false},
 		{"uuid variable", "https://cdn.redhat.com/$uuid/content", "https://cdn.redhat.com/abc-123-def/content/test.rpm", true},
+		{"cross major rhel10 to rhel9", "https://cdn.redhat.com/content/dist/rhel10/$releasever/x86_64/baseos/os", "https://cdn.redhat.com/content/dist/rhel9/9.8/x86_64/baseos/os", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			re, err := baseurlToRegex(tc.baseurl)
