@@ -3,6 +3,7 @@ package manifest
 import (
 	"fmt"
 
+	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 )
@@ -243,8 +244,10 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 	stage := osbuild.NewGrub2ISOLegacyStage(options)
 	pipeline.AddStage(stage)
 
-	// Add a stage to create the eltorito.img file for grub2 BIOS boot support
-	pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstISO9660StageOption("images/eltorito.img", "/boot/grub2")))
+	// Add a stage to create the eltorito.img file for grub2 BIOS boot support (x86_64 only)
+	if p.bootTreePipeline != nil && p.bootTreePipeline.Platform != nil && p.bootTreePipeline.Platform.GetArch() == arch.ARCH_X86_64 {
+		pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstISO9660StageOption("images/eltorito.img", "/boot/grub2")))
+	}
 
 	// Create EFI boot partition
 	filename := "images/efiboot.img"
