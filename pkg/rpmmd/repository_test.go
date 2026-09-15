@@ -2,11 +2,14 @@ package rpmmd_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
@@ -38,6 +41,16 @@ func TestRepoConfigUnmarshalHappy(t *testing.T) {
 			json: `{}`,
 			repo: rpmmd.Repository{},
 		},
+		{
+			name: "ignore-ssl",
+			json: `{"ignore_ssl":true}`,
+			repo: rpmmd.Repository{IgnoreSSL: common.ToPtr(true)},
+		},
+		{
+			name: "verify-ssl",
+			json: `{"ignore_ssl":false}`,
+			repo: rpmmd.Repository{IgnoreSSL: common.ToPtr(false)},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -45,6 +58,11 @@ func TestRepoConfigUnmarshalHappy(t *testing.T) {
 			err := yaml.Unmarshal([]byte(tc.json), &repos)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.repo, repos)
+
+			configs, err := rpmmd.LoadRepositoriesFromReader(strings.NewReader(`{"aarch64":[` + tc.json + `]}`))
+			require.NoError(t, err)
+			require.Len(t, configs["aarch64"], 1)
+			assert.Equal(t, tc.repo.IgnoreSSL, configs["aarch64"][0].IgnoreSSL)
 		})
 	}
 }
