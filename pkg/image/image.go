@@ -50,3 +50,16 @@ func GetCompressionPipeline(compression string, buildPipeline manifest.Build, in
 		panic(fmt.Sprintf("unsupported compression type %q", compression))
 	}
 }
+
+func compressionExt(compression string) string {
+	switch compression {
+	case "xz":
+		return "xz"
+	case "zstd":
+		return "zst"
+	case "gzip":
+		return "gz"
+	default:
+		panic(fmt.Sprintf("unsupported compression type %q", compression))
+	}
+}
