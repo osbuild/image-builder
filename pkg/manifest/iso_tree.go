@@ -203,49 +203,40 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 		disableTestEntry = p.bootTreePipeline.DisableTestEntry
 		disableTroubleshootingEntry = p.bootTreePipeline.DisableTroubleshootingEntry
 	}
-	options := &osbuild.Grub2ISOLegacyStageOptions{
-		Product: osbuild.Product{
-			Name:    product,
-			Version: version,
-		},
-		Kernel: osbuild.ISOKernel{
-			Dir:  "/images/pxeboot",
-			Opts: kernelOpts,
-		},
-		ISOLabel:        p.isoLabel,
-		FIPS:            false,
-		Install:         true,
-		Test:            !disableTestEntry,
-		Troubleshooting: !disableTroubleshootingEntry,
-		Config:          grub2config,
-	}
-
-	// If any menu entries are defined we turn off all default
-	// entries and instead append our own
-	// entries only
-	if len(p.bootTreePipeline.MenuEntries) > 0 {
-		options.Troubleshooting = false
-		options.Test = false
-		options.Install = false
-
-		for _, entry := range p.bootTreePipeline.MenuEntries {
-			options.Custom = append(options.Custom, osbuild.Grub2ISOLegacyCustomEntryOptions{
-				Name:   entry.Name,
-				Linux:  entry.Linux,
-				Initrd: entry.Initrd,
-			})
-		}
-	}
-
-	if p.bootTreePipeline != nil && p.bootTreePipeline.Platform != nil {
-		options.FIPS = p.bootTreePipeline.Platform.GetFIPSMenu()
-	}
-
-	stage := osbuild.NewGrub2ISOLegacyStage(options)
-	pipeline.AddStage(stage)
-
-	// Add a stage to create the eltorito.img file for grub2 BIOS boot support (x86_64 only)
+	// Legacy BIOS boot stages are only needed on x86_64
 	if p.bootTreePipeline != nil && p.bootTreePipeline.Platform != nil && p.bootTreePipeline.Platform.GetArch() == arch.ARCH_X86_64 {
+		options := &osbuild.Grub2ISOLegacyStageOptions{
+			Product: osbuild.Product{
+				Name:    product,
+				Version: version,
+			},
+			Kernel: osbuild.ISOKernel{
+				Dir:  "/images/pxeboot",
+				Opts: kernelOpts,
+			},
+			ISOLabel:        p.isoLabel,
+			FIPS:            p.bootTreePipeline.Platform.GetFIPSMenu(),
+			Install:         true,
+			Test:            !disableTestEntry,
+			Troubleshooting: !disableTroubleshootingEntry,
+			Config:          grub2config,
+		}
+
+		if len(p.bootTreePipeline.MenuEntries) > 0 {
+			options.Troubleshooting = false
+			options.Test = false
+			options.Install = false
+
+			for _, entry := range p.bootTreePipeline.MenuEntries {
+				options.Custom = append(options.Custom, osbuild.Grub2ISOLegacyCustomEntryOptions{
+					Name:   entry.Name,
+					Linux:  entry.Linux,
+					Initrd: entry.Initrd,
+				})
+			}
+		}
+
+		pipeline.AddStage(osbuild.NewGrub2ISOLegacyStage(options))
 		pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstISO9660StageOption("images/eltorito.img", "/boot/grub2")))
 	}
 
