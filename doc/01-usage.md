@@ -63,7 +63,7 @@ $ image-builder list --format=json | jq '.[0]'
 
 `list` output can be filtered with the `--filter` argument.
 
-### Distribution
+#### Distribution
 
 To filter on a given distribution, one can use `--filter` with the `distro:` prefix:
 
@@ -72,15 +72,16 @@ $ image-builder list --filter distro:fedora-43
 # ... long list ...
 ```
 
-### Type
+#### Type
 
-To filter on a given [image type](./10-faq.md#image-types) the `type:` prefix:
+To filter on a given [image type](./10-faq.md#image-types), use the `type:` prefix:
 
 ```console
 $ image-builder list --filter type:qcow2
 # ... long list ...
 ```
-### Architecture
+
+#### Architecture
 
 To filter on a given architecture use the `arch:` prefix:
 
@@ -89,7 +90,7 @@ $ image-builder list --filter arch:aarch64
 # ... long list ...
 ```
 
-### Combinations
+#### Combinations
 
 Filters can be combined to narrow the list further.
 
