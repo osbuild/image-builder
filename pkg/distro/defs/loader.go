@@ -578,7 +578,8 @@ type ImageTypeYAML struct {
 }
 
 type extrasYAML struct {
-	Sysexts map[string]sysextDef `yaml:"sysexts,omitempty"`
+	Sysexts    map[string]sysextDef    `yaml:"sysexts,omitempty"`
+	Partitions map[string]partitionDef `yaml:"partitions,omitempty"`
 }
 
 type packageConfDef struct {
@@ -591,6 +592,12 @@ type sysextDef struct {
 	ExcludePaths []string       `yaml:"exclude_paths,omitempty"`
 	PackageSets  []packageSet   `yaml:"package_sets"`
 	PackageConf  packageConfDef `yaml:"package_conf,omitempty"`
+}
+
+type partitionDef struct {
+	Mountpoint  string `yaml:"mountpoint"`
+	Filename    string `yaml:"filename,omitempty"`
+	Compression string `yaml:"compression,omitempty"`
 }
 
 func (it *ImageTypeYAML) IsOSTreeBasedImageType() bool {
@@ -930,6 +937,34 @@ func (imgType *ImageTypeYAML) Sysexts(id distro.ID, archName string) []SysextDef
 			ExcludePaths: sysext.ExcludePaths,
 			Packages:     pkgSet,
 			Standalone:   sysext.PackageConf.Standalone,
+		})
+	}
+	return res
+}
+
+type PartitionDef struct {
+	Name        string
+	Mountpoint  string
+	Filename    string
+	Compression string
+}
+
+// Partitions returns the resolved partition definitions for this image type.
+func (imgType *ImageTypeYAML) Partitions() []PartitionDef {
+	names := make([]string, 0, len(imgType.Extras.Partitions))
+	for name := range imgType.Extras.Partitions {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+
+	var res []PartitionDef
+	for _, name := range names {
+		sp := imgType.Extras.Partitions[name]
+		res = append(res, PartitionDef{
+			Name:        name,
+			Mountpoint:  sp.Mountpoint,
+			Filename:    sp.Filename,
+			Compression: sp.Compression,
 		})
 	}
 	return res

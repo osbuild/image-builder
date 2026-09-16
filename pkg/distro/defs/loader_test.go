@@ -2025,3 +2025,42 @@ image_types:
 	sysexts := it.Sysexts(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
 	assert.Empty(t, sysexts)
 }
+
+func TestPartitions(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      partitions:
+        boot:
+          mountpoint: /boot
+          filename: boot.img
+          compression: xz
+        rootfs:
+          mountpoint: /
+`
+	it := makeTestImageType(t, fakeYAML)
+	parts := it.Partitions()
+
+	require.Len(t, parts, 2)
+	assert.Equal(t, "boot", parts[0].Name)
+	assert.Equal(t, "/boot", parts[0].Mountpoint)
+	assert.Equal(t, "boot.img", parts[0].Filename)
+	assert.Equal(t, "xz", parts[0].Compression)
+	assert.Equal(t, "rootfs", parts[1].Name)
+	assert.Equal(t, "/", parts[1].Mountpoint)
+	assert.Equal(t, "", parts[1].Filename)
+	assert.Equal(t, "", parts[1].Compression)
+}
+
+func TestPartitionsEmpty(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    filename: foo
+    image_func: disk
+`
+	it := makeTestImageType(t, fakeYAML)
+	parts := it.Partitions()
+	assert.Empty(t, parts)
+}
