@@ -116,16 +116,6 @@ $ sudo image-builder build --distro centos-10 qcow2
 # ... progress ...
 ```
 
-When passed `--arch` `image-builder` will try to do an experimental cross-architecture build. Note that not all image types are available for all architectures.
-
-Cross-architecture builds are much slower than being able to build on native hardware. However, if no native hardware is available they might be an acceptable compromise.
-
-```console
-$ sudo image-builder build --distro fedora-43 --arch s390x server-qcow2
-WARNING: using experimental cross-architecture building to build "s390x"
-# ... progress ...
-```
-
 ### Additional Build Outputs
 
 By default `build` writes only the image artifact to the output directory. Additional outputs can be enabled with the following flags.
@@ -249,6 +239,21 @@ In these cases it's up to the user to select a filesystem to use through the `--
 ```console
 $ sudo image-builder build --bootc-ref quay.io/fedora/fedora-bootc:rawhide --bootc-default-fs ext4 qcow2
 # ...
+```
+
+### Cross-architecture builds
+
+> [!WARNING]
+> Cross-architecture building is an experimental feature.
+
+When passed `--arch` `image-builder` will try to build for a different architecture. Not all image types are available for all architectures.
+
+Cross-architecture builds are much slower than building on native hardware. However, if no native hardware is available they might be an acceptable compromise.
+
+```console
+$ sudo image-builder build --distro fedora-43 --arch s390x server-qcow2
+WARNING: using experimental cross-architecture building to build "s390x"
+# ... progress ...
 ```
 
 ## `image-builder describe`
