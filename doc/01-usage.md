@@ -256,6 +256,15 @@ WARNING: using experimental cross-architecture building to build "s390x"
 # ... progress ...
 ```
 
+### Reproducibility
+
+Some values in a build are derived randomly (e.g. partition UUIDs). The `--seed` flag pins the random number generator to a fixed integer value, making builds more reproducible.
+
+```console
+$ sudo image-builder build --seed 42 --distro fedora-43 server-qcow2
+# ...
+```
+
 ## `image-builder describe`
 
 The `describe` command outputs structured information about an image without building it. It lists the packages that would be used to build the images and the partition tables.
@@ -348,6 +357,13 @@ When passed `--arch` `image-builder` will show the manifest for that architectur
 ```console
 $ image-builder manifest --arch aarch64 minimal-raw-xz
 # ... output ...
+```
+
+The `--seed` flag pins the random number generator to a fixed integer value, making manifests more reproducible:
+
+```console
+$ image-builder manifest --seed 42 --distro fedora-43 server-qcow2
+# ... json ...
 ```
 
 ## `image-builder bootc`
