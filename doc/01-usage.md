@@ -116,6 +116,44 @@ $ sudo image-builder build --distro centos-10 qcow2
 # ... progress ...
 ```
 
+### Output location
+
+By default `build` places output into a directory named after the build, using the pattern `<distro>-<type>-<arch>` (e.g. `fedora-43-server-qcow2-x86_64/`). The `--output-dir` flag overrides this directory. The directory is created automatically if it does not exist, including any parent directories:
+
+```console
+$ sudo image-builder build --output-dir builds/fedora/my-build --distro fedora-43 server-qcow2
+# ...
+$ ls builds/fedora/my-build/
+fedora-43-server-qcow2-x86_64.qcow2
+```
+
+Files within the output directory use the same `<distro>-<type>-<arch>` pattern as their basename. The `--output-name` flag overrides this basename. If the value includes the image extension (e.g. `.qcow2`) it is stripped automatically.
+
+```console
+$ sudo image-builder build --output-name my-image --distro fedora-43 server-qcow2
+# ...
+$ ls fedora-43-server-qcow2-x86_64/
+my-image.qcow2
+```
+
+Both `--output-dir` and `--output-name` support Go template variables. The default basename template is `{{.Distribution.Identifier}}-{{.Image.Type}}-{{.Architecture}}`. The available template variables are:
+
+| Variable | Description | Example value |
+|---|---|---|
+| `{{.Distribution.Identifier}}` | Full distribution identifier | `fedora-43` |
+| `{{.Distribution.Name}}` | Distribution name | `fedora` |
+| `{{.Distribution.MajorVersion}}` | Major version number | `43` |
+| `{{.Distribution.MinorVersion}}` | Minor version number | `0` |
+| `{{.Image.Type}}` | Image type name | `server-qcow2` |
+| `{{.Architecture}}` | Target architecture | `x86_64` |
+
+```console
+$ sudo image-builder build --output-name="{{.Distribution.Identifier}}-foo-{{.Architecture}}" --distro fedora-43 server-qcow2
+# ...
+$ ls fedora-43-server-qcow2-x86_64/
+fedora-43-foo-x86_64.qcow2
+```
+
 ### Additional Build Outputs
 
 By default `build` writes only the image artifact to the output directory. Additional outputs can be enabled with the following flags.
