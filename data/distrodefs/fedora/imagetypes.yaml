@@ -535,7 +535,7 @@
       bootloader: "zipl"
     riscv64_uefi_platform: &riscv64_uefi_platform
       arch: "riscv64"
-      uefi_vendor: "fedor"
+      uefi_vendor: "fedora"
       image_format: "raw"
       packages: &riscv64_uefi_platform_packages
         # XXX: this is needed to get a generic bootkernel,
