@@ -241,6 +241,15 @@ $ sudo image-builder build --bootc-ref quay.io/fedora/fedora-bootc:rawhide --boo
 # ...
 ```
 
+#### `bootc-no-default-kernel-args`
+
+By default `image-builder` includes distribution-default kernel arguments when building bootc images. Passing `--bootc-no-default-kernel-args` clears these defaults so that only kernel arguments specified through a blueprint are used.
+
+```console
+$ sudo image-builder build --bootc-ref quay.io/centos-bootc/centos:stream10 --bootc-no-default-kernel-args qcow2
+# ...
+```
+
 ### Cross-architecture builds
 
 > [!WARNING]
