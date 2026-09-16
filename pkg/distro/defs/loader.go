@@ -25,6 +25,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/disk/partition"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/experimentalflags"
+	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/platform"
@@ -894,6 +895,10 @@ type SysextDef struct {
 	Standalone   bool
 }
 
+func (s SysextDef) ExportPipelineNames() []string {
+	return []string{image.SysextPipelineName(s.Name, s.Format)}
+}
+
 // Sysexts returns the resolved sysext definitions for this image type.
 func (imgType *ImageTypeYAML) Sysexts(id distro.ID, archName string) []SysextDef {
 	names := make([]string, 0, len(imgType.Extras.Sysexts))
@@ -947,6 +952,10 @@ type PartitionDef struct {
 	Mountpoint  string
 	Filename    string
 	Compression string
+}
+
+func (s PartitionDef) ExportPipelineNames() []string {
+	return []string{image.PartitionPipelineName(s.Name, s.Compression)}
 }
 
 // Partitions returns the resolved partition definitions for this image type.
