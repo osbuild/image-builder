@@ -312,6 +312,15 @@ $ sudo image-builder build --seed 42 --distro fedora-43 server-qcow2
 # ...
 ```
 
+### Cloud upload
+
+The `build` command supports all [`upload` flags](#image-builder-upload) directly, allowing you to build and upload in a single step. The target cloud is defined by the image type (e.g. `server-ami` uploads to AWS).
+
+```console
+$ sudo image-builder build --distro fedora-43 --aws-region us-east-1 --aws-bucket my-bucket --aws-ami-name my-image server-ami
+# ...
+```
+
 ## `image-builder describe`
 
 The `describe` command outputs structured information about an image without building it. It lists the packages that would be used to build the images and the partition tables.
@@ -381,6 +390,105 @@ When passed `--arch` `image-builder` will show the description for that architec
 ```console
 $ image-builder describe --arch aarch64 minimal-raw-xz
 # ... output ...
+```
+
+## `image-builder upload`
+
+The `upload` command uploads a previously built image to a cloud provider. The `--to` flag selects the target cloud. When using `build`, upload flags can be passed directly and the upload happens automatically after the build completes.
+
+```console
+$ image-builder upload --to aws --aws-region us-east-1 --aws-bucket my-bucket --aws-ami-name my-image fedora-43-generic-ami-x86_64/fedora-43-generic-ami-x86_64.raw
+# ...
+```
+
+The architecture is detected from the image filename when possible. Use `--arch` to override this. The output format can be changed with `--format` (yaml, json).
+
+### `--to aws`
+
+Upload and register an AMI in AWS. Credentials are read from the standard AWS credentials chain (environment, config files, instance profile). The following flags are required:
+
+| Flag | Description |
+|---|---|
+| `--aws-region` | Target AWS region |
+| `--aws-bucket` | S3 bucket for intermediate storage |
+| `--aws-ami-name` | Name for the registered AMI |
+
+Optional flags:
+
+| Flag | Description |
+|---|---|
+| `--aws-profile` | AWS credentials profile name |
+| `--aws-tag` | Tag the AMI with `Key=Value` (can be repeated) |
+| `--aws-boot-mode` | Boot mode: `legacy-bios`, `uefi`, `uefi-preferred` (default: `uefi-preferred`) |
+
+```console
+$ sudo image-builder build --distro fedora-43 --aws-region us-east-1 --aws-bucket my-bucket --aws-ami-name my-image --aws-tag Environment=dev generic-ami
+# ...
+```
+
+### `--to azure`
+
+Upload an image to Azure. All flags are required:
+
+| Flag | Description |
+|---|---|
+| `--azure-client-id` | Azure client ID |
+| `--azure-client-secret` | Azure client secret |
+| `--azure-tenant` | Azure tenant ID |
+| `--azure-subscription` | Azure subscription ID |
+| `--azure-resource-group` | Azure resource group |
+| `--azure-image-name` | Name for the uploaded image |
+
+```console
+$ sudo image-builder build --distro fedora-43 --azure-client-id $CLIENT_ID --azure-client-secret $SECRET --azure-tenant $TENANT --azure-subscription $SUB --azure-resource-group my-rg --azure-image-name my-image generic-vhd
+# ...
+```
+
+### `--to openstack`
+
+Upload an image to OpenStack. Authentication is handled through the standard OpenStack environment variables (e.g. `OS_AUTH_URL`, `OS_USERNAME`).
+
+| Flag | Description | Default |
+|---|---|---|
+| `--openstack-image` | Name for the uploaded image (required) | |
+| `--openstack-disk-format` | Disk format | `raw` |
+| `--openstack-container-format` | Container format | `bare` |
+
+```console
+$ sudo image-builder build --distro fedora-43 --openstack-image my-image generic-openstack
+# ...
+```
+
+### `--to libvirt`
+
+Upload an image to a libvirt storage pool.
+
+| Flag | Description |
+|---|---|
+| `--libvirt-connection` | Libvirt connection URI |
+| `--libvirt-pool` | Storage pool name |
+| `--libvirt-volume` | Volume name |
+
+```console
+$ image-builder upload --to libvirt --libvirt-connection qemu:///system --libvirt-pool default --libvirt-volume my-image fedora-43-server-qcow2-x86_64/fedora-43-server-qcow2-x86_64.qcow2
+# ...
+```
+
+### `--to ibmcloud`
+
+Upload an image to IBM Cloud. Requires the `IBMCLOUD_API_KEY` and `IBMCLOUD_CRN` environment variables to be set.
+
+| Flag | Description |
+|---|---|
+| `--ibmcloud-region` | Target IBM Cloud region |
+| `--ibmcloud-bucket` | Target bucket for storing the image |
+| `--ibmcloud-image-name` | Name for the uploaded image |
+
+```console
+$ export IBMCLOUD_API_KEY=my-api-key
+$ export IBMCLOUD_CRN=my-crn
+$ image-builder upload --to ibmcloud --ibmcloud-region us-south --ibmcloud-bucket my-bucket --ibmcloud-image-name my-image image.qcow2
+# ...
 ```
 
 ## `image-builder manifest`
