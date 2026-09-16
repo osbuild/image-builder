@@ -40,6 +40,8 @@ type describeImgYAML struct {
 
 	PartitionTable *disk.PartitionTable `yaml:"partition_table,omitempty"`
 
+	Extras []string `yaml:"extras,omitempty"`
+
 	Blueprint blueprintYAML `yaml:"blueprint"`
 }
 
@@ -138,8 +140,11 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 		return err
 	}
 
+	extras := img.ImgType.Extras()
+
 	arch := img.ImgType.Arch()
 	distro := arch.Distro()
+
 	outYaml := &describeImgYAML{
 		Distro:           distro.Name(),
 		OsVersion:        distro.OsVersion(),
@@ -152,6 +157,7 @@ func describeImage(img *imagefilter.Result, out io.Writer) error {
 		PayloadPipelines: m.PayloadPipelines(),
 		Packages:         pkgSets,
 		PartitionTable:   partTable,
+		Extras:           extras,
 		Blueprint: blueprintYAML{
 			SupportedOptions: img.ImgType.SupportedBlueprintOptions(),
 			RequiredOptions:  img.ImgType.RequiredBlueprintOptions(),
