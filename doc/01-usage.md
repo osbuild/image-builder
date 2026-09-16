@@ -203,14 +203,14 @@ Metrics:
 
 For example, to build a disk image from a [Fedora IoT](https://fedoraproject.org/iot/) ostree commit you can do the following:
 
-```
+```console
 $ sudo image-builder build --ostree-url https://d2ju0wfl996cmc.cloudfront.net/ --ostree-ref fedora/x86_64/stable/iot iot-raw-xz
 # ...
 ```
 
 Image types that are ostree-based always need to be passed the `--ostree-url` and `--ostree-ref` arguments. When trying to build an ostree-based image without passing them an error is shown:
 
-```
+```console
 $ sudo image-builder build iot-raw-xz
 No distro name specified, selecting "fedora-43" based on host, use --distro to override
 [|] Manifest generation step
