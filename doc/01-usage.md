@@ -126,6 +126,48 @@ WARNING: using experimental cross-architecture building to build "s390x"
 # ... progress ...
 ```
 
+### Additional Build Outputs
+
+By default `build` writes only the image artifact to the output directory. Additional outputs can be enabled with the following flags.
+
+#### Metadata
+
+`--with-manifest` places the osbuild manifest used for the build alongside the image. The manifest is written as `<basename>.osbuild-manifest.json`.
+
+```console
+$ sudo image-builder build --with-manifest --distro fedora-43 server-qcow2
+# ...
+$ ls *.osbuild-manifest.json
+fedora-43-server-qcow2-x86_64.osbuild-manifest.json
+```
+
+`--with-sbom` places an [SPDX](https://spdx.dev/) Software Bill of Materials document alongside the image.
+
+```console
+$ sudo image-builder build --with-sbom --distro fedora-43 server-qcow2
+# ...
+```
+
+`--with-buildlog` writes the full osbuild build log to `<basename>.buildlog` in the output directory. This can be useful for debugging failed or unexpected builds.
+
+```console
+$ sudo image-builder build --with-buildlog --distro fedora-43 server-qcow2
+# ...
+$ ls *.buildlog
+fedora-43-server-qcow2-x86_64.buildlog
+```
+
+`--with-metrics` prints timing information for each build stage at the end of the build, sorted by duration. This is useful for identifying which stages take the most time.
+
+```console
+$ sudo image-builder build --with-metrics --distro fedora-43 server-qcow2
+# ...
+Metrics:
+	os: org.osbuild.rpm: 30s
+	build: org.osbuild.rpm: 15s
+	os: org.osbuild.selinux: 5s
+```
+
 ### ostree
 
 `image-builder` can also produce [ostree](https://ostreedev.github.io/ostree/)-based images. For an ostree-based image the system is usually not built from packages but directly from an ostree commit which needs to be passed as an argument. However, the buildroot that is set up is package based and influenced by the `--distro` argument, the same applies to the installer image types. For an installer image the installer is created from packages and contains the ostree commit to deploy onto a system.
