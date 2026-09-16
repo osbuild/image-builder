@@ -359,6 +359,34 @@ $ image-builder version --format=json
 }
 ```
 
+## `image-builder system`
+
+The `system` command shows status information about the `image-builder` installation, such as the cache location, its current size in bytes, and its configured maximum size.
+
+```console
+$ image-builder system
+system:
+  cache:
+    path: /home/user/.cache/image-builder/store
+    size: 2009359005
+    max-size: unlimited
+```
+
+The output format can be changed with `--format`. Available formats are `yaml` (default) and `json`:
+
+```console
+$ image-builder system --format=json
+{
+  "system": {
+    "cache": {
+      "path": "/home/user/.cache/image-builder/store",
+      "size": 2009359005,
+      "max-size": "unlimited"
+    }
+  }
+}
+```
+
 ## Blueprints
 
 Images can be customized with [blueprints](https://osbuild.org/docs/user-guide/blueprint-reference). For example we could build the `qcow2` we built above with some customizations applied.
