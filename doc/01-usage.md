@@ -42,7 +42,7 @@ $ image-builder list
 
 ### Format
 
-The output format used by `list` can be swapped with the `--format` flag. Available types are `text` (for display in a terminal) and `json` which can be useful to consume programmatically:
+The output format used by `list` can be swapped with the `--format` flag. Available formats are `text` (for display in a terminal) and `json` which can be useful to consume programmatically:
 
 ```console
 $ image-builder list --format=json | jq '.[0]'
