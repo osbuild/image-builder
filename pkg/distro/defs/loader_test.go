@@ -2064,3 +2064,46 @@ image_types:
 	parts := it.Partitions()
 	assert.Empty(t, parts)
 }
+
+func TestSysextDefExportPipelineNames(t *testing.T) {
+	def := defs.SysextDef{Name: "nginx", Format: "erofs"}
+	assert.Equal(t, []string{"sysext-nginx-erofs"}, def.ExportPipelineNames())
+}
+
+func TestPartitionDefExportPipelineNames(t *testing.T) {
+	plain := defs.PartitionDef{Name: "rootfs", Mountpoint: "/"}
+	assert.Equal(t, []string{"partition-rootfs"}, plain.ExportPipelineNames())
+
+	compressed := defs.PartitionDef{Name: "boot", Mountpoint: "/boot", Compression: "xz"}
+	assert.Equal(t, []string{"partition-boot-xz"}, compressed.ExportPipelineNames())
+}
+
+func TestExportsWithExtras(t *testing.T) {
+	it := defs.ImageType{}
+	it.SetExtrasForTest(
+		[]defs.SysextDef{
+			{Name: "nginx", Format: "erofs"},
+			{Name: "podman", Format: "erofs"},
+		},
+		[]defs.PartitionDef{
+			{Name: "boot", Mountpoint: "/boot", Compression: "xz"},
+		},
+	)
+
+	exports, extraRefs, err := it.ExportsWithExtras([]string{"sysext:nginx", "partition:boot"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"sysext-nginx-erofs", "partition-boot-xz"}, exports)
+	assert.Equal(t, map[string]distro.ExtraRef{
+		"sysext-nginx-erofs": {Type: "sysext", Name: "nginx"},
+		"partition-boot-xz":  {Type: "partition", Name: "boot"},
+	}, extraRefs)
+
+	_, _, err = it.ExportsWithExtras([]string{"sysext:nonexistent"})
+	assert.EqualError(t, err, `unknown extra "sysext:nonexistent"`)
+
+	_, _, err = it.ExportsWithExtras([]string{"nginx"})
+	assert.EqualError(t, err, `invalid extra reference "nginx", expected type:name (e.g. sysext:nginx)`)
+
+	_, _, err = it.ExportsWithExtras([]string{"bogus:nginx"})
+	assert.EqualError(t, err, `unknown extra type "bogus" in "bogus:nginx"`)
+}
