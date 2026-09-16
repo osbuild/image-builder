@@ -27,6 +27,13 @@ type SysextConfig struct {
 	Standalone                bool
 }
 
+type PartitionConfig struct {
+	Name        string
+	Mountpoint  string
+	Filename    string
+	Compression string
+}
+
 type DiskImage struct {
 	Base
 
@@ -36,7 +43,8 @@ type DiskImage struct {
 	Environment        environment.Environment
 	Compression        string
 
-	Sysexts []SysextConfig
+	Sysexts    []SysextConfig
+	Partitions []PartitionConfig
 
 	// Control the VPC subformat use of force_size
 	VPCForceSize *bool
@@ -96,6 +104,21 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline, img.DiskCustomizations)
+
+	for _, sp := range img.Partitions {
+		partPipelineName := PartitionPipelineName(sp.Name, "")
+		partPipeline := manifest.NewPartitionImage(buildPipeline, rawImagePipeline, sp.Mountpoint, img.PartitionTable, partPipelineName)
+		partPipeline.SetFilename(sp.Name + ".raw")
+		var exportPipeline manifest.FilePipeline = partPipeline
+		if sp.Compression != "" {
+			exportPipeline = GetCompressionPipeline(sp.Compression, buildPipeline, partPipeline, PartitionPipelineName(sp.Name, sp.Compression))
+			exportPipeline.SetFilename(fmt.Sprintf("%s.raw.%s", sp.Name, compressionExt(sp.Compression)))
+		}
+		if sp.Filename != "" {
+			exportPipeline.SetFilename(sp.Filename)
+		}
+		exportPipeline.Export()
+	}
 
 	var imagePipeline manifest.FilePipeline
 	switch img.platform.GetImageFormat() {
