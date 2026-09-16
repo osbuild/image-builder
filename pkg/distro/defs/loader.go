@@ -571,8 +571,13 @@ type ImageTypeYAML struct {
 		RequiredOptions  []string `yaml:"required_options"`
 	} `yaml:"blueprint"`
 
+	Extras extrasYAML `yaml:"extras,omitempty"`
+
 	// name is set by the loader
 	name string
+}
+
+type extrasYAML struct {
 }
 
 func (it *ImageTypeYAML) IsOSTreeBasedImageType() bool {
