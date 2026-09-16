@@ -1726,7 +1726,6 @@ image_types:
       kernel_options:
         - "console=tty0"
         - "console=ttyS0,115200n8"
-        - "net.ifnames=0"
         - "netroot=iscsi"
         - "rd.iscsi.firmware=1"
       time_synchronization:
