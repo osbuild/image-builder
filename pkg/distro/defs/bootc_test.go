@@ -1076,6 +1076,7 @@ func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
 	type testCase struct {
 		distro          *BootcDistro
 		archName        string
+		hasGrub2Legacy  bool
 		hasGrub2Inst    bool
 		hasGrub2MBR     bool
 		hasEltoritoBoot bool
@@ -1085,6 +1086,7 @@ func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
 		"x86_64": {
 			distro:          NewTestBootcDistro(t),
 			archName:        "x86_64",
+			hasGrub2Legacy:  true,
 			hasGrub2Inst:    true,
 			hasGrub2MBR:     true,
 			hasEltoritoBoot: true,
@@ -1092,6 +1094,7 @@ func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
 		"aarch64": {
 			distro:          NewTestBootcDistroAarch64(t),
 			archName:        "aarch64",
+			hasGrub2Legacy:  false,
 			hasGrub2Inst:    false,
 			hasGrub2MBR:     false,
 			hasEltoritoBoot: false,
@@ -1112,9 +1115,17 @@ func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
 			mani, err := manifesttest.NewManifestFromBytes(manifestJson)
 			require.NoError(t, err)
 
-			// check bootiso-tree pipeline for grub2.inst stage
+			// check bootiso-tree pipeline for legacy BIOS stages
 			isoTreePipeline := mani.Pipeline("bootiso-tree")
 			require.NotNil(t, isoTreePipeline)
+
+			grub2LegacyStage := isoTreePipeline.Stage("org.osbuild.grub2.iso.legacy")
+			if tc.hasGrub2Legacy {
+				assert.NotNil(t, grub2LegacyStage, "expected grub2.iso.legacy stage for %s", tc.archName)
+			} else {
+				assert.Nil(t, grub2LegacyStage, "unexpected grub2.iso.legacy stage for %s", tc.archName)
+			}
+
 			grub2InstStage := isoTreePipeline.Stage("org.osbuild.grub2.inst")
 			if tc.hasGrub2Inst {
 				assert.NotNil(t, grub2InstStage, "expected grub2.inst stage for %s", tc.archName)
