@@ -79,6 +79,9 @@ type outputTmplData struct {
 	Pipeline struct {
 		ExportName string
 	}
+	Multi struct {
+		Name string
+	}
 	Architecture string
 }
 
@@ -110,7 +113,12 @@ func expandOutputTmpl(tmplStr string, data outputTmplData) (string, error) {
 	return buf.String(), nil
 }
 
-const defaultOutputTmpl = "{{.Distribution.Identifier}}-{{.Image.Type}}-{{.Architecture}}"
+const defaultOutputTmpl = `
+{{- .Distribution.Identifier -}}-
+{{- .Image.Type -}}-
+{{- if .Multi.Name -}}{{- .Multi.Name -}}-{{- end -}}
+{{- .Architecture -}}
+`
 
 // basenameFor returns the basename for directory and filenames
 // for the given imageType. This can be user overriden via userBasename.
@@ -439,10 +447,6 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-	if len(img.ImgType.Exports()) > 1 {
-		name, _ := basenameFor(img, "")
-		return nil, fmt.Errorf("image %q has multiple exports: this is currently unsupported: please report this as a bug", name)
 	}
 	return img, err
 }

@@ -1241,7 +1241,9 @@ func TestExpandOutputTmpl(t *testing.T) {
 		{"{{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}", "sysext-nginx", "centos-9-sysext-nginx-x86_64"},
 		{"plain-name", "", "plain-name"},
 	} {
-		data.Pipeline.ExportName = tc.artifact
+		if tc.artifact != "" {
+			data.Pipeline.ExportName = tc.artifact
+		}
 		got, err := main.ExpandOutputTmpl(tc.tmpl, data)
 		require.NoError(t, err, "template: %s", tc.tmpl)
 		assert.Equal(t, tc.expected, got, "template: %s, artifact: %s", tc.tmpl, tc.artifact)
@@ -1249,6 +1251,12 @@ func TestExpandOutputTmpl(t *testing.T) {
 
 	_, err = main.ExpandOutputTmpl("{{.BadField}}", data)
 	assert.Error(t, err)
+
+	multiData := main.OutputTmplDataFor(res)
+	multiData.Multi.Name = "second-export"
+	got, err := main.ExpandOutputTmpl(main.DefaultOutputTmpl, multiData)
+	require.NoError(t, err)
+	assert.Equal(t, "centos-9-qcow2-second-export-x86_64", got)
 }
 
 // XXX: move into as manifestgen.FakeDepsolve
@@ -1450,6 +1458,275 @@ image_types:
 	for _, line := range strings.Split(strings.TrimSpace(fakeStdout.String()), "\n") {
 		assert.Contains(t, line, "simonos-1", "expected only simonos-1 distros, got: %s", line)
 	}
+}
+
+func TestAllImageTypesHaveSingleExport(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	allImages, err := main.GetAllImages(nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, allImages)
+
+	for _, img := range allImages {
+		exports := img.ImgType.Exports()
+		assert.Equalf(t, 1, len(exports),
+			"%s/%s/%s has %d exports %v, expected 1",
+			img.ImgType.Arch().Distro().Name(),
+			img.ImgType.Name(),
+			img.ImgType.Arch().Name(),
+			len(exports), exports,
+		)
+	}
+}
+
+func makeFakeOsbuildMultiExportScript() string {
+	return `
+cat - > "$0".stdin
+
+output_dir=""
+exports=()
+format=""
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --output-directory)
+      output_dir="$2"
+      shift 2
+      ;;
+    --export)
+      exports+=("$2")
+      shift 2
+      ;;
+    --json)
+      format="json"
+      shift 1
+      ;;
+    *)
+      shift 1
+  esac
+done
+for export in "${exports[@]}"; do
+  mkdir -p "$output_dir/$export"
+  case $export in
+    container)
+      echo "fake-container" > "$output_dir/$export/container.oci.tar"
+      ;;
+    second-export)
+      echo "fake-second" > "$output_dir/$export/artifact.raw"
+      ;;
+    *)
+      echo "Unknown export: $export - add to testscript"
+      exit 1
+      ;;
+  esac
+done
+if [ "$format" = "json" ]; then
+  echo '{"message": "hai"}' >&3
+  echo '{"success": true}'
+fi
+`
+}
+
+func TestBuildIntegrationMultiExport(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	defsDir, repoDir := setupMultiExportDefs(t)
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	outputDir := filepath.Join(t.TempDir(), "output")
+	cacheDir := t.TempDir()
+	currentArch := arch.Current().String()
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"multi-container",
+		"--distro", "testdistro-1",
+		"--cache", cacheDir,
+		"--output-dir", outputDir,
+		"--force-defs-dir", defsDir,
+		"--force-repo-dir", repoDir,
+	})
+	defer restore()
+
+	script := makeFakeOsbuildMultiExportScript()
+	testutil.MockCommand(t, "osbuild", script)
+
+	err := main.Run()
+	require.NoError(t, err)
+
+	// The primary export (container) should use the default naming
+	primaryFile := fmt.Sprintf("testdistro-1-multi-container-%s.oci.tar", currentArch)
+	_, err = os.Stat(filepath.Join(outputDir, primaryFile))
+	assert.NoError(t, err, "primary export file %q missing", primaryFile)
+
+	// The second export should use the multi-output template with the
+	// pipeline name as Multi.Name
+	extraFile := fmt.Sprintf("testdistro-1-multi-container-second-export-%s.raw", currentArch)
+	_, err = os.Stat(filepath.Join(outputDir, extraFile))
+	assert.NoError(t, err, "extra export file %q missing", extraFile)
+
+	// The export pipeline directories should be cleaned up
+	_, err = os.Stat(filepath.Join(outputDir, "container"))
+	assert.True(t, os.IsNotExist(err), "container pipeline dir should be removed")
+	_, err = os.Stat(filepath.Join(outputDir, "second-export"))
+	assert.True(t, os.IsNotExist(err), "second-export dir should be removed")
+}
+
+func setupMultiExportDefs(t *testing.T) (defsDir, repoDir string) {
+	t.Helper()
+
+	defsDir = t.TempDir()
+	repoDir = t.TempDir()
+
+	distroYAML := `---
+distros:
+  - name: testdistro-1
+    distro_like: fedora
+    os_version: "1"
+    release_version: "1"
+    module_platform_id: "platform:t1"
+    default_fs_type: "ext4"
+    defs_path: testdistro
+    runner:
+      name: org.osbuild.fedora45
+      build_packages:
+        - "glibc"
+        - "systemd"
+        - "python3"
+`
+	imageTypesYAML := `---
+image_types:
+  "multi-container":
+    filename: "container.oci.tar"
+    mime_type: "application/x-tar"
+    image_func: "container"
+    bootable: false
+    exports: ["container", "second-export"]
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
+    package_sets:
+      os:
+        - include:
+            - "bash"
+`
+	repoJSON := `{
+  "x86_64": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}],
+  "aarch64": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}]
+}`
+
+	err := os.MkdirAll(filepath.Join(defsDir, "testdistro"), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(defsDir, "testdistro.yaml"), []byte(distroYAML), 0600)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(defsDir, "testdistro", "imagetypes.yaml"), []byte(imageTypesYAML), 0600)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(repoDir, "testdistro-1.json"), []byte(repoJSON), 0600)
+	require.NoError(t, err)
+
+	return defsDir, repoDir
+}
+
+func TestBuildIntegrationMultiExportOutputDirTemplating(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	defsDir, repoDir := setupMultiExportDefs(t)
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	base := t.TempDir()
+	cacheDir := t.TempDir()
+	currentArch := arch.Current().String()
+
+	outputDirTmpl := filepath.Join(base, "{{.Distribution.Identifier}}/{{.Image.Type}}")
+	expectedDir := filepath.Join(base, "testdistro-1/multi-container")
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"multi-container",
+		"--distro", "testdistro-1",
+		"--cache", cacheDir,
+		"--output-dir", outputDirTmpl,
+		"--force-defs-dir", defsDir,
+		"--force-repo-dir", repoDir,
+	})
+	defer restore()
+
+	script := makeFakeOsbuildMultiExportScript()
+	testutil.MockCommand(t, "osbuild", script)
+
+	err := main.Run()
+	require.NoError(t, err)
+
+	primaryFile := fmt.Sprintf("testdistro-1-multi-container-%s.oci.tar", currentArch)
+	_, err = os.Stat(filepath.Join(expectedDir, primaryFile))
+	assert.NoError(t, err, "primary export file %q missing in templated dir", primaryFile)
+
+	extraFile := fmt.Sprintf("testdistro-1-multi-container-second-export-%s.raw", currentArch)
+	_, err = os.Stat(filepath.Join(expectedDir, extraFile))
+	assert.NoError(t, err, "extra export file %q missing in templated dir", extraFile)
+}
+
+func TestBuildIntegrationMultiExportOutputNameTemplating(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	defsDir, repoDir := setupMultiExportDefs(t)
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	outputDir := filepath.Join(t.TempDir(), "output")
+	cacheDir := t.TempDir()
+	currentArch := arch.Current().String()
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"multi-container",
+		"--distro", "testdistro-1",
+		"--cache", cacheDir,
+		"--output-dir", outputDir,
+		"--output-name", "{{.Distribution.Identifier}}{{if .Multi.Name}}-{{.Multi.Name}}{{end}}-{{.Architecture}}",
+		"--force-defs-dir", defsDir,
+		"--force-repo-dir", repoDir,
+	})
+	defer restore()
+
+	script := makeFakeOsbuildMultiExportScript()
+	testutil.MockCommand(t, "osbuild", script)
+
+	err := main.Run()
+	require.NoError(t, err)
+
+	// The primary export uses the template with Multi.Name empty,
+	// so the conditional is skipped.
+	primaryFile := fmt.Sprintf("testdistro-1-%s.oci.tar", currentArch)
+	_, err = os.Stat(filepath.Join(outputDir, primaryFile))
+	assert.NoError(t, err, "primary export file %q missing", primaryFile)
+
+	// Secondary exports use the same template but with Multi.Name
+	// populated from the pipeline name ("second-export").
+	extraFile := fmt.Sprintf("testdistro-1-second-export-%s.raw", currentArch)
+	_, err = os.Stat(filepath.Join(outputDir, extraFile))
+	assert.NoError(t, err, "extra export file %q missing", extraFile)
 }
 
 func TestCacheDirForUidRoot(t *testing.T) {
