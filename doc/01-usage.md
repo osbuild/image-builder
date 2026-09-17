@@ -329,6 +329,36 @@ $ image-builder bootc inspect --ref quay.io/centos-bootc/centos:stream10 --forma
 # ... json output ...
 ```
 
+### `variants`
+
+The `bootc variants` command lists the deployment variants available inside a bootable container. Variants allow container publishers to ship multiple disk or ISO configurations (e.g. different partition layouts, filesystem types, or hardware-specific setups) that users can select at build time with `--bootc-variant`.
+
+```console
+$ image-builder bootc variants --ref quay.io/fedora/fedora-bootc:latest
+btrfs
+plain
+```
+
+The output format can be changed with `--format`. Available formats are `text` (default), `json`, and `yaml`.
+
+#### `bootc-variant`
+
+When building or generating a manifest from a bootable container, the `--bootc-variant` flag selects a deployment variant. If the selected variant provides a `disk.yaml` or `iso.yaml`, that configuration is used; otherwise `image-builder` falls back to the container's default configuration.
+
+```console
+$ sudo image-builder build --bootc-ref quay.io/fedora/fedora-bootc:latest --bootc-variant btrfs qcow2
+# ...
+```
+
+The `--variant` flag on `bootc inspect` works the same way, showing the container data as it would appear with a given variant selected:
+
+```console
+$ image-builder bootc inspect --ref quay.io/fedora/fedora-bootc:latest --variant btrfs
+# ... yaml output ...
+```
+
+Container publishers can add variants by placing configuration files under `/usr/lib/image-builder/bootc/variant.d/<name>/` in the container image. Each variant directory may contain a `disk.yaml` and/or `iso.yaml`.
+
 ## `image-builder version`
 
 The `version` command prints version information about the `image-builder` binary including its dependencies.
