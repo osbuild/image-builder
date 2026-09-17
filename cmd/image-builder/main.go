@@ -76,9 +76,6 @@ type outputTmplData struct {
 	Image struct {
 		Type string
 	}
-	Pipeline struct {
-		ExportName string
-	}
 	Multi struct {
 		Name string
 	}
@@ -93,7 +90,6 @@ func outputTmplDataFor(img *imagefilter.Result) outputTmplData {
 	data.Distribution.MajorVersion = id.MajorVersion
 	data.Distribution.MinorVersion = id.MinorVersion
 	data.Image.Type = img.ImgType.Name()
-	data.Pipeline.ExportName = strings.SplitN(img.ImgType.Filename(), ".", 2)[0]
 	data.Architecture = img.ImgType.Arch().Name()
 	return data
 }

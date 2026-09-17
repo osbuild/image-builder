@@ -1090,7 +1090,7 @@ func TestBuildIntegrationOutputNameTemplating(t *testing.T) {
 		"--distro", "centos-9",
 		"--cache", tmpdir,
 		"--output-dir", outputDir,
-		"--output-name={{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}",
+		"--output-name={{.Distribution.Identifier}}-{{.Image.Type}}-{{.Architecture}}",
 		"--with-manifest",
 		"--with-buildlog",
 	})
@@ -1103,7 +1103,7 @@ func TestBuildIntegrationOutputNameTemplating(t *testing.T) {
 	err := main.Run()
 	require.NoError(t, err)
 
-	prefix := fmt.Sprintf("centos-9-disk-%s", currentArch)
+	prefix := fmt.Sprintf("centos-9-qcow2-%s", currentArch)
 	expectedFiles := []string{
 		prefix + ".osbuild-manifest.json",
 		prefix + ".buildlog",
@@ -1205,8 +1205,6 @@ func TestBasenameFor(t *testing.T) {
 		{"qcow2", "{{.Distribution.Name}}-{{.Distribution.MajorVersion}}", "centos-9"},
 		// template with extension stripping
 		{"qcow2", "{{.Distribution.Identifier}}.qcow2", "centos-9"},
-		// template with artifact
-		{"qcow2", "{{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}", "centos-9-disk-x86_64"},
 	} {
 		res, err := main.GetOneImage("centos-9", tc.imgTypeName, "x86_64", nil)
 		require.NoError(t, err)
@@ -1229,24 +1227,18 @@ func TestExpandOutputTmpl(t *testing.T) {
 	assert.Equal(t, "x86_64", data.Architecture)
 	assert.Equal(t, "centos", data.Distribution.Name)
 	assert.Equal(t, 9, data.Distribution.MajorVersion)
-	assert.Equal(t, "disk", data.Pipeline.ExportName)
 
 	for _, tc := range []struct {
 		tmpl     string
-		artifact string
 		expected string
 	}{
-		{"{{.Distribution.Identifier}}-{{.Image.Type}}-{{.Architecture}}", "", "centos-9-qcow2-x86_64"},
-		{"{{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}", "disk", "centos-9-disk-x86_64"},
-		{"{{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}", "sysext-nginx", "centos-9-sysext-nginx-x86_64"},
-		{"plain-name", "", "plain-name"},
+		{"{{.Distribution.Identifier}}-{{.Image.Type}}-{{.Architecture}}", "centos-9-qcow2-x86_64"},
+		{"{{.Distribution.Name}}-{{.Distribution.MajorVersion}}", "centos-9"},
+		{"plain-name", "plain-name"},
 	} {
-		if tc.artifact != "" {
-			data.Pipeline.ExportName = tc.artifact
-		}
 		got, err := main.ExpandOutputTmpl(tc.tmpl, data)
 		require.NoError(t, err, "template: %s", tc.tmpl)
-		assert.Equal(t, tc.expected, got, "template: %s, artifact: %s", tc.tmpl, tc.artifact)
+		assert.Equal(t, tc.expected, got, "template: %s", tc.tmpl)
 	}
 
 	_, err = main.ExpandOutputTmpl("{{.BadField}}", data)
