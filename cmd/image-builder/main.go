@@ -450,6 +450,11 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		name, _ := basenameFor(img, "")
 		return nil, fmt.Errorf("image %q has multiple exports: this is currently unsupported: please report this as a bug", name)
 	}
+	if len(withExtras) > 0 {
+		if _, _, err := img.ImgType.ExportsWithExtras(withExtras); err != nil {
+			return nil, err
+		}
+	}
 	return img, err
 }
 
