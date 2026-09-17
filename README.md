@@ -288,26 +288,28 @@ to the installed image but are not used at build time to install third-party
 packages.
 
 To change repositories during image build time the command line options
-`--force-data-dir`, `--extra-repo` and `--force-repo` can be used. The repositories
-there will only added during build time and will not be available in the
-installed system (use the above blueprint options if that the goal).
+`--force-repo-dir`, `--extra-repo` and `--force-repo` can be used. The
+repositories there will only be added during build time and will not be
+available in the installed system (use the above blueprint options if that
+is the goal). `--force-data-dir` and `--data-dir` are deprecated aliases for
+`--force-repo-dir`.
 
-Note that both options are targeting advanced users/use-cases and when
+Note that these options are targeting advanced users/use-cases and when
 used wrongly can result in failing image builds or non-booting
 systems.
 
-## Using the force-data-dir switch
+## Using the force-repo-dir switch
 
-When using the `--force-data-dir` flag `image-builder` will look into
-the <datadir>/repositories directory for a file called <distro>.json
-that contains the repositories for the <distro>.
+When using the `--force-repo-dir` flag `image-builder` will look into
+the `<datadir>/repositories` directory for a file called `<distro>.json`
+that contains the repositories for the `<distro>`.
 
-This <distro>.json file is a simple architecture-> repositories mapping
-that looks like [this example](https://github.com/osbuild/images/blob/main/data/repositories/centos-10.json).
+This `<distro>.json` file is a simple architecture → repositories mapping
+that looks like [this example](./data/repositories/centos-10.json).
 
 ### Adding extra repositories during the build
 
-To add one or more extra repositories during the build use:
+To add one or more extra repositories during the build use
 `--extra-repo <baseurl>`, e.g. `--extra-repo file:///path/to/repo`.
 This will make the content of the repository available during image
 building and the dependency solver will pick packages from there as
@@ -323,8 +325,8 @@ option `--force-repo=file:///path/to/repos` can be used.
 When replacing repositories with Katello/Satellite kickstart trees, the host
 system must be subscribed in order to access repositories. Unsubscribed hosts
 can still access kickstart repositories published over HTTP. Keep in mind that
-GPG check is disabled when overriding base repositories. To use GPG, use
-`--data-dir` instead.
+GPG check is disabled when overriding base repositories with `--force-repo`.
+To use GPG, use `--force-repo-dir` with repository definition files instead.
 
 Note that the repositories defined there will be used for all
 dependency solving and there is no safeguards, i.e. one can point to
@@ -334,7 +336,7 @@ caution.
 
 ## Subscriptions
 
-When executing `image-builder-cli` via `podman`, subscription information is
+When executing `image-builder` via `podman`, subscription information is
 passed to the container and used to access Red Hat CDN. As long as the host
 machine is properly subscribed with attached Red Hat Enterprise Linux
 subscription, building RHEL images will work automatically.
