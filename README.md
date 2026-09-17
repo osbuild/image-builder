@@ -41,11 +41,11 @@ $ dnf install image-builder
 You can also install `image-builder` via the go build system.
 
 ```console
-$ go run github.com/osbuild/image-builder-cli/cmd/image-builder@main
+$ go run github.com/osbuild/image-builder/cmd/image-builder@main
 ```
 or install it into `$GOPATH/bin`
 ```console
-$ go install github.com/osbuild/image-builder-cli/cmd/image-builder@main
+$ go install github.com/osbuild/image-builder/cmd/image-builder@main
 ```
 
 Lastly you can use a container:
@@ -344,38 +344,43 @@ above.
 
 ## FAQ
 
-Q: Does this require a backend.
-A: The osbuild binary is used to actually build the images but beyond that
-   no setup is required, i.e. no daemons like osbuild-composer.
+### Does this require a backend?
 
-Q: Can I have custom repository files?
-A: Sure! The repositories are encoded in json in "<distro>-<vesion>.json",
-   files, e.g. "fedora-43.json". See these [examples](https://github.com/osbuild/images/tree/main/data/repositories). Use the "--force-data-dir" switch and
-   place them under "repositories/name-version.json", e.g. for:
-   "--force-data-dir ~/my-project --distro foo-1" a json file must be put under
-   "~/my-project/repositories/foo-1.json.
+The `osbuild` binary is used to actually build the images but beyond that
+no setup is required, i.e. no daemons like osbuild-composer.
 
-Q: What is the relation to [bootc-image-builder](https://github.com/osbuild/bootc-image-builder)?
-A: Both projects are very close. The `bootc-image-builder` focuses on providing
-   image-based artifacts while `image-builder` works with traditional package
-   based inputs. We expect the two projects to merge eventually and they already
-   share a lot of code.
+### Can I have custom repository files?
 
-Q: I get `Warnings during manifest creation` and the build stops, what can I do?
-A: This is a safety feature so that in e.g. CI systems warnings cannot
-   go unnoticed. Just add `--ignore-warnings` to the build they are
-   harmless.
+Yes. Repositories are encoded as JSON in `<distro>-<version>.json` files,
+for example `fedora-43.json`. See these
+[examples](./data/repositories). Use `--force-repo-dir` and place the
+files under `repositories/<name>-<version>.json`. For example, with
+`--force-repo-dir ~/my-project --distro foo-1` the JSON file must be at
+`~/my-project/repositories/foo-1.json`.
+
+### What is the relation to bootc-image-builder?
+
+Both projects are very close. [`bootc-image-builder`](https://github.com/osbuild/bootc-image-builder)
+focuses on providing image-based artifacts while `image-builder` works with
+traditional package based inputs. We expect the two projects to merge
+eventually and they already share a lot of code.
+
+### I get "Warnings during manifest creation" and the build stops, what can I do?
+
+This is a safety feature so that in e.g. CI systems warnings cannot
+go unnoticed. Add `--ignore-warnings` to the build if the warnings are
+harmless.
 
 ## Project
 
  * **Website**: <https://www.osbuild.org>
- * **Bug Tracker**: <https://github.com/osbuild/image-builder-cli/issues>
+ * **Bug Tracker**: <https://github.com/osbuild/image-builder/issues>
  * **Discussions**: <https://github.com/orgs/osbuild/discussions>
  * **Matrix (chat)**: [Image Builder channel on Fedora Chat](https://matrix.to/#/#image-builder:fedoraproject.org?web-instance[element.io]=chat.fedoraproject.org)
- * **Changelog**: <https://github.com/osbuild/image-builder-cli/releases>
+ * **Changelog**: <https://github.com/osbuild/image-builder/releases>
 
 ### Repository
 
- - **web**:   <https://github.com/osbuild/image-builder-cli>
- - **https**: `https://github.com/osbuild/image-builder-cli.git`
- - **ssh**:   `git@github.com:osbuild/image-builder-cli.git`
+ - **web**:   <https://github.com/osbuild/image-builder>
+ - **https**: `https://github.com/osbuild/image-builder.git`
+ - **ssh**:   `git@github.com:osbuild/image-builder.git`
