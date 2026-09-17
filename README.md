@@ -300,12 +300,12 @@ systems.
 
 ## Using the force-repo-dir switch
 
-When using the `--force-repo-dir` flag `image-builder` will look into
-the `<datadir>/repositories` directory for a file called `<distro>.json`
-that contains the repositories for the `<distro>`.
+When using the `--force-repo-dir` flag `image-builder` will look directly
+inside `<repodir>` for a file called `<distro>.yaml` that contains the
+repositories for the `<distro>`. JSON files (`<distro>.json`) still work.
 
-This `<distro>.json` file is a simple architecture → repositories mapping
-that looks like [this example](./data/repositories/centos-10.json).
+This file is a simple architecture → repositories mapping that looks like
+[this example](./data/repositories/centos-10.json).
 
 ### Adding extra repositories during the build
 
@@ -353,12 +353,12 @@ no setup is required, i.e. no daemons like osbuild-composer.
 
 ### Can I have custom repository files?
 
-Yes. Repositories are encoded as JSON in `<distro>-<version>.json` files,
-for example `fedora-43.json`. See these
+Yes. Repositories are encoded as YAML in `<distro>.yaml` files (JSON
+still works), for example `fedora-43.yaml`. See these
 [examples](./data/repositories). Use `--force-repo-dir` and place the
-files under `repositories/<name>-<version>.json`. For example, with
-`--force-repo-dir ~/my-project --distro foo-1` the JSON file must be at
-`~/my-project/repositories/foo-1.json`.
+files directly in that directory. For example, with
+`--force-repo-dir ~/my-project --distro foo-1` the file must be at
+`~/my-project/foo-1.yaml`.
 
 ### What is the relation to bootc-image-builder?
 
