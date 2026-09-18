@@ -219,7 +219,9 @@
         "cloud-qcow2",
         "cloud-ec2",
         "cloud-azure",
-        "cloud-gce"
+        "cloud-gce",
+        "rhivos-qcow2",
+        "rhivos-core-qcow2"
       ]
     }
   },
