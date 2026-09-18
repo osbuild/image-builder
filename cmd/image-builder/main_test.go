@@ -1179,6 +1179,94 @@ func TestBuildIntegrationOutputDirTemplating(t *testing.T) {
 	}
 }
 
+func TestDefaultOutputTmplBackwardCompat(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	res, err := main.GetOneImage("centos-9", "qcow2", "x86_64", nil)
+	require.NoError(t, err)
+
+	data := main.OutputTmplDataFor(res)
+	got, err := main.ExpandOutputTmpl(main.DefaultOutputTmpl, data)
+	require.NoError(t, err)
+	assert.Equal(t, "centos-9-qcow2-x86_64", got,
+		"default output template must produce {distro}-{imgtype}-{arch} when no extras are set")
+}
+
+func TestBuildIntegrationSingleOutput(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	tmpdir := t.TempDir()
+	outputDir := filepath.Join(tmpdir, "output")
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		"--distro", "centos-9",
+		"--cache", tmpdir,
+		"--output-dir", outputDir,
+	})
+	defer restore()
+
+	script := makeFakeOsbuildScript()
+	testutil.MockCommand(t, "osbuild", script)
+
+	err := main.Run()
+	require.NoError(t, err)
+
+	successCount := strings.Count(fakeStdout.String(), "Image build successful:")
+	assert.Equal(t, 1, successCount,
+		"without extras, build must produce exactly one output, got stdout: %s", fakeStdout.String())
+
+	currentArch := arch.Current().String()
+	expectedImage := fmt.Sprintf("centos-9-qcow2-%s.qcow2", currentArch)
+	_, err = os.Stat(filepath.Join(outputDir, expectedImage))
+	assert.NoError(t, err, "expected image file %q in output dir", expectedImage)
+}
+
+func TestOutputFilenameStable(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	for _, tc := range []struct {
+		distro       string
+		imgType      string
+		expectedFile string
+	}{
+		{"centos-9", "qcow2", "centos-9-qcow2-x86_64.qcow2"},
+		{"centos-9", "minimal-raw", "centos-9-minimal-raw-x86_64.raw.xz"},
+		{"fedora-44", "minimal-raw-xz", "fedora-44-minimal-raw-xz-x86_64.raw.xz"},
+		{"fedora-44", "minimal-raw-zst", "fedora-44-minimal-raw-zst-x86_64.raw.zst"},
+		{"centos-9", "vmdk", "centos-9-vmdk-x86_64.vmdk"},
+		{"centos-9", "vhd", "centos-9-vhd-x86_64.vhd"},
+	} {
+		t.Run(fmt.Sprintf("%s/%s", tc.distro, tc.imgType), func(t *testing.T) {
+			res, err := main.GetOneImage(tc.distro, tc.imgType, "x86_64", nil)
+			require.NoError(t, err)
+
+			basename, err := main.BasenameFor(res, "")
+			require.NoError(t, err)
+
+			filename := res.ImgType.Filename()
+			parts := strings.SplitN(filename, ".", 2)
+			require.True(t, len(parts) > 1, "filename %q has no extension", filename)
+
+			got := basename + "." + parts[1]
+			assert.Equal(t, tc.expectedFile, got)
+		})
+	}
+}
+
 func TestBasenameFor(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
