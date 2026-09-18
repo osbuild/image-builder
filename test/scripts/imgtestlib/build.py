@@ -9,7 +9,6 @@ from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
 
-
 def resolve_bootc_options(config: dict, distro: str, arch: str, image_type: str = None) -> dict:
     bootc = dict(config.get("options", {}).get("bootc", {}))
     if not distro.startswith("bootc-"):
@@ -71,7 +70,7 @@ def config_to_cli_args(config: dict, bootc: dict) -> List[str]:
 
 
 @log_section("Building image")
-def build_image(distro, arch, image_type, config_path):
+def build_image(distro, arch, image_type, config_path, export_pipeline):
     with open(config_path, "r", encoding="utf-8") as config_file:
         config = json.load(config_file)
 
@@ -113,9 +112,12 @@ def build_image(distro, arch, image_type, config_path):
     if os.path.exists(osbuild_manifest) and not os.path.exists(manifest_path):
         os.symlink(f"{build_name}.osbuild-manifest.json", manifest_path)
 
+    if not export_pipeline:
+        raise ValueError("build_image: export-pipeline is required")
+
     with open(manifest_path, "r", encoding="utf-8") as manifest_fp:
         manifest_data = json.load(manifest_fp)
-    manifest_id = get_manifest_id(manifest_data)
+    manifest_id = get_manifest_id(manifest_data, export_pipeline=export_pipeline)
 
     osbuild_ver, _ = runcmd(["osbuild", "--version"])
 
@@ -130,6 +132,7 @@ def build_image(distro, arch, image_type, config_path):
         "image-type": image_type,
         "config": config_name,
         "manifest-checksum": manifest_id,
+        "export-pipeline": export_pipeline,
         "osbuild-version": osbuild_ver.decode().strip(),
         "osbuild-commit": osbuild_commit,
         "commit": os.environ.get("CI_COMMIT_SHA", "N/A"),
@@ -156,12 +159,27 @@ def write_build_info(build_path: str, data: Dict):
         json.dump(data, info_fp, indent=2)
 
 
-def get_manifest_id(manifest_data):
-    md = json.dumps(manifest_data).encode()
+def osbuild_manifest_body(manifest_data):
+    if isinstance(manifest_data, dict) and "manifest" in manifest_data:
+        return manifest_data["manifest"]
+    return manifest_data
+
+
+def get_manifest_id(manifest_data, export_pipeline: str):
+    if not export_pipeline:
+        raise ValueError("get_manifest_id: export-pipeline is required")
+
+    manifest_body = osbuild_manifest_body(manifest_data)
+    md = json.dumps(manifest_body).encode()
     out, _ = runcmd(["osbuild", "--inspect", "-"], stdin=md)
     data = json.loads(out)
-    # last stage ID depends on all previous stage IDs, so we can use it as a manifest ID
-    return data["pipelines"][-1]["stages"][-1]["id"]
+    for pipeline in data["pipelines"]:
+        if pipeline["name"] == export_pipeline:
+            stages = pipeline.get("stages", [])
+            if not stages:
+                raise ValueError(f"export pipeline {export_pipeline!r} has no stages")
+            return stages[-1]["id"]
+    raise ValueError(f"export pipeline {export_pipeline!r} not found in manifest")
 
 
 def gen_build_name(distro, arch, image_type, config_name):

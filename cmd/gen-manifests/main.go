@@ -57,11 +57,12 @@ func (e *panicError) Error() string {
 }
 
 type buildRequest struct {
-	Distro       string                   `json:"distro,omitempty"`
-	Arch         string                   `json:"arch,omitempty"`
-	ImageType    string                   `json:"image-type,omitempty"`
-	Repositories []rpmmd.RepoConfig       `json:"repositories,omitempty"`
-	Config       *buildconfig.BuildConfig `json:"config"`
+	Distro         string                   `json:"distro,omitempty"`
+	Arch           string                   `json:"arch,omitempty"`
+	ImageType      string                   `json:"image-type,omitempty"`
+	ExportPipeline string                   `json:"export-pipeline,omitempty"`
+	Repositories   []rpmmd.RepoConfig       `json:"repositories,omitempty"`
+	Config         *buildconfig.BuildConfig `json:"config"`
 }
 
 type BuildDependency struct {
@@ -227,6 +228,14 @@ func loadImgConfig(configPath string, opts *buildconfig.Options) *BuildConfigs {
 
 type manifestJob func(chan string) error
 
+func exportPipelineForImageType(imgType distro.ImageType, context string) (string, error) {
+	exports := imgType.Exports()
+	if len(exports) == 0 {
+		return "", fmt.Errorf("[%s] image type %q has no export pipeline", context, imgType.Name())
+	}
+	return exports[0], nil
+}
+
 func makeManifestJob(
 	bc *buildconfig.BuildConfig,
 	imgType distro.ImageType,
@@ -384,12 +393,17 @@ func makeManifestJob(
 			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
 		}
 
+		exportPipeline, err := exportPipelineForImageType(imgType, filename)
+		if err != nil {
+			return err
+		}
 		request := buildRequest{
-			Distro:       distribution.Name(),
-			Arch:         archName,
-			ImageType:    imgType.Name(),
-			Repositories: allRepos,
-			Config:       bc,
+			Distro:         distribution.Name(),
+			Arch:           archName,
+			ImageType:      imgType.Name(),
+			ExportPipeline: exportPipeline,
+			Repositories:   allRepos,
+			Config:         bc,
 		}
 		if cs != nil {
 			err = cs.recordManifestChecksum(mfs, depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, request, filename, metadata)
@@ -603,7 +617,11 @@ func main() {
 					}
 
 					if dryRun {
-						fmt.Printf("%s,%s,%s,%s\n", distribution.Name(), archName, imgType.Name(), itConfig.Name)
+						exportPipeline, err := exportPipelineForImageType(imgType, itConfig.Name)
+						if err != nil {
+							panic(err)
+						}
+						fmt.Printf("%s,%s,%s,%s,%s\n", distribution.Name(), archName, imgType.Name(), itConfig.Name, exportPipeline)
 					} else {
 						job := makeManifestJob(itConfig, imgType, distribution, repos, archName, cacheRoot, outputDir, contentResolve, metadata, tmpdirRoot, false, "", cs)
 						jobs = append(jobs, job)
@@ -671,7 +689,11 @@ func main() {
 					}
 
 					if dryRun {
-						fmt.Printf("%s,%s,%s,%s\n", distribution.Name(), archName, imgType.Name(), itConfig.Name)
+						exportPipeline, err := exportPipelineForImageType(imgType, itConfig.Name)
+						if err != nil {
+							panic(err)
+						}
+						fmt.Printf("%s,%s,%s,%s,%s\n", distribution.Name(), archName, imgType.Name(), itConfig.Name, exportPipeline)
 					} else {
 						var repos []rpmmd.RepoConfig
 						job := makeManifestJob(itConfig, imgType, distribution, repos, archName, cacheRoot, outputDir, contentResolve, metadata, tmpdirRoot, bootcRemote, bootcInstallerRef, cs)
