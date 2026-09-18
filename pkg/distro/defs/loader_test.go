@@ -1925,3 +1925,185 @@ distros:
 	require.NoError(t, err)
 	assert.Nil(t, d4, "loader2 should not find distro-a")
 }
+
+func TestSysexts(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      sysexts:
+        my-ext:
+          package_sets:
+            - include: [vim, git]
+              exclude: [nano]
+        other-ext:
+          paths: ["/usr"]
+          exclude_paths: ["/usr/share/doc"]
+          package_sets:
+            - include: [htop]
+`
+	it := makeTestImageType(t, fakeYAML)
+	sysexts := it.Sysexts(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+
+	require.Len(t, sysexts, 2)
+	assert.Equal(t, "my-ext", sysexts[0].Name)
+	assert.Equal(t, rpmmd.PackageSet{
+		Include: []string{"git", "vim"},
+		Exclude: []string{"nano"},
+	}, sysexts[0].Packages)
+	assert.Equal(t, []string{"/usr", "/opt"}, sysexts[0].Paths, "default paths")
+	assert.Nil(t, sysexts[0].ExcludePaths)
+
+	assert.Equal(t, "other-ext", sysexts[1].Name)
+	assert.Equal(t, rpmmd.PackageSet{
+		Include: []string{"htop"},
+	}, sysexts[1].Packages)
+	assert.Equal(t, []string{"/usr"}, sysexts[1].Paths, "custom paths")
+	assert.Equal(t, []string{"/usr/share/doc"}, sysexts[1].ExcludePaths)
+}
+
+func TestSysextsWithConditions(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      sysexts:
+        cond-ext:
+          package_sets:
+            - include: [base-pkg]
+              conditions:
+                "add on test-distro":
+                  when:
+                    distro_name: "test-distro"
+                  append:
+                    include: [conditional-pkg]
+                "add on other-distro":
+                  when:
+                    distro_name: "other-distro"
+                  append:
+                    include: [other-pkg]
+`
+	it := makeTestImageType(t, fakeYAML)
+
+	sysexts := it.Sysexts(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+	require.Len(t, sysexts, 1)
+	assert.Equal(t, "cond-ext", sysexts[0].Name)
+	assert.Equal(t, []string{"base-pkg", "conditional-pkg"}, sysexts[0].Packages.Include)
+}
+
+func TestSysextsPackageConf(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      sysexts:
+        merged-ext:
+          package_sets:
+            - include: [htop]
+        standalone-ext:
+          package_sets:
+            - include: [nginx]
+          package_conf:
+            standalone: true
+`
+	it := makeTestImageType(t, fakeYAML)
+	sysexts := it.Sysexts(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+
+	require.Len(t, sysexts, 2)
+	assert.False(t, sysexts[0].Standalone, "merged-ext should not omit depsolve reference by default")
+	assert.True(t, sysexts[1].Standalone, "standalone-ext should omit depsolve reference")
+}
+
+func TestSysextsEmpty(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    filename: foo
+    image_func: disk
+`
+	it := makeTestImageType(t, fakeYAML)
+	sysexts := it.Sysexts(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+	assert.Empty(t, sysexts)
+}
+
+func TestPartitions(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      partitions:
+        boot:
+          mountpoint: /boot
+          filename: boot.img
+          compression: xz
+        rootfs:
+          mountpoint: /
+`
+	it := makeTestImageType(t, fakeYAML)
+	parts := it.Partitions()
+
+	require.Len(t, parts, 2)
+	assert.Equal(t, "boot", parts[0].Name)
+	assert.Equal(t, "/boot", parts[0].Mountpoint)
+	assert.Equal(t, "boot.img", parts[0].Filename)
+	assert.Equal(t, "xz", parts[0].Compression)
+	assert.Equal(t, "rootfs", parts[1].Name)
+	assert.Equal(t, "/", parts[1].Mountpoint)
+	assert.Equal(t, "", parts[1].Filename)
+	assert.Equal(t, "", parts[1].Compression)
+}
+
+func TestPartitionsEmpty(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    filename: foo
+    image_func: disk
+`
+	it := makeTestImageType(t, fakeYAML)
+	parts := it.Partitions()
+	assert.Empty(t, parts)
+}
+
+func TestSysextDefExportPipelineNames(t *testing.T) {
+	def := defs.SysextDef{Name: "nginx", Format: "erofs"}
+	assert.Equal(t, []string{"sysext-nginx-erofs"}, def.ExportPipelineNames())
+}
+
+func TestPartitionDefExportPipelineNames(t *testing.T) {
+	plain := defs.PartitionDef{Name: "rootfs", Mountpoint: "/"}
+	assert.Equal(t, []string{"partition-rootfs"}, plain.ExportPipelineNames())
+
+	compressed := defs.PartitionDef{Name: "boot", Mountpoint: "/boot", Compression: "xz"}
+	assert.Equal(t, []string{"partition-boot-xz"}, compressed.ExportPipelineNames())
+}
+
+func TestExportsWithExtras(t *testing.T) {
+	it := defs.ImageType{}
+	it.SetExtrasForTest(
+		[]defs.SysextDef{
+			{Name: "nginx", Format: "erofs"},
+			{Name: "podman", Format: "erofs"},
+		},
+		[]defs.PartitionDef{
+			{Name: "boot", Mountpoint: "/boot", Compression: "xz"},
+		},
+	)
+
+	exports, extraRefs, err := it.ExportsWithExtras([]string{"sysext:nginx", "partition:boot"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"sysext-nginx-erofs", "partition-boot-xz"}, exports)
+	assert.Equal(t, map[string]distro.ExtraRef{
+		"sysext-nginx-erofs": {Type: "sysext", Name: "nginx"},
+		"partition-boot-xz":  {Type: "partition", Name: "boot"},
+	}, extraRefs)
+
+	_, _, err = it.ExportsWithExtras([]string{"sysext:nonexistent"})
+	assert.EqualError(t, err, `unknown extra "sysext:nonexistent"`)
+
+	_, _, err = it.ExportsWithExtras([]string{"nginx"})
+	assert.EqualError(t, err, `invalid extra reference "nginx", expected type:name (e.g. sysext:nginx)`)
+
+	_, _, err = it.ExportsWithExtras([]string{"bogus:nginx"})
+	assert.EqualError(t, err, `unknown extra type "bogus" in "bogus:nginx"`)
+}

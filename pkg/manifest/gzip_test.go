@@ -17,7 +17,7 @@ func TestGzipSerialize(t *testing.T) {
 
 	// setup
 	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
-	gzipPipeline := manifest.NewGzip(build, rawImage)
+	gzipPipeline := manifest.NewGzip(build, rawImage, "")
 	gzipPipeline.SetFilename("filename.gz")
 
 	// run
@@ -31,4 +31,19 @@ func TestGzipSerialize(t *testing.T) {
 	assert.Equal(t, &osbuild.GzipStageOptions{
 		Filename: "filename.gz",
 	}, gzipStage.Options.(*osbuild.GzipStageOptions))
+}
+
+func TestGzipSerializeCustomName(t *testing.T) {
+	mani := manifest.New()
+	runner := &runner.Linux{}
+	build := manifest.NewBuild(&mani, runner, nil, nil)
+
+	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
+	gzipPipeline := manifest.NewGzip(build, rawImage, "my-gzip")
+	gzipPipeline.SetFilename("filename.gz")
+
+	osbuildPipeline, err := manifest.Serialize(gzipPipeline)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "my-gzip", osbuildPipeline.Name)
 }

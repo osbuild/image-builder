@@ -117,6 +117,17 @@ func (t *bootcImageType) Exports() []string {
 	return t.ImageTypeYAML.Exports
 }
 
+func (t *bootcImageType) Extras() []string {
+	return nil
+}
+
+func (t *bootcImageType) ExportsWithExtras(refs []string) ([]string, map[string]distro.ExtraRef, error) {
+	if len(refs) > 0 {
+		return nil, nil, fmt.Errorf("image type %q does not support extras", t.Name())
+	}
+	return t.Exports(), nil, nil
+}
+
 func (t *bootcImageType) SupportedBlueprintOptions() []string {
 	// The blueprint contains a few fields that are essentially metadata and
 	// not configuration / customizations. These should always be implicitly

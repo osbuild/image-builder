@@ -47,3 +47,8 @@ func (t *imageType) GetDefaultImageConfig() *distro.ImageConfig {
 func ImageTypeCheckOptions(it *imageType, bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
 	return it.checkOptions(bp, options)
 }
+
+func (t *imageType) SetExtrasForTest(sysexts []SysextDef, partitions []PartitionDef) {
+	t.sysexts = sysexts
+	t.partitions = partitions
+}
