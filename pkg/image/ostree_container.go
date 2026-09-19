@@ -68,7 +68,9 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	)
 	serverPipeline.OSTreeCommitServerCustomizations = img.OSTreeCommitServerCustomizations
 	serverPipeline.Language = img.ContainerLanguage
-	serverPipeline.RPMKeysBinary = img.OSCustomizations.RPMKeysBinary
+	if img.OSCustomizations.BaseRPMOptions.RPMKeys != nil {
+		serverPipeline.RPMKeysBinary = img.OSCustomizations.BaseRPMOptions.RPMKeys.BinPath
+	}
 
 	containerPipeline := manifest.NewOCIContainer(buildPipeline, serverPipeline)
 	containerPipeline.OCIContainerCustomizations = img.OCIContainerCustomizations

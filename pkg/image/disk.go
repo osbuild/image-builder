@@ -16,6 +16,24 @@ import (
 	"github.com/osbuild/image-builder/pkg/runner"
 )
 
+type SysextConfig struct {
+	Name                      string
+	Format                    string
+	ExtensionReleaseID        string
+	ExtensionReleaseVersionID string
+	Paths                     []string
+	ExcludePaths              []string
+	PackageSet                rpmmd.PackageSet
+	Standalone                bool
+}
+
+type PartitionConfig struct {
+	Name        string
+	Mountpoint  string
+	Filename    string
+	Compression string
+}
+
 type DiskImage struct {
 	Base
 
@@ -24,6 +42,9 @@ type DiskImage struct {
 	DiskCustomizations manifest.DiskCustomizations
 	Environment        environment.Environment
 	Compression        string
+
+	Sysexts    []SysextConfig
+	Partitions []PartitionConfig
 
 	// Control the VPC subformat use of force_size
 	VPCForceSize *bool
@@ -59,7 +80,45 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSVersion = img.OSVersion
 	osPipeline.OSNick = img.OSNick
 
+	for _, sysext := range img.Sysexts {
+		var depsolveRef manifest.Pipeline
+		if !sysext.Standalone {
+			depsolveRef = osPipeline
+		}
+		sp := manifest.NewSysextPipelines(buildPipeline, img.platform, repos, osPipeline, depsolveRef, sysext.Name)
+		sp.Tree.Customizations.PackageSet = sysext.PackageSet
+		sp.Tree.Customizations.BaseRPMOptions = img.OSCustomizations.BaseRPMOptions.Clone()
+		sp.Prep.Customizations.Paths = sysext.Paths
+		sp.Prep.Customizations.ExcludePaths = sysext.ExcludePaths
+		sp.Prep.Customizations.ExtensionRelease.Vars.ID = sysext.ExtensionReleaseID
+		sp.Prep.Customizations.ExtensionRelease.Vars.VersionID = sysext.ExtensionReleaseVersionID
+
+		switch sysext.Format {
+		case "erofs":
+			erofsPipeline := manifest.NewErofs(buildPipeline, sp.Prep, SysextPipelineName(sysext.Name, sysext.Format))
+			erofsPipeline.SetFilename("sysext-" + sysext.Name + ".erofs")
+			erofsPipeline.Export()
+		default:
+			return nil, fmt.Errorf("unsupported sysext format %q for %q", sysext.Format, sysext.Name)
+		}
+	}
+
 	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline, img.DiskCustomizations)
+
+	for _, sp := range img.Partitions {
+		partPipelineName := PartitionPipelineName(sp.Name, "")
+		partPipeline := manifest.NewPartitionImage(buildPipeline, rawImagePipeline, sp.Mountpoint, img.PartitionTable, partPipelineName)
+		partPipeline.SetFilename(sp.Name + ".raw")
+		var exportPipeline manifest.FilePipeline = partPipeline
+		if sp.Compression != "" {
+			exportPipeline = GetCompressionPipeline(sp.Compression, buildPipeline, partPipeline, PartitionPipelineName(sp.Name, sp.Compression))
+			exportPipeline.SetFilename(fmt.Sprintf("%s.raw.%s", sp.Name, compressionExt(sp.Compression)))
+		}
+		if sp.Filename != "" {
+			exportPipeline.SetFilename(sp.Filename)
+		}
+		exportPipeline.Export()
+	}
 
 	var imagePipeline manifest.FilePipeline
 	switch img.platform.GetImageFormat() {
@@ -122,7 +181,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		panic("invalid image format for image kind")
 	}
 
-	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, imagePipeline)
+	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, imagePipeline, "")
 	compressionPipeline.SetFilename(img.filename)
 
 	return compressionPipeline.Export(), nil

@@ -1402,3 +1402,104 @@ partition_table:
 		})
 	}
 }
+
+func newTestBootcDistroWithExtras(t *testing.T) *BootcDistro {
+	t.Helper()
+	d, err := NewBootc("bootc", &bootc.Info{
+		Imgref:        "example.com/containers/distro-bootc:version12",
+		ImageID:       "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+		Arch:          "amd64",
+		DefaultRootFs: "xfs",
+		Size:          100 * datasizes.MiB,
+		OSInfo: &osinfo.Info{
+			OSRelease: osinfo.OSRelease{
+				Name:      "DistroID",
+				ID:        "distroID",
+				VersionID: "83",
+			},
+			KernelInfo: &osinfo.KernelInfo{
+				Version: "6.17.7-300.fc43.x86_64",
+			},
+			ExtrasInfo: osinfo.ExtrasInfo{
+				Partitions: map[string]osinfo.ExtrasPartitionInfo{
+					"boot": {
+						Mountpoint:  "/boot",
+						Filename:    "boot.img",
+						Compression: "xz",
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	return d
+}
+
+func TestBootcExtrasPartitions(t *testing.T) {
+	d := newTestBootcDistroWithExtras(t)
+
+	archi, err := d.GetArch("x86_64")
+	require.NoError(t, err)
+
+	imgType, err := archi.GetImageType("qcow2")
+	require.NoError(t, err)
+
+	extras := imgType.Extras()
+	assert.Equal(t, []string{"partition:boot"}, extras)
+}
+
+func TestBootcExtrasNoExtras(t *testing.T) {
+	d := NewTestBootcDistro(t)
+
+	archi, err := d.GetArch("x86_64")
+	require.NoError(t, err)
+
+	imgType, err := archi.GetImageType("qcow2")
+	require.NoError(t, err)
+
+	extras := imgType.Extras()
+	assert.Nil(t, extras)
+}
+
+func TestBootcExportsWithExtras(t *testing.T) {
+	d := newTestBootcDistroWithExtras(t)
+
+	archi, err := d.GetArch("x86_64")
+	require.NoError(t, err)
+
+	imgType, err := archi.GetImageType("qcow2")
+	require.NoError(t, err)
+
+	exports, extraRefs, err := imgType.ExportsWithExtras([]string{"partition:boot"})
+	require.NoError(t, err)
+
+	assert.Contains(t, exports, "partition-boot-xz")
+	assert.Contains(t, extraRefs, "partition-boot-xz")
+	assert.Equal(t, distro.ExtraRef{Type: "partition", Name: "boot"}, extraRefs["partition-boot-xz"])
+}
+
+func TestBootcExportsWithExtrasRejectsUnknown(t *testing.T) {
+	d := newTestBootcDistroWithExtras(t)
+
+	archi, err := d.GetArch("x86_64")
+	require.NoError(t, err)
+
+	imgType, err := archi.GetImageType("qcow2")
+	require.NoError(t, err)
+
+	_, _, err = imgType.ExportsWithExtras([]string{"partition:nonexistent"})
+	assert.ErrorContains(t, err, `unknown extra "partition:nonexistent"`)
+}
+
+func TestBootcExportsWithExtrasRejectsSysext(t *testing.T) {
+	d := newTestBootcDistroWithExtras(t)
+
+	archi, err := d.GetArch("x86_64")
+	require.NoError(t, err)
+
+	imgType, err := archi.GetImageType("qcow2")
+	require.NoError(t, err)
+
+	_, _, err = imgType.ExportsWithExtras([]string{"sysext:nginx"})
+	assert.ErrorContains(t, err, `unsupported extra type "sysext" for bootc images`)
+}

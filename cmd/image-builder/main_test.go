@@ -1090,7 +1090,7 @@ func TestBuildIntegrationOutputNameTemplating(t *testing.T) {
 		"--distro", "centos-9",
 		"--cache", tmpdir,
 		"--output-dir", outputDir,
-		"--output-name={{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}",
+		"--output-name={{.Distribution.Name}}-{{.Distribution.MajorVersion}}-{{.Architecture}}",
 		"--with-manifest",
 		"--with-buildlog",
 	})
@@ -1103,7 +1103,7 @@ func TestBuildIntegrationOutputNameTemplating(t *testing.T) {
 	err := main.Run()
 	require.NoError(t, err)
 
-	prefix := fmt.Sprintf("centos-9-disk-%s", currentArch)
+	prefix := fmt.Sprintf("centos-9-%s", currentArch)
 	expectedFiles := []string{
 		prefix + ".osbuild-manifest.json",
 		prefix + ".buildlog",
@@ -1179,6 +1179,94 @@ func TestBuildIntegrationOutputDirTemplating(t *testing.T) {
 	}
 }
 
+func TestDefaultOutputTmplBackwardCompat(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	res, err := main.GetOneImage("centos-9", "qcow2", "x86_64", nil)
+	require.NoError(t, err)
+
+	data := main.OutputTmplDataFor(res)
+	got, err := main.ExpandOutputTmpl(main.DefaultOutputTmpl, data)
+	require.NoError(t, err)
+	assert.Equal(t, "centos-9-qcow2-x86_64", got,
+		"default output template must produce {distro}-{imgtype}-{arch} when no extras are set")
+}
+
+func TestBuildIntegrationSingleOutput(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	tmpdir := t.TempDir()
+	outputDir := filepath.Join(tmpdir, "output")
+	restore = main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		"--distro", "centos-9",
+		"--cache", tmpdir,
+		"--output-dir", outputDir,
+	})
+	defer restore()
+
+	script := makeFakeOsbuildScript()
+	testutil.MockCommand(t, "osbuild", script)
+
+	err := main.Run()
+	require.NoError(t, err)
+
+	successCount := strings.Count(fakeStdout.String(), "Image build successful:")
+	assert.Equal(t, 1, successCount,
+		"without extras, build must produce exactly one output, got stdout: %s", fakeStdout.String())
+
+	currentArch := arch.Current().String()
+	expectedImage := fmt.Sprintf("centos-9-qcow2-%s.qcow2", currentArch)
+	_, err = os.Stat(filepath.Join(outputDir, expectedImage))
+	assert.NoError(t, err, "expected image file %q in output dir", expectedImage)
+}
+
+func TestOutputFilenameStable(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	for _, tc := range []struct {
+		distro       string
+		imgType      string
+		expectedFile string
+	}{
+		{"centos-9", "qcow2", "centos-9-qcow2-x86_64.qcow2"},
+		{"centos-9", "minimal-raw", "centos-9-minimal-raw-x86_64.raw.xz"},
+		{"fedora-44", "minimal-raw-xz", "fedora-44-minimal-raw-xz-x86_64.raw.xz"},
+		{"fedora-44", "minimal-raw-zst", "fedora-44-minimal-raw-zst-x86_64.raw.zst"},
+		{"centos-9", "vmdk", "centos-9-vmdk-x86_64.vmdk"},
+		{"centos-9", "vhd", "centos-9-vhd-x86_64.vhd"},
+	} {
+		t.Run(fmt.Sprintf("%s/%s", tc.distro, tc.imgType), func(t *testing.T) {
+			res, err := main.GetOneImage(tc.distro, tc.imgType, "x86_64", nil)
+			require.NoError(t, err)
+
+			basename, err := main.BasenameFor(res, "")
+			require.NoError(t, err)
+
+			filename := res.ImgType.Filename()
+			parts := strings.SplitN(filename, ".", 2)
+			require.True(t, len(parts) > 1, "filename %q has no extension", filename)
+
+			got := basename + "." + parts[1]
+			assert.Equal(t, tc.expectedFile, got)
+		})
+	}
+}
+
 func TestBasenameFor(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
@@ -1205,8 +1293,6 @@ func TestBasenameFor(t *testing.T) {
 		{"qcow2", "{{.Distribution.Name}}-{{.Distribution.MajorVersion}}", "centos-9"},
 		// template with extension stripping
 		{"qcow2", "{{.Distribution.Identifier}}.qcow2", "centos-9"},
-		// template with artifact
-		{"qcow2", "{{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}", "centos-9-disk-x86_64"},
 	} {
 		res, err := main.GetOneImage("centos-9", tc.imgTypeName, "x86_64", nil)
 		require.NoError(t, err)
@@ -1229,26 +1315,31 @@ func TestExpandOutputTmpl(t *testing.T) {
 	assert.Equal(t, "x86_64", data.Architecture)
 	assert.Equal(t, "centos", data.Distribution.Name)
 	assert.Equal(t, 9, data.Distribution.MajorVersion)
-	assert.Equal(t, "disk", data.Pipeline.ExportName)
 
 	for _, tc := range []struct {
-		tmpl     string
-		artifact string
-		expected string
+		tmpl      string
+		extraName string
+		expected  string
 	}{
 		{"{{.Distribution.Identifier}}-{{.Image.Type}}-{{.Architecture}}", "", "centos-9-qcow2-x86_64"},
-		{"{{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}", "disk", "centos-9-disk-x86_64"},
-		{"{{.Distribution.Identifier}}-{{.Pipeline.ExportName}}-{{.Architecture}}", "sysext-nginx", "centos-9-sysext-nginx-x86_64"},
+		{"{{.Distribution.Identifier}}-{{.Extra.Name}}-{{.Architecture}}", "nginx", "centos-9-nginx-x86_64"},
+		{"{{.Distribution.Identifier}}-{{.Extra.Name}}-{{.Architecture}}", "sysext-nginx", "centos-9-sysext-nginx-x86_64"},
 		{"plain-name", "", "plain-name"},
 	} {
-		data.Pipeline.ExportName = tc.artifact
+		data.Extra.Name = tc.extraName
 		got, err := main.ExpandOutputTmpl(tc.tmpl, data)
 		require.NoError(t, err, "template: %s", tc.tmpl)
-		assert.Equal(t, tc.expected, got, "template: %s, artifact: %s", tc.tmpl, tc.artifact)
+		assert.Equal(t, tc.expected, got, "template: %s, extra: %s", tc.tmpl, tc.extraName)
 	}
 
 	_, err = main.ExpandOutputTmpl("{{.BadField}}", data)
 	assert.Error(t, err)
+
+	extraData := main.OutputTmplDataFor(res)
+	extraData.Extra.Name = "nginx"
+	got, err := main.ExpandOutputTmpl(main.DefaultOutputTmpl, extraData)
+	require.NoError(t, err)
+	assert.Equal(t, "centos-9-qcow2-nginx-x86_64", got)
 }
 
 // XXX: move into as manifestgen.FakeDepsolve
@@ -1418,6 +1509,12 @@ image_types:
       os:
         - include:
             - "bash"
+    extras:
+      sysexts:
+        nginx:
+          package_sets:
+            - include:
+                - "nginx"
 `
 	repoJSON := `{
   "x86_64": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}],
@@ -1450,6 +1547,188 @@ image_types:
 	for _, line := range strings.Split(strings.TrimSpace(fakeStdout.String()), "\n") {
 		assert.Contains(t, line, "simonos-1", "expected only simonos-1 distros, got: %s", line)
 	}
+}
+
+func TestAllImageTypesHaveSingleExport(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	allImages, err := main.GetAllImages(nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, allImages)
+
+	for _, img := range allImages {
+		exports := img.ImgType.Exports()
+		assert.Equalf(t, 1, len(exports),
+			"%s/%s/%s has %d exports %v, expected 1",
+			img.ImgType.Arch().Distro().Name(),
+			img.ImgType.Name(),
+			img.ImgType.Arch().Name(),
+			len(exports), exports,
+		)
+	}
+}
+
+func TestBuildWithExtraRejectsEarlyOnUnknown(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs([]string{
+		"build",
+		"container",
+		"--distro", "fedora-44",
+		"--with-extra", "sysext:nonexistent",
+	})
+	defer restore()
+
+	err := main.Run()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `unknown extra "sysext:nonexistent"`)
+}
+
+func makeFakeOsbuildMultiExportScript() string {
+	return `
+cat - > "$0".stdin
+
+output_dir=""
+exports=()
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --output-directory)
+      output_dir="$2"
+      shift 2
+      ;;
+    --export)
+      exports+=("$2")
+      shift 2
+      ;;
+    *)
+      shift 1
+  esac
+done
+for export in "${exports[@]}"; do
+  mkdir -p "$output_dir/$export"
+  case $export in
+    qcow2)
+      echo "fake" > "$output_dir/$export/disk.qcow2"
+      ;;
+    container)
+      echo "fake" > "$output_dir/$export/container.oci.tar"
+      ;;
+    sysext-*-erofs)
+      name="${export#sysext-}"
+      name="${name%-erofs}"
+      echo "fake" > "$output_dir/$export/sysext-${name}.erofs"
+      ;;
+    *)
+      echo "fake" > "$output_dir/$export/${export}.img"
+      ;;
+  esac
+done
+`
+}
+
+func TestBuildWithExtrasMultipleOutputs(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
+
+	defsDir := t.TempDir()
+	repoDir := t.TempDir()
+
+	distroYAML := `---
+distros:
+  - name: testdistro-1
+    distro_like: fedora
+    os_version: "1"
+    release_version: "1"
+    module_platform_id: "platform:t1"
+    default_fs_type: "ext4"
+    defs_path: testdistro
+    runner:
+      name: org.osbuild.fedora45
+      build_packages:
+        - "glibc"
+        - "systemd"
+        - "python3"
+`
+	imageTypesYAML := `---
+image_types:
+  "container":
+    filename: "container.oci.tar"
+    mime_type: "application/x-tar"
+    image_func: "container"
+    bootable: false
+    exports: ["container"]
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
+      - arch: "ppc64le"
+      - arch: "s390x"
+    package_sets:
+      os:
+        - include:
+            - "bash"
+    extras:
+      sysexts:
+        nginx:
+          package_sets:
+            - include:
+                - "nginx"
+`
+	repoJSON := `{
+  "x86_64": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}],
+  "aarch64": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}],
+  "ppc64le": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}],
+  "s390x": [{"name": "BaseOS", "baseurl": "http://example.com/repo"}]
+}`
+	err := os.MkdirAll(filepath.Join(defsDir, "testdistro"), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(defsDir, "testdistro.yaml"), []byte(distroYAML), 0600)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(defsDir, "testdistro", "imagetypes.yaml"), []byte(imageTypesYAML), 0600)
+	require.NoError(t, err)
+	err = os.WriteFile(filepath.Join(repoDir, "testdistro-1.json"), []byte(repoJSON), 0600)
+	require.NoError(t, err)
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	tmpdir := t.TempDir()
+	outputDir := filepath.Join(tmpdir, "output")
+	restore = main.MockOsArgs([]string{
+		"build",
+		"container",
+		"--distro", "testdistro-1",
+		"--force-defs-dir", defsDir,
+		"--force-repo-dir", repoDir,
+		"--cache", tmpdir,
+		"--output-dir", outputDir,
+		"--with-extra", "sysext:nginx",
+	})
+	defer restore()
+
+	script := makeFakeOsbuildMultiExportScript()
+	testutil.MockCommand(t, "osbuild", script)
+
+	err = main.Run()
+	require.NoError(t, err)
+
+	currentArch := arch.Current().String()
+	successCount := strings.Count(fakeStdout.String(), "Image build successful:")
+	assert.Equal(t, 2, successCount,
+		"build with one extra should produce two outputs, got stdout: %s", fakeStdout.String())
+
+	expectedMain := fmt.Sprintf("testdistro-1-container-%s.oci.tar", currentArch)
+	_, err = os.Stat(filepath.Join(outputDir, expectedMain))
+	assert.NoError(t, err, "expected main image file %q", expectedMain)
+
+	expectedExtra := fmt.Sprintf("testdistro-1-container-nginx-%s.erofs", currentArch)
+	_, err = os.Stat(filepath.Join(outputDir, expectedExtra))
+	assert.NoError(t, err, "expected sysext file %q", expectedExtra)
 }
 
 func TestCacheDirForUidRoot(t *testing.T) {
