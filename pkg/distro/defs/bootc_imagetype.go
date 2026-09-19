@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
@@ -118,14 +119,44 @@ func (t *bootcImageType) Exports() []string {
 }
 
 func (t *bootcImageType) Extras() []string {
-	return nil
+	var names []string
+	for _, sp := range t.ImageTypeYAML.Partitions() {
+		names = append(names, "partition:"+sp.Name)
+	}
+	return names
 }
 
 func (t *bootcImageType) ExportsWithExtras(refs []string) ([]string, map[string]distro.ExtraRef, error) {
-	if len(refs) > 0 {
-		return nil, nil, fmt.Errorf("image type %q does not support extras", t.Name())
+	exports := slices.Clone(t.ImageTypeYAML.Exports)
+	extraRefs := make(map[string]distro.ExtraRef)
+	partitions := t.ImageTypeYAML.Partitions()
+	for _, ref := range refs {
+		typ, name, ok := strings.Cut(ref, ":")
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid extra reference %q, expected type:name (e.g. partition:boot)", ref)
+		}
+		switch typ {
+		case "partition":
+			var found bool
+			for _, sp := range partitions {
+				if sp.Name == name {
+					er := distro.ExtraRef{Type: typ, Name: name}
+					for _, p := range sp.ExportPipelineNames() {
+						extraRefs[p] = er
+					}
+					exports = append(exports, sp.ExportPipelineNames()...)
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, nil, fmt.Errorf("unknown extra %q", ref)
+			}
+		default:
+			return nil, nil, fmt.Errorf("unsupported extra type %q for bootc images", typ)
+		}
 	}
-	return t.Exports(), nil, nil
+	return exports, extraRefs, nil
 }
 
 func (t *bootcImageType) SupportedBlueprintOptions() []string {
@@ -313,6 +344,15 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 		if bpIgnitionCustomization.FirstBoot != nil {
 			img.OSCustomizations.Ignition = ignition.FirstbootOptionsFromBP(*bpIgnitionCustomization.FirstBoot)
 		}
+	}
+
+	for _, sp := range t.ImageTypeYAML.Partitions() {
+		img.Partitions = append(img.Partitions, image.PartitionConfig{
+			Name:        sp.Name,
+			Mountpoint:  sp.Mountpoint,
+			Filename:    sp.Filename,
+			Compression: sp.Compression,
+		})
 	}
 
 	mf := manifest.New()
