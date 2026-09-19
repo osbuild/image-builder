@@ -56,6 +56,7 @@ distros:
       - "xccdf_org.ssgproject.content_profile_cis_server_l1"
       - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
       - "xccdf_org.ssgproject.content_profile_cis_workstation_l2"
+      - "xccdf_org.ssgproject.content_profile_cui"
       - "xccdf_org.ssgproject.content_profile_e8"
       - "xccdf_org.ssgproject.content_profile_hipaa"
       - "xccdf_org.ssgproject.content_profile_ism_o"
