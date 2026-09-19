@@ -310,6 +310,87 @@ func TestBootcDiskImageInstantiateDirs(t *testing.T) {
 	}
 }
 
+func TestBootcDiskImagePartitions(t *testing.T) {
+	containerSource := container.SourceSpec{
+		Source: "some-src",
+		Name:   "name",
+	}
+	containers := []container.SourceSpec{containerSource}
+
+	opts := &bootcDiskImageTestOpts{
+		ImageFormat: platform.FORMAT_QCOW2,
+		BIOS:        true,
+	}
+	img := image.NewBootcDiskImage(makeFakePlatform(opts), "fake-disk", containerSource, containerSource)
+	require.NotNil(t, img)
+	img.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
+	img.Partitions = []image.PartitionConfig{
+		{
+			Name:       "boot",
+			Mountpoint: "/boot",
+			Filename:   "boot.img",
+		},
+	}
+
+	m := &manifest.Manifest{}
+	runi := &runner.Fedora{}
+	err := img.InstantiateManifestFromContainers(m, containers, runi, nil)
+	require.NoError(t, err)
+
+	fakeSourceSpecs := map[string][]container.Spec{
+		"build": {{Source: "some-src", Digest: makeFakeDigest(t), ImageID: makeFakeDigest(t)}},
+		"image": {{Source: "other-src", Digest: makeFakeDigest(t), ImageID: makeFakeDigest(t)}},
+	}
+
+	osbuildManifest, err := m.Serialize(nil, fakeSourceSpecs, nil, nil, nil)
+	require.NoError(t, err)
+
+	partPipeline := findPipelineFromOsbuildManifest(t, osbuildManifest, "partition-boot")
+	require.NotNil(t, partPipeline, "partition-boot pipeline must exist")
+
+	ddStage := findStageFromOsbuildPipeline(t, partPipeline, "org.osbuild.dd")
+	require.NotNil(t, ddStage, "dd stage must exist in partition pipeline")
+}
+
+func TestBootcDiskImagePartitionsWithCompression(t *testing.T) {
+	containerSource := container.SourceSpec{
+		Source: "some-src",
+		Name:   "name",
+	}
+	containers := []container.SourceSpec{containerSource}
+
+	opts := &bootcDiskImageTestOpts{
+		ImageFormat: platform.FORMAT_QCOW2,
+		BIOS:        true,
+	}
+	img := image.NewBootcDiskImage(makeFakePlatform(opts), "fake-disk", containerSource, containerSource)
+	require.NotNil(t, img)
+	img.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
+	img.Partitions = []image.PartitionConfig{
+		{
+			Name:        "boot",
+			Mountpoint:  "/boot",
+			Compression: "xz",
+		},
+	}
+
+	m := &manifest.Manifest{}
+	runi := &runner.Fedora{}
+	err := img.InstantiateManifestFromContainers(m, containers, runi, nil)
+	require.NoError(t, err)
+
+	fakeSourceSpecs := map[string][]container.Spec{
+		"build": {{Source: "some-src", Digest: makeFakeDigest(t), ImageID: makeFakeDigest(t)}},
+		"image": {{Source: "other-src", Digest: makeFakeDigest(t), ImageID: makeFakeDigest(t)}},
+	}
+
+	osbuildManifest, err := m.Serialize(nil, fakeSourceSpecs, nil, nil, nil)
+	require.NoError(t, err)
+
+	partPipeline := findPipelineFromOsbuildManifest(t, osbuildManifest, "partition-boot-xz")
+	require.NotNil(t, partPipeline, "partition-boot-xz pipeline must exist")
+}
+
 func TestBootcDiskImageBuildpipelineHonorsSELinuxPolicy(t *testing.T) {
 	opts := &bootcDiskImageTestOpts{
 		SELinux: "custom",
