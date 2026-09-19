@@ -352,6 +352,73 @@ func TestLoadInfoISOSad(t *testing.T) {
 	assert.EqualError(t, err, `cannot parse iso definitions from "usr/lib/bootc-image-builder/iso.yaml": yaml: found character that cannot start any token`)
 }
 
+var fakeExtrasYAML = `
+partitions:
+  boot:
+    mountpoint: /boot
+    filename: boot.img
+    compression: xz
+  data:
+    mountpoint: /var/data
+`
+
+func createExtras(t *testing.T, root, fakeExtrasYAML string, dest string) {
+	t.Helper()
+
+	dst := path.Join(root, dest)
+	err := os.MkdirAll(path.Dir(dst), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(dst, []byte(fakeExtrasYAML), 0644)
+	require.NoError(t, err)
+}
+
+func TestLoadInfoExtrasHappy(t *testing.T) {
+	dests := []string{
+		"/usr/lib/bootc-image-builder/extras.yaml",
+		"/usr/lib/image-builder/bootc/extras.yaml",
+	}
+
+	for _, dest := range dests {
+		root := t.TempDir()
+		writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+		createExtras(t, root, fakeExtrasYAML, dest)
+
+		info, err := Load(os.DirFS(root))
+		require.NoError(t, err)
+
+		require.Len(t, info.ExtrasInfo.Partitions, 2)
+
+		boot := info.ExtrasInfo.Partitions["boot"]
+		assert.Equal(t, "/boot", boot.Mountpoint)
+		assert.Equal(t, "boot.img", boot.Filename)
+		assert.Equal(t, "xz", boot.Compression)
+
+		data := info.ExtrasInfo.Partitions["data"]
+		assert.Equal(t, "/var/data", data.Mountpoint)
+		assert.Equal(t, "", data.Filename)
+		assert.Equal(t, "", data.Compression)
+	}
+}
+
+func TestLoadInfoExtrasSad(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+	createExtras(t, root, "@invalidYAML", "/usr/lib/bootc-image-builder/extras.yaml")
+
+	_, err := Load(os.DirFS(root))
+	assert.EqualError(t, err, `cannot parse extras definitions from "usr/lib/bootc-image-builder/extras.yaml": yaml: found character that cannot start any token`)
+}
+
+func TestLoadInfoExtrasNotPresent(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+
+	info, err := Load(os.DirFS(root))
+	require.NoError(t, err)
+
+	assert.Nil(t, info.ExtrasInfo.Partitions)
+}
+
 func TestLoadInfoUEFIVendorSearchPath(t *testing.T) {
 	root := t.TempDir()
 
