@@ -352,6 +352,73 @@ func TestLoadInfoISOSad(t *testing.T) {
 	assert.EqualError(t, err, `cannot parse iso definitions from "usr/lib/bootc-image-builder/iso.yaml": yaml: found character that cannot start any token`)
 }
 
+var fakeExtrasYAML = `
+partitions:
+  boot:
+    mountpoint: /boot
+    filename: boot.img
+    compression: xz
+  data:
+    mountpoint: /var/data
+`
+
+func createExtras(t *testing.T, root, fakeExtrasYAML string, dest string) {
+	t.Helper()
+
+	dst := path.Join(root, dest)
+	err := os.MkdirAll(path.Dir(dst), 0755)
+	require.NoError(t, err)
+	err = os.WriteFile(dst, []byte(fakeExtrasYAML), 0644)
+	require.NoError(t, err)
+}
+
+func TestLoadInfoExtrasHappy(t *testing.T) {
+	dests := []string{
+		"/usr/lib/bootc-image-builder/extras.yaml",
+		"/usr/lib/image-builder/bootc/extras.yaml",
+	}
+
+	for _, dest := range dests {
+		root := t.TempDir()
+		writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+		createExtras(t, root, fakeExtrasYAML, dest)
+
+		info, err := Load(os.DirFS(root), "")
+		require.NoError(t, err)
+
+		require.Len(t, info.ExtrasInfo.Partitions, 2)
+
+		boot := info.ExtrasInfo.Partitions["boot"]
+		assert.Equal(t, "/boot", boot.Mountpoint)
+		assert.Equal(t, "boot.img", boot.Filename)
+		assert.Equal(t, "xz", boot.Compression)
+
+		data := info.ExtrasInfo.Partitions["data"]
+		assert.Equal(t, "/var/data", data.Mountpoint)
+		assert.Equal(t, "", data.Filename)
+		assert.Equal(t, "", data.Compression)
+	}
+}
+
+func TestLoadInfoExtrasSad(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+	createExtras(t, root, "@invalidYAML", "/usr/lib/bootc-image-builder/extras.yaml")
+
+	_, err := Load(os.DirFS(root), "")
+	assert.EqualError(t, err, `cannot parse extras definitions from "usr/lib/bootc-image-builder/extras.yaml": yaml: found character that cannot start any token`)
+}
+
+func TestLoadInfoExtrasNotPresent(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+
+	info, err := Load(os.DirFS(root), "")
+	require.NoError(t, err)
+
+	assert.Nil(t, info.ExtrasInfo.Partitions)
+}
+
 func TestLoadInfoUEFIVendorSearchPath(t *testing.T) {
 	root := t.TempDir()
 
@@ -557,4 +624,54 @@ partition_table:
 	require.NoError(t, err)
 	assert.Equal(t, datasizes.Size(2*datasizes.MiB), info.PartitionTable.Partitions[0].Size)
 	assert.Equal(t, "My-ISO", info.ISOInfo.Label)
+}
+
+func TestLoadVariantExtrasYaml(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "", "", "")
+
+	// Create default extras.yaml with two partitions
+	createExtras(t, root, fakeExtrasYAML, "/usr/lib/image-builder/bootc/extras.yaml")
+
+	// Create variant with a different extras.yaml (single partition, different values)
+	variantExtrasYAML := `
+partitions:
+  rootfs:
+    mountpoint: /
+    filename: rootfs.img
+    compression: zstd
+`
+	createExtras(t, root, variantExtrasYAML, "/usr/lib/image-builder/bootc/variant.d/test-variant/extras.yaml")
+
+	// Without variant: should get default (2 partitions)
+	info, err := Load(os.DirFS(root), "")
+	require.NoError(t, err)
+	require.Len(t, info.ExtrasInfo.Partitions, 2)
+	assert.Equal(t, "/boot", info.ExtrasInfo.Partitions["boot"].Mountpoint)
+
+	// With variant: should get variant's extras.yaml (1 partition)
+	info, err = Load(os.DirFS(root), "test-variant")
+	require.NoError(t, err)
+	require.Len(t, info.ExtrasInfo.Partitions, 1)
+	rootfs := info.ExtrasInfo.Partitions["rootfs"]
+	assert.Equal(t, "/", rootfs.Mountpoint)
+	assert.Equal(t, "rootfs.img", rootfs.Filename)
+	assert.Equal(t, "zstd", rootfs.Compression)
+}
+
+func TestLoadVariantExtrasYamlFallback(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "", "", "")
+
+	// Create default extras.yaml
+	createExtras(t, root, fakeExtrasYAML, "/usr/lib/image-builder/bootc/extras.yaml")
+
+	// Create variant directory with only disk.yaml (no extras.yaml)
+	createPartitionTable(t, root, fakePartitionTableYAML, "/usr/lib/image-builder/bootc/variant.d/no-extras/disk.yaml")
+
+	// Variant without extras.yaml should fall back to default extras
+	info, err := Load(os.DirFS(root), "no-extras")
+	require.NoError(t, err)
+	require.Len(t, info.ExtrasInfo.Partitions, 2)
+	assert.Equal(t, "/boot", info.ExtrasInfo.Partitions["boot"].Mountpoint)
 }

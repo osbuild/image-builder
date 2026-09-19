@@ -64,6 +64,16 @@ type ISOInfo struct {
 	}
 }
 
+type ExtrasPartitionInfo struct {
+	Mountpoint  string `json:"mountpoint" yaml:"mountpoint"`
+	Filename    string `json:"filename,omitempty" yaml:"filename,omitempty"`
+	Compression string `json:"compression,omitempty" yaml:"compression,omitempty"`
+}
+
+type ExtrasInfo struct {
+	Partitions map[string]ExtrasPartitionInfo `json:"partitions,omitempty" yaml:"partitions,omitempty"`
+}
+
 type Info struct {
 	OSRelease          OSRelease `yaml:"os_release"`
 	UEFIVendor         string    `yaml:"uefi_vendor"`
@@ -72,6 +82,7 @@ type Info struct {
 	KernelInfo         *KernelInfo `yaml:"kernel_info"`
 	InitrdModules      []string    `yaml:"initrd_modules"`
 	ISOInfo            ISOInfo     `yaml:"iso_info"`
+	ExtrasInfo         ExtrasInfo  `yaml:"extras_info"`
 
 	MountConfiguration *osbuild.MountConfiguration
 	PartitionTable     *disk.PartitionTable
@@ -284,6 +295,40 @@ func readISOYaml(fsys fs.FS, prefix, variant string) (*isoYAML, error) {
 	return nil, nil
 }
 
+type extrasYAML struct {
+	Partitions map[string]ExtrasPartitionInfo `json:"partitions" yaml:"partitions"`
+}
+
+func readExtrasYaml(fsys fs.FS, prefix, variant string) (*extrasYAML, error) {
+	paths := []string{path.Join(prefix, "extras.yaml")}
+	if variant != "" {
+		paths = []string{
+			path.Join(prefix, "variant.d", variant, "extras.yaml"),
+			path.Join(prefix, "extras.yaml"),
+		}
+	}
+
+	for _, p := range paths {
+		var extras extrasYAML
+		f, err := fsys.Open(p)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, fmt.Errorf("cannot load extras definitions from %q: %w", p, err)
+		}
+		defer f.Close()
+
+		if err := yaml.NewDecoder(f).Decode(&extras); err != nil {
+			return nil, fmt.Errorf("cannot parse extras definitions from %q: %w", p, err)
+		}
+
+		return &extras, nil
+	}
+
+	return nil, nil
+}
+
 func readKernelInfo(fsys fs.FS) (*KernelInfo, error) {
 	modulesDir := "usr/lib/modules"
 	entries, err := fs.ReadDir(fsys, modulesDir)
@@ -391,6 +436,15 @@ func Load(fsys fs.FS, variant string) (*Info, error) {
 		return nil, err
 	}
 
+	extrasYaml, err := readExtrasYaml(fsys, prefix, variant)
+	if err != nil {
+		return nil, err
+	}
+	var extrasInfo ExtrasInfo
+	if extrasYaml != nil {
+		extrasInfo.Partitions = extrasYaml.Partitions
+	}
+
 	isoInfo := ISOInfo{}
 
 	if isoYaml != nil {
@@ -440,5 +494,6 @@ func Load(fsys fs.FS, variant string) (*Info, error) {
 		MountConfiguration: mc,
 		PartitionTable:     pt,
 		ISOInfo:            isoInfo,
+		ExtrasInfo:         extrasInfo,
 	}, nil
 }
