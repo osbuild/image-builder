@@ -48,9 +48,9 @@ func (p *PartitionImage) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	part, err := FindPartitionByMountpoint(p.PartitionTable, p.Mountpoint)
-	if err != nil {
-		return osbuild.Pipeline{}, err
+	part := p.PartitionTable.FindPartitionForMountpoint(p.Mountpoint)
+	if part == nil {
+		return osbuild.Pipeline{}, fmt.Errorf("partition for mountpoint %q not found", p.Mountpoint)
 	}
 
 	if part.Start > math.MaxInt {
@@ -86,24 +86,4 @@ func (p *PartitionImage) getBuildPackages(Distro) ([]string, error) {
 func (p *PartitionImage) Export() *artifact.Artifact {
 	p.Base.export = true
 	return artifact.New(p.Name(), p.Filename(), nil)
-}
-
-func FindPartitionByMountpoint(pt *disk.PartitionTable, mountpoint string) (*disk.Partition, error) {
-	if pt.FindMountableOnPlain(mountpoint) == nil {
-		if pt.FindMountable(mountpoint) != nil {
-			return nil, fmt.Errorf("mountpoint %q is not on a plain partition", mountpoint)
-		}
-		return nil, fmt.Errorf("partition with mountpoint %q not found", mountpoint)
-	}
-
-	var found *disk.Partition
-	if err := pt.ForEachMountable(func(mnt disk.Mountable, path []disk.Entity) error {
-		if mnt.GetMountpoint() == mountpoint {
-			found = path[len(path)-2].(*disk.Partition)
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return found, nil
 }

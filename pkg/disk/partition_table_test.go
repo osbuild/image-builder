@@ -3815,3 +3815,140 @@ func TestNewCustomPartitionTableLVMWithExplicitBootAfterLVM(t *testing.T) {
 	}
 	assert.Equal(t, 1, bootCount, "expected exactly one /boot partition, not an auto-created duplicate")
 }
+
+func TestFindPartitionForMountpoint(t *testing.T) {
+	bootPartition := disk.Partition{
+		Start: 1048576,
+		Size:  524288000,
+		Payload: &disk.Filesystem{
+			Type:       "ext4",
+			Mountpoint: "/boot",
+		},
+	}
+
+	tests := []struct {
+		name       string
+		pt         *disk.PartitionTable
+		mountpoint string
+		wantStart  uint64
+		wantSize   uint64
+		wantNil    bool
+	}{
+		{
+			name: "plain",
+			pt: &disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					bootPartition,
+					{
+						Start: 525336576,
+						Size:  5368709120,
+						Payload: &disk.Filesystem{
+							Type:       "xfs",
+							Mountpoint: "/",
+						},
+					},
+				},
+			},
+			mountpoint: "/",
+			wantStart:  525336576,
+			wantSize:   5368709120,
+		},
+		{
+			name: "btrfs",
+			pt: &disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					bootPartition,
+					{
+						Start: 525336576,
+						Size:  10737418240,
+						Payload: &disk.Btrfs{
+							Subvolumes: []disk.BtrfsSubvolume{
+								{Name: "root", Mountpoint: "/"},
+								{Name: "home", Mountpoint: "/home"},
+							},
+						},
+					},
+				},
+			},
+			mountpoint: "/home",
+			wantStart:  525336576,
+			wantSize:   10737418240,
+		},
+		{
+			name: "lvm",
+			pt: &disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					bootPartition,
+					{
+						Start: 525336576,
+						Size:  10737418240,
+						Payload: &disk.LVMVolumeGroup{
+							Name: "rootvg",
+							LogicalVolumes: []disk.LVMLogicalVolume{
+								{
+									Name: "rootlv",
+									Payload: &disk.Filesystem{
+										Type:       "xfs",
+										Mountpoint: "/",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			mountpoint: "/",
+			wantStart:  525336576,
+			wantSize:   10737418240,
+		},
+		{
+			name: "luks",
+			pt: &disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					bootPartition,
+					{
+						Start: 525336576,
+						Size:  10737418240,
+						Payload: &disk.LUKSContainer{
+							Payload: &disk.Filesystem{
+								Type:       "xfs",
+								Mountpoint: "/",
+							},
+						},
+					},
+				},
+			},
+			mountpoint: "/",
+			wantStart:  525336576,
+			wantSize:   10737418240,
+		},
+		{
+			name: "not found",
+			pt: &disk.PartitionTable{
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					bootPartition,
+				},
+			},
+			mountpoint: "/var",
+			wantNil:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			part := tt.pt.FindPartitionForMountpoint(tt.mountpoint)
+			if tt.wantNil {
+				assert.Nil(t, part)
+				return
+			}
+			require.NotNil(t, part)
+			assert.Equal(t, tt.wantStart, part.Start)
+			assert.Equal(t, tt.wantSize, uint64(part.Size))
+		})
+	}
+}
