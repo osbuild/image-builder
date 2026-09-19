@@ -277,7 +277,7 @@ partition_table:
 
 ### Deployment Variants
 
-Containers can ship multiple `disk.yaml` and/or `iso.yaml` configurations as *deployment variants*. Variants allow a single container image to produce different disk layouts depending on the target environment, for example a `secure-execution` variant with verity partitions for s390x, or `btrfs` vs `ext4` variants for Fedora images.
+Containers can ship multiple `disk.yaml`, `iso.yaml`, and/or `extras.yaml` configurations as *deployment variants*. Variants allow a single container image to produce different disk layouts depending on the target environment, for example a `secure-execution` variant with verity partitions for s390x, or `btrfs` vs `ext4` variants for Fedora images.
 
 Variants are placed in the `variant.d/` subdirectory, with each variant in its own named directory:
 
@@ -285,14 +285,16 @@ Variants are placed in the `variant.d/` subdirectory, with each variant in its o
 /usr/lib/image-builder/bootc/
 ├── disk.yaml              # default configuration
 ├── iso.yaml               # default ISO configuration
+├── extras.yaml            # default extras configuration
 └── variant.d/
     ├── btrfs/
-    │   └── disk.yaml      # btrfs partition layout
+    │   ├── disk.yaml      # btrfs partition layout
+    │   └── extras.yaml    # btrfs-specific extras
     └── secure-execution/
         └── disk.yaml      # s390x SE partition layout
 ```
 
-Each variant directory may contain a `disk.yaml` and/or `iso.yaml`. When a variant is selected at build time with `--bootc-variant`, `image-builder` uses the variant's configuration files. If a variant provides only `disk.yaml` but not `iso.yaml` (or vice versa), `image-builder` falls back to the default configuration for the missing file.
+Each variant directory may contain a `disk.yaml`, `iso.yaml`, and/or `extras.yaml`. When a variant is selected at build time with `--bootc-variant`, `image-builder` uses the variant's configuration files. For any file not provided by the variant, `image-builder` falls back to the default configuration.
 
 Users can list available variants and select one at build time:
 
@@ -317,4 +319,32 @@ grub2:
     - name: "Install Fedora (bootc)"
       linux: "/images/pxeboot/vmlinuz inst.stage2=hd:LABEL=Fedora-bootc-Installer console=tty0 inst.text selinux=0"
       initrd: "/images/pxeboot/initrd.img"
+```
+
+### `extras.yaml`
+
+A YAML file that declares additional build artifacts ("extras") that `image-builder` can produce alongside the main disk image. Currently only partition extras are supported, which extract individual partitions from the built disk image as separate files.
+
+The canonical location for this file is `/usr/lib/image-builder/bootc/extras.yaml`. Like `disk.yaml` and `iso.yaml`, this file supports [deployment variant](#deployment-variants) overrides via `variant.d/<name>/extras.yaml`.
+
+```yaml
+partitions:
+  boot:
+    mountpoint: /boot
+    filename: boot.img
+    compression: xz
+  data:
+    mountpoint: /var/data
+```
+
+`partitions` is a map where each key is the name of the extra and each value is an object with the following properties:
+
+- `mountpoint`, a `string` identifying which partition to extract from the disk image. This must match a mountpoint defined in the partition table (either from `disk.yaml` or the base partition table). For mountpoints inside container types (Btrfs, LVM, LUKS, etc.) the entire enclosing partition is exported rather than just the individual mountpoint.
+- `filename`, an *optional* `string` to override the output filename. If omitted, the file is named `<name>.raw` (or `<name>.raw.<ext>` when compressed).
+- `compression`, an *optional* `string` specifying the compression format to apply to the extracted partition (e.g. `xz`, `zstd`).
+
+Extras defined in this file are visible in `image-builder bootc inspect` output and can be included in a build with `--with-extra`:
+
+```sh
+image-builder build --type qcow2 --with-extra partition:boot ...
 ```
