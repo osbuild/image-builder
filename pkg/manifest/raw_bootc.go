@@ -62,6 +62,15 @@ func (p *RawBootcImage) SetFilename(filename string) {
 	p.filename = filename
 }
 
+func (p *RawBootcImage) installPlatform() platform.Platform {
+	// Aboot installs do not use bootupd or require the ESP to be mounted at
+	// /boot/efi. Bootc discovers and mounts an ESP itself for ukiboot.
+	if p.Aboot {
+		return &platform.Data{}
+	}
+	return p.platform
+}
+
 func NewRawBootcImage(buildPipeline Build, containers []container.SourceSpec, platform platform.Platform) *RawBootcImage {
 	p := &RawBootcImage{
 		Base:     NewBase("image", buildPipeline),
@@ -167,11 +176,11 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	}
 	opts := &osbuild.BootcInstallToFilesystemOptions{}
 	// Unified kernels cannot have custom kernel options
-	if !p.UnifiedKernel {
+	if !p.UnifiedKernel && !p.Aboot {
 		opts.Kargs = p.OSCustomizations.KernelOptionsAppend
 	}
 	// Unified implies that the composefs backend must be used
-	if p.UnifiedKernel {
+	if p.UnifiedKernel || p.Aboot {
 		opts.ComposeFS = common.ToPtr(true)
 	}
 	if p.Bootloader != nil {
@@ -183,11 +192,12 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	inputs := osbuild.ContainerDeployInputs{
 		Images: osbuild.NewContainersInputForSingleSource(p.containerSpecs[0]),
 	}
-	devices, mounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
+	installPlatform := p.installPlatform()
+	devices, mounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, installPlatform)
 	if err != nil {
 		return osbuild.Pipeline{}, err
 	}
-	st, err := osbuild.NewBootcInstallToFilesystemStage(opts, inputs, devices, mounts, p.platform)
+	st, err := osbuild.NewBootcInstallToFilesystemStage(opts, inputs, devices, mounts, installPlatform)
 	if err != nil {
 		return osbuild.Pipeline{}, err
 	}
@@ -197,7 +207,7 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 		pipeline.AddStage(stage)
 	}
 
-	if !p.UnifiedKernel {
+	if !p.UnifiedKernel && !p.Aboot {
 		// all our customizations work directly on the mounted deployment
 		// root from the image so generate the devices/mounts for all
 		devices, mounts, err = osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
@@ -422,7 +432,7 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 func (p *RawBootcImage) genMountpointSELinuxStages() ([]*osbuild.Stage, error) {
 	stages := make([]*osbuild.Stage, 0, 3)
 
-	devices, allMounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
+	devices, allMounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.installPlatform())
 	if err != nil {
 		return nil, fmt.Errorf("generating devices/mounts for mountpoint SELinux labeling: %w", err)
 	}

@@ -100,6 +100,27 @@ func TestRawBootcImageSerializeMountsValidated(t *testing.T) {
 	assert.EqualError(t, err, `required mounts for bootupd stage [/boot/efi] missing`)
 }
 
+func TestRawBootcImageAbootWithoutESP(t *testing.T) {
+	pipeline := makeFakeRawBootcPipeline()
+	pipeline.Aboot = true
+	pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/")
+	result, err := pipeline.Serialize()
+	require.NoError(t, err)
+	stage := findStage("org.osbuild.bootc.install-to-filesystem", result.Stages)
+	require.NotNil(t, stage)
+	opts := stage.Options.(*osbuild.BootcInstallToFilesystemOptions)
+	assert.Equal(t, common.ToPtr(true), opts.ComposeFS)
+	assert.Empty(t, opts.Bootloader)
+}
+
+func TestRawBootcImageNonAbootNoneStillNeedsESP(t *testing.T) {
+	pipeline := makeFakeRawBootcPipeline()
+	pipeline.Bootloader = common.ToPtr("none")
+	pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/")
+	_, err := pipeline.Serialize()
+	require.EqualError(t, err, "required mounts for bootupd stage [/boot/efi] missing")
+}
+
 func findMountIdx(mounts []osbuild.Mount, mntType string) int {
 	for i, mnt := range mounts {
 		if mnt.Type == mntType {

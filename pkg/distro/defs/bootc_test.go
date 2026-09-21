@@ -666,17 +666,29 @@ func TestBootcImageTypeBootModeFromContainerType(t *testing.T) {
 	for _, tc := range []struct {
 		name          string
 		containerType bootc.ContainerType
+		unifiedKernel bool
 		want          platform.BootMode
 	}{
-		{"traditional", "vmlinuz", platform.BOOT_HYBRID},
-		{"android-aboot", bootc.ContainerTypeAboot, platform.BOOT_HYBRID},
-		{"efi-aboot", bootc.ContainerTypeAbootEFI, platform.BOOT_UEFI},
+		{"traditional", "vmlinuz", false, platform.BOOT_HYBRID},
+		{"uki", "uki", true, platform.BOOT_UEFI},
+		{"legacy-inspect-uki", "", true, platform.BOOT_UEFI},
+		{"android-aboot", bootc.ContainerTypeAboot, true, platform.BOOT_NONE},
+		{"efi-aboot", bootc.ContainerTypeAbootEFI, true, platform.BOOT_UEFI},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			imageType := NewTestBootcImageType(t, "raw")
-			imageType.arch.distro.(*BootcDistro).containerType = tc.containerType
-			assert.Equal(t, tc.want, imageType.BootMode())
-		})
+		for _, architecture := range []arch.Arch{arch.ARCH_X86_64, arch.ARCH_AARCH64} {
+			t.Run(tc.name+"/"+architecture.String(), func(t *testing.T) {
+				imageType := NewTestBootcImageType(t, "raw")
+				imageType.arch.arch = architecture
+				bd := imageType.arch.distro.(*BootcDistro)
+				bd.containerType = tc.containerType
+				bd.unifiedKernel = tc.unifiedKernel
+				want := tc.want
+				if architecture == arch.ARCH_AARCH64 && tc.containerType == "vmlinuz" {
+					want = platform.BOOT_UEFI
+				}
+				assert.Equal(t, want, imageType.BootMode())
+			})
+		}
 	}
 }
 
