@@ -461,12 +461,6 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
                 print(f"  not bootable: ssh-server not found in manifest {manifest_fname} ({arch} {image_type})")
                 return False
 
-            # We need jq in the image many images do not have it
-            # (e.g. centos-9/rhel-9 with releasever config) so skip those too
-            if not any("jq" in name for name in pkg_names):
-                print(f"  not bootable: jq not found in {manifest_fname} ({arch} {image_type})")
-                return False
-
     return True
 
 
