@@ -259,6 +259,24 @@ func TestUnifiedKernelHappy(t *testing.T) {
 	}
 }
 
+func TestHasAboot(t *testing.T) {
+	for _, tc := range []struct {
+		in  string
+		out bool
+	}{
+		{`{"type": "aboot"}`, true},
+		{`{"type": "aboot-efi"}`, true},
+		{`{"type": "uki"}`, false},
+		{`{}`, false},
+	} {
+		makeFakePodman(t, fmt.Sprintf("#!/bin/sh\necho '%s'\n", tc.in))
+		cnt := bootc.Container{}
+		aboot, err := cnt.HasAboot()
+		assert.NoError(t, err)
+		assert.Equal(t, tc.out, aboot)
+	}
+}
+
 func TestBootloaderHappy(t *testing.T) {
 	for _, tc := range []struct {
 		In  string
