@@ -235,11 +235,12 @@ func (c *Container) ResolveInfo(variant string) (*Info, error) {
 	bootcInfo.DefaultRootFs = bootcInstallConfig.Filesystem.Root.Type
 	bootcInfo.Bootloader = bootcInstallConfig.Bootloader
 
-	unifiedKernel, err := c.UnifiedKernel()
+	unifiedKernel, containerType, err := c.bootArtifacts()
 	if err != nil {
 		return nil, err
 	}
 	bootcInfo.UnifiedKernel = unifiedKernel
+	bootcInfo.ContainerType = containerType
 
 	size, err := getContainerSize(c.ref, c.storeOpts)
 	if err != nil {
@@ -384,6 +385,17 @@ func (c *Container) InitrdModules(kver string) ([]string, error) {
 
 // UnifiedKernel finds out if the kernel inside the bootc container is unified
 func (c *Container) UnifiedKernel() (bool, error) {
+	unified, _, err := c.bootArtifacts()
+	return unified, err
+}
+
+// HasAboot finds out if the bootc container has an aboot image.
+func (c *Container) HasAboot() (bool, error) {
+	_, containerType, err := c.bootArtifacts()
+	return containerType.IsAboot(), err
+}
+
+func (c *Container) bootArtifacts() (bool, ContainerType, error) {
 	args := []string{"exec"}
 	args = append(args, c.storeOpts...)
 	args = append(args, c.id, "bootc", "container", "inspect", "--json")
@@ -394,13 +406,14 @@ func (c *Container) UnifiedKernel() (bool, error) {
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 2 {
 			// NOTE: the 'bootc container inspect' was added in version 1.12.0, which was not in RHEL-10.1.
 			// Treat exit value '2' as a non-error, since it means the command is not available and return false.
-			return false, nil
+			return false, "", nil
 		}
-		return false, fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
+		return false, "", fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
 	}
 
 	var bootcInspect struct {
-		Kargs  []string `json:"kargs"`
+		Type   ContainerType `json:"type"`
+		Kargs  []string      `json:"kargs"`
 		Kernel struct {
 			Version string `json:"version"`
 			Unified bool   `json:"unified"`
@@ -408,10 +421,10 @@ func (c *Container) UnifiedKernel() (bool, error) {
 	}
 
 	if err := json.Unmarshal(output, &bootcInspect); err != nil {
-		return false, fmt.Errorf("failed to unmarshal bootc inspect : %w", err)
+		return false, "", fmt.Errorf("failed to unmarshal bootc inspect : %w", err)
 	}
 
-	return bootcInspect.Kernel.Unified, nil
+	return bootcInspect.Kernel.Unified, bootcInspect.Type, nil
 }
 
 func findImageIdFor(cntId, ref string, extraOpts []string) (string, error) {

@@ -37,6 +37,7 @@ type RawBootcImage struct {
 	LiveBoot bool
 
 	UnifiedKernel bool
+	Aboot         bool
 	Bootloader    *string
 
 	// customizations go here because there is no intermediate

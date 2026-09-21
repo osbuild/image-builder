@@ -23,6 +23,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/osbuild/manifesttest"
+	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,6 +43,7 @@ func TestNewBootc(t *testing.T) {
 
 		"ok": {
 			info: &bootc.Info{
+				ContainerType: bootc.ContainerTypeAbootEFI,
 				Imgref:        "example.com/containers/distro-bootc:version12",
 				ImageID:       "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
 				Arch:          "arm64",
@@ -55,9 +57,10 @@ func TestNewBootc(t *testing.T) {
 				},
 			},
 			expectedDistro: &BootcDistro{
-				imgref:      "example.com/containers/distro-bootc:version12",
-				imageID:     "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
-				buildImgref: "example.com/containers/distro-bootc:version12",
+				containerType: bootc.ContainerTypeAbootEFI,
+				imgref:        "example.com/containers/distro-bootc:version12",
+				imageID:       "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+				buildImgref:   "example.com/containers/distro-bootc:version12",
 				sourceInfo: &osinfo.Info{
 					OSRelease: osinfo.OSRelease{
 						ID:        "distroID",
@@ -657,6 +660,24 @@ func NewTestBootcImageType(t *testing.T, imgTypeName string) *bootcImageType {
 	imgType, err := arch.GetImageType(imgTypeName)
 	require.NoError(t, err)
 	return imgType.(*bootcImageType)
+}
+
+func TestBootcImageTypeBootModeFromContainerType(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		containerType bootc.ContainerType
+		want          platform.BootMode
+	}{
+		{"traditional", "vmlinuz", platform.BOOT_HYBRID},
+		{"android-aboot", bootc.ContainerTypeAboot, platform.BOOT_HYBRID},
+		{"efi-aboot", bootc.ContainerTypeAbootEFI, platform.BOOT_UEFI},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			imageType := NewTestBootcImageType(t, "raw")
+			imageType.arch.distro.(*BootcDistro).containerType = tc.containerType
+			assert.Equal(t, tc.want, imageType.BootMode())
+		})
+	}
 }
 
 func getUserConfig() *blueprint.Blueprint {
