@@ -48,6 +48,7 @@ type bootcDiskImageTestOpts struct {
 	Files       []*fsnode.File
 
 	KernelOptionsAppend []string
+	Aboot               bool
 }
 
 func makeFakePlatform(opts *bootcDiskImageTestOpts) platform.Platform {
@@ -83,6 +84,7 @@ func makeBootcDiskImageOsbuildManifest(t *testing.T, opts *bootcDiskImageTestOpt
 	img.OSCustomizations.SELinux = opts.SELinux
 	img.OSCustomizations.Files = opts.Files
 	img.OSCustomizations.Directories = opts.Directories
+	img.Aboot = opts.Aboot
 
 	m := &manifest.Manifest{}
 	runi := &runner.Fedora{}
@@ -179,6 +181,20 @@ func TestBootcDiskImageUsesBootcInstallToFs(t *testing.T) {
 	// ensure options got passed
 	bootcOpts := bootcStage["options"].(map[string]interface{})
 	assert.Equal(t, []interface{}{"karg1", "karg2"}, bootcOpts["kernel-args"])
+}
+
+func TestBootcDiskImageAbootUsesComposefs(t *testing.T) {
+	opts := &bootcDiskImageTestOpts{
+		Aboot:               true,
+		KernelOptionsAppend: []string{"karg1", "karg2"},
+	}
+	osbuildManifest := makeBootcDiskImageOsbuildManifest(t, opts)
+
+	imagePipeline := findPipelineFromOsbuildManifest(t, osbuildManifest, "image")
+	bootcStage := findStageFromOsbuildPipeline(t, imagePipeline, "org.osbuild.bootc.install-to-filesystem")
+	bootcOpts := bootcStage["options"].(map[string]interface{})
+	assert.Equal(t, true, bootcOpts["composefs"])
+	assert.NotContains(t, bootcOpts, "kernel-args")
 }
 
 func TestBootcDiskImageExportPipelines(t *testing.T) {

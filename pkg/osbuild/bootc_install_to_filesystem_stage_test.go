@@ -47,6 +47,14 @@ func TestBootcInstallToFilesystemStageNewHappy(t *testing.T) {
 	assert.Equal(t, stage, expectedStage)
 }
 
+func TestBootcInstallToFilesystemStageWithoutUEFIVendor(t *testing.T) {
+	pf := &platform.Data{Arch: arch.ARCH_X86_64}
+	_, err := osbuild.NewBootcInstallToFilesystemStage(nil, makeFakeContainerInputs(), nil, makeOsbuildMounts("/"), pf)
+	require.NoError(t, err)
+	_, err = osbuild.NewBootcInstallToFilesystemStage(nil, makeFakeContainerInputs(), nil, nil, pf)
+	require.ErrorContains(t, err, "required mounts for bootupd stage [/] missing")
+}
+
 func TestBootcInstallToFilesystemStageNewEssentialMountsOnly(t *testing.T) {
 	devices := makeOsbuildDevices("dev-for-/", "dev-for-/boot/efi", "dev-for-/var/log")
 	mounts := makeOsbuildMounts("/", "/boot/efi", "/var/log")
