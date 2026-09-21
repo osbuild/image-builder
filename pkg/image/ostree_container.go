@@ -30,6 +30,12 @@ type OSTreeContainer struct {
 	OSVersion              string
 	ExtraContainerPackages rpmmd.PackageSet // FIXME: this is never read
 	ContainerLanguage      string
+
+	// Bootupd enables bootupd metadata generation for the OSTree commit
+	// embedded in the container. When true, runs bootupctl backend
+	// generate-update-metadata so /usr/lib/bootupd/updates/ is present for
+	// later edge-installer / Anaconda bootupctl backend install.
+	Bootupd bool
 }
 
 func NewOSTreeContainer(platform platform.Platform, filename string, ref string) *OSTreeContainer {
@@ -52,6 +58,10 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Environment = img.Environment
 	osPipeline.OSTreeRef = img.OSTreeRef
 	osPipeline.OSTreeParent = img.OSTreeParent
+
+	if img.Bootupd {
+		osPipeline.Bootupd = true
+	}
 
 	commitPipeline := manifest.NewOSTreeCommit(buildPipeline, osPipeline, img.OSTreeRef)
 	commitPipeline.OSVersion = img.OSVersion

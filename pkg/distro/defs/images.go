@@ -1093,6 +1093,11 @@ func ostreeContainerImage(t *imageType,
 	img.OCIContainerCustomizations = ociContainerCustomizations(t)
 	img.OSTreeCommitServerCustomizations = ostreeCommitServerCustomizations(t)
 
+	// Enable bootupd metadata generation if configured
+	if imgConfig.BootupdGenMetadata != nil && *imgConfig.BootupdGenMetadata {
+		img.Bootupd = true
+	}
+
 	return img, nil
 }
 
