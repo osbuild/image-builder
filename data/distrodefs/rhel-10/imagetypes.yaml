@@ -1745,6 +1745,26 @@ image_types:
     blueprint:
       supported_options: *supported_options_disk
 
+  "ami-nvidia":
+    <<: *ami
+    name_aliases: []
+    default_size: "20 GiB"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
+    package_sets:
+      os:
+        - *ami_pkgset
+        - include:
+            - "cuda-toolkit"
+            - "kmod-nvidia-open"
+            - "libnccl"
+            - "nvidia-driver"
+            - "nvidia-driver-cuda"
+            - "nvidia-fabricmanager"
+    blueprint:
+      supported_options: *supported_options_disk
+
   "ec2-ha":
     <<: *ec2
     filename: "image.raw.xz"
