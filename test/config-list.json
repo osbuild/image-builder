@@ -226,6 +226,17 @@
   {
     "path": "./configs/empty.json",
     "filters": {
+      "distros": [
+        "rhel-10.2"
+      ],
+      "image-types": [
+        "ami-nvidia"
+      ]
+    }
+  },
+  {
+    "path": "./configs/empty.json",
+    "filters": {
       "arches": [],
       "distros": [
         "rhel-*",
