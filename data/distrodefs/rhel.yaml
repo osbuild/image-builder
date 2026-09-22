@@ -24,6 +24,7 @@ distros:
         when:
           not_distro_name: "rhel"
         ignore_image_types:
+          - ami-nvidia
           - azure-cvm
           - azure-rhui
           - azure-sap-rhui
