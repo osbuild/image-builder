@@ -183,7 +183,7 @@ func TestGenBootupdDevicesMountsMissingRoot(t *testing.T) {
 	assert.EqualError(t, err, "required mounts for bootupd stage [/ /boot/efi] missing")
 }
 
-func TestGenBootupdDevicesMountsUnexpectedEntity(t *testing.T) {
+func TestGenBootupdDevicesMountsLUKSWithoutFilesystem(t *testing.T) {
 	filename := "fake-disk.img"
 	pt := &disk.PartitionTable{
 		Partitions: []disk.Partition{
@@ -197,7 +197,39 @@ func TestGenBootupdDevicesMountsUnexpectedEntity(t *testing.T) {
 		UEFIVendor: "test",
 	}
 	_, _, err := osbuild.GenBootupdDevicesMounts(filename, pt, pf)
-	assert.EqualError(t, err, "type *disk.LUKSContainer not supported by bootupd handling yet")
+	assert.EqualError(t, err, "expected LUKS payload to be filesystem, got <nil>")
+}
+
+func TestGenBootupdDevicesMountsHappyLUKS(t *testing.T) {
+	filename := "fake-disk.img"
+	pt := testdisk.TestPartitionTables()["luks"]
+
+	luks := pt.Partitions[3].Payload.(*disk.LUKSContainer)
+	luks.Passphrase = "test-passphrase"
+
+	pf := &platform.Data{
+		Arch:       arch.ARCH_X86_64,
+		UEFIVendor: "test",
+	}
+
+	devices, mounts, err := osbuild.GenBootupdDevicesMounts(filename, &pt, pf)
+	require.NoError(t, err)
+
+	assert.Equal(t, osbuild.Device{
+		Type:   "org.osbuild.luks2",
+		Parent: "disk",
+		Options: &osbuild.LUKS2DeviceOptions{
+			Passphrase: "test-passphrase",
+			Partnum:    common.ToPtr(4),
+		},
+	}, devices["-"])
+
+	assert.Equal(t, osbuild.Mount{
+		Name:   "-",
+		Type:   "org.osbuild.xfs",
+		Source: "-",
+		Target: "/",
+	}, mounts[0])
 }
 
 var fakePt = &disk.PartitionTable{
