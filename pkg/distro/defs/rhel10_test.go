@@ -269,6 +269,7 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 				"vagrant-virtualbox",
 				"pxe-tar-xz",
 				"minimal-raw-xz",
+				"ami-nvidia",
 			},
 		},
 		{
