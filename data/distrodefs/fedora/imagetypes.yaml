@@ -287,6 +287,18 @@
           include:
             - dmidecode
 
+  # the network installer package set does not list all dependencies necessary in the anaconda
+  # webui path (which is selected based on rich dependencies), notably we are lacking
+  # `udisks2-btrfs` and `udisks2-lvm2` and thus missing support for these filesystems in
+  # cockpit-storage.
+  # this package set is to be included on all atomic installers
+  # see: https://bugzilla.redhat.com/show_bug.cgi?id=2537522
+  # see: https://github.com/fedora-silverblue/issue-tracker/issues/713
+  network_installer_webui_pkgset: &network_installer_webui_pkgset
+    include:
+      - "udisks2-btrfs"
+      - "udisks2-lvm2"
+
   cloud_init_services: &cloud_init_services
     - "cloud-init.service"
     - "cloud-config.service"
@@ -2962,6 +2974,7 @@ image_types:
     package_sets:
       installer:
         - *network_installer_pkgset
+        - *network_installer_webui_pkgset
         - include:
             - "fedora-release-kinoite"
     installer_config:
@@ -3017,6 +3030,7 @@ image_types:
     package_sets:
       installer:
         - *network_installer_pkgset
+        - *network_installer_webui_pkgset
         - include:
             - "fedora-release-silverblue"
     installer_config:
@@ -3088,6 +3102,7 @@ image_types:
     package_sets:
       installer:
         - *network_installer_pkgset
+        - *network_installer_webui_pkgset
         - include:
             - "fedora-release-sway-atomic"
 
@@ -3101,6 +3116,7 @@ image_types:
     package_sets:
       installer:
         - *network_installer_pkgset
+        - *network_installer_webui_pkgset
         - include:
             - "fedora-release-budgie-atomic"
 
@@ -3114,6 +3130,7 @@ image_types:
     package_sets:
       installer:
         - *network_installer_pkgset
+        - *network_installer_webui_pkgset
         - include:
             - "fedora-release-cosmic-atomic"
 
