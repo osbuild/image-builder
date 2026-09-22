@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #
 # gen-manifests-diff is a helper to diff the generated manifests
-# against what the current "main" of the images library would do.
+# against what the current "main" of the image-builder project would do.
 #
 # Alternatively a revision can be given as the first argument
 # and with that the diff is calculated against that. All images
@@ -23,10 +23,10 @@ def find_git_remote_upstream_name():
     res = subprocess.run(
         ["git", "remote", "-v"], text=True, capture_output=True, check=True)
     for line in res.stdout.split("\n"):
-        if m := re.search(r'(\w+)\s+(git@|https:\/\/)github\.com(:|\/)osbuild\/images', line):
+        if m := re.search(r'(\w+)\s+(git@|https:\/\/)github\.com(:|\/)osbuild\/image-builder', line):
             return m.group(1)
     # if this becomes a frequent issue add the upstream remote, see
-    # https://github.com/osbuild/images/pull/1356#issuecomment-2750997780
+    # https://github.com/osbuild/image-builder/pull/1356#issuecomment-2750997780
     # for details how to do this
     raise RuntimeError(f"cannot find upstream github banch in {res.stdout}, please report as a bug")
 
@@ -90,7 +90,7 @@ def main():
         case 1:
             print("no revision given as argument, running against merge base")
             # merge base is calculated against upstream
-            # "github.com/osbuild/images" not against the users fork
+            # "github.com/osbuild/image-builder" not against the users fork
             upstream = find_git_remote_upstream_name()
             rev = subprocess.run(
                 ["git", "merge-base", f"{upstream}/main", "HEAD"],
