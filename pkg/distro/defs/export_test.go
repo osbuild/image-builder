@@ -48,7 +48,8 @@ func ImageTypeCheckOptions(it *imageType, bp *blueprint.Blueprint, options distr
 	return it.checkOptions(bp, options)
 }
 
-func (t *imageType) SetExtrasForTest(sysexts []SysextDef, partitions []PartitionDef) {
+func (t *imageType) SetExtrasForTest(sysexts []SysextDef, partitions []PartitionDef, files []FileDef) {
 	t.sysexts = sysexts
 	t.partitions = partitions
+	t.files = files
 }

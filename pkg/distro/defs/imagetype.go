@@ -80,6 +80,7 @@ type imageType struct {
 
 	sysexts    []SysextDef
 	partitions []PartitionDef
+	files      []FileDef
 
 	supportedPartitioningModes []partition.PartitioningMode
 
@@ -202,6 +203,11 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 	it.partitionTable = basePT
 	it.sysexts = imgYAML.Sysexts(d.ID(), ar.Name())
 	it.partitions = imgYAML.Partitions()
+	files, err := imgYAML.Files(d.ID(), ar.Name())
+	if err != nil {
+		return imageType{}, err
+	}
+	it.files = files
 
 	it.packageSets = imgYAML.PackageSets(d.ID(), ar.Name())
 
@@ -270,6 +276,9 @@ func (t *imageType) Extras() []string {
 	for _, sp := range t.partitions {
 		names = append(names, "partition:"+sp.Name)
 	}
+	for _, f := range t.files {
+		names = append(names, "file:"+f.Name)
+	}
 	return names
 }
 
@@ -302,6 +311,17 @@ func (t *imageType) ExportsWithExtras(refs []string) ([]string, map[string]distr
 						extraRefs[p] = er
 					}
 					exports = append(exports, sp.ExportPipelineNames()...)
+					found = true
+					break
+				}
+			}
+		case "file":
+			for _, f := range t.files {
+				if f.Name == name {
+					for _, p := range f.ExportPipelineNames() {
+						extraRefs[p] = er
+					}
+					exports = append(exports, f.ExportPipelineNames()...)
 					found = true
 					break
 				}
