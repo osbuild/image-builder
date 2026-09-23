@@ -16,3 +16,8 @@ func TestPartitionPipelineName(t *testing.T) {
 	assert.Equal(t, "partition-rootfs", image.PartitionPipelineName("rootfs", ""))
 	assert.Equal(t, "partition-boot-xz", image.PartitionPipelineName("boot", "xz"))
 }
+
+func TestFilePipelineName(t *testing.T) {
+	assert.Equal(t, "file-kernel", image.FilePipelineName("kernel", ""))
+	assert.Equal(t, "file-initrd-xz", image.FilePipelineName("initrd", "xz"))
+}
