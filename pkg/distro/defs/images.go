@@ -842,6 +842,15 @@ func diskImage(t *imageType,
 		})
 	}
 
+	for _, f := range t.files {
+		img.Files = append(img.Files, image.FileConfig{
+			Name:        f.Name,
+			Path:        f.Path,
+			Filename:    f.Filename,
+			Compression: f.Compression,
+		})
+	}
+
 	if img.OSCustomizations.NoBLS {
 		img.OSProduct = t.Arch().Distro().Product()
 		img.OSVersion = t.Arch().Distro().OsVersion()

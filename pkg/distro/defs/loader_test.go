@@ -2088,6 +2088,7 @@ func TestExportsWithExtras(t *testing.T) {
 		[]defs.PartitionDef{
 			{Name: "boot", Mountpoint: "/boot", Compression: "xz"},
 		},
+		nil,
 	)
 
 	exports, extraRefs, err := it.ExportsWithExtras([]string{"sysext:nginx", "partition:boot"})
@@ -2106,4 +2107,112 @@ func TestExportsWithExtras(t *testing.T) {
 
 	_, _, err = it.ExportsWithExtras([]string{"bogus:nginx"})
 	assert.EqualError(t, err, `unknown extra type "bogus" in "bogus:nginx"`)
+}
+
+func TestFiles(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      files:
+        kernel:
+          path: /boot/vmlinuz
+          filename: vmlinuz.bin
+          compression: xz
+        osrelease:
+          path: /etc/os-release
+`
+	it := makeTestImageType(t, fakeYAML)
+	id := distro.ID{Name: "test-distro", MajorVersion: 1}
+	files, err := it.Files(id, "x86_64")
+	require.NoError(t, err)
+
+	require.Len(t, files, 2)
+	assert.Equal(t, "kernel", files[0].Name)
+	assert.Equal(t, "/boot/vmlinuz", files[0].Path)
+	assert.Equal(t, "vmlinuz.bin", files[0].Filename)
+	assert.Equal(t, "xz", files[0].Compression)
+	assert.Equal(t, "osrelease", files[1].Name)
+	assert.Equal(t, "/etc/os-release", files[1].Path)
+	assert.Equal(t, "", files[1].Filename)
+	assert.Equal(t, "", files[1].Compression)
+}
+
+func TestFilesEmpty(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    filename: foo
+    image_func: disk
+`
+	it := makeTestImageType(t, fakeYAML)
+	id := distro.ID{Name: "test-distro", MajorVersion: 1}
+	files, err := it.Files(id, "x86_64")
+	require.NoError(t, err)
+	assert.Empty(t, files)
+}
+
+func TestFilesTemplatedPath(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      files:
+        grubenv:
+          path: /boot/efi/EFI/{{.Distro.Name}}/grub.env
+`
+	it := makeTestImageType(t, fakeYAML)
+	id := distro.ID{Name: "redhat", MajorVersion: 10}
+	files, err := it.Files(id, "aarch64")
+	require.NoError(t, err)
+
+	require.Len(t, files, 1)
+	assert.Equal(t, "/boot/efi/EFI/redhat/grub.env", files[0].Path)
+}
+
+func TestFilesTemplatedPathWithArch(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      files:
+        kernel:
+          path: /boot/vmlinuz-{{.Arch}}
+`
+	it := makeTestImageType(t, fakeYAML)
+	id := distro.ID{Name: "fedora", MajorVersion: 42}
+	files, err := it.Files(id, "x86_64")
+	require.NoError(t, err)
+
+	require.Len(t, files, 1)
+	assert.Equal(t, "/boot/vmlinuz-x86_64", files[0].Path)
+}
+
+func TestFileDefExportPipelineNames(t *testing.T) {
+	plain := defs.FileDef{Name: "kernel", Path: "/boot/vmlinuz"}
+	assert.Equal(t, []string{"file-kernel"}, plain.ExportPipelineNames())
+
+	compressed := defs.FileDef{Name: "initrd", Path: "/boot/initramfs.img", Compression: "xz"}
+	assert.Equal(t, []string{"file-initrd-xz"}, compressed.ExportPipelineNames())
+}
+
+func TestExportsWithExtrasFiles(t *testing.T) {
+	it := defs.ImageType{}
+	it.SetExtrasForTest(
+		nil,
+		nil,
+		[]defs.FileDef{
+			{Name: "kernel", Path: "/boot/vmlinuz"},
+		},
+	)
+
+	exports, extraRefs, err := it.ExportsWithExtras([]string{"file:kernel"})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"file-kernel"}, exports)
+	assert.Equal(t, map[string]distro.ExtraRef{
+		"file-kernel": {Type: "file", Name: "kernel"},
+	}, extraRefs)
+
+	_, _, err = it.ExportsWithExtras([]string{"file:nonexistent"})
+	assert.EqualError(t, err, `unknown extra "file:nonexistent"`)
 }

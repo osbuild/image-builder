@@ -581,6 +581,7 @@ type ImageTypeYAML struct {
 type extrasYAML struct {
 	Sysexts    map[string]sysextDef    `yaml:"sysexts,omitempty"`
 	Partitions map[string]partitionDef `yaml:"partitions,omitempty"`
+	Files      map[string]fileDef      `yaml:"files,omitempty"`
 }
 
 type packageConfDef struct {
@@ -597,6 +598,12 @@ type sysextDef struct {
 
 type partitionDef struct {
 	Mountpoint  string `yaml:"mountpoint"`
+	Filename    string `yaml:"filename,omitempty"`
+	Compression string `yaml:"compression,omitempty"`
+}
+
+type fileDef struct {
+	Path        string `yaml:"path"`
 	Filename    string `yaml:"filename,omitempty"`
 	Compression string `yaml:"compression,omitempty"`
 }
@@ -958,6 +965,17 @@ func (s PartitionDef) ExportPipelineNames() []string {
 	return []string{image.PartitionPipelineName(s.Name, s.Compression)}
 }
 
+type FileDef struct {
+	Name        string
+	Path        string
+	Filename    string
+	Compression string
+}
+
+func (s FileDef) ExportPipelineNames() []string {
+	return []string{image.FilePipelineName(s.Name, s.Compression)}
+}
+
 // Partitions returns the resolved partition definitions for this image type.
 func (imgType *ImageTypeYAML) Partitions() []PartitionDef {
 	names := make([]string, 0, len(imgType.Extras.Partitions))
@@ -977,6 +995,55 @@ func (imgType *ImageTypeYAML) Partitions() []PartitionDef {
 		})
 	}
 	return res
+}
+
+// Files returns the resolved file definitions for this image type.
+// The path field supports Go templates with {{.Arch}} and {{.Distro.*}}.
+func (imgType *ImageTypeYAML) Files(id distro.ID, archName string) ([]FileDef, error) {
+	names := make([]string, 0, len(imgType.Extras.Files))
+	for name := range imgType.Extras.Files {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+
+	var res []FileDef
+	for _, name := range names {
+		f := imgType.Extras.Files[name]
+		path := f.Path
+		if strings.Contains(path, "{{") {
+			rendered, err := renderFilePathTemplate(path, id, archName)
+			if err != nil {
+				return nil, err
+			}
+			path = rendered
+		}
+		res = append(res, FileDef{
+			Name:        name,
+			Path:        path,
+			Filename:    f.Filename,
+			Compression: f.Compression,
+		})
+	}
+	return res, nil
+}
+
+func renderFilePathTemplate(path string, id distro.ID, archName string) (string, error) {
+	data := struct {
+		Arch   string
+		Distro distro.ID
+	}{
+		Arch:   archName,
+		Distro: id,
+	}
+	tmpl, err := template.New("file-path").Option("missingkey=error").Parse(path)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse template for file path %q: %w", path, err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute template for file path %q: %w", path, err)
+	}
+	return buf.String(), nil
 }
 
 // PartitionTable returns the partionTable for the given distro/imgType.
