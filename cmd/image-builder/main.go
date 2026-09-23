@@ -34,6 +34,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/sbom"
 
 	"github.com/osbuild/image-builder/internal/blueprintload"
+	"github.com/osbuild/image-builder/internal/cmdutil"
 	"github.com/osbuild/image-builder/pkg/setup"
 )
 
@@ -503,11 +504,26 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		return nil, fmt.Errorf("image %q has multiple exports: this is currently unsupported: please report this as a bug", name)
 	}
 	if len(withExtras) > 0 {
-		if _, _, err := img.ImgType.ExportsWithExtras(withExtras); err != nil {
+		resolved, err := resolveExtras(withExtras, img.ImgType.Extras())
+		if err != nil {
+			return nil, err
+		}
+		if _, _, err := img.ImgType.ExportsWithExtras(resolved); err != nil {
 			return nil, err
 		}
 	}
 	return img, err
+}
+
+func resolveExtras(patterns []string, available []string) ([]string, error) {
+	if len(patterns) == 0 {
+		return nil, nil
+	}
+	resolved, invalid := cmdutil.MultiValue(patterns).ResolveArgValues(available)
+	if len(invalid) > 0 {
+		return nil, fmt.Errorf("unknown extra %q", invalid[0])
+	}
+	return resolved, nil
 }
 
 func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []string, img *imagefilter.Result, wd io.Writer, wrapperOpts *cmdManifestWrapperOptions) ([]byte, error) {
@@ -776,7 +792,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	withExtras, err := cmd.Flags().GetStringArray("with-extra")
+	withExtraPatterns, err := cmd.Flags().GetStringArray("with-extra")
 	if err != nil {
 		return err
 	}
@@ -818,6 +834,10 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	img, err := getImage(cmd, args)
+	if err != nil {
+		return err
+	}
+	withExtras, err := resolveExtras(withExtraPatterns, img.ImgType.Extras())
 	if err != nil {
 		return err
 	}
