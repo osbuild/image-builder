@@ -18,6 +18,7 @@ var (
 	GetOneImage           = getOneImage
 	GetAllImages          = getAllImages
 	Run                   = run
+	ResolveExtras         = resolveExtras
 	FindDistro            = findDistro
 	DescribeImage         = describeImage
 	ProgressFromCmd       = progressFromCmd

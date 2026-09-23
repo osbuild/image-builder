@@ -1569,6 +1569,37 @@ func TestAllImageTypesHaveSingleExport(t *testing.T) {
 	}
 }
 
+func TestResolveExtras(t *testing.T) {
+	available := []string{"sysext:nginx", "sysext:podman", "partition:boot"}
+
+	resolved, err := main.ResolveExtras([]string{"sysext:nginx"}, available)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"sysext:nginx"}, resolved)
+
+	resolved, err = main.ResolveExtras([]string{"sysext:*"}, available)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"sysext:nginx", "sysext:podman"}, resolved)
+
+	resolved, err = main.ResolveExtras([]string{"*"}, available)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"sysext:nginx", "sysext:podman", "partition:boot"}, resolved)
+
+	resolved, err = main.ResolveExtras([]string{"*:*"}, available)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"sysext:nginx", "sysext:podman", "partition:boot"}, resolved)
+
+	resolved, err = main.ResolveExtras([]string{"sysext:ng*"}, available)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"sysext:nginx"}, resolved)
+
+	resolved, err = main.ResolveExtras(nil, available)
+	require.NoError(t, err)
+	assert.Nil(t, resolved)
+
+	_, err = main.ResolveExtras([]string{"sysext:nonexistent"}, available)
+	assert.EqualError(t, err, `unknown extra "sysext:nonexistent"`)
+}
+
 func TestBuildWithExtraRejectsEarlyOnUnknown(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
