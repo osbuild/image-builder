@@ -21,6 +21,7 @@ import (
 type ISOBootloader interface {
 	Manifest() *Manifest
 	GetISOBootStages(inputName string, pt *disk.PartitionTable) ([]*osbuild.Stage, []*fsnode.File, error)
+	GetISOConfigFiles() []string
 }
 
 type ISORootfsType uint64
