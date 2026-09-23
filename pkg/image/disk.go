@@ -34,6 +34,13 @@ type PartitionConfig struct {
 	Compression string
 }
 
+type FileConfig struct {
+	Name        string
+	Path        string
+	Filename    string
+	Compression string
+}
+
 type DiskImage struct {
 	Base
 
@@ -45,6 +52,7 @@ type DiskImage struct {
 
 	Sysexts    []SysextConfig
 	Partitions []PartitionConfig
+	Files      []FileConfig
 
 	// Control the VPC subformat use of force_size
 	VPCForceSize *bool
@@ -116,6 +124,21 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		}
 		if sp.Filename != "" {
 			exportPipeline.SetFilename(sp.Filename)
+		}
+		exportPipeline.Export()
+	}
+
+	for _, fc := range img.Files {
+		filePipelineName := FilePipelineName(fc.Name, "")
+		filePipeline := manifest.NewFileImage(buildPipeline, rawImagePipeline, fc.Path, img.PartitionTable, filePipelineName)
+		filePipeline.SetFilename(filepath.Base(fc.Path))
+		var exportPipeline manifest.FilePipeline = filePipeline
+		if fc.Compression != "" {
+			exportPipeline = GetCompressionPipeline(fc.Compression, buildPipeline, filePipeline, FilePipelineName(fc.Name, fc.Compression))
+			exportPipeline.SetFilename(fmt.Sprintf("%s.%s", filepath.Base(fc.Path), compressionExt(fc.Compression)))
+		}
+		if fc.Filename != "" {
+			exportPipeline.SetFilename(fc.Filename)
 		}
 		exportPipeline.Export()
 	}

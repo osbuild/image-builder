@@ -16,3 +16,12 @@ func PartitionPipelineName(name, compression string) string {
 	}
 	return "partition-" + name
 }
+
+// FilePipelineName returns the osbuild pipeline name for a file extra
+// with the given name and optional compression.
+func FilePipelineName(name, compression string) string {
+	if compression != "" {
+		return fmt.Sprintf("file-%s-%s", name, compression)
+	}
+	return "file-" + name
+}
