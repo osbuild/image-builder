@@ -123,5 +123,13 @@ def get_ci_runner_distro_for(distro, arch, image_type):
     the Schutzfile.
     """
     runner = get_ci_runner_for(distro, arch, image_type)
-    # given a runner like 'aws/fedora-44-x86_64' we want 'fedora-44'
-    return "-".join(runner.split("/")[1].split("-")[:-1])
+    # given a runner like 'aws/fedora-44-x86_64' or 'aws/fedora-44-x86_64-kvm we want 'fedora-44'
+    # 1. slice off the cloud prefix
+    distro_arch = runner.split("/")[1]
+    # 2. remove potential kvm suffix
+    distro_arch = distro_arch.removesuffix("-kvm")
+    # 3. remove known architecture suffixes
+    distro_arch = distro_arch.removesuffix("-x86_64")
+    distro_arch = distro_arch.removesuffix("-aarch64")
+
+    return distro_arch
