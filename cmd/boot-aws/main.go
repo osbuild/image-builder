@@ -6,11 +6,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/osbuild/image-builder/internal/test"
 	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
@@ -25,21 +27,28 @@ func exitCheck(err error) {
 	}
 }
 
-// createUserData creates cloud-init's user-data that contains user redhat with
-// the specified public key
+type cloudConfig struct {
+	User              string   `yaml:"user"`
+	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
+}
+
 func createUserData(username, publicKeyFile string) (string, error) {
 	publicKey, err := os.ReadFile(publicKeyFile)
 	if err != nil {
 		return "", err
 	}
 
-	userData := fmt.Sprintf(`#cloud-config
-user: %s
-ssh_authorized_keys:
-  - %s
-`, username, string(publicKey))
+	config := cloudConfig{
+		User:              username,
+		SSHAuthorizedKeys: []string{strings.TrimSpace(string(publicKey))},
+	}
 
-	return userData, nil
+	configYAML, err := yaml.Marshal(config)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal cloud-init user-data: %w", err)
+	}
+
+	return "#cloud-config\n" + string(configYAML), nil
 }
 
 // resources created or allocated for an instance that can be cleaned up when
