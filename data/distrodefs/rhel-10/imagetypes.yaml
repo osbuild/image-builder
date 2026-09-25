@@ -1788,62 +1788,84 @@ image_types:
             GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader -i 0 | head -n1)
             echo "Detected GPU: ${GPU_NAME}"
 
-            # Prints: <mem_mhz> <gpu_mhz> <arch>
-            # arch: turing (no -lmc), hopper (-lmcd), default (-lmc)
-            resolve_profile() {
-                case $1 in
-                    *T4*)                echo "5001 1590 turing"  ;;
-                    *A10G*)              echo "6250 1710 default" ;;
-                    *L40S*)              echo "9001 2520 default" ;;
-                    *"NVIDIA L4"*)       echo "6251 2040 default" ;;
-                    *"RTX PRO 4500"*)    echo "12501 2415 default" ;;
-                    *"RTX PRO 6000"*)    echo "12481 2430 default" ;;
-                    *V100*)              echo "877 1530 default"  ;;
-                    *A100-SXM4-40GB*)    echo "1215 1410 default" ;;
-                    *A100-SXM4-80GB*)    echo "1593 1410 default" ;;
-                    *H200*)              echo "3201 1980 hopper"  ;;
-                    *H100*)              echo "2619 1980 hopper"  ;;
-                    *B300*)              echo "3996 2032 default" ;;
-                    *B200*)              echo "3996 1965 default" ;;
-                    *M60*)               echo "2505 1177 default" ;;
-                    *)                   return 1 ;;
-                esac
-            }
+            start_fabricmanager() {
+                # A100: NVSwitch PCI 10de:1af1
+                # H100: NVSwitch PCI 10de:22a3 (also used by H200)
+                local a100_nvswitches h100_nvswitches
+                a100_nvswitches=$(lspci -d 10de:1af1 2>/dev/null | wc -l)
+                h100_nvswitches=$(lspci -d 10de:22a3 2>/dev/null | wc -l)
 
-            set_clocks() {
-                local mem=$1 gpu=$2 arch=$3
-
-                echo "Set clocks: memory=${mem} MHz gpu=${gpu} MHz arch=${arch}"
-
-                # Setting GPU clock is supported across all GPUs
-                if ! nvidia-smi -lgc "${gpu},${gpu}"; then
-                    echo "warning: failed to set GPU clock to ${gpu}"
+                if [[ "${a100_nvswitches}" -gt 0 || "${h100_nvswitches}" -gt 0 ]]; then
+                    echo "NVSwitch detected (A100=${a100_nvswitches} H100=${h100_nvswitches}); enabling nvidia-fabricmanager"
+                    if ! systemctl enable --now nvidia-fabricmanager; then
+                        echo "warning: failed to enable/start nvidia-fabricmanager"
+                    fi
+                else
+                    echo "No A100/H100 NVSwitch detected; leaving nvidia-fabricmanager disabled"
                 fi
-
-                case $arch in
-                    turing)
-                        # Turing (T4) does not support -lmc.
-                        ;;
-                    hopper)
-                        if ! nvidia-smi -lmcd "${mem}"; then
-                            echo "warning: failed to set memory clock (lmcd) to ${mem}"
-                        fi
-                        ;;
-                    *)
-                        if ! nvidia-smi -lmc "${mem},${mem}"; then
-                            echo "warning: failed to set memory clock to ${mem}"
-                        fi
-                        ;;
-                esac
             }
 
-            PROFILE=$(resolve_profile "${GPU_NAME}") || {
-                echo "unsupported GPU: ${GPU_NAME}; skipping clock settings"
-                exit 0
+            set_gpu_clocks() {
+                # Prints: <mem_mhz> <gpu_mhz> <arch>
+                # arch: turing (no -lmc), hopper (-lmcd), default (-lmc)
+                resolve_profile() {
+                    case $1 in
+                        *T4*)                echo "5001 1590 turing"  ;;
+                        *A10G*)              echo "6250 1710 default" ;;
+                        *L40S*)              echo "9001 2520 default" ;;
+                        *"NVIDIA L4"*)       echo "6251 2040 default" ;;
+                        *"RTX PRO 4500"*)    echo "12501 2415 default" ;;
+                        *"RTX PRO 6000"*)    echo "12481 2430 default" ;;
+                        *V100*)              echo "877 1530 default"  ;;
+                        *A100-SXM4-40GB*)    echo "1215 1410 default" ;;
+                        *A100-SXM4-80GB*)    echo "1593 1410 default" ;;
+                        *H200*)              echo "3201 1980 hopper"  ;;
+                        *H100*)              echo "2619 1980 hopper"  ;;
+                        *B300*)              echo "3996 2032 default" ;;
+                        *B200*)              echo "3996 1965 default" ;;
+                        *M60*)               echo "2505 1177 default" ;;
+                        *)                   return 1 ;;
+                    esac
+                }
+
+                set_clocks() {
+                    local mem=$1 gpu=$2 arch=$3
+
+                    echo "Set clocks: memory=${mem} MHz gpu=${gpu} MHz arch=${arch}"
+
+                    # Setting GPU clock is supported across all GPUs
+                    if ! nvidia-smi -lgc "${gpu},${gpu}"; then
+                        echo "warning: failed to set GPU clock to ${gpu}"
+                    fi
+
+                    case $arch in
+                        turing)
+                            # Turing (T4) does not support -lmc.
+                            ;;
+                        hopper)
+                            if ! nvidia-smi -lmcd "${mem}"; then
+                                echo "warning: failed to set memory clock (lmcd) to ${mem}"
+                            fi
+                            ;;
+                        *)
+                            if ! nvidia-smi -lmc "${mem},${mem}"; then
+                                echo "warning: failed to set memory clock to ${mem}"
+                            fi
+                            ;;
+                    esac
+                }
+
+                PROFILE=$(resolve_profile "${GPU_NAME}") || {
+                    echo "unsupported GPU: ${GPU_NAME}; skipping clock settings"
+                    return 0
+                }
+
+                read -r MEM_MHZ GPU_MHZ ARCH <<< "${PROFILE}"
+                set_clocks "${MEM_MHZ}" "${GPU_MHZ}" "${ARCH}"
             }
 
-            read -r MEM_MHZ GPU_MHZ ARCH <<< "${PROFILE}"
-            set_clocks "${MEM_MHZ}" "${GPU_MHZ}" "${ARCH}"
+            start_fabricmanager
+            set_gpu_clocks
       systemd_unit:
         - filename: &nvidia_gpu_tweaks_unit "nvidia-gpu-tweaks.service"
           "unit-type": "system"
@@ -1874,6 +1896,9 @@ image_types:
         - "tuned"
         # 'ami-nvidia' specific
         - *nvidia_gpu_tweaks_unit
+      disabled_services:
+        # Only enable at boot on NVSwitch instances (see nvidia-gpu-tweaks script)
+        - "nvidia-fabricmanager"
     blueprint:
       supported_options: *supported_options_disk
 
