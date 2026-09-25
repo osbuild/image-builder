@@ -566,6 +566,7 @@ func TestCreateSecurityGroupEC2(t *testing.T) {
 	type testCase struct {
 		name      string
 		sgName    string
+		vpcID     string
 		fec2      *fakeEC2Client
 		expectErr bool
 		errMsg    string
@@ -574,6 +575,7 @@ func TestCreateSecurityGroupEC2(t *testing.T) {
 		{
 			name:   "happy path",
 			sgName: "test-group",
+			vpcID:  "vpc-12345678",
 			fec2: &fakeEC2Client{
 				createSecurityGroup: &ec2.CreateSecurityGroupOutput{
 					GroupId: aws.String("sg-12345678"),
@@ -596,9 +598,10 @@ func TestCreateSecurityGroupEC2(t *testing.T) {
 			awsClient := awscloud.NewAWSForTest(tc.fec2, nil, nil, nil)
 			require.NotNil(t, awsClient)
 
-			createSGOut, err := awsClient.CreateSecurityGroupEC2(tc.sgName, "Test security group")
+			createSGOut, err := awsClient.CreateSecurityGroupEC2(tc.sgName, "Test security group", tc.vpcID)
 			require.Len(t, tc.fec2.createSecurityGroupCalls, 1)
 			require.Equal(t, tc.sgName, *tc.fec2.createSecurityGroupCalls[0].GroupName)
+			require.Equal(t, tc.vpcID, aws.ToString(tc.fec2.createSecurityGroupCalls[0].VpcId))
 
 			if tc.expectErr {
 				require.Empty(t, createSGOut)
@@ -748,6 +751,7 @@ func TestRunInstanceEC2(t *testing.T) {
 		sgID                        string
 		userData                    []byte
 		instanceType                string
+		subnetID                    string
 		fec2                        *fakeEC2Client
 		newInstanceRunningWaiterErr error
 		expectErr                   bool
@@ -760,6 +764,7 @@ func TestRunInstanceEC2(t *testing.T) {
 			sgID:         "sg-12345678",
 			userData:     []byte("test user data"),
 			instanceType: "t2.micro",
+			subnetID:     "subnet-12345678",
 			fec2: &fakeEC2Client{
 				runInstances: &ec2.RunInstancesOutput{
 					Instances: []ec2types.Instance{
@@ -884,7 +889,12 @@ func TestRunInstanceEC2(t *testing.T) {
 			restore := awscloud.MockNewInstanceRunningWaiterEC2(tc.newInstanceRunningWaiterErr)
 			defer restore()
 
-			output, err := awsClient.RunInstanceEC2(tc.imageId, tc.sgID, string(tc.userData), tc.instanceType)
+			output, err := awsClient.RunInstanceEC2(tc.imageId, tc.sgID, string(tc.userData), tc.instanceType, tc.subnetID)
+
+			if tc.instanceType != "invalid-type" {
+				require.Len(t, tc.fec2.runInstancesCalls, 1)
+				require.Equal(t, tc.subnetID, aws.ToString(tc.fec2.runInstancesCalls[0].SubnetId))
+			}
 
 			if tc.expectErr {
 				require.Error(t, err)
@@ -1057,6 +1067,44 @@ func TestGetInstanceAddress(t *testing.T) {
 			},
 			expectErr: true,
 			errMsg:    "no reservation found for instance i-1234567890abcdef0",
+		},
+		{
+			name:            "private IP fallback",
+			instanceId:      "i-1234567890abcdef0",
+			expectedAddress: "10.0.0.10",
+			fec2: &fakeEC2Client{
+				describeInstances: &ec2.DescribeInstancesOutput{
+					Reservations: []ec2types.Reservation{
+						{
+							Instances: []ec2types.Instance{
+								{
+									InstanceId:       aws.String("i-1234567890abcdef0"),
+									PrivateIpAddress: aws.String("10.0.0.10"),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "error: instance has no IP address",
+			instanceId: "i-1234567890abcdef0",
+			fec2: &fakeEC2Client{
+				describeInstances: &ec2.DescribeInstancesOutput{
+					Reservations: []ec2types.Reservation{
+						{
+							Instances: []ec2types.Instance{
+								{
+									InstanceId: aws.String("i-1234567890abcdef0"),
+								},
+							},
+						},
+					},
+				},
+			},
+			expectErr: true,
+			errMsg:    "instance i-1234567890abcdef0 has no public or private IP address",
 		},
 		{
 			name:       "error: describe instances failure",

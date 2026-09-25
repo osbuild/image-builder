@@ -125,6 +125,8 @@ go run ./cmd/boot-aws setup \
      --username "${USERNAME}" \
      --arch "${IMAGE_ARCHITECTURE}" \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
+     --vpc-id "${VPC_ID}" \
+     --subnet-id "${SUBNET_ID}" \
      --resourcefile ./aws-test-resources.json
 ```
 where:
@@ -133,7 +135,9 @@ where:
 - `${USERNAME}` is the username to set up on the instance,
 - `${IMAGE_ARCHITECTURE}` is the hardware architecture of the image being
   uploaded and booted,
-- `${PATH_TO_SSH_PUBLIC_KEY}` points to a public SSH key.
+- `${PATH_TO_SSH_PUBLIC_KEY}` points to a public SSH key,
+- `${VPC_ID}` and `${SUBNET_ID}` optionally select the VPC and subnet to use;
+  if either option is specified, both are required.
 
 AWS credentials are loaded from the default AWS credential chain. They can
 instead be supplied explicitly with `--access-key-id`, `--secret-access-key`,
@@ -141,9 +145,11 @@ and optionally `--session-token`.
 
 The command creates a security group configured to allow SSH access and
 launches an instance from the AMI. It waits until the instance is ready and
-prints its public IP address. It also uses the public SSH key and provided
+prints its public IP address, falling back to its private IP address when no
+public address is assigned. It also uses the public SSH key and provided
 username to configure cloud-init to create a user and set the SSH key on first
-boot.
+boot. When using a private address, the host running the command must have a
+route to the selected subnet so it can connect to the instance over SSH.
 
 The IDs of all created resources are stored in the file specified by the
 `--resourcefile` flag. This can be used to tear down all the resources created
@@ -162,6 +168,8 @@ go run ./cmd/boot-aws run \
      --arch "${IMAGE_ARCHITECTURE}" \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
      --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
+     --vpc-id "${VPC_ID}" \
+     --subnet-id "${SUBNET_ID}" \
      ${PATH_TO_EXECUTABLE}
 ```
 
