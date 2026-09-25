@@ -127,3 +127,43 @@ func TestRequiredFlagsBySubcommand(t *testing.T) {
 		})
 	}
 }
+
+func TestNetworkFlagsRequiredTogether(t *testing.T) {
+	for _, subcommand := range []string{"setup", "run"} {
+		t.Run(subcommand, func(t *testing.T) {
+			testCases := []struct {
+				name      string
+				vpcID     string
+				subnetID  string
+				expectErr bool
+			}{
+				{name: "neither flag"},
+				{name: "both flags", vpcID: "vpc-123", subnetID: "subnet-123"},
+				{name: "VPC only", vpcID: "vpc-123", expectErr: true},
+				{name: "subnet only", subnetID: "subnet-123", expectErr: true},
+			}
+
+			for _, tc := range testCases {
+				t.Run(tc.name, func(t *testing.T) {
+					root := setupCLI()
+					cmd, _, err := root.Find([]string{subcommand})
+					require.NoError(t, err)
+
+					if tc.vpcID != "" {
+						require.NoError(t, cmd.Flags().Set("vpc-id", tc.vpcID))
+					}
+					if tc.subnetID != "" {
+						require.NoError(t, cmd.Flags().Set("subnet-id", tc.subnetID))
+					}
+
+					err = cmd.ValidateFlagGroups()
+					if tc.expectErr {
+						require.ErrorContains(t, err, "they must all be set")
+					} else {
+						require.NoError(t, err)
+					}
+				})
+			}
+		})
+	}
+}

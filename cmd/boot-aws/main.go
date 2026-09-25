@@ -140,11 +140,19 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
+	vpcID, err := flags.GetString("vpc-id")
+	if err != nil {
+		return err
+	}
+	subnetID, err := flags.GetString("subnet-id")
+	if err != nil {
+		return err
+	}
 
 	fmt.Printf("Using AMI: %s\n", ami)
 
 	securityGroupName := fmt.Sprintf("image-boot-tests-%s", uuid.New().String())
-	securityGroup, err := a.CreateSecurityGroupEC2(securityGroupName, "image-tests-security-group")
+	securityGroup, err := a.CreateSecurityGroupEC2(securityGroupName, "image-tests-security-group", vpcID)
 	if err != nil {
 		return fmt.Errorf("CreateSecurityGroup(): %s", err.Error())
 	}
@@ -160,7 +168,7 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
-	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, userData, instance)
+	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, userData, instance, subnetID)
 	if err != nil {
 		return fmt.Errorf("RunInstanceEC2(): %s", err.Error())
 	}
@@ -409,8 +417,11 @@ func setupCLI() *cobra.Command {
 	setupCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
 	setupCmd.Flags().String("username", "", "name of the user to create on the system")
 	setupCmd.Flags().String("ssh-pubkey", "", "path to user's public ssh key")
+	setupCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
+	setupCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
 	setupCmd.Flags().StringArray("repo-file", nil, "path to a .repo file to install in /etc/yum.repos.d (may be repeated)")
+	setupCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-pubkey"} {
 		exitCheck(setupCmd.MarkFlagRequired(flag))
 	}
@@ -438,7 +449,10 @@ func setupCLI() *cobra.Command {
 	runCmd.Flags().String("username", "", "name of the user to create on the system")
 	runCmd.Flags().String("ssh-pubkey", "", "path to user's public ssh key")
 	runCmd.Flags().String("ssh-privkey", "", "path to user's private ssh key")
+	runCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
+	runCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	runCmd.Flags().StringArray("repo-file", nil, "path to a .repo file to install in /etc/yum.repos.d (may be repeated)")
+	runCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-pubkey", "ssh-privkey"} {
 		exitCheck(runCmd.MarkFlagRequired(flag))
 	}

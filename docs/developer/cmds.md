@@ -125,6 +125,8 @@ go run ./cmd/boot-aws setup \
      --username "${USERNAME}" \
      --arch "${IMAGE_ARCHITECTURE}" \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
+     --vpc-id "${VPC_ID}" \
+     --subnet-id "${SUBNET_ID}" \
      --repo-file "${PATH_TO_REPOSITORY_FILE}" \
      --resourcefile ./aws-test-resources.json
 ```
@@ -135,6 +137,8 @@ where:
 - `${IMAGE_ARCHITECTURE}` is the hardware architecture of the image being
   uploaded and booted,
 - `${PATH_TO_SSH_PUBLIC_KEY}` points to a public SSH key,
+- `${VPC_ID}` and `${SUBNET_ID}` optionally select the VPC and subnet to use;
+  if either option is specified, both are required,
 - `${PATH_TO_REPOSITORY_FILE}` optionally points to a `.repo` file to install
   in `/etc/yum.repos.d`. The `--repo-file` option can be repeated to install
   multiple repository files.
@@ -145,9 +149,11 @@ and optionally `--session-token`.
 
 The command creates a security group configured to allow SSH access and
 launches an instance from the AMI. It waits until the instance is ready and
-prints its public IP address. It also uses the public SSH key and provided
+prints its public IP address, falling back to its private IP address when no
+public address is assigned. It also uses the public SSH key and provided
 username to configure cloud-init to create a user and set the SSH key on first
-boot.
+boot. When using a private address, the host running the command must have a
+route to the selected subnet so it can connect to the instance over SSH.
 
 The IDs of all created resources are stored in the file specified by the
 `--resourcefile` flag. This can be used to tear down all the resources created
@@ -166,6 +172,8 @@ go run ./cmd/boot-aws run \
      --arch "${IMAGE_ARCHITECTURE}" \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
      --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
+     --vpc-id "${VPC_ID}" \
+     --subnet-id "${SUBNET_ID}" \
      --repo-file "${PATH_TO_REPOSITORY_FILE}" \
      ${PATH_TO_EXECUTABLE}
 ```
