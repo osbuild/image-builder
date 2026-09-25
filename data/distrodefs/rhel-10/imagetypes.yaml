@@ -1764,6 +1764,14 @@ image_types:
             - "nvidia-persistenced"
     image_config:
       <<: *ami_image_config
+      kernel_options:
+        # XXX: duplicated with ami.image_config.kernel_options :(
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "nvme_core.io_timeout=4294967295"
+        # same as AWS DLAMI
+        - "processor.max_cstate=1"
+        - "intel_idle.max_cstate=1"
       # FIXME: package the script & service separately
       files:
         - path: &nvidia_gpu_tweaks_script "/usr/libexec/nvidia-gpu-tweaks"
