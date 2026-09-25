@@ -597,3 +597,34 @@ def test_wait_ssh_ready_timeout():
     with pytest.raises(ConnectionRefusedError) as e:
         vm.wait_ssh_ready(timeout_sec=3)
     assert "after 3s" in str(e.value)
+
+
+@pytest.mark.parametrize("runner,distro", (
+    (
+        "aws/fedora-44-x86_64",
+        "fedora-44"
+    ),
+    (
+        "aws/fedora-44-x86_64-kvm",
+        "fedora-44"
+    ),
+    (
+        "aws/centos-stream-9-x86_64",
+        "centos-stream-9",
+    ),
+    (
+        "aws/centos-stream-9-x86_64-kvm",
+        "centos-stream-9",
+    ),
+    (
+        "aws/centos-stream-9-aarch64",
+        "centos-stream-9",
+    ),
+    (
+        "aws/fedora-44-aarch64",
+        "fedora-44"
+    ),
+))
+def test_get_ci_runner_distro_for(runner, distro):
+    with patch("imgtestlib.testenv.get_ci_runner_for", return_value=runner):
+        assert testlib.testenv.get_ci_runner_distro_for("", "", "") == distro
