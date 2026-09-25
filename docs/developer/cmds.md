@@ -120,79 +120,59 @@ For example, to boot an AMI or EC2 image, you can use the `./cmd/boot-aws`
 command with the `setup` subcommand:
 ```bash
 go run ./cmd/boot-aws setup \
-     --access-key-id "${AWS_ACCESS_KEY_ID}" \
-     --secret-access-key "${AWS_SECRET_ACCESS_KEY}" \
      --region "${AWS_REGION}" \
-     --bucket "${AWS_BUCKET}" \
-     --ami-name "${IMAGE_NAME}" \
-     --s3-key "${IMAGE_KEY}" \
+     --ami "${AMI_ID}" \
      --username "${USERNAME}" \
      --arch "${IMAGE_ARCHITECTURE}" \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
-     --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
      --repo-file "${PATH_TO_REPOSITORY_FILE}" \
-     --resourcefile ./aws-test-resources.json \
-     ${PATH_TO_IMAGE_FILE}
+     --resourcefile ./aws-test-resources.json
 ```
 where:
-- `${AWS_ACCESS_KEY_ID}` and `${AWS_SECRET_ACCESS_KEY}` are the AWS credentials,
 - `${AWS_REGION}` is the AWS region to use,
-- `${AWS_BUCKET}` is an S3 bucket (that must already exist),
-- `${IMAGE_NAME}` is the name to use for registering the AMI,
-- `${IMAGE_KEY}` is the key (filename) to use for the file in S3,
+- `${AMI_ID}` is the ID of an existing AMI,
 - `${USERNAME}` is the username to set up on the instance,
 - `${IMAGE_ARCHITECTURE}` is the hardware architecture of the image being
   uploaded and booted,
-- `${PATH_TO_SSH_PUBLIC_KEY}` and `${PATH_TO_SSH_PRIVATE_KEY}` point to an
-  public/private SSH key pair,
+- `${PATH_TO_SSH_PUBLIC_KEY}` points to a public SSH key,
 - `${PATH_TO_REPOSITORY_FILE}` optionally points to a `.repo` file to install
   in `/etc/yum.repos.d`. The `--repo-file` option can be repeated to install
   multiple repository files.
 
-This command will upload the image to S3, register the image as an AMI, create
-a security group configured to allow SSH access, and launch an instance from
-the AMI. It will then wait until the instance is ready and print its public IP
-address. It will also use the public ssh key and provided username to configure
-cloud-init to create a user and set the ssh key on first boot.
+AWS credentials are loaded from the default AWS credential chain. They can
+instead be supplied explicitly with `--access-key-id`, `--secret-access-key`,
+and optionally `--session-token`.
+
+The command creates a security group configured to allow SSH access and
+launches an instance from the AMI. It waits until the instance is ready and
+prints its public IP address. It also uses the public SSH key and provided
+username to configure cloud-init to create a user and set the SSH key on first
+boot.
 
 The IDs of all created resources are stored in the file specified by the
 `--resourcefile` flag. This can be used to tear down all the resources created
 by the `setup` subcommand:
 ```bash
 go run ./cmd/boot-aws teardown \
-     --access-key-id "${AWS_ACCESS_KEY_ID}" \
-     --secret-access-key "${AWS_SECRET_ACCESS_KEY}" \
-     --region "${AWS_REGION}" \
-     --bucket "${AWS_BUCKET}" \
-     --name "${IMAGE_NAME}" \
-     --key "${IMAGE_KEY}" \
-     --username "${USERNAME}" \
-     --arch "${IMAGE_ARCHITECTURE}" \
-     --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
-     --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
      --resourcefile ./aws-test-resources.json
 ```
 
 Alternatively, a setup-test-teardown procedure can be run in a single command using the `run` subcommand:
 ```bash
 go run ./cmd/boot-aws run \
-     --access-key-id "${AWS_ACCESS_KEY_ID}" \
-     --secret-access-key "${AWS_SECRET_ACCESS_KEY}" \
      --region "${AWS_REGION}" \
-     --bucket "${AWS_BUCKET}" \
-     --ami-name "${IMAGE_NAME}" \
-     --s3-key "${IMAGE_KEY}" \
+     --ami "${AMI_ID}" \
      --username "${USERNAME}" \
      --arch "${IMAGE_ARCHITECTURE}" \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
      --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
      --repo-file "${PATH_TO_REPOSITORY_FILE}" \
-     ${PATH_TO_IMAGE_FILE} ${PATH_TO_SCRIPT}
+     ${PATH_TO_EXECUTABLE}
 ```
 
-This will perform the same steps as the `setup` subcommand, then upload the
-script specified by `${PATH_TO_SCRIPT}` to the instance, run it, and then
-perform the same actions as the `teardown` subcommand.
+This performs the same steps as the `setup` subcommand, uploads the specified
+executable to the instance, runs it, and then performs the same actions as the
+`teardown` subcommand.
 
 #### Listing available image type configurations
 

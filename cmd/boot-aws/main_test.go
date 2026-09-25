@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 )
@@ -74,4 +78,52 @@ func TestCreateUserDataRejectsUnreadableRepositoryFile(t *testing.T) {
 
 	_, err := createUserData("test", publicKeyFile, []string{repoFile})
 	require.ErrorContains(t, err, "cannot read repository file")
+}
+
+func TestResourcesRegionRoundTrip(t *testing.T) {
+	region := "us-east-1"
+	securityGroup := "sg-123"
+	instance := "i-123"
+	written := resources{
+		Region:        region,
+		SecurityGroup: &securityGroup,
+		InstanceID:    &instance,
+	}
+
+	data, err := json.Marshal(&written)
+	require.NoError(t, err)
+	require.JSONEq(t, `{
+		"region": "us-east-1",
+		"security-group": "sg-123",
+		"instance": "i-123"
+	}`, string(data))
+
+	var read resources
+	require.NoError(t, json.Unmarshal(data, &read))
+	require.Equal(t, written, read)
+}
+
+func TestRequiredFlagsBySubcommand(t *testing.T) {
+	testCases := map[string][]string{
+		"setup":    {"ami", "arch", "region", "ssh-pubkey", "username"},
+		"run":      {"ami", "arch", "region", "ssh-privkey", "ssh-pubkey", "username"},
+		"teardown": {},
+	}
+
+	for subcommand, expected := range testCases {
+		t.Run(subcommand, func(t *testing.T) {
+			root := setupCLI()
+			cmd, _, err := root.Find([]string{subcommand})
+			require.NoError(t, err)
+
+			required := []string{}
+			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+				if values := flag.Annotations[cobra.BashCompOneRequiredFlag]; len(values) > 0 && values[0] == "true" {
+					required = append(required, flag.Name)
+				}
+			})
+			sort.Strings(required)
+			require.Equal(t, expected, required)
+		})
+	}
 }
