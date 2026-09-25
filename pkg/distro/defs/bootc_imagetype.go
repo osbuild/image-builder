@@ -908,6 +908,9 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 	if err != nil {
 		return nil, err
 	}
+	if basept == nil {
+		return nil, fmt.Errorf("pipelines: no partition tables defined for %s", t.arch.Name())
+	}
 
 	bd := t.arch.distro.(*BootcDistro)
 
@@ -915,8 +918,17 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 	// root filesystem is btrfs or lvm. Set a policy that disables the creation. Otherwise
 	// the default partition table policy is used.
 	if bd.unifiedKernel {
+		// basept may be the table from the YAML definitions or the container,
+		// work on a copy: the changes below modify it
+		basept = basept.Clone().(*disk.PartitionTable)
 		basept.Policy = &disk.PartitionTablePolicy{
 			EnsureXBOOTLDR: false,
+		}
+		// A partition table that comes from the container is used as-is.
+		if bd.sourceInfo == nil || bd.sourceInfo.PartitionTable == nil {
+			if err := setDPSRootPartitionType(basept, t.arch.arch); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -960,6 +972,27 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 	}
 
 	return partitionTable, nil
+}
+
+// setDPSRootPartitionType sets the Discoverable Partitions Specification
+// root type on the partition of "/" in pt.
+//
+// This is the expected default for images with a UKI, as with "bootc install
+// to-disk": the UKI command line normally has no root=, so the initrd finds
+// the root filesystem with systemd-gpt-auto-generator, by its partition type.
+// It is not a hard requirement: a UKI whose command line has root= boots
+// with any type.
+func setDPSRootPartitionType(pt *disk.PartitionTable, architecture arch.Arch) error {
+	root := pt.FindPartitionForMountpoint("/")
+	if root == nil {
+		return fmt.Errorf("no root partition in the partition table")
+	}
+	guid, err := disk.RootPartitionTypeGUID(architecture)
+	if err != nil {
+		return err
+	}
+	root.Type = guid
+	return nil
 }
 
 func (t *bootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, diskCust *blueprint.DiskCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {

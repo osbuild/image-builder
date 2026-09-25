@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/disk/partition"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func createRand() *rand.Rand {
@@ -366,6 +367,40 @@ func TestGenPartitionTableSetsRootfsForAllFilesystemsBtrfs(t *testing.T) {
 	// ESP is always vfat
 	mnt, _ = findMountableSizeableFor(pt, "/boot/efi")
 	assert.Equal(t, "vfat", mnt.GetFSType())
+}
+
+// Images with a UKI get the DPS root type by default (see
+// setDPSRootPartitionType), other images keep the generic type of the YAML
+// definitions.
+func TestGenPartitionTableUnifiedKernelRootType(t *testing.T) {
+	for name, tc := range map[string]struct {
+		unifiedKernel  bool
+		defaultFs      string
+		customizations *blueprint.Customizations
+		expected       string
+	}{
+		"default":     {expected: disk.FilesystemDataGUID},
+		"uki":         {unifiedKernel: true, expected: disk.RootPartitionX86_64GUID},
+		"uki-btrfs":   {unifiedKernel: true, defaultFs: "btrfs", expected: disk.RootPartitionX86_64GUID},
+		"uki-fs-size": {unifiedKernel: true, customizations: &blueprint.Customizations{Filesystem: []blueprint.FilesystemCustomization{{Mountpoint: "/", MinSize: datasizes.GiB}}}, expected: disk.RootPartitionX86_64GUID},
+	} {
+		t.Run(name, func(t *testing.T) {
+			imgType := NewTestBootcImageType(t, "qcow2")
+			bd := imgType.arch.distro.(*BootcDistro)
+			bd.unifiedKernel = tc.unifiedKernel
+			if tc.defaultFs != "" {
+				bd.defaultFs = tc.defaultFs
+			}
+			pt, err := imgType.genPartitionTable(tc.customizations, 0, createRand())
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, pt.FindPartitionForMountpoint("/").Type)
+
+			// the YAML definition that is shared with non-UKI images is untouched
+			basept, err := imgType.BasePartitionTable()
+			require.NoError(t, err)
+			assert.Equal(t, disk.FilesystemDataGUID, basept.FindPartitionForMountpoint("/").Type)
+		})
+	}
 }
 
 // the ESP size of the base partition table (501 MiB in the bootc-generic
