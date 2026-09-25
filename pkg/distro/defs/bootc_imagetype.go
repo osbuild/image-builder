@@ -347,6 +347,11 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	}
 
 	for _, sp := range t.ImageTypeYAML.Partitions() {
+		// every partition extra is part of the manifest, so fail early and
+		// clearly instead of in the pipeline serialization
+		if bd.unifiedKernel && pt.FindPartitionForMountpoint(sp.Mountpoint) == nil {
+			return nil, nil, fmt.Errorf("partition extra %q needs a partition for %q, which the default partition table for bootc containers with a unified kernel (UKI) doesn't have: the UKI is installed into the ESP", sp.Name, sp.Mountpoint)
+		}
 		img.Partitions = append(img.Partitions, image.PartitionConfig{
 			Name:        sp.Name,
 			Mountpoint:  sp.Mountpoint,
@@ -914,21 +919,34 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 
 	bd := t.arch.distro.(*BootcDistro)
 
+	// the user's own customizations, before the embedded ones are applied
+	userBootCust := slices.ContainsFunc(fsCust, func(fs blueprint.FilesystemCustomization) bool {
+		return fs.Mountpoint == "/boot"
+	})
+	userDiskCust := diskCust != nil
+
 	// When there's a unified kernel we don't want to auto-create a /boot even *if* the
 	// root filesystem is btrfs or lvm. Set a policy that disables the creation. Otherwise
 	// the default partition table policy is used.
 	if bd.unifiedKernel {
 		// basept may be the table from the YAML definitions or the container,
-		// work on a copy: the changes below modify it
+		// work on a copy: the changes below modify its policy and partitions
 		basept = basept.Clone().(*disk.PartitionTable)
-		basept.Policy = &disk.PartitionTablePolicy{
-			EnsureXBOOTLDR: false,
+		if basept.Policy == nil {
+			basept.Policy = disk.NewDefaultPartitionTablePolicy()
 		}
+		basept.Policy.EnsureXBOOTLDR = false
 		// A partition table that comes from the container is used as-is.
 		if bd.sourceInfo == nil || bd.sourceInfo.PartitionTable == nil {
 			if err := setDPSRootPartitionType(basept, t.arch.arch); err != nil {
 				return nil, err
 			}
+			// bootc installs the UKI into the ESP, so the XBOOTLDR partition
+			// of our default table would stay empty and only get in the way
+			// when systemd-gpt-auto-generator mounts it on /boot.
+			basept.Partitions = slices.DeleteFunc(basept.Partitions, func(p disk.Partition) bool {
+				return p.Type == disk.XBootLDRPartitionGUID
+			})
 		}
 	}
 
@@ -957,6 +975,12 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// A disk customization builds a new partition table, so any /boot in it
+	// was asked for by the user.
+	if bd.unifiedKernel && (userBootCust || (userDiskCust && partitionTable.FindMountable("/boot") != nil)) {
+		return nil, fmt.Errorf("a /boot partition is not supported for bootc containers with a unified kernel (UKI): the UKI is installed into the ESP")
 	}
 
 	// XXX: make this generic/configurable
@@ -1023,7 +1047,13 @@ func (t *bootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, 
 		Architecture:     t.arch.arch,
 		ESPSize:          basept.ESPSize(),
 	}
-	return disk.NewCustomPartitionTable(diskCust, partOptions, nil, rng)
+	// With a unified kernel, don't auto-create a /boot for btrfs or LVM
+	// either, see genPartitionTable().
+	var policy *disk.PartitionTablePolicy
+	if bd.unifiedKernel {
+		policy = basept.Policy
+	}
+	return disk.NewCustomPartitionTable(diskCust, partOptions, policy, rng)
 }
 
 func (t *bootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fsCust []blueprint.FilesystemCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {

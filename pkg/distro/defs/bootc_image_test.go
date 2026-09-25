@@ -403,6 +403,105 @@ func TestGenPartitionTableUnifiedKernelRootType(t *testing.T) {
 	}
 }
 
+func TestGenPartitionTableUnifiedKernel(t *testing.T) {
+	const bootErr = "a /boot partition is not supported for bootc containers with a unified kernel (UKI): the UKI is installed into the ESP"
+	plain := func(mountpoint string) blueprint.PartitionCustomization {
+		return blueprint.PartitionCustomization{
+			Type:                         "plain",
+			FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{Mountpoint: mountpoint, FSType: "ext4"},
+		}
+	}
+	btrfsRoot := blueprint.PartitionCustomization{
+		Type: "btrfs",
+		BtrfsVolumeCustomization: blueprint.BtrfsVolumeCustomization{
+			Subvolumes: []blueprint.BtrfsSubvolumeCustomization{{Name: "root", Mountpoint: "/"}},
+		},
+	}
+
+	for name, tc := range map[string]struct {
+		defaultFs      string
+		containerTable bool
+		customizations *blueprint.Customizations
+		expectedBoot   bool
+		expectedErr    string
+		// a partition table from the container is used as-is, and btrfs
+		// (and LVM) volumes of a disk customization get the generic data
+		// type, see NewCustomPartitionTable()
+		genericRootType bool
+	}{
+		"default":         {},
+		"default-btrfs":   {defaultFs: "btrfs"},
+		"container-table": {containerTable: true, expectedBoot: true, genericRootType: true},
+		"container-table-rootfs": {
+			containerTable:  true,
+			customizations:  &blueprint.Customizations{Filesystem: []blueprint.FilesystemCustomization{{Mountpoint: "/", MinSize: datasizes.GiB}}},
+			expectedBoot:    true,
+			genericRootType: true,
+		},
+		"disk-btrfs-root": {
+			customizations:  &blueprint.Customizations{Disk: &blueprint.DiskCustomization{Partitions: []blueprint.PartitionCustomization{btrfsRoot}}},
+			genericRootType: true,
+		},
+		"fs-boot": {
+			customizations: &blueprint.Customizations{Filesystem: []blueprint.FilesystemCustomization{{Mountpoint: "/boot", MinSize: datasizes.GiB}}},
+			expectedErr:    bootErr,
+		},
+		"disk-boot": {
+			customizations: &blueprint.Customizations{Disk: &blueprint.DiskCustomization{Partitions: []blueprint.PartitionCustomization{plain("/boot"), plain("/")}}},
+			expectedErr:    bootErr,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			imgType := NewTestBootcImageType(t, "qcow2")
+			bd := imgType.arch.distro.(*BootcDistro)
+			bd.unifiedKernel = true
+			if tc.defaultFs != "" {
+				bd.defaultFs = tc.defaultFs
+			}
+			basept, err := imgType.BasePartitionTable()
+			require.NoError(t, err)
+			if tc.containerTable {
+				bd.sourceInfo.PartitionTable = basept.Clone().(*disk.PartitionTable)
+				bd.sourceInfo.PartitionTable.Policy = &disk.PartitionTablePolicy{GrowRootToFillDisk: common.ToPtr(false)}
+			}
+
+			pt, err := imgType.genPartitionTable(tc.customizations, 0, createRand())
+			if tc.expectedErr != "" {
+				assert.EqualError(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedBoot, pt.FindPartitionForMountpoint("/boot") != nil)
+			if tc.genericRootType {
+				assert.Equal(t, disk.FilesystemDataGUID, pt.FindPartitionForMountpoint("/").Type)
+			} else {
+				assert.Equal(t, disk.RootPartitionX86_64GUID, pt.FindPartitionForMountpoint("/").Type)
+			}
+			require.NotNil(t, pt.FindMountable("/boot/efi"))
+			if tc.containerTable {
+				// the container's policy is kept, except for XBOOTLDR
+				assert.False(t, pt.Policy.EnsureXBOOTLDR)
+				assert.Equal(t, common.ToPtr(false), pt.Policy.GrowRootToFillDisk)
+			}
+
+			// the YAML definition that is shared with non-UKI images is untouched
+			basept, err = imgType.BasePartitionTable()
+			require.NoError(t, err)
+			assert.NotNil(t, basept.FindPartitionForMountpoint("/boot"))
+		})
+	}
+}
+
+func TestManifestUnifiedKernelBootPartitionExtra(t *testing.T) {
+	d := newTestBootcDistroWithExtras(t)
+	d.unifiedKernel = true
+	it, err := common.Must(d.GetArch("x86_64")).GetImageType("qcow2")
+	require.NoError(t, err)
+
+	_, _, err = it.Manifest(&blueprint.Blueprint{}, distro.ImageOptions{}, nil, common.ToPtr(int64(0)))
+	assert.EqualError(t, err, `partition extra "boot" needs a partition for "/boot", which the default partition table for bootc containers with a unified kernel (UKI) doesn't have: the UKI is installed into the ESP`)
+}
+
 // the ESP size of the base partition table (501 MiB in the bootc-generic
 // definitions) must survive a disk customization that doesn't mention
 // /boot/efi
