@@ -23,6 +23,21 @@ const (
 	GiB = datasizes.GiB
 )
 
+func TestRootPartitionTypeGUID(t *testing.T) {
+	for a, expected := range map[arch.Arch]string{
+		arch.ARCH_X86_64:  disk.RootPartitionX86_64GUID,
+		arch.ARCH_AARCH64: disk.RootPartitionAarch64GUID,
+		arch.ARCH_PPC64LE: disk.RootPartitionPpc64leGUID,
+		arch.ARCH_S390X:   disk.RootPartitionS390xGUID,
+	} {
+		guid, err := disk.RootPartitionTypeGUID(a)
+		require.NoError(t, err)
+		assert.Equal(t, expected, guid)
+	}
+	_, err := disk.RootPartitionTypeGUID(arch.ARCH_UNSET)
+	assert.Error(t, err)
+}
+
 func TestAlignUp(t *testing.T) {
 
 	pt := disk.PartitionTable{}
