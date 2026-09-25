@@ -27,12 +27,20 @@ func exitCheck(err error) {
 	}
 }
 
-type cloudConfig struct {
-	User              string   `yaml:"user"`
-	SSHAuthorizedKeys []string `yaml:"ssh_authorized_keys"`
+type cloudConfigFile struct {
+	Path        string `yaml:"path"`
+	Content     string `yaml:"content"`
+	Owner       string `yaml:"owner"`
+	Permissions string `yaml:"permissions"`
 }
 
-func createUserData(username, publicKeyFile string) (string, error) {
+type cloudConfig struct {
+	User              string            `yaml:"user"`
+	SSHAuthorizedKeys []string          `yaml:"ssh_authorized_keys"`
+	WriteFiles        []cloudConfigFile `yaml:"write_files,omitempty"`
+}
+
+func createUserData(username, publicKeyFile string, repoFiles []string) (string, error) {
 	publicKey, err := os.ReadFile(publicKeyFile)
 	if err != nil {
 		return "", err
@@ -41,6 +49,20 @@ func createUserData(username, publicKeyFile string) (string, error) {
 	config := cloudConfig{
 		User:              username,
 		SSHAuthorizedKeys: []string{strings.TrimSpace(string(publicKey))},
+	}
+
+	for _, repoFile := range repoFiles {
+		repoName := filepath.Base(repoFile)
+		content, err := os.ReadFile(repoFile)
+		if err != nil {
+			return "", fmt.Errorf("cannot read repository file %q: %w", repoFile, err)
+		}
+		config.WriteFiles = append(config.WriteFiles, cloudConfigFile{
+			Path:        filepath.Join("/etc/yum.repos.d", repoName),
+			Content:     string(content),
+			Owner:       "root:root",
+			Permissions: "0644",
+		})
 	}
 
 	configYAML, err := yaml.Marshal(config)
@@ -103,8 +125,12 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
+	repoFiles, err := flags.GetStringArray("repo-file")
+	if err != nil {
+		return err
+	}
 
-	userData, err := createUserData(username, sshPubKey)
+	userData, err := createUserData(username, sshPubKey, repoFiles)
 	if err != nil {
 		return fmt.Errorf("createUserData(): %s", err.Error())
 	}
@@ -396,6 +422,7 @@ func setupCLI() *cobra.Command {
 		DisableFlagsInUseLine: true,
 	}
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
+	setupCmd.Flags().StringArray("repo-file", nil, "path to a .repo file to install in /etc/yum.repos.d (may be repeated)")
 	rootCmd.AddCommand(setupCmd)
 
 	teardownCmd := &cobra.Command{
@@ -414,6 +441,7 @@ func setupCLI() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run:   runExec,
 	}
+	runCmd.Flags().StringArray("repo-file", nil, "path to a .repo file to install in /etc/yum.repos.d (may be repeated)")
 	rootCmd.AddCommand(runCmd)
 
 	return rootCmd

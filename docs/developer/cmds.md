@@ -130,6 +130,7 @@ go run ./cmd/boot-aws setup \
      --arch "${IMAGE_ARCHITECTURE}" \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
      --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
+     --repo-file "${PATH_TO_REPOSITORY_FILE}" \
      --resourcefile ./aws-test-resources.json \
      ${PATH_TO_IMAGE_FILE}
 ```
@@ -143,7 +144,10 @@ where:
 - `${IMAGE_ARCHITECTURE}` is the hardware architecture of the image being
   uploaded and booted,
 - `${PATH_TO_SSH_PUBLIC_KEY}` and `${PATH_TO_SSH_PRIVATE_KEY}` point to an
-  public/private SSH key pair.
+  public/private SSH key pair,
+- `${PATH_TO_REPOSITORY_FILE}` optionally points to a `.repo` file to install
+  in `/etc/yum.repos.d`. The `--repo-file` option can be repeated to install
+  multiple repository files.
 
 This command will upload the image to S3, register the image as an AMI, create
 a security group configured to allow SSH access, and launch an instance from
@@ -182,6 +186,7 @@ go run ./cmd/boot-aws run \
      --arch "${IMAGE_ARCHITECTURE}" \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
      --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
+     --repo-file "${PATH_TO_REPOSITORY_FILE}" \
      ${PATH_TO_IMAGE_FILE} ${PATH_TO_SCRIPT}
 ```
 
