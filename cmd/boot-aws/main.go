@@ -3,14 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/osbuild/image-builder/internal/test"
 	"github.com/osbuild/image-builder/pkg/cloud/awscloud"
@@ -25,26 +26,56 @@ func exitCheck(err error) {
 	}
 }
 
-// createUserData creates cloud-init's user-data that contains user redhat with
-// the specified public key
-func createUserData(username, publicKeyFile string) (string, error) {
+type cloudConfigFile struct {
+	Path        string `yaml:"path"`
+	Content     string `yaml:"content"`
+	Owner       string `yaml:"owner"`
+	Permissions string `yaml:"permissions"`
+}
+
+type cloudConfig struct {
+	User              string            `yaml:"user"`
+	SSHAuthorizedKeys []string          `yaml:"ssh_authorized_keys"`
+	WriteFiles        []cloudConfigFile `yaml:"write_files,omitempty"`
+}
+
+func createUserData(username, publicKeyFile string, repoFiles []string) (string, error) {
 	publicKey, err := os.ReadFile(publicKeyFile)
 	if err != nil {
 		return "", err
 	}
 
-	userData := fmt.Sprintf(`#cloud-config
-user: %s
-ssh_authorized_keys:
-  - %s
-`, username, string(publicKey))
+	config := cloudConfig{
+		User:              username,
+		SSHAuthorizedKeys: []string{strings.TrimSpace(string(publicKey))},
+	}
 
-	return userData, nil
+	for _, repoFile := range repoFiles {
+		repoName := filepath.Base(repoFile)
+		content, err := os.ReadFile(repoFile)
+		if err != nil {
+			return "", fmt.Errorf("cannot read repository file %q: %w", repoFile, err)
+		}
+		config.WriteFiles = append(config.WriteFiles, cloudConfigFile{
+			Path:        filepath.Join("/etc/yum.repos.d", repoName),
+			Content:     string(content),
+			Owner:       "root:root",
+			Permissions: "0644",
+		})
+	}
+
+	configYAML, err := yaml.Marshal(config)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal cloud-init user-data: %w", err)
+	}
+
+	return "#cloud-config\n" + string(configYAML), nil
 }
 
 // resources created or allocated for an instance that can be cleaned up when
 // tearing down.
 type resources struct {
+	Region        string  `json:"region,omitempty"`
 	SecurityGroup *string `json:"security-group,omitempty"`
 	InstanceID    *string `json:"instance,omitempty"`
 }
@@ -60,11 +91,7 @@ func getInstanceType(arch string) (string, error) {
 	}
 }
 
-func newClientFromArgs(flags *pflag.FlagSet) (*awscloud.AWS, error) {
-	region, err := flags.GetString("region")
-	if err != nil {
-		return nil, err
-	}
+func newClientFromArgs(flags *pflag.FlagSet, region string) (*awscloud.AWS, error) {
 	if flags.Changed("access-key-id") {
 		keyID, err := flags.GetString("access-key-id")
 		if err != nil {
@@ -94,8 +121,12 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
+	repoFiles, err := flags.GetStringArray("repo-file")
+	if err != nil {
+		return err
+	}
 
-	userData, err := createUserData(username, sshPubKey)
+	userData, err := createUserData(username, sshPubKey, repoFiles)
 	if err != nil {
 		return fmt.Errorf("createUserData(): %s", err.Error())
 	}
@@ -109,11 +140,19 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
+	vpcID, err := flags.GetString("vpc-id")
+	if err != nil {
+		return err
+	}
+	subnetID, err := flags.GetString("subnet-id")
+	if err != nil {
+		return err
+	}
 
 	fmt.Printf("Using AMI: %s\n", ami)
 
 	securityGroupName := fmt.Sprintf("image-boot-tests-%s", uuid.New().String())
-	securityGroup, err := a.CreateSecurityGroupEC2(securityGroupName, "image-tests-security-group")
+	securityGroup, err := a.CreateSecurityGroupEC2(securityGroupName, "image-tests-security-group", vpcID)
 	if err != nil {
 		return fmt.Errorf("CreateSecurityGroup(): %s", err.Error())
 	}
@@ -129,7 +168,7 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
-	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, userData, instance)
+	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, userData, instance, subnetID)
 	if err != nil {
 		return fmt.Errorf("RunInstanceEC2(): %s", err.Error())
 	}
@@ -150,7 +189,12 @@ func setup(cmd *cobra.Command, args []string) {
 
 	flags := cmd.Flags()
 
-	a, err := newClientFromArgs(flags)
+	region, err := flags.GetString("region")
+	if err != nil {
+		fnerr = err
+		return
+	}
+	a, err := newClientFromArgs(flags, region)
 	if err != nil {
 		fnerr = err
 		return
@@ -162,7 +206,7 @@ func setup(cmd *cobra.Command, args []string) {
 		fnerr = err
 		return
 	}
-	res := &resources{}
+	res := &resources{Region: region}
 
 	fnerr = doSetup(a, flags, res)
 	if fnerr != nil {
@@ -221,30 +265,26 @@ func teardown(cmd *cobra.Command, args []string) {
 
 	flags := cmd.Flags()
 
-	a, err := newClientFromArgs(flags)
+	resourcesFile, err := flags.GetString("resourcefile")
 	if err != nil {
 		fnerr = err
 		return
 	}
 
-	resourcesFile, err := flags.GetString("resourcefile")
-	if err != nil {
-		return
-	}
-
-	res := &resources{}
-	resfile, err := os.Open(resourcesFile)
-	if err != nil {
-		fnerr = fmt.Errorf("failed to open resources file: %s", err.Error())
-		return
-	}
-	resdata, err := io.ReadAll(resfile)
+	resdata, err := os.ReadFile(resourcesFile)
 	if err != nil {
 		fnerr = fmt.Errorf("failed to read resources file: %s", err.Error())
 		return
 	}
+	res := &resources{}
 	if err := json.Unmarshal(resdata, res); err != nil {
 		fnerr = fmt.Errorf("failed to unmarshal resources data: %s", err.Error())
+		return
+	}
+
+	a, err := newClientFromArgs(flags, res.Region)
+	if err != nil {
+		fnerr = err
 		return
 	}
 
@@ -327,7 +367,11 @@ func runExec(cmd *cobra.Command, args []string) {
 	command := args
 	flags := cmd.Flags()
 
-	a, fnerr := newClientFromArgs(flags)
+	region, fnerr := flags.GetString("region")
+	if fnerr != nil {
+		return
+	}
+	a, fnerr := newClientFromArgs(flags, region)
 	if fnerr != nil {
 		return
 	}
@@ -360,24 +404,6 @@ func setupCLI() *cobra.Command {
 	rootFlags.String("access-key-id", "", "access key ID")
 	rootFlags.String("secret-access-key", "", "secret access key")
 	rootFlags.String("session-token", "", "session token")
-	rootFlags.String("region", "", "target region")
-	rootFlags.String("ami", "", "AMI ID to boot")
-	rootFlags.String("arch", "", "arch (x86_64 or aarch64)")
-	rootFlags.String("username", "", "name of the user to create on the system")
-	rootFlags.String("ssh-pubkey", "", "path to user's public ssh key")
-	rootFlags.String("ssh-privkey", "", "path to user's private ssh key")
-
-	exitCheck(rootCmd.MarkPersistentFlagRequired("region"))
-	exitCheck(rootCmd.MarkPersistentFlagRequired("ami"))
-	exitCheck(rootCmd.MarkPersistentFlagRequired("arch"))
-
-	// TODO: make it optional and use a default
-	exitCheck(rootCmd.MarkPersistentFlagRequired("username"))
-
-	// TODO: make ssh key pair optional for 'run' and if not specified generate
-	// a temporary key pair
-	exitCheck(rootCmd.MarkPersistentFlagRequired("ssh-privkey"))
-	exitCheck(rootCmd.MarkPersistentFlagRequired("ssh-pubkey"))
 
 	setupCmd := &cobra.Command{
 		Use:                   "setup [--resourcefile <filename>]",
@@ -386,7 +412,19 @@ func setupCLI() *cobra.Command {
 		Run:                   setup,
 		DisableFlagsInUseLine: true,
 	}
+	setupCmd.Flags().String("region", "", "target region")
+	setupCmd.Flags().String("ami", "", "AMI ID to boot")
+	setupCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
+	setupCmd.Flags().String("username", "", "name of the user to create on the system")
+	setupCmd.Flags().String("ssh-pubkey", "", "path to user's public ssh key")
+	setupCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
+	setupCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
+	setupCmd.Flags().StringArray("repo-file", nil, "path to a .repo file to install in /etc/yum.repos.d (may be repeated)")
+	setupCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
+	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-pubkey"} {
+		exitCheck(setupCmd.MarkFlagRequired(flag))
+	}
 	rootCmd.AddCommand(setupCmd)
 
 	teardownCmd := &cobra.Command{
@@ -395,7 +433,7 @@ func setupCLI() *cobra.Command {
 		Args:  cobra.NoArgs,
 		Run:   teardown,
 	}
-	teardownCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
+	teardownCmd.Flags().StringP("resourcefile", "r", "resources.json", "path containing the resource IDs")
 	rootCmd.AddCommand(teardownCmd)
 
 	runCmd := &cobra.Command{
@@ -404,6 +442,19 @@ func setupCLI() *cobra.Command {
 		Long:  "boot an AMI on AWS EC2, then upload the executable file specified by the first positional argument and execute it via SSH with the args on the command line",
 		Args:  cobra.MinimumNArgs(1),
 		Run:   runExec,
+	}
+	runCmd.Flags().String("region", "", "target region")
+	runCmd.Flags().String("ami", "", "AMI ID to boot")
+	runCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
+	runCmd.Flags().String("username", "", "name of the user to create on the system")
+	runCmd.Flags().String("ssh-pubkey", "", "path to user's public ssh key")
+	runCmd.Flags().String("ssh-privkey", "", "path to user's private ssh key")
+	runCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
+	runCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
+	runCmd.Flags().StringArray("repo-file", nil, "path to a .repo file to install in /etc/yum.repos.d (may be repeated)")
+	runCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
+	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-pubkey", "ssh-privkey"} {
+		exitCheck(runCmd.MarkFlagRequired(flag))
 	}
 	rootCmd.AddCommand(runCmd)
 
