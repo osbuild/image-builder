@@ -129,13 +129,13 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	for _, fc := range img.Files {
-		filePipelineName := FilePipelineName(fc.Name, "")
-		filePipeline := manifest.NewFileImage(buildPipeline, rawImagePipeline, fc.Path, img.PartitionTable, filePipelineName)
-		filePipeline.SetFilename(filepath.Base(fc.Path))
-		var exportPipeline manifest.FilePipeline = filePipeline
+		prepPipeline := manifest.NewFilePrep(buildPipeline, rawImagePipeline, fc.Path, img.PartitionTable, FilePrepPipelineName(fc.Name))
+		var exportPipeline manifest.FilePipeline
 		if fc.Compression != "" {
-			exportPipeline = GetCompressionPipeline(fc.Compression, buildPipeline, filePipeline, FilePipelineName(fc.Name, fc.Compression))
+			exportPipeline = GetCompressionPipeline(fc.Compression, buildPipeline, prepPipeline, FilePipelineName(fc.Name, fc.Compression))
 			exportPipeline.SetFilename(fmt.Sprintf("%s.%s", filepath.Base(fc.Path), compressionExt(fc.Compression)))
+		} else {
+			exportPipeline = manifest.NewCopyFile(buildPipeline, prepPipeline, FilePipelineName(fc.Name, ""))
 		}
 		if fc.Filename != "" {
 			exportPipeline.SetFilename(fc.Filename)

@@ -17,6 +17,12 @@ func PartitionPipelineName(name, compression string) string {
 	return "partition-" + name
 }
 
+// FilePrepPipelineName returns the osbuild pipeline name for the
+// intermediate file-prep pipeline that extracts a file from the disk image.
+func FilePrepPipelineName(name string) string {
+	return "file-" + name + "-prep"
+}
+
 // FilePipelineName returns the osbuild pipeline name for a file extra
 // with the given name and optional compression.
 func FilePipelineName(name, compression string) string {
