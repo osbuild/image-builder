@@ -41,7 +41,7 @@ func testPartitionTable() *disk.PartitionTable {
 	}
 }
 
-func TestFileImageSerialize(t *testing.T) {
+func TestFilePrepSerialize(t *testing.T) {
 	mani := manifest.New()
 	runner := &runner.Linux{}
 	build := manifest.NewBuild(&mani, runner, nil, nil)
@@ -49,12 +49,12 @@ func TestFileImageSerialize(t *testing.T) {
 	pt := testPartitionTable()
 	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
 
-	filePipeline := manifest.NewFileImage(build, rawImage, "/etc/os-release", pt, "file-osrelease")
+	prepPipeline := manifest.NewFilePrep(build, rawImage, "/etc/os-release", pt, "file-osrelease-prep")
 
-	pipeline, err := manifest.Serialize(filePipeline)
+	pipeline, err := manifest.Serialize(prepPipeline)
 	require.NoError(t, err)
 
-	assert.Equal(t, "file-osrelease", pipeline.Name)
+	assert.Equal(t, "file-osrelease-prep", pipeline.Name)
 	require.Equal(t, 2, len(pipeline.Stages))
 
 	// First stage: copy the raw image into the pipeline tree
@@ -74,42 +74,83 @@ func TestFileImageSerialize(t *testing.T) {
 	assert.Equal(t, "tree:///os-release", fileOpts.Paths[0].To)
 }
 
-func TestFileImageDefaultFilename(t *testing.T) {
+func TestFilePrepDefaultFilename(t *testing.T) {
 	mani := manifest.New()
 	runner := &runner.Linux{}
 	build := manifest.NewBuild(&mani, runner, nil, nil)
 
 	pt := testPartitionTable()
 	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
-	filePipeline := manifest.NewFileImage(build, rawImage, "/boot/vmlinuz", pt, "file-kernel")
+	prepPipeline := manifest.NewFilePrep(build, rawImage, "/boot/vmlinuz", pt, "file-kernel-prep")
 
-	assert.Equal(t, "vmlinuz", filePipeline.Filename())
+	assert.Equal(t, "vmlinuz", prepPipeline.Filename())
 }
 
-func TestFileImageSetFilename(t *testing.T) {
+func TestFilePrepSetFilename(t *testing.T) {
 	mani := manifest.New()
 	runner := &runner.Linux{}
 	build := manifest.NewBuild(&mani, runner, nil, nil)
 
 	pt := testPartitionTable()
 	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
-	filePipeline := manifest.NewFileImage(build, rawImage, "/boot/vmlinuz", pt, "file-kernel")
+	prepPipeline := manifest.NewFilePrep(build, rawImage, "/boot/vmlinuz", pt, "file-kernel-prep")
 
-	filePipeline.SetFilename("kernel.bin")
-	assert.Equal(t, "kernel.bin", filePipeline.Filename())
+	prepPipeline.SetFilename("kernel.bin")
+	assert.Equal(t, "kernel.bin", prepPipeline.Filename())
 }
 
-func TestFileImageExport(t *testing.T) {
+func TestFilePrepExport(t *testing.T) {
 	mani := manifest.New()
 	runner := &runner.Linux{}
 	build := manifest.NewBuild(&mani, runner, nil, nil)
 
 	pt := testPartitionTable()
 	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
-	filePipeline := manifest.NewFileImage(build, rawImage, "/etc/os-release", pt, "file-osrelease")
-	filePipeline.SetFilename("os-release.txt")
+	prepPipeline := manifest.NewFilePrep(build, rawImage, "/etc/os-release", pt, "file-osrelease-prep")
+	prepPipeline.SetFilename("os-release.txt")
 
-	art := filePipeline.Export()
+	art := prepPipeline.Export()
 	assert.NotNil(t, art)
 	assert.Equal(t, "os-release.txt", art.Filename())
+}
+
+func TestCopyFileSerialize(t *testing.T) {
+	mani := manifest.New()
+	runner := &runner.Linux{}
+	build := manifest.NewBuild(&mani, runner, nil, nil)
+
+	pt := testPartitionTable()
+	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
+	prepPipeline := manifest.NewFilePrep(build, rawImage, "/etc/os-release", pt, "file-osrelease-prep")
+
+	copyPipeline := manifest.NewCopyFile(build, prepPipeline, "file-osrelease")
+
+	pipeline, err := manifest.Serialize(copyPipeline)
+	require.NoError(t, err)
+
+	assert.Equal(t, "file-osrelease", pipeline.Name)
+	require.Equal(t, 1, len(pipeline.Stages))
+
+	stage := pipeline.Stages[0]
+	assert.Equal(t, "org.osbuild.copy", stage.Type)
+	opts := stage.Options.(*osbuild.CopyStageOptions)
+	require.Len(t, opts.Paths, 1)
+	assert.Equal(t, "input://image/os-release", opts.Paths[0].From)
+	assert.Equal(t, "tree:///os-release", opts.Paths[0].To)
+}
+
+func TestCopyFileExport(t *testing.T) {
+	mani := manifest.New()
+	runner := &runner.Linux{}
+	build := manifest.NewBuild(&mani, runner, nil, nil)
+
+	pt := testPartitionTable()
+	rawImage := manifest.NewRawImage(build, nil, manifest.DiskCustomizations{})
+	prepPipeline := manifest.NewFilePrep(build, rawImage, "/etc/os-release", pt, "file-osrelease-prep")
+
+	copyPipeline := manifest.NewCopyFile(build, prepPipeline, "file-osrelease")
+
+	art := copyPipeline.Export()
+	assert.NotNil(t, art)
+	assert.Equal(t, "os-release", art.Filename())
 }

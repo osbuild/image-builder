@@ -9,10 +9,14 @@ import (
 	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
-// FileImage extracts a single file from an assembled raw disk image by
+// FilePrep extracts a single file from an assembled raw disk image by
 // mounting its filesystems and copying the file out. It runs after the
 // full image (including the bootloader) has been assembled.
-type FileImage struct {
+//
+// The pipeline tree contains both the loop-mounted disk image and the
+// extracted file. Use CopyFile (or a compression pipeline) to produce
+// a clean export that contains only the extracted file.
+type FilePrep struct {
 	Base
 	filename    string
 	imgPipeline FilePipeline
@@ -24,8 +28,8 @@ type FileImage struct {
 	PartitionTable *disk.PartitionTable
 }
 
-func NewFileImage(buildPipeline Build, imgPipeline FilePipeline, path string, pt *disk.PartitionTable, name string) *FileImage {
-	p := &FileImage{
+func NewFilePrep(buildPipeline Build, imgPipeline FilePipeline, path string, pt *disk.PartitionTable, name string) *FilePrep {
+	p := &FilePrep{
 		Base:           NewBase(name, buildPipeline),
 		imgPipeline:    imgPipeline,
 		filename:       filepath.Base(path),
@@ -36,15 +40,15 @@ func NewFileImage(buildPipeline Build, imgPipeline FilePipeline, path string, pt
 	return p
 }
 
-func (p *FileImage) Filename() string {
+func (p *FilePrep) Filename() string {
 	return p.filename
 }
 
-func (p *FileImage) SetFilename(filename string) {
+func (p *FilePrep) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func (p *FileImage) serialize() (osbuild.Pipeline, error) {
+func (p *FilePrep) serialize() (osbuild.Pipeline, error) {
 	pipeline, err := p.Base.serialize()
 	if err != nil {
 		return osbuild.Pipeline{}, err
@@ -83,11 +87,69 @@ func (p *FileImage) serialize() (osbuild.Pipeline, error) {
 	return pipeline, nil
 }
 
-func (p *FileImage) getBuildPackages(Distro) ([]string, error) {
+func (p *FilePrep) getBuildPackages(Distro) ([]string, error) {
 	return nil, nil
 }
 
-func (p *FileImage) Export() *artifact.Artifact {
+func (p *FilePrep) Export() *artifact.Artifact {
+	p.Base.export = true
+	return artifact.New(p.Name(), p.Filename(), nil)
+}
+
+// CopyFile copies a single file from an input pipeline into a clean tree.
+// It is used to produce an export that contains only the target file
+// without any intermediate artifacts (such as the disk image that
+// FilePrep keeps in its tree for loop-mounting).
+type CopyFile struct {
+	Base
+	filename    string
+	imgPipeline FilePipeline
+}
+
+func NewCopyFile(buildPipeline Build, imgPipeline FilePipeline, name string) *CopyFile {
+	p := &CopyFile{
+		Base:        NewBase(name, buildPipeline),
+		imgPipeline: imgPipeline,
+		filename:    imgPipeline.Filename(),
+	}
+	buildPipeline.addDependent(p)
+	return p
+}
+
+func (p *CopyFile) Filename() string {
+	return p.filename
+}
+
+func (p *CopyFile) SetFilename(filename string) {
+	p.filename = filename
+}
+
+func (p *CopyFile) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+
+	inputName := "image"
+	copyOpts := &osbuild.CopyStageOptions{
+		Paths: []osbuild.CopyStagePath{
+			{
+				From: fmt.Sprintf("input://%s/%s", inputName, p.imgPipeline.Filename()),
+				To:   fmt.Sprintf("tree:///%s", p.filename),
+			},
+		},
+	}
+	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.imgPipeline.Name())
+	pipeline.AddStage(osbuild.NewCopyStageSimple(copyOpts, copyInputs))
+
+	return pipeline, nil
+}
+
+func (p *CopyFile) getBuildPackages(Distro) ([]string, error) {
+	return nil, nil
+}
+
+func (p *CopyFile) Export() *artifact.Artifact {
 	p.Base.export = true
 	return artifact.New(p.Name(), p.Filename(), nil)
 }
