@@ -26,7 +26,15 @@ func exitCheck(err error) {
 
 // createUserData creates cloud-init's user-data that contains user redhat with
 // the specified public key
-func createUserData(username, publicKeyFile string) (string, error) {
+func createUserData(username, publicKeyFile, userDataFile string) (string, error) {
+	if userDataFile != "" {
+		userData, err := os.ReadFile(userDataFile)
+		if err != nil {
+			return "", fmt.Errorf("cannot read user-data file %q: %w", userDataFile, err)
+		}
+		return string(userData), nil
+	}
+
 	publicKey, err := os.ReadFile(publicKeyFile)
 	if err != nil {
 		return "", err
@@ -90,8 +98,12 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
+	userDataFile, err := flags.GetString("user-data")
+	if err != nil {
+		return err
+	}
 
-	userData, err := createUserData(username, sshPubKey)
+	userData, err := createUserData(username, sshPubKey, userDataFile)
 	if err != nil {
 		return fmt.Errorf("createUserData(): %s", err.Error())
 	}
@@ -385,6 +397,7 @@ func setupCLI() *cobra.Command {
 	setupCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
 	setupCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
+	setupCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
 	setupCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-pubkey"} {
 		exitCheck(setupCmd.MarkFlagRequired(flag))
@@ -415,6 +428,7 @@ func setupCLI() *cobra.Command {
 	runCmd.Flags().String("ssh-privkey", "", "path to user's private ssh key")
 	runCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
 	runCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
+	runCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
 	runCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-pubkey", "ssh-privkey"} {
 		exitCheck(runCmd.MarkFlagRequired(flag))
