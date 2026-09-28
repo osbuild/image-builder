@@ -122,9 +122,7 @@ command with the `setup` subcommand:
 go run ./cmd/boot-aws setup \
      --region "${AWS_REGION}" \
      --ami "${AMI_ID}" \
-     --username "${USERNAME}" \
      --arch "${IMAGE_ARCHITECTURE}" \
-     --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
      --vpc-id "${VPC_ID}" \
      --subnet-id "${SUBNET_ID}" \
      --user-data "${PATH_TO_USER_DATA}" \
@@ -133,15 +131,12 @@ go run ./cmd/boot-aws setup \
 where:
 - `${AWS_REGION}` is the AWS region to use,
 - `${AMI_ID}` is the ID of an existing AMI,
-- `${USERNAME}` is the username to set up on the instance,
 - `${IMAGE_ARCHITECTURE}` is the hardware architecture of the image being
   uploaded and booted,
-- `${PATH_TO_SSH_PUBLIC_KEY}` points to a public SSH key,
 - `${VPC_ID}` and `${SUBNET_ID}` optionally select the VPC and subnet to use;
   if either option is specified, both are required,
-- `${PATH_TO_USER_DATA}` optionally points to a cloud-init user-data file. Its
-  contents are passed to EC2 unchanged, replacing the user-data generated from
-  `${USERNAME}` and `${PATH_TO_SSH_PUBLIC_KEY}`.
+- `${PATH_TO_USER_DATA}` points to a cloud-init user-data file. Its contents
+  are passed to EC2 unchanged.
 
 AWS credentials are loaded from the default AWS credential chain. They can
 instead be supplied explicitly with `--access-key-id`, `--secret-access-key`,
@@ -150,10 +145,9 @@ and optionally `--session-token`.
 The command creates a security group configured to allow SSH access and
 launches an instance from the AMI. It waits until the instance is ready and
 prints its public IP address, falling back to its private IP address when no
-public address is assigned. It also uses the public SSH key and provided
-username to configure cloud-init to create a user and set the SSH key on first
-boot. When using a private address, the host running the command must have a
-route to the selected subnet so it can connect to the instance over SSH.
+public address is assigned. When using a private address, the host running the
+command must have a route to the selected subnet so it can connect to the
+instance over SSH.
 
 The IDs of all created resources are stored in the file specified by the
 `--resourcefile` flag. This can be used to tear down all the resources created
@@ -168,9 +162,8 @@ Alternatively, a setup-test-teardown procedure can be run in a single command us
 go run ./cmd/boot-aws run \
      --region "${AWS_REGION}" \
      --ami "${AMI_ID}" \
-     --username "${USERNAME}" \
      --arch "${IMAGE_ARCHITECTURE}" \
-     --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
+     --username "${USERNAME}" \
      --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
      --vpc-id "${VPC_ID}" \
      --subnet-id "${SUBNET_ID}" \
@@ -180,7 +173,8 @@ go run ./cmd/boot-aws run \
 
 This performs the same steps as the `setup` subcommand, uploads the specified
 executable to the instance, runs it, and then performs the same actions as the
-`teardown` subcommand.
+`teardown` subcommand. The user-data must configure `${USERNAME}` with an SSH
+key matching `${PATH_TO_SSH_PRIVATE_KEY}`.
 
 #### Listing available image type configurations
 

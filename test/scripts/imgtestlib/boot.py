@@ -121,24 +121,29 @@ def ensure_uncompressed(filepath):
         yield filepath
 
 
+def write_cloud_init_user_data(pubkey_path, directory):
+    ssh_key = pathlib.Path(pubkey_path).read_text(encoding="utf8").strip()
+    user_data = pathlib.Path(directory) / "user-data.yaml"
+    user_data_content = textwrap.dedent(f"""\
+    #cloud-config
+    users:
+      - name: root
+        ssh_authorized_keys:
+          - {ssh_key}
+      - name: osbuild
+        groups: [wheel]
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        ssh_authorized_keys:
+          - {ssh_key}
+    """)
+    user_data.write_text(user_data_content, encoding="utf8")
+    return user_data
+
+
 @contextlib.contextmanager
 def make_cloud_init_iso(pubkey_path) -> Generator:
-    ssh_key = pathlib.Path(pubkey_path).read_text(encoding="utf8").strip()
     with TemporaryDirectory() as tmpdir:
-        user_data = pathlib.Path(tmpdir) / "user-data.yaml"
-        user_data_content = textwrap.dedent(f"""\
-        #cloud-config
-        users:
-          - name: root
-            ssh_authorized_keys:
-              - {ssh_key}
-          - name: osbuild
-            groups: [wheel]
-            sudo: ALL=(ALL) NOPASSWD:ALL
-            ssh_authorized_keys:
-              - {ssh_key}
-        """)
-        user_data.write_text(user_data_content)
+        user_data = write_cloud_init_user_data(pubkey_path, tmpdir)
         meta_data = pathlib.Path(tmpdir) / "meta-data"
         meta_data.write_text('{"instance-id": "i-1234567890abcdef0"}')
         iso_path = pathlib.Path(tmpdir) / "cloud-init.iso"
@@ -468,17 +473,19 @@ def cmd_boot_aws(distro, arch, image_type, image_name, privkey, pubkey, image_pa
         boot_mode = get_boot_mode(distro, arch, image_type)
 
     ami_id = upload_to_aws(arch, image_name, image_path, boot_mode)
-    cmd = ["go", "run", "./cmd/boot-aws", "run",
-           "--access-key-id", aws_config["key_id"],
-           "--secret-access-key", aws_config["secret_key"],
-           "--region", aws_config["region"],
-           "--arch", arch,
-           "--ami", ami_id,
-           "--username", "osbuild",
-           "--ssh-privkey", privkey,
-           "--ssh-pubkey", pubkey,
-           *script_cmd]
-    runcmd_nc(cmd)
+    with TemporaryDirectory() as tmpdir:
+        user_data = write_cloud_init_user_data(pubkey, tmpdir)
+        cmd = ["go", "run", "./cmd/boot-aws", "run",
+               "--access-key-id", aws_config["key_id"],
+               "--secret-access-key", aws_config["secret_key"],
+               "--region", aws_config["region"],
+               "--arch", arch,
+               "--ami", ami_id,
+               "--username", "osbuild",
+               "--ssh-privkey", privkey,
+               "--user-data", os.fspath(user_data),
+               *script_cmd]
+        runcmd_nc(cmd)
 
 
 def boot_ami(distro, arch, image_type, image_path, config):
