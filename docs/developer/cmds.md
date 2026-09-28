@@ -127,6 +127,7 @@ go run ./cmd/boot-aws setup \
      --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
      --vpc-id "${VPC_ID}" \
      --subnet-id "${SUBNET_ID}" \
+     --user-data "${PATH_TO_USER_DATA}" \
      --resourcefile ./aws-test-resources.json
 ```
 where:
@@ -137,7 +138,10 @@ where:
   uploaded and booted,
 - `${PATH_TO_SSH_PUBLIC_KEY}` points to a public SSH key,
 - `${VPC_ID}` and `${SUBNET_ID}` optionally select the VPC and subnet to use;
-  if either option is specified, both are required.
+  if either option is specified, both are required,
+- `${PATH_TO_USER_DATA}` optionally points to a cloud-init user-data file. Its
+  contents are passed to EC2 unchanged, replacing the user-data generated from
+  `${USERNAME}` and `${PATH_TO_SSH_PUBLIC_KEY}`.
 
 AWS credentials are loaded from the default AWS credential chain. They can
 instead be supplied explicitly with `--access-key-id`, `--secret-access-key`,
@@ -170,6 +174,7 @@ go run ./cmd/boot-aws run \
      --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
      --vpc-id "${VPC_ID}" \
      --subnet-id "${SUBNET_ID}" \
+     --user-data "${PATH_TO_USER_DATA}" \
      ${PATH_TO_EXECUTABLE}
 ```
 
