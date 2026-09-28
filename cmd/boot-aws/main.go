@@ -24,31 +24,6 @@ func exitCheck(err error) {
 	}
 }
 
-// createUserData creates cloud-init's user-data that contains user redhat with
-// the specified public key
-func createUserData(username, publicKeyFile, userDataFile string) (string, error) {
-	if userDataFile != "" {
-		userData, err := os.ReadFile(userDataFile)
-		if err != nil {
-			return "", fmt.Errorf("cannot read user-data file %q: %w", userDataFile, err)
-		}
-		return string(userData), nil
-	}
-
-	publicKey, err := os.ReadFile(publicKeyFile)
-	if err != nil {
-		return "", err
-	}
-
-	userData := fmt.Sprintf(`#cloud-config
-user: %s
-ssh_authorized_keys:
-  - %s
-`, username, string(publicKey))
-
-	return userData, nil
-}
-
 // resources created or allocated for an instance that can be cleaned up when
 // tearing down.
 type resources struct {
@@ -90,22 +65,14 @@ func newClientFromArgs(flags *pflag.FlagSet, region string) (*awscloud.AWS, erro
 }
 
 func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
-	username, err := flags.GetString("username")
-	if err != nil {
-		return err
-	}
-	sshPubKey, err := flags.GetString("ssh-pubkey")
-	if err != nil {
-		return err
-	}
 	userDataFile, err := flags.GetString("user-data")
 	if err != nil {
 		return err
 	}
 
-	userData, err := createUserData(username, sshPubKey, userDataFile)
+	userData, err := os.ReadFile(userDataFile)
 	if err != nil {
-		return fmt.Errorf("createUserData(): %s", err.Error())
+		return fmt.Errorf("cannot read user-data file %q: %w", userDataFile, err)
 	}
 
 	ami, err := flags.GetString("ami")
@@ -145,7 +112,7 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
-	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, userData, instance, subnetID)
+	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, string(userData), instance, subnetID)
 	if err != nil {
 		return fmt.Errorf("RunInstanceEC2(): %s", err.Error())
 	}
@@ -273,7 +240,6 @@ func doRunExec(a *awscloud.AWS, command []string, flags *pflag.FlagSet, res *res
 	if err != nil {
 		return err
 	}
-
 	username, err := flags.GetString("username")
 	if err != nil {
 		return err
@@ -392,14 +358,12 @@ func setupCLI() *cobra.Command {
 	setupCmd.Flags().String("region", "", "target region")
 	setupCmd.Flags().String("ami", "", "AMI ID to boot")
 	setupCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
-	setupCmd.Flags().String("username", "", "name of the user to create on the system")
-	setupCmd.Flags().String("ssh-pubkey", "", "path to user's public ssh key")
 	setupCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
 	setupCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
 	setupCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
 	setupCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
-	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-pubkey"} {
+	for _, flag := range []string{"region", "ami", "arch"} {
 		exitCheck(setupCmd.MarkFlagRequired(flag))
 	}
 	rootCmd.AddCommand(setupCmd)
@@ -424,13 +388,12 @@ func setupCLI() *cobra.Command {
 	runCmd.Flags().String("ami", "", "AMI ID to boot")
 	runCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
 	runCmd.Flags().String("username", "", "name of the user to create on the system")
-	runCmd.Flags().String("ssh-pubkey", "", "path to user's public ssh key")
 	runCmd.Flags().String("ssh-privkey", "", "path to user's private ssh key")
 	runCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
 	runCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	runCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
 	runCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
-	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-pubkey", "ssh-privkey"} {
+	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-privkey"} {
 		exitCheck(runCmd.MarkFlagRequired(flag))
 	}
 	rootCmd.AddCommand(runCmd)
