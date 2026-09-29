@@ -244,11 +244,33 @@ func readDiskYaml(fsys fs.FS, prefix, variant string) (*diskYAML, error) {
 		if err := yaml.NewDecoder(f).Decode(&disk); err != nil {
 			return nil, fmt.Errorf("cannot parse disk definitions from %q: %w", p, err)
 		}
+		if disk.PartitionTable != nil {
+			setLUKSDefaults(disk.PartitionTable)
+		}
 
 		return &disk, nil
 	}
 
 	return nil, nil
+}
+
+// setLUKSDefaults fills in the PBKDF parameters that the
+// org.osbuild.luks2.format stage treats as optional, using the same
+// defaults as the stage, so they can be left out of a disk.yaml.
+func setLUKSDefaults(pt *disk.PartitionTable) {
+	_ = pt.ForEachEntity(func(e disk.Entity, _ []disk.Entity) error {
+		lc, ok := e.(*disk.LUKSContainer)
+		if !ok {
+			return nil
+		}
+		if lc.PBKDF.Memory == 0 {
+			lc.PBKDF.Memory = 32
+		}
+		if lc.PBKDF.Parallelism == 0 {
+			lc.PBKDF.Parallelism = 1
+		}
+		return nil
+	})
 }
 
 type isoYAML struct {
