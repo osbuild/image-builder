@@ -1,12 +1,16 @@
 package main
 
 import (
+	"io"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/image-builder/internal/olog"
 	"github.com/osbuild/image-builder/pkg/datasizes"
+	ilog "github.com/osbuild/image-builder/pkg/olog"
 )
 
 func TestManifestImageSizeFlag(t *testing.T) {
@@ -46,4 +50,46 @@ func TestManifestCommandDocumentsImageSizeUsage(t *testing.T) {
 
 	assert.Contains(t, manifestCmd.Long, "--image-size")
 	assert.Contains(t, manifestCmd.Example, `--image-size "1 GiB"`)
+}
+
+func TestVerboseFlagEnablesLogging(t *testing.T) {
+	cases := []struct {
+		name string
+		args []string
+		want io.Writer
+	}{
+		{
+			name: "no-flag",
+			args: []string{"version"},
+			want: io.Discard,
+		},
+		{
+			name: "before-subcommand",
+			args: []string{"--verbose", "version"},
+			want: os.Stderr,
+		},
+		{
+			name: "after-subcommand",
+			args: []string{"version", "-v"},
+			want: os.Stderr,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			olog.SetDefault(nil)
+			ilog.SetDefault(nil)
+			defer olog.SetDefault(nil)
+			defer ilog.SetDefault(nil)
+
+			rootCmd, err := setupRootCmd()
+			require.NoError(t, err)
+			rootCmd.SetArgs(tc.args)
+			rootCmd.SetOut(io.Discard)
+			require.NoError(t, rootCmd.Execute())
+
+			assert.Equal(t, tc.want, olog.Default().Writer())
+			assert.Equal(t, tc.want, ilog.Default().Writer())
+		})
+	}
 }
