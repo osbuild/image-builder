@@ -341,6 +341,45 @@ func TestLoadInfoDiskYamlWithoutPartitionTable(t *testing.T) {
 	assert.Equal(t, osbuild.MOUNT_CONFIGURATION_UNITS, *info.MountConfiguration)
 }
 
+func TestLoadInfoDiskYamlLog(t *testing.T) {
+	for _, tc := range []struct {
+		desc    string
+		dests   []string
+		variant string
+		logged  string
+	}{
+		{"none", nil, "", ""},
+		{"default", []string{"usr/lib/image-builder/bootc/disk.yaml"}, "", "usr/lib/image-builder/bootc/disk.yaml"},
+		{"variant", []string{"usr/lib/image-builder/bootc/disk.yaml", "usr/lib/image-builder/bootc/variant.d/v1/disk.yaml"}, "v1", "usr/lib/image-builder/bootc/variant.d/v1/disk.yaml"},
+		{"variant-fallback", []string{"usr/lib/image-builder/bootc/disk.yaml"}, "v1", "usr/lib/image-builder/bootc/disk.yaml"},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			root := t.TempDir()
+			writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "", "", "")
+			if tc.variant != "" {
+				require.NoError(t, os.MkdirAll(path.Join(root, "usr/lib/image-builder/bootc/variant.d", tc.variant), 0755))
+			}
+			for _, dest := range tc.dests {
+				createPartitionTable(t, root, fakePartitionTableYAML, dest)
+			}
+
+			var buf bytes.Buffer
+			olog.SetDefault(log.New(&buf, "", 0))
+			defer olog.SetDefault(nil)
+
+			_, err := Load(os.DirFS(root), tc.variant)
+			require.NoError(t, err)
+
+			if tc.logged == "" {
+				assert.NotContains(t, buf.String(), "disk definitions")
+				return
+			}
+			assert.Contains(t, buf.String(), "found disk definitions in /"+tc.logged+"\n")
+			assert.Equal(t, 1, strings.Count(buf.String(), "found disk definitions"))
+		})
+	}
+}
+
 var fakeISOYAML = `
 label: "My-ISO"
 kernel_args:
