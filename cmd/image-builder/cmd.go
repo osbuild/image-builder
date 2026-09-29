@@ -61,7 +61,19 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	rootCmd.PersistentFlags().String("output-dir", "", `Put output into the specified directory`)
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, `Switch to verbose mode (more logging on stderr and verbose progress)`)
 	registerMemProfileFlags(rootCmd)
-	rootCmd.PersistentPreRun = memProfilePersistentPreRun
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		memProfilePersistentPreRun(cmd, args)
+
+		verbose, err := cmd.Flags().GetBool("verbose")
+		if err != nil {
+			return err
+		}
+		if verbose {
+			olog.SetDefault(log.New(os.Stderr, "", 0))
+			ilog.SetDefault(log.New(os.Stderr, "", 0))
+		}
+		return nil
+	}
 
 	rootCmd.SetOut(osStdout)
 	rootCmd.SetErr(osStderr)
@@ -113,15 +125,6 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 
 	docCmd := setupDocCmd(rootCmd)
 	rootCmd.AddCommand(docCmd)
-
-	verbose, err := rootCmd.PersistentFlags().GetBool("verbose")
-	if err != nil {
-		return nil, err
-	}
-	if verbose {
-		olog.SetDefault(log.New(os.Stderr, "", 0))
-		ilog.SetDefault(log.New(os.Stderr, "", 0))
-	}
 
 	return rootCmd, nil
 }
