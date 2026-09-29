@@ -248,6 +248,7 @@ func readDiskYaml(fsys fs.FS, prefix, variant string) (*diskYAML, error) {
 			setLUKSDefaults(disk.PartitionTable)
 		}
 
+		olog.Printf("found disk definitions in /%s", p)
 		return &disk, nil
 	}
 
