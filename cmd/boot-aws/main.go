@@ -92,6 +92,10 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
+	instanceType, err := flags.GetString("instance-type")
+	if err != nil {
+		return err
+	}
 
 	fmt.Printf("Using AMI: %s\n", ami)
 
@@ -112,6 +116,10 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
+	if instanceType != "" {
+		instance = instanceType
+	}
+
 	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, string(userData), instance, subnetID)
 	if err != nil {
 		return fmt.Errorf("RunInstanceEC2(): %s", err.Error())
@@ -362,6 +370,7 @@ func setupCLI() *cobra.Command {
 	setupCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
 	setupCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
+	setupCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small")
 	setupCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "arch"} {
 		exitCheck(setupCmd.MarkFlagRequired(flag))
@@ -392,6 +401,7 @@ func setupCLI() *cobra.Command {
 	runCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
 	runCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	runCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
+	runCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small")
 	runCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-privkey"} {
 		exitCheck(runCmd.MarkFlagRequired(flag))
