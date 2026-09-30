@@ -471,19 +471,6 @@
     }
   },
   {
-    "path": "./configs/import-rpm-gpg-keys-from-tree-fedora.json",
-    "filters": {
-      "image-types": [
-        "generic-qcow2",
-        "server-qcow2",
-        "cloud-qcow2"
-      ],
-      "distros": [
-        "fedora*"
-      ]
-    }
-  },
-  {
     "path": "./configs/rhsm.json",
     "filters": {
       "image-types": [
