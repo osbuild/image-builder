@@ -1453,6 +1453,7 @@
         image_format: "raw"
       - <<: *aarch64_platform
         image_format: "raw"
+        boot_files: *ostree_boot_files_for_rpi
 
 image_types:
   "generic-vagrant-libvirt": &generic_vagrant_libvirt
