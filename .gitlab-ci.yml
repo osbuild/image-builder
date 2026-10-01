@@ -1095,7 +1095,7 @@ fail:
   stage: test
   extends: .terraform
   variables:
-    RUNNER: aws/fedora-44-x86_64
+    RUNNER: aws/fedora-44-x86_64-kvm
   rules:
     # 1. Skip the job if we're on the github merge queue
     - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
@@ -1114,7 +1114,7 @@ fail:
   stage: test
   extends: .terraform
   variables:
-    RUNNER: aws/fedora-44-x86_64
+    RUNNER: aws/fedora-44-x86_64-kvm
   rules:
     # 1. Skip the job if we're on the github merge queue
     - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
@@ -1133,7 +1133,7 @@ fail:
   stage: test
   extends: .terraform
   variables:
-    RUNNER: aws/fedora-44-x86_64
+    RUNNER: aws/fedora-44-x86_64-kvm
   rules:
     # 1. Skip the job if we're on the github merge queue
     - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
@@ -1152,7 +1152,7 @@ fail:
   stage: test
   extends: .terraform
   variables:
-    RUNNER: aws/fedora-44-x86_64
+    RUNNER: aws/fedora-44-x86_64-kvm
   rules:
     # 1. Skip the job if we're on the github merge queue
     - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
@@ -1171,7 +1171,7 @@ fail:
   stage: test
   extends: .terraform
   variables:
-    RUNNER: aws/fedora-44-x86_64
+    RUNNER: aws/fedora-44-x86_64-kvm
   rules:
     # 1. Skip the job if we're on the github merge queue
     - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'
@@ -1190,7 +1190,7 @@ fail:
   stage: test
   extends: .terraform
   variables:
-    RUNNER: aws/fedora-44-x86_64
+    RUNNER: aws/fedora-44-x86_64-kvm
   rules:
     # 1. Skip the job if we're on the github merge queue
     - if: '$CI_COMMIT_BRANCH =~ /^gh-readonly-queue/'

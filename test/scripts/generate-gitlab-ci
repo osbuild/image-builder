@@ -283,7 +283,8 @@ def main():
 
     # bootc-image-builder tests on both arches
     for arch in ("x86_64", "aarch64"):
-        runner = testlib.testenv.get_ci_runner_for(distro="*", arch=arch, image_type="*")
+        # Select the runner from the Schutzfile configuration
+        runner = testlib.testenv.get_ci_runner_for(distro="*", arch=arch, image_type="bootc-kvm")
         for test_file_path in collect_bib_tests():
             trigger_stage.append(BOOTC_IMAGE_BUILDER_TEMPLATE.format(
                 runner=runner,
