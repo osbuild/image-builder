@@ -2629,6 +2629,7 @@ image_types:
         - "customizations.fips"
         - "customizations.group"
         - "customizations.installer"
+        - "customizations.iso"
         - "customizations.kernel.append"
         - "customizations.locale"
         - "customizations.user"
