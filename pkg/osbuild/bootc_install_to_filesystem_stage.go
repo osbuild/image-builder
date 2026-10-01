@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"slices"
+	"strings"
 
 	"github.com/osbuild/image-builder/pkg/platform"
 )
@@ -59,4 +60,9 @@ func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, 
 		Devices: devices,
 		Mounts:  reqMounts,
 	}, nil
+}
+
+// IsVarMountpoint returns true for /var and mountpoints below it.
+func IsVarMountpoint(target string) bool {
+	return target == "/var" || strings.HasPrefix(target, "/var/")
 }

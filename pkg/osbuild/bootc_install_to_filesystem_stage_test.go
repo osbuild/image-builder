@@ -71,6 +71,21 @@ func TestBootcInstallToFilesystemStageNewEssentialMountsOnly(t *testing.T) {
 	assert.Equal(t, expectedStage, stage)
 }
 
+func TestIsVarMountpoint(t *testing.T) {
+	for target, expected := range map[string]bool{
+		"/var":         true,
+		"/var/":        true,
+		"/var/log":     true,
+		"/var/lib/app": true,
+		"/":            false,
+		"/variable":    false,
+		"/opt/var":     false,
+		"/boot/efi":    false,
+	} {
+		assert.Equal(t, expected, osbuild.IsVarMountpoint(target), target)
+	}
+}
+
 func TestBootcInstallToFilesystemStageNewNoContainers(t *testing.T) {
 	devices := makeOsbuildDevices("dev-for-/", "dev-for-/boot", "dev-for-/boot/efi")
 	mounts := makeOsbuildMounts("/", "/boot", "/boot/efi")

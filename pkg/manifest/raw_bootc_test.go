@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -98,6 +99,39 @@ func TestRawBootcImageSerializeMountsValidated(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = rawBootcPipeline.Serialize()
 	assert.EqualError(t, err, `required mounts for bootupd stage [/boot/efi] missing`)
+}
+
+func TestRawBootcImageSerializeVarMounts(t *testing.T) {
+	pipeline := makeFakeRawBootcPipeline()
+	pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi", "/var/opt", "/var/opt/app", "/tmp")
+	pipeline.OSCustomizations.Users = []users.User{{Name: "alice"}}
+	pipeline.OSCustomizations.SELinux = "targeted"
+	serialized, err := pipeline.Serialize()
+	require.NoError(t, err)
+
+	// Customizations see /var filesystems on top of the deployment,
+	// rather than hidden below its stateroot /var.
+	stage := findStage("org.osbuild.users", serialized.Stages)
+	require.NotNil(t, stage)
+	var mounts []string
+	for _, mount := range stage.Mounts {
+		mounts = append(mounts, mount.Type+":"+mount.Target)
+	}
+	assert.Equal(t, []string{
+		"org.osbuild.ext4:/", "org.osbuild.ext4:/boot", "org.osbuild.fat:/boot/efi", "org.osbuild.ext4:/tmp",
+		"org.osbuild.ostree.deployment:",
+		"org.osbuild.ext4:/var/opt", "org.osbuild.ext4:/var/opt/app",
+		"org.osbuild.bind:tree://",
+	}, mounts)
+
+	// setfiles does not cross mounts: each /var filesystem is relabeled.
+	var relabeled []string
+	for _, stage := range findStages("org.osbuild.selinux", serialized.Stages) {
+		if opts := stage.Options.(*osbuild.SELinuxStageOptions); strings.HasPrefix(opts.Target, "tree://") {
+			relabeled = append(relabeled, opts.Target)
+		}
+	}
+	assert.Equal(t, []string{"tree:///etc", "tree:///var", "tree:///var/opt", "tree:///var/opt/app"}, relabeled)
 }
 
 func findMountIdx(mounts []osbuild.Mount, mntType string) int {
