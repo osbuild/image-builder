@@ -83,7 +83,7 @@ RUN mv /usr/share/anaconda/list-harddrives-stub /usr/bin/list-harddrives && \
 
 RUN ln -s /usr/lib/systemd/system/anaconda-shell@.service /usr/lib/systemd/system/autovt@.service
 
-RUN mkdir /usr/lib/systemd/logind.conf.d
+RUN mkdir -p /usr/lib/systemd/logind.conf.d
 COPY <<EOT /usr/lib/systemd/logind.conf.d/anaconda-shell.conf
 [Login]
 ReserveVT=2
@@ -115,11 +115,30 @@ sudo podman build -t localhost/iso -f Containerfile
 sudo image-builder build --bootc-ref localhost/iso --bootc-default-fs ext4 bootc-generic-iso
 ```
 
+> [!TIP]
+> For offline installs, pass `--bootc-installer-payload-ref` to embed the payload
+> container in the ISO installer environment's containers-storage store. The
+> Anaconda kickstart must then install from that local store using a
+> `containers-storage:` source image reference.
+>
+> Example:
+>
+> ```Dockerfile
+> COPY <<EOT /usr/share/anaconda/interactive-defaults.ks
+> bootc --source-imgref containers-storage:quay.io/fedora/fedora-bootc:rawhide --target-imgref quay.io/fedora/fedora-bootc:rawhide
+> EOT
+> ```
+>
+> ```
+> PAYLOADREF="quay.io/fedora/fedora-bootc:rawhide"
+> sudo podman build -t localhost/iso -f Containerfile
+> sudo image-builder build --bootc-ref localhost/iso --bootc-installer-payload-ref "$PAYLOADREF" --bootc-default-fs ext4 bootc-generic-iso
+> ```
+
 > [!WARNING]
 > *A `bootc`-system installed through Anaconda will fail to start the `systemd-remount-fs.service`. See [here](https://forge.fedoraproject.org/atomic-desktops/tracker/issues/72#issuecomment-593808) and [here](https://bugzilla.redhat.com/show_bug.cgi?id=2332319) for more information.*
 
-
-For more examples, including for other operating systems, you can take a look at [this demonstration repository](https://github.com/ondrejbudai/bootc-isos).
+For more examples, including for other operating systems, you can take a look at [this demonstration repository](github.com/osbuild/bootc-foundry). The [bootc-foundry repository](https://github.com/osbuild/bootc-foundry) may also be of interest.
 
 ## Historical
 
