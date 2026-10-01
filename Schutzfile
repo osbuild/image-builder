@@ -13,6 +13,7 @@
       "*": {
         "x86_64": {
           "*": "aws/fedora-44-x86_64",
+          "bootc-kvm": "aws/fedora-44-x86_64-kvm",
           "qcow2": "aws/fedora-44-x86_64-kvm",
           "server-qcow2": "aws/fedora-44-x86_64-kvm",
           "generic-qcow2": "aws/fedora-44-x86_64-kvm",
