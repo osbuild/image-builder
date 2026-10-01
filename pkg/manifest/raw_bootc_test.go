@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -102,36 +103,60 @@ func TestRawBootcImageSerializeMountsValidated(t *testing.T) {
 }
 
 func TestRawBootcImageSerializeVarMounts(t *testing.T) {
-	pipeline := makeFakeRawBootcPipeline()
-	pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi", "/var/opt", "/var/opt/app", "/tmp")
-	pipeline.OSCustomizations.Users = []users.User{{Name: "alice"}}
-	pipeline.OSCustomizations.SELinux = "targeted"
-	serialized, err := pipeline.Serialize()
-	require.NoError(t, err)
+	bootMounts := []string{"/", "/boot", "/boot/efi"}
+	varMounts := []string{"/var/opt", "/var/opt/app"}
+	for _, installVarMounts := range []bool{false, true} {
+		t.Run(fmt.Sprintf("InstallVarMounts=%v", installVarMounts), func(t *testing.T) {
+			pipeline := makeFakeRawBootcPipeline()
+			pipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi", "/var/opt", "/var/opt/app", "/tmp")
+			pipeline.InstallVarMounts = installVarMounts
+			pipeline.OSCustomizations.Users = []users.User{{Name: "alice"}}
+			pipeline.OSCustomizations.SELinux = "targeted"
+			serialized, err := pipeline.Serialize()
+			require.NoError(t, err)
 
-	// Customizations see /var filesystems on top of the deployment,
-	// rather than hidden below its stateroot /var.
-	stage := findStage("org.osbuild.users", serialized.Stages)
-	require.NotNil(t, stage)
-	var mounts []string
-	for _, mount := range stage.Mounts {
-		mounts = append(mounts, mount.Type+":"+mount.Target)
-	}
-	assert.Equal(t, []string{
-		"org.osbuild.ext4:/", "org.osbuild.ext4:/boot", "org.osbuild.fat:/boot/efi", "org.osbuild.ext4:/tmp",
-		"org.osbuild.ostree.deployment:",
-		"org.osbuild.ext4:/var/opt", "org.osbuild.ext4:/var/opt/app",
-		"org.osbuild.bind:tree://",
-	}, mounts)
+			// Only a bootc that initializes /var filesystems gets them mounted.
+			expectedInstallMounts := bootMounts
+			if installVarMounts {
+				expectedInstallMounts = append(slices.Clone(bootMounts), varMounts...)
+			}
+			stage := findStage("org.osbuild.bootc.install-to-filesystem", serialized.Stages)
+			require.NotNil(t, stage)
+			assert.Equal(t, expectedInstallMounts, mountTargets(stage.Mounts))
 
-	// setfiles does not cross mounts: each /var filesystem is relabeled.
-	var relabeled []string
-	for _, stage := range findStages("org.osbuild.selinux", serialized.Stages) {
-		if opts := stage.Options.(*osbuild.SELinuxStageOptions); strings.HasPrefix(opts.Target, "tree://") {
-			relabeled = append(relabeled, opts.Target)
-		}
+			// Customizations always see /var filesystems on top of the deployment,
+			// rather than hidden below its stateroot /var.
+			stage = findStage("org.osbuild.users", serialized.Stages)
+			require.NotNil(t, stage)
+			var mounts []string
+			for _, mount := range stage.Mounts {
+				mounts = append(mounts, mount.Type+":"+mount.Target)
+			}
+			assert.Equal(t, []string{
+				"org.osbuild.ext4:/", "org.osbuild.ext4:/boot", "org.osbuild.fat:/boot/efi", "org.osbuild.ext4:/tmp",
+				"org.osbuild.ostree.deployment:",
+				"org.osbuild.ext4:/var/opt", "org.osbuild.ext4:/var/opt/app",
+				"org.osbuild.bind:tree://",
+			}, mounts)
+
+			// setfiles does not cross mounts: each /var filesystem is relabeled.
+			var relabeled []string
+			for _, stage := range findStages("org.osbuild.selinux", serialized.Stages) {
+				if opts := stage.Options.(*osbuild.SELinuxStageOptions); strings.HasPrefix(opts.Target, "tree://") {
+					relabeled = append(relabeled, opts.Target)
+				}
+			}
+			assert.Equal(t, []string{"tree:///etc", "tree:///var", "tree:///var/opt", "tree:///var/opt/app"}, relabeled)
+		})
 	}
-	assert.Equal(t, []string{"tree:///etc", "tree:///var", "tree:///var/opt", "tree:///var/opt/app"}, relabeled)
+}
+
+func mountTargets(mounts []osbuild.Mount) []string {
+	var targets []string
+	for _, mount := range mounts {
+		targets = append(targets, mount.Target)
+	}
+	return targets
 }
 
 func findMountIdx(mounts []osbuild.Mount, mntType string) int {
