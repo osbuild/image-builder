@@ -1765,7 +1765,21 @@ image_types:
             - "nvidia-persistenced"
     image_config:
       <<: *ami_image_config
+      directories:
+        - path: /usr/lib/systemd/system/nvidia-fabricmanager.service.d
+          ensure_parent_dirs: true
+        - path: /usr/lib/systemd/system/nvidia-persistenced.service.d
+          ensure_parent_dirs: true
       files:
+        - path: /usr/lib/systemd/system/nvidia-fabricmanager.service.d/fabricmanager.conf
+          data: |
+            [Unit]
+            # Check if any NVSwitches are available
+            ConditionDirectoryNotEmpty=/proc/driver/nvidia-nvswitch/devices
+        - path: /usr/lib/systemd/system/nvidia-persistenced.service.d/persistenced.conf
+          data: |
+            [Unit]
+            After=nvidia-fabricmanager.service
         - path: &nvidia_gpu_tweaks_script "/usr/libexec/nvidia-gpu-tweaks"
           mode: 0755
           data: |
@@ -1873,6 +1887,7 @@ image_types:
         - "reboot.target"
         - "tuned"
         # 'ami-nvidia' specific
+        - "nvidia-fabricmanager"
         - "nvidia-persistenced"
         - *nvidia_gpu_tweaks_unit
     blueprint:
