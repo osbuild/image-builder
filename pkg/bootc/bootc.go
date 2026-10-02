@@ -28,6 +28,10 @@ type Info struct {
 	// Is the container using a unified kernel?
 	UnifiedKernel bool
 
+	// Does the container's bootc initialize filesystems mounted at /var
+	// (and below) during "bootc install to-filesystem"?
+	InstallVarMounts bool
+
 	// What bootloader should be passed?
 	Bootloader *string
 }
