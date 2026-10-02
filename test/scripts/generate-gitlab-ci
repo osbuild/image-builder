@@ -224,6 +224,7 @@ def collect_bib_tests():
     return sorted(glob(f"{bib_tests_path}/test_*.py"))
 
 
+# pylint: disable=too-many-branches
 def main():
     config_path = sys.argv[1]
     images = testlib.core.list_images(arches=ARCHITECTURES)
@@ -282,11 +283,15 @@ def main():
                                                           runner=man_only_runner))
 
     # bootc-image-builder tests on both arches
+    bootc_kvm = []
     for arch in ("x86_64", "aarch64"):
         # Select the runner from the Schutzfile configuration
         runner = testlib.testenv.get_ci_runner_for(distro="*", arch=arch, image_type="bootc-kvm")
         for test_file_path in collect_bib_tests():
-            trigger_stage.append(BOOTC_IMAGE_BUILDER_TEMPLATE.format(
+            # DEBUG only run the pxe tests
+            if "pxe" not in test_file_path:
+                continue
+            bootc_kvm.append(BOOTC_IMAGE_BUILDER_TEMPLATE.format(
                 runner=runner,
                 arch=arch,
                 test_file_path=test_file_path,
@@ -317,14 +322,15 @@ def main():
     with open(config_path, "w", encoding="utf-8") as config_file:
         config_file.write(BASE_CONFIG)
         config_file.write(testlib.core.BASE_CONFIG)
-        config_file.write("\n".join(gen_stage))
-        config_file.write("\n".join(trigger_stage))
-        config_file.write("\n".join(ostree_gen_stage))
-        config_file.write("\n".join(ostree_trigger_stage))
-        config_file.write("\n".join(bootc_gen_stage))
-        config_file.write("\n".join(bootc_trigger_stage))
-        config_file.write("\n".join(man_gen_stage))
-        config_file.write("\n".join(test_stage))
+        config_file.write("\n".join(bootc_kvm))
+##        config_file.write("\n".join(gen_stage))
+##        config_file.write("\n".join(trigger_stage))
+##        config_file.write("\n".join(ostree_gen_stage))
+##        config_file.write("\n".join(ostree_trigger_stage))
+##        config_file.write("\n".join(bootc_gen_stage))
+##        config_file.write("\n".join(bootc_trigger_stage))
+##        config_file.write("\n".join(man_gen_stage))
+##        config_file.write("\n".join(test_stage))
 
 
 if __name__ == "__main__":

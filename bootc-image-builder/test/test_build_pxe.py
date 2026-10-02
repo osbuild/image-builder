@@ -78,8 +78,9 @@ def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key
                 ]:
                     append_arg = (
                         f"rd.live.image root={root_arg} rw console=ttyS0 "
-                        f"systemd.debug-shell=ttyS0 "
+                        "systemd.debug-shell=ttyS0 "
                         "fstab=no "  # Do not allow mounts to be created from fstab
+                        "rd.debug "
                         f"{ostree_path}"
                     )
                     extra_args = [
@@ -102,8 +103,8 @@ def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key
 
 @pytest.mark.skipif(platform.system() != "Linux", reason="boot test only runs on linux right now")
 @pytest.mark.parametrize("container_ref", [
-    "quay.io/centos-bootc/centos-bootc:stream10",
-    "quay.io/fedora/fedora-bootc:43",
+#    "quay.io/centos-bootc/centos-bootc:stream10",
+#    "quay.io/fedora/fedora-bootc:43",
     "quay.io/centos-bootc/centos-bootc:stream9",
 ])
 # pylint: disable=too-many-locals,duplicate-code

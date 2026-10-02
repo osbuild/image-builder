@@ -43,7 +43,7 @@ def anaconda_iso_fixture(shared_tmpdir, build_container, request, force_aws_uplo
 
 @pytest.mark.skipif(platform.system() != "Linux", reason="boot test only runs on linux right now")
 @pytest.mark.parametrize("anaconda_iso", gen_testcases("anaconda-iso"), indirect=["anaconda_iso"])
-@pytest.mark.skip(reason="kvm boot tests are currently disabled")
+##@pytest.mark.skip(reason="kvm boot tests are currently disabled")
 def test_iso_installs(anaconda_iso):
     installer_iso_path = anaconda_iso.img_path
     test_disk_path = installer_iso_path.with_name("test-disk.img")
