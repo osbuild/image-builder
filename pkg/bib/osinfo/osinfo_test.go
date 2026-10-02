@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/olog"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
 func writeOSRelease(t *testing.T, root, id, versionID, name, platformID, variantID, idLike string) {
@@ -282,6 +283,101 @@ func TestLoadInfoPartitionTableSad(t *testing.T) {
 
 	_, err := Load(os.DirFS(root), "")
 	assert.EqualError(t, err, `cannot parse disk definitions from "usr/lib/bootc-image-builder/disk.yaml": yaml: found character that cannot start any token`)
+}
+
+var fakeLUKSPartitionTableYAML = `
+partition_table:
+  type: "gpt"
+  partitions:
+    - size: 10 GiB
+      type: "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+      payload_type: "luks"
+      payload:
+        passphrase: "osbuild"
+        uuid: "fb180daf-48a7-4ee0-b10d-394651850fd4"
+        pbkdf: %s
+        payload_type: "filesystem"
+        payload:
+          type: "ext4"
+          mountpoint: "/"
+`
+
+func TestLoadInfoPartitionTableLUKSDefaults(t *testing.T) {
+	for _, tc := range []struct {
+		desc     string
+		pbkdf    string
+		expected disk.Argon2id
+	}{
+		{"omitted", "{iterations: 4}", disk.Argon2id{Iterations: 4, Memory: 32, Parallelism: 1}},
+		{"memory-only", "{iterations: 4, memory: 64}", disk.Argon2id{Iterations: 4, Memory: 64, Parallelism: 1}},
+		{"parallelism-only", "{iterations: 4, parallelism: 2}", disk.Argon2id{Iterations: 4, Memory: 32, Parallelism: 2}},
+		{"explicit", "{iterations: 4, memory: 64, parallelism: 2}", disk.Argon2id{Iterations: 4, Memory: 64, Parallelism: 2}},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			root := t.TempDir()
+			writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+			createPartitionTable(t, root, fmt.Sprintf(fakeLUKSPartitionTableYAML, tc.pbkdf), "/usr/lib/image-builder/bootc/disk.yaml")
+
+			info, err := Load(os.DirFS(root), "")
+			require.NoError(t, err)
+			luks, ok := info.PartitionTable.Partitions[0].Payload.(*disk.LUKSContainer)
+			require.True(t, ok)
+			assert.Equal(t, tc.expected, luks.PBKDF)
+			assert.NotPanics(t, func() {
+				osbuild.GenDeviceCreationStages(info.PartitionTable, "disk.raw")
+			})
+		})
+	}
+}
+
+func TestLoadInfoDiskYamlWithoutPartitionTable(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "fedora", "platform:f40", "coreos")
+	createPartitionTable(t, root, "mount_configuration: units\n", "/usr/lib/image-builder/bootc/disk.yaml")
+
+	info, err := Load(os.DirFS(root), "")
+	require.NoError(t, err)
+	assert.Nil(t, info.PartitionTable)
+	assert.Equal(t, osbuild.MOUNT_CONFIGURATION_UNITS, *info.MountConfiguration)
+}
+
+func TestLoadInfoDiskYamlLog(t *testing.T) {
+	for _, tc := range []struct {
+		desc    string
+		dests   []string
+		variant string
+		logged  string
+	}{
+		{"none", nil, "", ""},
+		{"default", []string{"usr/lib/image-builder/bootc/disk.yaml"}, "", "usr/lib/image-builder/bootc/disk.yaml"},
+		{"variant", []string{"usr/lib/image-builder/bootc/disk.yaml", "usr/lib/image-builder/bootc/variant.d/v1/disk.yaml"}, "v1", "usr/lib/image-builder/bootc/variant.d/v1/disk.yaml"},
+		{"variant-fallback", []string{"usr/lib/image-builder/bootc/disk.yaml"}, "v1", "usr/lib/image-builder/bootc/disk.yaml"},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			root := t.TempDir()
+			writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "", "", "")
+			if tc.variant != "" {
+				require.NoError(t, os.MkdirAll(path.Join(root, "usr/lib/image-builder/bootc/variant.d", tc.variant), 0755))
+			}
+			for _, dest := range tc.dests {
+				createPartitionTable(t, root, fakePartitionTableYAML, dest)
+			}
+
+			var buf bytes.Buffer
+			olog.SetDefault(log.New(&buf, "", 0))
+			defer olog.SetDefault(nil)
+
+			_, err := Load(os.DirFS(root), tc.variant)
+			require.NoError(t, err)
+
+			if tc.logged == "" {
+				assert.NotContains(t, buf.String(), "disk definitions")
+				return
+			}
+			assert.Contains(t, buf.String(), "found disk definitions in /"+tc.logged+"\n")
+			assert.Equal(t, 1, strings.Count(buf.String(), "found disk definitions"))
+		})
+	}
 }
 
 var fakeISOYAML = `
