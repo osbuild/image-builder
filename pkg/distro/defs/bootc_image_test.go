@@ -856,3 +856,136 @@ func TestManifestSubscriptionCustomization(t *testing.T) {
 		})
 	}
 }
+
+func TestUnifiedKernelUnsupportedCustomizations(t *testing.T) {
+	pass := "pass"
+	key := "ssh-ed25519 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+	serial := "serial --unit=0 --speed=115200"
+	boolTrue := true
+
+	for name, tc := range map[string]struct {
+		customizations *blueprint.Customizations
+		expectWarning  bool
+	}{
+		"empty": {
+			customizations: nil,
+			expectWarning:  false,
+		},
+		"disk": {
+			customizations: &blueprint.Customizations{
+				Disk: &blueprint.DiskCustomization{
+					Partitions: []blueprint.PartitionCustomization{
+						{
+							Type:                         "plain",
+							FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{Mountpoint: "/", FSType: "ext4"},
+						},
+					},
+				},
+			},
+			expectWarning: false,
+		},
+		"user": {
+			customizations: &blueprint.Customizations{
+				User: []blueprint.UserCustomization{
+					{Name: "tester", Password: &pass, Key: &key},
+				},
+			},
+			expectWarning: true,
+		},
+		"group": {
+			customizations: &blueprint.Customizations{
+				Group: blueprint.GroupsCustomization{
+					blueprint.GroupCustomization{Name: "testgroup"},
+				},
+			},
+			expectWarning: true,
+		},
+		"directories": {
+			customizations: &blueprint.Customizations{
+				Directories: []blueprint.DirectoryCustomization{
+					{Path: "/etc/mydir"},
+				},
+			},
+			expectWarning: true,
+		},
+		"files": {
+			customizations: &blueprint.Customizations{
+				Files: []blueprint.FileCustomization{
+					{Path: "/etc/myfile"},
+				},
+			},
+			expectWarning: true,
+		},
+		"kernel": {
+			customizations: &blueprint.Customizations{
+				Kernel: &blueprint.KernelCustomization{Append: "quiet"},
+			},
+			expectWarning: true,
+		},
+		"bootloader": {
+			customizations: &blueprint.Customizations{
+				Bootloader: &blueprint.BootloaderCustomization{
+					Grub2: &blueprint.Grub2Customization{
+						TerminalInput: []string{"serial"},
+						Serial:        &serial,
+					},
+				},
+			},
+			expectWarning: true,
+		},
+		"ignition": {
+			customizations: &blueprint.Customizations{
+				Ignition: &blueprint.IgnitionCustomization{
+					FirstBoot: &blueprint.FirstBootIgnitionCustomization{
+						ProvisioningURL: "http://example.com",
+					},
+				},
+			},
+			expectWarning: true,
+		},
+		"sshd": {
+			customizations: &blueprint.Customizations{
+				Sshd: &blueprint.SshdCustomization{
+					PasswordAuthentication: &boolTrue,
+				},
+			},
+			expectWarning: true,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			imgType := NewTestBootcImageType(t, "qcow2")
+			bd := imgType.arch.distro.(*BootcDistro)
+			bd.unifiedKernel = true
+
+			bp := &blueprint.Blueprint{Customizations: tc.customizations}
+			_, warnings, err := imgType.Manifest(bp, distro.ImageOptions{}, nil, common.ToPtr(int64(0)))
+			require.NoError(t, err)
+			if tc.expectWarning {
+				assert.NotEmpty(t, warnings, "expected validation warning for unsupported customization")
+				assert.Contains(t, warnings[0], "not supported")
+			} else {
+				assert.Empty(t, warnings)
+			}
+		})
+	}
+}
+
+func TestNonUnifiedKernelCustomizationsStillSupported(t *testing.T) {
+	pass := "pass"
+	key := "ssh-ed25519 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+	imgType := NewTestBootcImageType(t, "qcow2")
+	bd := imgType.arch.distro.(*BootcDistro)
+	assert.False(t, bd.unifiedKernel)
+
+	bp := &blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			User: []blueprint.UserCustomization{
+				{Name: "tester", Password: &pass, Key: &key},
+			},
+		},
+	}
+	_, warnings, err := imgType.Manifest(bp, distro.ImageOptions{}, nil, common.ToPtr(int64(0)))
+	require.NoError(t, err)
+	assert.Empty(t, warnings, "non-UKI should not warn about user customization")
+}
