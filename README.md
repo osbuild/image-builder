@@ -360,13 +360,6 @@ files directly in that directory. For example, with
 `--force-repo-dir ~/my-project --distro foo-1` the file must be at
 `~/my-project/foo-1.yaml`.
 
-### What is the relation to bootc-image-builder?
-
-Both projects are very close. [`bootc-image-builder`](https://github.com/osbuild/bootc-image-builder)
-focuses on providing image-based artifacts while `image-builder` works with
-traditional package based inputs. We expect the two projects to merge
-eventually and they already share a lot of code.
-
 ### I get "Warnings during manifest creation" and the build stops, what can I do?
 
 This is a safety feature so that in e.g. CI systems warnings cannot

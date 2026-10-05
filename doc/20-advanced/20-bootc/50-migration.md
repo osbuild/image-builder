@@ -95,25 +95,25 @@ See [ISOs](./10-isos.md) for more information.
 
 ## Flag mapping
 
-| Legacy `bootc-image-builder` container | `image-builder` | Notes |
-|---|---|---|
-| `IMAGE_NAME` positional argument | `--bootc-ref IMAGE_NAME` | |
-| `--type TYPE` | positional `<image-type>` | For example, `--type qcow2` becomes `build ... qcow2`. `bootc-image-builder` could build multiple types in one invocation; `image-builder build` builds one type at a time. |
-| `--rootfs FS` | `--bootc-default-fs FS` | |
-| `--target-arch ARCH` | `--arch ARCH` | |
-| `--build-container REF` | `--bootc-build-ref REF` | |
-| `--installer-payload-ref REF` | `--bootc-installer-payload-ref REF` | |
-| `--no-default-kernel-args` | `--bootc-no-default-kernel-args` | |
-| `--in-vm` | `--in-vm` | |
-| implicit `/config.toml` or `/config.json` | `--blueprint /path/to/blueprint.toml` | Pass the blueprint file explicitly. If running the `image-builder` container, mount the file into the container first. |
-| `--output DIR` | `--output-dir DIR` | Artifact filenames and subdirectories may differ; update scripts that use fixed output paths. |
-| `--store DIR` | `--cache DIR` | Controls the osbuild store/cache path. Defaults differ between the legacy container, host-installed `image-builder`, and the `image-builder` container. |
-| `--rpmmd DIR` | `--rpmmd-cache DIR` | |
-| `--progress`, `--verbose` | `--progress`, `--verbose` | |
-| `--log-level LEVEL` | no direct equivalent | |
-| `--use-librepo` | no public equivalent | `image-builder` uses librepo by default, so remove this flag when migrating. |
-| `--chown UID:GID` | no direct equivalent | Adjust host directory ownership/permissions before or after the build if needed. |
-| AWS upload flags with `--type ami` | same AWS flags with image type `ami` | |
+| Legacy `bootc-image-builder` container    | `image-builder`                       | Notes                                                                                                                                                                       |
+| ----------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IMAGE_NAME` positional argument          | `--bootc-ref IMAGE_NAME`              |                                                                                                                                                                             |
+| `--type TYPE`                             | positional `<image-type>`             | For example, `--type qcow2` becomes `build ... qcow2`. `bootc-image-builder` could build multiple types in one invocation; `image-builder build` builds one type at a time. |
+| `--rootfs FS`                             | `--bootc-default-fs FS`               |                                                                                                                                                                             |
+| `--target-arch ARCH`                      | `--arch ARCH`                         |                                                                                                                                                                             |
+| `--build-container REF`                   | `--bootc-build-ref REF`               |                                                                                                                                                                             |
+| `--installer-payload-ref REF`             | `--bootc-installer-payload-ref REF`   |                                                                                                                                                                             |
+| `--no-default-kernel-args`                | `--bootc-no-default-kernel-args`      |                                                                                                                                                                             |
+| `--in-vm`                                 | `--in-vm`                             |                                                                                                                                                                             |
+| implicit `/config.toml` or `/config.json` | `--blueprint /path/to/blueprint.toml` | Pass the blueprint file explicitly. If running the `image-builder` container, mount the file into the container first.                                                      |
+| `--output DIR`                            | `--output-dir DIR`                    | Artifact filenames and subdirectories may differ; update scripts that use fixed output paths.                                                                               |
+| `--store DIR`                             | `--cache DIR`                         | Controls the osbuild store/cache path. Defaults differ between the legacy container, host-installed `image-builder`, and the `image-builder` container.                     |
+| `--rpmmd DIR`                             | `--rpmmd-cache DIR`                   |                                                                                                                                                                             |
+| `--progress`, `--verbose`                 | `--progress`, `--verbose`             |                                                                                                                                                                             |
+| `--log-level LEVEL`                       | no direct equivalent                  |                                                                                                                                                                             |
+| `--use-librepo`                           | no public equivalent                  | `image-builder` uses librepo by default, so remove this flag when migrating.                                                                                                |
+| `--chown UID:GID`                         | no direct equivalent                  | Adjust host directory ownership/permissions before or after the build if needed.                                                                                            |
+| AWS upload flags with `--type ami`        | same AWS flags with image type `ami`  |                                                                                                                                                                             |
 
 ## Embedded configuration in the source container
 
