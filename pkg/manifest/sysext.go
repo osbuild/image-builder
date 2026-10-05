@@ -18,6 +18,7 @@ type SysextCustomizations struct {
 	ExcludePaths     []string
 	ExtensionRelease osbuild.OSReleaseStageOptions
 	BaseRPMOptions   *osbuild.RPMStageOptions
+	SELinux          string
 }
 
 // SysextTree installs packages into a tree that serves as the overlay for a
@@ -153,6 +154,17 @@ func (p *SysextPrep) serialize() (osbuild.Pipeline, error) {
 	pipeline.AddStage(osbuild.NewTreeDeltaStage(opts, p.filesystemReferencePipeline.Name(), p.overlayPipeline.Name()))
 
 	pipeline = p.writeExtensionRelease(pipeline)
+
+	if p.Customizations.SELinux != "" {
+		inputName := "tree"
+		fileContextsPath := fmt.Sprintf("input://%s/etc/selinux/%s/contexts/files/file_contexts",
+			inputName, p.Customizations.SELinux)
+		selinuxStage := osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
+			FileContexts: fileContextsPath,
+		})
+		selinuxStage.Inputs = osbuild.NewPipelineTreeInputs(inputName, p.filesystemReferencePipeline.Name())
+		pipeline.AddStage(selinuxStage)
+	}
 
 	return pipeline, nil
 }

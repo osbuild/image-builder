@@ -100,6 +100,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		sp.Prep.Customizations.ExcludePaths = sysext.ExcludePaths
 		sp.Prep.Customizations.ExtensionRelease.Vars.ID = sysext.ExtensionReleaseID
 		sp.Prep.Customizations.ExtensionRelease.Vars.VersionID = sysext.ExtensionReleaseVersionID
+		sp.Prep.Customizations.SELinux = img.OSCustomizations.SELinux
 
 		switch sysext.Format {
 		case "erofs":
