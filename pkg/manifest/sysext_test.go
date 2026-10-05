@@ -147,6 +147,50 @@ func TestSysextPrepSerialize(t *testing.T) {
 	assert.Equal(t, "44", erOpts.Vars.VersionID)
 }
 
+func TestSysextPrepSerializeSELinux(t *testing.T) {
+	mani := manifest.New()
+	r := &runner.Linux{}
+	build := manifest.NewBuild(&mani, r, nil, nil)
+	pf := &platform.Data{Arch: arch.ARCH_X86_64}
+
+	refPipeline := manifest.NewOS(build, pf, nil)
+	overlayPipeline := manifest.NewSysextTree(build, pf, nil, "ext")
+
+	final := manifest.NewSysextPrep(build, refPipeline, overlayPipeline, "ext")
+	final.Customizations.Paths = []string{"/usr"}
+	final.Customizations.SELinux = "targeted"
+	pipeline, err := manifest.Serialize(final)
+	require.NoError(t, err)
+
+	require.Len(t, pipeline.Stages, 3, "expected tree-delta, os-release, and selinux stages")
+	assert.Equal(t, "org.osbuild.tree-delta", pipeline.Stages[0].Type)
+	assert.Equal(t, "org.osbuild.os-release", pipeline.Stages[1].Type)
+
+	assert.Equal(t, "org.osbuild.selinux", pipeline.Stages[2].Type)
+	selinuxOpts := pipeline.Stages[2].Options.(*osbuild.SELinuxStageOptions)
+	assert.Equal(t, "input://tree/etc/selinux/targeted/contexts/files/file_contexts", selinuxOpts.FileContexts)
+	assert.NotNil(t, pipeline.Stages[2].Inputs)
+}
+
+func TestSysextPrepSerializeNoSELinux(t *testing.T) {
+	mani := manifest.New()
+	r := &runner.Linux{}
+	build := manifest.NewBuild(&mani, r, nil, nil)
+	pf := &platform.Data{Arch: arch.ARCH_X86_64}
+
+	refPipeline := manifest.NewOS(build, pf, nil)
+	overlayPipeline := manifest.NewSysextTree(build, pf, nil, "ext")
+
+	final := manifest.NewSysextPrep(build, refPipeline, overlayPipeline, "ext")
+	final.Customizations.Paths = []string{"/usr"}
+	pipeline, err := manifest.Serialize(final)
+	require.NoError(t, err)
+
+	require.Len(t, pipeline.Stages, 2, "expected only tree-delta and os-release stages")
+	assert.Equal(t, "org.osbuild.tree-delta", pipeline.Stages[0].Type)
+	assert.Equal(t, "org.osbuild.os-release", pipeline.Stages[1].Type)
+}
+
 func TestSysextPrepSerializeWithExcludePaths(t *testing.T) {
 	mani := manifest.New()
 	r := &runner.Linux{}
