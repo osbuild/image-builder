@@ -281,7 +281,10 @@ func uploaderForCmdAzure(cmd *cobra.Command, targetArchStr string, bootMode *pla
 	}
 
 	var missing []string
-	requiredArgs := []string{"azure-client-id", "azure-client-secret", "azure-tenant", "azure-subscription", "azure-resource-group", "azure-image-name"}
+	requiredArgs := []string{"azure-subscription", "azure-resource-group", "azure-image-name"}
+	if clientID != "" || clientSecret != "" {
+		requiredArgs = append(requiredArgs, "azure-client-id", "azure-client-secret", "azure-tenant")
+	}
 	for _, argName := range requiredArgs {
 		arg, err := cmd.Flags().GetString(argName)
 		if err != nil {
