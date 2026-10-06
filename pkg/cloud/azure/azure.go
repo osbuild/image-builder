@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v7"
@@ -78,8 +79,25 @@ func newTestClient(
 
 // NewClient creates a client for accessing the Azure API.
 // See https://docs.microsoft.com/en-us/rest/api/azure/
-// If you need to work with the Azure Storage API, see NewStorageClient
+// It uses Azure CLI credentials when service principal credentials are absent.
+// If you need to work with the Azure Storage API, see NewStorageClient.
 func NewClient(credentials Credentials, tenantID, subscriptionID string) (*Client, error) {
+	if credentials.ClientID == "" && credentials.ClientSecret == "" {
+		// Use Azure CLI credentials when service principal credentials are absent.
+		creds, err := azidentity.NewAzureCLICredential(&azidentity.AzureCLICredentialOptions{
+			TenantID:     tenantID,
+			Subscription: subscriptionID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("creating Azure CLI credential failed: %w", err)
+		}
+		return newClientWithCredential(creds, subscriptionID)
+	}
+
+	// Service principal client ID and secret must be provided together.
+	if credentials.ClientID == "" || credentials.ClientSecret == "" {
+		return nil, fmt.Errorf("Azure client ID and client secret must be provided together")
+	}
 	creds, err := azidentity.NewClientSecretCredential(tenantID, credentials.ClientID, credentials.ClientSecret, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating azure ClientSecretCredential failed: %w", err)
