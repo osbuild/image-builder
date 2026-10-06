@@ -463,6 +463,7 @@
       - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
       - &root_partition_x86_64_guid "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
+      - &root_partition_aarch64_guid "B921B045-1DF0-41C3-AF44-4C6F280D3FAE"
 
     default_partition_tables: &default_partition_tables
       x86_64:
@@ -2926,3 +2927,179 @@ image_types:
             - "rpm-plugin-audit"
             - "shadow-utils"
             - "tzdata"
+
+  rhivos-qcow2: &rhivos-qcow2
+    <<: *qcow2
+    name_aliases: []
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "qcow2"
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+    image_config:
+      default_kernel: "kernel-automotive"
+      default_kernel_name: "kernel-automotive"
+      kernel_options:
+        - "rd.modules-load=nvme,virtio_mmio"
+      enabled_services:
+        - "sshd"
+        - "chronyd"
+    partition_table:
+      x86_64:
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_efi
+          - size: "2 GiB"
+            type: *root_partition_x86_64_guid
+            payload_type: "filesystem"
+            payload:
+              type: "ext4"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+      aarch64:
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_efi
+          - size: "2 GiB"
+            type: *root_partition_aarch64_guid
+            payload_type: "filesystem"
+            payload:
+              type: "ext4"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+    package_sets:
+      os:
+        - include:
+            - "@core"
+            - "audit"
+            - "automotive-image-builder"
+            - "awscli"
+            - "chrony"
+            - "cloud-init"
+            - "cloud-utils-growpart"
+            - "fusa-gcc-plugin"
+            - "fusa-gcc-plugin-data"
+            - "git"
+            - "iputils"
+            - "less"
+            - "network-manager-applet"
+            - "nmstate"
+            - "openssh-server"
+            - "psmisc"
+            - "qemu-guest-agent"
+            - "redhat-release-automotive"
+            - "redhat-release-automotive-eula"
+            - "rsync"
+            - "strace"
+            - "subscription-manager"
+            - "tar"
+            - "tcpdump"
+            - "tuned"
+            - "vim"
+          exclude:
+            - "aic94xx-firmware"
+            - "alsa-firmware"
+            - "alsa-lib"
+            - "alsa-tools-firmware"
+            - "biosdevname"
+            - "dnf-plugin-spacewalk"
+            - "dracut-config-rescue"
+            - "fedora-release"
+            - "fedora-repos"
+            - "firewalld"
+            - "iprutils"
+            - "ivtv-firmware"
+            - "iwl1000-firmware"
+            - "iwl100-firmware"
+            - "iwl105-firmware"
+            - "iwl135-firmware"
+            - "iwl2000-firmware"
+            - "iwl2030-firmware"
+            - "iwl3160-firmware"
+            - "iwl3945-firmware"
+            - "iwl4965-firmware"
+            - "iwl5000-firmware"
+            - "iwl5150-firmware"
+            - "iwl6000-firmware"
+            - "iwl6000g2a-firmware"
+            - "iwl6000g2b-firmware"
+            - "iwl6050-firmware"
+            - "iwl7260-firmware"
+            - "langpacks-*"
+            - "langpacks-en"
+            - "libertas-sd8787-firmware"
+            - "plymouth"
+            - "rng-tools"
+            - "udisks2"
+
+  rhivos-core-qcow2:
+    <<: *rhivos-qcow2
+    package_sets:
+      os:
+        - include:
+            - "@core"
+            - "audit"
+            - "automotive-image-builder"
+            - "awscli"
+            - "chrony"
+            - "cloud-init"
+            - "cloud-utils-growpart"
+            - "fusa-gcc-plugin"
+            - "git"
+            - "iputils"
+            - "less"
+            - "network-manager-applet"
+            - "nmstate"
+            - "openssh-server"
+            - "psmisc"
+            - "qemu-guest-agent"
+            - "redhat-release-automotive-core"
+            - "redhat-release-automotive-core-eula"
+            - "rsync"
+            - "strace"
+            - "subscription-manager"
+            - "tar"
+            - "tcpdump"
+            - "tuned"
+            - "vim"
+          exclude:
+            - "aic94xx-firmware"
+            - "alsa-firmware"
+            - "alsa-lib"
+            - "alsa-tools-firmware"
+            - "biosdevname"
+            - "dnf-plugin-spacewalk"
+            - "dracut-config-rescue"
+            - "fedora-release"
+            - "fedora-repos"
+            - "firewalld"
+            - "iprutils"
+            - "ivtv-firmware"
+            - "iwl1000-firmware"
+            - "iwl100-firmware"
+            - "iwl105-firmware"
+            - "iwl135-firmware"
+            - "iwl2000-firmware"
+            - "iwl2030-firmware"
+            - "iwl3160-firmware"
+            - "iwl3945-firmware"
+            - "iwl4965-firmware"
+            - "iwl5000-firmware"
+            - "iwl5150-firmware"
+            - "iwl6000-firmware"
+            - "iwl6000g2a-firmware"
+            - "iwl6000g2b-firmware"
+            - "iwl6050-firmware"
+            - "iwl7260-firmware"
+            - "langpacks-*"
+            - "langpacks-en"
+            - "libertas-sd8787-firmware"
+            - "plymouth"
+            - "rng-tools"
+            - "udisks2"
