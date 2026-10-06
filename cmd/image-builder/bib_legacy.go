@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 
@@ -315,7 +316,7 @@ func manifestForISO(c *ManifestConfig, rng *rand.Rand) (*manifest.Manifest, erro
 	}
 
 	if isoCust != nil && isoCust.VolumeID != "" {
-		img.ISOCustomizations.Label = isoCust.VolumeID
+		img.ISOCustomizations.Label = strings.ReplaceAll(isoCust.VolumeID, "$arch", c.Architecture.String())
 	} else {
 		img.ISOCustomizations.Label = bootcdistro.LabelForISO(&c.SourceInfo.OSRelease, c.Architecture.String())
 	}

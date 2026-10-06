@@ -601,7 +601,7 @@ type ISOImageType interface {
 	getDefaultISOConfig() *distro.ISOConfig
 }
 
-func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.ISOCustomizations, error) {
+func isoCustomizations(t ISOImageType, c *blueprint.Customizations, architecture arch.Arch) (manifest.ISOCustomizations, error) {
 	isoLabel, err := t.ISOLabel()
 	if err != nil {
 		return manifest.ISOCustomizations{}, err
@@ -663,7 +663,7 @@ func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.IS
 		}
 
 		if isoCust.VolumeID != "" {
-			isc.Label = isoCust.VolumeID
+			isc.Label = replaceBasicTemplate(isoCust.VolumeID, architecture)
 		}
 
 		if isoCust.ApplicationID != "" {
@@ -939,7 +939,7 @@ func liveInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -988,7 +988,7 @@ func imageInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -1168,7 +1168,7 @@ func ostreeInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -1362,7 +1362,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -1419,7 +1419,7 @@ func networkInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -1534,10 +1534,8 @@ func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultURL, defaultRe
 	}, nil
 }
 
-// replace basic variables that might come from blueprint(s), these are not intended to be
-// used elsewhere and are thus called only in specific places
-// concretely this is because we need to template the flatpak references coming from pungi
-// configs. they're currently only applied there; other places will need further discussion
+// replace basic variables that might come from blueprint(s), e.g. $arch
+// in flatpak references and ISO volume IDs
 func replaceBasicTemplate(input string, architecture arch.Arch) string {
 	return strings.ReplaceAll(input, "$arch", architecture.String())
 }
