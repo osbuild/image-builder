@@ -23,7 +23,7 @@ const (
 
 type Client struct {
 	subscription   string
-	creds          *azidentity.ClientSecretCredential
+	creds          azcore.TokenCredential
 	resources      ResourcesClient
 	resourceGroups ResourceGroupsClient
 	accounts       AccountsClient
@@ -85,6 +85,10 @@ func NewClient(credentials Credentials, tenantID, subscriptionID string) (*Clien
 		return nil, fmt.Errorf("creating azure ClientSecretCredential failed: %w", err)
 	}
 
+	return newClientWithCredential(creds, subscriptionID)
+}
+
+func newClientWithCredential(creds azcore.TokenCredential, subscriptionID string) (*Client, error) {
 	resFact, err := armresources.NewClientFactory(subscriptionID, creds, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating resources client factory failed: %w", err)
