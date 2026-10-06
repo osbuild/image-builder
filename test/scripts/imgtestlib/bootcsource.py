@@ -8,10 +8,10 @@ DISK_IMAGE_TYPES = VANILLA_REF_IMAGE_TYPES | CLOUD_IMAGE_TYPES
 INSTALLER_IMAGE_TYPES = {"bootc-generic-iso", "bootc-installer"}
 
 
-# Dynamic bootc CI scope is currently limited to fedora-44 / x86_64 / qcow2+ami.
+# Dynamic bootc CI scope is currently limited to fedora-44 / x86_64 / disk image types.
 BOOTC_SOURCES = ["fedora-44"]
 BOOTC_ARCHES = ["x86_64"]
-BOOTC_IMAGE_TYPES = ["qcow2", "ami"]
+BOOTC_IMAGE_TYPES = ["qcow2", "ami", "raw", "gce", "vhd", "vmdk", "ova"]
 BOOTC_CONFIGS = {"bootc-user"}
 
 
