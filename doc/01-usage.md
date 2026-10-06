@@ -429,21 +429,32 @@ $ sudo image-builder build --distro fedora-43 --aws-region us-east-1 --aws-bucke
 
 ### `--to azure`
 
-Upload an image to Azure. All flags are required:
+Upload an image to Azure. The subscription, resource group, and image name are
+required. For authentication, either use the current Azure CLI login or provide
+service principal credentials.
 
 | Flag | Description |
 |---|---|
-| `--azure-client-id` | Azure client ID |
-| `--azure-client-secret` | Azure client secret |
-| `--azure-tenant` | Azure tenant ID |
-| `--azure-subscription` | Azure subscription ID |
-| `--azure-resource-group` | Azure resource group |
-| `--azure-image-name` | Name for the uploaded image |
+| `--azure-client-id` | Service principal client ID; provide with `--azure-client-secret` and `--azure-tenant`, or omit both credentials to use Azure CLI credentials |
+| `--azure-client-secret` | Service principal client secret; provide with `--azure-client-id` and `--azure-tenant`, or omit both credentials to use Azure CLI credentials |
+| `--azure-tenant` | Azure tenant ID; required for service principal authentication and optional with Azure CLI credentials |
+| `--azure-subscription` | Azure subscription ID (required) |
+| `--azure-resource-group` | Azure resource group (required) |
+| `--azure-image-name` | Name for the uploaded image (required) |
+
+For Azure CLI authentication, authenticate with `az` first:
 
 ```console
-$ sudo image-builder build --distro fedora-43 --azure-client-id $CLIENT_ID --azure-client-secret $SECRET --azure-tenant $TENANT --azure-subscription $SUB --azure-resource-group my-rg --azure-image-name my-image generic-vhd
+$ az login
+$ image-builder upload image.vhd --to azure --arch x86_64 \
+    --azure-subscription <subscription-id> \
+    --azure-resource-group <resource-group> \
+    --azure-image-name my-image
 # ...
 ```
+
+For service principal authentication, provide `--azure-client-id`,
+`--azure-client-secret`, and `--azure-tenant` with the upload command.
 
 ### `--to openstack`
 

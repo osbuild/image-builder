@@ -251,10 +251,20 @@ func setupManifestCmd() (*cobra.Command, error) {
 	return manifestCmd, nil
 }
 
+const uploadAuthHelp = `For AWS uploads, credentials are read from the standard AWS credentials chain,
+including environment variables, shared configuration and credentials files, and
+instance profiles. Use --aws-profile to select a named profile.
+
+For Azure uploads, omit both --azure-client-id and --azure-client-secret to use
+Azure CLI credentials after authenticating with az login. For service principal
+authentication, provide --azure-client-id, --azure-client-secret, and --azure-tenant.
+The tenant is optional with Azure CLI credentials.`
+
 func setupUploadCmd() *cobra.Command {
 	uploadCmd := &cobra.Command{
 		Use:          "upload <image-path>",
 		Short:        "Upload the given image from <image-path>",
+		Long:         "Upload the given image from <image-path>.\n\n" + uploadAuthHelp,
 		RunE:         cmdUpload,
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
@@ -288,8 +298,10 @@ func setupUploadCmd() *cobra.Command {
 
 func setupBuildCmd() (*cobra.Command, error) {
 	buildCmd := &cobra.Command{
-		Use:          "build <image-type>",
-		Short:        "Build the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
+		Use:   "build <image-type>",
+		Short: "Build the given image-type, e.g. qcow2 (tip: combine with --distro, --arch)",
+		Long: "Build the given image-type, e.g. qcow2 (tip: combine with --distro, --arch).\n\n" +
+			"This command also supports uploading the image to a cloud provider after building it.\n\n" + uploadAuthHelp,
 		RunE:         cmdBuild,
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
