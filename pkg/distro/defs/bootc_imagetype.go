@@ -819,7 +819,7 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 	// Used when dracut rebuilds the initramfs in the bootc pipeline
 	img.KernelVersion = bd.sourceInfo.KernelInfo.Version
 
-	img.ISOCustomizations, err = isoCustomizations(t, customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, customizations, t.arch.arch)
 	if err != nil {
 		return nil, nil, err
 	}

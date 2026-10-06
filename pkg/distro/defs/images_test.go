@@ -108,6 +108,49 @@ func TestInstallerCustomizationsOverridePreview(t *testing.T) {
 
 }
 
+func TestISOCustomizationsReplacesArchInVolumeID(t *testing.T) {
+	for _, tc := range []struct {
+		volumeID      string
+		arch          arch.Arch
+		expectedLabel string
+	}{
+		{
+			volumeID:      "MyISO-$arch",
+			arch:          arch.ARCH_X86_64,
+			expectedLabel: "MyISO-x86_64",
+		},
+		{
+			volumeID:      "MyISO-$arch",
+			arch:          arch.ARCH_AARCH64,
+			expectedLabel: "MyISO-aarch64",
+		},
+		{
+			volumeID:      "MyISO-no-template",
+			arch:          arch.ARCH_X86_64,
+			expectedLabel: "MyISO-no-template",
+		},
+	} {
+		t.Run(fmt.Sprintf("%s/%s", tc.volumeID, tc.arch), func(t *testing.T) {
+			it := isoTestImageType()
+			c := &blueprint.Customizations{
+				ISO: &blueprint.ISOCustomization{
+					VolumeID: tc.volumeID,
+				},
+			}
+			isc, err := isoCustomizations(it, c, tc.arch)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedLabel, isc.Label)
+		})
+	}
+
+	t.Run("nil-customizations-preserves-default", func(t *testing.T) {
+		it := isoTestImageType()
+		isc, err := isoCustomizations(it, nil, arch.ARCH_X86_64)
+		require.NoError(t, err)
+		assert.Equal(t, "iso-label", isc.Label)
+	})
+}
+
 func TestReplaceBasictemplate(t *testing.T) {
 	for _, tc := range []struct {
 		input    string
