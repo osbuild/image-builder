@@ -249,6 +249,17 @@ jobs:
         run: |
           tools/yaml-lint.sh
 
+  check-snapshots:
+    name: "🔍 Check for valid snapshot urls"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Check for valid snapshot urls
+        run: ./tools/check-snapshots --errors-only .
+
   cross-arch-integration-test:
     strategy:
       matrix:
