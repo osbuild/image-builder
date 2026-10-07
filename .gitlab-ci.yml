@@ -2086,6 +2086,23 @@ fail:
   needs:
     - init
 
+
+"generate-bootc-config: [rhel-10, x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-x86_64
+    INTERNAL_NETWORK: "false"
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-bootc-config --bootc-source rhel-10 --arch x86_64 boot-config.yml
+  artifacts:
+    paths:
+      - boot-config.yml
+  needs:
+    - init
+
 "bootc-build-trigger: [fedora-44, x86_64]":
   stage: build
   trigger:
@@ -2095,6 +2112,17 @@ fail:
     strategy: depend
   needs:
     - "generate-bootc-config: [fedora-44, x86_64]"
+
+
+"bootc-build-trigger: [rhel-10, x86_64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: boot-config.yml
+        job: "generate-bootc-config: [rhel-10, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-bootc-config: [rhel-10, x86_64]"
 
 "generate-manifests: [centos-10, ppc64le]":
   stage: gen

@@ -34,3 +34,4 @@ __pycache__
 recording-*.cast.json
 /image-builder
 man
+.auth/

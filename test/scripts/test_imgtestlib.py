@@ -67,6 +67,31 @@ def test_resolve_fedora_44_bootc_refs():
     assert testlib.bootcsource.resolve_bootc_source_ref("fedora-44", "x86_64", "ami") == ref
 
 
+def test_resolve_rhel_10_bootc_refs():
+    azure_ref = (
+        "quay.io/redhat-services-prod/insights-management-tenant/"
+        "image-builder-bootc-foundry/rhel-10-azure:latest"
+    )
+    assert testlib.bootcsource.resolve_bootc_source_ref("rhel-10", "x86_64", "vhd") == azure_ref
+    assert testlib.bootcsource.bootc_image_types_for_source("rhel-10") == ["vhd"]
+
+
+def test_bootc_pull_script_fedora_is_plain_pull():
+    ref = "quay.io/fedora/fedora-bootc:44"
+    assert testlib.bootcsource.bootc_pull_script(ref) == f"podman pull {ref}"
+
+
+def test_bootc_pull_script_uses_quay_bot_token_for_foundry():
+    ref = (
+        "quay.io/redhat-services-prod/insights-management-tenant/"
+        "image-builder-bootc-foundry/rhel-10-azure:latest"
+    )
+    script = testlib.bootcsource.bootc_pull_script(ref)
+    assert testlib.bootcsource.QUAY_BOT_TOKEN_VAR in script
+    assert testlib.bootcsource.QUAY_AUTH_FILE in script
+    assert "REGISTRY_AUTH_FILE" in script
+
+
 def test_resolve_bootc_source():
     entry = testlib.bootcsource.resolve_bootc_source("fedora-44", "x86_64")
     assert entry["ref"] == "quay.io/fedora/fedora-bootc:44"
