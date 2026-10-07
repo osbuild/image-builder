@@ -58,6 +58,9 @@ large and difficult to read):
 * You must run `./tools/gen-manifest-checksums.sh` for every commit and include
   any changes into the commit. We use this to keep track of which commit changes
   what output artifacts and it helps you finding unintended changes.
+* You must run `./tools/prepare-source.sh` for every commit (this takes care of
+  the earlier mentioned `go fmt ./...` and some bits related to dependencies and
+  test configs) and amend any changes into the commit.
 
 ## Maintaining a PR
 
