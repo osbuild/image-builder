@@ -7,12 +7,25 @@ CLOUD_IMAGE_TYPES = {"ami", "gce", "vhd"}
 DISK_IMAGE_TYPES = VANILLA_REF_IMAGE_TYPES | CLOUD_IMAGE_TYPES
 INSTALLER_IMAGE_TYPES = {"bootc-generic-iso", "bootc-installer"}
 
-
-# Dynamic bootc CI scope is currently limited to fedora-44 / x86_64 / disk image types.
-BOOTC_SOURCES = ["fedora-44"]
+# we test all image types for fedora-44, but only vhd for rhel-10
+# since we only have bootc-foundry for rhel-10, we only support vhd for rhel-10
+BOOTC_SOURCE_IMAGE_TYPES = {
+    "fedora-44": ["qcow2", "ami", "raw", "gce", "vmdk", "ova"],
+    "rhel-10": ["vhd"],
+}
+BOOTC_SOURCES = list(BOOTC_SOURCE_IMAGE_TYPES)
 BOOTC_ARCHES = ["x86_64"]
-BOOTC_IMAGE_TYPES = ["qcow2", "ami", "raw", "gce", "vhd", "vmdk", "ova"]
 BOOTC_CONFIGS = {"bootc-user"}
+
+QUAY_BOT_TOKEN_VAR = "QUAY_BOT_TOKEN"
+QUAY_AUTH_FILE = ".auth/quay.json"
+
+
+def bootc_image_types_for_source(source_name):
+    try:
+        return BOOTC_SOURCE_IMAGE_TYPES[source_name]
+    except KeyError as exc:
+        raise KeyError(f"unknown bootc source {source_name}") from exc
 
 
 def load_bootc_source(source_name):
@@ -68,3 +81,16 @@ def resolve_ref_from_entry(entry, source_name, arch, image_type=None):
 def resolve_bootc_source_ref(source_name, arch, image_type=None):
     entry = resolve_bootc_source(source_name, arch)
     return resolve_ref_from_entry(entry, source_name, arch, image_type=image_type)
+
+
+def bootc_pull_script(bootc_ref):
+    """Return shell commands to pull a bootc image."""
+    pull = f"podman pull {bootc_ref}"
+    if "image-builder-bootc-foundry" not in bootc_ref:
+        return pull
+    return "\n".join([
+        "mkdir -p .auth",
+        "printf '{\"auths\":{\"quay.io\":{\"auth\":\"%s\"}}}'\\n' "
+        f"\"${{{QUAY_BOT_TOKEN_VAR}}}\" > {QUAY_AUTH_FILE}",
+        f"REGISTRY_AUTH_FILE=\"{QUAY_AUTH_FILE}\" {pull}",
+    ])
