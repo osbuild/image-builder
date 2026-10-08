@@ -7,12 +7,26 @@ CLOUD_IMAGE_TYPES = {"ami", "gce", "vhd"}
 DISK_IMAGE_TYPES = VANILLA_REF_IMAGE_TYPES | CLOUD_IMAGE_TYPES
 INSTALLER_IMAGE_TYPES = {"bootc-generic-iso", "bootc-installer"}
 
-
-# Dynamic bootc CI scope is currently limited to fedora-44 / x86_64 / ami.
-BOOTC_SOURCES = ["fedora-44"]
+# we test all image types for fedora-44, but only vhd for rhel-10
+# since we only have bootc-foundry for rhel-10, we only support vhd for rhel-10
+BOOTC_SOURCE_IMAGE_TYPES = {
+    "fedora-44": ["qcow2", "ami", "raw", "vmdk"],
+    "rhel-10": ["vhd"],
+}
+BOOTC_SOURCES = list(BOOTC_SOURCE_IMAGE_TYPES)
 BOOTC_ARCHES = ["x86_64"]
-BOOTC_IMAGE_TYPES = ["ami"]
 BOOTC_CONFIGS = {"bootc-user"}
+
+BOOTC_QUAY_AUTH_SECURE_FILE = "quay-auth.json"
+BOOTC_QUAY_AUTH_PATH = f".secure_files/{BOOTC_QUAY_AUTH_SECURE_FILE}"
+QUAY_AUTH_DOWNLOAD_SCRIPT = "./test/scripts/download-quay-auth"
+
+
+def bootc_image_types_for_source(source_name):
+    try:
+        return BOOTC_SOURCE_IMAGE_TYPES[source_name]
+    except KeyError as exc:
+        raise KeyError(f"unknown bootc source {source_name}") from exc
 
 
 def load_bootc_source(source_name):
@@ -68,3 +82,28 @@ def resolve_ref_from_entry(entry, source_name, arch, image_type=None):
 def resolve_bootc_source_ref(source_name, arch, image_type=None):
     entry = resolve_bootc_source(source_name, arch)
     return resolve_ref_from_entry(entry, source_name, arch, image_type=image_type)
+
+
+def needs_quay_auth(bootc_ref):
+    return "image-builder-bootc-foundry" in bootc_ref
+
+
+def quay_auth_file_path():
+    return os.path.abspath(BOOTC_QUAY_AUTH_PATH)
+
+
+def ensure_quay_auth_file():
+    path = quay_auth_file_path()
+    if not os.path.isfile(path):
+        raise RuntimeError(
+            f"{BOOTC_QUAY_AUTH_SECURE_FILE} not found at {path}; "
+            f"run {QUAY_AUTH_DOWNLOAD_SCRIPT} first"
+        )
+    return path
+
+
+def quay_auth_extra_env(bootc_refs):
+    """Return env var needed to pull private bootc-foundry images."""
+    if not bootc_refs or not any(needs_quay_auth(ref) for ref in bootc_refs):
+        return {}
+    return {"REGISTRY_AUTH_FILE": ensure_quay_auth_file()}

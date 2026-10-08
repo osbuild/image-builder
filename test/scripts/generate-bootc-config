@@ -13,8 +13,7 @@ build/{distro}/{arch}/{image_type}/{config_name}:
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
-    - podman pull {bootc_ref}
-    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
+{pull_image_steps}    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
     - ./test/scripts/boot-image "{image_path}" "{config}"
     - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
   extends: .terraform
@@ -26,8 +25,8 @@ build/{distro}/{arch}/{image_type}/{config_name}:
 """
 
 
-def should_skip(config_name, image_type):
-    return (image_type not in testlib.bootcsource.BOOTC_IMAGE_TYPES
+def should_skip(config_name, image_type, bootc_source):
+    return (image_type not in testlib.bootcsource.bootc_image_types_for_source(bootc_source)
             or config_name not in testlib.bootcsource.BOOTC_CONFIGS)
 
 
@@ -37,7 +36,7 @@ def group_image_types_by_ref(bootc_source, arch):
     bootc_entry = testlib.bootcsource.resolve_bootc_source(bootc_source, arch)
     base_ref = bootc_entry.get("ref")
     build_ref = bootc_entry.get("build_ref")
-    for image_type in testlib.bootcsource.BOOTC_IMAGE_TYPES:
+    for image_type in testlib.bootcsource.bootc_image_types_for_source(bootc_source):
         ref = testlib.bootcsource.resolve_ref_from_entry(bootc_entry, bootc_source, arch, image_type=image_type)
         if ref is None:
             continue
@@ -87,7 +86,7 @@ def generate_configs(build_requests, pipeline_file, bootc_source):
                   f"does not match bootc source {bootc_source}")
             continue
 
-        if should_skip(config_name, image_type):
+        if should_skip(config_name, image_type, bootc_source):
             print(f"🦘 Skipping {distro}/{arch}/{image_type}/{config_name}")
             continue
 
@@ -108,10 +107,18 @@ def generate_configs(build_requests, pipeline_file, bootc_source):
         config_path = os.path.join(testlib.core.CONFIGS_PATH, config_name + ".json")
         export_pipeline_flag = testlib.core.export_pipeline_shell_flag(
             build.get("export-pipeline"))
+        if bootc_source == "rhel-10":
+            pull_image_steps = (
+                "    - ./test/scripts/download-quay-auth\n"
+                f"    - export REGISTRY_AUTH_FILE={testlib.bootcsource.BOOTC_QUAY_AUTH_PATH}\n"
+            )
+        else:
+            pull_image_steps = f"    - podman pull {bootc_ref}\n"
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
                                                 runner=runner, tag=tag,
                                                 config_name=config_name, config=config_path,
-                                                image_path=image_path, bootc_ref=bootc_ref,
+                                                image_path=image_path,
+                                                pull_image_steps=pull_image_steps,
                                                 export_pipeline_flag=export_pipeline_flag))
     print("✅ DONE!")
 
@@ -135,7 +142,7 @@ def main():
     build_requests = testlib.core.filter_builds(manifests, distro=s3_distro, arch=arch)
 
     build_requests = [b for b in build_requests
-                      if not should_skip(b["config"]["name"], b["image-type"])]
+                      if not should_skip(b["config"]["name"], b["image-type"], bootc_source)]
     with open(args.config, "w", encoding="utf-8") as config_file:
         if len(build_requests) == 0:
             print("⚫ No manifest changes detected. Generating null config.")

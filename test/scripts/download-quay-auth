@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p .secure_files
+
+glab auth login --job-token "$CI_JOB_TOKEN" --hostname "$CI_SERVER_FQDN" --api-protocol "$CI_SERVER_PROTOCOL"
+glab -R "$CI_PROJECT_PATH" securefile download --name quay-auth.json --path .secure_files/quay-auth.json

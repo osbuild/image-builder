@@ -5,7 +5,7 @@ import pathlib
 import sys
 from typing import Dict
 
-from .bootcsource import bootc_source_from_distro, resolve_bootc_source_ref
+from .bootcsource import bootc_source_from_distro, quay_auth_extra_env, resolve_bootc_source_ref
 from .build import get_manifest_id
 from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_s3
 from .gitlab import log_section
@@ -32,6 +32,7 @@ CAN_BOOT_TEST = {
         "image-installer", "minimal-installer", "network-installer",
         "everything-network-installer", "server-network-installer",
         "qcow2", "generic-qcow2", "cloud-qcow2",
+        "raw", "vmdk",
         "wsl", "generic-wsl",
         "bootc-generic-iso",
     ]
@@ -135,6 +136,8 @@ def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images
         cmd = ["sudo", "-E", *cmd]
     env = rng_seed_env()
     env["GOPROXY"] = "https://proxy.golang.org,direct"
+    if bootc_refs:
+        env.update(quay_auth_extra_env(bootc_refs))
     print("⌨️" + " ".join(cmd) + " ENV: " + str(env))
     _, stderr = runcmd(cmd, extra_env=env)
     return stderr
@@ -220,10 +223,10 @@ def check_for_build(manifest_fname, build_request, manifest_data, build_info_dir
             print("  Adding config to build pipeline.")
             return True
 
-    image_type = dl_config["image-type"]
-    if not can_boot_test(manifest_fname, manifest_data, build_request["image-type"], build_request["arch"],
+    req_image_type = build_request["image-type"]
+    if not can_boot_test(manifest_fname, manifest_data, req_image_type, build_request["arch"],
                          build_request["distro"], build_request["config"].get("blueprint", {})):
-        print(f"  Boot testing for {image_type} is not yet supported")
+        print(f"  Boot testing for {req_image_type} is not yet supported")
         return False
 
     # boot testing supported: check if it's been tested, otherwise queue it for rebuild and boot

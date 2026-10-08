@@ -67,6 +67,46 @@ def test_resolve_fedora_44_bootc_refs():
     assert testlib.bootcsource.resolve_bootc_source_ref("fedora-44", "x86_64", "ami") == ref
 
 
+def test_resolve_rhel_10_bootc_refs():
+    azure_ref = (
+        "quay.io/redhat-services-prod/insights-management-tenant/"
+        "image-builder-bootc-foundry/rhel-10-azure:latest"
+    )
+    assert testlib.bootcsource.resolve_bootc_source_ref("rhel-10", "x86_64", "vhd") == azure_ref
+    assert testlib.bootcsource.bootc_image_types_for_source("rhel-10") == ["vhd"]
+
+
+def test_quay_auth_extra_env_skips_public_images():
+    ref = "quay.io/fedora/fedora-bootc:44"
+    assert not testlib.bootcsource.quay_auth_extra_env([ref])
+
+
+def test_ensure_quay_auth_file_uses_existing_file(tmp_path, monkeypatch):
+    secure_dir = tmp_path / ".secure_files"
+    secure_dir.mkdir()
+    auth_file = secure_dir / "quay-auth.json"
+    auth_file.write_text('{"auths":{"quay.io":{"auth":"dGVzdDpzZWNyZXQ="}}}', encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    assert testlib.bootcsource.ensure_quay_auth_file() == str(auth_file.resolve())
+
+
+def test_quay_auth_extra_env_uses_secure_file(tmp_path, monkeypatch):
+    ref = (
+        "quay.io/redhat-services-prod/insights-management-tenant/"
+        "image-builder-bootc-foundry/rhel-10-azure:latest"
+    )
+    secure_dir = tmp_path / ".secure_files"
+    secure_dir.mkdir()
+    auth_file = secure_dir / "quay-auth.json"
+    auth_file.write_text('{"auths":{"quay.io":{"auth":"dGVzdDpzZWNyZXQ="}}}', encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    env = testlib.bootcsource.quay_auth_extra_env([ref])
+
+    assert env == {"REGISTRY_AUTH_FILE": str(auth_file.resolve())}
+
+
 def test_resolve_bootc_source():
     entry = testlib.bootcsource.resolve_bootc_source("fedora-44", "x86_64")
     assert entry["ref"] == "quay.io/fedora/fedora-bootc:44"
