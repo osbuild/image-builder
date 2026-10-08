@@ -76,20 +76,35 @@ def test_resolve_rhel_10_bootc_refs():
     assert testlib.bootcsource.bootc_image_types_for_source("rhel-10") == ["vhd"]
 
 
-def test_bootc_pull_script_fedora_is_plain_pull():
+def test_quay_auth_extra_env_skips_public_images():
     ref = "quay.io/fedora/fedora-bootc:44"
-    assert testlib.bootcsource.bootc_pull_script(ref) == f"podman pull {ref}"
+    assert not testlib.bootcsource.quay_auth_extra_env([ref])
 
 
-def test_bootc_pull_script_uses_quay_bot_token_for_foundry():
+def test_ensure_quay_auth_file_uses_existing_file(tmp_path, monkeypatch):
+    secure_dir = tmp_path / ".secure_files"
+    secure_dir.mkdir()
+    auth_file = secure_dir / "quay-auth.json"
+    auth_file.write_text('{"auths":{"quay.io":{"auth":"dGVzdDpzZWNyZXQ="}}}', encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    assert testlib.bootcsource.ensure_quay_auth_file() == str(auth_file.resolve())
+
+
+def test_quay_auth_extra_env_uses_secure_file(tmp_path, monkeypatch):
     ref = (
         "quay.io/redhat-services-prod/insights-management-tenant/"
         "image-builder-bootc-foundry/rhel-10-azure:latest"
     )
-    script = testlib.bootcsource.bootc_pull_script(ref)
-    assert testlib.bootcsource.QUAY_BOT_TOKEN_VAR in script
-    assert testlib.bootcsource.QUAY_AUTH_FILE in script
-    assert "REGISTRY_AUTH_FILE" in script
+    secure_dir = tmp_path / ".secure_files"
+    secure_dir.mkdir()
+    auth_file = secure_dir / "quay-auth.json"
+    auth_file.write_text('{"auths":{"quay.io":{"auth":"dGVzdDpzZWNyZXQ="}}}', encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    env = testlib.bootcsource.quay_auth_extra_env([ref])
+
+    assert env == {"REGISTRY_AUTH_FILE": str(auth_file.resolve())}
 
 
 def test_resolve_bootc_source():

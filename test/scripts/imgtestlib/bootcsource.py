@@ -17,8 +17,9 @@ BOOTC_SOURCES = list(BOOTC_SOURCE_IMAGE_TYPES)
 BOOTC_ARCHES = ["x86_64"]
 BOOTC_CONFIGS = {"bootc-user"}
 
-QUAY_BOT_TOKEN_VAR = "QUAY_BOT_TOKEN"
-QUAY_AUTH_FILE = ".auth/quay.json"
+BOOTC_QUAY_AUTH_SECURE_FILE = "quay-auth.json"
+BOOTC_QUAY_AUTH_PATH = f".secure_files/{BOOTC_QUAY_AUTH_SECURE_FILE}"
+QUAY_AUTH_DOWNLOAD_SCRIPT = "./test/scripts/download-quay-auth"
 
 
 def bootc_image_types_for_source(source_name):
@@ -83,14 +84,26 @@ def resolve_bootc_source_ref(source_name, arch, image_type=None):
     return resolve_ref_from_entry(entry, source_name, arch, image_type=image_type)
 
 
-def bootc_pull_script(bootc_ref):
-    """Return shell commands to pull a bootc image."""
-    pull = f"podman pull {bootc_ref}"
-    if "image-builder-bootc-foundry" not in bootc_ref:
-        return pull
-    return "\n".join([
-        "mkdir -p .auth",
-        "printf '{\"auths\":{\"quay.io\":{\"auth\":\"%s\"}}}'\\n' "
-        f"\"${{{QUAY_BOT_TOKEN_VAR}}}\" > {QUAY_AUTH_FILE}",
-        f"REGISTRY_AUTH_FILE=\"{QUAY_AUTH_FILE}\" {pull}",
-    ])
+def needs_quay_auth(bootc_ref):
+    return "image-builder-bootc-foundry" in bootc_ref
+
+
+def quay_auth_file_path():
+    return os.path.abspath(BOOTC_QUAY_AUTH_PATH)
+
+
+def ensure_quay_auth_file():
+    path = quay_auth_file_path()
+    if not os.path.isfile(path):
+        raise RuntimeError(
+            f"{BOOTC_QUAY_AUTH_SECURE_FILE} not found at {path}; "
+            f"run {QUAY_AUTH_DOWNLOAD_SCRIPT} first"
+        )
+    return path
+
+
+def quay_auth_extra_env(bootc_refs):
+    """Return env var needed to pull private bootc-foundry images."""
+    if not bootc_refs or not any(needs_quay_auth(ref) for ref in bootc_refs):
+        return {}
+    return {"REGISTRY_AUTH_FILE": ensure_quay_auth_file()}

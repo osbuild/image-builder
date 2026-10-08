@@ -2096,6 +2096,7 @@ fail:
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/download-quay-auth
     - ./test/scripts/generate-bootc-config --bootc-source rhel-10 --arch x86_64 boot-config.yml
   artifacts:
     paths:

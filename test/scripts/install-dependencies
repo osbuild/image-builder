@@ -9,6 +9,7 @@ install_deps() {
         awscli2 \
         cloud-utils \
         gcc \
+        glab \
         go \
         iproute \
         krb5-devel \

@@ -126,7 +126,7 @@ BOOTC_GEN_TEMPLATE = """
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
-    - ./test/scripts/generate-bootc-config --bootc-source {bootc_source} --arch {arch} boot-config.yml
+{quay_auth_download}    - ./test/scripts/generate-bootc-config --bootc-source {bootc_source} --arch {arch} boot-config.yml
   artifacts:
     paths:
       - boot-config.yml
@@ -304,10 +304,14 @@ def main():
     for bootc_source in BOOTC_SOURCES:
         for arch in testlib.bootcsource.BOOTC_ARCHES:
             runner = testlib.testenv.get_ci_runner_for(distro="*", arch=arch, image_type="*")
+            quay_auth_download = ""
+            if bootc_source == "rhel-10":
+                quay_auth_download = "    - ./test/scripts/download-quay-auth\n"
             bootc_gen_stage.append(BOOTC_GEN_TEMPLATE.format(
                 bootc_source=bootc_source,
                 arch=arch,
                 runner=runner,
+                quay_auth_download=quay_auth_download,
             ))
             bootc_trigger_stage.append(BOOTC_TRIGGER_TEMPLATE.format(
                 bootc_source=bootc_source,
