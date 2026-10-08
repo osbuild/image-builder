@@ -459,11 +459,12 @@ func TestSetBuildContainer(t *testing.T) {
 	// base bootc container info to initialise the distro before setting the
 	// build container info
 	baseBootcInfo := &bootc.Info{
-		Imgref:        "example.com/containers/distro-bootc:version12",
-		ImageID:       "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
-		Arch:          "aarch64",
-		DefaultRootFs: "xfs",
-		Size:          100 * datasizes.MiB,
+		Imgref:           "example.com/containers/distro-bootc:version12",
+		ImageID:          "acf88e518194fac963a1b2e2e4110e38a4ce5fb3fceddd624fae8997d4566930",
+		Arch:             "aarch64",
+		DefaultRootFs:    "xfs",
+		Size:             100 * datasizes.MiB,
+		InstallVarMounts: true,
 		OSInfo: &osinfo.Info{
 			OSRelease: osinfo.OSRelease{
 				ID:        "whatever",
@@ -477,6 +478,8 @@ func TestSetBuildContainer(t *testing.T) {
 		expectedImgref  string
 		expectedImageID string
 		expectedError   string
+		// the build container runs bootc install, not the base container
+		expectedInstallVarMounts bool
 	}
 
 	testCases := map[string]testCase{
@@ -492,6 +495,16 @@ func TestSetBuildContainer(t *testing.T) {
 			},
 			expectedImgref:  "example.com/containers/distro-bootc:build42",
 			expectedImageID: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+		},
+
+		"var-mounts": {
+			buildInfo: &bootc.Info{
+				Imgref:           "example.com/containers/distro-bootc:build43",
+				Arch:             "arm64",
+				InstallVarMounts: true,
+			},
+			expectedImgref:           "example.com/containers/distro-bootc:build43",
+			expectedInstallVarMounts: true,
 		},
 
 		"noimgref": {
@@ -541,6 +554,7 @@ func TestSetBuildContainer(t *testing.T) {
 
 			require.Equal(tc.expectedImgref, bd.buildImgref)
 			require.Equal(tc.expectedImageID, bd.buildImageID)
+			require.Equal(tc.expectedInstallVarMounts, bd.installVarMounts)
 		})
 	}
 }

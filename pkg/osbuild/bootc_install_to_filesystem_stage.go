@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"slices"
+	"strings"
 
 	"github.com/osbuild/image-builder/pkg/platform"
 )
@@ -30,9 +31,12 @@ func (BootcInstallToFilesystemOptions) isStageOptions() {}
 // It requires a mount setup so that bootupd can be run by bootc. I.e
 // "/", "/boot" and "/boot/efi" need to be set up so that
 // bootc/bootupd find and install all required bootloader bits.
+// With varMounts, filesystems for /var and below are mounted as well, so that
+// bootc initializes them from the image. Only pass it for a bootc that
+// advertises this (see bootc.Info.InstallVarMounts).
 //
 // The mounts input should be generated with GenBootupdDevicesMounts.
-func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, inputs ContainerDeployInputs, devices map[string]Device, mounts []Mount, pltf platform.Platform) (*Stage, error) {
+func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, inputs ContainerDeployInputs, devices map[string]Device, mounts []Mount, pltf platform.Platform, varMounts bool) (*Stage, error) {
 	if err := validateBootupdMounts(mounts, pltf); err != nil {
 		return nil, err
 	}
@@ -41,13 +45,13 @@ func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, 
 		return nil, fmt.Errorf("expected exactly one container input but got: %v (%v)", len(inputs.Images.References), inputs.Images.References)
 	}
 
-	// Don't mount any custom mountpoints.
-	// Only mount the minimum required mounts for bootc:
-	//   /, /boot, and /boot/efi, if they are already defined.
+	// Don't mount other custom mountpoints, bootc requires an otherwise empty
+	// target. Older bootc versions reject /var mountpoints, or leave those
+	// filesystems empty so that they hide the image's /var content at boot.
 	requiredMountpoints := []string{"/", "/boot", "/boot/efi"}
 	reqMounts := make([]Mount, 0, len(mounts))
 	for _, mount := range mounts {
-		if slices.Contains(requiredMountpoints, mount.Target) {
+		if slices.Contains(requiredMountpoints, mount.Target) || (varMounts && IsVarMountpoint(mount.Target)) {
 			reqMounts = append(reqMounts, mount)
 		}
 	}
@@ -59,4 +63,9 @@ func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, 
 		Devices: devices,
 		Mounts:  reqMounts,
 	}, nil
+}
+
+// IsVarMountpoint returns true for /var and mountpoints below it.
+func IsVarMountpoint(target string) bool {
+	return target == "/var" || strings.HasPrefix(target, "/var/")
 }

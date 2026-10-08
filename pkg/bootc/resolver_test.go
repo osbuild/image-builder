@@ -259,6 +259,38 @@ func TestUnifiedKernelHappy(t *testing.T) {
 	}
 }
 
+func TestInstallVarMounts(t *testing.T) {
+	for _, tc := range []struct {
+		Name     string
+		In       string
+		ExitCode int
+		Out      bool
+		ErrMsg   string
+	}{
+		{Name: "supported", In: `{"install-features": ["initialize-var-mounts"]}`, Out: true},
+		{Name: "other features", In: `{"install-features": ["something-else"]}`, Out: false},
+		{Name: "no features", In: `{"kernel": {"unified": false}}`, Out: false},
+		{Name: "unknown command", In: "", ExitCode: 2, Out: false},
+		{Name: "error", In: "", ExitCode: 1, ErrMsg: "failed to run bootc container inspect"},
+		{Name: "bad json", In: "{", ErrMsg: "failed to unmarshal bootc inspect"},
+	} {
+		t.Run(tc.Name, func(t *testing.T) {
+			makeFakePodman(t, fmt.Sprintf(`#!/bin/sh
+				echo '%s'
+				exit %d
+				`, tc.In, tc.ExitCode))
+			cnt := bootc.Container{}
+			varMounts, err := cnt.InstallVarMounts()
+			if tc.ErrMsg != "" {
+				assert.ErrorContains(t, err, tc.ErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.Out, varMounts)
+		})
+	}
+}
+
 func TestBootloaderHappy(t *testing.T) {
 	for _, tc := range []struct {
 		In  string
