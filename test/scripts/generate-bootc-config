@@ -13,9 +13,7 @@ build/{distro}/{arch}/{image_type}/{config_name}:
   script:
     - sudo -E ./test/scripts/setup-osbuild-repo
     - sudo ./test/scripts/install-dependencies
-    - |
-{bootc_pull_script}
-    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
+{pull_image_steps}    - ./test/scripts/build-image "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
     - ./test/scripts/boot-image "{image_path}" "{config}"
     - sudo -E ./test/scripts/upload-results "{distro}" "{image_type}" "{config}"{export_pipeline_flag}
   extends: .terraform
@@ -109,13 +107,18 @@ def generate_configs(build_requests, pipeline_file, bootc_source):
         config_path = os.path.join(testlib.core.CONFIGS_PATH, config_name + ".json")
         export_pipeline_flag = testlib.core.export_pipeline_shell_flag(
             build.get("export-pipeline"))
-        pull_script = testlib.bootcsource.bootc_pull_script(bootc_ref)
+        if bootc_source == "rhel-10":
+            pull_image_steps = (
+                "    - ./test/scripts/download-quay-auth\n"
+                f"    - export REGISTRY_AUTH_FILE={testlib.bootcsource.BOOTC_QUAY_AUTH_PATH}\n"
+            )
+        else:
+            pull_image_steps = f"    - podman pull {bootc_ref}\n"
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
                                                 runner=runner, tag=tag,
                                                 config_name=config_name, config=config_path,
                                                 image_path=image_path,
-                                                bootc_pull_script="\n".join(
-                                                    f"      {line}" for line in pull_script.splitlines()),
+                                                pull_image_steps=pull_image_steps,
                                                 export_pipeline_flag=export_pipeline_flag))
     print("✅ DONE!")
 
