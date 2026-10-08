@@ -32,6 +32,7 @@ CAN_BOOT_TEST = {
         "image-installer", "minimal-installer", "network-installer",
         "everything-network-installer", "server-network-installer",
         "qcow2", "generic-qcow2", "cloud-qcow2",
+        "raw", "vmdk",
         "wsl", "generic-wsl",
         "bootc-generic-iso",
     ]
@@ -222,10 +223,10 @@ def check_for_build(manifest_fname, build_request, manifest_data, build_info_dir
             print("  Adding config to build pipeline.")
             return True
 
-    image_type = dl_config["image-type"]
-    if not can_boot_test(manifest_fname, manifest_data, build_request["image-type"], build_request["arch"],
+    req_image_type = build_request["image-type"]
+    if not can_boot_test(manifest_fname, manifest_data, req_image_type, build_request["arch"],
                          build_request["distro"], build_request["config"].get("blueprint", {})):
-        print(f"  Boot testing for {image_type} is not yet supported")
+        print(f"  Boot testing for {req_image_type} is not yet supported")
         return False
 
     # boot testing supported: check if it's been tested, otherwise queue it for rebuild and boot

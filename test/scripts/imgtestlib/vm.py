@@ -242,8 +242,12 @@ class QEMU(VM):
             img_format = "qcow2"
         elif self._img.suffix in (".img", ".raw"):
             img_format = "raw"
+        elif self._img.suffix == ".vmdk":
+            img_format = "vmdk"
         else:
-            raise ValueError(f"Unsupported image extension: {self._img}. Must be .qcow2 or .img")
+            raise ValueError(
+                f"Unsupported image extension: {self._img}. "
+                "Must be .qcow2, .raw, .img, or .vmdk")
 
         # common part
         qemu_cmdline += [

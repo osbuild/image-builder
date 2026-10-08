@@ -600,7 +600,7 @@ def boot_image(search_path, build_config_path, keep_booted=False):
         return
 
     print(f"Testing image at {image_path}")
-    if image_type in ("qcow2", "generic-qcow2", "cloud-qcow2"):
+    if image_type in ("qcow2", "generic-qcow2", "cloud-qcow2", "raw", "vmdk"):
         # Not all qcow2 types can be boot-tested, for example `server-qcow2` uses
         # initial-setup and this blocks the boot.
         boot_qemu(arch, image_path, build_config_path, keep_booted=keep_booted)
