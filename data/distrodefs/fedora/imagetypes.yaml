@@ -1334,7 +1334,7 @@
 
   atomic_disk_common: &atomic_disk_common
     <<: *ostree_imgtype_common
-    default_size: "10 GiB"
+    default_size: "15 GiB"
     bootable: true
     image_func: "ostree_disk"
     ostree: *ostree_atomic
