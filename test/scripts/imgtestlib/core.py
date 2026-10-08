@@ -5,7 +5,7 @@ import pathlib
 import sys
 from typing import Dict
 
-from .bootcsource import bootc_source_from_distro, resolve_bootc_source_ref
+from .bootcsource import bootc_source_from_distro, quay_auth_extra_env, resolve_bootc_source_ref
 from .build import get_manifest_id
 from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_s3
 from .gitlab import log_section
@@ -135,6 +135,8 @@ def gen_manifests(outputdir, config_list=None, distros=None, arches=None, images
         cmd = ["sudo", "-E", *cmd]
     env = rng_seed_env()
     env["GOPROXY"] = "https://proxy.golang.org,direct"
+    if bootc_refs:
+        env.update(quay_auth_extra_env(bootc_refs))
     print("⌨️" + " ".join(cmd) + " ENV: " + str(env))
     _, stderr = runcmd(cmd, extra_env=env)
     return stderr
