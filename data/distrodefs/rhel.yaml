@@ -105,6 +105,11 @@ distros:
             distro_name: "ol"
           shallow_merge:
             default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-ol10-ds.xml"
+        "oracle default kernel should be kernel-core":
+          when:
+            distro_name: "ol"
+          shallow_merge:
+            default_kernel: "kernel-core"
 
   - <<: *rhel10
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
