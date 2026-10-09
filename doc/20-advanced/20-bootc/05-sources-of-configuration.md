@@ -275,9 +275,48 @@ partition_table:
 > [!WARNING]
 > *LUKS configurations currently do not work with bootable containers in `image-builder`. See [here](https://github.com/osbuild/images/issues/2228).*
 
+### `blueprint.json` / `blueprint.toml`
+
+A JSON or TOML file containing blueprint customizations to apply when building an image from the container. The canonical location is `/usr/lib/image-builder/bootc/blueprint.json` (or `blueprint.toml`). Only the `customizations` section of the blueprint is used; fields like `packages` do not apply to bootc images since the package set comes from the container itself.
+
+This allows containers to ship default customizations (users, kernel arguments, services, firewall rules, etc.) so that images built from the container are configured correctly without requiring the end-user to supply a separate blueprint.
+
+Example `blueprint.json`:
+
+```json
+{
+  "customizations": {
+    "user": [
+      {
+        "name": "admin",
+        "groups": ["wheel"]
+      }
+    ],
+    "kernel": {
+      "append": "quiet"
+    }
+  }
+}
+```
+
+Equivalent `blueprint.toml`:
+
+```toml
+[[customizations.user]]
+name = "admin"
+groups = ["wheel"]
+
+[customizations.kernel]
+append = "quiet"
+```
+
+For backward compatibility, `config.json` and `config.toml` are also recognized at the same locations. The `blueprint.*` filenames take precedence when both exist.
+
+Like `disk.yaml`, these files support [deployment variant](#deployment-variants) overrides.
+
 ### Deployment Variants
 
-Containers can ship multiple `disk.yaml`, `iso.yaml`, and/or `extras.yaml` configurations as *deployment variants*. Variants allow a single container image to produce different disk layouts depending on the target environment, for example a `secure-execution` variant with verity partitions for s390x, or `btrfs` vs `ext4` variants for Fedora images.
+Containers can ship multiple `disk.yaml`, `iso.yaml`, `extras.yaml`, and/or `blueprint.json`/`blueprint.toml` configurations as *deployment variants*. Variants allow a single container image to produce different configurations depending on the target environment, for example a `secure-execution` variant with verity partitions for s390x, or `btrfs` vs `ext4` variants for Fedora images.
 
 Variants are placed in the `variant.d/` subdirectory, with each variant in its own named directory:
 
@@ -286,15 +325,17 @@ Variants are placed in the `variant.d/` subdirectory, with each variant in its o
 ├── disk.yaml              # default configuration
 ├── iso.yaml               # default ISO configuration
 ├── extras.yaml            # default extras configuration
+├── blueprint.json         # default blueprint customizations
 └── variant.d/
     ├── btrfs/
     │   ├── disk.yaml      # btrfs partition layout
     │   └── extras.yaml    # btrfs-specific extras
     └── secure-execution/
-        └── disk.yaml      # s390x SE partition layout
+        ├── disk.yaml      # s390x SE partition layout
+        └── blueprint.json # s390x SE customizations
 ```
 
-Each variant directory may contain a `disk.yaml`, `iso.yaml`, and/or `extras.yaml`. When a variant is selected at build time with `--bootc-variant`, `image-builder` uses the variant's configuration files. For any file not provided by the variant, `image-builder` falls back to the default configuration.
+Each variant directory may contain a `disk.yaml`, `iso.yaml`, `extras.yaml`, and/or `blueprint.json`/`blueprint.toml`. When a variant is selected at build time with `--bootc-variant`, `image-builder` uses the variant's configuration files. For any file not provided by the variant, `image-builder` falls back to the default configuration.
 
 Users can list available variants and select one at build time:
 
