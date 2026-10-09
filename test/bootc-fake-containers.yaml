@@ -11,6 +11,10 @@ containers:
         versionid: "1"
       kernel_info:
         version: 6.6
+      initrd_modules:
+        - ostree
+        - livenet
+        - dmsquash-live
     default_fs: "ext4"
     container_size: 10_000_000_000
   - <<: *default_fake_container
@@ -89,15 +93,29 @@ containers:
         id: "fedora"
         versionid: "42"
 
-  # test bootc-generic-iso
+  # test generic-iso
   - <<: *default_fake_container
-    image_types: ["bootc-generic-iso"]
+    image_types: ["generic-iso"]
     arch: x86_64
     info:
       <<: *default_info
       uefi_vendor: "uefi-vendor-x86_64"
   - <<: *default_fake_container
-    image_types: ["bootc-generic-iso"]
+    image_types: ["generic-iso"]
+    arch: aarch64
+    info:
+      <<: *default_info
+      uefi_vendor: "uefi-vendor-aarch64"
+
+  # test pxe-tar-xz
+  - <<: *default_fake_container
+    image_types: ["pxe-tar-xz"]
+    arch: x86_64
+    info:
+      <<: *default_info
+      uefi_vendor: "uefi-vendor-x86_64"
+  - <<: *default_fake_container
+    image_types: ["pxe-tar-xz"]
     arch: aarch64
     info:
       <<: *default_info
