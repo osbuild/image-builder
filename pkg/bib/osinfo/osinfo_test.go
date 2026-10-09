@@ -57,10 +57,13 @@ func createBootupdEFI(t *testing.T, root, uefiVendor string) {
 	require.NoError(t, err)
 }
 
-func createImageCustomization(t *testing.T, root, custType string) {
+func createImageCustomization(t *testing.T, root, custType string, variant ...string) {
 	t.Helper()
 
 	bibDir := path.Join(root, "usr/lib/bootc-image-builder/")
+	if len(variant) > 0 && variant[0] != "" {
+		bibDir = path.Join(root, "usr/lib/bootc-image-builder/variant.d", variant[0])
+	}
 	err := os.MkdirAll(bibDir, 0755)
 	require.NoError(t, err)
 
@@ -177,6 +180,58 @@ func TestLoadInfo(t *testing.T) {
 			}
 		})
 	}
+}
+
+var testCustomizationJSON = `{
+	"customizations": {
+		"disk": {
+			"partitions": [
+				{
+					"label": "var",
+					"mountpoint": "/var",
+					"fs_type": "ext4",
+					"minsize": "3 GiB"
+				}
+			]
+		}
+	}
+}`
+
+func TestLoadInfoVariantCustomization(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "platform:f40", "coreos", "")
+	createBootupdEFI(t, root, "fedora")
+
+	variantDir := path.Join(root, "usr/lib/image-builder/bootc/variant.d/myvariant")
+	require.NoError(t, os.MkdirAll(variantDir, 0755))
+	require.NoError(t, os.WriteFile(path.Join(variantDir, "blueprint.json"), []byte(testCustomizationJSON), 0644))
+
+	info, err := Load(os.DirFS(root), "myvariant")
+	require.NoError(t, err)
+	require.NotNil(t, info.ImageCustomization)
+	require.NotNil(t, info.ImageCustomization.Disk)
+	require.NotEmpty(t, info.ImageCustomization.Disk.Partitions)
+	assert.Equal(t, "var", info.ImageCustomization.Disk.Partitions[0].Label)
+}
+
+func TestLoadInfoVariantFallback(t *testing.T) {
+	root := t.TempDir()
+	writeOSRelease(t, root, "fedora", "40", "Fedora Linux", "platform:f40", "coreos", "")
+	createBootupdEFI(t, root, "fedora")
+
+	baseDir := path.Join(root, "usr/lib/image-builder/bootc")
+	require.NoError(t, os.MkdirAll(baseDir, 0755))
+	require.NoError(t, os.WriteFile(path.Join(baseDir, "blueprint.json"), []byte(testCustomizationJSON), 0644))
+
+	variantDir := path.Join(baseDir, "variant.d/myvariant")
+	require.NoError(t, os.MkdirAll(variantDir, 0755))
+
+	info, err := Load(os.DirFS(root), "myvariant")
+	require.NoError(t, err)
+	require.NotNil(t, info.ImageCustomization)
+	require.NotNil(t, info.ImageCustomization.Disk)
+	require.NotEmpty(t, info.ImageCustomization.Disk.Partitions)
+	assert.Equal(t, "var", info.ImageCustomization.Disk.Partitions[0].Label)
 }
 
 func TestLoadInfoKernel(t *testing.T) {
