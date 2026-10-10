@@ -1,6 +1,7 @@
 import contextlib
 import json
 import os
+import re
 import pathlib
 import random
 import shutil
@@ -23,6 +24,8 @@ WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
 # We need up to 15 minutes for full Anaconda ISO installations
 # But in some cases the CI systems are even slower, so use 1800s
 ISO_BOOT_TIMEOUT = 1800
+# osbuild-upload-oci prints the custom image OCID in a fixed success line
+_OCI_UPLOAD_IMAGE_RE = re.compile(r"Image (ocid1\.[^\s]+) was uploaded")
 
 
 def ensure_env_vars(env_vars: Dict[str, Optional[str]]):
@@ -63,6 +66,42 @@ def get_wsl_config():
     ensure_env_vars(env_vars)
     env_vars.update(azure_config)
     return env_vars
+
+
+def get_oci_config():
+    # Individual CI variables provide API authentication and upload targets.
+    env_vars = {
+        "region": os.environ.get("OCI_REGION"),
+        "compartment_id": os.environ.get("OCI_COMPARTMENT_ID"),
+        "subnet_id": os.environ.get("OCI_SUBNET_ID"),
+        "bucket_name": os.environ.get("OCI_BUCKET_NAME"),
+        "bucket_namespace": os.environ.get("OCI_BUCKET_NAMESPACE"),
+        "private_key_path": os.environ.get("OCI_PRIVATE_KEY"),
+        "user_id": os.environ.get("OCI_USER_ID"),
+        "tenancy": os.environ.get("OCI_TENANCY"),
+        "fingerprint": os.environ.get("OCI_FINGERPRINT"),
+    }
+    ensure_env_vars(env_vars)
+    return env_vars
+
+
+@contextlib.contextmanager
+def oci_cli_config(oci_config) -> Generator[str, None, None]:
+    # Temp config file for the boot-oci SDK client.
+    with TemporaryDirectory() as tmpdir:
+        config_path = os.path.join(tmpdir, "config")
+        lines = [
+            "[DEFAULT]",
+            f"user={oci_config['user_id']}",
+            f"fingerprint={oci_config['fingerprint']}",
+            f"key_file={oci_config['private_key_path']}",
+            f"tenancy={oci_config['tenancy']}",
+            f"region={oci_config['region']}",
+            "",
+        ]
+        with open(config_path, "w", encoding="utf-8") as config_fp:
+            config_fp.write("\n".join(lines))
+        yield config_path
 
 
 @contextlib.contextmanager
@@ -522,6 +561,52 @@ def upload_to_azure(arch, image_name, image_path):
     result = json.loads(stdout)
     return result["image_id"]
 
+def upload_to_oci(image_name, image_path, extra_env=None):
+    """Upload an image with osbuild-upload-oci and return the custom image OCID."""
+    oci_config = get_oci_config()
+    # Credentials are read from the temporary OCI config file.
+    cmd = ["go", "run", "./cmd/osbuild-upload-oci",
+           "--region", oci_config["region"],
+           "--bucket-name", oci_config["bucket_name"],
+           "--bucket-namespace", oci_config["bucket_namespace"],
+           "--compartment-id", oci_config["compartment_id"],
+           "--object-name", image_name,
+           "--filename", image_path]
+    stdout, stderr = runcmd(cmd, extra_env=extra_env)
+    print(stderr.decode())  # status messages
+    match = _OCI_UPLOAD_IMAGE_RE.search(stdout.decode())
+    if not match:
+        raise RuntimeError(
+            f"oci upload: could not parse image OCID from output: {stdout.decode()}")
+    return match.group(1)
+
+
+def boot_oci(distro, arch, image_path, config):
+    cmd = [BASE_TEST_EXEC+arch, config]
+    make_check_host_config(arch)
+    with ensure_uncompressed(image_path) as raw_image_path:
+        with create_ssh_key(key_type="rsa") as (privkey, pubkey):
+            name = f"{distro}-" + str(uuid.uuid4())
+            oci_config = get_oci_config()
+            with oci_cli_config(oci_config) as oci_config_path:
+                oci_env = {"OCI_CONFIG_FILE": oci_config_path}
+                image_ocid = upload_to_oci(name, raw_image_path, extra_env=oci_env)
+                with TemporaryDirectory() as tmpdir:
+                    pubkey_file = os.path.join(tmpdir, "authorized_keys")
+                    with open(pubkey_file, "w", encoding="utf-8") as pubkey_fp:
+                        pubkey_fp.write(pubkey)
+                    run_cmd = ["go", "run", "./cmd/boot-oci", "run",
+                               "--region", oci_config["region"],
+                               "--compartment-id", oci_config["compartment_id"],
+                               "--subnet-id", oci_config["subnet_id"],
+                               "--image", image_ocid,
+                               "--arch", arch,
+                               "--username", "opc",
+                               "--ssh-privkey", privkey,
+                               "--ssh-authorized-keys-file", pubkey_file,
+                               *cmd]
+                    runcmd_nc(run_cmd, extra_env=oci_env)
+
 
 def boot_vhd(distro, arch, image_path, config):
     cmd = [BASE_TEST_EXEC+arch, config]
@@ -622,6 +707,8 @@ def boot_image(search_path, build_config_path, keep_booted=False):
         boot_ami(distro, arch, image_type, image_path, build_config_path)
     elif image_type in ("vhd"):
         boot_vhd(distro, arch, image_path, build_config_path)
+    elif image_type in ("oci"):
+        boot_oci(distro, arch, image_path, build_config_path)
     elif image_type in ("wsl", "generic-wsl"):
         if distro == "fedora-41":
             print(f"{distro} {image_type} boot tests are not supported, fails on wsl import")
