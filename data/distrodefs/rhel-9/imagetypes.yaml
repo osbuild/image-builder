@@ -1747,11 +1747,18 @@ image_types:
           config:
             datasource_list:
               - "Oracle"
+      # iSCSI in initramfs so OCI BM can attach the boot LUN.
       dracut_conf:
         - filename: "oci.conf"
           config:
             add_drivers:
               - "mlx5_core"
+              - "iscsi_ibft"
+            add_dracutmodules:
+              - "iscsi"
+              - "network"
+            install:
+              - "/usr/sbin/iscsiadm"
       conditions:
         <<: *qcow2_image_config_conditions
         "oracle linux is hostonly":
@@ -1768,6 +1775,9 @@ image_types:
     package_sets:
       os:
         - *qcow2_pkgset
+        - include:
+            # Required so dracut iscsi module check passes during kernel-core %posttrans.
+            - "iscsi-initiator-utils"
         - conditions:
             "system reinstall bootc": *conditions_pkgsets_system_reinstall_bootc
     partition_table:
