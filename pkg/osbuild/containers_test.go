@@ -148,3 +148,23 @@ func TestGenContainerStorageStagesIntegration(t *testing.T) {
   }
 ]`)
 }
+
+func TestGenContainerStorageStagesSkopeoAndMounts(t *testing.T) {
+	storagePath := ""
+	containerSpecs := []container.Spec{
+		{
+			LocalName: "some-name",
+			ImageID:   "sha256:1851d5f64ebaeac67c5c2d9e4adc1e73aa6433b44a167268a3510c3d056062db",
+		},
+	}
+
+	// Just testing to make sure devices and mounts are added, these are dummy values
+	devices := makeOsbuildDevices("disk")
+	mounts := makeOsbuildMounts("boot")
+	stages := osbuild.GenContainerStorageStagesWithMounts(storagePath, containerSpecs, devices, mounts)
+	assert.Equal(t, len(stages), 1)
+	assert.Equal(t, stages[0].Type, "org.osbuild.skopeo")
+	assert.Equal(t, stages[0].Inputs.(osbuild.SkopeoStageInputs).Images.Type, "org.osbuild.containers")
+	assert.Equal(t, stages[0].Devices["disk"].Type, "org.osbuild.loopback")
+	assert.Equal(t, stages[0].Mounts[0].Name, "mnt-for-boot")
+}
