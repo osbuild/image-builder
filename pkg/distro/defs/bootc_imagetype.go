@@ -632,8 +632,14 @@ func (t *bootcImageType) manifestForGenericISO(bp *blueprint.Blueprint, options 
 
 	img.KernelVersion = bd.sourceInfo.KernelInfo.Version // needed by BootcRootFS
 
+	// Add the installer payload container as a payload
 	if options.Bootc != nil && options.Bootc.InstallerPayloadRef != "" {
-		return nil, nil, fmt.Errorf("bootc installer payload is not supported on generic-iso")
+		payload := container.SourceSpec{
+			Source: options.Bootc.InstallerPayloadRef,
+			Name:   options.Bootc.InstallerPayloadRef,
+			Local:  local,
+		}
+		img.PayloadContainers = []container.SourceSpec{payload}
 	}
 
 	// Setup the iso customizations from the YAML
