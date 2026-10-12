@@ -34,6 +34,9 @@ type ContainerBasedIso struct {
 
 	// Custom ISO bootloader menus override the default menus
 	Grub2MenuEntries []manifest.ISOGrub2MenuEntry
+
+	// PayloadContainers to add to the image container storage
+	PayloadContainers []container.SourceSpec
 }
 
 func NewContainerBasedIso(platform platform.Platform, filename string, container container.SourceSpec, buildOpts *manifest.BuildOptions) *ContainerBasedIso {
@@ -75,6 +78,7 @@ func (img *ContainerBasedIso) InstantiateManifestFromContainer(m *manifest.Manif
 	rawImage.OSCustomizations = img.OSCustomizations
 	rawImage.DiskCustomizations = img.DiskCustomizations
 	rawImage.KernelVersion = img.KernelVersion
+	rawImage.PayloadContainers = img.PayloadContainers
 
 	// Setup root filesystem so that dmsquash-live will boot it
 	rawImage.LiveBoot = true
