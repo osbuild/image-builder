@@ -110,6 +110,10 @@ func findMountIdx(mounts []osbuild.Mount, mntType string) int {
 }
 
 func makeFakeRawBootcPipeline() *manifest.RawBootcImage {
+	return makeFakeRawBootcPayloadPipeline(nil)
+}
+
+func makeFakeRawBootcPayloadPipeline(payloadRefs []string) *manifest.RawBootcImage {
 	mani := manifest.New()
 	runner := &runner.Linux{}
 	pf := &platform.Data{
@@ -119,7 +123,19 @@ func makeFakeRawBootcPipeline() *manifest.RawBootcImage {
 	build := manifest.NewBuildFromContainer(&mani, runner, nil, nil)
 	rawBootcPipeline := manifest.NewRawBootcImage(build, nil, pf)
 	rawBootcPipeline.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
-	err := rawBootcPipeline.SerializeStart(manifest.Inputs{Containers: []container.Spec{{Source: "foo"}}})
+	containers := []container.Spec{{Source: "foo"}}
+
+	// Add additional payload containers
+	for _, ref := range payloadRefs {
+		containers = append(containers, container.Spec{Source: ref})
+		payload := container.SourceSpec{
+			Source: ref,
+			Name:   ref,
+			Local:  true,
+		}
+		rawBootcPipeline.PayloadContainers = append(rawBootcPipeline.PayloadContainers, payload)
+	}
+	err := rawBootcPipeline.SerializeStart(manifest.Inputs{Containers: containers})
 	if err != nil {
 		panic(err)
 	}
@@ -801,4 +817,14 @@ func collectMkdirPaths(stages []*osbuild.Stage) []string {
 		}
 	}
 	return mkdirPaths
+}
+
+func TestRawBootcPayload(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPayloadPipeline([]string{"quay.io/fedora/fedora-bootc:latest"})
+	pipeline, err := rawBootcPipeline.Serialize()
+	require.NoError(t, err)
+
+	// Check for skopeo stage
+	skopeoStage := findStage("org.osbuild.skopeo", pipeline.Stages)
+	require.NotNil(t, skopeoStage)
 }
