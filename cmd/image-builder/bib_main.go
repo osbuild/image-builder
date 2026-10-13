@@ -112,7 +112,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 			// including tiny statically linked target-arch
 			// binaries inside our bib container
 			fmt.Fprintf(os.Stderr, "WARNING: target-arch is experimental and needs an installed 'qemu-user' package\n")
-			if slices.Contains(imgTypes, "iso") {
+			if slices.Contains(imgTypes, "iso") || slices.Contains(imgTypes, "anaconda-iso") {
 				return nil, nil, fmt.Errorf("cannot build iso for different target arches yet")
 			}
 			cntArch = target
