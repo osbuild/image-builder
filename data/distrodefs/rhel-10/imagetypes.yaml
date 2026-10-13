@@ -1214,18 +1214,6 @@ image_types:
           config:
             datasource_list:
               - "Oracle"
-      # iSCSI in initramfs so OCI BM can attach the boot LUN.
-      dracut_conf:
-        - filename: "oci.conf"
-          config:
-            add_drivers:
-              - "mlx5_core"
-              - "iscsi_ibft"
-            add_dracutmodules:
-              - "iscsi"
-              - "network"
-            install:
-              - "/usr/sbin/iscsiadm"
       conditions:
         <<: *qcow2_image_config_conditions
         "oracle linux is hostonly":
@@ -1233,6 +1221,22 @@ image_types:
             distro_name: "ol"
           shallow_merge:
             hostonly: true
+        "rhel-10.4+ gets OCI iSCSI dracut configuration":
+          when:
+            distro_name: "rhel"
+            version_greater_or_equal: "10.4"
+          shallow_merge:
+            # iSCSI in initramfs so OCI BM can attach the boot LUN.
+            dracut_conf:
+              - filename: "oci.conf"
+                config:
+                  add_drivers:
+                    - "mlx5_core"
+                    - "iscsi_ibft"
+                  add_dracutmodules:
+                    - "iscsi"
+                  install:
+                    - "/usr/sbin/iscsiadm"
         "rhel needs the rhel release rpm gpg key":
           when:
             distro_name: "rhel"
@@ -1293,9 +1297,15 @@ image_types:
     package_sets:
       os:
         - *qcow2_pkgset
-        - include:
-            # Required so dracut iscsi module check passes during kernel-core %posttrans.
-            - "iscsi-initiator-utils"
+        - conditions:
+            "rhel-10.4+ gets OCI iSCSI tools":
+              when:
+                distro_name: "rhel"
+                version_greater_or_equal: "10.4"
+              append:
+                include:
+                  # Required so dracut iscsi module check passes during kernel-core %posttrans.
+                  - "iscsi-initiator-utils"
     blueprint:
       supported_options: *supported_options_disk
 
