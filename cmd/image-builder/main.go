@@ -417,8 +417,8 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		// The behavior of anaconda-iso without special mTLS setup is different
 		// from bib so instead of introducing subtle incompatibilities just error
 		// here
-		if imgTypeStr == "anaconda-iso" {
-			return nil, fmt.Errorf(`image type bootc "anaconda-iso" is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`)
+		if imgTypeStr == "anaconda-iso" || imgTypeStr == "iso" {
+			return nil, fmt.Errorf(`image type bootc %q is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`, imgTypeStr)
 		}
 		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef, bootcVariant)
 		if err != nil {

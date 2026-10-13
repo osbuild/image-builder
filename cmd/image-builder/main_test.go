@@ -150,6 +150,21 @@ func TestBootcAnacondaIsoNotSupportedForImageBuilder(t *testing.T) {
 	assert.EqualError(t, err, `image type bootc "anaconda-iso" is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`)
 }
 
+func TestBootcIsoNotSupportedForImageBuilder(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	restore = main.MockOsArgs(append([]string{"manifest"}, "iso", "--bootc-ref=example.com/cnt"))
+	defer restore()
+
+	var fakeStdout bytes.Buffer
+	restore = main.MockOsStdout(&fakeStdout)
+	defer restore()
+
+	err := main.Run()
+	assert.EqualError(t, err, `image type bootc "iso" is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`)
+}
+
 func hasDepsolveDnf() bool {
 	// XXX: expose images/pkg/depsolve:findDepsolveDnf()
 	_, err := os.Stat("/usr/libexec/osbuild-depsolve-dnf")
