@@ -199,6 +199,7 @@ func doTeardown(aws *awscloud.AWS, res *resources) error {
 		if _, err := aws.TerminateInstancesEC2([]string{*res.InstanceID}, time.Hour); err != nil {
 			return fmt.Errorf("failed to terminate instance: %v", err)
 		}
+		res.InstanceID = nil
 	}
 
 	if res.SecurityGroup != nil {
@@ -206,6 +207,7 @@ func doTeardown(aws *awscloud.AWS, res *resources) error {
 		if _, err := aws.DeleteSecurityGroupEC2(*res.SecurityGroup); err != nil {
 			return fmt.Errorf("cannot delete the security group: %v", err)
 		}
+		res.SecurityGroup = nil
 	}
 
 	return nil
