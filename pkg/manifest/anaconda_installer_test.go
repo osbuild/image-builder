@@ -217,6 +217,33 @@ func TestAnacondaInstallerConfigLorax(t *testing.T) {
 	assert.Equal(t, stageOptions[0].Branding.Logos, "fedora-logos")
 }
 
+func TestAnacondaInstallerCustomizationsPackages(t *testing.T) {
+	installer := newAnacondaInstaller()
+	installer.InstallerCustomizations.Packages = []string{"driver-pkg-1", "driver-pkg-2"}
+	installer.ExtraPackages = []string{"extra-pkg"}
+
+	pkgSets, err := installer.GetPackageSetChain(manifest.DISTRO_NULL)
+	require.NoError(t, err)
+	require.Len(t, pkgSets, 2)
+
+	assert.Contains(t, pkgSets[0].Include, "extra-pkg")
+	assert.NotContains(t, pkgSets[0].Include, "driver-pkg-1")
+
+	assert.Equal(t, []string{"driver-pkg-1", "driver-pkg-2"}, pkgSets[1].Include)
+	assert.False(t, pkgSets[1].InstallWeakDeps)
+}
+
+func TestAnacondaInstallerCustomizationsPackagesEmpty(t *testing.T) {
+	installer := newAnacondaInstaller()
+	installer.ExtraPackages = []string{"extra-pkg"}
+
+	pkgSets, err := installer.GetPackageSetChain(manifest.DISTRO_NULL)
+	require.NoError(t, err)
+	require.Len(t, pkgSets, 1)
+
+	assert.Contains(t, pkgSets[0].Include, "extra-pkg")
+}
+
 // TestAnacondaInstallerBootcSerialize verifies that AnacondaInstaller correctly
 // handles the bootc installer case where containers are provided but packages
 // are empty. Bootc installers get the kernel version via introspection, so

@@ -73,6 +73,10 @@ func (p *SysextTree) GetPackageSetChain(d Distro) ([]rpmmd.PackageSet, error) {
 	return p.getPackageSetChain(d)
 }
 
+func (p *AnacondaInstaller) GetPackageSetChain(d Distro) ([]rpmmd.PackageSet, error) {
+	return p.getPackageSetChain(d)
+}
+
 var MakeKickstartSudoersPost = makeKickstartSudoersPost
 
 func GetInline(p Pipeline) []string {
