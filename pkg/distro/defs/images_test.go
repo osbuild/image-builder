@@ -108,6 +108,31 @@ func TestInstallerCustomizationsOverridePreview(t *testing.T) {
 
 }
 
+func TestInstallerCustomizationsPackages(t *testing.T) {
+	it := isoTestImageType()
+	c := &blueprint.Customizations{
+		Installer: &blueprint.InstallerCustomization{
+			Packages: []blueprint.Package{
+				{Name: "driver-pkg"},
+				{Name: "versioned-pkg", Version: "1.0"},
+			},
+		},
+	}
+
+	isc, err := installerCustomizations(it, c, distro.ImageOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"driver-pkg", "versioned-pkg-1.0"}, isc.Packages)
+}
+
+func TestInstallerCustomizationsPackagesEmpty(t *testing.T) {
+	it := isoTestImageType()
+	c := &blueprint.Customizations{}
+
+	isc, err := installerCustomizations(it, c, distro.ImageOptions{})
+	require.NoError(t, err)
+	assert.Nil(t, isc.Packages)
+}
+
 func TestISOCustomizationsReplacesArchInVolumeID(t *testing.T) {
 	for _, tc := range []struct {
 		volumeID      string
