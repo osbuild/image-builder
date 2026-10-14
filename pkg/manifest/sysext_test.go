@@ -235,6 +235,26 @@ func TestSysextPrepExtensionRelease(t *testing.T) {
 		assert.Equal(t, "usr/lib/extension-release.d/extension-release.nginx", opts.Path)
 		assert.Equal(t, "fedora", opts.Vars.ID)
 		assert.Equal(t, "44", opts.Vars.VersionID)
+		assert.Nil(t, opts.ExtensionReleaseStrict)
+	})
+
+	t.Run("separate internal name and relaxed filename check", func(t *testing.T) {
+		prep := newPrep("se-tmux")
+		prep.Customizations.ExtensionReleaseName = "tmux"
+		strict := false
+		prep.Customizations.ExtensionRelease.ExtensionReleaseStrict = &strict
+		prep.Customizations.ExtensionRelease.Vars.ID = "teamsbc"
+		prep.Customizations.ExtensionRelease.Vars.VersionID = "46"
+		pipeline, err := manifest.Serialize(prep)
+		require.NoError(t, err)
+
+		assert.Equal(t, "sysext-se-tmux-prep", pipeline.Name)
+		opts := pipeline.Stages[1].Options.(*osbuild.OSReleaseStageOptions)
+		assert.Equal(t, "usr/lib/extension-release.d/extension-release.tmux", opts.Path)
+		require.NotNil(t, opts.ExtensionReleaseStrict)
+		assert.False(t, *opts.ExtensionReleaseStrict)
+		assert.Equal(t, "teamsbc", opts.Vars.ID)
+		assert.Equal(t, "46", opts.Vars.VersionID)
 	})
 
 	t.Run("only ID", func(t *testing.T) {
