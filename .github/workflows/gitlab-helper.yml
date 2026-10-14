@@ -9,8 +9,14 @@ on:  # yamllint disable-line rule:truthy
   pull_request:
     branches:
       - "*"
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
   # for merge queue
   merge_group:
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
 
 jobs:
   prepare:
