@@ -71,3 +71,23 @@ requires us to re-read the diff and trigger it again.
 
 If tests fail and you expect it was a flake you can ask in the PR for a contributor to
 re-run your tests.
+
+## Policy on the use of Large Language Modules (LLMs) or other AI tooling
+
+You are allowed to use generative AI and LLM tools ("AI") to help create your contributions,
+as long as you review and edit what they produce so that your contributions follow the project
+guidelines.
+
+1. **You are the author**. You as the author must be able to explain every part of your contribution and why you
+   did things that way (or not another way). You own the code like any other code you wrote. Do not list AI tools
+   as author or co-author or credit them in any way that suggests ownership.
+2. **You must understand what you contribute**. Don't submit AI-generated code that you do not understand. If you
+   cannot explain the code you contributed when you get questions, we will not be inclined to merge or review further
+   pull requests.
+3. **You must speak for yourself**. Do not let an AI agent open pull requests, write comments, or generally act on
+   your behalf. You may use AI to help write your commit messages, code comments, pull request descriptions, but you
+   must review and edit what it writes to ensure it matches the style of existing commits and pull requests.
+   A pull request description briefly explains what and why, commit messages do the same but for a small chunk, they
+   are not subtitles to the diff.
+4. **You are responsible for licensing**. Make sure your contribution, including any AI generated code, is compatible
+   with this project's license.
