@@ -1953,6 +1953,8 @@ image_types:
 	}, sysexts[0].Packages)
 	assert.Equal(t, []string{"/usr", "/opt"}, sysexts[0].Paths, "default paths")
 	assert.Nil(t, sysexts[0].ExcludePaths)
+	assert.Empty(t, sysexts[0].ExtensionReleaseName)
+	assert.Nil(t, sysexts[0].ExtensionReleaseStrict)
 
 	assert.Equal(t, "other-ext", sysexts[1].Name)
 	assert.Equal(t, rpmmd.PackageSet{
@@ -1960,6 +1962,29 @@ image_types:
 	}, sysexts[1].Packages)
 	assert.Equal(t, []string{"/usr"}, sysexts[1].Paths, "custom paths")
 	assert.Equal(t, []string{"/usr/share/doc"}, sysexts[1].ExcludePaths)
+}
+
+func TestSysextsExtensionRelease(t *testing.T) {
+	fakeYAML := `
+image_types:
+  test_type:
+    extras:
+      sysexts:
+        se-tmux:
+          extension_release:
+            name: tmux
+            strict: false
+          package_sets:
+            - include: [tmux]
+`
+	it := makeTestImageType(t, fakeYAML)
+	sysexts := it.Sysexts(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+	require.Len(t, sysexts, 1)
+	assert.Equal(t, "se-tmux", sysexts[0].Name)
+	assert.Equal(t, "tmux", sysexts[0].ExtensionReleaseName)
+	require.NotNil(t, sysexts[0].ExtensionReleaseStrict)
+	assert.False(t, *sysexts[0].ExtensionReleaseStrict)
+	assert.Equal(t, []string{"sysext-se-tmux-erofs"}, sysexts[0].ExportPipelineNames())
 }
 
 func TestSysextsWithConditions(t *testing.T) {
