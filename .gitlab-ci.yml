@@ -752,6 +752,74 @@ fail:
   needs:
     - init
 
+
+"generate-build-config: [rhivos-2.0, aarch64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-aarch64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro rhivos-2.0 --arch aarch64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
+  needs:
+    - init
+
+
+"generate-build-config: [rhivos-2.0, x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro rhivos-2.0 --arch x86_64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
+  needs:
+    - init
+
+
+"generate-build-config: [rhivos-core-2.0, aarch64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-aarch64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro rhivos-core-2.0 --arch aarch64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
+  needs:
+    - init
+
+
+"generate-build-config: [rhivos-core-2.0, x86_64]":
+  stage: gen
+  extends: .terraform
+  variables:
+    RUNNER: aws/fedora-44-x86_64
+    INTERNAL_NETWORK: "true"
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - ./test/scripts/generate-build-config --distro rhivos-core-2.0 --arch x86_64 build-config.yml
+  artifacts:
+    paths:
+      - build-config.yml
+  needs:
+    - init
+
 "image-build-trigger: [centos-10, aarch64]":
   stage: build
   trigger:
@@ -1201,6 +1269,50 @@ fail:
     strategy: depend
   needs:
     - "generate-build-config: [rhel-9.9, x86_64]"
+
+
+"image-build-trigger: [rhivos-2.0, aarch64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [rhivos-2.0, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [rhivos-2.0, aarch64]"
+
+
+"image-build-trigger: [rhivos-2.0, x86_64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [rhivos-2.0, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [rhivos-2.0, x86_64]"
+
+
+"image-build-trigger: [rhivos-core-2.0, aarch64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [rhivos-core-2.0, aarch64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [rhivos-core-2.0, aarch64]"
+
+
+"image-build-trigger: [rhivos-core-2.0, x86_64]":
+  stage: build
+  trigger:
+    include:
+      - artifact: build-config.yml
+        job: "generate-build-config: [rhivos-core-2.0, x86_64]"
+    strategy: depend
+  needs:
+    - "generate-build-config: [rhivos-core-2.0, x86_64]"
 
 
 "bootc-image-builder/test/test_build_cross.py [x86_64]":
