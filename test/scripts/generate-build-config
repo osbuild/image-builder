@@ -54,6 +54,19 @@ def generate_manifests(outputdir, distro, arch):
     return testlib.core.read_manifests(outputdir)
 
 
+def needs_internal(distro):
+    """
+    True for distros that require access to internal RH network
+    """
+    if "rhel" in distro:
+        return True
+
+    if "rhivo" in distro:
+        return True
+
+    return False
+
+
 def generate_configs(build_requests, pipeline_file):
     print(f"🧪 Generating dynamic pipelines for {len(build_requests)} builds")
     for build in build_requests:
@@ -76,7 +89,7 @@ def generate_configs(build_requests, pipeline_file):
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
                                                 runner=runner, tag=tag,
                                                 config_name=config_name, config=config_path,
-                                                internal="true" if "rhel" in distro else "false",
+                                                internal=needs_internal(distro),
                                                 image_path=image_path,
                                                 export_pipeline_flag=export_pipeline_flag))
     print("✅ DONE!")
