@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 func isoTestImageType() *imageType {
@@ -199,5 +200,47 @@ func TestReplaceBasictemplate(t *testing.T) {
 		},
 	} {
 		assert.Equal(t, replaceBasicTemplate(tc.input, tc.arch), tc.expected)
+	}
+}
+
+func TestDefaultTargetOverride(t *testing.T) {
+	for _, tc := range []struct {
+		confDefaultTarget string
+		bpDefaultTarget   string
+		expected          string
+	}{
+		{
+			confDefaultTarget: "multi-user.target",
+			bpDefaultTarget:   "graphical.target",
+			expected:          "graphical.target",
+		},
+		{
+			confDefaultTarget: "multi-user.target",
+			bpDefaultTarget:   "",
+			expected:          "multi-user.target",
+		},
+	} {
+		t.Run(fmt.Sprintf("imageConfig: %s, blueprint: %s", tc.confDefaultTarget, tc.bpDefaultTarget), func(t *testing.T) {
+			it := isoTestImageType()
+			it.imageConfig.DefaultTarget = &tc.confDefaultTarget
+
+			bp := &blueprint.Blueprint{
+				Customizations: &blueprint.Customizations{
+					Services: &blueprint.ServicesCustomization{
+						DefaultTarget: tc.bpDefaultTarget,
+					},
+				},
+			}
+
+			osc, err := osCustomizations(
+				it,
+				rpmmd.PackageSet{},
+				distro.ImageOptions{},
+				nil,
+				bp,
+			)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, osc.DefaultTarget)
+		})
 	}
 }
