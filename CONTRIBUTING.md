@@ -21,9 +21,6 @@ we provide [COPR builds](https://copr.fedorainfracloud.org/coprs/g/osbuild/osbui
 Afterwards you can make any changes you desire and build with `go build ./cmd/image-builder`,
 to test your changes.
 
-See the [HACKING guide](HACKING.md) for more information on development
-utilities and workflows.
-
 ## Testing
 
 You can run the Go unit tests with `go test ./...`.
