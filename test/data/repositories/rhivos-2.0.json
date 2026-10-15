@@ -1,0 +1,16 @@
+{
+  "aarch64": [
+    {
+      "name": "rhivos-2.0",
+      "baseurl": "http://rhivos.auto-toolchain.redhat.com/in-vehicle-os/RHIVOS-2/RHIVOS-2.0/repos/RHIVOS/compose/RHIVOS/aarch64/os/",
+      "check_gpg": false
+    }
+  ],
+  "x86_64": [
+    {
+      "name": "rhivos-2.0",
+      "baseurl": "http://rhivos.auto-toolchain.redhat.com/in-vehicle-os/RHIVOS-2/RHIVOS-2.0/repos/RHIVOS/compose/RHIVOS/x86_64/os/",
+      "check_gpg": false
+    }
+  ]
+}
