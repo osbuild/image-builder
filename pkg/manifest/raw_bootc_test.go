@@ -158,6 +158,48 @@ func TestRawBootcImageSerializeCreateUsersOptions(t *testing.T) {
 	}
 }
 
+func TestRawBootcImageSerializeUsersHomeDirs(t *testing.T) {
+	rawBootcPipeline := makeFakeRawBootcPipeline()
+
+	customHome := "/custom/home"
+	for _, tc := range []struct {
+		users        []users.User
+		expectedHome map[string]*string
+	}{
+		{
+			[]users.User{{Name: "root"}},
+			map[string]*string{"root": common.ToPtr("/var/roothome")},
+		},
+		{
+			[]users.User{{Name: "foo"}},
+			map[string]*string{"foo": common.ToPtr("/var/home/foo")},
+		},
+		{
+			[]users.User{{Name: "root"}, {Name: "foo"}},
+			map[string]*string{
+				"root": common.ToPtr("/var/roothome"),
+				"foo":  common.ToPtr("/var/home/foo"),
+			},
+		},
+		{
+			[]users.User{{Name: "bar", Home: &customHome}},
+			map[string]*string{"bar": &customHome},
+		},
+	} {
+		rawBootcPipeline.OSCustomizations.Users = tc.users
+
+		pipeline, err := rawBootcPipeline.Serialize()
+		assert.NoError(t, err)
+
+		usersStage := findStage("org.osbuild.users", pipeline.Stages)
+		require.NotNil(t, usersStage)
+		userOptions := usersStage.Options.(*osbuild.UsersStageOptions)
+		for name, expectedHome := range tc.expectedHome {
+			assert.Equal(t, expectedHome, userOptions.Users[name].Home, "user %q", name)
+		}
+	}
+}
+
 func TestRawBootcImageSerializeMkdirOptions(t *testing.T) {
 	rawBootcPipeline := makeFakeRawBootcPipeline()
 
