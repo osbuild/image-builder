@@ -79,7 +79,7 @@ func (img *ContainerBasedIso) InstantiateManifestFromContainer(m *manifest.Manif
 	}
 	buildOptions.ContainerBuildable = true
 	buildPipeline := manifest.NewBuildFromContainer(m, runner, cnts, buildOptions)
-	osTreePipeline := manifest.NewOSFromContainer("os-tree", buildPipeline, &img.ContainerSource)
+	osTreePipeline := manifest.NewOSFromContainer("os-tree", buildPipeline, &img.ContainerSource, img.platform)
 	osTreePipeline.PayloadContainer = img.PayloadContainer
 
 	product := img.Product
