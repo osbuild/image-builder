@@ -5,6 +5,15 @@
     "description": "Blueprint for boot-testing bootc images with a remote container source. bootc containers have no cloud-init, so the test SSH user must be added.",
     "version": "1.0",
     "customizations": {
+      "files": [
+        {
+          "path": "/etc/sudoers.d/osbuild",
+          "data": "osbuild ALL=(ALL) NOPASSWD:ALL\n",
+          "mode": "0440",
+          "user": "root",
+          "group": "root"
+        }
+      ],
       "user": [
         {
           "groups": [
