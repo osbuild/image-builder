@@ -165,6 +165,18 @@ def find_ovmf():
     raise ValueError("cannot find a OVMF bios")
 
 
+def use_ovmf_supported(arch):
+    # Whether use_ovmf may add OVMF firmware in QEMU._gen_qemu_cmdline.
+    return arch in ("amd64", "x86_64")
+
+
+def use_ovmf_variants(arch):
+    # Distinct use_ovmf values worth running in PXE boot tests.
+    if use_ovmf_supported(arch):
+        return (False, True)
+    return (False,)
+
+
 # pylint: disable=too-many-instance-attributes
 class QEMU(VM):
     # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -195,6 +207,7 @@ class QEMU(VM):
 
     # pylint: disable=too-many-branches
     def _gen_qemu_cmdline(self, snapshot, use_ovmf):
+        use_ovmf = use_ovmf and use_ovmf_supported(self._arch)
         virtio_scsi_hd = [
             "-device", "virtio-scsi-pci,id=scsi",
             "-device", "scsi-hd,drive=disk0",
@@ -278,6 +291,7 @@ class QEMU(VM):
             return
         self._ssh_port = get_free_port()
         self._address = "localhost"
+        use_ovmf = use_ovmf and use_ovmf_supported(self._arch)
 
         # XXX: use systemd-run to ensure cleanup?
         # pylint: disable=consider-using-with

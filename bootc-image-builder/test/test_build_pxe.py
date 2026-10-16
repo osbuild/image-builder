@@ -71,7 +71,7 @@ def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key
                 fp.truncate(0)
 
             # test both the combined and HTTP rootfs variants
-            for use_ovmf in [False, True]:
+            for use_ovmf in testlib.vm.use_ovmf_variants(arch):
                 for root_arg, initrd_file in [
                     ("live:/rootfs.img", "combined.img"),
                     (f"live:http://10.0.2.2:{http_port}/rootfs.img", "initrd.img")

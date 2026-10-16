@@ -16,7 +16,7 @@ from .build import read_build_info, write_build_info
 from .core import can_boot_test, find_image_file, read_manifest
 from .gitlab import log_section
 from .run import runcmd, runcmd_nc
-from .vm import QEMU, get_free_port
+from .vm import QEMU, get_free_port, use_ovmf_variants
 
 BASE_TEST_EXEC = "check-host-config-"  # + arch
 WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
@@ -381,7 +381,7 @@ def boot_qemu_pxe(arch, pxe_tar_path):
                 fp.truncate(0)
 
             # test both the combined and HTTP rootfs variants
-            for use_ovmf in [False, True]:
+            for use_ovmf in use_ovmf_variants(arch):
                 for root_arg, initrd_file in [
                     ("live:/rootfs.img", "combined.img"),
                     (f"live:http://10.0.2.2:{http_port}/rootfs.img", "initrd.img")
