@@ -99,6 +99,12 @@ def build_image(distro, arch, image_type, config_path, export_pipeline):
     # bootc builds derive the distro from the container and reject --distro.
     if not bootc.get("ref"):
         cmd.extend(["--distro", distro])
+
+    if "rhivos" in distro:
+        # NOTE: (hopefully) temporary workaround (2026-10-16)
+        # The librepo source seems to be having issues with the RHIVOS repositories. Work around the issue here for now.
+        cmd.append("--use-librepo=false")
+
     cmd.extend(config_to_cli_args(config, bootc))
     runcmd_nc(cmd)
 
