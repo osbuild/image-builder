@@ -185,7 +185,8 @@
         "rhel-10*",
         "centos-*",
         "fedora-*",
-        "eln*"
+        "eln*",
+        "rhivos-*"
       ],
       "image-types": [
         "ami",
