@@ -1757,7 +1757,6 @@ image_types:
         - *ami_pkgset
         - include:
             - "cuda-toolkit"
-            - "kmod-nvidia-open"
             - "libnccl"
             - "nvidia-driver"
             - "nvidia-driver-cuda"
