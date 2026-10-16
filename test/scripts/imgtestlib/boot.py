@@ -203,6 +203,7 @@ def qemu_cmd_scp_and_run(vm, cmd, privkey_path):
         if os.path.exists(arg):
             vm.scp(arg, "/tmp/", user="osbuild", keyfile=privkey_path)
     vmcmd = ["/tmp/" + os.path.basename(arg) for arg in cmd]
+    vmcmd = ["sudo", "-n", "--"] + vmcmd
     return vm.run(vmcmd, user="osbuild", keyfile=privkey_path)
 
 

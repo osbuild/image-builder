@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/osbuild/image-builder/internal/buildconfig"
@@ -17,6 +18,15 @@ func init() {
 	}, filesCheck)
 }
 
+func isRootOnlySudoersPath(path string) bool {
+	return strings.HasPrefix(path, "/etc/sudoers.d/")
+}
+
+func sudoersFileExists(path string) bool {
+	_, _, code, err := ExecString("sudo", "test", "-f", path)
+	return err == nil && code == 0
+}
+
 func filesCheck(meta *Metadata, config *buildconfig.BuildConfig) error {
 	expected := config.Blueprint.Customizations.Files
 
@@ -25,6 +35,15 @@ func filesCheck(meta *Metadata, config *buildconfig.BuildConfig) error {
 	}
 
 	for _, file := range expected {
+		if isRootOnlySudoersPath(file.Path) {
+			// bootc images have no cloud-init, so the test SSH user must be added to sudoers
+			// however, we can't check the content of the file, so we just check that it exists
+			if !sudoersFileExists(file.Path) {
+				return Fail("file does not exist:", file.Path)
+			}
+			continue
+		}
+
 		if !Exists(file.Path) {
 			return Fail("file does not exist:", file.Path)
 		}

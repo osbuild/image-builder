@@ -19,6 +19,7 @@ func TestFilesCheck(t *testing.T) {
 		mockReadFile  map[string]ReadFileResult
 		mockLookupUID map[string]LookupUIDResult
 		mockLookupGID map[string]LookupGIDResult
+		mockExec      map[string]ExecResult
 		wantErr       error
 	}{
 		{
@@ -158,6 +159,19 @@ func TestFilesCheck(t *testing.T) {
 			mockLookupGID: map[string]LookupGIDResult{"nonexistent": {Err: errors.New("group not found")}},
 			wantErr:       check.ErrCheckFailed,
 		},
+		{
+			name: "sudoers drop-in exists only",
+			config: &blueprint.FileCustomization{
+				Path:  "/etc/sudoers.d/osbuild",
+				Mode:  "0440",
+				User:  "root",
+				Group: "root",
+				Data:  "osbuild ALL=(ALL) NOPASSWD:ALL\n",
+			},
+			mockExec: map[string]ExecResult{
+				"sudo test -f /etc/sudoers.d/osbuild": {Code: 0},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -167,6 +181,7 @@ func TestFilesCheck(t *testing.T) {
 			installMockReadFile(t, tt.mockReadFile)
 			installMockLookupUID(t, tt.mockLookupUID)
 			installMockLookupGID(t, tt.mockLookupGID)
+			installMockExec(t, tt.mockExec)
 
 			chk, found := check.FindCheckByName("files")
 			require.True(t, found, "Files Check not found")
