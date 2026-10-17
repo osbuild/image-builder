@@ -15,7 +15,7 @@ BOOTC_SOURCE_IMAGE_TYPES = {
 }
 BOOTC_SOURCES = list(BOOTC_SOURCE_IMAGE_TYPES)
 BOOTC_ARCHES = ["x86_64"]
-BOOTC_CONFIGS = {"bootc-user"}
+BOOTC_CONFIGS = {"bootc-user", "bootc-empty"}
 
 BOOTC_QUAY_AUTH_SECURE_FILE = "quay-auth.json"
 BOOTC_QUAY_AUTH_PATH = f".secure_files/{BOOTC_QUAY_AUTH_SECURE_FILE}"

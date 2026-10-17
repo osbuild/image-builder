@@ -107,13 +107,11 @@ def generate_configs(build_requests, pipeline_file, bootc_source):
         config_path = os.path.join(testlib.core.CONFIGS_PATH, config_name + ".json")
         export_pipeline_flag = testlib.core.export_pipeline_shell_flag(
             build.get("export-pipeline"))
-        if bootc_source == "rhel-10":
-            pull_image_steps = (
-                "    - ./test/scripts/download-quay-auth\n"
-                f"    - export REGISTRY_AUTH_FILE={testlib.bootcsource.BOOTC_QUAY_AUTH_PATH}\n"
-            )
-        else:
-            pull_image_steps = f"    - podman pull {bootc_ref}\n"
+        pull_image_steps = (
+            "    - ./test/scripts/download-quay-auth\n"
+            f"    - export REGISTRY_AUTH_FILE={testlib.bootcsource.BOOTC_QUAY_AUTH_PATH}\n"
+            f"    - podman pull {bootc_ref}\n"
+        )
         pipeline_file.write(JOB_TEMPLATE.format(distro=distro, arch=arch, image_type=image_type,
                                                 runner=runner, tag=tag,
                                                 config_name=config_name, config=config_path,
