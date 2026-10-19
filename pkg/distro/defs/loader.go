@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"text/template"
 
 	"go.yaml.in/yaml/v3"
@@ -55,6 +56,10 @@ func dataFS() fs.FS {
 
 type Loader struct {
 	fs fs.FS
+
+	loadDistrosOnce sync.Once
+	distrosCache    *distrosYAML
+	distrosCacheErr error
 }
 
 func NewLoader(fsys fs.FS) *Loader {
@@ -197,6 +202,13 @@ func (d *DistroYAML) GetTweaks() *distro.Tweaks {
 // Note that files are read separately from each other, so anchors and other
 // references can only be done within the same file.
 func (l *Loader) loadDistros() (*distrosYAML, error) {
+	l.loadDistrosOnce.Do(func() {
+		l.distrosCache, l.distrosCacheErr = l.loadDistrosFromFS()
+	})
+	return l.distrosCache, l.distrosCacheErr
+}
+
+func (l *Loader) loadDistrosFromFS() (*distrosYAML, error) {
 	dents, err := fs.Glob(l.fs, "*.yaml")
 	if err != nil {
 		return nil, err
