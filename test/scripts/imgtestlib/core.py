@@ -440,6 +440,10 @@ def can_boot_test(manifest_fname, manifest_data, image_type, arch, distro, bluep
     if image_type not in CAN_BOOT_TEST.get("*", []) + CAN_BOOT_TEST.get(arch, []):
         return False
 
+    if "rhivos" in distro:
+        print(f"  not bootable: distro {distro} isn't supported for boot testing yet")
+        return False
+
     if distro.startswith("bootc-"):
         source_name = bootc_source_from_distro(distro)
         ref = resolve_bootc_source_ref(source_name, arch, image_type)
