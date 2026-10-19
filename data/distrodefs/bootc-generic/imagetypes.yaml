@@ -85,6 +85,19 @@
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
 
+  rootfs_excludes: &default_rootfs_excludes
+    - "boot/efi/.*"
+    - "boot/grub2/.*"
+    - "boot/config-.*"
+    - "boot/initramfs-.*"
+    - "boot/loader/.*"
+    - "boot/symvers-.*"
+    - "boot/System.map-.*"
+    - "usr/lib/sysimage/rpm/.*"
+    - "var/lib/rpm/.*"
+    - "var/lib/yum/.*"
+    - "var/lib/dnf/.*"
+
   supported_options_lists:
     supported_options_disk: &supported_options_disk
       - "customizations.bootloader"
@@ -189,6 +202,15 @@ image_types:
     filename: "install.iso"
     boot_iso: true
     image_func: "bootc_generic_iso"
+    iso_config:
+      rootfs_type: "squashfs"
+      rootfs_excludes: *default_rootfs_excludes
+      conditions:
+        "x86_64 uses grub2":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            boot_type: "grub2"
     blueprint:
       supported_options: *supported_options_iso
 
