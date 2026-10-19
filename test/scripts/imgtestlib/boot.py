@@ -141,17 +141,21 @@ def write_cloud_init_user_data(pubkey_path, directory):
 
 
 @contextlib.contextmanager
-def make_cloud_init_iso(pubkey_path) -> Generator:
+def make_cloud_init(pubkey_path) -> Generator:
     with TemporaryDirectory() as tmpdir:
         user_data = write_cloud_init_user_data(pubkey_path, tmpdir)
         meta_data = pathlib.Path(tmpdir) / "meta-data"
         meta_data.write_text('{"instance-id": "i-1234567890abcdef0"}')
-        iso_path = pathlib.Path(tmpdir) / "cloud-init.iso"
-        subprocess.check_call(
-            ["cloud-localds", os.fspath(iso_path), user_data.name, meta_data.name],
-            cwd=tmpdir,
-        )
-        yield iso_path
+        cloud_init = pathlib.Path(tmpdir) / "cloud-init.img"
+        ci_path = os.fspath(cloud_init)
+
+        # Create cloud-init image with a FAT filesystem for maximum compatibility.
+        # The RHIVOS images need this.
+        subprocess.check_call(["truncate", "--size", "64M", ci_path])
+        subprocess.check_call(["mkfs.vfat", "-F", "32", "-n", "CIDATA", ci_path])
+        subprocess.check_call(["mcopy", "-i", ci_path, os.fspath(meta_data), "::meta-data"])
+        subprocess.check_call(["mcopy", "-i", ci_path, os.fspath(user_data), "::user-data"])
+        yield ci_path
 
 
 def arch_to_goarch(arch):
@@ -212,8 +216,9 @@ def boot_qemu(arch, image_path, config_file, keep_booted=False):
     with contextlib.ExitStack() as cm:
         uncompressed_image_path = cm.enter_context(ensure_uncompressed(image_path))
         (privkey_path, pubkey_path) = cm.enter_context(create_ssh_key())
-        cloud_init_iso = cm.enter_context(make_cloud_init_iso(pubkey_path))
-        with QEMU(uncompressed_image_path, arch=arch, cdrom=cloud_init_iso) as vm:
+        cloud_init = cm.enter_context(make_cloud_init(pubkey_path))
+        cloud_init_args = ["-drive", f"file={cloud_init},if=virtio,format=raw,readonly=on"]
+        with QEMU(uncompressed_image_path, arch=arch, extra_args=cloud_init_args) as vm:
             try:
                 qemu_cmd_scp_and_run(vm, cmd, privkey_path)
             finally:
