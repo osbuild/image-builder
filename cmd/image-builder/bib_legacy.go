@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"math/rand"
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 
+	repos "github.com/osbuild/image-builder/data/repositories"
 	"github.com/osbuild/image-builder/internal/cmdutil"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/bib/osinfo"
@@ -22,6 +24,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/reporegistry"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 
 	"github.com/osbuild/image-builder/pkg/bootc"
@@ -59,9 +62,11 @@ type ManifestConfig struct {
 
 	// use librepo ad the rpm downlaod backend
 	UseLibrepo bool
+
+	Repos []rpmmd.RepoConfig
 }
 
-func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch) ([]byte, *mTLSConfig, error) {
+func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch, imageType string) ([]byte, error) {
 	var baseCnt, buildCnt *bootc.Container
 	var sourceinfo, buildSourceinfo *osinfo.Info
 	if buildImgref == "" {
@@ -69,7 +74,7 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 		// build container
 		container, err := bootc.NewContainerWithRepos(imgref)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		defer func() {
 			if err := container.Stop(); err != nil {
@@ -82,7 +87,7 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 
 		sourceinfo, err = osinfo.Load(container.RootFS(), "")
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		buildSourceinfo = sourceinfo
 
@@ -93,7 +98,7 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 		// container with repos support
 		baseCnt, err = bootc.NewContainer(imgref)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		defer func() {
 			if err := baseCnt.Stop(); err != nil {
@@ -103,7 +108,7 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 
 		buildCnt, err = bootc.NewContainerWithRepos(buildImgref)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		defer func() {
 			if err := buildCnt.Stop(); err != nil {
@@ -113,11 +118,11 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 
 		sourceinfo, err = osinfo.Load(baseCnt.RootFS(), "")
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		buildSourceinfo, err = osinfo.Load(buildCnt.RootFS(), "")
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
@@ -127,22 +132,31 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 	} else {
 		bic, err := baseCnt.InstallConfiguration()
 		if err != nil {
-			return nil, nil, fmt.Errorf("cannot get rootfs type for container: %w", err)
+			return nil, fmt.Errorf("cannot get rootfs type for container: %w", err)
 		}
 		rootfsType = bic.Filesystem.Root.Type
 		if rootfsType == "" {
-			return nil, nil, fmt.Errorf(`no default root filesystem type specified in container, please use "--rootfs" to set manually`)
+			return nil, fmt.Errorf(`no default root filesystem type specified in container, please use "--rootfs" to set manually`)
 		}
+	}
+
+	repoReg, err := reporegistry.New(nil, []fs.FS{repos.FS})
+	if err != nil {
+		return nil, err
+	}
+	repos, err := repoReg.ReposByImageTypeName(fmt.Sprintf("%s-%s", sourceinfo.OSRelease.ID, sourceinfo.OSRelease.VersionID), cntArch.String(), imageType)
+	if err != nil {
+		return nil, err
 	}
 
 	// This is needed just for RHEL and RHSM in most cases, but let's run it every time in case
 	// the image has some non-standard dnf plugins.
 	if err := buildCnt.InitDNF(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	solver, err := buildCnt.NewContainerSolver(rpmCacheRoot, cntArch, sourceinfo)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	manifestConfig := &ManifestConfig{
@@ -155,48 +169,42 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 		BuildSourceInfo: buildSourceinfo,
 		RootFSType:      rootfsType,
 		UseLibrepo:      useLibrepo,
+		Repos:           repos,
 	}
 
-	manifest, repos, err := makeISOManifest(manifestConfig, solver, rpmCacheRoot)
+	manifest, err := makeISOManifest(manifestConfig, solver, rpmCacheRoot)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
-	mTLS, err := extractTLSKeys(repos)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return manifest, mTLS, nil
+	return manifest, nil
 }
 
-func makeISOManifest(c *ManifestConfig, solver *depsolvednf.Solver, cacheRoot string) (manifest.OSBuildManifest, map[string][]rpmmd.RepoConfig, error) {
+func makeISOManifest(c *ManifestConfig, solver *depsolvednf.Solver, cacheRoot string) (manifest.OSBuildManifest, error) {
 	seed, err := cmdutil.NewRNGSeed()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	//nolint:gosec
 	rng := rand.New(rand.NewSource(seed))
 
 	mani, err := manifestForISO(c, rng)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot get manifest: %w", err)
+		return nil, fmt.Errorf("cannot get manifest: %w", err)
 	}
 
 	// depsolve packages
 	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
-	depsolvedRepos := make(map[string][]rpmmd.RepoConfig)
 	pkgSetChains, err := mani.GetPackageSetChains()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+
 	for name, pkgSet := range pkgSetChains {
 		res, err := solver.Depsolve(pkgSet, 0)
 		if err != nil {
-			return nil, nil, fmt.Errorf("cannot depsolve: %w", err)
+			return nil, fmt.Errorf("cannot depsolve: %w", err)
 		}
 		depsolvedSets[name] = *res
-		depsolvedRepos[name] = res.Repos
 	}
 
 	// Resolve container - the normal case is that host and target
@@ -216,11 +224,11 @@ func makeISOManifest(c *ManifestConfig, solver *depsolvednf.Solver, cacheRoot st
 		}
 		specs, err := resolver.Finish()
 		if err != nil {
-			return nil, nil, fmt.Errorf("cannot resolve containers: %w", err)
+			return nil, fmt.Errorf("cannot resolve containers: %w", err)
 		}
 		for _, spec := range specs {
 			if spec.Arch != c.Architecture {
-				return nil, nil, fmt.Errorf("image found is for unexpected architecture %q (expected %q), if that is intentional, please make sure --target-arch matches", spec.Arch, c.Architecture)
+				return nil, fmt.Errorf("image found is for unexpected architecture %q (expected %q), if that is intentional, please make sure --target-arch matches", spec.Arch, c.Architecture)
 			}
 		}
 		containerSpecs[plName] = specs
@@ -232,9 +240,9 @@ func makeISOManifest(c *ManifestConfig, solver *depsolvednf.Solver, cacheRoot st
 	}
 	mf, err := mani.Serialize(depsolvedSets, containerSpecs, nil, nil, &opts)
 	if err != nil {
-		return nil, nil, fmt.Errorf("[ERROR] manifest serialization failed: %s", err.Error())
+		return nil, fmt.Errorf("[ERROR] manifest serialization failed: %s", err.Error())
 	}
-	return mf, depsolvedRepos, nil
+	return mf, nil
 }
 
 func manifestForISO(c *ManifestConfig, rng *rand.Rand) (*manifest.Manifest, error) {
@@ -373,6 +381,6 @@ func manifestForISO(c *ManifestConfig, rng *rand.Rand) (*manifest.Manifest, erro
 	}
 	mf.Distro = foundDistro
 
-	_, err = img.InstantiateManifest(&mf, nil, foundRunner, rng)
+	_, err = img.InstantiateManifest(&mf, c.Repos, foundRunner, rng)
 	return &mf, err
 }

@@ -1,6 +1,8 @@
 package bootc_test
 
 import (
+	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,8 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	repos "github.com/osbuild/image-builder/data/repositories"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/reporegistry"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 
 	"github.com/osbuild/image-builder/pkg/bib/osinfo"
@@ -40,6 +44,14 @@ func ensureAMD64(t *testing.T) {
 	}
 }
 
+func repoConfigs(t *testing.T, sourceInfo *osinfo.Info) []rpmmd.RepoConfig {
+	repoReg, err := reporegistry.New(nil, []fs.FS{repos.FS})
+	require.NoError(t, err)
+	repos, err := repoReg.ReposByImageTypeName(fmt.Sprintf("%s-%s", sourceInfo.OSRelease.ID, sourceInfo.OSRelease.VersionID), arch.Current().String(), "")
+	require.NoError(t, err)
+	return repos
+}
+
 func TestDepsolveDNFWorks(t *testing.T) {
 	if !hasPodman() {
 		t.Skip("skipping test: no podman")
@@ -64,7 +76,8 @@ func TestDepsolveDNFWorks(t *testing.T) {
 	require.NoError(t, err)
 	res, err := solver.Depsolve([]rpmmd.PackageSet{
 		{
-			Include: []string{"coreutils"},
+			Include:      []string{"coreutils"},
+			Repositories: repoConfigs(t, sourceInfo),
 		},
 	}, 0)
 	require.NoError(t, err)
@@ -143,7 +156,8 @@ func TestDepsolveDNFWorkWithSubscribedContent(t *testing.T) {
 
 	res, err := solver.Depsolve([]rpmmd.PackageSet{
 		{
-			Include: []string{"coreutils"},
+			Include:      []string{"coreutils"},
+			Repositories: repoConfigs(t, sourceInfo),
 		},
 	}, 0)
 	require.NoError(t, err)
