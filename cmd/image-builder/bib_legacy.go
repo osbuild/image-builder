@@ -313,6 +313,13 @@ func manifestForISO(c *ManifestConfig, rng *rand.Rand) (*manifest.Manifest, erro
 
 	img.ExtraBasePackages = installerPkgSet
 
+	if tweaks := distroYAML.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
+		img.BuildOptions = &manifest.BuildOptions{
+			RPMStageIgnoreGPGImportFailures: tweaks.RPMKeys.IgnoreBuildImportFailures,
+		}
+		img.InstallerCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
 	var customizations *blueprint.Customizations
 	if c.Config != nil {
 		customizations = c.Config.Customizations
