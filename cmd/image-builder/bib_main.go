@@ -61,13 +61,10 @@ func saveManifest(ms manifest.OSBuildManifest, fpath string) error {
 //
 // This code is very similar to main.go:generateManifest (which is sad), but
 // consolidate is hard because:
-//  1. We need to support anaconda-iso here which means we need to provide a custom
-//     depsolve function to extract the mTLS config from the container image, this is
-//     something we consider legacy so ibcli:main.go does not have it
-//  2. The cobra options handling is different (but that could be consolidated)
-//  3. Blueprint validation is a warning by default for bib but an error for ibcli (could also be
+//  1. The cobra options handling is different (but that could be consolidated)
+//  2. Blueprint validation is a warning by default for bib but an error for ibcli (could also be
 //     consolidated)
-func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.ProgressBar) ([]byte, *mTLSConfig, error) {
+func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.ProgressBar) ([]byte, error) {
 	cntArch := arch.Current()
 
 	imgref := args[0]
@@ -84,7 +81,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	if cmd.Flags().Changed("seed") {
 		seedFlagVal, err := cmd.Flags().GetInt64("seed")
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		customSeed = &seedFlagVal
 	}
@@ -95,7 +92,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 		if localStorage {
 			fmt.Fprintf(os.Stderr, "WARNING: --local is now the default behavior, you can remove it from the command line\n")
 		} else {
-			return nil, nil, fmt.Errorf(`--local=false is no longer supported, remove it and make sure to pull the container before running bib:
+			return nil, fmt.Errorf(`--local=false is no longer supported, remove it and make sure to pull the container before running bib:
 	sudo podman pull %s`, imgref)
 		}
 	}
@@ -103,7 +100,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	if targetArch != "" {
 		target, err := arch.FromString(targetArch)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		if target != arch.Current() {
 			// TODO: detect if binfmt_misc for target arch is
@@ -113,7 +110,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 			// binaries inside our bib container
 			fmt.Fprintf(os.Stderr, "WARNING: target-arch is experimental and needs an installed 'qemu-user' package\n")
 			if slices.Contains(imgTypes, "iso") || slices.Contains(imgTypes, "anaconda-iso") {
-				return nil, nil, fmt.Errorf("cannot build iso for different target arches yet")
+				return nil, fmt.Errorf("cannot build iso for different target arches yet")
 			}
 			cntArch = target
 		}
@@ -121,20 +118,20 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	// TODO: add "target-variant", see https://github.com/osbuild/bootc-image-builder/pull/139/files#r1467591868
 
 	if err := setup.ValidateHasContainerStorageMounted(); err != nil {
-		return nil, nil, fmt.Errorf("could not access container storage, did you forget -v /var/lib/containers/storage:/var/lib/containers/storage? (%w)", err)
+		return nil, fmt.Errorf("could not access container storage, did you forget -v /var/lib/containers/storage:/var/lib/containers/storage? (%w)", err)
 	}
 
 	imageTypes, err := bibimg.New(imgTypes...)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot detect build types %v: %w", imgTypes, err)
+		return nil, fmt.Errorf("cannot detect build types %v: %w", imgTypes, err)
 	}
 	config, err := blueprintload.LoadWithFallback(userConfigFile)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot read config: %w", err)
+		return nil, fmt.Errorf("cannot read config: %w", err)
 	}
 
 	if err := setup.ValidateHasContainerTags(imgref); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	pbar.SetPulseMsgf("Manifest generation step")
@@ -147,48 +144,47 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 
 	// The anaconda-iso code is different enough for a separate function
 	if imgTypeStr == "anaconda-iso" || imgTypeStr == "iso" {
-		return manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot, config, useLibrepo, cntArch)
+		return manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot, config, useLibrepo, cntArch, imgTypeStr)
 	}
 
 	bootcInfo, err := bootc.ResolveBootcInfo(imgref, "")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if rootFs != "" {
 		bootcInfo.DefaultRootFs = rootFs
 	}
 	distri, err := defs.NewBootc("bootc", bootcInfo)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if buildImgref != "" {
 		buildBootcInfo, err := bootc.ResolveBootcInfo(buildImgref, "")
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		if err := distri.SetBuildContainer(buildBootcInfo); err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 	archi, err := distri.GetArch(cntArch.String())
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	imgType, err := archi.GetImageType(imgTypeStr)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	repos, err := reporegistry.New(nil, []fs.FS{repos.FS})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	var depsolveResult map[string]depsolvednf.DepsolveResult
 	var rpmDownloader osbuild.RpmDownloader
 	if useLibrepo {
 		rpmDownloader = osbuild.RpmDownloaderLibrepo
 	}
-	var mTLS *mTLSConfig
 	mg, err := manifestgen.New(repos, &manifestgen.Options{
 		Cachedir:   rpmCacheRoot,
 		CustomSeed: customSeed,
@@ -208,10 +204,6 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 			for k, v := range depsolveResult {
 				depsolvedRepos[k] = v.Repos
 			}
-			mTLS, err = extractTLSKeys(depsolvedRepos)
-			if err != nil {
-				return nil, err
-			}
 			return depsolveResult, err
 		},
 		// this turns (blueprint validation) warnings into
@@ -219,7 +211,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 		WarningsOutput: os.Stderr,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	imgOpts := &distro.ImageOptions{
 		Bootc: &distro.BootcImageOptions{
@@ -228,10 +220,10 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	}
 	manifest, err := mg.Generate(config, imgType, imgOpts)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return manifest, mTLS, nil
+	return manifest, nil
 }
 
 func bibCmdManifest(cmd *cobra.Command, args []string) error {
@@ -242,7 +234,7 @@ func bibCmdManifest(cmd *cobra.Command, args []string) error {
 	}
 	defer pbar.Stop()
 
-	mf, _, err := bibManifestFromCobra(cmd, args, pbar)
+	mf, err := bibManifestFromCobra(cmd, args, pbar)
 	if err != nil {
 		return fmt.Errorf("cannot generate manifest: %w", err)
 	}
@@ -292,12 +284,10 @@ func handleAWSFlags(cmd *cobra.Command) (cloud.Uploader, error) {
 
 // This is very similar to main.go:cmdBuild (which is sad), the differences that makes
 // merging them very hard are:
-//  1. We need to support anaconda-iso here which means we need to support writing a custom
-//     mTLS configuration (and cleaning up afterwards)
-//  2. The cobra options are different
-//  3. Multiple image types can be build in a single go (--type qcow2 --type raw) which is
+//  1. The cobra options are different
+//  2. Multiple image types can be build in a single go (--type qcow2 --type raw) which is
 //     not supported by ibcli
-//  4. The produced artifacts are not renamed, they are exactly as they come out of the
+//  3. The produced artifacts are not renamed, they are exactly as they come out of the
 //     imgType.Export(), e.g. "bootiso.iso". ibcli will rename to $distro-$arch-$imgtype
 //     intead (but we cannot change the output of bib becaue e.g. podman desktop depends
 //     on it)
@@ -346,7 +336,7 @@ func bibCmdBuild(cmd *cobra.Command, args []string) error {
 
 	manifest_fname := fmt.Sprintf("manifest-%s.json", strings.Join(imgTypes, "-"))
 	pbar.SetMessagef("Generating manifest %s", manifest_fname)
-	mf, mTLS, err := bibManifestFromCobra(cmd, args, pbar)
+	mf, err := bibManifestFromCobra(cmd, args, pbar)
 	if err != nil {
 		return fmt.Errorf("cannot build manifest: %w", err)
 	}
@@ -370,17 +360,6 @@ func bibCmdBuild(cmd *cobra.Command, args []string) error {
 	if !canChown {
 		// set export options for osbuild
 		osbuildEnv = []string{"OSBUILD_EXPORT_FORCE_NO_PRESERVE_OWNER=1"}
-	}
-
-	if mTLS != nil {
-		envVars, cleanup, err := prepareOsbuildMTLSConfig(mTLS)
-		if err != nil {
-			return fmt.Errorf("failed to prepare osbuild TLS keys: %w", err)
-		}
-
-		defer cleanup()
-
-		osbuildEnv = append(osbuildEnv, envVars...)
 	}
 
 	if experimentalflags.Bool("debug-qemu-user") {
