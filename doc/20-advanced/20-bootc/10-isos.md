@@ -205,4 +205,5 @@ There's an alternative image type called `bootc-installer` which makes more assu
 
 ### `anaconda-iso`
 
-There was an alternative image type called `anaconda-iso` or `iso` in `bootc-image-builder` but this image type is not available in `image-builder`. See the [migration guide](./50-migration.md).
+There was an alternative image type called `anaconda-iso` or `iso` in `bootc-image-builder` but this
+image type is not available in `image-builder`. See the [legacy ISOs](./20-legacy-isos.md) and the [migration guide](./50-migration.md).
