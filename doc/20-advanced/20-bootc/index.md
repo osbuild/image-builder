@@ -2,4 +2,5 @@
 
 - [Sources of Configuration](./05-sources-of-configuration.md)
 - [ISOs](./10-isos.md)
+- [Legacy ISOs](./20-legacy-isos.md)
 - [Migrating from `bootc-image-builder`](./50-migration.md)
