@@ -114,7 +114,9 @@ sudo ./bin/build ...
 #### Booting images
 
 You can boot an image in its target environment by using the appropriate
-command from `cmd/`. _Currently, only AWS is supported._
+command from `cmd/`.
+
+### AWS
 
 For example, to boot an AMI or EC2 image, you can use the `./cmd/boot-aws`
 command with the `setup` subcommand:
@@ -175,6 +177,71 @@ This performs the same steps as the `setup` subcommand, uploads the specified
 executable to the instance, runs it, and then performs the same actions as the
 `teardown` subcommand. The user-data must configure `${USERNAME}` with an SSH
 key matching `${PATH_TO_SSH_PRIVATE_KEY}`.
+
+### OCI
+
+To boot a custom image on Oracle Cloud Infrastructure, use `./cmd/boot-oci`
+with the `setup` subcommand:
+```bash
+go run ./cmd/boot-oci setup \
+  --region "${OCI_REGION}" \
+  --compartment-id "${COMPARTMENT_ID}" \
+  --subnet-id "${SUBNET_ID}" \
+  --availability-domain "${AVAILABILITY_DOMAIN}" \
+  --image "${IMAGE_OCID}" \
+  --arch "${IMAGE_ARCHITECTURE}" \
+  --ssh-authorized-keys-file "${PATH_TO_SSH_PUBLIC_KEY}" \
+  -r "${TMP_RESOURCE_FILE}"
+```
+where:
+- `${OCI_REGION}` is the OCI region (must match the image and subnet),
+- `${COMPARTMENT_ID}` is the compartment for the instance (must match the subnet),
+- `${SUBNET_ID}` is a subnet that allows public IPs for SSH,
+- `${AVAILABILITY_DOMAIN}` is the availability domain for the instance (for
+  example `gzqB:US-CHICAGO-1-AD-1`; required for regional subnets),
+- `${IMAGE_OCID}` is the OCID of an existing custom image,
+- `${IMAGE_ARCHITECTURE}` is `x86_64` or `aarch64`,
+- `${PATH_TO_SSH_PUBLIC_KEY}` is an SSH public key file (same as `oci` CLI
+  `--ssh-authorized-keys-file`),
+- `${TMP_RESOURCE_FILE}` stores `region`, `instance`, and `public-ip` (for
+  example `/tmp/oci-boot.json`).
+
+OCI credentials are read from `~/.oci/config`.
+
+The command launches an instance, waits until it is running, and prints its
+public IP. Optional `--shape` and `--shape-config` override the default flex
+shape for the architecture. Pass `--debug` to print launch parameters.
+
+Resource IDs are written to `--resourcefile` / `-r`. Tear down with:
+```bash
+go run ./cmd/boot-oci teardown -r "${TMP_RESOURCE_FILE}"
+```
+The region is taken from the resources file; do not pass `--region` to
+`teardown`.
+
+Alternatively, a setup-test-teardown procedure can be run in a single command
+using the `run` subcommand:
+```bash
+go build -o check-host-config-x86_64 ./cmd/check-host-config
+
+go run ./cmd/boot-oci run \
+  --region "${OCI_REGION}" \
+  --compartment-id "${COMPARTMENT_ID}" \
+  --subnet-id "${SUBNET_ID}" \
+  --availability-domain "${AVAILABILITY_DOMAIN}" \
+  --image "${IMAGE_OCID}" \
+  --arch "${IMAGE_ARCHITECTURE}" \
+  --username opc \
+  --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
+  --ssh-authorized-keys-file "${PATH_TO_SSH_PUBLIC_KEY}" \
+  ./check-host-config-x86_64 ./test/configs/empty.json
+```
+
+This calls the same launch path as `setup`, SSHs into the instance using
+`${PATH_TO_SSH_PRIVATE_KEY}`, uploads the executable and its arguments, runs
+them, and then terminates the instance. `${PATH_TO_SSH_PUBLIC_KEY}` is sent
+to OCI at launch; the private key never leaves the host running `boot-oci`.
+
 
 #### Listing available image type configurations
 
