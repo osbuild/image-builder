@@ -7,8 +7,6 @@ import (
 	"log"
 	"os"
 
-	"cloud.google.com/go/compute/apiv1/computepb"
-
 	"github.com/osbuild/image-builder/pkg/cloud/gcp"
 	"github.com/osbuild/image-builder/pkg/olog"
 )
@@ -52,15 +50,9 @@ func main() {
 
 	olog.SetDefault(log.New(os.Stderr, "", 0))
 
-	var guestOSFeatures []*computepb.GuestOsFeature
-
-	switch osFamily {
-	case "rhel-8":
-		guestOSFeatures = gcp.GuestOsFeaturesRHEL8
-	case "rhel-9":
-		guestOSFeatures = gcp.GuestOsFeaturesRHEL9
-	default:
-		olog.Fatalf("[GCP] Unknown OS Family %q. Use one of: 'rhel-8', 'rhel-9'.", osFamily)
+	guestOSFeatures := gcp.GuestOsFeaturesByDistro(osFamily)
+	if guestOSFeatures == nil {
+		olog.Fatalf("[GCP] Unknown OS Family %q.", osFamily)
 	}
 
 	var credentials []byte
