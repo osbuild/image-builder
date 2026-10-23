@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"cloud.google.com/go/compute/apiv1/computepb"
@@ -48,6 +49,8 @@ func main() {
 	flag.BoolVar(&skipUpload, "skip-upload", false, "Use to skip Image Upload step")
 	flag.BoolVar(&skipImport, "skip-import", false, "Use to skip Image Import step")
 	flag.Parse()
+
+	olog.SetDefault(log.New(os.Stderr, "", 0))
 
 	var guestOSFeatures []*computepb.GuestOsFeature
 
