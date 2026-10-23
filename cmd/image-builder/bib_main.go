@@ -76,6 +76,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 	buildImgref, _ := cmd.Flags().GetString("build-container")
 	installerPayloadRef, _ := cmd.Flags().GetString("installer-payload-ref")
 	useLibrepo, _ := cmd.Flags().GetBool("use-librepo")
+	forceRepo, _ := cmd.Flags().GetStringArray("force-repo")
 
 	var customSeed *int64
 	if cmd.Flags().Changed("seed") {
@@ -144,7 +145,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 
 	// The anaconda-iso code is different enough for a separate function
 	if imgTypeStr == "anaconda-iso" || imgTypeStr == "iso" {
-		return manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot, config, useLibrepo, cntArch, imgTypeStr)
+		return manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot, config, useLibrepo, cntArch, imgTypeStr, forceRepo)
 	}
 
 	bootcInfo, err := bootc.ResolveBootcInfo(imgref, "")

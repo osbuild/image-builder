@@ -66,7 +66,7 @@ type ManifestConfig struct {
 	Repos []rpmmd.RepoConfig
 }
 
-func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch, imageType string) ([]byte, error) {
+func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, config *blueprint.Blueprint, useLibrepo bool, cntArch arch.Arch, imageType string, forceRepos []string) ([]byte, error) {
 	var baseCnt, buildCnt *bootc.Container
 	var sourceinfo, buildSourceinfo *osinfo.Info
 	if buildImgref == "" {
@@ -140,13 +140,23 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 		}
 	}
 
-	repoReg, err := reporegistry.New(nil, []fs.FS{repos.FS})
-	if err != nil {
-		return nil, err
-	}
-	repos, err := repoReg.ReposByImageTypeName(fmt.Sprintf("%s-%s", sourceinfo.OSRelease.ID, sourceinfo.OSRelease.VersionID), cntArch.String(), imageType)
-	if err != nil {
-		return nil, err
+	var repoConfigs []rpmmd.RepoConfig
+	if len(forceRepos) > 0 {
+		var err error
+		repoConfigs, err = parseRepoURLs(forceRepos, "forced")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		var err error
+		repoReg, err := reporegistry.New(nil, []fs.FS{repos.FS})
+		if err != nil {
+			return nil, err
+		}
+		repoConfigs, err = repoReg.ReposByImageTypeName(fmt.Sprintf("%s-%s", sourceinfo.OSRelease.ID, sourceinfo.OSRelease.VersionID), cntArch.String(), imageType)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// This is needed just for RHEL and RHSM in most cases, but let's run it every time in case
@@ -169,7 +179,7 @@ func manifestForLegacyISO(imgref, buildImgref, rootFs, rpmCacheRoot string, conf
 		BuildSourceInfo: buildSourceinfo,
 		RootFSType:      rootfsType,
 		UseLibrepo:      useLibrepo,
-		Repos:           repos,
+		Repos:           repoConfigs,
 	}
 
 	manifest, err := makeISOManifest(manifestConfig, solver, rpmCacheRoot)
