@@ -99,6 +99,7 @@ func setupBibBuildCmd() *cobra.Command {
 	buildCmd.Flags().String("store", "/store", "osbuild store for intermediate pipeline trees")
 	//TODO: add json progress for higher level tools like "podman bootc"
 	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
+	buildCmd.Flags().StringArray("force-repo", nil, `Override the base repositories during build (these will not be part of the final image)`)
 
 	buildCmd.MarkFlagsRequiredTogether("aws-region", "aws-bucket", "aws-ami-name")
 

@@ -96,7 +96,7 @@ See [ISOs](./10-isos.md) for more information.
 ## Flag mapping
 
 | Legacy `bootc-image-builder` container    | `image-builder`                       | Notes                                                                                                                                                                       |
-| ----------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-------------------------------------------|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `IMAGE_NAME` positional argument          | `--bootc-ref IMAGE_NAME`              |                                                                                                                                                                             |
 | `--type TYPE`                             | positional `<image-type>`             | For example, `--type qcow2` becomes `build ... qcow2`. `bootc-image-builder` could build multiple types in one invocation; `image-builder build` builds one type at a time. |
 | `--rootfs FS`                             | `--bootc-default-fs FS`               |                                                                                                                                                                             |
@@ -114,6 +114,7 @@ See [ISOs](./10-isos.md) for more information.
 | `--use-librepo`                           | no public equivalent                  | `image-builder` uses librepo by default, so remove this flag when migrating.                                                                                                |
 | `--chown UID:GID`                         | no direct equivalent                  | Adjust host directory ownership/permissions before or after the build if needed.                                                                                            |
 | AWS upload flags with `--type ami`        | same AWS flags with image type `ami`  |                                                                                                                                                                             |
+| `--force-repo`                            | `--force-repo`                        | Overwrites the rpm repositories used during builds              |                                                                                                                                                                             |
 
 ## Embedded configuration in the source container
 
