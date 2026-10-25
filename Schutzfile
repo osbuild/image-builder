@@ -6,7 +6,7 @@
         "ref": "quay.io/centos-bootc/bootc-image-builder@sha256:9893e7209e5f449b86ababfd2ee02a58cca2e5990f77b06c3539227531fc8120"
       },
       "osbuild": {
-        "commit": "aff1eccb426ef2ce0a69a9c728628542f3f3034a"
+        "commit": "2e15f7a0a6dde4086ac1541f4737a07e3f56c0d5"
       }
     },
     "gitlab-ci-runner-for": {
