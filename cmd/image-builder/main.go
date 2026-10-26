@@ -1019,6 +1019,15 @@ func cmdPrefetch(cmd *cobra.Command, args []string) error {
 	} else if verbose {
 		progressType = "verbose"
 	}
+
+	var jsonFmt bool
+	if format, err := cmd.Flags().GetString("format"); err != nil {
+		return err
+	} else if format == "json" {
+		jsonFmt = true
+		progressType = "verbose" // disable progress, otherwise we don't get json output
+	}
+
 	pbar, err := progress.New(progressType, progress.ProgressConfig{WithMsg: true})
 	if err != nil {
 		// this should never happen
@@ -1047,7 +1056,8 @@ func cmdPrefetch(cmd *cobra.Command, args []string) error {
 	}
 
 	opts := progress.OSBuildOptions{
-		StoreDir: cacheDir,
+		StoreDir:   cacheDir,
+		JSONOutput: jsonFmt,
 	}
 	return progress.RunOSBuild(pbar, mf, nil, &opts)
 }

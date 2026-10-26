@@ -1833,6 +1833,10 @@ func TestPrefetchCommandMockedOSBuild(t *testing.T) {
 			args:     []string{"prefetch", "--cache", cachePath, manifestPath},
 			expected: fmt.Sprintf("--store %s --output-directory  --cache-max-size=21474836480 -", cachePath),
 		},
+		"with-json": {
+			args:     []string{"prefetch", "--cache", cachePath, "--format=json", manifestPath},
+			expected: fmt.Sprintf("--store %s --output-directory  --cache-max-size=21474836480 - --json", cachePath),
+		},
 	}
 
 	for name, testCase := range testCases {
