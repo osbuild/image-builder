@@ -10,6 +10,7 @@ import (
 	ilog "github.com/osbuild/image-builder/pkg/olog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"github.com/spf13/pflag"
 )
 
 func setupRootCmd() (*cobra.Command, error) {
@@ -106,13 +107,9 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	if err != nil {
 		return nil, err
 	}
-	buildCmd.Flags().AddFlagSet(manifestCmd.Flags())
-	// The build command can upload images to the appropriate cloud provider,
-	// so it should support the upload options as well
-	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
+
 	rootCmd.AddCommand(buildCmd)
 
-	buildCmd.Flags().AddFlagSet(uploadCmd.Flags())
 	// add after the rest of the uploadCmd flag set is added to avoid
 	// that build gets a "--to" parameter
 	uploadCmd.Flags().String("to", "", "upload to the given cloud")
@@ -205,6 +202,52 @@ func setupSystemCmd() *cobra.Command {
 	return systemCmd
 }
 
+func rpmmdFlag(cmd *cobra.Command) {
+	cmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
+}
+
+func manifestFlags(cmd *cobra.Command) error {
+	flagSet := pflag.NewFlagSet("manifest", pflag.ContinueOnError)
+	flagSet.String("blueprint", "", `filename of a blueprint to customize an image`)
+	flagSet.Int64("seed", 0, `rng seed, some values are derived randomly, pinning the seed allows more reproducibility if you need it. must be an integer. only used when changed.`)
+	flagSet.String("arch", "", `build manifest for a different architecture`)
+	flagSet.String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
+	flagSet.String("ostree-ref", "", `OSTREE reference`)
+	flagSet.String("ostree-parent", "", `OSTREE parent`)
+	flagSet.String("ostree-url", "", `OSTREE url`)
+	flagSet.String("bootc-ref", "", `bootc container ref`)
+	flagSet.String("bootc-variant", "", `deployment variant to use for the bootc container`)
+	flagSet.String("bootc-build-ref", "", `bootc build container ref`)
+	flagSet.String("bootc-installer-payload-ref", "", `bootc installer payload ref`)
+	flagSet.String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
+	flagSet.Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
+	flagSet.Bool("bootc-pull-container", false, `pull bootc container from remote location instead of using it from local container storage`)
+
+	var imageSize datasizes.Size
+	flagSet.TextVar(&imageSize, "image-size", imageSize, `override the default image size (e.g. 1 GiB)`)
+	flagSet.Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
+	if err := flagSet.MarkHidden("use-librepo"); err != nil {
+		return err
+	}
+	flagSet.Bool("with-sbom", false, `export SPDX SBOM document`)
+	flagSet.Bool("with-rpmlist", false, `export RPM list as JSON`)
+	if err := flagSet.MarkHidden("with-rpmlist"); err != nil {
+		return err
+	}
+	flagSet.Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
+	flagSet.String("registrations", "", `filename of a registrations file with e.g. subscription details`)
+	flagSet.Bool("preview", true, `override distro default preview state if passed`)
+	if err := flagSet.MarkHidden("preview"); err != nil {
+		return err
+	}
+
+	cmd.Flags().AddFlagSet(flagSet)
+
+	rpmmdFlag(cmd)
+
+	return nil
+}
+
 func setupManifestCmd() (*cobra.Command, error) {
 	manifestCmd := &cobra.Command{
 		Use:          "manifest <image-type>",
@@ -216,39 +259,39 @@ func setupManifestCmd() (*cobra.Command, error) {
 		Args:         cobra.ExactArgs(1),
 		Hidden:       true,
 	}
-	manifestCmd.Flags().String("blueprint", "", `filename of a blueprint to customize an image`)
-	manifestCmd.Flags().Int64("seed", 0, `rng seed, some values are derived randomly, pinning the seed allows more reproducibility if you need it. must be an integer. only used when changed.`)
-	manifestCmd.Flags().String("arch", "", `build manifest for a different architecture`)
-	manifestCmd.Flags().String("distro", "", `build manifest for a different distroname (e.g. centos-9)`)
-	manifestCmd.Flags().String("ostree-ref", "", `OSTREE reference`)
-	manifestCmd.Flags().String("ostree-parent", "", `OSTREE parent`)
-	manifestCmd.Flags().String("ostree-url", "", `OSTREE url`)
-	manifestCmd.Flags().String("bootc-ref", "", `bootc container ref`)
-	manifestCmd.Flags().String("bootc-variant", "", `deployment variant to use for the bootc container`)
-	manifestCmd.Flags().String("bootc-build-ref", "", `bootc build container ref`)
-	manifestCmd.Flags().String("bootc-installer-payload-ref", "", `bootc installer payload ref`)
-	manifestCmd.Flags().String("bootc-default-fs", "", `default filesystem to use for the bootc install (e.g. ext4)`)
-	manifestCmd.Flags().Bool("bootc-no-default-kernel-args", false, `don't use the default kernel arguments`)
-	manifestCmd.Flags().Bool("bootc-pull-container", false, `pull bootc container from remote location instead of using it from local container storage`)
-	var imageSize datasizes.Size
-	manifestCmd.Flags().TextVar(&imageSize, "image-size", imageSize, `override the default image size (e.g. 1 GiB)`)
-	manifestCmd.Flags().Bool("use-librepo", true, `use librepo to download packages (disable if you use old versions of osbuild)`)
-	if err := manifestCmd.Flags().MarkHidden("use-librepo"); err != nil {
-		return nil, err
-	}
-	manifestCmd.Flags().Bool("with-sbom", false, `export SPDX SBOM document`)
-	manifestCmd.Flags().Bool("with-rpmlist", false, `export RPM list as JSON`)
-	if err := manifestCmd.Flags().MarkHidden("with-rpmlist"); err != nil {
-		return nil, err
-	}
-	manifestCmd.Flags().Bool("ignore-warnings", false, `ignore warnings during manifest generation`)
-	manifestCmd.Flags().String("registrations", "", `filename of a registrations file with e.g. subscription details`)
-	manifestCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
-	manifestCmd.Flags().Bool("preview", true, `override distro default preview state if passed`)
-	if err := manifestCmd.Flags().MarkHidden("preview"); err != nil {
+	if err := manifestFlags(manifestCmd); err != nil {
 		return nil, err
 	}
 	return manifestCmd, nil
+}
+
+func uploadFlags(cmd *cobra.Command) {
+	flagSet := pflag.NewFlagSet("upload", pflag.ContinueOnError)
+	flagSet.String("aws-ami-name", "", "name for the AMI in AWS (only for --to=aws)")
+	flagSet.String("aws-bucket", "", "target S3 bucket name for intermediate storage when creating AMI (only for --to=aws)")
+	flagSet.String("aws-region", "", "target region for AWS uploads (only for --to=aws)")
+	flagSet.String("aws-profile", "", "name of the AWS credentials profile (only for --to=aws)")
+	flagSet.StringArray("aws-tag", []string{}, "tag the AMI with this Key=Value (only for --to=aws)")
+	flagSet.String("aws-boot-mode", "", "boot mode for the AMI: legacy-bios, uefi, uefi-preferred (only for --to=aws)")
+	flagSet.String("libvirt-connection", "", "connection URI (only for --to=libvirt)")
+	flagSet.String("libvirt-pool", "", "pool name (only for --to=libvirt)")
+	flagSet.String("libvirt-volume", "", "volume name (only for --to=libvirt)")
+	flagSet.String("openstack-image", "", "name for the uploaded image (only for --to=openstack)")
+	flagSet.String("openstack-disk-format", "raw", "the disk format of a virtual machine image (only for --to=openstack)")
+	flagSet.String("openstack-container-format", "bare", "this indicates if the image contains metadata about the VM (only for --to=openstack)")
+	flagSet.String("ibmcloud-bucket", "", "target bucket name for storing the image (only for --to=ibmcloud)")
+	flagSet.String("ibmcloud-region", "", "target region for IBM Cloud uploads (only for --to=ibmcloud)")
+	flagSet.String("ibmcloud-image-name", "", "name for the uploaded image (only for --to=ibmcloud)")
+	flagSet.String("azure-client-id", "", "Azure client ID (only for --to=azure)")
+	flagSet.String("azure-client-secret", "", "Azure client secret (only for --to=azure)")
+	flagSet.String("azure-tenant", "", "Azure tenant ID (only for --to=azure)")
+	flagSet.String("azure-subscription", "", "Azure subscription ID (only for --to=azure)")
+	flagSet.String("azure-resource-group", "", "Azure resource group (only for --to=azure)")
+	flagSet.String("azure-image-name", "", "name for the uploaded image (only for --to=azure)")
+	flagSet.String("arch", "", "upload for the given architecture")
+	flagSet.String("format", "", "output in a specific format (yaml, json)")
+
+	cmd.Flags().AddFlagSet(flagSet)
 }
 
 const uploadAuthHelp = `For AWS uploads, credentials are read from the standard AWS credentials chain,
@@ -269,31 +312,20 @@ func setupUploadCmd() *cobra.Command {
 		SilenceUsage: true,
 		Args:         cobra.ExactArgs(1),
 	}
-	uploadCmd.Flags().String("aws-ami-name", "", "name for the AMI in AWS (only for --to=aws)")
-	uploadCmd.Flags().String("aws-bucket", "", "target S3 bucket name for intermediate storage when creating AMI (only for --to=aws)")
-	uploadCmd.Flags().String("aws-region", "", "target region for AWS uploads (only for --to=aws)")
-	uploadCmd.Flags().String("aws-profile", "", "name of the AWS credentials profile (only for --to=aws)")
-	uploadCmd.Flags().StringArray("aws-tag", []string{}, "tag the AMI with this Key=Value (only for --to=aws)")
-	uploadCmd.Flags().String("aws-boot-mode", "", "boot mode for the AMI: legacy-bios, uefi, uefi-preferred (only for --to=aws)")
-	uploadCmd.Flags().String("libvirt-connection", "", "connection URI (only for --to=libvirt)")
-	uploadCmd.Flags().String("libvirt-pool", "", "pool name (only for --to=libvirt)")
-	uploadCmd.Flags().String("libvirt-volume", "", "volume name (only for --to=libvirt)")
-	uploadCmd.Flags().String("openstack-image", "", "name for the uploaded image (only for --to=openstack)")
-	uploadCmd.Flags().String("openstack-disk-format", "raw", "the disk format of a virtual machine image (only for --to=openstack)")
-	uploadCmd.Flags().String("openstack-container-format", "bare", "this indicates if the image contains metadata about the VM (only for --to=openstack)")
-	uploadCmd.Flags().String("ibmcloud-bucket", "", "target bucket name for storing the image (only for --to=ibmcloud)")
-	uploadCmd.Flags().String("ibmcloud-region", "", "target region for IBM Cloud uploads (only for --to=ibmcloud)")
-	uploadCmd.Flags().String("ibmcloud-image-name", "", "name for the uploaded image (only for --to=ibmcloud)")
-	uploadCmd.Flags().String("azure-client-id", "", "Azure client ID (only for --to=azure)")
-	uploadCmd.Flags().String("azure-client-secret", "", "Azure client secret (only for --to=azure)")
-	uploadCmd.Flags().String("azure-tenant", "", "Azure tenant ID (only for --to=azure)")
-	uploadCmd.Flags().String("azure-subscription", "", "Azure subscription ID (only for --to=azure)")
-	uploadCmd.Flags().String("azure-resource-group", "", "Azure resource group (only for --to=azure)")
-	uploadCmd.Flags().String("azure-image-name", "", "name for the uploaded image (only for --to=azure)")
-	uploadCmd.Flags().String("arch", "", "upload for the given architecture")
-	uploadCmd.Flags().String("format", "", "output in a specific format (yaml, json)")
+
+	uploadFlags(uploadCmd)
 
 	return uploadCmd
+}
+
+func cacheFlag(cmd *cobra.Command) {
+	cmd.Flags().String("cache", defaultCacheDir(), `osbuild directory where sources and intermediary os trees are stored`)
+}
+
+func progressFlag(cmd *cobra.Command) {
+	// TODO: couple this with --verbose
+	// When --verbose is set, it should be equivalent to --progress=verbose
+	cmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
 }
 
 func setupBuildCmd() (*cobra.Command, error) {
@@ -309,10 +341,6 @@ func setupBuildCmd() (*cobra.Command, error) {
 	buildCmd.Flags().StringArray("with-extra", nil, `include an extra by type:name in the build, globs supported (e.g. --with-extra "sysext:*")`)
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
 	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
-	buildCmd.Flags().String("cache", defaultCacheDir(), `osbuild directory where sources and intermediary os trees are stored`)
-	// XXX: add "--verbose" here, similar to how bib is doing this
-	// (see https://github.com/osbuild/bootc-image-builder/pull/790/commits/5cec7ffd8a526e2ca1e8ada0ea18f927695dfe43)
-	buildCmd.Flags().String("progress", "auto", "type of progress bar to use (e.g. verbose,term)")
 	buildCmd.Flags().Bool("with-metrics", false, `print timing information at the end of the build`)
 	buildCmd.Flags().String("output-name", "", "set specific output basename")
 	buildCmd.Flags().Bool("in-vm", false, `run the osbuild pipeline in a virtual machine`)
@@ -322,6 +350,16 @@ func setupBuildCmd() (*cobra.Command, error) {
 	if err := buildCmd.Flags().MarkHidden("with-upload-result"); err != nil {
 		return nil, err
 	}
+
+	if err := manifestFlags(buildCmd); err != nil {
+		return nil, err
+	}
+	// The build command can upload images to the appropriate cloud provider,
+	// so it should support the upload options as well
+	uploadFlags(buildCmd)
+
+	cacheFlag(buildCmd)
+	progressFlag(buildCmd)
 
 	return buildCmd, nil
 }
@@ -356,7 +394,7 @@ func setupPkgSearchCmd() *cobra.Command {
 	pkgSearchCmd.Flags().String("distro", "", "Search packages for a specific distro (e.g. centos-9)")
 	pkgSearchCmd.Flags().String("arch", "", "Search packages for a specific architecture")
 	pkgSearchCmd.Flags().String("type", "", "Narrow search to repos for a specific image type (e.g. qcow2)")
-	pkgSearchCmd.Flags().String("rpmmd-cache", "", `osbuild directory to cache rpm metadata`)
+	rpmmdFlag(pkgSearchCmd)
 
 	return pkgSearchCmd
 }
