@@ -27,6 +27,9 @@ CAN_BOOT_TEST = {
         "edge-ami",
         "vhd",
         "cloud-ec2",
+        "gce",
+        "gce-rhui",
+        "cloud-gce",
     ],
     "x86_64": [
         "image-installer", "minimal-installer", "network-installer",

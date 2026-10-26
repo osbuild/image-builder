@@ -56,8 +56,13 @@ func main() {
 		guestOSFeatures = gcp.GuestOsFeaturesRHEL8
 	case "rhel-9":
 		guestOSFeatures = gcp.GuestOsFeaturesRHEL9
+	case "rhel-10":
+		guestOSFeatures = gcp.GuestOsFeaturesRHEL10
+	case "fedora":
+		// Fedora GCE images do not use the RHEL guest OS feature set.
+		guestOSFeatures = nil
 	default:
-		olog.Fatalf("[GCP] Unknown OS Family %q. Use one of: 'rhel-8', 'rhel-9'.", osFamily)
+		olog.Fatalf("[GCP] Unknown OS Family %q. Use one of: 'rhel-8', 'rhel-9', 'rhel-10', 'fedora'.", osFamily)
 	}
 
 	var credentials []byte

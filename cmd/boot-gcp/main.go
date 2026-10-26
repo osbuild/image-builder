@@ -56,7 +56,7 @@ func newClientFromArgs(flags *pflag.FlagSet) (*gcp.GCP, error) {
 }
 
 func readSSHKeys(flags *pflag.FlagSet) (string, error) {
-	sshKeysFile, err := flags.GetString("ssh-authorized-keys-file")
+	keyPath, err := flags.GetString("ssh-pubkey")
 	if err != nil {
 		return "", err
 	}
@@ -64,9 +64,9 @@ func readSSHKeys(flags *pflag.FlagSet) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	keys, err := os.ReadFile(sshKeysFile)
+	keys, err := os.ReadFile(keyPath)
 	if err != nil {
-		return "", fmt.Errorf("cannot read ssh-authorized-keys-file %q: %w", sshKeysFile, err)
+		return "", fmt.Errorf("cannot read ssh-pubkey %q: %w", keyPath, err)
 	}
 	return gcp.FormatSSHKeysMetadata(username, string(keys))
 }
@@ -163,6 +163,7 @@ func setup(cmd *cobra.Command, args []string) {
 				fmt.Fprintf(os.Stderr, "teardown(): %s\n", tderr.Error())
 			}
 		}
+		return // skip resources file when setup did not succeed
 	}
 
 	resdata, err := json.MarshalIndent(res, "", "  ")
@@ -175,17 +176,18 @@ func setup(cmd *cobra.Command, args []string) {
 		fnerr = fmt.Errorf("failed to create resources file: %s", err.Error())
 		return
 	}
+	defer func() {
+		if cerr := resfile.Close(); cerr != nil && fnerr == nil {
+			fmt.Fprintf(os.Stderr, "error closing resources file: %s\n", cerr.Error())
+			fnerr = cerr
+		}
+	}()
 	_, err = resfile.Write(resdata)
 	if err != nil {
 		fnerr = fmt.Errorf("failed to write resources file: %s", err.Error())
 		return
 	}
 	fmt.Printf("IDs for any newly created resources are stored in %s. Use the teardown command to clean them up.\n", resourcesFile)
-	if err = resfile.Close(); err != nil {
-		fmt.Fprintf(os.Stderr, "error closing resources file: %s\n", err.Error())
-		fnerr = err
-		return
-	}
 }
 
 func doTeardown(client *gcp.GCP, res *resources) error {
@@ -336,13 +338,13 @@ func setupCLI() *cobra.Command {
 	setupCmd.Flags().String("image", "", "Compute Engine image name in the credentials project")
 	setupCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store resource IDs")
-	setupCmd.Flags().String("ssh-authorized-keys-file", "", "path to SSH public key file")
+	setupCmd.Flags().String("ssh-pubkey", "", "path to SSH public key file")
 	setupCmd.Flags().String("username", "", "SSH user name for GCE ssh-keys metadata")
 	setupCmd.Flags().String("machine-type", "", "machine type (default depends on --arch)")
 	setupCmd.Flags().String("network", "", "VPC network URL or name (default VPC if empty)")
 	setupCmd.Flags().String("subnet", "", "subnet name or URL (required when the project has no default subnet in the zone region)")
 	setupCmd.Flags().String("instance-name", "", "VM name (generated if empty)")
-	for _, flag := range []string{"project", "zone", "subnet", "image", "arch", "ssh-authorized-keys-file", "username"} {
+	for _, flag := range []string{"project", "zone", "subnet", "image", "arch", "ssh-pubkey", "username"} {
 		exitCheck(setupCmd.MarkFlagRequired(flag))
 	}
 	rootCmd.AddCommand(setupCmd)
@@ -369,12 +371,12 @@ func setupCLI() *cobra.Command {
 	runCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
 	runCmd.Flags().String("username", "", "SSH user name")
 	runCmd.Flags().String("ssh-privkey", "", "path to SSH private key")
-	runCmd.Flags().String("ssh-authorized-keys-file", "", "path to SSH public key file")
+	runCmd.Flags().String("ssh-pubkey", "", "path to SSH public key file")
 	runCmd.Flags().String("machine-type", "", "machine type (default depends on --arch)")
 	runCmd.Flags().String("network", "", "VPC network URL or name (default VPC if empty)")
 	runCmd.Flags().String("subnet", "", "subnet name or URL (required when the project has no default subnet in the zone region)")
 	runCmd.Flags().String("instance-name", "", "VM name (generated if empty)")
-	for _, flag := range []string{"project", "zone", "subnet", "image", "arch", "username", "ssh-privkey", "ssh-authorized-keys-file"} {
+	for _, flag := range []string{"project", "zone", "subnet", "image", "arch", "username", "ssh-privkey", "ssh-pubkey"} {
 		exitCheck(runCmd.MarkFlagRequired(flag))
 	}
 	rootCmd.AddCommand(runCmd)

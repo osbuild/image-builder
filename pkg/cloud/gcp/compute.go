@@ -153,12 +153,6 @@ func (g *GCP) ComputeImageInsert(
 	}
 	defer imagesClient.Close()
 
-	operationsClient, err := compute.NewGlobalOperationsRESTClient(ctx, option.WithCredentials(g.creds))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Compute Engine Operations client: %v", err)
-	}
-	defer operationsClient.Close()
-
 	imgInsertReq := &computepb.InsertImageRequest{
 		Project: g.GetProjectID(),
 		ImageResource: &computepb.Image{
@@ -177,30 +171,8 @@ func (g *GCP) ComputeImageInsert(
 		return nil, fmt.Errorf("failed to insert provided image into GCE: %v", err)
 	}
 
-	// wait for the operation to finish
-	var operationResource *computepb.Operation
-	for {
-		waitOperationReq := &computepb.WaitGlobalOperationRequest{
-			Operation: operation.Proto().GetName(),
-			Project:   g.GetProjectID(),
-		}
-
-		operationResource, err = operationsClient.Wait(ctx, waitOperationReq)
-		if err != nil {
-			return nil, fmt.Errorf("failed to wait for an Image Import operation: %v", err)
-		}
-
-		// The operation finished
-		if operationResource.GetStatus() != computepb.Operation_RUNNING && operationResource.GetStatus() != computepb.Operation_PENDING {
-			break
-		}
-	}
-
-	// If the operation failed, the HttpErrorStatusCode is set to a non-zero value
-	if operationStatusCode := operationResource.GetHttpErrorStatusCode(); operationStatusCode != 0 {
-		operationErrorMsg := operationResource.GetHttpErrorMessage()
-		operationErrors := operationResource.GetError().GetErrors()
-		return nil, fmt.Errorf("failed to insert image into GCE. HTTPErrorCode:%d HTTPErrorMsg:%v Errors:%v", operationStatusCode, operationErrorMsg, operationErrors)
+	if err := g.waitGlobalOperation(ctx, g.GetProjectID(), operation.Proto().GetName()); err != nil {
+		return nil, fmt.Errorf("failed to wait for image import: %w", err)
 	}
 
 	getImageReq := &computepb.GetImageRequest{

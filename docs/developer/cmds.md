@@ -176,6 +176,32 @@ executable to the instance, runs it, and then performs the same actions as the
 `teardown` subcommand. The user-data must configure `${USERNAME}` with an SSH
 key matching `${PATH_TO_SSH_PRIVATE_KEY}`.
 
+To boot a custom image on Google Compute Engine, use `./cmd/boot-gcp` with the
+`setup` subcommand:
+```bash
+go run ./cmd/boot-gcp setup \
+  --project "${GCP_PROJECT}" \
+  --zone "${GCP_ZONE}" \
+  --subnet "${GCP_SUBNET}" \
+  --image "${IMAGE_NAME}" \
+  --arch "${IMAGE_ARCHITECTURE}" \
+  --username osbuild \
+  --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
+  -r "${TMP_RESOURCE_FILE}"
+```
+where `${IMAGE_NAME}` is the image name in the project (not a file path).
+Credentials use Application Default Credentials or `--credentials` for a
+service account JSON file.
+
+Resource IDs are written to `--resourcefile` / `-r`. Tear down with:
+```bash
+go run ./cmd/boot-gcp teardown -r "${TMP_RESOURCE_FILE}"
+```
+
+Alternatively, use the `run` subcommand to boot, upload and run
+`check-host-config`, then tear down (same flags as `setup`, plus
+`--ssh-privkey`).
+
 #### Listing available image type configurations
 
 The `cmd/list-images` utility simply lists all available combinations of
