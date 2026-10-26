@@ -1793,3 +1793,68 @@ func TestCacheDirForUidNonRootFallback(t *testing.T) {
 	expected := filepath.Join(home, ".cache", "image-builder", "store")
 	assert.Equal(t, expected, main.CacheDirForUid(1000))
 }
+
+// mockOSBuildEchoArgs creates a shell script that writes the arguments it
+// receives to argsPath and exits successfully. It names the file osbuild,
+// places it in a temporary directory, and adds that directory to the top of
+// the $PATH for the given test run.
+func mockOSBuildEchoArgs(t *testing.T, argsPath string) {
+	mockScriptTmpl := `#!/bin/bash
+cat > %s << EOF
+$@
+EOF`
+	mockScript := fmt.Sprintf(mockScriptTmpl, argsPath)
+	tmpdir := t.TempDir()
+
+	scriptPath := filepath.Join(tmpdir, "osbuild")
+
+	if err := os.WriteFile(scriptPath, []byte(mockScript), 0o770); err != nil { //nolint:gosec // test executable
+		t.Fatal(err)
+	}
+
+	path := os.Getenv("PATH")
+	path = tmpdir + ":" + path
+	t.Setenv("PATH", path)
+}
+
+func TestPrefetchCommandMockedOSBuild(t *testing.T) {
+	manifestPath := filepath.Join(t.TempDir(), "m.json")
+	cachePath := t.TempDir()
+	require.NoError(t, os.WriteFile(manifestPath, []byte("{}"), 0o600))
+	testCases := map[string]struct {
+		args     []string
+		expected string
+	}{
+		"simple": {
+			args:     []string{"prefetch", manifestPath},
+			expected: fmt.Sprintf("--store %s --output-directory  --cache-max-size=21474836480 -", main.DefaultCacheDir()),
+		},
+		"with-cachedir": {
+			args:     []string{"prefetch", "--cache", cachePath, manifestPath},
+			expected: fmt.Sprintf("--store %s --output-directory  --cache-max-size=21474836480 -", cachePath),
+		},
+	}
+
+	for name, testCase := range testCases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			outPath := filepath.Join(t.TempDir(), "args")
+			mockOSBuildEchoArgs(t, outPath)
+
+			restoreArgs := main.MockOsArgs(testCase.args)
+			defer restoreArgs()
+
+			err := main.Run()
+			require.NoError(err)
+
+			argsBytes, err := os.ReadFile(outPath)
+			require.NoError(err)
+
+			args := string(argsBytes)
+			args = strings.TrimSpace(args)
+
+			require.Equal(testCase.expected, args)
+		})
+	}
+}
