@@ -28,6 +28,7 @@ var (
 	DefaultOutputTmpl     = defaultOutputTmpl
 	CacheDirForUid        = cacheDirForUid
 	NewPkgSearchFormatter = newPkgSearchFormatter
+	DefaultCacheDir       = defaultCacheDir
 )
 
 type DescribeImgYAML describeImgYAML
