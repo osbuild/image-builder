@@ -998,6 +998,60 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	return describeImage(res, osStdout)
 }
 
+func cmdPrefetch(cmd *cobra.Command, args []string) error {
+	manifestPath := args[0]
+
+	cacheDir, err := cmd.Flags().GetString("cache")
+	if err != nil {
+		return err
+	}
+
+	// NOTE: we can't support the 'progress' option here yet because that also
+	// supports the file progress, which requires an output directory, and
+	// output directory isn't supported by the prefetch command. We can add the
+	// 'progress' flag to this subcommand after we've unified the behaviour of
+	// the two flags, either by adding an output directory or filename whenever
+	// 'progress' is supported, or by producing an error when 'progress=file'
+	// but for whatever reason that option isn't supported.
+	progressType := "auto"
+	if verbose, err := cmd.Flags().GetBool("verbose"); err != nil {
+		return err
+	} else if verbose {
+		progressType = "verbose"
+	}
+	pbar, err := progress.New(progressType, progress.ProgressConfig{WithMsg: true})
+	if err != nil {
+		// this should never happen
+		return fmt.Errorf("cannot create progress bar: %w", err)
+	}
+
+	pbar.Start()
+	defer pbar.Stop()
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		pbar.Stop()
+	}()
+
+	pbar.SetPulseMsgf("Downloading sources")
+	mf, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return fmt.Errorf("failed to read manifest at %s: %w", manifestPath, err)
+	}
+
+	// Fail early if the cache directory is not writable, instead of
+	// waiting for osbuild to fail after slow manifest generation.
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+		return fmt.Errorf("cannot create cache directory %q: %w\nHint: use --cache to specify a writable path", cacheDir, err)
+	}
+
+	opts := progress.OSBuildOptions{
+		StoreDir: cacheDir,
+	}
+	return progress.RunOSBuild(pbar, mf, nil, &opts)
+}
+
 func run() error {
 	// Initialize console logger (stderr, no prefix)
 	log.SetFlags(0)
