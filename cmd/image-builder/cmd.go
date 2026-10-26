@@ -426,6 +426,8 @@ func setupPrefetchCmd() *cobra.Command {
 		SilenceUsage: true,
 		RunE:         cmdPrefetch,
 	}
+	prefetchCmd.Flags().String("format", "", "Output in a specific format (json)")
+
 	cacheFlag(prefetchCmd)
 	return prefetchCmd
 }
