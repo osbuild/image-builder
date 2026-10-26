@@ -490,10 +490,12 @@ func TestSysextTreeGetPackageSetChainPreservesReference(t *testing.T) {
 	require.Len(t, refChain, 3)
 
 	for _, name := range []string{"nginx", "tmux"} {
+		extraRepo := rpmmd.RepoConfig{BaseURLs: []string{"https://example.org/" + name}}
 		sp := manifest.NewSysextPipelines(build, pf, []rpmmd.RepoConfig{extensionRepo}, refPipeline, refPipeline, name)
 		sp.Tree.Customizations.PackageSet = rpmmd.PackageSet{
 			Include:         []string{name},
 			Exclude:         []string{"extension-excluded"},
+			Repositories:    []rpmmd.RepoConfig{extraRepo},
 			InstallWeakDeps: true,
 		}
 
@@ -504,7 +506,7 @@ func TestSysextTreeGetPackageSetChainPreservesReference(t *testing.T) {
 		assert.Equal(t, rpmmd.PackageSet{
 			Include:      []string{name},
 			Exclude:      []string{"extension-excluded"},
-			Repositories: []rpmmd.RepoConfig{baseRepo, payloadRepo, extensionRepo},
+			Repositories: []rpmmd.RepoConfig{baseRepo, payloadRepo, extraRepo, extensionRepo},
 		}, chain[len(refChain)])
 	}
 	// Constructing extension chains must not change the reference's inputs.
@@ -523,12 +525,15 @@ func TestSysextTreeGetPackageSetChainNilDepsolveReference(t *testing.T) {
 	refPipeline.OSCustomizations.BasePackages = []string{"coreutils", "bash"}
 
 	sp := manifest.NewSysextPipelines(build, pf, nil, refPipeline, nil, "nginx")
+	extraRepo := rpmmd.RepoConfig{BaseURLs: []string{"https://example.org/nginx"}}
 	sp.Tree.Customizations.PackageSet = rpmmd.PackageSet{
-		Include: []string{"nginx"},
+		Include:      []string{"nginx"},
+		Repositories: []rpmmd.RepoConfig{extraRepo},
 	}
 
 	chain, err := sp.Tree.GetPackageSetChain(0)
 	require.NoError(t, err)
 	require.Len(t, chain, 1)
 	assert.Equal(t, []string{"nginx"}, chain[0].Include)
+	assert.Equal(t, []rpmmd.RepoConfig{extraRepo}, chain[0].Repositories)
 }

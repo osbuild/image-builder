@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1933,6 +1934,14 @@ image_types:
     extras:
       sysexts:
         my-ext:
+          package_conf:
+            repositories:
+              - name: Extension packages
+                baseurl: ["https://example.org/extra/$basearch"]
+                gpgkeys: ["https://example.org/RPM-GPG-KEY-extra"]
+                check_gpg: true
+                ignore_ssl: false
+                metadata_expire: 6h
           package_sets:
             - include: [vim, git]
               exclude: [nano]
@@ -1950,6 +1959,14 @@ image_types:
 	assert.Equal(t, rpmmd.PackageSet{
 		Include: []string{"git", "vim"},
 		Exclude: []string{"nano"},
+		Repositories: []rpmmd.RepoConfig{{
+			Name:           "Extension packages",
+			BaseURLs:       []string{"https://example.org/extra/$basearch"},
+			GPGKeys:        []string{"https://example.org/RPM-GPG-KEY-extra"},
+			CheckGPG:       common.ToPtr(true),
+			IgnoreSSL:      common.ToPtr(false),
+			MetadataExpire: "6h",
+		}},
 	}, sysexts[0].Packages)
 	assert.Equal(t, []string{"/usr", "/opt"}, sysexts[0].Paths, "default paths")
 	assert.Nil(t, sysexts[0].ExcludePaths)
@@ -1962,6 +1979,36 @@ image_types:
 	}, sysexts[1].Packages)
 	assert.Equal(t, []string{"/usr"}, sysexts[1].Paths, "custom paths")
 	assert.Equal(t, []string{"/usr/share/doc"}, sysexts[1].ExcludePaths)
+}
+
+func TestSysextRepositoriesMatchRepositoryFiles(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		repo string
+	}{
+		{"scalar URL and key", `{"name":"extra","baseurl":"https://example.org/extra","gpgkey":"key"}`},
+		{"URL list and combined keys", `{"name":"extra","baseurl":["https://example.org/extra","https://mirror.example.org/extra"],"gpgkey":"first","gpgkeys":["second","third"],"check_gpg":true}`},
+		{"metalink and options", `{"name":"extra","metalink":"https://example.org/metalink","ignore_ssl":false,"rhsm":true,"module_hotfixes":true,"metadata_expire":"6h"}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			it := makeTestImageType(t, fmt.Sprintf(`
+image_types:
+  test_type:
+    extras:
+      sysexts:
+        my-ext:
+          package_conf:
+            repositories: [%s]
+          package_sets:
+            - include: [extension-package]
+`, tc.repo))
+			sysexts := it.Sysexts(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+			require.Len(t, sysexts, 1)
+			fromFile, err := rpmmd.LoadRepositoriesFromReader(strings.NewReader("x86_64: [" + tc.repo + "]"))
+			require.NoError(t, err)
+			assert.Equal(t, fromFile["x86_64"], sysexts[0].Packages.Repositories)
+		})
+	}
 }
 
 func TestSysextsExtensionRelease(t *testing.T) {

@@ -19,12 +19,15 @@ import (
 )
 
 func TestDiskImageSysextStandalone(t *testing.T) {
-	for _, standalone := range []bool{false, true} {
-		name := "reuse OS"
-		if standalone {
-			name = "standalone"
-		}
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		standalone bool
+	}{
+		{"reuse OS", false},
+		{"standalone", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			standalone := tc.standalone
 			img := image.NewDiskImage(&platform.Data{Arch: arch.ARCH_X86_64, ImageFormat: platform.FORMAT_RAW}, "disk.raw")
 			img.DiskCustomizations = manifest.NewDiskCustomizations()
 			img.PartitionTable = &disk.PartitionTable{
@@ -38,10 +41,15 @@ func TestDiskImageSysextStandalone(t *testing.T) {
 			img.OSCustomizations.BaseRPMOptions = osbuild.RPMStageOptions{GPGKeysFromTree: []string{"/base-key"}}
 			img.Sysexts = []image.SysextConfig{{
 				Name: "test", Format: "erofs", Standalone: standalone,
-				PackageSet: rpmmd.PackageSet{Include: []string{"extension"}},
+				PackageSet: rpmmd.PackageSet{Include: []string{"extension"}, Repositories: []rpmmd.RepoConfig{{Name: "extra"}}},
 			}}
 			mf := manifest.New()
-			_, err := img.InstantiateManifest(&mf, nil, &runner.Fedora{}, nil)
+			repos := []rpmmd.RepoConfig{
+				{Name: "global"},
+				{Name: "targeted", PackageSets: []string{"sysext-test-tree"}},
+				{Name: "OS only", PackageSets: []string{"os"}},
+			}
+			_, err := img.InstantiateManifest(&mf, repos, &runner.Fedora{}, nil)
 			require.NoError(t, err)
 			chains, err := mf.GetPackageSetChains()
 			require.NoError(t, err)
@@ -53,6 +61,15 @@ func TestDiskImageSysextStandalone(t *testing.T) {
 				assert.Equal(t, chains["os"], chains["sysext-test-tree"][:len(chains["os"])])
 				assert.Equal(t, []string{"extension"}, chains["sysext-test-tree"][len(chains["os"])].Include)
 			}
+
+			last := chains["sysext-test-tree"][len(chains["sysext-test-tree"])-1]
+			assert.Contains(t, last.Repositories, rpmmd.RepoConfig{Name: "extra"})
+			assert.Contains(t, last.Repositories, repos[1])
+			assert.Contains(t, last.Repositories, repos[0])
+			if standalone {
+				assert.NotContains(t, last.Repositories, repos[2])
+			}
+			assert.Contains(t, chains["os"][0].Repositories, repos[0])
 
 			depsolved := mockPackageSets()
 			installed := depsolved["os"].Transactions[0][0]
