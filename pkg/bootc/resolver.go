@@ -235,11 +235,12 @@ func (c *Container) ResolveInfo(variant string) (*Info, error) {
 	bootcInfo.DefaultRootFs = bootcInstallConfig.Filesystem.Root.Type
 	bootcInfo.Bootloader = bootcInstallConfig.Bootloader
 
-	unifiedKernel, err := c.UnifiedKernel()
+	inspect, err := c.inspect()
 	if err != nil {
 		return nil, err
 	}
-	bootcInfo.UnifiedKernel = unifiedKernel
+	bootcInfo.UnifiedKernel = inspect.Kernel.Unified
+	bootcInfo.InstallVarMounts = inspect.installVarMounts()
 
 	size, err := getContainerSize(c.ref, c.storeOpts)
 	if err != nil {
@@ -254,10 +255,17 @@ func (c *Container) ResolveInfo(variant string) (*Info, error) {
 // used for build containers where we don't need all the information and trying
 // to get it might break things.
 func (c *Container) ResolveBuildInfo() (*Info, error) {
+	// The build container runs "bootc install", so its bootc determines
+	// which filesystems can be mounted for the installation.
+	installVarMounts, err := c.InstallVarMounts()
+	if err != nil {
+		return nil, err
+	}
 	return &Info{
-		Imgref:  c.ref,
-		ImageID: c.id,
-		Arch:    c.Arch(),
+		Imgref:           c.ref,
+		ImageID:          c.id,
+		Arch:             c.Arch(),
+		InstallVarMounts: installVarMounts,
 	}, nil
 }
 
@@ -382,8 +390,35 @@ func (c *Container) InitrdModules(kver string) ([]string, error) {
 	return strings.Split(strings.TrimRight(string(output), "\n"), "\n"), nil
 }
 
-// UnifiedKernel finds out if the kernel inside the bootc container is unified
-func (c *Container) UnifiedKernel() (bool, error) {
+// InstallFeatureVarMounts is advertised by "bootc container inspect" when
+// "bootc install to-filesystem" initializes filesystems mounted at /var (and
+// below) from the image. Older versions leave such filesystems empty, so they
+// hide the image's /var content, and versions before 1.12 reject them.
+const InstallFeatureVarMounts = "initialize-var-mounts"
+
+// containerInspect is the subset of "bootc container inspect --json" used here.
+type containerInspect struct {
+	Kernel struct {
+		Unified bool `json:"unified"`
+	} `json:"kernel"`
+	InstallFeatures []string `json:"install-features"`
+}
+
+func (i *containerInspect) installVarMounts() bool {
+	return slices.Contains(i.InstallFeatures, InstallFeatureVarMounts)
+}
+
+func parseContainerInspect(data []byte) (*containerInspect, error) {
+	var inspect containerInspect
+	if err := json.Unmarshal(data, &inspect); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal bootc inspect : %w", err)
+	}
+	return &inspect, nil
+}
+
+// inspect runs "bootc container inspect" in the container. The result is
+// empty for bootc versions without that command.
+func (c *Container) inspect() (*containerInspect, error) {
 	args := []string{"exec"}
 	args = append(args, c.storeOpts...)
 	args = append(args, c.id, "bootc", "container", "inspect", "--json")
@@ -393,25 +428,31 @@ func (c *Container) UnifiedKernel() (bool, error) {
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 2 {
 			// NOTE: the 'bootc container inspect' was added in version 1.12.0, which was not in RHEL-10.1.
-			// Treat exit value '2' as a non-error, since it means the command is not available and return false.
-			return false, nil
+			// Treat exit value '2' as a non-error, since it means the command is not available.
+			return &containerInspect{}, nil
 		}
-		return false, fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
+		return nil, fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
 	}
+	return parseContainerInspect(output)
+}
 
-	var bootcInspect struct {
-		Kargs  []string `json:"kargs"`
-		Kernel struct {
-			Version string `json:"version"`
-			Unified bool   `json:"unified"`
-		} `json:"kernel"`
+// UnifiedKernel finds out if the kernel inside the bootc container is unified
+func (c *Container) UnifiedKernel() (bool, error) {
+	inspect, err := c.inspect()
+	if err != nil {
+		return false, err
 	}
+	return inspect.Kernel.Unified, nil
+}
 
-	if err := json.Unmarshal(output, &bootcInspect); err != nil {
-		return false, fmt.Errorf("failed to unmarshal bootc inspect : %w", err)
+// InstallVarMounts finds out if the bootc inside the container initializes
+// filesystems mounted at /var (and below) during "bootc install to-filesystem".
+func (c *Container) InstallVarMounts() (bool, error) {
+	inspect, err := c.inspect()
+	if err != nil {
+		return false, err
 	}
-
-	return bootcInspect.Kernel.Unified, nil
+	return inspect.installVarMounts(), nil
 }
 
 func findImageIdFor(cntId, ref string, extraOpts []string) (string, error) {
