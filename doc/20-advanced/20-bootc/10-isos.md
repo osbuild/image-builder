@@ -1,6 +1,6 @@
 # ISOs
 
-## Generic
+## generic-iso
 
 `image-builder` can build ISOs out of bootable containers. The image type to use to build ISOs is the `generic-iso` image type. `image-builder` takes the bootable container and explodes the relevant parts to put them into the correct places on the ISO this means that there is a small contract in place on what `image-builder` expects to exist in your bootable container:
 
@@ -196,6 +196,94 @@ sudo image-builder build --bootc-ref localhost/iso --bootc-default-fs ext4 gener
 > *A `bootc`-system installed through Anaconda will fail to start the `systemd-remount-fs.service`. See [here](https://forge.fedoraproject.org/atomic-desktops/tracker/issues/72#issuecomment-593808) and [here](https://bugzilla.redhat.com/show_bug.cgi?id=2332319) for more information.*
 
 For more examples, including for other operating systems, you can take a look at [this demonstration repository](github.com/osbuild/bootc-foundry). The [bootc-foundry repository](https://github.com/osbuild/bootc-foundry) may also be of interest.
+
+## ostree-iso
+
+The `ostree-iso` image is similar to the `pxe-tar-xz` image where the root
+filesystem is an ostree commit created from the bootc image specified with
+`--bootc-ref`. It is just wrapped up in a bootable iso. You can customize it
+with blueprints, add a payload with `--bootc-installer-payload-ref` or by
+running podman in the Containerfile.
+
+It has the same requirements on the initrd as the `generic-iso`, otherwise it
+will not boot. `image-builder` will inspect the initrd's module list before
+starting the build and return an error if you have not included all the needed
+modules.
+
+### Example Containerfile
+
+This container file builds a simple bootable iso with nothing extra.
+
+```Dockerfile
+FROM quay.io/fedora/fedora-bootc:rawhide
+
+# these are necessary build tools. if you use a separate build container then
+# these tools should be installed there
+RUN dnf install -qy \
+    grub2-efi-*-cdboot \
+    dracut-live \
+    erofs-utils \
+    implantisomd5 \
+    shim \
+    xorrisofs
+RUN dnf clean all
+RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
+
+# Override using composefs for ostree (it is incompatible with the erofs rootfs)
+RUN cat <<EOF > /usr/lib/ostree/prepare-root.conf
+[composefs]
+enabled = no
+[sysroot]
+readonly = true
+EOF
+
+# Include the dmsquash-live module in the initramfs
+RUN cat <<EOF > /usr/lib/dracut/dracut.conf.d/40-iso.conf
+compress="xz"
+add_dracutmodules+=" qemu qemu-net livenet dmsquash-live "
+early_microcode="no"
+EOF
+
+# Rebuild the initrd
+RUN set -xe; kver=$(ls /usr/lib/modules); env DRACUT_NO_XATTR=1 dracut -vf /usr/lib/modules/$kver/initramfs.img "$kver"
+
+# ---
+
+# some configuration for our ISO
+
+RUN mkdir -p /usr/lib/image-builder/bootc
+
+RUN cat <<EOF > /usr/lib/image-builder/bootc/iso.yaml
+label: "Fedora"
+kernel_args:
+  - console=ttyS0
+grub2:
+  timeout: 5
+  entries:
+    - name: "Fedora"
+      linux: \${kernelpath} \${root}
+      initrd: \${initrdpath}
+EOF
+
+# Disable services that won't work on an iso
+RUN systemctl mask \
+    bootc-generic-growpart.service \
+    bootc-publish-rhsm-facts.service \
+    bootloader-update.service \
+    rpm-ostree-fix-shadow-mode.service
+```
+
+You can then build this into an ISO:
+```
+sudo podman build -t localhost/simple-iso -f Containerfile
+sudo image-builder build --bootc-ref localhost/simple-iso --bootc-default-fs ext4 ostree-iso
+```
+
+If a `--bootc-installer-payload-ref` argument is optionally passed to
+`image-builder` when building a `ostree-iso` then the container reference is
+copied from the hosts container storage to `/var/lib/containers/storage` in the
+erofs filesystem. It can then be used from the booted iso,
+eg. `podman run --rm -it fedora:latest`
 
 ## Historical
 
