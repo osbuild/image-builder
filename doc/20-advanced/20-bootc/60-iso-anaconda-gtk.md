@@ -1,6 +1,6 @@
-# Generating a Fedora 45 Live ISO with Anaconda for bootc Image Installation
+# Generating a Fedora 45 Live ISO with Legacy Anaconda GTK for bootc Image Installation
 
-The `bootc-image-builder` project has been deprecated in favor of the unified `image-builder` tool. This document details the process of creating a Fedora Live ISO with the Anaconda installer to install `bootc` images using the new `bootc-generic-iso` method in `image-builder`.
+The `bootc-image-builder` project has been deprecated in favor of the unified `image-builder` tool. This document details the process of creating a Fedora Live ISO with the Anaconda GTK (legacy) installer to install `bootc` images using the new `bootc-generic-iso` method in `image-builder`.
 
 Below is a `Containerfile` that generates a local container image used to build a Fedora 45 ISO with your custom `bootc` image. This documentation was tested specifically on Fedora 45. For other versions, the legacy `bootc-image-builder` utility still works, and this workflow may also work on Fedora 44.
 
@@ -8,8 +8,10 @@ The `Containerfile` was obtained from [https://osbuild.org/docs/developer-guide/
 
 ## Containerfile
 
-```
+```dockerfile
 FROM quay.io/fedora/fedora-bootc:45
+
+ARG CONTAINER_NAME=localhost/my-bootc-image:latest
 
 # Installation of installer tools and boot media
 RUN dnf5 install -qy \
@@ -43,9 +45,8 @@ grub2:
 EOT
 
 # Enables bootc installation mode in ISO's Anaconda (this is where kickstart gets fetched)
-COPY <<EOT /usr/share/anaconda/interactive-defaults.ks
-bootc --source-imgref registry:IMAGE-NAME --target-imgref IMAGE-NAME
-EOT
+RUN mkdir -p /usr/share/anaconda && \
+    echo "bootc --source-imgref registry:${CONTAINER_NAME} --target-imgref ${CONTAINER_NAME}" > /usr/share/anaconda/interactive-defaults.ks
 
 # Anaconda environment adjustments (with DNF5 path)
 RUN echo "install:x:0:0:root:/root:/usr/libexec/anaconda/run-anaconda" >> /etc/passwd && \
@@ -86,25 +87,20 @@ EOT
 
 ## Build Instructions
 
-### Step 1: Update the Containerfile with Your bootc Image
+### Step 1: Build the Container Image
 
-In the `Containerfile` above, locate the following line:
+Build the container image passing your target container image via `--build-arg CONTAINER_NAME`:
 
-```
-bootc --source-imgref registry:IMAGE-NAME --target-imgref "IMAGE-NAME"
-```
-
-Replace `IMAGE-NAME` with your custom `bootc` image in both places. Then, build the container image:
-
-```
-sudo podman build -t localhost/bootc-generic-iso-f45:latest -f Containerfile
+```bash
+sudo podman build -t localhost/bootc-generic-iso-f45:latest \
+        --build-arg CONTAINER_NAME=your-container -f Containerfile
 ```
 
 ### Step 2: Generate the Installer ISO
 
 After building the container image, use it to generate the Anaconda installer ISO for your Fedora 45 `bootc` image (requires `image-builder` to be installed):
 
-```
+```bash
 sudo image-builder build \
   --bootc-ref localhost/bootc-generic-iso-f45:latest \
   --bootc-default-fs ext4 \
