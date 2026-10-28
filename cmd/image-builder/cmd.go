@@ -464,10 +464,6 @@ func setupTaskCmd() (*cobra.Command, error) {
 	return taskCmd, nil
 }
 
-func noop(_ *cobra.Command, _ []string) error {
-	return nil
-}
-
 func setupTaskInitCmd() (*cobra.Command, error) {
 	taskInitCmd := &cobra.Command{
 		Use:          "init <working directory>",
@@ -509,7 +505,10 @@ func setupTaskBuildCmd() *cobra.Command {
 		Short:        "Build the image using the manifest and all other resources for this task",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
-		RunE:         noop,
+		RunE:         cmdTaskBuild,
 	}
+
+	taskBuildCmd.Flags().String("format", "", "Output in a specific format (json)")
+	progressFlag(taskBuildCmd)
 	return taskBuildCmd
 }
