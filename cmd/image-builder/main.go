@@ -1198,6 +1198,57 @@ func cmdTaskPrefetch(cmd *cobra.Command, args []string) error {
 	return progress.RunOSBuild(pbar, mf, nil, &opts)
 }
 
+func cmdTaskBuild(cmd *cobra.Command, args []string) error {
+	taskdir := args[0]
+
+	manifestPath := filepath.Join(taskdir, "manifest.json")
+	manifest, err := os.ReadFile(manifestPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("manifest not found in %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
+	}
+
+	cachedir := filepath.Join(taskdir, "cache")
+
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+
+	pbar, err := progressFromCmd(cmd, progress.ProgressConfig{
+		FilePath: filepath.Join(taskdir, "build.progress"),
+		WithMsg:  true,
+	})
+	if err != nil {
+		return err
+	}
+
+	pbar.Start()
+	defer pbar.Stop()
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		pbar.Stop()
+	}()
+
+	pbar.SetPulseMsgf("Image building step")
+	buildOpts := &progress.OSBuildOptions{
+		OutputDir:  taskdir,
+		StoreDir:   cachedir,
+		JSONOutput: format == "json",
+	}
+	var exports []string // TODO: must be communicated from init
+	if err := progress.RunOSBuild(pbar, manifest, exports, buildOpts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func run() error {
 	// Initialize console logger (stderr, no prefix)
 	log.SetFlags(0)
