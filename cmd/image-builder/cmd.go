@@ -477,7 +477,7 @@ func setupTaskInitCmd() (*cobra.Command, error) {
 		Short:        "Initialise a working directory for a multi-step build task with a manifest and related metadata",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
-		RunE:         noop,
+		RunE:         cmdTaskInit,
 	}
 	if err := manifestFlags(taskInitCmd); err != nil {
 		return nil, err

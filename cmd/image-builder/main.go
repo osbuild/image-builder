@@ -27,6 +27,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
+	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/progress"
@@ -1059,6 +1060,73 @@ func cmdPrefetch(cmd *cobra.Command, args []string) error {
 		JSONOutput: jsonFmt,
 	}
 	return progress.RunOSBuild(pbar, mf, nil, &opts)
+}
+
+// Returns nil if we can write to the given directory.
+// The path must exist and be a directory.
+func checkPathRW(path string) error {
+	if pathstat, err := os.Stat(path); err != nil { // return on any error, not just not-exist
+		return err
+	} else if !pathstat.IsDir() {
+		return fmt.Errorf("%q already exists and is not a directory", path)
+	}
+
+	checkfilepath := filepath.Join(path, ".image-builder-write-check")
+	checkfile, err := os.Create(checkfilepath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := checkfile.Close(); err != nil {
+			olog.Printf("error closing write-check file %q: %s", checkfilepath, err)
+		}
+		if err := os.Remove(checkfilepath); err != nil {
+			olog.Printf("error deleting write-check file %q: %s", checkfilepath, err)
+		}
+	}()
+
+	return nil
+}
+
+func cmdTaskInit(cmd *cobra.Command, args []string) error {
+	workdir := args[0]
+	// create the working directory immediately
+	if err := os.MkdirAll(workdir, 0o770); err != nil {
+		return fmt.Errorf("failed creating working directory %q: %w", workdir, err)
+	}
+
+	// but error out if it's not writeable
+	if err := checkPathRW(workdir); err != nil {
+		return fmt.Errorf("read-write check on %q failed: %s", workdir, err)
+	}
+
+	imgType, err := cmd.Flags().GetString("image-type")
+	if err != nil {
+		return err
+	}
+
+	img, err := getImage(cmd, imgType)
+	if err != nil {
+		return err
+	}
+	opts := &cmdManifestWrapperOptions{
+		useBootstrapIfNeeded: true,
+	}
+	pbar, err := progress.New("", progress.ProgressConfig{})
+	if err != nil {
+		return err
+	}
+	mf, err := generateManifest(pbar, cmd, args, img, io.Discard, opts)
+	if err != nil {
+		return err
+	}
+
+	manifestPath := filepath.Join(workdir, "manifest.json")
+	if err := os.WriteFile(manifestPath, mf, 0o660); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func run() error {
