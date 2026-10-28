@@ -359,7 +359,7 @@ type cmdManifestWrapperOptions struct {
 var manifestgenDepsolver manifestgen.DepsolveFunc
 var manifestgenContainerResolver manifestgen.ContainerResolverFunc
 
-func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
+func getImage(cmd *cobra.Command, imageType string) (*imagefilter.Result, error) {
 	repoDir, err := cmd.Flags().GetString("force-repo-dir")
 	if err != nil {
 		return nil, err
@@ -406,7 +406,6 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	imgTypeStr := args[0]
 
 	if bootcVariant != "" && bootcRef == "" {
 		return nil, fmt.Errorf("cannot use --bootc-variant without --bootc-ref")
@@ -417,8 +416,8 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		// The behavior of anaconda-iso without special mTLS setup is different
 		// from bib so instead of introducing subtle incompatibilities just error
 		// here
-		if imgTypeStr == "anaconda-iso" || imgTypeStr == "iso" {
-			return nil, fmt.Errorf(`image type bootc %q is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`, imgTypeStr)
+		if imageType == "anaconda-iso" || imageType == "iso" {
+			return nil, fmt.Errorf(`image type bootc %q is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`, imageType)
 		}
 		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef, bootcVariant)
 		if err != nil {
@@ -465,7 +464,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		if err != nil {
 			return nil, err
 		}
-		imgType, err := archi.GetImageType(imgTypeStr)
+		imgType, err := archi.GetImageType(imageType)
 		if err != nil {
 			return nil, err
 		}
@@ -493,7 +492,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 			ForceRepos:   forceRepos,
 			ForceDefsDir: forceDefsDir,
 		}
-		img, err = getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
+		img, err = getOneImage(distroStr, imageType, archStr, repoOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -748,7 +747,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	img, err := getImage(cmd, args)
+	img, err := getImage(cmd, args[0])
 	if err != nil {
 		return err
 	}
@@ -833,7 +832,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	img, err := getImage(cmd, args)
+	img, err := getImage(cmd, args[0])
 	if err != nil {
 		return err
 	}
