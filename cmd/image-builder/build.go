@@ -77,34 +77,10 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 	if err := progress.RunOSBuild(pbar, osbuildManifest, exports, osbuildOpts); err != nil {
 		return nil, err
 	}
-	// Rename *sigh*, see https://github.com/osbuild/image-builder/pull/1039
-	// for my preferred way. Every frontend to images has to duplicate
-	// similar code like this.
-	outputData := outputTmplDataFor(res)
-	outputTmpl := defaultOutputTmpl
-	if opts.OutputBasename != "" {
-		outputTmpl = opts.OutputBasename
-	}
 
-	// Multiple export pipelines from the same extra share a base name;
-	// they must produce files with different extensions to avoid collisions.
-	names := map[string]string{exports[0]: basename}
-	for _, export := range exports[1:] {
-		data := outputData
-		ref, ok := extraRefs[export]
-		if !ok {
-			// getImage rejects multiple exports unless --with-extra is set,
-			// and ExportsWithExtras populates extraRefs for every pipeline
-			// it adds, so this should never be reached.
-			return nil, fmt.Errorf("unexpected export pipeline %q without extra reference", export)
-		}
-		data.Extra.Type = ref.Type
-		data.Extra.Name = ref.Name
-		name, err := expandOutputTmpl(outputTmpl, data)
-		if err != nil {
-			return nil, err
-		}
-		names[export] = name
+	names, err := resolveExportFilenames(res, exports, opts.OutputBasename, basename, extraRefs)
+	if err != nil {
+		return nil, err
 	}
 
 	var outputPaths []string
@@ -131,4 +107,34 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 	}
 
 	return outputPaths, nil
+}
+
+func resolveExportFilenames(res *imagefilter.Result, exports []string, outputBasename string, basename string, extraRefs map[string]distro.ExtraRef) (map[string]string, error) {
+	outputData := outputTmplDataFor(res)
+	outputTmpl := defaultOutputTmpl
+	if outputBasename != "" {
+		outputTmpl = outputBasename
+	}
+
+	// Multiple export pipelines from the same extra share a base name;
+	// they must produce files with different extensions to avoid collisions.
+	names := map[string]string{exports[0]: basename}
+	for _, export := range exports[1:] {
+		data := outputData
+		ref, ok := extraRefs[export]
+		if !ok {
+			// getImage rejects multiple exports unless --with-extra is set,
+			// and ExportsWithExtras populates extraRefs for every pipeline
+			// it adds, so this should never be reached.
+			return nil, fmt.Errorf("unexpected export pipeline %q without extra reference", export)
+		}
+		data.Extra.Type = ref.Type
+		data.Extra.Name = ref.Name
+		name, err := expandOutputTmpl(outputTmpl, data)
+		if err != nil {
+			return nil, err
+		}
+		names[export] = name
+	}
+	return names, nil
 }
