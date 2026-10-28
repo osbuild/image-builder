@@ -473,10 +473,11 @@ func noop(_ *cobra.Command, _ []string) error {
 
 func setupTaskInitCmd() (*cobra.Command, error) {
 	taskInitCmd := &cobra.Command{
-		Use:   "init <working directory>",
-		Short: "Initialise a working directory for a multi-step build task with a manifest and related metadata",
-		Args:  cobra.ExactArgs(1),
-		RunE:  noop,
+		Use:          "init <working directory>",
+		Short:        "Initialise a working directory for a multi-step build task with a manifest and related metadata",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         noop,
 	}
 	if err := manifestFlags(taskInitCmd); err != nil {
 		return nil, err
@@ -495,30 +496,33 @@ func setupTaskInitCmd() (*cobra.Command, error) {
 
 func setupTaskPrefetchCmd() *cobra.Command {
 	taskPrefetchCmd := &cobra.Command{
-		Use:   "prefetch <working directory>",
-		Short: "Fetch all sources defined in the manifest in the working directory and prepare the osbuild store for this task",
-		Args:  cobra.ExactArgs(1),
-		RunE:  noop,
+		Use:          "prefetch <working directory>",
+		Short:        "Fetch all sources defined in the manifest in the working directory and prepare the osbuild store for this task",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         noop,
 	}
 	return taskPrefetchCmd
 }
 
 func setupTaskBuildCmd() *cobra.Command {
 	taskBuildCmd := &cobra.Command{
-		Use:   "build-image <working directory>",
-		Short: "Build the image using the manifest and all other resources for this task",
-		Args:  cobra.ExactArgs(1),
-		RunE:  noop,
+		Use:          "build-image <working directory>",
+		Short:        "Build the image using the manifest and all other resources for this task",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         noop,
 	}
 	return taskBuildCmd
 }
 
 func setupTaskUploadCmd() *cobra.Command {
 	taskBuildCmd := &cobra.Command{
-		Use:   "upload-image <working directory>",
-		Short: "Upload the image built by this task to the appropriate cloud provider",
-		Args:  cobra.ExactArgs(1),
-		RunE:  noop,
+		Use:          "upload-image <working directory>",
+		Short:        "Upload the image built by this task to the appropriate cloud provider",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         noop,
 	}
 	return taskBuildCmd
 }
