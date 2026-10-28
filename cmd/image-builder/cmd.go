@@ -491,6 +491,8 @@ func setupTaskInitCmd() (*cobra.Command, error) {
 	if err := taskInitCmd.MarkFlagRequired("image-type"); err != nil {
 		return nil, err
 	}
+
+	taskInitCmd.Flags().String("output-name", "", "set specific output basename")
 	return taskInitCmd, nil
 }
 

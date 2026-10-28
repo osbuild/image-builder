@@ -1089,7 +1089,8 @@ func checkPathRW(path string) error {
 }
 
 type taskInfo struct {
-	Exports []string `json:"exports"`
+	Exports        []string `json:"exports"`
+	OutputBasename string   `json:"basename"`
 }
 
 func cmdTaskInit(cmd *cobra.Command, args []string) error {
@@ -1143,9 +1144,16 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		}
 		exports = allExports
 	}
+
+	outputBasename, err := cmd.Flags().GetString("output-name")
+	if err != nil {
+		return err
+	}
+
 	taskInfoPath := filepath.Join(workdir, "task.json")
 	ti := taskInfo{
-		Exports: exports,
+		Exports:        exports,
+		OutputBasename: outputBasename,
 	}
 	tijson, err := json.MarshalIndent(ti, "", "  ")
 	if err != nil {
