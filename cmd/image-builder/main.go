@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"text/template"
@@ -1090,7 +1091,22 @@ func checkPathRW(path string) error {
 }
 
 type taskInfo struct {
-	Exports []string `json:"exports"`
+	// Names of pipelines to export when building along with the desired file
+	// or directory name for the artifact of each pipeline
+	Exports map[string]string `json:"exports"`
+
+	// Template for the names of output artifacts (image, extras, buildlog,
+	// metrics, etc)
+	OutputBasename string `json:"basename"`
+
+	// Write the log output from the build to a file
+	Buildlog bool `json:"buildlog"`
+
+	// Print timing information at the end of the build
+	Metrics bool `json:"metrics"`
+
+	// Run the osbuild pipeline in a virtual machine
+	InVM bool `json:"invm"`
 }
 
 func cmdTaskInit(cmd *cobra.Command, args []string) error {
@@ -1126,26 +1142,63 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	withExtras, _ := cmd.Flags().GetStringArray("with-extra")
-	exports := img.ImgType.Exports()
-	if len(img.ImgType.Exports()) > 1 && len(withExtras) == 0 {
-		name, _ := basenameFor(img, "")
-		return fmt.Errorf("image %q has multiple exports: this is currently unsupported: please report this as a bug", name)
+	withExtraPatterns, err := cmd.Flags().GetStringArray("with-extra")
+	if err != nil {
+		return err
 	}
-	if len(withExtras) > 0 {
-		resolved, err := resolveExtras(withExtras, img.ImgType.Extras())
+	extraExports, err := resolveExtras(withExtraPatterns, img.ImgType.Extras())
+	if err != nil {
+		return err
+	}
+
+	outputBasename, err := cmd.Flags().GetString("output-name")
+	if err != nil {
+		return err
+	}
+
+	writeBuildlog, err := cmd.Flags().GetBool("with-buildlog")
+	if err != nil {
+		return err
+	}
+
+	writeMetrics, err := cmd.Flags().GetBool("with-metrics")
+	if err != nil {
+		return err
+	}
+
+	invm, err := cmd.Flags().GetBool("in-vm")
+	if err != nil {
+		return err
+	}
+
+	basename, err := basenameFor(img, outputBasename)
+	if err != nil {
+		return err
+	}
+
+	exports := slices.Clone(img.ImgType.Exports())
+
+	var extraRefs map[string]distro.ExtraRef
+	if len(extraExports) > 0 {
+		var err error
+		exports, extraRefs, err = img.ImgType.ExportsWithExtras(extraExports)
 		if err != nil {
 			return err
 		}
-		allExports, _, err := img.ImgType.ExportsWithExtras(resolved)
-		if err != nil {
-			return err
-		}
-		exports = allExports
 	}
+
+	exportFilenames, err := resolveExportFilenames(img, exports, outputBasename, basename, extraRefs)
+	if err != nil {
+		return err
+	}
+
 	taskInfoPath := filepath.Join(workdir, "task.json")
 	ti := taskInfo{
-		Exports: exports,
+		Exports:        exportFilenames,
+		OutputBasename: outputBasename,
+		Buildlog:       writeBuildlog,
+		Metrics:        writeMetrics,
+		InVM:           invm,
 	}
 	tijson, err := json.Marshal(ti)
 	if err != nil {
@@ -1289,7 +1342,10 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 		StoreDir:   cachedir,
 		JSONOutput: format == "json",
 	}
-	exports := ti.Exports
+	exports := []string{}
+	for name := range ti.Exports {
+		exports = append(exports, name)
+	}
 	if err := progress.RunOSBuild(pbar, manifest, exports, buildOpts); err != nil {
 		return err
 	}
