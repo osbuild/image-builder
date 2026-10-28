@@ -1129,6 +1129,74 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func cmdTaskPrefetch(cmd *cobra.Command, args []string) error {
+	workdir := args[0]
+
+	manifestPath := filepath.Join(workdir, "manifest.json")
+
+	// Fail early if the manifest isn't readable.
+	mf, err := os.ReadFile(manifestPath)
+	if os.IsNotExist(err) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("manifest not found in %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
+	}
+
+	cachedir := filepath.Join(workdir, "cache")
+
+	// Fail early if the cache directory is not writable, instead of
+	// waiting for osbuild to fail after slow manifest generation.
+	if err := os.MkdirAll(cachedir, 0o755); err != nil {
+		return fmt.Errorf("cannot create cache directory %q: %w", cachedir, err)
+	}
+
+	// NOTE: we can't support the 'progress' option here yet because that also
+	// supports the file progress, which requires an output directory, and
+	// output directory isn't supported by the prefetch command. We can add the
+	// 'progress' flag to this subcommand after we've unified the behaviour of
+	// the two flags, either by adding an output directory or filename whenever
+	// 'progress' is supported, or by producing an error when 'progress=file'
+	// but for whatever reason that option isn't supported.
+	progressType := "auto"
+	if verbose, err := cmd.Flags().GetBool("verbose"); err != nil {
+		return err
+	} else if verbose {
+		progressType = "verbose"
+	}
+
+	var jsonFmt bool
+	if format, err := cmd.Flags().GetString("format"); err != nil {
+		return err
+	} else if format == "json" {
+		jsonFmt = true
+		progressType = "verbose" // disable progress, otherwise we don't get json output
+	}
+
+	pbar, err := progress.New(progressType, progress.ProgressConfig{WithMsg: true})
+	if err != nil {
+		// this should never happen
+		return fmt.Errorf("cannot create progress bar: %w", err)
+	}
+
+	pbar.Start()
+	defer pbar.Stop()
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		pbar.Stop()
+	}()
+
+	pbar.SetPulseMsgf("Downloading sources")
+	opts := progress.OSBuildOptions{
+		StoreDir:   cachedir,
+		JSONOutput: jsonFmt,
+	}
+	return progress.RunOSBuild(pbar, mf, nil, &opts)
+}
+
 func run() error {
 	// Initialize console logger (stderr, no prefix)
 	log.SetFlags(0)

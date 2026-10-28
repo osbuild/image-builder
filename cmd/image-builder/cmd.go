@@ -500,8 +500,11 @@ func setupTaskPrefetchCmd() *cobra.Command {
 		Short:        "Fetch all sources defined in the manifest in the working directory and prepare the osbuild store for this task",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
-		RunE:         noop,
+		RunE:         cmdTaskPrefetch,
 	}
+	taskPrefetchCmd.Flags().String("format", "", "Output in a specific format (json)")
+
+	cacheFlag(taskPrefetchCmd)
 	return taskPrefetchCmd
 }
 
