@@ -1197,6 +1197,66 @@ func cmdTaskPrefetch(cmd *cobra.Command, args []string) error {
 	return progress.RunOSBuild(pbar, mf, nil, &opts)
 }
 
+func cmdTaskBuild(cmd *cobra.Command, args []string) error {
+	workdir := args[0]
+
+	manifestPath := filepath.Join(workdir, "manifest.json")
+	manifest, err := os.ReadFile(manifestPath)
+	if os.IsNotExist(err) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("manifest not found in %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
+	}
+
+	cachedir := filepath.Join(workdir, "cache")
+
+	outputdir := filepath.Join(workdir, "build")
+	// Fail early if the output directory is not writable, instead of waiting
+	// for osbuild to fail after slow manifest generation.
+	if err := os.MkdirAll(outputdir, 0o755); err != nil {
+		return fmt.Errorf("cannot create cache directory %q: %w", cachedir, err)
+	}
+
+	basename := filepath.Join(outputdir, "image")
+
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+
+	pbar, err := progressFromCmd(cmd, progress.ProgressConfig{
+		FilePath: filepath.Join(outputdir, fmt.Sprintf("%s.progress", basename)),
+		WithMsg:  true,
+	})
+	if err != nil {
+		return err
+	}
+
+	pbar.Start()
+	defer pbar.Stop()
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		pbar.Stop()
+	}()
+
+	pbar.SetPulseMsgf("Image building step")
+	buildOpts := &progress.OSBuildOptions{
+		OutputDir:  outputdir,
+		StoreDir:   cachedir,
+		JSONOutput: format == "json",
+	}
+	var exports []string // TODO: must be communicated from init
+	if err := progress.RunOSBuild(pbar, manifest, exports, buildOpts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func run() error {
 	// Initialize console logger (stderr, no prefix)
 	log.SetFlags(0)

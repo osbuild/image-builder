@@ -514,8 +514,11 @@ func setupTaskBuildCmd() *cobra.Command {
 		Short:        "Build the image using the manifest and all other resources for this task",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
-		RunE:         noop,
+		RunE:         cmdTaskBuild,
 	}
+
+	taskBuildCmd.Flags().String("format", "", "Output in a specific format (json)")
+	progressFlag(taskBuildCmd)
 	return taskBuildCmd
 }
 
