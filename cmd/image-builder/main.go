@@ -1088,6 +1088,10 @@ func checkPathRW(path string) error {
 	return nil
 }
 
+type taskInfo struct {
+	Exports []string `json:"exports"`
+}
+
 func cmdTaskInit(cmd *cobra.Command, args []string) error {
 	workdir := args[0]
 	// create the working directory immediately
@@ -1118,6 +1122,36 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 	}
 	mf, err := generateManifest(pbar, cmd, args, img, io.Discard, opts)
 	if err != nil {
+		return err
+	}
+
+	// NOTE: this might end up in the manifest instead
+	withExtras, _ := cmd.Flags().GetStringArray("with-extra")
+	exports := img.ImgType.Exports()
+	if len(img.ImgType.Exports()) > 1 && len(withExtras) == 0 {
+		name, _ := basenameFor(img, "")
+		return fmt.Errorf("image %q has multiple exports: this is currently unsupported: please report this as a bug", name)
+	}
+	if len(withExtras) > 0 {
+		resolved, err := resolveExtras(withExtras, img.ImgType.Extras())
+		if err != nil {
+			return err
+		}
+		allExports, _, err := img.ImgType.ExportsWithExtras(resolved)
+		if err != nil {
+			return err
+		}
+		exports = allExports
+	}
+	taskInfoPath := filepath.Join(workdir, "task.json")
+	ti := taskInfo{
+		Exports: exports,
+	}
+	tijson, err := json.MarshalIndent(ti, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(taskInfoPath, tijson, 0o660); err != nil {
 		return err
 	}
 
@@ -1204,10 +1238,25 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 	manifest, err := os.ReadFile(manifestPath)
 	if os.IsNotExist(err) {
 		parentCmd := cmd.Parent()
-		return fmt.Errorf("manifest not found in %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
+		return fmt.Errorf("manifest not found at %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
 	}
 	if err != nil {
 		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
+	}
+
+	taskInfoPath := filepath.Join(workdir, "task.json")
+	tijson, err := os.ReadFile(taskInfoPath)
+	if os.IsNotExist(err) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("task info not found at %q: see '%s init --help'", taskInfoPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read task info at %q: %w", taskInfoPath, err)
+	}
+
+	var ti taskInfo
+	if err := json.Unmarshal(tijson, &ti); err != nil {
+		return err
 	}
 
 	cachedir := filepath.Join(workdir, "cache")
@@ -1249,7 +1298,7 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 		StoreDir:   cachedir,
 		JSONOutput: format == "json",
 	}
-	var exports []string // TODO: must be communicated from init
+	exports := ti.Exports
 	if err := progress.RunOSBuild(pbar, manifest, exports, buildOpts); err != nil {
 		return err
 	}
