@@ -194,7 +194,7 @@ func TestKickstartStageUsers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			ksOpts, err := osbuild.NewKickstartStageOptions("/test.ks", tc.users, nil)
+			ksOpts, err := osbuild.NewKickstartStageOptions("/test.ks", tc.users, nil, nil)
 			if tc.expErr != "" {
 				assert.EqualError(err, tc.expErr)
 				return
@@ -315,6 +315,7 @@ func TestNewKickstartOptionsPlain(t *testing.T) {
 				tc.path,
 				tc.userCustomizations,
 				tc.groupCustomizations,
+				nil,
 			)
 			if tc.expErr != "" {
 				assert.EqualError(err, tc.expErr)
@@ -564,6 +565,7 @@ func TestNewKicstartStageOptionsWithLiveIMG(t *testing.T) {
 		path               string
 		userCustomizations []users.User
 		imgURL             string
+		hostname           *string
 
 		expOptions *osbuild.KickstartStageOptions
 		expErr     string
@@ -572,6 +574,19 @@ func TestNewKicstartStageOptionsWithLiveIMG(t *testing.T) {
 	testCases := map[string]testCase{
 		"empty": {
 			expErr: "org.osbuild.kickstart: kickstart path \"\" is invalid",
+		},
+		"hostname": {
+			path:     "/osbuild-test.ks",
+			hostname: common.ToPtr("MousieInAHousie"),
+			expOptions: &osbuild.KickstartStageOptions{
+				Path: "/osbuild-test.ks",
+				Network: []osbuild.NetworkOptions{
+					{
+						Device:   "link",
+						Hostname: "MousieInAHousie",
+					},
+				},
+			},
 		},
 		"user": {
 			path: "/osbuild-test.ks",
@@ -645,6 +660,7 @@ func TestNewKicstartStageOptionsWithLiveIMG(t *testing.T) {
 				tc.path,
 				tc.userCustomizations,
 				nil,
+				tc.hostname,
 				tc.imgURL,
 			)
 			if tc.expErr != "" {
