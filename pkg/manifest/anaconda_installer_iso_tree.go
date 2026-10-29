@@ -614,7 +614,8 @@ func (p *AnacondaInstallerISOTree) ostreeKickstartStages() ([]*osbuild.Stage, er
 		kickstartOptions, err = osbuild.NewKickstartStageOptions(
 			p.Kickstart.Path,
 			p.Kickstart.Users,
-			p.Kickstart.Groups)
+			p.Kickstart.Groups,
+			nil)
 	}
 
 	if err != nil {
@@ -806,6 +807,7 @@ func (p *AnacondaInstallerISOTree) tarPayloadStages() ([]*osbuild.Stage, error) 
 			p.Kickstart.Path,
 			p.Kickstart.Users,
 			p.Kickstart.Groups,
+			p.Kickstart.Hostname,
 			makeISORootPath(p.InstallerCustomizations.Payload.Path))
 
 		if err != nil {
@@ -831,7 +833,8 @@ func (p *AnacondaInstallerISOTree) netinstKickstartStages() ([]*osbuild.Stage, e
 		kickstartOptions, err := osbuild.NewKickstartStageOptions(
 			p.Kickstart.Path,
 			p.Kickstart.Users,
-			p.Kickstart.Groups)
+			p.Kickstart.Groups,
+			nil)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to create kickstart stage options: %w", err)
@@ -905,6 +908,9 @@ func (p *AnacondaInstallerISOTree) makeKickstartStages(stageOptions *osbuild.Kic
 
 		stageOptions.Network = []osbuild.NetworkOptions{
 			{BootProto: "dhcp", Device: "link", Activate: common.ToPtr(true), OnBoot: "on"},
+		}
+		if kickstartOptions.Hostname != nil {
+			stageOptions.Network[0].Hostname = *kickstartOptions.Hostname
 		}
 	}
 
