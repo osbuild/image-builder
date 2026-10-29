@@ -668,3 +668,10 @@ def test_wait_ssh_ready_timeout():
 def test_get_ci_runner_distro_for(runner, distro):
     with patch("imgtestlib.testenv.get_ci_runner_for", return_value=runner):
         assert testlib.testenv.get_ci_runner_distro_for("", "", "") == distro
+
+
+def test_gcp_os_family():
+    assert testlib.boot.gcp_os_family("rhel-8.10") == "rhel-8"
+    assert testlib.boot.gcp_os_family("rhel-9.4") == "rhel-9"
+    assert testlib.boot.gcp_os_family("rhel-10.0") == "rhel-10"
+    assert testlib.boot.gcp_os_family("fedora-44") == "fedora"

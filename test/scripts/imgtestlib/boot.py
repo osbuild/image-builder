@@ -54,6 +54,29 @@ def get_azure_config():
     return env_vars
 
 
+def get_gcp_config():
+    env_vars = {
+        "project": os.environ.get("GCP_PROJECT"),
+        "zone": os.environ.get("GCP_ZONE"),
+        "subnet": os.environ.get("GCP_SUBNET"),
+        "bucket": os.environ.get("GCP_BUCKET"),
+        "region": os.environ.get("GCP_REGION"),
+    }
+    ensure_env_vars(env_vars)
+    return env_vars
+
+
+def gcp_os_family(distro):
+    """Map distro name to osbuild-upload-gcp --os-family for guest OS features."""
+    if distro.startswith("rhel-8") or distro.startswith("centos-8"):
+        return "rhel-8"
+    if distro.startswith("rhel-10") or distro.startswith("centos-10"):
+        return "rhel-10"
+    if distro.startswith("fedora"):
+        return "fedora"
+    return "rhel-9"
+
+
 def get_wsl_config():
     azure_config = get_azure_config()
     env_vars = {
@@ -523,6 +546,50 @@ def upload_to_azure(arch, image_name, image_path):
     return result["image_id"]
 
 
+def upload_to_gcp(distro, image_name, image_path):
+    """Upload a GCE image tarball via osbuild-upload-gcp; returns the Compute image name."""
+    gcp_config = get_gcp_config()
+    object_name = f"osbuild-upload-{uuid.uuid4()}"
+    cmd = ["go", "run", "./cmd/osbuild-upload-gcp",
+           "--bucket", gcp_config["bucket"],
+           "--object", object_name,
+           "--regions", gcp_config["region"],
+           "--os-family", gcp_os_family(distro),
+           "--image-name", image_name,
+           "--image", image_path]
+    cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if cred_path:
+        cmd.extend(["--cred-path", cred_path])
+    stdout, stderr = runcmd(cmd)
+    print(stderr.decode())
+    print(stdout.decode())
+    return image_name
+
+
+def boot_gce(distro, arch, image_path, config):
+    cmd = [BASE_TEST_EXEC+arch, config]
+    make_check_host_config(arch)
+    with create_ssh_key() as (privkey, pubkey):
+        name = f"{distro}-" + str(uuid.uuid4())
+        image_name = upload_to_gcp(distro, name, image_path)
+        gcp_config = get_gcp_config()
+        with TemporaryDirectory() as tmpdir:
+            pubkey_file = os.path.join(tmpdir, "authorized_keys")
+            with open(pubkey_file, "w", encoding="utf-8") as pubkey_fp:
+                pubkey_fp.write(pubkey)
+            run_cmd = ["go", "run", "./cmd/boot-gcp", "run",
+                       "--project", gcp_config["project"],
+                       "--zone", gcp_config["zone"],
+                       "--subnet", gcp_config["subnet"],
+                       "--image", image_name,
+                       "--arch", arch,
+                       "--username", "osbuild",
+                       "--ssh-privkey", privkey,
+                       "--ssh-pubkey", pubkey_file,
+                       *cmd]
+            runcmd_nc(run_cmd)
+
+
 def boot_vhd(distro, arch, image_path, config):
     cmd = [BASE_TEST_EXEC+arch, config]
     make_check_host_config(arch)
@@ -622,6 +689,8 @@ def boot_image(search_path, build_config_path, keep_booted=False):
         boot_ami(distro, arch, image_type, image_path, build_config_path)
     elif image_type in ("vhd"):
         boot_vhd(distro, arch, image_path, build_config_path)
+    elif image_type in ("gce", "gce-rhui", "cloud-gce"):
+        boot_gce(distro, arch, image_path, build_config_path)
     elif image_type in ("wsl", "generic-wsl"):
         if distro == "fedora-41":
             print(f"{distro} {image_type} boot tests are not supported, fails on wsl import")
