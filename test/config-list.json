@@ -725,6 +725,7 @@
         "ova",
         "anaconda-iso",
         "generic-iso",
+        "ostree-iso",
         "pxe-tar-xz"
       ]
     }
@@ -745,6 +746,7 @@
         "ova",
         "anaconda-iso",
         "generic-iso",
+        "ostree-iso",
         "pxe-tar-xz"
       ]
     }
@@ -757,7 +759,8 @@
       ],
       "image-types": [
         "bootc-installer",
-        "generic-iso"
+        "generic-iso",
+        "ostree-iso"
       ]
     }
   },
@@ -777,6 +780,7 @@
         "ova",
         "anaconda-iso",
         "generic-iso",
+        "ostree-iso",
         "pxe-tar-xz"
       ]
     }
@@ -797,6 +801,7 @@
         "ova",
         "anaconda-iso",
         "generic-iso",
+        "ostree-iso",
         "pxe-tar-xz"
       ]
     }
@@ -809,7 +814,8 @@
       ],
       "image-types": [
         "bootc-installer",
-        "generic-iso"
+        "generic-iso",
+        "ostree-iso"
       ]
     }
   },

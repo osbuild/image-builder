@@ -775,6 +775,9 @@ var isoContainers = map[string][]container.Spec{
 	"os-tree": {
 		containerSpec,
 	},
+	"image": {
+		containerSpec,
+	},
 }
 
 // simplified representation of a manifest
@@ -1081,6 +1084,31 @@ func TestBootcIsoManifestSerialization(t *testing.T) {
 	assert.NoError(t, checkStages(manifestJson, expStages, nil))
 }
 
+func TestOstreeIsoManifestSerialization(t *testing.T) {
+	bd := NewTestBootcDistro(t)
+	imgType, err := bd.arches["x86_64"].GetImageType("ostree-iso")
+	assert.NoError(t, err)
+
+	bp := &blueprint.Blueprint{}
+	imgOptions := distro.ImageOptions{}
+
+	mf, _, err := imgType.Manifest(bp, imgOptions, nil, common.ToPtr(int64(0)))
+	assert.NoError(t, err)
+
+	manifestJson, err := mf.Serialize(nil, isoContainers, nil, nil, nil)
+	assert.NoError(t, err)
+
+	expStages := map[string][]string{
+		"build":        {"org.osbuild.container-deploy"},
+		"image":        {"org.osbuild.bootc.install-to-filesystem"},
+		"bootc-rootfs": {"org.osbuild.erofs"},
+		"efiboot-tree": {"org.osbuild.grub2.iso"},
+		"bootiso-tree": {"org.osbuild.ostree.grub2"},
+		"bootiso":      {"org.osbuild.xorrisofs"},
+	}
+	assert.NoError(t, checkStages(manifestJson, expStages, nil))
+}
+
 func NewTestBootcDistroAarch64(t *testing.T) *BootcDistro {
 	t.Helper()
 	distro, err := NewBootc("bootc", &bootc.Info{
@@ -1108,6 +1136,7 @@ func NewTestBootcDistroAarch64(t *testing.T) *BootcDistro {
 func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
 	type testCase struct {
 		distro          *BootcDistro
+		imageType       string
 		archName        string
 		hasGrub2Legacy  bool
 		hasGrub2Inst    bool
@@ -1116,16 +1145,36 @@ func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
 	}
 
 	testCases := map[string]testCase{
-		"x86_64": {
+		"generic-iso-x86_64": {
 			distro:          NewTestBootcDistro(t),
+			imageType:       "generic-iso",
 			archName:        "x86_64",
 			hasGrub2Legacy:  true,
 			hasGrub2Inst:    true,
 			hasGrub2MBR:     true,
 			hasEltoritoBoot: true,
 		},
-		"aarch64": {
+		"generic-iso-aarch64": {
 			distro:          NewTestBootcDistroAarch64(t),
+			imageType:       "generic-iso",
+			archName:        "aarch64",
+			hasGrub2Legacy:  false,
+			hasGrub2Inst:    false,
+			hasGrub2MBR:     false,
+			hasEltoritoBoot: false,
+		},
+		"ostree-iso-x86_64": {
+			distro:          NewTestBootcDistro(t),
+			imageType:       "ostree-iso",
+			archName:        "x86_64",
+			hasGrub2Legacy:  true,
+			hasGrub2Inst:    true,
+			hasGrub2MBR:     true,
+			hasEltoritoBoot: true,
+		},
+		"ostree-iso-aarch64": {
+			distro:          NewTestBootcDistroAarch64(t),
+			imageType:       "ostree-iso",
 			archName:        "aarch64",
 			hasGrub2Legacy:  false,
 			hasGrub2Inst:    false,
@@ -1136,7 +1185,7 @@ func TestBootcGenericIsoNoI386OnAarch64(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			imgType, err := tc.distro.arches[tc.archName].GetImageType("generic-iso")
+			imgType, err := tc.distro.arches[tc.archName].GetImageType(tc.imageType)
 			require.NoError(t, err)
 
 			mf, _, err := imgType.Manifest(&blueprint.Blueprint{}, distro.ImageOptions{}, nil, common.ToPtr(int64(0)))
