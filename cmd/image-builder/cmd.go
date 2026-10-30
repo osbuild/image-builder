@@ -126,6 +126,12 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	prefetchCmd := setupPrefetchCmd()
 	rootCmd.AddCommand(prefetchCmd)
 
+	taskCmd, err := setupTaskCmd()
+	if err != nil {
+		return nil, err
+	}
+	rootCmd.AddCommand(taskCmd)
+
 	return rootCmd, nil
 }
 
@@ -431,4 +437,100 @@ func setupPrefetchCmd() *cobra.Command {
 
 	cacheFlag(prefetchCmd)
 	return prefetchCmd
+}
+
+func setupTaskCmd() (*cobra.Command, error) {
+	desc := `A task is a single build that can be performed in multiple steps, making it possible to control each step of the build process individually. See the help for each subcommand for details.`
+	taskCmd := &cobra.Command{
+		Use:          "task",
+		Short:        "Create and manage an image build task",
+		Long:         desc,
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
+	}
+
+	taskInitCmd, err := setupTaskInitCmd()
+	if err != nil {
+		return nil, err
+	}
+	taskCmd.AddCommand(taskInitCmd)
+
+	taskPrefetchCmd := setupTaskPrefetchCmd()
+	taskCmd.AddCommand(taskPrefetchCmd)
+
+	taskBuildCmd := setupTaskBuildCmd()
+	taskCmd.AddCommand(taskBuildCmd)
+
+	taskUploadCmd := setupTaskUploadCmd()
+	taskCmd.AddCommand(taskUploadCmd)
+
+	return taskCmd, nil
+}
+
+func noop(_ *cobra.Command, _ []string) error {
+	return nil
+}
+
+func setupTaskInitCmd() (*cobra.Command, error) {
+	taskInitCmd := &cobra.Command{
+		Use:          "init <working directory>",
+		Short:        "Initialise a working directory for a multi-step build task with a manifest and related metadata",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         cmdTaskInit,
+	}
+	if err := manifestFlags(taskInitCmd); err != nil {
+		return nil, err
+	}
+
+	// The manifest command, like the build command, takes the image type as a
+	// positional argument. For task subcommands, we want the only positional
+	// argument to be the working directory, so the image-type becomes a
+	// required flag instead.
+	taskInitCmd.Flags().String("image-type", "", "the type of image to build (see 'list' command)")
+	if err := taskInitCmd.MarkFlagRequired("image-type"); err != nil {
+		return nil, err
+	}
+
+	taskInitCmd.Flags().String("output-name", "", "set specific output basename")
+	return taskInitCmd, nil
+}
+
+func setupTaskPrefetchCmd() *cobra.Command {
+	taskPrefetchCmd := &cobra.Command{
+		Use:          "prefetch <working directory>",
+		Short:        "Fetch all sources defined in the manifest in the working directory and prepare the osbuild store for this task",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         cmdTaskPrefetch,
+	}
+	taskPrefetchCmd.Flags().String("format", "", "Output in a specific format (json)")
+
+	cacheFlag(taskPrefetchCmd)
+	return taskPrefetchCmd
+}
+
+func setupTaskBuildCmd() *cobra.Command {
+	taskBuildCmd := &cobra.Command{
+		Use:          "build-image <working directory>",
+		Short:        "Build the image using the manifest and all other resources for this task",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         cmdTaskBuild,
+	}
+
+	taskBuildCmd.Flags().String("format", "", "Output in a specific format (json)")
+	progressFlag(taskBuildCmd)
+	return taskBuildCmd
+}
+
+func setupTaskUploadCmd() *cobra.Command {
+	taskBuildCmd := &cobra.Command{
+		Use:          "upload-image <working directory>",
+		Short:        "Upload the image built by this task to the appropriate cloud provider",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         noop,
+	}
+	return taskBuildCmd
 }

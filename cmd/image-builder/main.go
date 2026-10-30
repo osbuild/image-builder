@@ -27,6 +27,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
+	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/progress"
@@ -359,7 +360,7 @@ type cmdManifestWrapperOptions struct {
 var manifestgenDepsolver manifestgen.DepsolveFunc
 var manifestgenContainerResolver manifestgen.ContainerResolverFunc
 
-func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
+func getImage(cmd *cobra.Command, imageType string) (*imagefilter.Result, error) {
 	repoDir, err := cmd.Flags().GetString("force-repo-dir")
 	if err != nil {
 		return nil, err
@@ -406,7 +407,6 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	imgTypeStr := args[0]
 
 	if bootcVariant != "" && bootcRef == "" {
 		return nil, fmt.Errorf("cannot use --bootc-variant without --bootc-ref")
@@ -417,8 +417,8 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		// The behavior of anaconda-iso without special mTLS setup is different
 		// from bib so instead of introducing subtle incompatibilities just error
 		// here
-		if imgTypeStr == "anaconda-iso" || imgTypeStr == "iso" {
-			return nil, fmt.Errorf(`image type bootc %q is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`, imgTypeStr)
+		if imageType == "anaconda-iso" || imageType == "iso" {
+			return nil, fmt.Errorf(`image type bootc %q is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`, imageType)
 		}
 		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef, bootcVariant)
 		if err != nil {
@@ -465,7 +465,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		if err != nil {
 			return nil, err
 		}
-		imgType, err := archi.GetImageType(imgTypeStr)
+		imgType, err := archi.GetImageType(imageType)
 		if err != nil {
 			return nil, err
 		}
@@ -493,7 +493,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 			ForceRepos:   forceRepos,
 			ForceDefsDir: forceDefsDir,
 		}
-		img, err = getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
+		img, err = getOneImage(distroStr, imageType, archStr, repoOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -748,7 +748,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	img, err := getImage(cmd, args)
+	img, err := getImage(cmd, args[0])
 	if err != nil {
 		return err
 	}
@@ -833,7 +833,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	img, err := getImage(cmd, args)
+	img, err := getImage(cmd, args[0])
 	if err != nil {
 		return err
 	}
@@ -1060,6 +1060,258 @@ func cmdPrefetch(cmd *cobra.Command, args []string) error {
 		JSONOutput: jsonFmt,
 	}
 	return progress.RunOSBuild(pbar, mf, nil, &opts)
+}
+
+// Returns nil if we can write to the given directory.
+// The path must exist and be a directory.
+func checkPathRW(path string) error {
+	if pathstat, err := os.Stat(path); err != nil { // return on any error, not just not-exist
+		return err
+	} else if !pathstat.IsDir() {
+		return fmt.Errorf("%q already exists and is not a directory", path)
+	}
+
+	checkfilepath := filepath.Join(path, ".image-builder-write-check")
+	checkfile, err := os.Create(checkfilepath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := checkfile.Close(); err != nil {
+			olog.Printf("error closing write-check file %q: %s", checkfilepath, err)
+		}
+		if err := os.Remove(checkfilepath); err != nil {
+			olog.Printf("error deleting write-check file %q: %s", checkfilepath, err)
+		}
+	}()
+
+	return nil
+}
+
+type taskInfo struct {
+	Exports        []string `json:"exports"`
+	OutputBasename string   `json:"basename"`
+}
+
+func cmdTaskInit(cmd *cobra.Command, args []string) error {
+	workdir := args[0]
+	// create the working directory immediately
+	if err := os.MkdirAll(workdir, 0o770); err != nil {
+		return fmt.Errorf("failed creating working directory %q: %w", workdir, err)
+	}
+
+	// but error out if it's not writeable
+	if err := checkPathRW(workdir); err != nil {
+		return fmt.Errorf("read-write check on %q failed: %s", workdir, err)
+	}
+
+	imgType, err := cmd.Flags().GetString("image-type")
+	if err != nil {
+		return err
+	}
+
+	img, err := getImage(cmd, imgType)
+	if err != nil {
+		return err
+	}
+	opts := &cmdManifestWrapperOptions{
+		useBootstrapIfNeeded: true,
+	}
+	pbar, err := progress.New("", progress.ProgressConfig{})
+	if err != nil {
+		return err
+	}
+	mf, err := generateManifest(pbar, cmd, args, img, io.Discard, opts)
+	if err != nil {
+		return err
+	}
+
+	// NOTE: this might end up in the manifest instead
+	withExtras, _ := cmd.Flags().GetStringArray("with-extra")
+	exports := img.ImgType.Exports()
+	if len(img.ImgType.Exports()) > 1 && len(withExtras) == 0 {
+		name, _ := basenameFor(img, "")
+		return fmt.Errorf("image %q has multiple exports: this is currently unsupported: please report this as a bug", name)
+	}
+	if len(withExtras) > 0 {
+		resolved, err := resolveExtras(withExtras, img.ImgType.Extras())
+		if err != nil {
+			return err
+		}
+		allExports, _, err := img.ImgType.ExportsWithExtras(resolved)
+		if err != nil {
+			return err
+		}
+		exports = allExports
+	}
+
+	outputBasename, err := cmd.Flags().GetString("output-name")
+	if err != nil {
+		return err
+	}
+
+	taskInfoPath := filepath.Join(workdir, "task.json")
+	ti := taskInfo{
+		Exports:        exports,
+		OutputBasename: outputBasename,
+	}
+	tijson, err := json.MarshalIndent(ti, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(taskInfoPath, tijson, 0o660); err != nil {
+		return err
+	}
+
+	manifestPath := filepath.Join(workdir, "manifest.json")
+	if err := os.WriteFile(manifestPath, mf, 0o660); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func cmdTaskPrefetch(cmd *cobra.Command, args []string) error {
+	workdir := args[0]
+
+	manifestPath := filepath.Join(workdir, "manifest.json")
+
+	// Fail early if the manifest isn't readable.
+	mf, err := os.ReadFile(manifestPath)
+	if os.IsNotExist(err) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("manifest not found in %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
+	}
+
+	cachedir := filepath.Join(workdir, "cache")
+
+	// Fail early if the cache directory is not writable, instead of
+	// waiting for osbuild to fail after slow manifest generation.
+	if err := os.MkdirAll(cachedir, 0o755); err != nil {
+		return fmt.Errorf("cannot create cache directory %q: %w", cachedir, err)
+	}
+
+	// NOTE: we can't support the 'progress' option here yet because that also
+	// supports the file progress, which requires an output directory, and
+	// output directory isn't supported by the prefetch command. We can add the
+	// 'progress' flag to this subcommand after we've unified the behaviour of
+	// the two flags, either by adding an output directory or filename whenever
+	// 'progress' is supported, or by producing an error when 'progress=file'
+	// but for whatever reason that option isn't supported.
+	progressType := "auto"
+	if verbose, err := cmd.Flags().GetBool("verbose"); err != nil {
+		return err
+	} else if verbose {
+		progressType = "verbose"
+	}
+
+	var jsonFmt bool
+	if format, err := cmd.Flags().GetString("format"); err != nil {
+		return err
+	} else if format == "json" {
+		jsonFmt = true
+		progressType = "verbose" // disable progress, otherwise we don't get json output
+	}
+
+	pbar, err := progress.New(progressType, progress.ProgressConfig{WithMsg: true})
+	if err != nil {
+		// this should never happen
+		return fmt.Errorf("cannot create progress bar: %w", err)
+	}
+
+	pbar.Start()
+	defer pbar.Stop()
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		pbar.Stop()
+	}()
+
+	pbar.SetPulseMsgf("Downloading sources")
+	opts := progress.OSBuildOptions{
+		StoreDir:   cachedir,
+		JSONOutput: jsonFmt,
+	}
+	return progress.RunOSBuild(pbar, mf, nil, &opts)
+}
+
+func cmdTaskBuild(cmd *cobra.Command, args []string) error {
+	workdir := args[0]
+
+	manifestPath := filepath.Join(workdir, "manifest.json")
+	manifest, err := os.ReadFile(manifestPath)
+	if os.IsNotExist(err) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("manifest not found at %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
+	}
+
+	taskInfoPath := filepath.Join(workdir, "task.json")
+	tijson, err := os.ReadFile(taskInfoPath)
+	if os.IsNotExist(err) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("task info not found at %q: see '%s init --help'", taskInfoPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read task info at %q: %w", taskInfoPath, err)
+	}
+
+	var ti taskInfo
+	if err := json.Unmarshal(tijson, &ti); err != nil {
+		return err
+	}
+
+	cachedir := filepath.Join(workdir, "cache")
+
+	outputdir := filepath.Join(workdir, "build")
+	// Fail early if the output directory is not writable, instead of waiting
+	// for osbuild to fail after slow manifest generation.
+	if err := os.MkdirAll(outputdir, 0o755); err != nil {
+		return fmt.Errorf("cannot create cache directory %q: %w", cachedir, err)
+	}
+
+	basename := filepath.Join(outputdir, "image")
+
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+
+	pbar, err := progressFromCmd(cmd, progress.ProgressConfig{
+		FilePath: filepath.Join(outputdir, fmt.Sprintf("%s.progress", basename)),
+		WithMsg:  true,
+	})
+	if err != nil {
+		return err
+	}
+
+	pbar.Start()
+	defer pbar.Stop()
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		pbar.Stop()
+	}()
+
+	pbar.SetPulseMsgf("Image building step")
+	buildOpts := &progress.OSBuildOptions{
+		OutputDir:  outputdir,
+		StoreDir:   cachedir,
+		JSONOutput: format == "json",
+	}
+	exports := ti.Exports
+	if err := progress.RunOSBuild(pbar, manifest, exports, buildOpts); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func run() error {
