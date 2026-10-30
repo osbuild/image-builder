@@ -1,13 +1,82 @@
 package distroidparser
 
 import (
+	"io/fs"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/defs"
 )
+
+// countingFS counts Open calls. Parse reads distros.yaml through the
+// loader filesystem, so an unchanged count means the result came from
+// the cache instead of the definitions.
+type countingFS struct {
+	fs.FS
+	opens int
+}
+
+func (c *countingFS) Open(name string) (fs.File, error) {
+	c.opens++
+	return c.FS.Open(name)
+}
+
+func TestParseReusesResult(t *testing.T) {
+	fsys := &countingFS{FS: fstest.MapFS{
+		"distros.yaml": &fstest.MapFile{Data: []byte("distros:\n - match: 'test-[0-9]+'\n")},
+	}}
+	parser := NewParserWithLoader(defs.NewLoader(fsys))
+
+	id, err := parser.Parse("test-1")
+	require.NoError(t, err)
+	require.Equal(t, 1, id.MajorVersion)
+	opens := fsys.opens
+	require.Positive(t, opens)
+
+	// The caller must not be able to change the cached value.
+	id.MajorVersion = 99
+
+	id, err = parser.Parse("test-1")
+	require.NoError(t, err)
+	require.Equal(t, 1, id.MajorVersion)
+	require.Equal(t, opens, fsys.opens)
+}
+
+func TestParseDoesNotCacheUnknown(t *testing.T) {
+	fsys := &countingFS{FS: fstest.MapFS{
+		"distros.yaml": &fstest.MapFile{Data: []byte("distros:\n - name: centos-9\n - match: 'test-[0-9]+'\n")},
+	}}
+	parser := NewParserWithLoader(defs.NewLoader(fsys))
+
+	id, err := parser.Parse("centos-9")
+	require.NoError(t, err)
+	require.Equal(t, "centos", id.Name)
+	opens := fsys.opens
+	// A literal distro name is recognized and cached.
+	_, err = parser.Parse("centos-9")
+	require.NoError(t, err)
+	require.Equal(t, opens, fsys.opens)
+
+	// A well-formed name that no definition accepts is not cached.
+	id, err = parser.Parse("unknown-1")
+	require.NoError(t, err)
+	require.Equal(t, "unknown", id.Name)
+	opens = fsys.opens
+	_, err = parser.Parse("unknown-1")
+	require.NoError(t, err)
+	require.Greater(t, fsys.opens, opens)
+
+	// An invalid distro string is not cached either.
+	_, err = parser.Parse("unknown")
+	require.Error(t, err)
+	opens = fsys.opens
+	_, err = parser.Parse("unknown")
+	require.Error(t, err)
+	require.Greater(t, fsys.opens, opens)
+}
 
 func TestDefaltParser(t *testing.T) {
 	type testCase struct {
