@@ -195,7 +195,7 @@ sudo image-builder build --bootc-ref localhost/iso --bootc-default-fs ext4 gener
 > [!WARNING]
 > *A `bootc`-system installed through Anaconda will fail to start the `systemd-remount-fs.service`. See [here](https://forge.fedoraproject.org/atomic-desktops/tracker/issues/72#issuecomment-593808) and [here](https://bugzilla.redhat.com/show_bug.cgi?id=2332319) for more information.*
 
-For more examples, including for other operating systems, you can take a look at [this demonstration repository](github.com/osbuild/bootc-foundry). The [bootc-foundry repository](https://github.com/osbuild/bootc-foundry) may also be of interest.
+For more examples, including for other operating systems, you can take a look at [this demonstration repository](https://github.com/osbuild/bootc-foundry). The [bootc-foundry repository](https://github.com/osbuild/bootc-foundry) may also be of interest.
 
 ## Historical
 
