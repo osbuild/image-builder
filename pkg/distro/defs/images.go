@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
@@ -1009,6 +1010,10 @@ func imageInstallerImage(t *imageType,
 	// XXX these bits should move into the `installerCustomization` function
 	// XXX directly
 	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleUsers)
+	if common.ValueOrEmpty(img.Kickstart.Language) != "" || common.ValueOrEmpty(img.Kickstart.Keyboard) != "" {
+		img.InstallerCustomizations.EnabledAnacondaModules =
+			append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleLocalization)
+	}
 
 	if img.Kickstart.Unattended {
 		img.InstallerCustomizations.KernelOptionsAppend = append(installerConfig.KickstartUnattendedExtraKernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
