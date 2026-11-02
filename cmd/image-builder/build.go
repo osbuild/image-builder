@@ -83,30 +83,7 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		return nil, err
 	}
 
-	var outputPaths []string
-	for _, export := range exports {
-		pipelineDir := filepath.Join(opts.OutputDir, export)
-		entries, err := os.ReadDir(pipelineDir)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read export directory %q: %w", export, err)
-		}
-		for _, entry := range entries {
-			src := filepath.Join(pipelineDir, entry.Name())
-			ext := strings.SplitN(entry.Name(), ".", 2)
-			artExt := ""
-			if len(ext) > 1 {
-				artExt = "." + ext[1]
-			}
-			dst := filepath.Join(opts.OutputDir, names[export]+artExt)
-			if err := os.Rename(src, dst); err != nil {
-				return nil, fmt.Errorf("cannot rename artifact %q: %w", entry.Name(), err)
-			}
-			outputPaths = append(outputPaths, dst)
-		}
-		_ = os.Remove(pipelineDir)
-	}
-
-	return outputPaths, nil
+	return renameExports(exports, opts.OutputDir, names)
 }
 
 func resolveExportFilenames(res *imagefilter.Result, exports []string, outputBasename string, basename string, extraRefs map[string]distro.ExtraRef) (map[string]string, error) {
@@ -137,4 +114,30 @@ func resolveExportFilenames(res *imagefilter.Result, exports []string, outputBas
 		names[export] = name
 	}
 	return names, nil
+}
+
+func renameExports(exports []string, outputDir string, names map[string]string) ([]string, error) {
+	var outputPaths []string
+	for _, export := range exports {
+		pipelineDir := filepath.Join(outputDir, export)
+		entries, err := os.ReadDir(pipelineDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read export directory %q: %w", export, err)
+		}
+		for _, entry := range entries {
+			src := filepath.Join(pipelineDir, entry.Name())
+			ext := strings.SplitN(entry.Name(), ".", 2)
+			artExt := ""
+			if len(ext) > 1 {
+				artExt = "." + ext[1]
+			}
+			dst := filepath.Join(outputDir, names[export]+artExt)
+			if err := os.Rename(src, dst); err != nil {
+				return nil, fmt.Errorf("cannot rename artifact %q: %w", entry.Name(), err)
+			}
+			outputPaths = append(outputPaths, dst)
+		}
+		_ = os.Remove(pipelineDir)
+	}
+	return outputPaths, nil
 }
