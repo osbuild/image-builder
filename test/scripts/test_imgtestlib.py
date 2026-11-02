@@ -55,6 +55,40 @@ def test_export_pipeline_shell_flag():
     assert testlib.core.export_pipeline_shell_flag("archive") == ' --export-pipeline "archive"'
 
 
+def test_aws_instance_type():
+    assert testlib.boot.aws_instance_type("x86_64") == "t3.small"
+    assert testlib.boot.aws_instance_type("aarch64") == "t4g.medium"
+    assert testlib.boot.aws_instance_type("X86_64") == "t3.small"
+    with pytest.raises(RuntimeError, match="no EC2 instance type configured"):
+        testlib.boot.aws_instance_type("ppc64le")
+
+
+@pytest.mark.parametrize("arch,instance_type", (
+    ("x86_64", "t3.small"),
+    ("aarch64", "t4g.medium"),
+))
+def test_cmd_boot_aws_passes_instance_type(arch, instance_type):
+    aws_config = {
+        "key_id": "key-id",
+        "secret_key": "secret-key",
+        "bucket": "bucket",
+        "region": "us-east-1",
+    }
+    # we need to patch the functions that were imported into the boot namespace, not the originals
+    with patch("imgtestlib.boot.make_check_host_config"), \
+         patch("imgtestlib.boot.get_aws_config", return_value=aws_config), \
+         patch("imgtestlib.boot.get_boot_mode", return_value="uefi"), \
+         patch("imgtestlib.boot.upload_to_aws", return_value="ami-0123456789"), \
+         patch("imgtestlib.boot.write_cloud_init_user_data", return_value="/fake/user-data"), \
+         patch("imgtestlib.boot.runcmd_nc") as mocked_runcmd_nc:
+        testlib.boot.cmd_boot_aws("fedora-44", arch, "ami", "image-name", "/fake/privkey", "/fake/pubkey",
+                                  "/fake/image.raw", [testlib.boot.BASE_TEST_EXEC + arch, "config.json"])
+
+    cmd = mocked_runcmd_nc.call_args.args[0]
+    assert "--arch" not in cmd
+    assert cmd[cmd.index("--instance-type") + 1] == instance_type
+
+
 def test_bootc_source_from_distro():
     assert testlib.bootcsource.bootc_source_from_distro("bootc-rhel-10.2") == "rhel-10"
     assert testlib.bootcsource.bootc_source_from_distro("bootc-fedora-44") == "fedora-44"
