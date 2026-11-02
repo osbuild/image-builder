@@ -1350,7 +1350,9 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return nil
+	_, err = renameExports(exports, taskdir, ti.Exports)
+
+	return err
 }
 
 func run() error {
