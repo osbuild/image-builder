@@ -1131,7 +1131,20 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	opts := &cmdManifestWrapperOptions{
-		useBootstrapIfNeeded: true,
+		// NOTE: The multi-step build feature is intended for build systems
+		// that need to separate actions which require network access
+		// (depsolving, downloading) from actions that should be isolated
+		// (building). Only the build step needs to run on a host with the same
+		// architecture as the target image. The init and fetch steps can be
+		// run on any architecture. We shouldn't assume that the build will be
+		// run on the same architecture as the manifest generation. We disable
+		// the cross-architecture bootstrapping here for this reason. This
+		// means that cross-architecture builds with a bootstrap buildroot
+		// isn't supported when using tasks, but since it's an experimental
+		// feature, this is preferable.
+		// If we want to add support for this in the future, we will need a new
+		// way (a separate CLI option perhaps) for the user to enable it.
+		useBootstrapIfNeeded: false,
 	}
 	pbar, err := progress.New("", progress.ProgressConfig{})
 	if err != nil {
