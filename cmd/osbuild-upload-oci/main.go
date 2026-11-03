@@ -2,7 +2,9 @@ package main
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"math/big"
 	"os"
@@ -23,6 +25,7 @@ var (
 	fileName        string
 	objectName      string
 	compartment     string
+	outputFormat    string
 )
 
 var uploadCmd = &cobra.Command{
@@ -50,9 +53,22 @@ var uploadCmd = &cobra.Command{
 			return fmt.Errorf("failed to create the image from storage object: %v", err)
 		}
 
-		fmt.Printf("Image %s was uploaded and created successfully\n", imageID)
-		return nil
+		return writeUploadResult(cmd.OutOrStdout(), outputFormat, imageID)
 	},
+}
+
+func writeUploadResult(w io.Writer, format, imageID string) error {
+	switch format {
+	case "", "text":
+		_, err := fmt.Fprintf(w, "Image %s was uploaded and created successfully\n", imageID)
+		return err
+	case "json":
+		return json.NewEncoder(w).Encode(struct {
+			ImageID string `json:"image_id"`
+		}{ImageID: imageID})
+	default:
+		return fmt.Errorf("unsupported format %q, supported formats: text, json", format)
+	}
 }
 
 func main() {
@@ -67,6 +83,7 @@ func main() {
 	uploadCmd.Flags().StringVarP(&privateKeyFile, "private-key", "p", "", "private key for authenticating OCI API requests")
 	uploadCmd.Flags().StringVarP(&fingerprint, "fingerprint", "", "", "the private key's fingerprint")
 	uploadCmd.Flags().StringVarP(&compartment, "compartment-id", "c", "", "the compartment ID of the target image")
+	uploadCmd.Flags().StringVar(&outputFormat, "format", "text", "output format: text or json")
 	_ = uploadCmd.MarkFlagRequired("bucket-name")
 	_ = uploadCmd.MarkFlagRequired("bucket-namespace")
 	_ = uploadCmd.MarkFlagRequired("compartment-id")
@@ -101,7 +118,7 @@ func uploaderFromConfig() (oci.Uploader, error) {
 		return uploader, nil
 	}
 
-	fmt.Printf("Creating an uploader from default config\n")
+	fmt.Fprintln(os.Stderr, "Creating an uploader from default config")
 	uploader, err := oci.NewClient(nil)
 	if err != nil {
 		return nil, err
