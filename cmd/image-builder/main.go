@@ -675,20 +675,25 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	if err != nil {
 		return nil, err
 	}
-	if withSBOM {
-		sbomDir, err := resolveOutputDir(outputDir, img)
-		if err != nil {
-			return nil, err
-		}
-		sbomBasename, err := basenameFor(img, outputFilename)
-		if err != nil {
-			return nil, err
-		}
-		mgOptions.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
-			filename = fmt.Sprintf("%s.%s", sbomBasename, strings.SplitN(filename, ".", 2)[1])
-			return fileWriter(sbomDir, filename, content)
-		}
+
+	imgBasename, err := basenameFor(img, outputFilename)
+	if err != nil {
+		return nil, err
 	}
+
+	imgOutputDir, err := resolveOutputDir(outputDir, img)
+	if err != nil {
+		return nil, err
+	}
+
+	if withSBOM {
+		mgOptions.SBOMWriter = initSBOMWriter(imgBasename, imgOutputDir)
+	}
+
+	if withRPMList {
+		mgOptions.RPMListWriter = initRPMListWriter(imgBasename, imgOutputDir)
+	}
+
 	if len(forceRepos) > 0 {
 		forcedRepos, err := parseRepoURLs(forceRepos, "forced")
 		if err != nil {
@@ -698,21 +703,6 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	}
 	if ignoreWarnings {
 		mgOptions.WarningsOutput = os.Stderr
-	}
-
-	if withRPMList {
-		rpmDir, err := resolveOutputDir(outputDir, img)
-		if err != nil {
-			return nil, err
-		}
-		rpmBasename, err := basenameFor(img, outputFilename)
-		if err != nil {
-			return nil, err
-		}
-		mgOptions.RPMListWriter = func(filename string, content io.Reader) error {
-			filename = fmt.Sprintf("%s.%s", rpmBasename, filename)
-			return fileWriter(rpmDir, filename, content)
-		}
 	}
 
 	mg, err := manifestgen.New(repos, &mgOptions)
@@ -1414,6 +1404,20 @@ func checkTaskVersion(task taskInfo) error {
 	}
 
 	return nil
+}
+
+func initSBOMWriter(sbomBasename string, sbomDir string) manifestgen.SBOMWriterFunc {
+	return func(filename string, content io.Reader, docType sbom.StandardType) error {
+		filename = fmt.Sprintf("%s.%s", sbomBasename, strings.SplitN(filename, ".", 2)[1])
+		return fileWriter(sbomDir, filename, content)
+	}
+}
+
+func initRPMListWriter(rpmBasename, rpmDir string) manifestgen.RPMListWriterFunc {
+	return func(filename string, content io.Reader) error {
+		filename = fmt.Sprintf("%s.%s", rpmBasename, filename)
+		return fileWriter(rpmDir, filename, content)
+	}
 }
 
 func run() error {
