@@ -1378,6 +1378,16 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 	for name := range task.Exports {
 		exports = append(exports, name)
 	}
+
+	if task.Buildlog {
+		buildLogWriter, err := openBuildLogWriter(taskdir, task.OutputBasename)
+		if err != nil {
+			return err
+		}
+		defer buildLogWriter.Close()
+		buildOpts.BuildLog = buildLogWriter
+	}
+
 	if err := progress.RunOSBuild(pbar, manifest, exports, buildOpts); err != nil {
 		return err
 	}
