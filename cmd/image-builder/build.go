@@ -51,19 +51,16 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		InVm:       opts.InVm,
 		JSONOutput: opts.JSONOutput,
 	}
-	if opts.WriteBuildlog {
-		if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
-			return nil, fmt.Errorf("cannot create buildlog base directory: %w", err)
-		}
-		p := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.buildlog", basename))
-		f, err := os.Create(p)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create buildlog: %w", err)
-		}
-		defer f.Close()
 
-		osbuildOpts.BuildLog = f
+	if opts.WriteBuildlog {
+		buildLogWriter, err := openBuildLogWriter(opts.OutputDir, basename)
+		if err != nil {
+			return nil, err
+		}
+		defer buildLogWriter.Close()
+		osbuildOpts.BuildLog = buildLogWriter
 	}
+
 	exports := res.ImgType.Exports()
 	var extraRefs map[string]distro.ExtraRef
 	if len(opts.WithExtras) > 0 {
@@ -84,6 +81,21 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 	}
 
 	return renameExports(exports, opts.OutputDir, names)
+}
+
+// openBuildLogWriter creates a file for osbuild to write the build log. The
+// file must be closed by the caller.
+func openBuildLogWriter(outputDir, basename string) (*os.File, error) {
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return nil, fmt.Errorf("cannot create buildlog base directory: %w", err)
+	}
+	p := filepath.Join(outputDir, fmt.Sprintf("%s.buildlog", basename))
+	f, err := os.Create(p)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create buildlog: %w", err)
+	}
+
+	return f, nil
 }
 
 func resolveExportFilenames(res *imagefilter.Result, exports []string, outputBasename string, basename string, extraRefs map[string]distro.ExtraRef) (map[string]string, error) {
