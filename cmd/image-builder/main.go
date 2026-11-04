@@ -1170,7 +1170,7 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	outputBasename, err := cmd.Flags().GetString("output-name")
+	userBasename, err := cmd.Flags().GetString("output-name")
 	if err != nil {
 		return err
 	}
@@ -1190,7 +1190,7 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	basename, err := basenameFor(img, outputBasename)
+	imgBasename, err := basenameFor(img, userBasename)
 	if err != nil {
 		return err
 	}
@@ -1206,7 +1206,7 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	exportFilenames, err := resolveExportFilenames(img, exports, outputBasename, basename, extraRefs)
+	exportFilenames, err := resolveExportFilenames(img, exports, userBasename, imgBasename, extraRefs)
 	if err != nil {
 		return err
 	}
@@ -1216,7 +1216,7 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 	taskInfoPath := filepath.Join(workdir, "task.json")
 	ti := taskInfo{
 		Exports:             exportFilenames,
-		OutputBasename:      outputBasename,
+		OutputBasename:      imgBasename,
 		Buildlog:            writeBuildlog,
 		Metrics:             writeMetrics,
 		InVM:                invm,
