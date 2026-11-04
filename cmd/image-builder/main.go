@@ -1365,6 +1365,14 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 		OutputDir:  taskdir,
 		StoreDir:   cachedir,
 		JSONOutput: format == "json",
+
+		Metrics: task.Metrics,
+	}
+	if task.InVM {
+		// NOTE: Bad magic string!
+		// Add properties to pipelines and/or image types that specify which
+		// pipelines need to run in VMs when the option is set
+		buildOpts.InVm = []string{"image"}
 	}
 	exports := []string{}
 	for name := range task.Exports {
