@@ -25,8 +25,8 @@ type versionDescription struct {
 	} `yaml:"image-builder" json:"image-builder"`
 }
 
-func readVersionInfo() *versionDescription {
-	vd := &versionDescription{}
+func readVersionInfo() versionDescription {
+	vd := versionDescription{}
 
 	// We'll be getting these values from the build info if they're available, otherwise
 	// they will always be set to unknown. Note that `version` is set globally so it can
