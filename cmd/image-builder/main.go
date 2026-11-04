@@ -1146,7 +1146,17 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	mf, err := generateManifest(pbar, cmd, args, img, io.Discard, opts)
+
+	// This is ugly and wrong but the generateManifest() function reads cmd
+	// flags directly. Until we refactor these functions to not rely on cobra
+	// data structures, this is how we need to do it.
+	if err := cmd.Flags().Set("output-dir", workdir); err != nil {
+		return fmt.Errorf("failed to set output directory for manifest generator: %w", err)
+	}
+
+	// Same as above: It reads the first element of the third argument
+	// (args[0]) to get the image type name.
+	mf, err := generateManifest(pbar, cmd, []string{imgType}, img, io.Discard, opts)
 	if err != nil {
 		return err
 	}
