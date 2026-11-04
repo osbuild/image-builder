@@ -1105,6 +1105,11 @@ type taskInfo struct {
 	ImageBuilderCommit string `json:"image_builder_commit"`
 }
 
+func resolveTaskManifestName(outputdir, basename string) string {
+	filename := fmt.Sprintf("%s.manifest.json", basename)
+	return filepath.Join(outputdir, filename)
+}
+
 func cmdTaskInit(cmd *cobra.Command, args []string) error {
 	workdir := args[0]
 	// create the working directory immediately
@@ -1231,7 +1236,7 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	manifestPath := filepath.Join(workdir, "manifest.json")
+	manifestPath := resolveTaskManifestName(workdir, imgBasename)
 	if err := os.WriteFile(manifestPath, mf, 0o600); err != nil {
 		return err
 	}
@@ -1250,7 +1255,7 @@ func cmdTaskPrefetch(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("incompatible task version: %w", err)
 	}
 
-	manifestPath := filepath.Join(workdir, "manifest.json")
+	manifestPath := resolveTaskManifestName(workdir, task.OutputBasename)
 
 	// Fail early if the manifest isn't readable.
 	mf, err := os.ReadFile(manifestPath)
@@ -1326,7 +1331,7 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("incompatible task version: %w", err)
 	}
 
-	manifestPath := filepath.Join(taskdir, "manifest.json")
+	manifestPath := resolveTaskManifestName(taskdir, task.OutputBasename)
 	manifest, err := os.ReadFile(manifestPath)
 	if errors.Is(err, fs.ErrNotExist) {
 		parentCmd := cmd.Parent()
@@ -1344,7 +1349,7 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	pbar, err := progressFromCmd(cmd, progress.ProgressConfig{
-		FilePath: filepath.Join(taskdir, "build.progress"),
+		FilePath: filepath.Join(taskdir, fmt.Sprintf("%s.progress", task.OutputBasename)),
 		WithMsg:  true,
 	})
 	if err != nil {
