@@ -1409,23 +1409,25 @@ func networkInstallerImage(t *imageType,
 	}
 
 	var err error
+	// NOTE: The network installer only supports adding locale, users and groups
 	img.Kickstart, err = kickstart.New(customizations)
 	if err != nil {
 		return nil, err
 	}
-	// NOTE: The network installer only supports adding users and groups
+	language, keyboard := customizations.GetPrimaryLocale()
+	if language != nil {
+		img.Language = *language
+		img.Kickstart.Language = language
+	}
+	if keyboard != nil {
+		img.Kickstart.Keyboard = keyboard
+	}
 
 	// If we have an empty kickstart options we don't want to put it on
 	// the image at all as an empty kickstart will create an empty kickstart
 	// file. In the netinst case we want *no* kickstart file at all.
 	if img.Kickstart.IsZero() {
 		img.Kickstart = nil
-	}
-
-	language, _ := customizations.GetPrimaryLocale()
-
-	if language != nil {
-		img.Language = *language
 	}
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
@@ -1444,6 +1446,11 @@ func networkInstallerImage(t *imageType,
 		img.RootfsCompression = img.ISOCustomizations.ErofsOptions.Compression.Method
 	} else {
 		img.RootfsCompression = "xz"
+	}
+
+	if img.Kickstart != nil && (common.ValueOrEmpty(img.Kickstart.Language) != "" || common.ValueOrEmpty(img.Kickstart.Keyboard) != "") {
+		img.InstallerCustomizations.EnabledAnacondaModules =
+			append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleLocalization)
 	}
 
 	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {

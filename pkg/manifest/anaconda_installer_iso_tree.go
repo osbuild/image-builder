@@ -836,7 +836,9 @@ func (p *AnacondaInstallerISOTree) netinstKickstartStages() ([]*osbuild.Stage, e
 			p.Kickstart.Path,
 			p.Kickstart.Users,
 			p.Kickstart.Groups,
-			nil, nil, nil)
+			nil,
+			p.Kickstart.Language,
+			p.Kickstart.Keyboard)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to create kickstart stage options: %w", err)
