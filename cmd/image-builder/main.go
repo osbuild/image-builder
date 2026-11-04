@@ -1310,18 +1310,8 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
 	}
 
-	taskInfoPath := filepath.Join(taskdir, "task.json")
-	tijson, err := os.ReadFile(taskInfoPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		parentCmd := cmd.Parent()
-		return fmt.Errorf("task info not found at %q: see '%s init --help'", taskInfoPath, parentCmd.CommandPath())
-	}
+	task, err := readTaskInfo(taskdir)
 	if err != nil {
-		return fmt.Errorf("failed to read task info at %q: %w", taskInfoPath, err)
-	}
-
-	var ti taskInfo
-	if err := json.Unmarshal(tijson, &ti); err != nil {
 		return err
 	}
 
@@ -1356,16 +1346,34 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 		JSONOutput: format == "json",
 	}
 	exports := []string{}
-	for name := range ti.Exports {
+	for name := range task.Exports {
 		exports = append(exports, name)
 	}
 	if err := progress.RunOSBuild(pbar, manifest, exports, buildOpts); err != nil {
 		return err
 	}
 
-	_, err = renameExports(exports, taskdir, ti.Exports)
+	_, err = renameExports(exports, taskdir, task.Exports)
 
 	return err
+}
+
+func readTaskInfo(workdir string) (taskInfo, error) {
+	taskInfoPath := filepath.Join(workdir, "task.json")
+	tijson, err := os.ReadFile(taskInfoPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return taskInfo{}, fmt.Errorf("task info not found at %q: see 'image-builder task init --help'", taskInfoPath)
+	}
+	if err != nil {
+		return taskInfo{}, fmt.Errorf("failed to read task info at %q: %w", taskInfoPath, err)
+	}
+
+	var task taskInfo
+	if err := json.Unmarshal(tijson, &task); err != nil {
+		return taskInfo{}, err
+	}
+
+	return task, nil
 }
 
 func run() error {
