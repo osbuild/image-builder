@@ -1107,6 +1107,12 @@ type taskInfo struct {
 
 	// Run the osbuild pipeline in a virtual machine
 	InVM bool `json:"invm"`
+
+	// The version of Image Builder that created the task
+	ImageBuilderVersion string `json:"image_builder_version"`
+
+	// The VCS revision of Image Builder that created the task
+	ImageBuilderCommit string `json:"image_builder_commit"`
 }
 
 func cmdTaskInit(cmd *cobra.Command, args []string) error {
@@ -1205,13 +1211,17 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	ibVersion := readVersionInfo().ImageBuilder
+
 	taskInfoPath := filepath.Join(workdir, "task.json")
 	ti := taskInfo{
-		Exports:        exportFilenames,
-		OutputBasename: outputBasename,
-		Buildlog:       writeBuildlog,
-		Metrics:        writeMetrics,
-		InVM:           invm,
+		Exports:             exportFilenames,
+		OutputBasename:      outputBasename,
+		Buildlog:            writeBuildlog,
+		Metrics:             writeMetrics,
+		InVM:                invm,
+		ImageBuilderVersion: ibVersion.Version,
+		ImageBuilderCommit:  ibVersion.Commit,
 	}
 	tijson, err := json.Marshal(ti)
 	if err != nil {
@@ -1231,6 +1241,14 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 
 func cmdTaskPrefetch(cmd *cobra.Command, args []string) error {
 	workdir := args[0]
+
+	task, err := readTaskInfo(workdir)
+	if err != nil {
+		return err
+	}
+	if err := checkTaskVersion(task); err != nil {
+		return fmt.Errorf("incompatible task version: %w", err)
+	}
 
 	manifestPath := filepath.Join(workdir, "manifest.json")
 
@@ -1300,6 +1318,14 @@ func cmdTaskPrefetch(cmd *cobra.Command, args []string) error {
 func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 	taskdir := args[0]
 
+	task, err := readTaskInfo(taskdir)
+	if err != nil {
+		return err
+	}
+	if err := checkTaskVersion(task); err != nil {
+		return fmt.Errorf("incompatible task version: %w", err)
+	}
+
 	manifestPath := filepath.Join(taskdir, "manifest.json")
 	manifest, err := os.ReadFile(manifestPath)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -1308,11 +1334,6 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 	}
 	if err != nil {
 		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
-	}
-
-	task, err := readTaskInfo(taskdir)
-	if err != nil {
-		return err
 	}
 
 	cachedir := filepath.Join(taskdir, "cache")
@@ -1374,6 +1395,17 @@ func readTaskInfo(workdir string) (taskInfo, error) {
 	}
 
 	return task, nil
+}
+
+func checkTaskVersion(task taskInfo) error {
+	ibVersion := readVersionInfo().ImageBuilder
+
+	if ibVersion.Version != task.ImageBuilderVersion ||
+		ibVersion.Commit != task.ImageBuilderCommit {
+		return fmt.Errorf("using version %s (%s) but task was created by %s (%s)\ntasks must be processed by the same image-builder version that created them", ibVersion.Version, ibVersion.Commit, task.ImageBuilderVersion, task.ImageBuilderCommit)
+	}
+
+	return nil
 }
 
 func run() error {
