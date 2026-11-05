@@ -100,7 +100,8 @@
           "nfs-server",
           "rpcbind",
           "nftables"
-        ]
+        ],
+        "default_target": "graphical.target"
       },
       "filesystem": [
         {
