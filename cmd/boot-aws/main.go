@@ -348,7 +348,7 @@ func setupCLI() *cobra.Command {
 	setupCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
 	setupCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
-	setupCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small")
+	setupCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small (x86_64) or t4g.medium (aarch64)")
 	setupCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "instance-type"} {
 		exitCheck(setupCmd.MarkFlagRequired(flag))
@@ -378,7 +378,7 @@ func setupCLI() *cobra.Command {
 	runCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
 	runCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	runCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
-	runCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small")
+	runCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small (x86_64) or t4g.medium (aarch64)")
 	runCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "instance-type", "username", "ssh-privkey"} {
 		exitCheck(runCmd.MarkFlagRequired(flag))
