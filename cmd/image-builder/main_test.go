@@ -406,6 +406,8 @@ cat - > "$0".stdin
 output_dir=""
 export=""
 format=""
+store=""
+
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
@@ -425,26 +427,38 @@ while [[ $# -gt 0 ]]; do
       format="json"
       shift 1
       ;;
+   --store)
+     store="$2"
+     shift 2
+     ;;
     *)
       shift 1
   esac
 done
+
 mkdir -p "$output_dir/$export"
-case $export in
-  qcow2)
-    echo "fake-img-qcow2" > "$output_dir/$export/disk.qcow2"
-    ;;
-  image)
-    echo "fake-img-raw" > "$output_dir/$export/image.raw"
-    ;;
-  *)
-    echo "Unknown export: $1 - add to testscript"
-    exit 1
-    ;;
-esac
+if [[ $export != "" ]]; then
+  case $export in
+    qcow2)
+      echo "fake-img-qcow2" > "$output_dir/$export/disk.qcow2"
+      ;;
+    image)
+      echo "fake-img-raw" > "$output_dir/$export/image.raw"
+      ;;
+    *)
+      echo "Unknown export: $1 - add to testscript"
+      exit 1
+      ;;
+  esac
+fi
 if [ "$format" = "json" ]; then
   echo '{"message": "hai"}' >&3
   echo '{"success": true}'
+fi
+
+if [[ "$store" != "" ]]; then
+  mkdir -p "$store" "$store"/{objects,sources,stage,tmp}
+  touch $store/{CACHEDIR.TAG,store.info,store.size}
 fi
 `
 }
