@@ -22,7 +22,8 @@ import (
 func Names(distros []string) error {
 	var errs []error
 
-	parser := distroidparser.NewDefaultParser()
+	// DefaultParser caches results for the life of the process.
+	parser := distroidparser.DefaultParser
 	slices.SortFunc(distros, func(a, b string) int {
 		id1, err := parser.Parse(a)
 		if err != nil {
