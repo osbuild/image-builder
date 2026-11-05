@@ -409,6 +409,10 @@ format=""
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+    --version)
+      echo 'osbuild 42'
+      exit 0
+      ;;
     --output-directory)
       output_dir="$2"
       shift 2
