@@ -427,10 +427,10 @@ while [[ $# -gt 0 ]]; do
       format="json"
       shift 1
       ;;
-   --store)
-     store="$2"
-     shift 2
-     ;;
+    --store)
+      store="$2"
+      shift 2
+      ;;
     *)
       shift 1
   esac
@@ -458,7 +458,7 @@ fi
 
 if [[ "$store" != "" ]]; then
   mkdir -p "$store" "$store"/{objects,sources,stage,tmp}
-  touch $store/{CACHEDIR.TAG,store.info,store.size}
+  touch "$store"/{CACHEDIR.TAG,store.info,store.size}
 fi
 `
 }
