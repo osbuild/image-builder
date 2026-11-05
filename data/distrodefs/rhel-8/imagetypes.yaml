@@ -2636,6 +2636,14 @@ image_types:
         qcow2_compat: "0.10"
     image_config:
       <<: *qcow2_image_config
+      time_synchronization:
+        servers:
+          - hostname: "169.254.169.254"
+            prefer: true
+            iburst: true
+            minpoll: 4
+            maxpoll: 4
+        leapsectz: ""
       cloud_init:
         - filename: "00-rhel-default-user.cfg"
           config:
