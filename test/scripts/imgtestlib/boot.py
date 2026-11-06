@@ -3,6 +3,7 @@ import json
 import os
 import pathlib
 import random
+import re
 import shutil
 import signal
 import string
@@ -52,6 +53,40 @@ def get_azure_config():
     }
     ensure_env_vars(env_vars)
     return env_vars
+
+
+def get_gcp_config():
+    env_vars = {
+        "project": os.environ.get("GCP_PROJECT"),
+        "bucket": os.environ.get("GCP_BUCKET"),
+        "region": os.environ.get("GCP_REGION"),
+    }
+    ensure_env_vars(env_vars)
+    env_vars["zone"] = os.environ.get("GCP_ZONE")
+    env_vars["subnet"] = os.environ.get("GCP_SUBNET")
+    return env_vars
+
+
+def gcp_os_family(distro):
+    """Map distro name to osbuild-upload-gcp --os-family for guest OS features."""
+    if distro.startswith("rhel-8") or distro.startswith("centos-8"):
+        return "rhel-8"
+    if distro.startswith("rhel-10") or distro.startswith("centos-10"):
+        return "rhel-10"
+    if distro.startswith("fedora"):
+        return "fedora"
+    return "rhel-9"
+
+
+def gcp_image_name(distro):
+    # GCE image names only accept lowercase letters, digits, and hyphens.
+    name = re.sub(r"[^a-z0-9-]", "-", distro.lower())
+    return f"{name}-{uuid.uuid4()}"
+
+
+def gcp_upload_object_name():
+    # GCE only imports image archives whose object names end in .tar.gz.
+    return f"osbuild-upload-{uuid.uuid4()}.tar.gz"
 
 
 def get_wsl_config():
@@ -602,6 +637,53 @@ def boot_oci(distro, arch, image_path, config):
                     runcmd_nc(run_cmd, extra_env=oci_env)
 
 
+def upload_to_gcp(distro, image_name, image_path):
+    """Upload a GCE image tarball via osbuild-upload-gcp; returns the Compute image name."""
+    gcp_config = get_gcp_config()
+    object_name = gcp_upload_object_name()
+    cmd = ["go", "run", "./cmd/osbuild-upload-gcp",
+           "--bucket", gcp_config["bucket"],
+           "--object", object_name,
+           "--regions", gcp_config["region"],
+           "--os-family", gcp_os_family(distro),
+           "--image-name", image_name,
+           "--image", image_path]
+    cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if cred_path:
+        cmd.extend(["--cred-path", cred_path])
+    stdout, stderr = runcmd(cmd)
+    print(stderr.decode())
+    print(stdout.decode())
+    return image_name
+
+
+def boot_gce(distro, arch, image_path, config):
+    cmd = [BASE_TEST_EXEC+arch, config]
+    make_check_host_config(arch)
+    with create_ssh_key() as (privkey, pubkey):
+        name = gcp_image_name(distro)
+        image_name = upload_to_gcp(distro, name, image_path)
+        gcp_config = get_gcp_config()
+        with TemporaryDirectory() as tmpdir:
+            pubkey_file = os.path.join(tmpdir, "authorized_keys")
+            with open(pubkey_file, "w", encoding="utf-8") as pubkey_fp:
+                pubkey_fp.write(pubkey)
+            run_cmd = ["go", "run", "./cmd/boot-gcp", "run",
+                       "--project", gcp_config["project"],
+                       "--region", gcp_config["region"],
+                       "--image", image_name,
+                       "--arch", arch,
+                       "--username", "osbuild",
+                       "--ssh-privkey", privkey,
+                       "--ssh-pubkey", pubkey_file,
+                       *cmd]
+            if gcp_config["zone"]:
+                run_cmd.extend(["--zone", gcp_config["zone"]])
+            if gcp_config["subnet"]:
+                run_cmd.extend(["--subnet", gcp_config["subnet"]])
+            runcmd_nc(run_cmd)
+
+
 def boot_vhd(distro, arch, image_path, config):
     cmd = [BASE_TEST_EXEC+arch, config]
     make_check_host_config(arch)
@@ -703,6 +785,8 @@ def boot_image(search_path, build_config_path, keep_booted=False):
         boot_vhd(distro, arch, image_path, build_config_path)
     elif image_type in ("oci"):
         boot_oci(distro, arch, image_path, build_config_path)
+    elif image_type in ("gce", "gce-rhui", "cloud-gce"):
+        boot_gce(distro, arch, image_path, build_config_path)
     elif image_type in ("wsl", "generic-wsl"):
         if distro == "fedora-41":
             print(f"{distro} {image_type} boot tests are not supported, fails on wsl import")
