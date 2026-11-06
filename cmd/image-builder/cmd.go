@@ -123,8 +123,11 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	docCmd := setupDocCmd(rootCmd)
 	rootCmd.AddCommand(docCmd)
 
-	prefetchCmd := setupPrefetchCmd()
-	rootCmd.AddCommand(prefetchCmd)
+	taskCmd, err := setupTaskCmd()
+	if err != nil {
+		return nil, err
+	}
+	rootCmd.AddCommand(taskCmd)
 
 	return rootCmd, nil
 }
@@ -418,17 +421,84 @@ func setupDocCmd(rootCmd *cobra.Command) *cobra.Command {
 	return docCmd
 }
 
-func setupPrefetchCmd() *cobra.Command {
-	prefetchCmd := &cobra.Command{
-		Use:          "prefetch <manifest>",
-		Short:        "Fetch all sources defined in a manifest and prepare the osbuild store",
+func setupTaskCmd() (*cobra.Command, error) {
+	desc := `A task is a single build that can be performed in multiple steps, making it possible to control each step of the build process individually. See the help for each subcommand for details.`
+	taskCmd := &cobra.Command{
+		Use:          "task",
+		Short:        "Create and manage an image build task",
+		Long:         desc,
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
+	}
+
+	taskInitCmd, err := setupTaskInitCmd()
+	if err != nil {
+		return nil, err
+	}
+	taskCmd.AddCommand(taskInitCmd)
+
+	taskPrefetchCmd := setupTaskPrefetchCmd()
+	taskCmd.AddCommand(taskPrefetchCmd)
+
+	taskBuildCmd := setupTaskBuildCmd()
+	taskCmd.AddCommand(taskBuildCmd)
+
+	return taskCmd, nil
+}
+
+func setupTaskInitCmd() (*cobra.Command, error) {
+	taskInitCmd := &cobra.Command{
+		Use:          "init <working directory>",
+		Short:        "Initialise a working directory for a multi-step build task with a manifest and related metadata",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
-		RunE:         cmdPrefetch,
-		Hidden:       true,
+		RunE:         cmdTaskInit,
 	}
-	prefetchCmd.Flags().String("format", "", "Output in a specific format (json)")
+	if err := manifestFlags(taskInitCmd); err != nil {
+		return nil, err
+	}
 
-	cacheFlag(prefetchCmd)
-	return prefetchCmd
+	// The manifest command, like the build command, takes the image type as a
+	// positional argument. For task subcommands, we want the only positional
+	// argument to be the working directory, so the image-type becomes a
+	// required flag instead.
+	taskInitCmd.Flags().String("image-type", "", "the type of image to build (see 'list' command)")
+	if err := taskInitCmd.MarkFlagRequired("image-type"); err != nil {
+		return nil, err
+	}
+
+	// Build command options that will be saved to the sidecar (task.json) and
+	// used by any other task subcommand that needs them
+	taskInitCmd.Flags().StringArray("with-extra", nil, `include an extra by type:name in the build, globs supported (e.g. --with-extra "sysext:*")`)
+	taskInitCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
+	taskInitCmd.Flags().Bool("with-metrics", false, `print timing information at the end of the build`)
+	taskInitCmd.Flags().String("output-name", "", "set specific output basename")
+	taskInitCmd.Flags().Bool("in-vm", false, `run the osbuild pipeline in a virtual machine`)
+	return taskInitCmd, nil
+}
+
+func setupTaskPrefetchCmd() *cobra.Command {
+	taskPrefetchCmd := &cobra.Command{
+		Use:          "prefetch <working directory>",
+		Short:        "Fetch all sources defined in the manifest in the working directory and prepare the osbuild store for this task",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         cmdTaskPrefetch,
+	}
+	taskPrefetchCmd.Flags().String("format", "", "Output in a specific format (json)")
+	return taskPrefetchCmd
+}
+
+func setupTaskBuildCmd() *cobra.Command {
+	taskBuildCmd := &cobra.Command{
+		Use:          "build-image <working directory>",
+		Short:        "Build the image using the manifest and all other resources for this task",
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE:         cmdTaskBuild,
+	}
+
+	taskBuildCmd.Flags().String("format", "", "Output in a specific format (json)")
+	progressFlag(taskBuildCmd)
+	return taskBuildCmd
 }

@@ -51,19 +51,16 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		InVm:       opts.InVm,
 		JSONOutput: opts.JSONOutput,
 	}
-	if opts.WriteBuildlog {
-		if err := os.MkdirAll(opts.OutputDir, 0755); err != nil {
-			return nil, fmt.Errorf("cannot create buildlog base directory: %w", err)
-		}
-		p := filepath.Join(opts.OutputDir, fmt.Sprintf("%s.buildlog", basename))
-		f, err := os.Create(p)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create buildlog: %w", err)
-		}
-		defer f.Close()
 
-		osbuildOpts.BuildLog = f
+	if opts.WriteBuildlog {
+		buildLogWriter, err := openBuildLogWriter(opts.OutputDir, basename)
+		if err != nil {
+			return nil, err
+		}
+		defer buildLogWriter.Close()
+		osbuildOpts.BuildLog = buildLogWriter
 	}
+
 	exports := res.ImgType.Exports()
 	var extraRefs map[string]distro.ExtraRef
 	if len(opts.WithExtras) > 0 {
@@ -77,13 +74,35 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 	if err := progress.RunOSBuild(pbar, osbuildManifest, exports, osbuildOpts); err != nil {
 		return nil, err
 	}
-	// Rename *sigh*, see https://github.com/osbuild/image-builder/pull/1039
-	// for my preferred way. Every frontend to images has to duplicate
-	// similar code like this.
+
+	names, err := resolveExportFilenames(res, exports, opts.OutputBasename, basename, extraRefs)
+	if err != nil {
+		return nil, err
+	}
+
+	return renameExports(exports, opts.OutputDir, names)
+}
+
+// openBuildLogWriter creates a file for osbuild to write the build log. The
+// file must be closed by the caller.
+func openBuildLogWriter(outputDir, basename string) (*os.File, error) {
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return nil, fmt.Errorf("cannot create buildlog base directory: %w", err)
+	}
+	p := filepath.Join(outputDir, fmt.Sprintf("%s.buildlog", basename))
+	f, err := os.Create(p)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create buildlog: %w", err)
+	}
+
+	return f, nil
+}
+
+func resolveExportFilenames(res *imagefilter.Result, exports []string, outputBasename string, basename string, extraRefs map[string]distro.ExtraRef) (map[string]string, error) {
 	outputData := outputTmplDataFor(res)
 	outputTmpl := defaultOutputTmpl
-	if opts.OutputBasename != "" {
-		outputTmpl = opts.OutputBasename
+	if outputBasename != "" {
+		outputTmpl = outputBasename
 	}
 
 	// Multiple export pipelines from the same extra share a base name;
@@ -106,10 +125,13 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		}
 		names[export] = name
 	}
+	return names, nil
+}
 
+func renameExports(exports []string, outputDir string, names map[string]string) ([]string, error) {
 	var outputPaths []string
 	for _, export := range exports {
-		pipelineDir := filepath.Join(opts.OutputDir, export)
+		pipelineDir := filepath.Join(outputDir, export)
 		entries, err := os.ReadDir(pipelineDir)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read export directory %q: %w", export, err)
@@ -121,7 +143,7 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 			if len(ext) > 1 {
 				artExt = "." + ext[1]
 			}
-			dst := filepath.Join(opts.OutputDir, names[export]+artExt)
+			dst := filepath.Join(outputDir, names[export]+artExt)
 			if err := os.Rename(src, dst); err != nil {
 				return nil, fmt.Errorf("cannot rename artifact %q: %w", entry.Name(), err)
 			}
@@ -129,6 +151,5 @@ func buildImage(pbar progress.ProgressBar, res *imagefilter.Result, osbuildManif
 		}
 		_ = os.Remove(pipelineDir)
 	}
-
 	return outputPaths, nil
 }

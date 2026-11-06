@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"text/template"
@@ -27,6 +29,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
 	"github.com/osbuild/image-builder/pkg/manifestgen"
+	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/progress"
@@ -359,7 +362,7 @@ type cmdManifestWrapperOptions struct {
 var manifestgenDepsolver manifestgen.DepsolveFunc
 var manifestgenContainerResolver manifestgen.ContainerResolverFunc
 
-func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
+func getImage(cmd *cobra.Command, imageType string) (*imagefilter.Result, error) {
 	repoDir, err := cmd.Flags().GetString("force-repo-dir")
 	if err != nil {
 		return nil, err
@@ -406,7 +409,6 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	imgTypeStr := args[0]
 
 	if bootcVariant != "" && bootcRef == "" {
 		return nil, fmt.Errorf("cannot use --bootc-variant without --bootc-ref")
@@ -417,8 +419,8 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		// The behavior of anaconda-iso without special mTLS setup is different
 		// from bib so instead of introducing subtle incompatibilities just error
 		// here
-		if imgTypeStr == "anaconda-iso" || imgTypeStr == "iso" {
-			return nil, fmt.Errorf(`image type bootc %q is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`, imgTypeStr)
+		if imageType == "anaconda-iso" || imageType == "iso" {
+			return nil, fmt.Errorf(`image type bootc %q is not supported with image-builder, please consider switching to "bootc-installer" or use bootc-image-builder`, imageType)
 		}
 		bootcInfo, err := bootc.ResolveBootcInfo(bootcRef, bootcVariant)
 		if err != nil {
@@ -465,7 +467,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 		if err != nil {
 			return nil, err
 		}
-		imgType, err := archi.GetImageType(imgTypeStr)
+		imgType, err := archi.GetImageType(imageType)
 		if err != nil {
 			return nil, err
 		}
@@ -493,7 +495,7 @@ func getImage(cmd *cobra.Command, args []string) (*imagefilter.Result, error) {
 			ForceRepos:   forceRepos,
 			ForceDefsDir: forceDefsDir,
 		}
-		img, err = getOneImage(distroStr, imgTypeStr, archStr, repoOpts)
+		img, err = getOneImage(distroStr, imageType, archStr, repoOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -673,20 +675,25 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	if err != nil {
 		return nil, err
 	}
-	if withSBOM {
-		sbomDir, err := resolveOutputDir(outputDir, img)
-		if err != nil {
-			return nil, err
-		}
-		sbomBasename, err := basenameFor(img, outputFilename)
-		if err != nil {
-			return nil, err
-		}
-		mgOptions.SBOMWriter = func(filename string, content io.Reader, docType sbom.StandardType) error {
-			filename = fmt.Sprintf("%s.%s", sbomBasename, strings.SplitN(filename, ".", 2)[1])
-			return fileWriter(sbomDir, filename, content)
-		}
+
+	imgBasename, err := basenameFor(img, outputFilename)
+	if err != nil {
+		return nil, err
 	}
+
+	imgOutputDir, err := resolveOutputDir(outputDir, img)
+	if err != nil {
+		return nil, err
+	}
+
+	if withSBOM {
+		mgOptions.SBOMWriter = initSBOMWriter(imgBasename, imgOutputDir)
+	}
+
+	if withRPMList {
+		mgOptions.RPMListWriter = initRPMListWriter(imgBasename, imgOutputDir)
+	}
+
 	if len(forceRepos) > 0 {
 		forcedRepos, err := parseRepoURLs(forceRepos, "forced")
 		if err != nil {
@@ -696,21 +703,6 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	}
 	if ignoreWarnings {
 		mgOptions.WarningsOutput = os.Stderr
-	}
-
-	if withRPMList {
-		rpmDir, err := resolveOutputDir(outputDir, img)
-		if err != nil {
-			return nil, err
-		}
-		rpmBasename, err := basenameFor(img, outputFilename)
-		if err != nil {
-			return nil, err
-		}
-		mgOptions.RPMListWriter = func(filename string, content io.Reader) error {
-			filename = fmt.Sprintf("%s.%s", rpmBasename, filename)
-			return fileWriter(rpmDir, filename, content)
-		}
 	}
 
 	mg, err := manifestgen.New(repos, &mgOptions)
@@ -748,7 +740,7 @@ func cmdManifest(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	img, err := getImage(cmd, args)
+	img, err := getImage(cmd, args[0])
 	if err != nil {
 		return err
 	}
@@ -833,7 +825,7 @@ func cmdBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	img, err := getImage(cmd, args)
+	img, err := getImage(cmd, args[0])
 	if err != nil {
 		return err
 	}
@@ -998,12 +990,225 @@ func cmdDescribeImg(cmd *cobra.Command, args []string) error {
 	return describeImage(res, osStdout)
 }
 
-func cmdPrefetch(cmd *cobra.Command, args []string) error {
-	manifestPath := args[0]
+// Returns nil if we can write to the given directory.
+// The path must exist and be a directory.
+func checkPathRW(path string) error {
+	if pathstat, err := os.Stat(path); err != nil { // return on any error, not just not-exist
+		return err
+	} else if !pathstat.IsDir() {
+		return fmt.Errorf("%q already exists and is not a directory", path)
+	}
 
-	cacheDir, err := cmd.Flags().GetString("cache")
+	checkfilepath := filepath.Join(path, ".image-builder-write-check")
+	checkfile, err := os.Create(checkfilepath)
 	if err != nil {
 		return err
+	}
+	defer func() {
+		if err := checkfile.Close(); err != nil {
+			olog.Printf("error closing write-check file %q: %s", checkfilepath, err)
+		}
+		if err := os.Remove(checkfilepath); err != nil {
+			olog.Printf("error deleting write-check file %q: %s", checkfilepath, err)
+		}
+	}()
+
+	return nil
+}
+
+type taskInfo struct {
+	// Names of pipelines to export when building along with the desired file
+	// or directory name for the artifact of each pipeline
+	Exports map[string]string `json:"exports"`
+
+	// Template for the names of output artifacts (image, extras, buildlog,
+	// metrics, etc)
+	OutputBasename string `json:"basename"`
+
+	// Write the log output from the build to a file
+	Buildlog bool `json:"buildlog"`
+
+	// Print timing information at the end of the build
+	Metrics bool `json:"metrics"`
+
+	// Run the osbuild pipeline in a virtual machine
+	InVM bool `json:"invm"`
+
+	// The version of Image Builder that created the task
+	ImageBuilderVersion string `json:"image_builder_version"`
+
+	// The VCS revision of Image Builder that created the task
+	ImageBuilderCommit string `json:"image_builder_commit"`
+}
+
+func resolveTaskManifestName(outputdir, basename string) string {
+	filename := fmt.Sprintf("%s.manifest.json", basename)
+	return filepath.Join(outputdir, filename)
+}
+
+func cmdTaskInit(cmd *cobra.Command, args []string) error {
+	workdir := args[0]
+	// create the working directory immediately
+	if err := os.MkdirAll(workdir, 0o770); err != nil {
+		return fmt.Errorf("failed creating working directory %q: %w", workdir, err)
+	}
+
+	// but error out if it's not writeable
+	if err := checkPathRW(workdir); err != nil {
+		return fmt.Errorf("read-write check on %q failed: %w", workdir, err)
+	}
+
+	imgType, err := cmd.Flags().GetString("image-type")
+	if err != nil {
+		return err
+	}
+
+	img, err := getImage(cmd, imgType)
+	if err != nil {
+		return err
+	}
+	opts := &cmdManifestWrapperOptions{
+		// NOTE: The multi-step build feature is intended for build systems
+		// that need to separate actions which require network access
+		// (depsolving, downloading) from actions that should be isolated
+		// (building). Only the build step needs to run on a host with the same
+		// architecture as the target image. The init and fetch steps can be
+		// run on any architecture. We shouldn't assume that the build will be
+		// run on the same architecture as the manifest generation. We disable
+		// the cross-architecture bootstrapping here for this reason. This
+		// means that cross-architecture builds with a bootstrap buildroot
+		// isn't supported when using tasks, but since it's an experimental
+		// feature, this is preferable.
+		// If we want to add support for this in the future, we will need a new
+		// way (a separate CLI option perhaps) for the user to enable it.
+		useBootstrapIfNeeded: false,
+	}
+	pbar, err := progress.New("", progress.ProgressConfig{})
+	if err != nil {
+		return err
+	}
+
+	// This is ugly and wrong but the generateManifest() function reads cmd
+	// flags directly. Until we refactor these functions to not rely on cobra
+	// data structures, this is how we need to do it.
+	if err := cmd.Flags().Set("output-dir", workdir); err != nil {
+		return fmt.Errorf("failed to set output directory for manifest generator: %w", err)
+	}
+
+	// Same as above: It reads the first element of the third argument
+	// (args[0]) to get the image type name.
+	mf, err := generateManifest(pbar, cmd, []string{imgType}, img, io.Discard, opts)
+	if err != nil {
+		return err
+	}
+
+	withExtraPatterns, err := cmd.Flags().GetStringArray("with-extra")
+	if err != nil {
+		return err
+	}
+	extraExports, err := resolveExtras(withExtraPatterns, img.ImgType.Extras())
+	if err != nil {
+		return err
+	}
+
+	userBasename, err := cmd.Flags().GetString("output-name")
+	if err != nil {
+		return err
+	}
+
+	writeBuildlog, err := cmd.Flags().GetBool("with-buildlog")
+	if err != nil {
+		return err
+	}
+
+	writeMetrics, err := cmd.Flags().GetBool("with-metrics")
+	if err != nil {
+		return err
+	}
+
+	invm, err := cmd.Flags().GetBool("in-vm")
+	if err != nil {
+		return err
+	}
+
+	imgBasename, err := basenameFor(img, userBasename)
+	if err != nil {
+		return err
+	}
+
+	exports := slices.Clone(img.ImgType.Exports())
+
+	var extraRefs map[string]distro.ExtraRef
+	if len(extraExports) > 0 {
+		var err error
+		exports, extraRefs, err = img.ImgType.ExportsWithExtras(extraExports)
+		if err != nil {
+			return err
+		}
+	}
+
+	exportFilenames, err := resolveExportFilenames(img, exports, userBasename, imgBasename, extraRefs)
+	if err != nil {
+		return err
+	}
+
+	ibVersion := readVersionInfo().ImageBuilder
+
+	taskInfoPath := filepath.Join(workdir, "task.json")
+	ti := taskInfo{
+		Exports:             exportFilenames,
+		OutputBasename:      imgBasename,
+		Buildlog:            writeBuildlog,
+		Metrics:             writeMetrics,
+		InVM:                invm,
+		ImageBuilderVersion: ibVersion.Version,
+		ImageBuilderCommit:  ibVersion.Commit,
+	}
+	tijson, err := json.Marshal(ti)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(taskInfoPath, tijson, 0o600); err != nil {
+		return err
+	}
+
+	manifestPath := resolveTaskManifestName(workdir, imgBasename)
+	if err := os.WriteFile(manifestPath, mf, 0o600); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func cmdTaskPrefetch(cmd *cobra.Command, args []string) error {
+	workdir := args[0]
+
+	task, err := readTaskInfo(workdir)
+	if err != nil {
+		return err
+	}
+	if err := checkTaskVersion(task); err != nil {
+		return fmt.Errorf("incompatible task version: %w", err)
+	}
+
+	manifestPath := resolveTaskManifestName(workdir, task.OutputBasename)
+
+	// Fail early if the manifest isn't readable.
+	mf, err := os.ReadFile(manifestPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("manifest not found in %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
+	}
+
+	cachedir := filepath.Join(workdir, "cache")
+
+	// Fail early if the cache directory is not writable, instead of
+	// waiting for osbuild to fail after slow manifest generation.
+	if err := os.MkdirAll(cachedir, 0o755); err != nil {
+		return fmt.Errorf("cannot create cache directory %q: %w", cachedir, err)
 	}
 
 	// NOTE: we can't support the 'progress' option here yet because that also
@@ -1044,22 +1249,136 @@ func cmdPrefetch(cmd *cobra.Command, args []string) error {
 	}()
 
 	pbar.SetPulseMsgf("Downloading sources")
-	mf, err := os.ReadFile(manifestPath)
-	if err != nil {
-		return fmt.Errorf("failed to read manifest at %s: %w", manifestPath, err)
-	}
-
-	// Fail early if the cache directory is not writable, instead of
-	// waiting for osbuild to fail after slow manifest generation.
-	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
-		return fmt.Errorf("cannot create cache directory %q: %w\nHint: use --cache to specify a writable path", cacheDir, err)
-	}
-
 	opts := progress.OSBuildOptions{
-		StoreDir:   cacheDir,
+		StoreDir:   cachedir,
 		JSONOutput: jsonFmt,
 	}
 	return progress.RunOSBuild(pbar, mf, nil, &opts)
+}
+
+func cmdTaskBuild(cmd *cobra.Command, args []string) error {
+	taskdir := args[0]
+
+	task, err := readTaskInfo(taskdir)
+	if err != nil {
+		return err
+	}
+	if err := checkTaskVersion(task); err != nil {
+		return fmt.Errorf("incompatible task version: %w", err)
+	}
+
+	manifestPath := resolveTaskManifestName(taskdir, task.OutputBasename)
+	manifest, err := os.ReadFile(manifestPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		parentCmd := cmd.Parent()
+		return fmt.Errorf("manifest not found at %q: see '%s init --help'", manifestPath, parentCmd.CommandPath())
+	}
+	if err != nil {
+		return fmt.Errorf("failed to read manifest at %q: %w", manifestPath, err)
+	}
+
+	cachedir := filepath.Join(taskdir, "cache")
+
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		return err
+	}
+
+	pbar, err := progressFromCmd(cmd, progress.ProgressConfig{
+		FilePath: filepath.Join(taskdir, fmt.Sprintf("%s.progress", task.OutputBasename)),
+		WithMsg:  true,
+	})
+	if err != nil {
+		return err
+	}
+
+	pbar.Start()
+	defer pbar.Stop()
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		pbar.Stop()
+	}()
+
+	pbar.SetPulseMsgf("Image building step")
+	buildOpts := &progress.OSBuildOptions{
+		OutputDir:  taskdir,
+		StoreDir:   cachedir,
+		JSONOutput: format == "json",
+
+		Metrics: task.Metrics,
+	}
+	if task.InVM {
+		// NOTE: Bad magic string!
+		// Add properties to pipelines and/or image types that specify which
+		// pipelines need to run in VMs when the option is set
+		buildOpts.InVm = []string{"image"}
+	}
+	exports := []string{}
+	for name := range task.Exports {
+		exports = append(exports, name)
+	}
+
+	if task.Buildlog {
+		buildLogWriter, err := openBuildLogWriter(taskdir, task.OutputBasename)
+		if err != nil {
+			return err
+		}
+		defer buildLogWriter.Close()
+		buildOpts.BuildLog = buildLogWriter
+	}
+
+	if err := progress.RunOSBuild(pbar, manifest, exports, buildOpts); err != nil {
+		return err
+	}
+
+	_, err = renameExports(exports, taskdir, task.Exports)
+
+	return err
+}
+
+func readTaskInfo(workdir string) (taskInfo, error) {
+	taskInfoPath := filepath.Join(workdir, "task.json")
+	tijson, err := os.ReadFile(taskInfoPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return taskInfo{}, fmt.Errorf("task info not found at %q: see 'image-builder task init --help'", taskInfoPath)
+	}
+	if err != nil {
+		return taskInfo{}, fmt.Errorf("failed to read task info at %q: %w", taskInfoPath, err)
+	}
+
+	var task taskInfo
+	if err := json.Unmarshal(tijson, &task); err != nil {
+		return taskInfo{}, err
+	}
+
+	return task, nil
+}
+
+func checkTaskVersion(task taskInfo) error {
+	ibVersion := readVersionInfo().ImageBuilder
+
+	if ibVersion.Version != task.ImageBuilderVersion ||
+		ibVersion.Commit != task.ImageBuilderCommit {
+		return fmt.Errorf("using version %s (%s) but task was created by %s (%s)\ntasks must be processed by the same image-builder version that created them", ibVersion.Version, ibVersion.Commit, task.ImageBuilderVersion, task.ImageBuilderCommit)
+	}
+
+	return nil
+}
+
+func initSBOMWriter(sbomBasename string, sbomDir string) manifestgen.SBOMWriterFunc {
+	return func(filename string, content io.Reader, docType sbom.StandardType) error {
+		filename = fmt.Sprintf("%s.%s", sbomBasename, strings.SplitN(filename, ".", 2)[1])
+		return fileWriter(sbomDir, filename, content)
+	}
+}
+
+func initRPMListWriter(rpmBasename, rpmDir string) manifestgen.RPMListWriterFunc {
+	return func(filename string, content io.Reader) error {
+		filename = fmt.Sprintf("%s.%s", rpmBasename, filename)
+		return fileWriter(rpmDir, filename, content)
+	}
 }
 
 func run() error {
