@@ -668,3 +668,36 @@ def test_wait_ssh_ready_timeout():
 def test_get_ci_runner_distro_for(runner, distro):
     with patch("imgtestlib.testenv.get_ci_runner_for", return_value=runner):
         assert testlib.testenv.get_ci_runner_distro_for("", "", "") == distro
+
+
+def test_gcp_os_family():
+    assert testlib.boot.gcp_os_family("rhel-8.10") == "rhel-8"
+    assert testlib.boot.gcp_os_family("rhel-9.4") == "rhel-9"
+    assert testlib.boot.gcp_os_family("rhel-10.0") == "rhel-10"
+    assert testlib.boot.gcp_os_family("fedora-44") == "fedora"
+
+
+def test_gcp_image_name():
+    name = testlib.boot.gcp_image_name("rhel-10.3")
+    assert name.startswith("rhel-10-3-")
+    assert all(char.islower() or char.isdigit() or char == "-" for char in name)
+
+
+def test_gcp_upload_object_name():
+    assert testlib.boot.gcp_upload_object_name().endswith(".tar.gz")
+
+
+def test_get_gcp_config_allows_discovered_zone_and_subnet(monkeypatch):
+    monkeypatch.setenv("GCP_PROJECT", "cockpituous")
+    monkeypatch.setenv("GCP_BUCKET", "test-bucket")
+    monkeypatch.setenv("GCP_REGION", "us")
+    monkeypatch.delenv("GCP_ZONE", raising=False)
+    monkeypatch.delenv("GCP_SUBNET", raising=False)
+
+    assert testlib.boot.get_gcp_config() == {
+        "project": "cockpituous",
+        "bucket": "test-bucket",
+        "region": "us",
+        "zone": None,
+        "subnet": None,
+    }
