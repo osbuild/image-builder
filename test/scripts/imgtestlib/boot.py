@@ -208,6 +208,20 @@ def arch_to_goarch(arch):
     return goarch
 
 
+def aws_instance_type(arch):
+    """
+    Return the EC2 instance type to boot test images of the given architecture on.
+    """
+    mapping = {
+        "x86_64": "t3.small",
+        "aarch64": "t4g.medium",
+    }
+    instance_type = mapping.get(arch.lower())
+    if instance_type is None:
+        raise RuntimeError(f"no EC2 instance type configured for architecture {arch!r}")
+    return instance_type
+
+
 def make_check_host_config(arch):
     goarch = arch_to_goarch(arch)
     # build without CGO so no dependencies are needed
@@ -502,6 +516,8 @@ def cmd_boot_aws(distro, arch, image_type, image_name, privkey, pubkey, image_pa
     make_check_host_config(arch)
     aws_config = get_aws_config()
 
+    instance_type = aws_instance_type(arch)
+
     # we special case rhel 7.9 here as it doesn't 'actually exist' in the definitions
     # for image-builder
     if distro == "rhel-7.9" and image_type == "ec2":
@@ -521,7 +537,7 @@ def cmd_boot_aws(distro, arch, image_type, image_name, privkey, pubkey, image_pa
                "--access-key-id", aws_config["key_id"],
                "--secret-access-key", aws_config["secret_key"],
                "--region", aws_config["region"],
-               "--arch", arch,
+               "--instance-type", instance_type,
                "--ami", ami_id,
                "--username", "osbuild",
                "--ssh-privkey", privkey,

@@ -32,17 +32,6 @@ type resources struct {
 	InstanceID    *string `json:"instance,omitempty"`
 }
 
-func getInstanceType(arch string) (string, error) {
-	switch arch {
-	case "x86_64":
-		return "t3.small", nil
-	case "aarch64":
-		return "t4g.medium", nil
-	default:
-		return "", fmt.Errorf("getInstanceType(): unknown architecture %q", arch)
-	}
-}
-
 func newClientFromArgs(flags *pflag.FlagSet, region string) (*awscloud.AWS, error) {
 	if flags.Changed("access-key-id") {
 		keyID, err := flags.GetString("access-key-id")
@@ -80,10 +69,6 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 		return err
 	}
 
-	archArg, err := flags.GetString("arch")
-	if err != nil {
-		return err
-	}
 	vpcID, err := flags.GetString("vpc-id")
 	if err != nil {
 		return err
@@ -112,15 +97,7 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 		return fmt.Errorf("AuthorizeSecurityGroupIngressEC2(): %s", err.Error())
 	}
 
-	instance, err := getInstanceType(archArg)
-	if err != nil {
-		return err
-	}
-	if instanceType != "" {
-		instance = instanceType
-	}
-
-	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, string(userData), instance, subnetID)
+	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, string(userData), instanceType, subnetID)
 	if err != nil {
 		return fmt.Errorf("RunInstanceEC2(): %s", err.Error())
 	}
@@ -367,14 +344,13 @@ func setupCLI() *cobra.Command {
 	}
 	setupCmd.Flags().String("region", "", "target region")
 	setupCmd.Flags().String("ami", "", "AMI ID to boot")
-	setupCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
 	setupCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
 	setupCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
 	setupCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
-	setupCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small")
+	setupCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small (x86_64) or t4g.medium (aarch64)")
 	setupCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
-	for _, flag := range []string{"region", "ami", "arch"} {
+	for _, flag := range []string{"region", "ami", "instance-type"} {
 		exitCheck(setupCmd.MarkFlagRequired(flag))
 	}
 	rootCmd.AddCommand(setupCmd)
@@ -397,15 +373,14 @@ func setupCLI() *cobra.Command {
 	}
 	runCmd.Flags().String("region", "", "target region")
 	runCmd.Flags().String("ami", "", "AMI ID to boot")
-	runCmd.Flags().String("arch", "", "arch (x86_64 or aarch64)")
 	runCmd.Flags().String("username", "", "name of the user to create on the system")
 	runCmd.Flags().String("ssh-privkey", "", "path to user's private ssh key")
 	runCmd.Flags().String("vpc-id", "", "ID of the VPC to use")
 	runCmd.Flags().String("subnet-id", "", "ID of the subnet to launch the instance in")
 	runCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
-	runCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small")
+	runCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small (x86_64) or t4g.medium (aarch64)")
 	runCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
-	for _, flag := range []string{"region", "ami", "arch", "username", "ssh-privkey"} {
+	for _, flag := range []string{"region", "ami", "instance-type", "username", "ssh-privkey"} {
 		exitCheck(runCmd.MarkFlagRequired(flag))
 	}
 	rootCmd.AddCommand(runCmd)

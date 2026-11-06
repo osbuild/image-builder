@@ -124,7 +124,7 @@ command with the `setup` subcommand:
 go run ./cmd/boot-aws setup \
      --region "${AWS_REGION}" \
      --ami "${AMI_ID}" \
-     --arch "${IMAGE_ARCHITECTURE}" \
+     --instance-type "${INSTANCE_TYPE}" \
      --vpc-id "${VPC_ID}" \
      --subnet-id "${SUBNET_ID}" \
      --user-data "${PATH_TO_USER_DATA}" \
@@ -133,8 +133,9 @@ go run ./cmd/boot-aws setup \
 where:
 - `${AWS_REGION}` is the AWS region to use,
 - `${AMI_ID}` is the ID of an existing AMI,
-- `${IMAGE_ARCHITECTURE}` is the hardware architecture of the image being
-  uploaded and booted,
+- `${INSTANCE_TYPE}` is the EC2 instance type to launch, for example
+  `t3.small` for `x86_64` or `t4g.medium` for `aarch64`. It must match the
+  architecture of the AMI being booted,
 - `${VPC_ID}` and `${SUBNET_ID}` optionally select the VPC and subnet to use;
   if either option is specified, both are required,
 - `${PATH_TO_USER_DATA}` points to a cloud-init user-data file. Its contents
@@ -164,7 +165,7 @@ Alternatively, a setup-test-teardown procedure can be run in a single command us
 go run ./cmd/boot-aws run \
      --region "${AWS_REGION}" \
      --ami "${AMI_ID}" \
-     --arch "${IMAGE_ARCHITECTURE}" \
+     --instance-type "${INSTANCE_TYPE}" \
      --username "${USERNAME}" \
      --ssh-privkey "${PATH_TO_SSH_PRIVATE_KEY}" \
      --vpc-id "${VPC_ID}" \
