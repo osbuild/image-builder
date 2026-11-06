@@ -255,6 +255,7 @@ func TestRH10Architecture_ListImageTypes(t *testing.T) {
 				"tar",
 				"wsl",
 				"gce",
+				"gce-custom",
 				"image-installer",
 				"network-installer",
 				"azure-cvm",
