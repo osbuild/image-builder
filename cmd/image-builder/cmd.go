@@ -123,9 +123,6 @@ operating systems like Fedora, CentOS and RHEL with easy customizations support.
 	docCmd := setupDocCmd(rootCmd)
 	rootCmd.AddCommand(docCmd)
 
-	prefetchCmd := setupPrefetchCmd()
-	rootCmd.AddCommand(prefetchCmd)
-
 	taskCmd, err := setupTaskCmd()
 	if err != nil {
 		return nil, err
@@ -422,21 +419,6 @@ func setupDocCmd(rootCmd *cobra.Command) *cobra.Command {
 		},
 	}
 	return docCmd
-}
-
-func setupPrefetchCmd() *cobra.Command {
-	prefetchCmd := &cobra.Command{
-		Use:          "prefetch <manifest>",
-		Short:        "Fetch all sources defined in a manifest and prepare the osbuild store",
-		Args:         cobra.ExactArgs(1),
-		SilenceUsage: true,
-		RunE:         cmdPrefetch,
-		Hidden:       true,
-	}
-	prefetchCmd.Flags().String("format", "", "Output in a specific format (json)")
-
-	cacheFlag(prefetchCmd)
-	return prefetchCmd
 }
 
 func setupTaskCmd() (*cobra.Command, error) {
