@@ -230,6 +230,12 @@ func TestV2HandlerMakeDepsolveRequest(t *testing.T) {
 		SSLClientCert: "/cert",
 		SSLClientKey:  "/key",
 	}
+	basicAuthRepo := rpmmd.RepoConfig{
+		Name:     "basic",
+		BaseURLs: []string{"https://example.org/basic"},
+		Username: "user",
+		Password: "pass",
+	}
 	priorityRepo := rpmmd.RepoConfig{
 		Name:     "priority-repo",
 		BaseURLs: []string{"https://example.org/priority"},
@@ -486,6 +492,35 @@ func TestV2HandlerMakeDepsolveRequest(t *testing.T) {
 					"optional-metadata": ["filelists"]
 				}
 			}`, baseOS.Hash(), appstream.Hash(), mtlsRepo.Hash()),
+		},
+		{
+			name: "basic auth passed",
+			packageSets: []rpmmd.PackageSet{
+				{
+					Include:      []string{"pkg1"},
+					Repositories: []rpmmd.RepoConfig{baseOS, appstream, basicAuthRepo},
+				},
+			},
+			wantJSON: fmt.Sprintf(`{
+				"api_version": 2,
+				"command": "depsolve",
+				"module_platform_id": "platform:el8",
+				"releasever": "8",
+				"arch": "x86_64",
+				"cachedir": "/cache",
+				"arguments": {
+					"repos": [
+						{"id": %[1]q, "name": "baseos", "baseurl": ["https://example.org/baseos"]},
+						{"id": %[2]q, "name": "appstream", "baseurl": ["https://example.org/appstream"]},
+						{"id": %[3]q, "name": "basic", "baseurl": ["https://example.org/basic"], "username": "user", "password": "pass"}
+					],
+					"transactions": [
+						{"package-specs": ["pkg1"], "repo-ids": [%[1]q, %[2]q, %[3]q], "install_weak_deps": false}
+					],
+					"root_dir": "/root",
+					"optional-metadata": ["filelists"]
+				}
+			}`, baseOS.Hash(), appstream.Hash(), basicAuthRepo.Hash()),
 		},
 		{
 			name: "priority passed",
