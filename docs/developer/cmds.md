@@ -243,6 +243,33 @@ This calls the same launch path as `setup`, SSHs into the instance using
 them, and then terminates the instance. `${PATH_TO_SSH_PUBLIC_KEY}` is sent
 to OCI at launch; the private key never leaves the host running `boot-oci`.
 
+### GCP
+
+To boot a custom image on Google Compute Engine, use `./cmd/boot-gcp` with the
+`setup` subcommand:
+```bash
+go run ./cmd/boot-gcp setup \
+  --project "${GCP_PROJECT}" \
+  --zone "${GCP_ZONE}" \
+  --subnet "${GCP_SUBNET}" \
+  --image "${IMAGE_NAME}" \
+  --arch "${IMAGE_ARCHITECTURE}" \
+  --username osbuild \
+  --ssh-pubkey "${PATH_TO_SSH_PUBLIC_KEY}" \
+  -r "${TMP_RESOURCE_FILE}"
+```
+where `${IMAGE_NAME}` is the image name in the project (not a file path).
+Credentials use Application Default Credentials or `--credentials` for a
+service account JSON file.
+
+Resource IDs are written to `--resourcefile` / `-r`. Tear down with:
+```bash
+go run ./cmd/boot-gcp teardown -r "${TMP_RESOURCE_FILE}"
+```
+
+Alternatively, use the `run` subcommand to boot, upload and run
+`check-host-config`, then tear down (same flags as `setup`, plus
+`--ssh-privkey`).
 
 #### Listing available image type configurations
 
