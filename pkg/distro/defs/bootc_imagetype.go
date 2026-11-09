@@ -295,7 +295,10 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 		img.DiskCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
 	}
 
-	imageConfig := t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name())
+	imageConfig, err := expandKernelOptions(t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name()), bd.id, t.arch.Name())
+	if err != nil {
+		return nil, nil, err
+	}
 	if imageConfig != nil {
 		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
 	}
@@ -697,7 +700,10 @@ func (t *bootcImageType) manifestForBootcISO(bp *blueprint.Blueprint, options di
 		img.DiskCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
 	}
 
-	imageConfig := t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name())
+	imageConfig, err := expandKernelOptions(t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name()), bd.id, t.arch.Name())
+	if err != nil {
+		return nil, nil, err
+	}
 	if imageConfig != nil {
 		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
 	}
@@ -945,7 +951,10 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 		img.DiskCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
 	}
 
-	imageConfig := t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name())
+	imageConfig, err := expandKernelOptions(t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name()), bd.id, t.arch.Name())
+	if err != nil {
+		return nil, nil, err
+	}
 	if imageConfig != nil {
 		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
 	}

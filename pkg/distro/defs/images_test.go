@@ -14,6 +14,33 @@ import (
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
+func TestExpandKernelOptions(t *testing.T) {
+	id := distro.ID{ImageID: "example-image", ImageVersion: "42.1"}
+	config := &distro.ImageConfig{KernelOptions: []string{
+		"quiet",
+		"mount.usr=dissect",
+		"systemd.image_filter=usr={{.Distro.ImageID}}_{{.Distro.ImageVersion}}",
+		"arch={{.Arch}}",
+	}}
+	for _, archName := range []string{"x86_64", "aarch64"} {
+		result, err := expandKernelOptions(config, id, archName)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"quiet", "mount.usr=dissect", "systemd.image_filter=usr=example-image_42.1", "arch=" + archName}, result.KernelOptions)
+	}
+	assert.Equal(t, "arch={{.Arch}}", config.KernelOptions[3])
+
+	for _, tc := range []struct{ option, message string }{
+		{"{{.Arch", "cannot parse template for kernel option"},
+		{"{{.Distro.NoSuchField}}", "cannot execute template for kernel option"},
+	} {
+		_, err := expandKernelOptions(&distro.ImageConfig{KernelOptions: []string{tc.option}}, id, "x86_64")
+		require.ErrorContains(t, err, tc.message)
+	}
+	result, err := expandKernelOptions(nil, id, "x86_64")
+	require.NoError(t, err)
+	assert.Nil(t, result)
+}
+
 func isoTestImageType() *imageType {
 	return &imageType{
 		arch: &architecture{
