@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/common"
@@ -469,7 +470,65 @@ func TestCheckOptions(t *testing.T) {
 					URL: "https://example.org/repo",
 				},
 			},
-			expErr: "blueprint validation failed for image type \"iot-installer\": customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group",
+			expErr: "blueprint validation failed for image type \"iot-installer\": customizations.installer.kickstart.contents cannot be used with customizations.user",
+		},
+
+		"f42/iot-installer-bad-combinations-group": {
+			distro: "fedora-42",
+			it:     "iot-installer",
+			bp: blueprint.Blueprint{
+				Customizations: &blueprint.Customizations{
+					Group: []blueprint.GroupCustomization{{Name: "wheel"}},
+					Installer: &blueprint.InstallerCustomization{
+						Kickstart: &blueprint.Kickstart{
+							Contents: "echo 'Testing'",
+						},
+					},
+				},
+			},
+			options: distro.ImageOptions{
+				OSTree: &ostree.ImageOptions{
+					URL: "https://example.org/repo",
+				},
+			},
+			expErr: "blueprint validation failed for image type \"iot-installer\": customizations.installer.kickstart.contents cannot be used with customizations.group",
+		},
+
+		"f42/iot-installer-bad-combinations-kernel-append": {
+			distro: "fedora-42",
+			it:     "iot-installer",
+			bp: blueprint.Blueprint{
+				Customizations: &blueprint.Customizations{
+					Kernel: &blueprint.KernelCustomization{Append: "debug"},
+				},
+			},
+			options: distro.ImageOptions{
+				OSTree: &ostree.ImageOptions{
+					URL: "https://example.org/repo",
+				},
+			},
+			expErr: "blueprint validation failed for image type \"iot-installer\": customizations.installer.kickstart.contents cannot be used with customizations.kernel.append",
+		},
+
+		"f42/iot-installer-kickstart-kernel-append": {
+			distro: "fedora-42",
+			it:     "iot-installer",
+			bp: blueprint.Blueprint{
+				Customizations: &blueprint.Customizations{
+					Kernel: &blueprint.KernelCustomization{Append: "console=ttyS0"},
+					Installer: &blueprint.InstallerCustomization{
+						Kickstart: &blueprint.Kickstart{
+							Contents: "bootloader --append='foo'\n",
+						},
+					},
+				},
+			},
+			options: distro.ImageOptions{
+				OSTree: &ostree.ImageOptions{
+					URL: "https://example.org/repo",
+				},
+			},
+			expErr: "blueprint validation failed for image type \"iot-installer\": customizations.installer.kickstart.contents cannot be used with customizations.kernel.append",
 		},
 
 		"f42/ostree-disk-unsupported-containers": {
@@ -921,7 +980,7 @@ func TestCheckOptions(t *testing.T) {
 				},
 			},
 		},
-		"r8/edge-installer-bad-combinations": {
+		"r8/edge-installer-bad-combinations-user": {
 			distro: "rhel-8.10",
 			it:     "edge-installer",
 			bp: blueprint.Blueprint{
@@ -939,7 +998,47 @@ func TestCheckOptions(t *testing.T) {
 					URL: "https://example.org/repo",
 				},
 			},
-			expErr: "blueprint validation failed for image type \"edge-installer\": customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group",
+			expErr: "blueprint validation failed for image type \"edge-installer\": customizations.installer.kickstart.contents cannot be used with customizations.user",
+		},
+		"r8/edge-installer-bad-combinations-kernel-append": {
+			distro: "rhel-8.10",
+			it:     "edge-installer",
+			bp: blueprint.Blueprint{
+				Customizations: &blueprint.Customizations{
+					Kernel: &blueprint.KernelCustomization{Append: "debug"},
+					Installer: &blueprint.InstallerCustomization{
+						Kickstart: &blueprint.Kickstart{
+							Contents: "echo 'Testing'",
+						},
+					},
+				},
+			},
+			options: distro.ImageOptions{
+				OSTree: &ostree.ImageOptions{
+					URL: "https://example.org/repo",
+				},
+			},
+			expErr: "blueprint validation failed for image type \"edge-installer\": customizations.installer.kickstart.contents cannot be used with customizations.kernel.append",
+		},
+		"r8/edge-installer-bad-combinations-group": {
+			distro: "rhel-8.10",
+			it:     "edge-installer",
+			bp: blueprint.Blueprint{
+				Customizations: &blueprint.Customizations{
+					Group: []blueprint.GroupCustomization{{Name: "wheel"}},
+					Installer: &blueprint.InstallerCustomization{
+						Kickstart: &blueprint.Kickstart{
+							Contents: "echo 'Testing'",
+						},
+					},
+				},
+			},
+			options: distro.ImageOptions{
+				OSTree: &ostree.ImageOptions{
+					URL: "https://example.org/repo",
+				},
+			},
+			expErr: "blueprint validation failed for image type \"edge-installer\": customizations.installer.kickstart.contents cannot be used with customizations.group",
 		},
 
 		"r8/ostree-disk-requires-ostree-url": {
@@ -1521,7 +1620,7 @@ func TestCheckOptions(t *testing.T) {
 				},
 			},
 		},
-		"r9/edge-installer-bad-combinations": {
+		"r9/edge-installer-bad-combinations-user": {
 			distro: "rhel-9.7",
 			it:     "edge-installer",
 			bp: blueprint.Blueprint{
@@ -1539,7 +1638,47 @@ func TestCheckOptions(t *testing.T) {
 					URL: "https://example.org/repo",
 				},
 			},
-			expErr: "blueprint validation failed for image type \"edge-installer\": customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group",
+			expErr: "blueprint validation failed for image type \"edge-installer\": customizations.installer.kickstart.contents cannot be used with customizations.user",
+		},
+		"r9/edge-installer-bad-combinations-group": {
+			distro: "rhel-9.7",
+			it:     "edge-installer",
+			bp: blueprint.Blueprint{
+				Customizations: &blueprint.Customizations{
+					Group: []blueprint.GroupCustomization{{Name: "wheel"}},
+					Installer: &blueprint.InstallerCustomization{
+						Kickstart: &blueprint.Kickstart{
+							Contents: "echo 'Testing'",
+						},
+					},
+				},
+			},
+			options: distro.ImageOptions{
+				OSTree: &ostree.ImageOptions{
+					URL: "https://example.org/repo",
+				},
+			},
+			expErr: "blueprint validation failed for image type \"edge-installer\": customizations.installer.kickstart.contents cannot be used with customizations.group",
+		},
+		"r9/edge-installer-bad-combinations-kernel-append": {
+			distro: "rhel-9.7",
+			it:     "edge-installer",
+			bp: blueprint.Blueprint{
+				Customizations: &blueprint.Customizations{
+					Kernel: &blueprint.KernelCustomization{Append: "debug"},
+					Installer: &blueprint.InstallerCustomization{
+						Kickstart: &blueprint.Kickstart{
+							Contents: "echo 'Testing'",
+						},
+					},
+				},
+			},
+			options: distro.ImageOptions{
+				OSTree: &ostree.ImageOptions{
+					URL: "https://example.org/repo",
+				},
+			},
+			expErr: "blueprint validation failed for image type \"edge-installer\": customizations.installer.kickstart.contents cannot be used with customizations.kernel.append",
 		},
 
 		"r9/ostree-disk-unsupported-containers": {
@@ -1929,4 +2068,57 @@ func TestCheckOptions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCheckOptionsNilBlueprint(t *testing.T) {
+	d := defs.DistroFactory("fedora-42")
+	archi, err := d.GetArch("x86_64")
+	require.NoError(t, err)
+
+	it, err := archi.GetImageType("qcow2")
+	require.NoError(t, err)
+
+	genit, ok := it.(*defs.ImageType)
+	require.True(t, ok)
+
+	warnings, err := defs.ImageTypeCheckOptions(genit, nil, distro.ImageOptions{})
+	assert.NoError(t, err)
+	assert.Nil(t, warnings)
+}
+
+func TestValidateInstallerKickstartContentsConflicts(t *testing.T) {
+	assert.NoError(t, defs.ValidateInstallerKickstartContentsConflicts(nil))
+	assert.NoError(t, defs.ValidateInstallerKickstartContentsConflicts(&blueprint.Customizations{}))
+	assert.NoError(t, defs.ValidateInstallerKickstartContentsConflicts(&blueprint.Customizations{
+		Kernel: &blueprint.KernelCustomization{Append: "console=ttyS0"},
+	}))
+	assert.NoError(t, defs.ValidateInstallerKickstartContentsConflicts(&blueprint.Customizations{
+		Installer: &blueprint.InstallerCustomization{
+			Kickstart: &blueprint.Kickstart{Contents: "bootloader --append='foo'\n"},
+		},
+	}))
+
+	err := defs.ValidateInstallerKickstartContentsConflicts(&blueprint.Customizations{
+		Kernel: &blueprint.KernelCustomization{Append: "console=ttyS0"},
+		Installer: &blueprint.InstallerCustomization{
+			Kickstart: &blueprint.Kickstart{Contents: "bootloader --append='foo'\n"},
+		},
+	})
+	assert.EqualError(t, err, "customizations.installer.kickstart.contents cannot be used with customizations.kernel.append")
+
+	err = defs.ValidateInstallerKickstartContentsConflicts(&blueprint.Customizations{
+		User: []blueprint.UserCustomization{{Name: "alice"}},
+		Installer: &blueprint.InstallerCustomization{
+			Kickstart: &blueprint.Kickstart{Contents: "user alice\n"},
+		},
+	})
+	assert.EqualError(t, err, "customizations.installer.kickstart.contents cannot be used with customizations.user")
+
+	err = defs.ValidateInstallerKickstartContentsConflicts(&blueprint.Customizations{
+		Group: []blueprint.GroupCustomization{{Name: "wheel"}},
+		Installer: &blueprint.InstallerCustomization{
+			Kickstart: &blueprint.Kickstart{Contents: "%include /osbuild-base.ks\n"},
+		},
+	})
+	assert.EqualError(t, err, "customizations.installer.kickstart.contents cannot be used with customizations.group")
 }

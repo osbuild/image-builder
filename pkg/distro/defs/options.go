@@ -12,6 +12,49 @@ import (
 	"github.com/osbuild/image-builder/pkg/policies"
 )
 
+func hasInstallerKickstartContents(customizations *blueprint.Customizations) (bool, error) {
+	if customizations == nil {
+		return false, nil
+	}
+	instCust, err := customizations.GetInstaller()
+	if err != nil {
+		return false, err
+	}
+	if instCust == nil || instCust.Kickstart == nil || instCust.Kickstart.Contents == "" {
+		return false, nil
+	}
+	return true, nil
+}
+
+// validateInstallerKickstartContentsConflicts reports bp customizations
+// that must not be combined with customizations.installer.kickstart.contents.
+// This is mostly due to overlapping functionality between the two.
+func validateInstallerKickstartContentsConflicts(customizations *blueprint.Customizations) error {
+	ok, err := hasInstallerKickstartContents(customizations)
+	if err != nil || !ok {
+		return err
+	}
+
+	groups, err := customizations.GetGroups()
+	if err != nil {
+		return err
+	}
+	if len(groups) > 0 {
+		return fmt.Errorf("customizations.installer.kickstart.contents cannot be used with customizations.group")
+	}
+
+	users := customizations.GetUsers()
+	if len(users) > 0 {
+		return fmt.Errorf("customizations.installer.kickstart.contents cannot be used with customizations.user")
+	}
+
+	kernelCust := customizations.GetKernel()
+	if kernelCust != nil && kernelCust.Append != "" {
+		return fmt.Errorf("customizations.installer.kickstart.contents cannot be used with customizations.kernel.append")
+	}
+	return nil
+}
+
 func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
 	if !t.isOSTreeBasedImageType() && options.OSTree != nil {
 		return nil, fmt.Errorf("OSTree is not supported for %q", t.Name())
@@ -19,6 +62,10 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 
 	if len(t.supportedPartitioningModes) > 0 && !slices.Contains(t.supportedPartitioningModes, options.PartitioningMode) {
 		return nil, fmt.Errorf("partitioning mode %s not supported for %q", options.PartitioningMode, t.Name())
+	}
+
+	if bp == nil {
+		return nil, nil
 	}
 
 	customizations := bp.Customizations
@@ -153,15 +200,8 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 
-	instCust, err := customizations.GetInstaller()
-	if err != nil {
+	if err := validateInstallerKickstartContentsConflicts(customizations); err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
-	}
-	if instCust != nil && instCust.Kickstart != nil && len(instCust.Kickstart.Contents) > 0 {
-		groups, _ := customizations.GetGroups() // group customization errors are checked above
-		if customizations.GetUsers() != nil || groups != nil {
-			return warnings, fmt.Errorf("%s: customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group", errPrefix)
-		}
 	}
 	return warnings, nil
 }
