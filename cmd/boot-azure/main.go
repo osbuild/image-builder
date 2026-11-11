@@ -414,9 +414,6 @@ func setupCLI() *cobra.Command {
 	rootFlags.String("size", "", "size or instance type of the VM to create")
 	rootFlags.String("arch", "x86_64", "architecture (x86_64 or aarch64)")
 
-	exitCheck(rootCmd.MarkPersistentFlagRequired("client-id"))
-	exitCheck(rootCmd.MarkPersistentFlagRequired("client-secret"))
-	exitCheck(rootCmd.MarkPersistentFlagRequired("tenant"))
 	exitCheck(rootCmd.MarkPersistentFlagRequired("subscription"))
 
 	setupCmd := &cobra.Command{
