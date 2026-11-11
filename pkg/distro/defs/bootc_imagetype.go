@@ -189,9 +189,9 @@ func (t *bootcImageType) getDefaultISOConfig() *distro.ISOConfig {
 }
 
 // keep in sync with "generic/imagetype.go:checkOptions()"
-func (t *bootcImageType) checkOptions(bp *blueprint.Blueprint) []string {
+func (t *bootcImageType) checkOptions(bp *blueprint.Blueprint) ([]string, error) {
 	if bp == nil {
-		return nil
+		return nil, nil
 	}
 
 	if err := distro.ValidateConfig(t, *bp); err != nil {
@@ -199,13 +199,20 @@ func (t *bootcImageType) checkOptions(bp *blueprint.Blueprint) []string {
 		// NOTE (validation-warnings): appending to warnings now, because this
 		// is breaking a lot of things the service
 		errAsWarning := fmt.Errorf("%s: %w", errPrefix, err)
-		return []string{errAsWarning.Error()}
+		return []string{errAsWarning.Error()}, nil
 	}
-	return nil
+
+	if err := validateInstallerKickstartContentsConflicts(bp.Customizations); err != nil {
+		return nil, fmt.Errorf("blueprint validation failed for image type %q: %w", t.Name(), err)
+	}
+	return nil, nil
 }
 
 func (t *bootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seedp *int64) (*manifest.Manifest, []string, error) {
-	validationWarnings := t.checkOptions(bp)
+	validationWarnings, err := t.checkOptions(bp)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	mani, manifestWarnings, err := t.manifestWithoutValidation(bp, options, seedp)
 	return mani, append(validationWarnings, manifestWarnings...), err

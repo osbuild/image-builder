@@ -500,6 +500,11 @@ func TestCheckOptions(t *testing.T) {
 			bp: blueprint.Blueprint{
 				Customizations: &blueprint.Customizations{
 					Kernel: &blueprint.KernelCustomization{Append: "debug"},
+					Installer: &blueprint.InstallerCustomization{
+						Kickstart: &blueprint.Kickstart{
+							Contents: "echo 'Testing'",
+						},
+					},
 				},
 			},
 			options: distro.ImageOptions{
