@@ -239,6 +239,45 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 	}
 }
 
+func TestManifestPartitioningMode(t *testing.T) {
+	restore := main.MockManifestgenDepsolver(fakeDepsolve)
+	defer restore()
+	restore = main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	for _, tc := range []struct {
+		name      string
+		blueprint string
+		wantLVM   bool
+		wantError string
+	}{
+		{name: "no customizations"},
+		{name: "default", blueprint: "[customizations]\n[[customizations.filesystem]]\nmountpoint = '/var/log'\nminsize = '1 GiB'\n", wantLVM: true},
+		{name: "raw", blueprint: "[customizations]\npartitioning_mode = 'raw'\n[[customizations.filesystem]]\nmountpoint = '/var/log'\nminsize = '1 GiB'\n"},
+		{name: "lvm", blueprint: "[customizations]\npartitioning_mode = 'lvm'\n", wantLVM: true},
+		{name: "invalid", blueprint: "[customizations]\npartitioning_mode = 'bogus'\n", wantError: "invalid partitioning mode 'bogus'"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			restore := main.MockOsArgs([]string{
+				"manifest", "qcow2", "--arch=x86_64", "--distro=centos-10",
+				"--blueprint=" + makeTestBlueprint(t, tc.blueprint),
+			})
+			defer restore()
+			var output bytes.Buffer
+			restore = main.MockOsStdout(&output)
+			defer restore()
+
+			err := main.Run()
+			if tc.wantError != "" {
+				require.ErrorContains(t, err, tc.wantError)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantLVM, strings.Contains(output.String(), "org.osbuild.lvm2.create"))
+		})
+	}
+}
+
 func TestManifestIntegrationAutoDetectDistro(t *testing.T) {
 	restore := main.MockManifestgenDepsolver(fakeDepsolve)
 	defer restore()
