@@ -25,6 +25,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/cloud"
 	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk/partition"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/imagefilter"
@@ -643,6 +644,10 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	if err != nil {
 		return nil, err
 	}
+	partitioningMode, err := bp.Customizations.GetPartitioningMode()
+	if err != nil {
+		return nil, err
+	}
 	if bootcRef == "" {
 		distroStr = img.ImgType.Arch().Distro().Name()
 	} else {
@@ -711,10 +716,11 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	}
 
 	imgOpts := &distro.ImageOptions{
-		Facts:        &facts.ImageOptions{APIType: facts.IBCLI_APITYPE},
-		OSTree:       ostreeImgOpts,
-		Subscription: subscription,
-		Size:         imageSize.Uint64(),
+		Facts:            &facts.ImageOptions{APIType: facts.IBCLI_APITYPE},
+		OSTree:           ostreeImgOpts,
+		Subscription:     subscription,
+		Size:             imageSize.Uint64(),
+		PartitioningMode: partition.PartitioningMode(partitioningMode),
 		Bootc: &distro.BootcImageOptions{
 			InstallerPayloadRef:      bootcInstallerPayloadRef,
 			OmitDefaultKernelArgs:    bootcOmitDefaultKernelArgs,
