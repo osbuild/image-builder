@@ -197,6 +197,213 @@ sudo image-builder build --bootc-ref localhost/iso --bootc-default-fs ext4 gener
 
 For more examples, including for other operating systems, you can take a look at [this demonstration repository](https://github.com/osbuild/bootc-foundry). The [bootc-foundry repository](https://github.com/osbuild/bootc-foundry) may also be of interest.
 
+### Example Anaconda WebUI Installer Containerfile
+
+The `bootc-image-builder` project has been deprecated in favor of the unified `image-builder` tool. This example creates a Fedora Rawhide Live ISO with the new Anaconda WebUI installer to install `bootc` images using the `bootc-generic-iso` method in `image-builder`.
+
+The `Containerfile` below generates a local container image used to build a Fedora Rawhide ISO configured to launch the Anaconda WebUI interface (powered by Cockpit and Wayland, using `gnome-kiosk` as the compositor). It was obtained and adapted from [the image-builder ISO documentation](https://osbuild.org/docs/developer-guide/projects/image-builder/advanced/bootc/isos/). Reading that documentation before following this example is strongly recommended.
+
+```dockerfile
+FROM quay.io/fedora/fedora-bootc:rawhide
+
+# Collecting your image bootc personalization
+ARG CONTAINER_NAME=quay.io/fedora/fedora-bootc:rawhide
+
+# Installs essential Anaconda packages to generate the live ISO with the installer
+RUN dnf install -qy \
+    anaconda \
+    anaconda-install-img-deps \
+    anaconda-dracut \
+    dracut-config-generic \
+    dracut-network \
+    net-tools \
+    grub2-efi-x64-cdboot \
+    plymouth \
+    cockpit-ws \
+    cockpit-bridge \
+    anaconda-webui \
+    firefox \
+    gnome-kiosk \
+    mesa-dri-drivers \
+    default-fonts-core-sans \
+    jq
+
+# these are necessary build tools. if you use a separate build container then
+# these tools should be installed there
+RUN dnf install -qy \
+    xorrisofs \
+    squashfs-tools
+
+RUN dnf clean all
+
+RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
+
+# ---
+
+# some configuration for our ISO
+
+RUN mkdir -p /usr/lib/image-builder/bootc
+
+# Configured with inst.webui to launch anacondaWEBUI as the main installer
+RUN cat <<EOF > /usr/lib/image-builder/bootc/iso.yaml
+label: "Fedora-bootc-Installer"
+grub2:
+  timeout: 5
+  entries:
+    - name: "Install Fedora (bootc WebUI Wayland Local)"
+      linux: \${kernelpath} \${root} inst.webui
+      initrd: \${initrdpath}
+EOF
+
+# some configuration for anaconda
+
+COPY <<EOT /usr/share/anaconda/interactive-defaults.ks
+bootc --source-imgref registry:${CONTAINER_NAME} --target-imgref ${CONTAINER_NAME}
+EOT
+
+# ---
+
+# these things are normally performed by `lorax` to make `anaconda` work; this is the
+# bare minimum to get things to work
+
+RUN echo "install:x:0:0:root:/root:/usr/libexec/anaconda/run-anaconda" >> /etc/passwd && \
+    echo "install::14438:0:99999:7:::" >> /etc/shadow && \
+    passwd -d root
+
+RUN mv /usr/share/anaconda/list-harddrives-stub /usr/bin/list-harddrives && \
+    mv /etc/yum.repos.d /etc/anaconda.repos.d && \
+    ln -s /lib/systemd/system/anaconda.target /etc/systemd/system/default.target && \
+    rm -v /usr/lib/systemd/system-generators/systemd-gpt-auto-generator
+
+RUN ln -s /usr/lib/systemd/system/anaconda-shell@.service /usr/lib/systemd/system/autovt@.service
+
+RUN mkdir -p /usr/lib/systemd/logind.conf.d
+COPY <<EOT /usr/lib/systemd/logind.conf.d/anaconda-shell.conf
+[Login]
+ReserveVT=2
+EOT
+
+RUN mkdir "$(realpath /root)" && \
+    kernel=$(kernel-install list --json pretty | jq -r '.[] | select(.has_kernel == true) | .version') && \
+    DRACUT_NO_XATTR=1 dracut --force -v --zstd --reproducible --no-hostonly \
+        --add "anaconda" \
+        "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
+
+RUN mkdir /etc/systemd/user/pipewire.service.d/
+COPY <<EOT /etc/systemd/user/pipewire.service.d/allowroot.conf
+[Unit]
+ConditionUser=
+EOT
+
+RUN mkdir /etc/systemd/user/pipewire.socket.d/
+COPY <<EOT /etc/systemd/user/pipewire.socket.d/allowroot.conf
+[Unit]
+ConditionUser=
+EOT
+```
+
+The `CONTAINER_NAME` build argument points to the `bootc` image that Anaconda will install. It defaults to `quay.io/fedora/fedora-bootc:rawhide`, so override it when installing a different image:
+
+```bash
+sudo podman build -t localhost/bootc-generic-iso-rawhide:latest \
+  --build-arg CONTAINER_NAME=quay.io/your-org/your-bootc-image:latest \
+  -f Containerfile
+```
+
+Then generate the installer ISO (requires `image-builder` to be installed):
+
+```bash
+sudo image-builder build \
+  --bootc-ref localhost/bootc-generic-iso-rawhide:latest \
+  --bootc-default-fs ext4 \
+  bootc-generic-iso
+```
+
+Once the process completes, a new directory will be created in the current working directory containing the generated ISO for bare-metal installation.
+
+### Example Anaconda GTK Installer Containerfile
+
+If you need the legacy installer, the same workflow also works with the Anaconda GTK installer. This is the legacy method, tested on Fedora Rawhide; for other versions, the legacy `bootc-image-builder` utility still works.
+
+The build and ISO generation commands are the same as above. Use this `Containerfile` instead:
+
+```dockerfile
+FROM quay.io/fedora/fedora-bootc:rawhide
+
+ARG CONTAINER_NAME=quay.io/fedora/fedora-bootc:rawhide
+
+# Installation of installer tools and boot media
+RUN dnf5 install -qy \
+    anaconda \
+    anaconda-install-img-deps \
+    anaconda-dracut \
+    dracut-config-generic \
+    dracut-network \
+    net-tools \
+    grub2-efi-x64-cdboot \
+    plymouth \
+    default-fonts-core-sans \
+    default-fonts-other-sans \
+    google-noto-sans-cjk-fonts \
+    xorrisofs \
+    squashfs-tools \
+    jq && \
+    dnf5 clean all
+
+RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
+
+# ISO GRUB Boot Menu Configuration
+RUN mkdir -p /usr/lib/image-builder/bootc
+COPY <<EOT /usr/lib/image-builder/bootc/iso.yaml
+label: "Custom-Fedora-Installer"
+grub2:
+  entries:
+    - name: "Install Fedora (bootc)"
+      linux: "/images/pxeboot/vmlinuz inst.stage2=hd:LABEL=Custom-Fedora-Installer console=tty0 inst.graphical rhgb quiet"
+      initrd: "/images/pxeboot/initrd.img"
+EOT
+
+# Enables bootc installation mode in ISO's Anaconda (this is where kickstart gets fetched)
+RUN mkdir -p /usr/share/anaconda && \
+    echo "bootc --source-imgref registry:${CONTAINER_NAME} --target-imgref ${CONTAINER_NAME}" > /usr/share/anaconda/interactive-defaults.ks
+
+# Anaconda environment adjustments (with DNF5 path)
+RUN echo "install:x:0:0:root:/root:/usr/libexec/anaconda/run-anaconda" >> /etc/passwd && \
+    echo "install::14438:0:99999:7:::" >> /etc/shadow && \
+    passwd -d root
+
+RUN mv /usr/share/anaconda/list-harddrives-stub /usr/bin/list-harddrives && \
+    mv /usr/share/dnf5/repos.d /etc/anaconda.repos.d && \
+    ln -s /lib/systemd/system/anaconda.target /etc/systemd/system/default.target && \
+    rm -v /usr/lib/systemd/system-generators/systemd-gpt-auto-generator
+
+RUN ln -s /usr/lib/systemd/system/anaconda-shell@.service /usr/lib/systemd/system/autovt@.service
+
+RUN mkdir -p /usr/lib/systemd/logind.conf.d
+COPY <<EOT /usr/lib/systemd/logind.conf.d/anaconda-shell.conf
+[Login]
+ReserveVT=2
+EOT
+
+RUN mkdir -p "$(realpath /root)" && \
+    kernel=$(kernel-install list --json pretty | jq -r '.[] | select(.has_kernel == true) | .version') && \
+    DRACUT_NO_XATTR=1 dracut --force -v --zstd --reproducible --no-hostonly \
+        --add "anaconda" \
+        "/usr/lib/modules/${kernel}/initramfs.img" "${kernel}"
+
+RUN mkdir -p /etc/systemd/user/pipewire.service.d/
+COPY <<EOT /etc/systemd/user/pipewire.service.d/allowroot.conf
+[Unit]
+ConditionUser=
+EOT
+
+RUN mkdir -p /etc/systemd/user/pipewire.socket.d/
+COPY <<EOT /etc/systemd/user/pipewire.socket.d/allowroot.conf
+[Unit]
+ConditionUser=
+EOT
+```
+
 ## ostree-iso
 
 The `ostree-iso` image is similar to the `pxe-tar-xz` image where the root
