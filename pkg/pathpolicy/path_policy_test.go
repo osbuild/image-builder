@@ -36,6 +36,7 @@ func TestPathPolicyCheck(t *testing.T) {
 		"/var/log":         true,
 		"/var/empty":       false,
 		"/var/empty/dir":   false,
+		"/usr":             false,
 	}
 
 	for k, v := range tests {
