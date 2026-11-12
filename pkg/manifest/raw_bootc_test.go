@@ -492,7 +492,7 @@ func TestRawBootcImageSerializeGrub2DStage(t *testing.T) {
 				Serial: "serial --unit=0 --speed=115200",
 			},
 			expectStage:  true,
-			expectedPath: "tree:///boot/grub2/console.cfg",
+			expectedPath: "mount://boot/grub2/console.cfg",
 		},
 		{
 			name: "all-console-fields",
@@ -502,7 +502,7 @@ func TestRawBootcImageSerializeGrub2DStage(t *testing.T) {
 				Serial:         "serial --unit=0 --speed=115200",
 			},
 			expectStage:  true,
-			expectedPath: "tree:///boot/grub2/console.cfg",
+			expectedPath: "mount://boot/grub2/console.cfg",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
