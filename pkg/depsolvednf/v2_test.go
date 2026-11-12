@@ -1452,6 +1452,45 @@ func TestV2HandlerToRPMMDPackageWithMTLS(t *testing.T) {
 	assert.Equal(t, "org.osbuild.mtls", rpmPkg.Secrets)
 }
 
+func TestV2HandlerToRPMMDPackageWithBasic(t *testing.T) {
+	v2Handler := newV2Handler()
+
+	repo := v2Repository{
+		ID:       "basic-repo",
+		Name:     "Basic Repo",
+		Username: "user",
+		Password: "pass",
+	}
+
+	pkg := v2Package{
+		Name:            "test-pkg",
+		Epoch:           0,
+		Version:         "1.0",
+		Release:         "1.el9",
+		Arch:            "x86_64",
+		RepoID:          "basic-repo",
+		Location:        "Packages/test-pkg.rpm",
+		RemoteLocations: []string{"https://example.com/test-pkg.rpm"},
+		Checksum:        &v2Checksum{Algorithm: "sha256", Value: "aaaa"},
+		Provides:        []v2Dependency{},
+		Requires:        []v2Dependency{},
+		RequiresPre:     []v2Dependency{},
+		Conflicts:       []v2Dependency{},
+		Obsoletes:       []v2Dependency{},
+		RegularRequires: []v2Dependency{},
+		Recommends:      []v2Dependency{},
+		Suggests:        []v2Dependency{},
+		Enhances:        []v2Dependency{},
+		Supplements:     []v2Dependency{},
+		Files:           []string{},
+	}
+	rpmmdRepo := v2Handler.toRPMMDRepoConfig(repo)
+	rpmPkg, err := v2Handler.toRPMMDPackage(pkg, &rpmmdRepo)
+	require.NoError(t, err)
+
+	assert.Equal(t, "org.osbuild.basic_auth", rpmPkg.Secrets)
+}
+
 func TestV2HandlerToRPMMDRelDepList(t *testing.T) {
 	v2Handler := newV2Handler()
 

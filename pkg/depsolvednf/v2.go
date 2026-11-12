@@ -551,6 +551,12 @@ func (h *v2Handler) toRPMMDPackage(pkg v2Package, repo *rpmmd.RepoConfig) (rpmmd
 		rpmPkg.Secrets = "org.osbuild.mtls"
 	}
 
+	// Set basic auth secrets if Username is set.
+	// The Solver will override secrets to 'org.osbuild.rhsm' if the repo needs RHSM secrets.
+	if repo.Username != "" {
+		rpmPkg.Secrets = "org.osbuild.basic_auth"
+	}
+
 	return rpmPkg, nil
 }
 
@@ -610,6 +616,8 @@ func (h *v2Handler) toRPMMDRepoConfig(repo v2Repository) rpmmd.RepoConfig {
 		SSLClientKey:   repo.SSLClientKey,
 		SSLClientCert:  repo.SSLClientCert,
 		RHSM:           repo.RHSM,
+		Username:       repo.Username,
+		Password:       repo.Password,
 	}
 }
 
