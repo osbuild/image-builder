@@ -396,7 +396,7 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 		if grub2dCfg := osbuild.NewGrub2DConfigFromGrub2Config(p.OSCustomizations.Grub2Config); grub2dCfg != nil {
 			grub2dOpts := &osbuild.Grub2DStageOptions{
 				Config: grub2dCfg,
-				Path:   "tree:///boot/grub2/console.cfg",
+				Path:   "mount://boot/grub2/console.cfg",
 			}
 			grub2dStage := osbuild.NewGrub2DStage(grub2dOpts)
 			grub2dStage.Devices, grub2dStage.Mounts, err = osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
