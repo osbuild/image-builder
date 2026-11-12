@@ -675,6 +675,13 @@ func TestApplyRHSMSecrets(t *testing.T) {
 		SSLClientCert: "/etc/pki/mtls-repo/cert",
 		SSLClientKey:  "/etc/pki/mtls-repo/key",
 	}
+	basicRepo := rpmmd.RepoConfig{
+		Name:     "basic-repo",
+		BaseURLs: []string{"https://example.com/basic/"},
+		RHSM:     false,
+		Username: "user",
+		Password: "pass",
+	}
 	plainRepo := rpmmd.RepoConfig{
 		Name:     "plain-repo",
 		BaseURLs: []string{"https://example.com/plain/"},
@@ -756,6 +763,16 @@ func TestApplyRHSMSecrets(t *testing.T) {
 			packages:     rpmmd.PackageList{},
 			repos:        []rpmmd.RepoConfig{rhsmRepo},
 			wantPackages: rpmmd.PackageList{},
+		},
+		{
+			name: "non-RHSM repo keeps basic auth secrets",
+			packages: rpmmd.PackageList{
+				{Name: "pkg1", RepoID: basicRepo.Hash(), Secrets: "org.osbuild.basic_auth"},
+			},
+			repos: []rpmmd.RepoConfig{basicRepo},
+			wantPackages: rpmmd.PackageList{
+				{Name: "pkg1", RepoID: basicRepo.Hash(), Secrets: "org.osbuild.basic_auth"},
+			},
 		},
 	}
 
