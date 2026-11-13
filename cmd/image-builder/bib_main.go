@@ -224,7 +224,7 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 		return nil, err
 	}
 
-	return manifest, nil
+	return manifest.Manifest, nil
 }
 
 func bibCmdManifest(cmd *cobra.Command, args []string) error {

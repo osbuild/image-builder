@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/reporegistry"
 	"github.com/osbuild/image-builder/pkg/rpmlist"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 const (
@@ -74,6 +75,10 @@ type Options struct {
 	UseBootstrapContainer bool
 
 	RPMListWriter RPMListWriterFunc
+
+	// SBOMPackages makes Generate return the resolved payload RPMs in
+	// Result.Packages, for SBOM generation.
+	SBOMPackages bool
 }
 
 // Generator can generate an osbuild manifest from a given repository
@@ -97,6 +102,7 @@ type Generator struct {
 
 	useBootstrapContainer bool
 	rpmlistWriter         RPMListWriterFunc
+	sbomPackages          bool
 }
 
 // New will create a new manifest generator
@@ -118,6 +124,7 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		overrideRepos:          opts.OverrideRepos,
 		useBootstrapContainer:  opts.UseBootstrapContainer,
 		rpmlistWriter:          opts.RPMListWriter,
+		sbomPackages:           opts.SBOMPackages,
 	}
 	if mg.depsolve == nil {
 		mg.depsolve = DefaultDepsolve
@@ -144,9 +151,14 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 	return mg, nil
 }
 
+type Result struct {
+	Manifest []byte
+	Packages []sbom.Package
+}
+
 // Generate will generate a new manifest for the given distro/imageType/arch
 // combination.
-func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType, imgOpts *distro.ImageOptions) ([]byte, error) {
+func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType, imgOpts *distro.ImageOptions) (Result, error) {
 	if imgOpts == nil {
 		imgOpts = &distro.ImageOptions{}
 	}
@@ -161,7 +173,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 		var err error
 		repos, err = mg.reporegistry.ReposByImageTypeName(dist.Name(), a.Name(), imgType.Name())
 		if err != nil {
-			return nil, err
+			return Result{}, err
 		}
 	}
 	// To support "user" a.k.a. "3rd party" repositories, these
@@ -170,19 +182,19 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 	// for the given image type, see e.g. distro/rhel/imagetype.go:Manifest()
 	preManifest, warnings, err := imgType.Manifest(bp, *imgOpts, repos, mg.customSeed)
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	if len(warnings) > 0 {
 		warn := strings.Join(warnings, "\n")
 		if mg.warningsOutput != nil {
 			fmt.Fprint(mg.warningsOutput, warn)
 		} else {
-			return nil, fmt.Errorf("Warnings during manifest creation:\n%v", warn)
+			return Result{}, fmt.Errorf("Warnings during manifest creation:\n%v", warn)
 		}
 	}
 	pkgSetChains, err := preManifest.GetPackageSetChains()
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	solver := depsolvednf.NewSolver(dist.ModulePlatformID(), dist.Releasever(), a.Name(), dist.Name(), mg.cacheDir)
 	if dd, ok := dist.(distro.CustomDepsolverDistro); ok {
@@ -191,7 +203,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 		archi := common.Must(arch.FromString(a.Name()))
 		customSolver, cleanupFunc, err := dd.Depsolver(mg.cacheDir, archi)
 		if err != nil {
-			return nil, err
+			return Result{}, err
 		}
 		if customSolver != nil {
 			solver = customSolver
@@ -204,28 +216,28 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 	}
 	depsolved, err := mg.depsolve(solver, mg.cacheDir, mg.depsolveWarningsOutput, pkgSetChains, dist, a.Name())
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	containerSpecs, err := mg.containerResolver(preManifest.GetContainerSourceSpecs(), a.Name())
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	for _, specs := range containerSpecs {
 		for _, spec := range specs {
 			if spec.Arch.String() != a.Name() {
-				return nil, fmt.Errorf("%w: %q != %q", ErrContainerArchMismatch, spec.Arch, a.Name())
+				return Result{}, fmt.Errorf("%w: %q != %q", ErrContainerArchMismatch, spec.Arch, a.Name())
 			}
 		}
 	}
 
 	commitSpecs, err := mg.commitResolver(preManifest.GetOSTreeSourceSpecs())
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 
 	flatpakSpecs, err := mg.flatpakResolver(preManifest.GetFlatpakSourceSpecs())
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 
 	opts := &manifest.SerializeOptions{
@@ -234,7 +246,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 
 	mf, err := preManifest.Serialize(depsolved, containerSpecs, commitSpecs, flatpakSpecs, opts)
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 
 	if mg.rpmlistWriter != nil {
@@ -255,11 +267,30 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 			}
 		}
 		if err := writeRPMList(mg.rpmlistWriter, uniquePackages); err != nil {
-			return nil, err
+			return Result{}, err
 		}
 	}
 
-	return mf, nil
+	var packages []sbom.Package
+	if mg.sbomPackages {
+		packages = sbomInventory(preManifest.PayloadPipelines(), depsolved)
+	}
+
+	return Result{Manifest: mf, Packages: packages}, nil
+}
+
+func sbomInventory(payload []string, depsolved map[string]depsolvednf.DepsolveResult) []sbom.Package {
+	var packages []sbom.Package
+	for _, plName := range payload {
+		pipeline, ok := depsolved[plName]
+		if !ok {
+			continue
+		}
+		for _, pkg := range pipeline.Transactions.AllPackages() {
+			packages = append(packages, sbom.PackageFromRPMMD(pkg))
+		}
+	}
+	return packages
 }
 
 func addUniquePackagesFromPipeline(unique map[string]rpmmd.Package, pipeline depsolvednf.DepsolveResult) {

@@ -719,7 +719,7 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 		return nil, err
 	}
 	var pretty bytes.Buffer
-	if err := json.Indent(&pretty, []byte(mf), "", "    "); err != nil {
+	if err := json.Indent(&pretty, mf.Manifest, "", "    "); err != nil {
 		return nil, err
 	}
 
