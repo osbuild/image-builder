@@ -191,6 +191,14 @@ func TestRhel9_FilenameFromType(t *testing.T) {
 			},
 		},
 		{
+			name: "gce-3p",
+			args: args{"gce-3p"},
+			want: wantResult{
+				filename: "image.tar.gz",
+				mimeType: "application/gzip",
+			},
+		},
+		{
 			name: "edge-ami",
 			args: args{"edge-ami"},
 			want: wantResult{
@@ -324,6 +332,7 @@ func TestRhel9_ImageType_Name(t *testing.T) {
 				"edge-container",
 				"edge-installer",
 				"gce",
+				"gce-3p",
 				"tar",
 				"image-installer",
 				"minimal-raw",
@@ -493,6 +502,7 @@ func TestRhel9_Architecture_ListImageTypes(t *testing.T) {
 				"edge-ami",
 				"edge-vsphere",
 				"gce",
+				"gce-3p",
 				"tar",
 				"image-installer",
 				"oci",
