@@ -615,9 +615,25 @@ func (a *AWS) AuthorizeSecurityGroupIngressEC2(groupID, address string, from, to
 }
 
 func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string) (*ec2types.Reservation, error) {
+	instanceID, err := a.LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.WaitInstanceRunningEC2(instanceID); err != nil {
+		return nil, err
+	}
+	reservation, err := a.instanceReservation(instanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get reservation for instance %s: %w", instanceID, err)
+	}
+	return reservation, nil
+}
+
+// LaunchInstanceEC2 starts an instance and returns its ID without waiting for it to run.
+func (a *AWS) LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string) (string, error) {
 	ec2InstanceType := ec2types.InstanceType(instanceType)
 	if !slices.Contains(ec2InstanceType.Values(), ec2InstanceType) {
-		return nil, fmt.Errorf("ec2 doesn't support the following instance type: %s", instanceType)
+		return "", fmt.Errorf("ec2 doesn't support the following instance type: %s", instanceType)
 	}
 
 	input := &ec2.RunInstancesInput{
@@ -631,36 +647,33 @@ func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnet
 	if subnetID != "" {
 		input.SubnetId = aws.String(subnetID)
 	}
-
 	runInstanceOutput, err := a.ec2.RunInstances(
 		context.TODO(),
 		input,
 	)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	if len(runInstanceOutput.Instances) == 0 {
-		return nil, fmt.Errorf("no instances were created")
+	if runInstanceOutput == nil {
+		return "", fmt.Errorf("no instance launch response")
 	}
+	if len(runInstanceOutput.Instances) != 1 || runInstanceOutput.Instances[0].InstanceId == nil {
+		return "", fmt.Errorf("expected exactly one created instance, got %d", len(runInstanceOutput.Instances))
+	}
+	return aws.ToString(runInstanceOutput.Instances[0].InstanceId), nil
+}
+
+// WaitInstanceRunningEC2 waits for an instance to reach the running state.
+func (a *AWS) WaitInstanceRunningEC2(instanceID string) error {
 	instanceWaiter := newInstanceRunningWaiterEC2(a.ec2)
-	err = instanceWaiter.Wait(
+	return instanceWaiter.Wait(
 		context.TODO(),
 		&ec2.DescribeInstancesInput{
-			InstanceIds: []string{aws.ToString(runInstanceOutput.Instances[0].InstanceId)},
+			InstanceIds: []string{instanceID},
 		},
 		time.Hour,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	reservation, err := a.instanceReservation(aws.ToString(runInstanceOutput.Instances[0].InstanceId))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get reservation for instance %s: %w", aws.ToString(runInstanceOutput.Instances[0].InstanceId), err)
-	}
-
-	return reservation, nil
 }
 
 // TerminateInstancesEC2 terminates the specified EC2 instances and waits for them to be terminated if timeout is greater than 0.

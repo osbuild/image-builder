@@ -12,6 +12,7 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/image-builder/internal/common"
@@ -917,6 +918,35 @@ func TestRunInstanceEC2(t *testing.T) {
 		})
 	}
 
+}
+
+func TestLaunchInstanceEC2WithoutWaiting(t *testing.T) {
+	fake := &fakeEC2Client{runInstances: &ec2.RunInstancesOutput{
+		Instances: []ec2types.Instance{{InstanceId: aws.String("i-test")}},
+	}}
+	client := awscloud.NewAWSForTest(fake, nil, nil, nil)
+	for range 2 {
+		id, err := client.LaunchInstanceEC2("ami-test", "sg-test", "#cloud-config", "t2.micro", "subnet-test")
+		require.NoError(t, err)
+		assert.Equal(t, "i-test", id)
+	}
+	assert.Len(t, fake.runInstancesCalls, 2)
+	assert.Empty(t, fake.describeInstancesCalls)
+	for _, request := range fake.runInstancesCalls {
+		assert.Equal(t, int32(1), aws.ToInt32(request.MinCount))
+		assert.Equal(t, int32(1), aws.ToInt32(request.MaxCount))
+		assert.Equal(t, []string{"sg-test"}, request.SecurityGroupIds)
+		assert.Equal(t, "subnet-test", aws.ToString(request.SubnetId))
+	}
+}
+
+func TestLaunchInstanceEC2RejectsIncompleteResponse(t *testing.T) {
+	for _, response := range []*ec2.RunInstancesOutput{nil, {}, {Instances: []ec2types.Instance{{}}}} {
+		fake := &fakeEC2Client{runInstances: response}
+		client := awscloud.NewAWSForTest(fake, nil, nil, nil)
+		_, err := client.LaunchInstanceEC2("ami-test", "sg-test", "", "t2.micro", "")
+		assert.Error(t, err)
+	}
 }
 
 func TestTerminateInstanceEC2(t *testing.T) {
