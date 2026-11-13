@@ -20,6 +20,8 @@ const (
 // GCP structure holds necessary information to authenticate and interact with GCP.
 type GCP struct {
 	creds *google.Credentials
+	// projectID overrides creds.ProjectID when user ADC lacks a project.
+	projectID string
 }
 
 // New returns an authenticated GCP instance, allowing to interact with GCP API.
@@ -51,7 +53,7 @@ func New(credentials []byte) (*GCP, error) {
 		return nil, fmt.Errorf("failed to get Google credentials: %v", err)
 	}
 
-	return &GCP{creds}, nil
+	return &GCP{creds: creds}, nil
 }
 
 // NewFromFile loads the credentials from a file and returns an authenticated
@@ -64,8 +66,16 @@ func NewFromFile(path string) (*GCP, error) {
 	return New(gcpCredentials)
 }
 
+// SetProjectID sets the target GCP project when credentials omit project_id.
+func (g *GCP) SetProjectID(projectID string) {
+	g.projectID = projectID
+}
+
 // GetProjectID returns a string with the Project ID of the project, used for
 // all GCP operations.
 func (g *GCP) GetProjectID() string {
+	if g.projectID != "" {
+		return g.projectID
+	}
 	return g.creds.ProjectID
 }
