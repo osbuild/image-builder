@@ -706,6 +706,18 @@ func (p *AnacondaInstallerISOTree) bootcInstallerKickstartStages() ([]*osbuild.S
 		return nil, err
 	}
 
+	if len(p.Kickstart.KernelOptionsAppend) > 0 {
+		kickstartOptions.Bootloader = &osbuild.BootloaderOptions{
+			// We currently leaves quoting to the
+			// user. This is generally ok - to do better
+			// we will have to mimic the kernel arg
+			// parser, see
+			// https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
+			// and lib/cmdline.c in the kernel source
+			Append: strings.Join(p.Kickstart.KernelOptionsAppend, " "),
+		}
+	}
+
 	if p.Kickstart.UserFile != nil {
 
 		// when a user defines their own kickstart, we create a kickstart that
@@ -741,17 +753,6 @@ func (p *AnacondaInstallerISOTree) bootcInstallerKickstartStages() ([]*osbuild.S
 		All: true,
 	}
 
-	if len(p.Kickstart.KernelOptionsAppend) > 0 {
-		kickstartOptions.Bootloader = &osbuild.BootloaderOptions{
-			// We currently leaves quoting to the
-			// user. This is generally ok - to do better
-			// we will have to mimic the kernel arg
-			// parser, see
-			// https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
-			// and lib/cmdline.c in the kernel source
-			Append: strings.Join(p.Kickstart.KernelOptionsAppend, " "),
-		}
-	}
 	if p.Kickstart.NetworkOnBoot {
 		kickstartOptions.Network = []osbuild.NetworkOptions{
 			{BootProto: "dhcp", Device: "link", Activate: common.ToPtr(true), OnBoot: "on"},
