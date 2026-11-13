@@ -616,7 +616,7 @@ func (p *AnacondaInstallerISOTree) ostreeKickstartStages() ([]*osbuild.Stage, er
 			p.Kickstart.Path,
 			p.Kickstart.Users,
 			p.Kickstart.Groups,
-			nil)
+			nil, nil, nil)
 	}
 
 	if err != nil {
@@ -809,6 +809,8 @@ func (p *AnacondaInstallerISOTree) tarPayloadStages() ([]*osbuild.Stage, error) 
 			p.Kickstart.Users,
 			p.Kickstart.Groups,
 			p.Kickstart.Hostname,
+			p.Kickstart.Language,
+			p.Kickstart.Keyboard,
 			makeISORootPath(p.InstallerCustomizations.Payload.Path))
 
 		if err != nil {
@@ -835,7 +837,9 @@ func (p *AnacondaInstallerISOTree) netinstKickstartStages() ([]*osbuild.Stage, e
 			p.Kickstart.Path,
 			p.Kickstart.Users,
 			p.Kickstart.Groups,
-			nil)
+			nil,
+			p.Kickstart.Language,
+			p.Kickstart.Keyboard)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to create kickstart stage options: %w", err)

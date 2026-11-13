@@ -194,7 +194,7 @@ func TestKickstartStageUsers(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			ksOpts, err := osbuild.NewKickstartStageOptions("/test.ks", tc.users, nil, nil)
+			ksOpts, err := osbuild.NewKickstartStageOptions("/test.ks", tc.users, nil, nil, nil, nil)
 			if tc.expErr != "" {
 				assert.EqualError(err, tc.expErr)
 				return
@@ -315,6 +315,8 @@ func TestNewKickstartOptionsPlain(t *testing.T) {
 				tc.path,
 				tc.userCustomizations,
 				tc.groupCustomizations,
+				nil,
+				nil,
 				nil,
 			)
 			if tc.expErr != "" {
@@ -566,6 +568,8 @@ func TestNewKicstartStageOptionsWithLiveIMG(t *testing.T) {
 		userCustomizations []users.User
 		imgURL             string
 		hostname           *string
+		lang               *string
+		keyboard           *string
 
 		expOptions *osbuild.KickstartStageOptions
 		expErr     string
@@ -575,11 +579,15 @@ func TestNewKicstartStageOptionsWithLiveIMG(t *testing.T) {
 		"empty": {
 			expErr: "org.osbuild.kickstart: kickstart path \"\" is invalid",
 		},
-		"hostname": {
+		"hostname+lang+keyboard": {
 			path:     "/osbuild-test.ks",
 			hostname: common.ToPtr("MousieInAHousie"),
+			lang:     common.ToPtr("Mousian"),
+			keyboard: common.ToPtr("Mousie.UTF-8"),
 			expOptions: &osbuild.KickstartStageOptions{
-				Path: "/osbuild-test.ks",
+				Path:     "/osbuild-test.ks",
+				Lang:     "Mousian",
+				Keyboard: "Mousie.UTF-8",
 				Network: []osbuild.NetworkOptions{
 					{
 						Device:   "link",
@@ -661,6 +669,8 @@ func TestNewKicstartStageOptionsWithLiveIMG(t *testing.T) {
 				tc.userCustomizations,
 				nil,
 				tc.hostname,
+				tc.lang,
+				tc.keyboard,
 				tc.imgURL,
 			)
 			if tc.expErr != "" {
