@@ -21,6 +21,10 @@ type fakeEC2Client struct {
 	authorizeSecurityGroupIngress      *ec2.AuthorizeSecurityGroupIngressOutput
 	authorizeSecurityGroupIngressErr   error
 
+	authorizeSecurityGroupEgressCalls []*ec2.AuthorizeSecurityGroupEgressInput
+	authorizeSecurityGroupEgress      *ec2.AuthorizeSecurityGroupEgressOutput
+	authorizeSecurityGroupEgressErr   error
+
 	createSecurityGroupCalls []*ec2.CreateSecurityGroupInput
 	createSecurityGroup      *ec2.CreateSecurityGroupOutput
 	createSecurityGroupErr   error
@@ -94,6 +98,14 @@ func (f *fakeEC2Client) AuthorizeSecurityGroupIngress(ctx context.Context, input
 		return nil, f.authorizeSecurityGroupIngressErr
 	}
 	return f.authorizeSecurityGroupIngress, nil
+}
+
+func (f *fakeEC2Client) AuthorizeSecurityGroupEgress(ctx context.Context, input *ec2.AuthorizeSecurityGroupEgressInput, optFns ...func(*ec2.Options)) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+	f.authorizeSecurityGroupEgressCalls = append(f.authorizeSecurityGroupEgressCalls, input)
+	if f.authorizeSecurityGroupEgressErr != nil {
+		return nil, f.authorizeSecurityGroupEgressErr
+	}
+	return f.authorizeSecurityGroupEgress, nil
 }
 
 func (f *fakeEC2Client) CreateSecurityGroup(ctx context.Context, input *ec2.CreateSecurityGroupInput, optFns ...func(*ec2.Options)) (*ec2.CreateSecurityGroupOutput, error) {

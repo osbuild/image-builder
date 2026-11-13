@@ -614,8 +614,26 @@ func (a *AWS) AuthorizeSecurityGroupIngressEC2(groupID, address string, from, to
 		})
 }
 
+// AuthorizeSecurityGroupSelfEC2 permits all traffic between members of the
+// group in both directions, as required for EFA.
+func (a *AWS) AuthorizeSecurityGroupSelfEC2(groupID string) error {
+	permission := []ec2types.IpPermission{{
+		IpProtocol:       aws.String("-1"),
+		UserIdGroupPairs: []ec2types.UserIdGroupPair{{GroupId: aws.String(groupID)}},
+	}}
+	if _, err := a.ec2.AuthorizeSecurityGroupIngress(context.TODO(), &ec2.AuthorizeSecurityGroupIngressInput{
+		GroupId: aws.String(groupID), IpPermissions: permission,
+	}); err != nil {
+		return err
+	}
+	_, err := a.ec2.AuthorizeSecurityGroupEgress(context.TODO(), &ec2.AuthorizeSecurityGroupEgressInput{
+		GroupId: aws.String(groupID), IpPermissions: permission,
+	})
+	return err
+}
+
 func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string) (*ec2types.Reservation, error) {
-	instanceID, err := a.LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID)
+	instanceID, err := a.LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -630,7 +648,7 @@ func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnet
 }
 
 // LaunchInstanceEC2 starts an instance and returns its ID without waiting for it to run.
-func (a *AWS) LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string) (string, error) {
+func (a *AWS) LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string, efa bool) (string, error) {
 	ec2InstanceType := ec2types.InstanceType(instanceType)
 	if !slices.Contains(ec2InstanceType.Values(), ec2InstanceType) {
 		return "", fmt.Errorf("ec2 doesn't support the following instance type: %s", instanceType)
@@ -646,6 +664,25 @@ func (a *AWS) LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, sub
 	}
 	if subnetID != "" {
 		input.SubnetId = aws.String(subnetID)
+	}
+	if efa {
+		if subnetID == "" {
+			return "", fmt.Errorf("EFA requires a subnet ID")
+		}
+		input.SecurityGroupIds = nil
+		input.SubnetId = nil
+		// NOTE: One EFA-with-ENA interface on network card 0. Enough for instance
+		// types with a single EFA, such as g7.12xlarge. Types with multiple
+		// network cards (g7.48xlarge, p5, p6) need one EFA per card; those extra
+		// interfaces are not created here.
+		input.NetworkInterfaces = []ec2types.InstanceNetworkInterfaceSpecification{{
+			NetworkCardIndex:    aws.Int32(0),
+			DeviceIndex:         aws.Int32(0),
+			InterfaceType:       aws.String("efa"),
+			SubnetId:            aws.String(subnetID),
+			Groups:              []string{secGroupID},
+			DeleteOnTermination: aws.Bool(true),
+		}}
 	}
 	runInstanceOutput, err := a.ec2.RunInstances(
 		context.TODO(),
