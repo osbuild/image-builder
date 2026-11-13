@@ -34,6 +34,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/progress"
 	"github.com/osbuild/image-builder/pkg/rhsm/facts"
+	"github.com/osbuild/image-builder/pkg/sbom"
 
 	"github.com/osbuild/image-builder/internal/blueprintload"
 	"github.com/osbuild/image-builder/internal/cmdutil"
@@ -1056,6 +1057,9 @@ type taskInfo struct {
 	// Write the log output from the build to a file
 	Buildlog bool `json:"buildlog"`
 
+	// SBOM writes an SPDX document next to the built image.
+	SBOM bool `json:"sbom"`
+
 	// Print timing information at the end of the build
 	Metrics bool `json:"metrics"`
 
@@ -1090,10 +1094,31 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	withSBOM, err := cmd.Flags().GetBool("with-sbom")
+	if err != nil {
+		return err
+	}
+	withExtraPatterns, err := cmd.Flags().GetStringArray("with-extra")
+	if err != nil {
+		return err
+	}
+	bootcRef, err := cmd.Flags().GetString("bootc-ref")
+	if err != nil {
+		return err
+	}
+	if withSBOM && len(withExtraPatterns) > 0 {
+		return errSBOMWithExtra
+	}
+	if withSBOM && bootcRef != "" {
+		return errSBOMWithBootc
+	}
 
 	img, err := getImage(cmd, imgType)
 	if err != nil {
 		return err
+	}
+	if withSBOM && img.ImgType.OSTreeRef() != "" {
+		return errSBOMWithOSTree
 	}
 	opts := &cmdManifestWrapperOptions{
 		// NOTE: The multi-step build feature is intended for build systems
@@ -1110,6 +1135,7 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		// If we want to add support for this in the future, we will need a new
 		// way (a separate CLI option perhaps) for the user to enable it.
 		useBootstrapIfNeeded: false,
+		withSBOM:             withSBOM,
 	}
 	pbar, err := progress.New("", progress.ProgressConfig{})
 	if err != nil {
@@ -1129,11 +1155,12 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	withExtraPatterns, err := cmd.Flags().GetStringArray("with-extra")
-	if err != nil {
-		return err
+	if withSBOM {
+		if err := writeTaskSBOMContents(workdir, result.Packages); err != nil {
+			return err
+		}
 	}
+
 	extraExports, err := resolveExtras(withExtraPatterns, img.ImgType.Extras())
 	if err != nil {
 		return err
@@ -1187,6 +1214,7 @@ func cmdTaskInit(cmd *cobra.Command, args []string) error {
 		Exports:             exportFilenames,
 		OutputBasename:      imgBasename,
 		Buildlog:            writeBuildlog,
+		SBOM:                withSBOM,
 		Metrics:             writeMetrics,
 		InVM:                invm,
 		ImageBuilderVersion: ibVersion.Version,
@@ -1347,6 +1375,13 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 	for name := range task.Exports {
 		exports = append(exports, name)
 	}
+	var packages []sbom.Package
+	if task.SBOM {
+		packages, err = readTaskSBOMContents(taskdir)
+		if err != nil {
+			return err
+		}
+	}
 
 	if task.Buildlog {
 		buildLogWriter, err := openBuildLogWriter(taskdir, task.OutputBasename)
@@ -1361,9 +1396,15 @@ func cmdTaskBuild(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = renameExports(exports, taskdir, task.Exports)
+	outputPaths, err := renameExports(exports, taskdir, task.Exports)
+	if err != nil {
+		return err
+	}
 
-	return err
+	if !task.SBOM {
+		return nil
+	}
+	return writeImageSBOM(taskdir, task.OutputBasename, outputPaths, packages)
 }
 
 func readTaskInfo(workdir string) (taskInfo, error) {

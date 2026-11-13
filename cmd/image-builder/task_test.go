@@ -42,6 +42,11 @@ func TestTaskIntegrationArgs(t *testing.T) {
 			expectedFilesBuild: []string{prefix("qcow2")},
 		},
 		{
+			args:               []string{"--with-sbom"},
+			expectedFilesInit:  []string{prefix("manifest.json"), "sbom-contents.json"},
+			expectedFilesBuild: []string{prefix("qcow2"), prefix("spdx.json")},
+		},
+		{
 			args:               []string{"--with-buildlog"},
 			expectedFilesInit:  []string{prefix("manifest.json")},
 			expectedFilesBuild: []string{prefix("qcow2"), prefix("buildlog")},
@@ -155,4 +160,62 @@ func dirRelative(t *testing.T, dir string) []string {
 	}
 
 	return stripped
+}
+
+func TestTaskBuildWithSBOM(t *testing.T) {
+	mockSBOMManifestGeneration(t)
+	dir := t.TempDir()
+	restore := main.MockOsArgs([]string{
+		"task", "init",
+		"--image-type", "qcow2",
+		"--distro", "centos-9",
+		"--output-name", "image",
+		"--with-sbom",
+		dir,
+	})
+	defer restore()
+	testutil.MockCommand(t, "osbuild", makeFakeOsbuildScript())
+	require.NoError(t, main.Run())
+
+	restore = main.MockOsArgs([]string{"task", "build-image", dir})
+	defer restore()
+	testutil.MockCommand(t, "osbuild", makeFakeOsbuildScript())
+	require.NoError(t, main.Run())
+	assertImageSBOM(t, filepath.Join(dir, "image.spdx.json"), "image", filepath.Join(dir, "image.qcow2"))
+}
+
+func TestTaskInitWithSBOMRejectsUnsupported(t *testing.T) {
+	mockSBOMManifestGeneration(t)
+	for _, tc := range []struct {
+		name     string
+		args     []string
+		expected string
+	}{
+		{
+			name:     "with-extra",
+			args:     []string{"--image-type", "qcow2", "--with-extra", "sysext:nginx"},
+			expected: "--with-sbom cannot be combined with --with-extra",
+		},
+		{
+			name:     "ostree",
+			args:     []string{"--image-type", "edge-commit"},
+			expected: "ostree-based image type",
+		},
+		{
+			name: "bootc",
+			args: []string{
+				"--image-type", "qcow2",
+				"--bootc-ref", "quay.io/example/bootc:latest",
+			},
+			expected: "--with-sbom cannot be used with --bootc-ref",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			args := append([]string{"task", "init", "--distro", "centos-9", "--with-sbom", dir}, tc.args...)
+			restore := main.MockOsArgs(args)
+			defer restore()
+			require.ErrorContains(t, main.Run(), tc.expected)
+		})
+	}
 }

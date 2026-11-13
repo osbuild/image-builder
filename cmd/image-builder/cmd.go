@@ -471,6 +471,7 @@ func setupTaskInitCmd() (*cobra.Command, error) {
 	// used by any other task subcommand that needs them
 	taskInitCmd.Flags().StringArray("with-extra", nil, `include an extra by type:name in the build, globs supported (e.g. --with-extra "sysext:*")`)
 	taskInitCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
+	taskInitCmd.Flags().Bool("with-sbom", false, `export an SPDX SBOM`)
 	taskInitCmd.Flags().Bool("with-metrics", false, `print timing information at the end of the build`)
 	taskInitCmd.Flags().String("output-name", "", "set specific output basename")
 	taskInitCmd.Flags().Bool("in-vm", false, `run the osbuild pipeline in a virtual machine`)
