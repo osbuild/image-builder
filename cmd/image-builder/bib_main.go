@@ -219,12 +219,12 @@ func bibManifestFromCobra(cmd *cobra.Command, args []string, pbar progress.Progr
 			InstallerPayloadRef: installerPayloadRef,
 		},
 	}
-	manifest, err := mg.Generate(config, imgType, imgOpts)
+	result, err := mg.Generate(config, imgType, imgOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	return manifest.Manifest, nil
+	return result.Manifest, nil
 }
 
 func bibCmdManifest(cmd *cobra.Command, args []string) error {

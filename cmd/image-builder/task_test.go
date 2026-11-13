@@ -42,22 +42,12 @@ func TestTaskIntegrationArgs(t *testing.T) {
 			expectedFilesBuild: []string{prefix("qcow2")},
 		},
 		{
-			args:               []string{"--with-sbom"},
-			expectedFilesInit:  []string{prefix("manifest.json")},
-			expectedFilesBuild: []string{prefix("qcow2")},
-		},
-		{
 			args:               []string{"--with-buildlog"},
 			expectedFilesInit:  []string{prefix("manifest.json")},
 			expectedFilesBuild: []string{prefix("qcow2"), prefix("buildlog")},
 		},
 		{
-			args:               []string{"--with-sbom", "--with-buildlog"},
-			expectedFilesInit:  []string{prefix("manifest.json")},
-			expectedFilesBuild: []string{prefix("qcow2"), prefix("buildlog")},
-		},
-		{
-			args:               []string{"--with-sbom", "--with-buildlog", "--with-rpmlist"},
+			args:               []string{"--with-buildlog", "--with-rpmlist"},
 			expectedFilesInit:  []string{prefix("manifest.json"), prefix("rpmlist.json")},
 			expectedFilesBuild: []string{prefix("qcow2"), prefix("buildlog")},
 		},

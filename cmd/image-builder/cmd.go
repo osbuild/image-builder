@@ -235,7 +235,6 @@ func manifestFlags(cmd *cobra.Command) error {
 	if err := flagSet.MarkHidden("use-librepo"); err != nil {
 		return err
 	}
-	flagSet.Bool("with-sbom", false, `export SPDX SBOM document`)
 	flagSet.Bool("with-rpmlist", false, `export RPM list as JSON`)
 	if err := flagSet.MarkHidden("with-rpmlist"); err != nil {
 		return err
@@ -346,6 +345,7 @@ func setupBuildCmd() (*cobra.Command, error) {
 	}
 	buildCmd.Flags().StringArray("with-extra", nil, `include an extra by type:name in the build, globs supported (e.g. --with-extra "sysext:*")`)
 	buildCmd.Flags().Bool("with-manifest", false, `export osbuild manifest`)
+	buildCmd.Flags().Bool("with-sbom", false, `export an SPDX SBOM`)
 	buildCmd.Flags().Bool("with-buildlog", false, `export osbuild buildlog`)
 	buildCmd.Flags().Bool("with-metrics", false, `print timing information at the end of the build`)
 	buildCmd.Flags().String("output-name", "", "set specific output basename")
