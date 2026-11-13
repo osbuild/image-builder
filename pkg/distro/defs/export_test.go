@@ -48,6 +48,10 @@ func ImageTypeCheckOptions(it *imageType, bp *blueprint.Blueprint, options distr
 	return it.checkOptions(bp, options)
 }
 
+func ValidateInstallerKickstartContentsConflicts(customizations *blueprint.Customizations) error {
+	return validateInstallerKickstartContentsConflicts(customizations)
+}
+
 func (t *imageType) SetExtrasForTest(sysexts []SysextDef, partitions []PartitionDef, files []FileDef) {
 	t.sysexts = sysexts
 	t.partitions = partitions
