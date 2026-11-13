@@ -633,10 +633,11 @@ func (a *AWS) AuthorizeSecurityGroupSelfEC2(groupID string) error {
 }
 
 func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string) (*ec2types.Reservation, error) {
-	instanceID, err := a.LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID, false)
+	instanceIDs, err := a.LaunchInstancesEC2(imageID, secGroupID, userData, instanceType, subnetID, 1, false)
 	if err != nil {
 		return nil, err
 	}
+	instanceID := instanceIDs[0]
 	if err := a.WaitInstanceRunningEC2(instanceID); err != nil {
 		return nil, err
 	}
@@ -647,16 +648,19 @@ func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnet
 	return reservation, nil
 }
 
-// LaunchInstanceEC2 starts an instance and returns its ID without waiting for it to run.
-func (a *AWS) LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string, efa bool) (string, error) {
+// LaunchInstancesEC2 starts count instances in one request without waiting for them to run.
+func (a *AWS) LaunchInstancesEC2(imageID, secGroupID, userData, instanceType, subnetID string, count int32, efa bool) ([]string, error) {
+	if count < 1 {
+		return nil, fmt.Errorf("instances must be at least 1")
+	}
 	ec2InstanceType := ec2types.InstanceType(instanceType)
 	if !slices.Contains(ec2InstanceType.Values(), ec2InstanceType) {
-		return "", fmt.Errorf("ec2 doesn't support the following instance type: %s", instanceType)
+		return nil, fmt.Errorf("ec2 doesn't support the following instance type: %s", instanceType)
 	}
 
 	input := &ec2.RunInstancesInput{
-		MaxCount:         aws.Int32(1),
-		MinCount:         aws.Int32(1),
+		MaxCount:         aws.Int32(count),
+		MinCount:         aws.Int32(count),
 		ImageId:          &imageID,
 		InstanceType:     ec2InstanceType,
 		SecurityGroupIds: []string{secGroupID},
@@ -667,7 +671,7 @@ func (a *AWS) LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, sub
 	}
 	if efa {
 		if subnetID == "" {
-			return "", fmt.Errorf("EFA requires a subnet ID")
+			return nil, fmt.Errorf("EFA requires a subnet ID")
 		}
 		input.SecurityGroupIds = nil
 		input.SubnetId = nil
@@ -689,16 +693,23 @@ func (a *AWS) LaunchInstanceEC2(imageID, secGroupID, userData, instanceType, sub
 		input,
 	)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if runInstanceOutput == nil {
-		return "", fmt.Errorf("no instance launch response")
+		return nil, fmt.Errorf("no instance launch response")
 	}
-	if len(runInstanceOutput.Instances) != 1 || runInstanceOutput.Instances[0].InstanceId == nil {
-		return "", fmt.Errorf("expected exactly one created instance, got %d", len(runInstanceOutput.Instances))
+	if len(runInstanceOutput.Instances) != int(count) {
+		return nil, fmt.Errorf("expected %d created instances, got %d", count, len(runInstanceOutput.Instances))
 	}
-	return aws.ToString(runInstanceOutput.Instances[0].InstanceId), nil
+	ids := make([]string, count)
+	for i, instance := range runInstanceOutput.Instances {
+		ids[i] = aws.ToString(instance.InstanceId)
+		if ids[i] == "" {
+			return nil, fmt.Errorf("instance launch response contains an instance without an ID")
+		}
+	}
+	return ids, nil
 }
 
 // WaitInstanceRunningEC2 waits for an instance to reach the running state.

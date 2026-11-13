@@ -141,6 +141,12 @@ where:
 - `${PATH_TO_USER_DATA}` points to a cloud-init user-data file. Its contents
   are passed to EC2 unchanged.
 
+The `setup` subcommand launches one instance by default. Pass `--instances N`
+to launch N instances from the same AMI, with the same instance type and user
+data. Pass `--efa` to attach an EFA interface to each instance and allow
+traffic among members of their security group. EFA requires an EFA-capable
+instance type, `--vpc-id`, and `--subnet-id`.
+
 AWS credentials are loaded from the default AWS credential chain. They can
 instead be supplied explicitly with `--access-key-id`, `--secret-access-key`,
 and optionally `--session-token`.

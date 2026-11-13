@@ -920,15 +920,15 @@ func TestRunInstanceEC2(t *testing.T) {
 
 }
 
-func TestLaunchInstanceEC2WithoutWaiting(t *testing.T) {
+func TestLaunchInstancesEC2WithoutWaiting(t *testing.T) {
 	fake := &fakeEC2Client{runInstances: &ec2.RunInstancesOutput{
 		Instances: []ec2types.Instance{{InstanceId: aws.String("i-test")}},
 	}}
 	client := awscloud.NewAWSForTest(fake, nil, nil, nil)
 	for range 2 {
-		id, err := client.LaunchInstanceEC2("ami-test", "sg-test", "#cloud-config", "t2.micro", "subnet-test", false)
+		ids, err := client.LaunchInstancesEC2("ami-test", "sg-test", "#cloud-config", "t2.micro", "subnet-test", 1, false)
 		require.NoError(t, err)
-		assert.Equal(t, "i-test", id)
+		assert.Equal(t, []string{"i-test"}, ids)
 	}
 	assert.Len(t, fake.runInstancesCalls, 2)
 	assert.Empty(t, fake.describeInstancesCalls)
@@ -940,27 +940,45 @@ func TestLaunchInstanceEC2WithoutWaiting(t *testing.T) {
 	}
 }
 
-func TestLaunchInstanceEC2RejectsIncompleteResponse(t *testing.T) {
+func TestLaunchInstancesEC2RejectsInvalidCount(t *testing.T) {
+	for _, count := range []int32{-1, 0} {
+		t.Run(fmt.Sprintf("count=%d", count), func(t *testing.T) {
+			fake := &fakeEC2Client{runInstances: &ec2.RunInstancesOutput{
+				Instances: []ec2types.Instance{{InstanceId: aws.String("i-test")}},
+			}}
+			client := awscloud.NewAWSForTest(fake, nil, nil, nil)
+			ids, err := client.LaunchInstancesEC2("ami-test", "sg-test", "", "t2.micro", "", count, false)
+			require.EqualError(t, err, "instances must be at least 1")
+			assert.Empty(t, ids)
+			assert.Empty(t, fake.runInstancesCalls)
+		})
+	}
+}
+
+func TestLaunchInstancesEC2RejectsIncompleteResponse(t *testing.T) {
 	for _, response := range []*ec2.RunInstancesOutput{nil, {}, {Instances: []ec2types.Instance{{}}}} {
 		fake := &fakeEC2Client{runInstances: response}
 		client := awscloud.NewAWSForTest(fake, nil, nil, nil)
-		_, err := client.LaunchInstanceEC2("ami-test", "sg-test", "", "t2.micro", "", false)
+		_, err := client.LaunchInstancesEC2("ami-test", "sg-test", "", "t2.micro", "", 1, false)
 		assert.Error(t, err)
 	}
 }
 
-func TestLaunchEFAInstanceEC2(t *testing.T) {
+func TestLaunchEFAInstancesEC2(t *testing.T) {
 	fake := &fakeEC2Client{runInstances: &ec2.RunInstancesOutput{
-		Instances: []ec2types.Instance{{InstanceId: aws.String("i-efa")}},
+		Instances: []ec2types.Instance{
+			{InstanceId: aws.String("i-efa-1")},
+			{InstanceId: aws.String("i-efa-2")},
+		},
 	}}
 	client := awscloud.NewAWSForTest(fake, nil, nil, nil)
-	id, err := client.LaunchInstanceEC2("ami-test", "sg-test", "#cloud-config", "g7.12xlarge", "subnet-test", true)
+	ids, err := client.LaunchInstancesEC2("ami-test", "sg-test", "#cloud-config", "g7.12xlarge", "subnet-test", 2, true)
 	require.NoError(t, err)
-	assert.Equal(t, "i-efa", id)
+	assert.Equal(t, []string{"i-efa-1", "i-efa-2"}, ids)
 	require.Len(t, fake.runInstancesCalls, 1)
 	request := fake.runInstancesCalls[0]
-	assert.Equal(t, int32(1), aws.ToInt32(request.MinCount))
-	assert.Equal(t, int32(1), aws.ToInt32(request.MaxCount))
+	assert.Equal(t, int32(2), aws.ToInt32(request.MinCount))
+	assert.Equal(t, int32(2), aws.ToInt32(request.MaxCount))
 	assert.Empty(t, request.SecurityGroupIds)
 	assert.Nil(t, request.SubnetId)
 	require.Len(t, request.NetworkInterfaces, 1)
@@ -973,10 +991,10 @@ func TestLaunchEFAInstanceEC2(t *testing.T) {
 	assert.True(t, aws.ToBool(interfaceSpec.DeleteOnTermination))
 }
 
-func TestLaunchEFAInstanceEC2RequiresSubnet(t *testing.T) {
+func TestLaunchEFAInstancesEC2RequiresSubnet(t *testing.T) {
 	fake := &fakeEC2Client{}
 	client := awscloud.NewAWSForTest(fake, nil, nil, nil)
-	_, err := client.LaunchInstanceEC2("ami-test", "sg-test", "", "g7.12xlarge", "", true)
+	_, err := client.LaunchInstancesEC2("ami-test", "sg-test", "", "g7.12xlarge", "", 2, true)
 	require.EqualError(t, err, "EFA requires a subnet ID")
 	assert.Empty(t, fake.runInstancesCalls)
 }
