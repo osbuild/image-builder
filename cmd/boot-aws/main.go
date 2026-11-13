@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,9 +28,17 @@ func exitCheck(err error) {
 // resources created or allocated for an instance that can be cleaned up when
 // tearing down.
 type resources struct {
-	Region        string  `json:"region,omitempty"`
-	SecurityGroup *string `json:"security-group,omitempty"`
-	InstanceID    *string `json:"instance,omitempty"`
+	Region        string   `json:"region,omitempty"`
+	SecurityGroup *string  `json:"security-group,omitempty"`
+	InstanceIDs   []string `json:"instances,omitempty"`
+}
+
+func saveResources(filename string, res *resources) error {
+	data, err := json.MarshalIndent(res, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filename, data, 0600)
 }
 
 func newClientFromArgs(flags *pflag.FlagSet, region string) (*awscloud.AWS, error) {
@@ -53,7 +62,10 @@ func newClientFromArgs(flags *pflag.FlagSet, region string) (*awscloud.AWS, erro
 	}
 }
 
-func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
+func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources, count int32, efa bool) error {
+	if count < 1 {
+		return fmt.Errorf("instances must be at least 1")
+	}
 	userDataFile, err := flags.GetString("user-data")
 	if err != nil {
 		return err
@@ -81,6 +93,9 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return err
 	}
+	if efa && subnetID == "" {
+		return fmt.Errorf("EFA requires --subnet-id")
+	}
 
 	fmt.Printf("Using AMI: %s\n", ami)
 
@@ -89,26 +104,38 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources) error {
 	if err != nil {
 		return fmt.Errorf("CreateSecurityGroup(): %s", err.Error())
 	}
+	if securityGroup == nil || securityGroup.GroupId == nil || *securityGroup.GroupId == "" {
+		return fmt.Errorf("CreateSecurityGroupEC2() returned no security group ID")
+	}
+	securityGroupID := *securityGroup.GroupId
 
-	res.SecurityGroup = securityGroup.GroupId
+	res.SecurityGroup = &securityGroupID
 
-	_, err = a.AuthorizeSecurityGroupIngressEC2(*securityGroup.GroupId, "0.0.0.0/0", 22, 22, "tcp")
+	_, err = a.AuthorizeSecurityGroupIngressEC2(securityGroupID, "0.0.0.0/0", 22, 22, "tcp")
 	if err != nil {
 		return fmt.Errorf("AuthorizeSecurityGroupIngressEC2(): %s", err.Error())
 	}
-
-	runResult, err := a.RunInstanceEC2(ami, *securityGroup.GroupId, string(userData), instanceType, subnetID)
-	if err != nil {
-		return fmt.Errorf("RunInstanceEC2(): %s", err.Error())
+	if efa {
+		if err := a.AuthorizeSecurityGroupSelfEC2(securityGroupID); err != nil {
+			return fmt.Errorf("AuthorizeSecurityGroupSelfEC2(): %w", err)
+		}
 	}
-	instanceID := runResult.Instances[0].InstanceId
-	res.InstanceID = instanceID
 
-	ip, err := a.GetInstanceAddress(*instanceID)
+	ids, err := a.LaunchInstancesEC2(ami, securityGroupID, string(userData), instanceType, subnetID, count, efa)
 	if err != nil {
-		return fmt.Errorf("GetInstanceAddress(): %s", err.Error())
+		return fmt.Errorf("LaunchInstancesEC2(): %w", err)
 	}
-	fmt.Printf("Instance %s is running and has IP address %s\n", *instanceID, ip)
+	res.InstanceIDs = append(res.InstanceIDs, ids...)
+	for _, id := range res.InstanceIDs {
+		if err := a.WaitInstanceRunningEC2(id); err != nil {
+			return fmt.Errorf("instance %s did not become running: %w", id, err)
+		}
+		ip, err := a.GetInstanceAddress(id)
+		if err != nil {
+			return fmt.Errorf("GetInstanceAddress(%s): %w", id, err)
+		}
+		fmt.Printf("Instance %s is running and has IP address %s\n", id, ip)
+	}
 	return nil
 }
 
@@ -129,54 +156,50 @@ func setup(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// collect resources into res and write them out when the function returns
 	resourcesFile, err := flags.GetString("resourcefile")
 	if err != nil {
 		fnerr = err
 		return
 	}
 	res := &resources{Region: region}
-
-	fnerr = doSetup(a, flags, res)
+	count, err := flags.GetInt32("instances")
+	if err != nil {
+		fnerr = err
+		return
+	}
+	efa, err := flags.GetBool("efa")
+	if err != nil {
+		fnerr = err
+		return
+	}
+	fnerr = doSetup(a, flags, res, count, efa)
 	if fnerr != nil {
 		fmt.Fprintf(os.Stderr, "setup() failed: %s\n", fnerr.Error())
 		fmt.Fprint(os.Stderr, "tearing down resources\n")
 		tderr := doTeardown(a, res)
 		if tderr != nil {
 			fmt.Fprintf(os.Stderr, "teardown(): %s\n", tderr.Error())
+			fnerr = errors.Join(fnerr, tderr)
 		}
 	}
 
-	resdata, err := json.MarshalIndent(res, "", "  ")
-	if err != nil {
-		fnerr = fmt.Errorf("failed to marshal resources data: %s", err.Error())
-		return
+	// Save the created resources, or any left over after failed setup and cleanup.
+	if err := saveResources(resourcesFile, res); err != nil {
+		fnerr = errors.Join(fnerr, fmt.Errorf("failed to write resources file: %w", err))
 	}
-	resfile, err := os.Create(resourcesFile)
-	if err != nil {
-		fnerr = fmt.Errorf("failed to create resources file: %s", err.Error())
-		return
-	}
-	_, err = resfile.Write(resdata)
-	if err != nil {
-		fnerr = fmt.Errorf("failed to write resources file: %s", err.Error())
+	if fnerr != nil {
 		return
 	}
 	fmt.Printf("IDs for any newly created resources are stored in %s. Use the teardown command to clean them up.\n", resourcesFile)
-	if err = resfile.Close(); err != nil {
-		fmt.Fprintf(os.Stderr, "error closing resources file: %s\n", err.Error())
-		fnerr = err
-		return
-	}
 }
 
 func doTeardown(aws *awscloud.AWS, res *resources) error {
-	if res.InstanceID != nil {
-		fmt.Printf("terminating instance %s\n", *res.InstanceID)
-		if _, err := aws.TerminateInstancesEC2([]string{*res.InstanceID}, time.Hour); err != nil {
-			return fmt.Errorf("failed to terminate instance: %v", err)
+	if len(res.InstanceIDs) > 0 {
+		fmt.Printf("terminating instances %v\n", res.InstanceIDs)
+		if _, err := aws.TerminateInstancesEC2(res.InstanceIDs, time.Hour); err != nil {
+			return fmt.Errorf("failed to terminate instances: %w", err)
 		}
-		res.InstanceID = nil
+		res.InstanceIDs = nil
 	}
 
 	if res.SecurityGroup != nil {
@@ -220,6 +243,7 @@ func teardown(cmd *cobra.Command, args []string) {
 	}
 
 	fnerr = doTeardown(a, res)
+	fnerr = errors.Join(fnerr, saveResources(resourcesFile, res))
 }
 
 func doRunExec(a *awscloud.AWS, command []string, flags *pflag.FlagSet, res *resources) error {
@@ -239,7 +263,7 @@ func doRunExec(a *awscloud.AWS, command []string, flags *pflag.FlagSet, res *res
 	defer os.RemoveAll(tmpdir)
 
 	hostsfile := filepath.Join(tmpdir, "known_hosts")
-	ip, err := a.GetInstanceAddress(*res.InstanceID)
+	ip, err := a.GetInstanceAddress(res.InstanceIDs[0])
 	if err != nil {
 		return err
 	}
@@ -315,7 +339,7 @@ func runExec(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	fnerr = doSetup(a, flags, res)
+	fnerr = doSetup(a, flags, res, 1, false)
 	if fnerr != nil {
 		return
 	}
@@ -349,6 +373,8 @@ func setupCLI() *cobra.Command {
 	setupCmd.Flags().StringP("resourcefile", "r", "resources.json", "path to store the resource IDs")
 	setupCmd.Flags().String("user-data", "", "path to a cloud-init user-data file (passed through unchanged)")
 	setupCmd.Flags().String("instance-type", "", "instance type to use, e.g. t3.small (x86_64) or t4g.medium (aarch64)")
+	setupCmd.Flags().Int32("instances", 1, "number of instances to launch")
+	setupCmd.Flags().Bool("efa", false, "attach an EFA primary network interface and allow intra-group traffic")
 	setupCmd.MarkFlagsRequiredTogether("vpc-id", "subnet-id")
 	for _, flag := range []string{"region", "ami", "instance-type"} {
 		exitCheck(setupCmd.MarkFlagRequired(flag))
