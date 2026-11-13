@@ -133,7 +133,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version: "1.25.14"
+          go-version: "1.26.10"
         id: go
 
       - name: Check out code into the Go module directory
@@ -156,7 +156,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.8
+          version: v2.9
           args: --verbose --timeout 5m0s
 
   shellcheck:
