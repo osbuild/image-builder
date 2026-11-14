@@ -1127,11 +1127,11 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 			if err := setDPSRootPartitionType(basept, t.arch.arch); err != nil {
 				return nil, err
 			}
-			// bootc installs the UKI into the ESP, so the XBOOTLDR partition
-			// of our default table would stay empty and only get in the way
-			// when systemd-gpt-auto-generator mounts it on /boot.
+			// bootc installs the UKI into the ESP, so the /boot partition
+			// of our default table is unnecessary.
 			basept.Partitions = slices.DeleteFunc(basept.Partitions, func(p disk.Partition) bool {
-				return p.Type == disk.XBootLDRPartitionGUID
+				mnt, ok := p.Payload.(disk.Mountable)
+				return ok && mnt.GetMountpoint() == "/boot"
 			})
 		}
 	}
