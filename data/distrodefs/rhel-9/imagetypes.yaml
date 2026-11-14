@@ -807,7 +807,7 @@
           fstab_passno: 2
       - &default_partition_table_part_boot
         size: "1 GiB"
-        type: *xboot_ldr_partition_guid
+        type: *filesystem_data_guid
         payload_type: "filesystem"
         payload: &default_partition_table_part_boot_payload
           type: "xfs"
@@ -1819,7 +1819,7 @@ image_types:
               fstab_passno: 2
           - &oci_part_boot
             size: "1 GiB"
-            type: *xboot_ldr_partition_guid
+            type: *filesystem_data_guid
             payload_type: "filesystem"
             payload:
               type: "xfs"
@@ -2908,7 +2908,7 @@ image_types:
               fstab_passno: 2
           - &minimal_raw_partition_table_part_boot
             size: "500 MiB"
-            type: *xboot_ldr_partition_guid
+            type: *filesystem_data_guid
             payload_type: "filesystem"
             payload:
               <<: *default_partition_table_part_boot_payload
