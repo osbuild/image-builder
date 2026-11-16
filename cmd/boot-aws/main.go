@@ -126,10 +126,10 @@ func doSetup(a *awscloud.AWS, flags *pflag.FlagSet, res *resources, count int32,
 		return fmt.Errorf("LaunchInstancesEC2(): %w", err)
 	}
 	res.InstanceIDs = append(res.InstanceIDs, ids...)
+	if err := a.WaitInstanceRunningEC2(res.InstanceIDs...); err != nil {
+		return fmt.Errorf("instances did not become running: %w", err)
+	}
 	for _, id := range res.InstanceIDs {
-		if err := a.WaitInstanceRunningEC2(id); err != nil {
-			return fmt.Errorf("instance %s did not become running: %w", id, err)
-		}
 		ip, err := a.GetInstanceAddress(id)
 		if err != nil {
 			return fmt.Errorf("GetInstanceAddress(%s): %w", id, err)
