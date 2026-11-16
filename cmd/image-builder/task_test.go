@@ -43,7 +43,7 @@ func TestTaskIntegrationArgs(t *testing.T) {
 		},
 		{
 			args:               []string{"--with-sbom"},
-			expectedFilesInit:  []string{prefix("manifest.json"), prefix("buildroot-build.spdx.json"), prefix("image-os.spdx.json")},
+			expectedFilesInit:  []string{prefix("manifest.json")},
 			expectedFilesBuild: []string{prefix("qcow2")},
 		},
 		{
@@ -53,12 +53,12 @@ func TestTaskIntegrationArgs(t *testing.T) {
 		},
 		{
 			args:               []string{"--with-sbom", "--with-buildlog"},
-			expectedFilesInit:  []string{prefix("manifest.json"), prefix("buildroot-build.spdx.json"), prefix("image-os.spdx.json")},
+			expectedFilesInit:  []string{prefix("manifest.json")},
 			expectedFilesBuild: []string{prefix("qcow2"), prefix("buildlog")},
 		},
 		{
 			args:               []string{"--with-sbom", "--with-buildlog", "--with-rpmlist"},
-			expectedFilesInit:  []string{prefix("manifest.json"), prefix("buildroot-build.spdx.json"), prefix("image-os.spdx.json"), prefix("rpmlist.json")},
+			expectedFilesInit:  []string{prefix("manifest.json"), prefix("rpmlist.json")},
 			expectedFilesBuild: []string{prefix("qcow2"), prefix("buildlog")},
 		},
 	} {

@@ -34,7 +34,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/progress"
 	"github.com/osbuild/image-builder/pkg/rhsm/facts"
-	"github.com/osbuild/image-builder/pkg/sbom"
 
 	"github.com/osbuild/image-builder/internal/blueprintload"
 	"github.com/osbuild/image-builder/internal/cmdutil"
@@ -552,10 +551,6 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	if err != nil {
 		return nil, err
 	}
-	withSBOM, err := cmd.Flags().GetBool("with-sbom")
-	if err != nil {
-		return nil, err
-	}
 	withRPMList, err := cmd.Flags().GetBool("with-rpmlist")
 	if err != nil {
 		return nil, err
@@ -684,10 +679,6 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	imgOutputDir, err := resolveOutputDir(outputDir, img)
 	if err != nil {
 		return nil, err
-	}
-
-	if withSBOM {
-		mgOptions.SBOMWriter = initSBOMWriter(imgBasename, imgOutputDir)
 	}
 
 	if withRPMList {
@@ -1365,13 +1356,6 @@ func checkTaskVersion(task taskInfo) error {
 	}
 
 	return nil
-}
-
-func initSBOMWriter(sbomBasename string, sbomDir string) manifestgen.SBOMWriterFunc {
-	return func(filename string, content io.Reader, docType sbom.StandardType) error {
-		filename = fmt.Sprintf("%s.%s", sbomBasename, strings.SplitN(filename, ".", 2)[1])
-		return fileWriter(sbomDir, filename, content)
-	}
 }
 
 func initRPMListWriter(rpmBasename, rpmDir string) manifestgen.RPMListWriterFunc {

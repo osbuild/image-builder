@@ -551,19 +551,6 @@ func TestBuildIntegrationArgs(t *testing.T) {
 			[]string{"--with-buildlog"},
 			[]string{prefix + ".buildlog"},
 			"",
-		}, {
-			[]string{"--with-sbom"},
-			[]string{prefix + ".buildroot-build.spdx.json",
-				prefix + ".image-os.spdx.json",
-			},
-			"",
-		}, {
-			[]string{"--with-manifest", "--with-sbom"},
-			[]string{prefix + ".buildroot-build.spdx.json",
-				prefix + ".image-os.spdx.json",
-				prefix + ".osbuild-manifest.json",
-			},
-			"",
 		},
 		{
 			[]string{"--format", "json", "--with-buildlog", "--progress", "file"},
@@ -772,43 +759,6 @@ osbuild-stage-output
 			}
 		})
 	}
-}
-
-func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
-	restore := main.MockManifestgenDepsolver(fakeDepsolve)
-	defer restore()
-
-	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
-	defer restore()
-
-	outputDir := filepath.Join(t.TempDir(), "output-dir")
-
-	restore = main.MockNewRepoRegistry(testrepos.New)
-	defer restore()
-
-	restore = main.MockOsArgs([]string{
-		"manifest",
-		"qcow2",
-		"--arch=x86_64",
-		"--distro=centos-9",
-		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
-		"--with-sbom",
-		"--output-dir", outputDir,
-	})
-	defer restore()
-
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
-
-	sboms, err := filepath.Glob(filepath.Join(outputDir, "*.spdx.json"))
-	assert.NoError(t, err)
-	assert.Equal(t, len(sboms), 2)
-	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildroot-build.spdx.json"), sboms[0])
-	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.image-os.spdx.json"), sboms[1])
 }
 
 func TestDescribeImageSmoke(t *testing.T) {
@@ -1074,7 +1024,6 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 		// have exactly the same result (once the depsolving is mocked)
 		"--output-name=foo.n.0.qcow2",
 		"--with-manifest",
-		"--with-sbom",
 		"--with-buildlog",
 	})
 	defer restore()
@@ -1086,8 +1035,6 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 	assert.NoError(t, err)
 
 	expectedFiles := []string{
-		"foo.n.0.buildroot-build.spdx.json",
-		"foo.n.0.image-os.spdx.json",
 		"foo.n.0.osbuild-manifest.json",
 		"foo.n.0.buildlog",
 		"foo.n.0.qcow2",
@@ -1380,7 +1327,7 @@ func fakeDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsO
 	if depsolveWarningsOutput != nil {
 		_, _ = depsolveWarningsOutput.Write([]byte(`fake depsolve output`))
 	}
-	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil, true)
+	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil)
 	if err != nil {
 		return nil, err
 	}

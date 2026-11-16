@@ -15,7 +15,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/image-builder/pkg/runner"
-	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 func RunPlayground(img image.ImageKind, d distro.Distro, arch distro.Arch, repos map[string][]rpmmd.RepoConfig, state_dir string) {
@@ -38,7 +37,7 @@ func RunPlayground(img image.ImageKind, d distro.Distro, arch distro.Arch, repos
 
 	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
 	for name, chain := range common.Must(manifest.GetPackageSetChains()) {
-		res, err := solver.Depsolve(chain, sbom.StandardTypeNone)
+		res, err := solver.Depsolve(chain)
 		if err != nil {
 			panic(fmt.Sprintf("failed to depsolve for pipeline %s: %s\n", name, err.Error()))
 		}

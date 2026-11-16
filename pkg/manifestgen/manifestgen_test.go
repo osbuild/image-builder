@@ -27,7 +27,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/osbuild/manifesttest"
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
 	testrepos "github.com/osbuild/image-builder/test/data/repositories"
 )
 
@@ -132,7 +131,7 @@ func fakeDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsO
 	if depsolveWarningsOutput != nil {
 		_, _ = depsolveWarningsOutput.Write([]byte(`fake depsolve output`))
 	}
-	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil, true)
+	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -217,48 +216,6 @@ func TestManifestGeneratorContainers(t *testing.T) {
 
 	// container is included
 	assert.Contains(t, string(osbuildManifest), "resolved-cnt-"+fakeContainerSource)
-}
-
-func TestManifestGeneratorDepsolveWithSbomWriter(t *testing.T) {
-	repos, err := testrepos.New()
-	assert.NoError(t, err)
-	fac := distrofactory.NewDefault()
-
-	filter, err := imagefilter.New(fac, repos)
-	assert.NoError(t, err)
-	res, err := filter.Filter("distro:centos-9", "type:qcow2", "arch:x86_64")
-	assert.NoError(t, err)
-	assert.Equal(t, 1, len(res))
-
-	generatedSboms := map[string]string{}
-	opts := &manifestgen.Options{
-		Depsolve:          fakeDepsolve,
-		CommitResolver:    panicCommitResolver,
-		ContainerResolver: panicContainerResolver,
-
-		SBOMWriter: func(filename string, content io.Reader, docType sbom.StandardType) error {
-			assert.Equal(t, sbom.StandardTypeSpdx, docType)
-
-			b, err := io.ReadAll(content)
-			assert.NoError(t, err)
-			generatedSboms[filename] = strings.TrimSpace(string(b))
-			return nil
-		},
-	}
-	mg, err := manifestgen.New(repos, opts)
-	assert.NoError(t, err)
-	assert.NotNil(t, mg)
-	var bp blueprint.Blueprint
-	_, err = mg.Generate(&bp, res[0].ImgType, nil)
-	require.NoError(t, err)
-
-	assert.Contains(t, generatedSboms, "centos-9-qcow2-x86_64.buildroot-build.spdx.json")
-	assert.Contains(t, generatedSboms, "centos-9-qcow2-x86_64.image-os.spdx.json")
-	expected := map[string]string{
-		"centos-9-qcow2-x86_64.buildroot-build.spdx.json": `{"sbom-for":"build"}`,
-		"centos-9-qcow2-x86_64.image-os.spdx.json":        `{"sbom-for":"os"}`,
-	}
-	assert.Equal(t, expected, generatedSboms)
 }
 
 func TestManifestGeneratorWithRPMListWriter(t *testing.T) {

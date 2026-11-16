@@ -9,7 +9,6 @@ import (
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 // v2 API structs
@@ -164,9 +163,6 @@ type v2Arguments struct {
 
 	// Optional metadata to download for the repositories
 	OptionalMetadata []string `json:"optional-metadata,omitempty"`
-
-	// Optionally request an SBOM from depsolving
-	Sbom *v2SbomRequest `json:"sbom,omitempty"`
 }
 
 // v2TransactionArgs contains arguments for a single depsolve transaction.
@@ -197,18 +193,12 @@ type v2SearchArgs struct {
 	Packages []string `json:"packages"`
 }
 
-// v2SbomRequest contains SBOM generation request.
-type v2SbomRequest struct {
-	Type string `json:"type"`
-}
-
 // v2DepsolveResult represents the V2 depsolve command response.
 type v2DepsolveResult struct {
 	Solver       string                  `json:"solver"`
 	Transactions [][]v2Package           `json:"transactions"`
 	Repos        map[string]v2Repository `json:"repos"`
 	Modules      map[string]v2ModuleSpec `json:"modules"`
-	SBOM         json.RawMessage         `json:"sbom,omitempty"`
 }
 
 // v2PackageListResult is the common response structure for dump and search.
@@ -229,7 +219,7 @@ func newV2Handler() *v2Handler {
 
 var _ apiHandler = newV2Handler()
 
-func (h *v2Handler) makeDepsolveRequest(cfg *solverConfig, pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) ([]byte, error) {
+func (h *v2Handler) makeDepsolveRequest(cfg *solverConfig, pkgSets []rpmmd.PackageSet) ([]byte, error) {
 	allRepos := collectRepos(pkgSets)
 
 	transactions := make([]v2TransactionArgs, len(pkgSets))
@@ -267,10 +257,6 @@ func (h *v2Handler) makeDepsolveRequest(cfg *solverConfig, pkgSets []rpmmd.Packa
 		CacheDir:         cfg.cacheDir,
 		Proxy:            cfg.proxy,
 		Arguments:        args,
-	}
-
-	if sbomType != sbom.StandardTypeNone {
-		req.Arguments.Sbom = &v2SbomRequest{Type: sbomType.String()}
 	}
 
 	return json.Marshal(req)
@@ -361,7 +347,6 @@ func (h *v2Handler) parseDepsolveResult(output []byte) (*depsolveResultRaw, erro
 		Modules:      modules,
 		Repos:        repos,
 		Solver:       result.Solver,
-		SBOMRaw:      result.SBOM,
 	}, nil
 }
 

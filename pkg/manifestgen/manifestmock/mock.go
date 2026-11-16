@@ -3,7 +3,6 @@ package manifestmock
 import (
 	"cmp"
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"slices"
@@ -16,7 +15,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/flatpak"
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 func ResolveContainers(containerSources map[string][]container.SourceSpec) map[string][]container.Spec {
@@ -98,7 +96,6 @@ func Depsolve(
 	packageSets map[string][]rpmmd.PackageSet,
 	archName string,
 	bc *buildconfig.BuildConfig,
-	generateSBOM bool,
 ) (map[string]depsolvednf.DepsolveResult, error) {
 	useRootDir := bc != nil && bc.Solver != nil && bc.Solver.UseRootDir
 	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
@@ -314,22 +311,9 @@ func Depsolve(
 			return cmp.Compare(a.Id, b.Id)
 		})
 
-		var sbomDoc *sbom.Document
-		if generateSBOM {
-			var err error
-			sbomDoc, err = sbom.NewDocument(
-				sbom.StandardTypeSpdx,
-				json.RawMessage(fmt.Sprintf(`{"sbom-for":"%s"}`, pkgSetName)),
-			)
-			if err != nil {
-				return nil, err
-			}
-		}
-
 		depsolvedSets[pkgSetName] = depsolvednf.DepsolveResult{
 			Transactions: transactions,
 			Repos:        allRepos,
-			SBOM:         sbomDoc,
 		}
 	}
 
