@@ -712,13 +712,16 @@ func (a *AWS) LaunchInstancesEC2(imageID, secGroupID, userData, instanceType, su
 	return ids, nil
 }
 
-// WaitInstanceRunningEC2 waits for an instance to reach the running state.
-func (a *AWS) WaitInstanceRunningEC2(instanceID string) error {
+// WaitInstanceRunningEC2 waits until every instance is running.
+func (a *AWS) WaitInstanceRunningEC2(instanceIDs ...string) error {
+	if len(instanceIDs) == 0 {
+		return fmt.Errorf("no instance IDs to wait for")
+	}
 	instanceWaiter := newInstanceRunningWaiterEC2(a.ec2)
 	return instanceWaiter.Wait(
 		context.TODO(),
 		&ec2.DescribeInstancesInput{
-			InstanceIds: []string{instanceID},
+			InstanceIds: slices.Clone(instanceIDs),
 		},
 		time.Hour,
 	)
