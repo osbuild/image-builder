@@ -41,6 +41,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/reporegistry"
 	"github.com/osbuild/image-builder/pkg/rhsm/facts"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	testrepos "github.com/osbuild/image-builder/test/data/repositories"
@@ -591,6 +592,10 @@ func main() {
 				// get repositories
 				repos, err := testedRepoRegistry.ReposByImageTypeName(distroName, archName, imgTypeName)
 				if err != nil {
+					if skipNorepos && errors.Is(err, reporegistry.ErrNoRepoFound) {
+						fmt.Fprintf(os.Stderr, "Skipping %s/%s/%s (reason: %v)\n", distroName, archName, imgTypeName, err)
+						continue
+					}
 					panic(fmt.Sprintf("failed to get repositories for %s/%s: %v", distroName, archName, err))
 				}
 				if len(repos) == 0 {
