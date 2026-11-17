@@ -24,7 +24,6 @@ fi
 checksums_dir="./test/data/manifest-checksums"
 mkdir -p "${checksums_dir}"
 
-# NOTE: fedora-41 riscv has no test repositories so we need to skip it.
 # NOTE: silence stdout as it gets way too noisy in the GitHub action log (until
 # gen-manifests gets a verbosity or progress option).
 # Save stderr to reduce noise as well and print it only if the run fails.
@@ -36,7 +35,8 @@ if ! /tmp/gen-manifest-checksums-bin \
     --packages=false --containers=false --commits=false --flatpaks=false \
     --metadata=false \
     --fake-bootc=true \
-    --arches "x86_64,aarch64,ppc64le,s390x" \
+    --arches "x86_64,aarch64,ppc64le,riscv64,s390x" \
+    --skip-norepos \
     --output "${checksums_dir}" \
     > /dev/null 2> "${stderr}"; then
 
