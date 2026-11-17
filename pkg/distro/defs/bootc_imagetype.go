@@ -102,8 +102,8 @@ func (t *bootcImageType) BootMode() platform.BootMode {
 		return platform.BOOT_NONE
 	}
 
-	// Other aarch64 images use UEFI.
-	if t.arch.arch == arch.ARCH_AARCH64 {
+	// Other aarch64 and riscv64 images use UEFI.
+	if t.arch.arch == arch.ARCH_AARCH64 || t.arch.arch == arch.ARCH_RISCV64 {
 		return platform.BOOT_UEFI
 	}
 

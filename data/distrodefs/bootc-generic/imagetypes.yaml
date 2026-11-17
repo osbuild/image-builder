@@ -70,6 +70,12 @@
           - *default_partition_table_part_efi
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
+      riscv64:
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_efi
+          - *default_partition_table_part_boot
+          - *default_partition_table_part_root
       ppc64le:
         type: "gpt"
         partitions:
