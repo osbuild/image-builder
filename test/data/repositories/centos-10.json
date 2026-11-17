@@ -71,5 +71,13 @@
         "gce"
       ]
     }
+  ],
+  "riscv64": [
+    {
+      "name": "riscv",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-riscv64-riscv-20261108",
+      "check_gpg": false,
+      "gpgkeys": []
+    }
   ]
 }
