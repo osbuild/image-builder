@@ -675,7 +675,7 @@ func TestBootcImageTypeBootModeFromContainerType(t *testing.T) {
 		{"android-aboot", bootc.ContainerTypeAboot, true, platform.BOOT_NONE},
 		{"efi-aboot", bootc.ContainerTypeAbootEFI, true, platform.BOOT_UEFI},
 	} {
-		for _, architecture := range []arch.Arch{arch.ARCH_X86_64, arch.ARCH_AARCH64} {
+		for _, architecture := range []arch.Arch{arch.ARCH_X86_64, arch.ARCH_AARCH64, arch.ARCH_RISCV64} {
 			t.Run(tc.name+"/"+architecture.String(), func(t *testing.T) {
 				imageType := NewTestBootcImageType(t, "raw")
 				imageType.arch.arch = architecture
@@ -683,7 +683,7 @@ func TestBootcImageTypeBootModeFromContainerType(t *testing.T) {
 				bd.containerType = tc.containerType
 				bd.unifiedKernel = tc.unifiedKernel
 				want := tc.want
-				if architecture == arch.ARCH_AARCH64 && tc.containerType == "vmlinuz" {
+				if (architecture == arch.ARCH_AARCH64 || architecture == arch.ARCH_RISCV64) && tc.containerType == "vmlinuz" {
 					want = platform.BOOT_UEFI
 				}
 				assert.Equal(t, want, imageType.BootMode())
