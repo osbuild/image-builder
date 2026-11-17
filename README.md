@@ -110,8 +110,9 @@ With the `--with-manifest` option an
 [osbuild](https://github.com/osbuild/osbuild) manifest will be
 placed in the output directory too.
 
-With the `--with-sbom` option an SPDX SBOM document will be
-placed in the output directory too.
+Use `--with-sbom` to also write an SPDX SBOM for a package-based (RPM) image
+as `<basename>.spdx.json` alongside the image. See [SBOM usage and
+limitations](./doc/01-usage.md#sbom).
 
 ### Blueprints
 
@@ -177,12 +178,6 @@ enough to be usable.
 
 Note that this feature is considered experimental currently.
 
-
-### SBOMs
-
-It is possible to generate spdx based SBOM (software bill of materials)
-documents as part of the build. Just pass `--with-sbom` and
-it will put them into the output directory.
 
 ### Cloud integration
 
