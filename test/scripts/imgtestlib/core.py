@@ -28,6 +28,9 @@ CAN_BOOT_TEST = {
         "vhd",
         "cloud-ec2",
         "oci",
+        "gce",
+        "gce-rhui",
+        "cloud-gce",
     ],
     "x86_64": [
         "image-installer", "minimal-installer", "network-installer",

@@ -51,7 +51,7 @@ func main() {
 	olog.SetDefault(log.New(os.Stderr, "", 0))
 
 	guestOSFeatures := gcp.GuestOsFeaturesByDistro(osFamily)
-	if guestOSFeatures == nil {
+	if guestOSFeatures == nil && osFamily != "fedora" {
 		olog.Fatalf("[GCP] Unknown OS Family %q.", osFamily)
 	}
 
