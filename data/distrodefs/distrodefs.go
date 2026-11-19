@@ -1,3 +1,5 @@
+//go:build !rpm_data
+
 package distrodefs
 
 import "embed"

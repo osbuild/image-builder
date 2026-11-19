@@ -48,9 +48,18 @@ Requires:   osbuild-ostree >= %{min_osbuild_version}
 Requires:   osbuild-lvm2 >= %{min_osbuild_version}
 Requires:   osbuild-luks2 >= %{min_osbuild_version}
 Requires:   osbuild-depsolve-dnf >= %{min_osbuild_version}
+Requires:   image-builder-defs = %{version}-%{release}
 
 %description
 %{common_description}
+
+%package core-defs
+Summary: Distribution, image type and repository definitions for image-builder
+BuildArch: noarch
+Provides: image-builder-defs = %{version}-%{release}
+
+%description core-defs
+Distribution, image type and repository definitions used by image-builder.
 
 %prep
 %if 0%{?rhel}
@@ -78,8 +87,9 @@ export GOFLAGS+=" -mod=vendor"
 %undefine gomodulesmode
 %endif
 
-export LDFLAGS="${LDFLAGS} -X 'main.version=%{version}'"
-%gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/image-builder %{goipath}/cmd/image-builder
+export LDFLAGS="${LDFLAGS} -X 'main.version=%{version}' -X '%{goipath}/data/distrodefs.DataDir=%{_datadir}/image-builder/definitions' -X '%{goipath}/data/repositories.DataDir=%{_datadir}/image-builder/repositories'"
+export GO_BUILDTAGS="rpm_data ${GO_BUILDTAGS:-${BUILDTAGS:-}} ${GOTAGS:-}"
+%gobuild -o _bin/image-builder %{goipath}/cmd/image-builder
 
 # Generate man pages
 mkdir -p man/man1
@@ -93,6 +103,10 @@ install -m 0755 -vd                                 %{buildroot}%{_tmpfilesdir}
 install -m 0644 -vp data/tmpfiles.d/image-builder.conf %{buildroot}%{_tmpfilesdir}/image-builder.conf
 install -m 0755 -vd                                 %{buildroot}%{_mandir}/man1
 install -m 0644 -vp man/man1/image-builder*.1       %{buildroot}%{_mandir}/man1/
+install -m 0755 -vd %{buildroot}%{_datadir}/image-builder/definitions
+cp -a data/distrodefs/*.yaml data/distrodefs/*/ %{buildroot}%{_datadir}/image-builder/definitions/
+install -m 0755 -vd %{buildroot}%{_datadir}/image-builder/repositories
+install -m 0644 -vp data/repositories/*.json %{buildroot}%{_datadir}/image-builder/repositories/
 %check
 export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
@@ -112,6 +126,10 @@ cd $PWD/_build/src/%{goipath}
 %{_tmpfilesdir}/image-builder.conf
 %{_mandir}/man1/image-builder*.1*
 %ghost %attr(0755, root, root) %dir /var/cache/image-builder
+
+%files core-defs
+%license LICENSE
+%{_datadir}/image-builder
 
 %changelog
 # the changelog is distribution-specific, therefore there's just one entry

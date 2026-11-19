@@ -61,7 +61,7 @@ func NewLoader(fsys fs.FS) *Loader {
 	return &Loader{fs: fsys}
 }
 
-// BuiltinLoader returns a Loader for the embedded distrodefs FS,
+// BuiltinLoader returns a Loader for the default distrodefs FS,
 // with the experimental yamldir override applied if it exists
 func BuiltinLoader() *Loader {
 	return NewLoader(dataFS())
