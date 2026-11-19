@@ -17,6 +17,7 @@ type BootcISO struct {
 	Base
 
 	PartitionTable *disk.PartitionTable
+	TargetRef      string
 
 	// Customizations
 	OSCustomizations        manifest.OSCustomizations
@@ -74,6 +75,7 @@ func (img *BootcISO) InstantiateManifestFromContainer(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuildFromContainer(m, runner, cnts, buildOptions)
 
 	rawImage := manifest.NewRawBootcImage(buildPipeline, containers, img.platform)
+	rawImage.TargetRef = img.TargetRef
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.OSCustomizations = img.OSCustomizations
 	rawImage.DiskCustomizations = img.DiskCustomizations

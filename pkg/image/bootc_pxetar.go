@@ -16,6 +16,7 @@ type BootcPXEImage struct {
 	Base
 
 	PartitionTable *disk.PartitionTable
+	TargetRef      string
 
 	ContainerSource      *container.SourceSpec
 	BuildContainerSource *container.SourceSpec
@@ -109,6 +110,7 @@ func (img *BootcPXEImage) InstantiateManifestFromContainers(m *manifest.Manifest
 	if customSourcePipeline != "" {
 		rawImage.SourcePipeline = customSourcePipeline
 	}
+	rawImage.TargetRef = img.TargetRef
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.OSCustomizations = img.OSCustomizations
 	rawImage.DiskCustomizations = img.DiskCustomizations
