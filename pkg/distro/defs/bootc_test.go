@@ -1062,6 +1062,73 @@ func TestManifestGenerationBootloaderValidation(t *testing.T) {
 	})
 }
 
+func TestBootcInstallerKickstartContentsConflicts(t *testing.T) {
+	kickstartOnly := &blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Installer: &blueprint.InstallerCustomization{
+				Kickstart: &blueprint.Kickstart{Contents: "%include /osbuild-base.ks\n"},
+			},
+		},
+	}
+
+	installerImgOptions := distro.ImageOptions{
+		Bootc: &distro.BootcImageOptions{
+			InstallerPayloadRef: "registry.example.com/payload:latest",
+		},
+	}
+
+	t.Run("bootc-installer/kickstart-only", func(t *testing.T) {
+		imgType := NewTestBootcImageType(t, "bootc-installer")
+		_, _, err := imgType.Manifest(kickstartOnly, installerImgOptions, nil, common.ToPtr(int64(0)))
+		assert.NoError(t, err)
+	})
+
+	t.Run("bootc-installer/kernel-append", func(t *testing.T) {
+		imgType := NewTestBootcImageType(t, "bootc-installer")
+		bp := &blueprint.Blueprint{
+			Customizations: &blueprint.Customizations{
+				Kernel: &blueprint.KernelCustomization{Append: "console=ttyS0"},
+				Installer: &blueprint.InstallerCustomization{
+					Kickstart: &blueprint.Kickstart{Contents: "%include /osbuild-base.ks\n"},
+				},
+			},
+		}
+		_, _, err := imgType.Manifest(bp, installerImgOptions, nil, common.ToPtr(int64(0)))
+		assert.EqualError(t, err,
+			`blueprint validation failed for image type "bootc-installer": customizations.installer.kickstart.contents cannot be used with customizations.kernel.append`)
+	})
+
+	t.Run("bootc-installer/user", func(t *testing.T) {
+		imgType := NewTestBootcImageType(t, "bootc-installer")
+		bp := &blueprint.Blueprint{
+			Customizations: &blueprint.Customizations{
+				User: []blueprint.UserCustomization{{Name: "alice"}},
+				Installer: &blueprint.InstallerCustomization{
+					Kickstart: &blueprint.Kickstart{Contents: "user alice\n"},
+				},
+			},
+		}
+		_, _, err := imgType.Manifest(bp, installerImgOptions, nil, common.ToPtr(int64(0)))
+		assert.EqualError(t, err,
+			`blueprint validation failed for image type "bootc-installer": customizations.installer.kickstart.contents cannot be used with customizations.user`)
+	})
+
+	t.Run("bootc-installer/group", func(t *testing.T) {
+		imgType := NewTestBootcImageType(t, "bootc-installer")
+		bp := &blueprint.Blueprint{
+			Customizations: &blueprint.Customizations{
+				Group: []blueprint.GroupCustomization{{Name: "wheel"}},
+				Installer: &blueprint.InstallerCustomization{
+					Kickstart: &blueprint.Kickstart{Contents: "%include /osbuild-base.ks\n"},
+				},
+			},
+		}
+		_, _, err := imgType.Manifest(bp, installerImgOptions, nil, common.ToPtr(int64(0)))
+		assert.EqualError(t, err,
+			`blueprint validation failed for image type "bootc-installer": customizations.installer.kickstart.contents cannot be used with customizations.group`)
+	})
+}
+
 func TestBootcIsoManifestSerialization(t *testing.T) {
 	bd := NewTestBootcDistro(t)
 	imgType, err := bd.arches["x86_64"].GetImageType("generic-iso")
