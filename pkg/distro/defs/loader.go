@@ -44,6 +44,14 @@ var (
 // this can be overriden in tests
 var defaultDataFS fs.FS = distrodefs.Data
 
+// DefaultSource describes the default definitions source, including overrides.
+func DefaultSource() string {
+	if overrideDir := experimentalflags.String("yamldir"); overrideDir != "" {
+		return overrideDir
+	}
+	return distrodefs.Source()
+}
+
 func dataFS() fs.FS {
 	dataFS := defaultDataFS
 	if overrideDir := experimentalflags.String("yamldir"); overrideDir != "" {

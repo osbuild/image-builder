@@ -8,3 +8,6 @@ import "os"
 var DataDir = "/usr/share/image-builder/definitions"
 
 var Data = os.DirFS(DataDir)
+
+// Source describes where the default definitions are loaded from.
+func Source() string { return DataDir }

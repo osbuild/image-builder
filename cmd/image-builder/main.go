@@ -164,11 +164,15 @@ func cmdSystem(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	forceDefsDir, err := cmd.Flags().GetString("force-defs-dir")
+	if err != nil {
+		return err
+	}
 	switch format {
 	case "", "yaml":
-		fmt.Fprint(cmd.OutOrStdout(), prettySystemStatus())
+		fmt.Fprint(cmd.OutOrStdout(), prettySystemStatus(forceDefsDir))
 	case "json":
-		fmt.Fprint(cmd.OutOrStdout(), jsonSystemStatus())
+		fmt.Fprint(cmd.OutOrStdout(), jsonSystemStatus(forceDefsDir))
 	default:
 		return fmt.Errorf("unsupported format %q, supported formats: yaml, json", format)
 	}
