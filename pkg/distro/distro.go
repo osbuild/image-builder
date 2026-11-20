@@ -178,6 +178,7 @@ type ExtraRef struct {
 }
 
 type BootcImageOptions struct {
+	TargetRef           string `json:"target_ref,omitempty"`
 	InstallerPayloadRef string `json:"installer_payload_ref,omitempty"`
 
 	// We introduce default kernel arguments in bootc generic image types which

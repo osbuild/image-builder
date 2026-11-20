@@ -31,6 +31,9 @@ type RawBootcImage struct {
 	// container storage
 	PayloadContainers []container.SourceSpec
 
+	// TargetRef is the container reference recorded for future updates.
+	TargetRef string
+
 	// Source pipeline for files written to raw partitions
 	SourcePipeline string
 
@@ -193,7 +196,9 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	if p.Bootloader != nil {
 		opts.Bootloader = *p.Bootloader
 	}
-	if len(p.containers) > 0 {
+	if p.TargetRef != "" {
+		opts.TargetImgref = p.TargetRef
+	} else if len(p.containers) > 0 {
 		opts.TargetImgref = p.containers[0].Name
 	}
 	inputs := osbuild.ContainerDeployInputs{

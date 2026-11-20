@@ -216,6 +216,14 @@ func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, opti
 	//nolint:gosec
 	rng := rand.New(rand.NewSource(seed))
 
+	if options.Bootc != nil && options.Bootc.TargetRef != "" {
+		switch t.Image {
+		case "bootc_disk", "bootc_ostree_iso", "pxe_tar":
+		default:
+			return nil, nil, fmt.Errorf("bootc target ref is not supported for image type %q", t.Name())
+		}
+	}
+
 	switch t.Image {
 	case "bootc_legacy_iso":
 		return t.manifestForLegacyISO(bp, options, rng)
@@ -270,6 +278,9 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	filename := strings.Split(t.Filename(), ".")[0]
 
 	img := image.NewBootcDiskImage(platform, filename, containerSource, buildContainerSource)
+	if options.Bootc != nil {
+		img.TargetRef = options.Bootc.TargetRef
+	}
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
@@ -671,6 +682,9 @@ func (t *bootcImageType) manifestForBootcISO(bp *blueprint.Blueprint, options di
 	platformi.ImageFormat = platform.FORMAT_ISO
 
 	img := image.NewBootcISO(platformi, t.Filename(), containerSource)
+	if options.Bootc != nil {
+		img.TargetRef = options.Bootc.TargetRef
+	}
 	var customizations *blueprint.Customizations
 	if bp != nil {
 		customizations = bp.Customizations
@@ -930,6 +944,9 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 
 	platform := PlatformFor(t.arch.Name(), bd.sourceInfo.UEFIVendor)
 	img := image.NewBootcPXEImage(platform, t.Filename(), containerSource, buildContainerSource)
+	if options.Bootc != nil {
+		img.TargetRef = options.Bootc.TargetRef
+	}
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
