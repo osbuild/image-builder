@@ -60,10 +60,10 @@ func TestManifestGeneratorDepsolve(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, mg)
 			var bp blueprint.Blueprint
-			osbuildManifest, err := mg.Generate(&bp, res[0].ImgType, nil)
+			result, err := mg.Generate(&bp, res[0].ImgType, nil)
 			require.NoError(t, err)
 
-			pipelineNames, err := manifesttest.PipelineNamesFrom(osbuildManifest)
+			pipelineNames, err := manifesttest.PipelineNamesFrom(result.Manifest)
 			assert.NoError(t, err)
 			assert.Equal(t, []string{"build", "os", "image", "qcow2"}, pipelineNames)
 
@@ -73,15 +73,15 @@ func TestManifestGeneratorDepsolve(t *testing.T) {
 				// Format: "sources":{... "org.osbuild.librepo":{... "items":{... "sha256:...":{"path":"packages/...","mirror":"..."}}}
 				sourcesPattern := regexp.MustCompile(
 					`"sources":\{"org\.osbuild\.librepo":\{"items":\{"sha256:[a-f0-9]{64}":\{"path":"packages/[^"]+\.rpm","mirror":"[^"]+"\}`)
-				assert.Regexp(t, sourcesPattern, string(osbuildManifest))
-				assert.NotContains(t, string(osbuildManifest), "org.osbuild.curl")
+				assert.Regexp(t, sourcesPattern, string(result.Manifest))
+				assert.NotContains(t, string(result.Manifest), "org.osbuild.curl")
 			} else {
 				// Curl uses RemoteLocations for URL
 				// Format: "sources":{... "org.osbuild.curl":{... "items":{... "sha256:...":{"url":"https://..."}}}
 				sourcesPattern := regexp.MustCompile(
 					`"sources":\{"org\.osbuild\.curl":\{"items":\{"sha256:[a-f0-9]{64}":\{"url":"https://[^"]+/packages/[^"]+\.rpm"\}`)
-				assert.Regexp(t, sourcesPattern, string(osbuildManifest))
-				assert.NotContains(t, string(osbuildManifest), "org.osbuild.librepo")
+				assert.Regexp(t, sourcesPattern, string(result.Manifest))
+				assert.NotContains(t, string(result.Manifest), "org.osbuild.librepo")
 			}
 		})
 	}
@@ -113,26 +113,26 @@ func TestManifestGeneratorWithOstreeCommit(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, mg)
 	var bp blueprint.Blueprint
-	osbuildManifest, err := mg.Generate(&bp, res[0].ImgType, imageOpts)
+	result, err := mg.Generate(&bp, res[0].ImgType, imageOpts)
 	assert.NoError(t, err)
 
-	pipelineNames, err := manifesttest.PipelineNamesFrom(osbuildManifest)
+	pipelineNames, err := manifesttest.PipelineNamesFrom(result.Manifest)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"build", "ostree-deployment", "image"}, pipelineNames)
 
 	// XXX: add testhelper to manifesttest for this
-	assert.Contains(t, string(osbuildManifest), `{"url":"resolved-url-for-centos/9/x86_64/edge"}`)
+	assert.Contains(t, string(result.Manifest), `{"url":"resolved-url-for-centos/9/x86_64/edge"}`)
 	// Test that depsolving happened by checking that sources contain curl items with sha256 checksums and URLs
 	sourcesPattern := regexp.MustCompile(
 		`"sources":\{"org\.osbuild\.curl":\{"items":\{"sha256:[a-f0-9]{64}":\{"url":"https://[^"]+/packages/[^"]+\.rpm"\}`)
-	assert.Regexp(t, sourcesPattern, string(osbuildManifest))
+	assert.Regexp(t, sourcesPattern, string(result.Manifest))
 }
 
 func fakeDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsOutput io.Writer, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]depsolvednf.DepsolveResult, error) {
 	if depsolveWarningsOutput != nil {
 		_, _ = depsolveWarningsOutput.Write([]byte(`fake depsolve output`))
 	}
-	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil, true)
+	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -212,53 +212,11 @@ func TestManifestGeneratorContainers(t *testing.T) {
 			},
 		},
 	}
-	osbuildManifest, err := mg.Generate(&bp, res[0].ImgType, nil)
+	result, err := mg.Generate(&bp, res[0].ImgType, nil)
 	assert.NoError(t, err)
 
 	// container is included
-	assert.Contains(t, string(osbuildManifest), "resolved-cnt-"+fakeContainerSource)
-}
-
-func TestManifestGeneratorDepsolveWithSbomWriter(t *testing.T) {
-	repos, err := testrepos.New()
-	assert.NoError(t, err)
-	fac := distrofactory.NewDefault()
-
-	filter, err := imagefilter.New(fac, repos)
-	assert.NoError(t, err)
-	res, err := filter.Filter("distro:centos-9", "type:qcow2", "arch:x86_64")
-	assert.NoError(t, err)
-	assert.Equal(t, 1, len(res))
-
-	generatedSboms := map[string]string{}
-	opts := &manifestgen.Options{
-		Depsolve:          fakeDepsolve,
-		CommitResolver:    panicCommitResolver,
-		ContainerResolver: panicContainerResolver,
-
-		SBOMWriter: func(filename string, content io.Reader, docType sbom.StandardType) error {
-			assert.Equal(t, sbom.StandardTypeSpdx, docType)
-
-			b, err := io.ReadAll(content)
-			assert.NoError(t, err)
-			generatedSboms[filename] = strings.TrimSpace(string(b))
-			return nil
-		},
-	}
-	mg, err := manifestgen.New(repos, opts)
-	assert.NoError(t, err)
-	assert.NotNil(t, mg)
-	var bp blueprint.Blueprint
-	_, err = mg.Generate(&bp, res[0].ImgType, nil)
-	require.NoError(t, err)
-
-	assert.Contains(t, generatedSboms, "centos-9-qcow2-x86_64.buildroot-build.spdx.json")
-	assert.Contains(t, generatedSboms, "centos-9-qcow2-x86_64.image-os.spdx.json")
-	expected := map[string]string{
-		"centos-9-qcow2-x86_64.buildroot-build.spdx.json": `{"sbom-for":"build"}`,
-		"centos-9-qcow2-x86_64.image-os.spdx.json":        `{"sbom-for":"os"}`,
-	}
-	assert.Equal(t, expected, generatedSboms)
+	assert.Contains(t, string(result.Manifest), "resolved-cnt-"+fakeContainerSource)
 }
 
 func TestManifestGeneratorWithRPMListWriter(t *testing.T) {
@@ -298,6 +256,188 @@ func TestManifestGeneratorWithRPMListWriter(t *testing.T) {
 	assert.NotEmpty(t, rows)
 }
 
+// Payload RPMs include all installation transactions. Buildroot-only RPMs
+// are excluded. Packages shared between payload pipelines are kept.
+// sbom.Package has no field for repo URLs or secrets; the exact match guards that.
+func TestGenerateReturnsPayloadPackages(t *testing.T) {
+	repos, err := testrepos.New()
+	require.NoError(t, err)
+	fac := distrofactory.NewDefault()
+
+	filter, err := imagefilter.New(fac, repos)
+	require.NoError(t, err)
+	res, err := filter.Filter("distro:centos-9", "type:qcow2", "arch:x86_64")
+	require.NoError(t, err)
+	require.Len(t, res, 1)
+
+	imgType := res[0].ImgType
+	a := imgType.Arch()
+	imgRepos, err := repos.ReposByImageTypeName(a.Distro().Name(), a.Name(), imgType.Name())
+	require.NoError(t, err)
+
+	repo := imgRepos[0]
+	payloadOnly := rpmmd.Package{
+		Name:    "payload-only",
+		Version: "1.0",
+		Release: "1.fixture",
+		Arch:    "x86_64",
+		Vendor:  "Fixture Vendor",
+		URL:     "https://example.test/payload-only",
+		Checksum: rpmmd.Checksum{
+			Type:  "sha256",
+			Value: strings.Repeat("a", 64),
+		},
+		RepoID:          repo.Id,
+		Repo:            &repo,
+		Location:        "packages/payload-only.rpm",
+		RemoteLocations: []string{repo.BaseURLs[0] + "/packages/payload-only.rpm"},
+		Secrets:         "org.osbuild.rhsm",
+	}
+	buildrootOnly := rpmmd.Package{
+		Name:    "buildroot-only",
+		Version: "1.0",
+		Release: "1.fixture",
+		Arch:    "x86_64",
+		Vendor:  "Fixture Vendor",
+		URL:     "https://example.test/buildroot-only",
+		Checksum: rpmmd.Checksum{
+			Type:  "sha256",
+			Value: strings.Repeat("b", 64),
+		},
+		RepoID:          repo.Id,
+		Repo:            &repo,
+		Location:        "packages/buildroot-only.rpm",
+		RemoteLocations: []string{repo.BaseURLs[0] + "/packages/buildroot-only.rpm"},
+		Secrets:         "org.osbuild.rhsm",
+	}
+	both := rpmmd.Package{
+		Name:    "both",
+		Epoch:   2,
+		Version: "1.0",
+		Release: "1.fixture",
+		Arch:    "x86_64",
+		Vendor:  "Fixture Vendor",
+		URL:     "https://example.test/both",
+		Checksum: rpmmd.Checksum{
+			Type:  "sha256",
+			Value: strings.Repeat("c", 64),
+		},
+		RepoID:          repo.Id,
+		Repo:            &repo,
+		Location:        "packages/both.rpm",
+		RemoteLocations: []string{repo.BaseURLs[0] + "/packages/both.rpm"},
+		Secrets:         "org.osbuild.rhsm",
+	}
+	// The OS pipeline looks up a package named kernel while serializing.
+	kernel := rpmmd.Package{
+		Name:    "kernel",
+		Version: "1.0",
+		Release: "1.fixture",
+		Arch:    "x86_64",
+		Vendor:  "Fixture Vendor",
+		URL:     "https://example.test/kernel",
+		Checksum: rpmmd.Checksum{
+			Type:  "sha256",
+			Value: strings.Repeat("d", 64),
+		},
+		RepoID:          repo.Id,
+		Repo:            &repo,
+		Location:        "packages/kernel.rpm",
+		RemoteLocations: []string{repo.BaseURLs[0] + "/packages/kernel.rpm"},
+		Secrets:         "org.osbuild.rhsm",
+	}
+	controlledDepsolve := func(_ *depsolvednf.Solver, _ string, _ io.Writer, _ map[string][]rpmmd.PackageSet, _ distro.Distro, _ string) (map[string]depsolvednf.DepsolveResult, error) {
+		return map[string]depsolvednf.DepsolveResult{
+			"os":    {Transactions: depsolvednf.TransactionList{{both}, {payloadOnly, kernel}}},
+			"image": {Transactions: depsolvednf.TransactionList{{both}}},
+			"build": {Transactions: depsolvednf.TransactionList{{buildrootOnly, both}}},
+		}, nil
+	}
+
+	want := []sbom.Package{
+		{
+			Name:    "both",
+			Epoch:   2,
+			Version: "1.0",
+			Release: "1.fixture",
+			Arch:    "x86_64",
+			Vendor:  "Fixture Vendor",
+			URL:     "https://example.test/both",
+			Checksum: rpmmd.Checksum{
+				Type:  "sha256",
+				Value: strings.Repeat("c", 64),
+			},
+		},
+		{
+			Name:    "kernel",
+			Version: "1.0",
+			Release: "1.fixture",
+			Arch:    "x86_64",
+			Vendor:  "Fixture Vendor",
+			URL:     "https://example.test/kernel",
+			Checksum: rpmmd.Checksum{
+				Type:  "sha256",
+				Value: strings.Repeat("d", 64),
+			},
+		},
+		{
+			Name:    "payload-only",
+			Version: "1.0",
+			Release: "1.fixture",
+			Arch:    "x86_64",
+			Vendor:  "Fixture Vendor",
+			URL:     "https://example.test/payload-only",
+			Checksum: rpmmd.Checksum{
+				Type:  "sha256",
+				Value: strings.Repeat("a", 64),
+			},
+		},
+		{
+			Name:    "both",
+			Epoch:   2,
+			Version: "1.0",
+			Release: "1.fixture",
+			Arch:    "x86_64",
+			Vendor:  "Fixture Vendor",
+			URL:     "https://example.test/both",
+			Checksum: rpmmd.Checksum{
+				Type:  "sha256",
+				Value: strings.Repeat("c", 64),
+			},
+		},
+	}
+	for _, tt := range []struct {
+		name         string
+		sbomPackages bool
+		want         []sbom.Package
+	}{
+		{
+			name:         "requested",
+			sbomPackages: true,
+			want:         want,
+		},
+		{
+			name: "option unset",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var bp blueprint.Blueprint
+			mg, err := manifestgen.New(repos, &manifestgen.Options{
+				SBOMPackages:      tt.sbomPackages,
+				Depsolve:          controlledDepsolve,
+				CommitResolver:    panicCommitResolver,
+				ContainerResolver: panicContainerResolver,
+			})
+			require.NoError(t, err)
+
+			result, err := mg.Generate(&bp, imgType, nil)
+			require.NoError(t, err)
+			require.NotEmpty(t, result.Manifest)
+			assert.Equal(t, tt.want, result.Packages)
+		})
+	}
+}
+
 func TestManifestGeneratorSeed(t *testing.T) {
 	repos, err := testrepos.New()
 	assert.NoError(t, err)
@@ -322,16 +462,16 @@ func TestManifestGeneratorSeed(t *testing.T) {
 		assert.NoError(t, err)
 
 		var bp blueprint.Blueprint
-		osbuildManifest, err := mg.Generate(&bp, res[0].ImgType, nil)
+		result, err := mg.Generate(&bp, res[0].ImgType, nil)
 		assert.NoError(t, err)
 
 		// with the customSeed we always get a predicatable uuid for
 		// the xfs boot partition
 		needle := `8b9968ba-f910-4259-915b-f7025a291b00`
 		if withCustomSeed {
-			assert.Contains(t, string(osbuildManifest), needle)
+			assert.Contains(t, string(result.Manifest), needle)
 		} else {
-			assert.NotContains(t, string(osbuildManifest), needle)
+			assert.NotContains(t, string(result.Manifest), needle)
 		}
 	}
 }
@@ -392,12 +532,12 @@ func TestManifestGeneratorOverrideRepos(t *testing.T) {
 			assert.NoError(t, err)
 
 			var bp blueprint.Blueprint
-			osbuildManifest, err := mg.Generate(&bp, res[0].ImgType, nil)
+			result, err := mg.Generate(&bp, res[0].ImgType, nil)
 			assert.NoError(t, err)
 			if withOverrideRepos {
-				assert.Contains(t, string(osbuildManifest), "http://example.com/overriden-repo/")
+				assert.Contains(t, string(result.Manifest), "http://example.com/overriden-repo/")
 			} else {
-				assert.NotContains(t, string(osbuildManifest), "http://example.com/overriden-repo/")
+				assert.NotContains(t, string(result.Manifest), "http://example.com/overriden-repo/")
 			}
 		})
 	}
@@ -426,9 +566,9 @@ func TestManifestGeneratorUseBootstrapContainer(t *testing.T) {
 			assert.NoError(t, err)
 
 			var bp blueprint.Blueprint
-			osbuildManifest, err := mg.Generate(&bp, res[0].ImgType, nil)
+			result, err := mg.Generate(&bp, res[0].ImgType, nil)
 			assert.NoError(t, err)
-			pipelines, err := manifesttest.PipelineNamesFrom(osbuildManifest)
+			pipelines, err := manifesttest.PipelineNamesFrom(result.Manifest)
 			assert.NoError(t, err)
 			needle := "bootstrap-buildroot"
 			if useBootstrapContainer {

@@ -14,30 +14,6 @@ podman_run = [
 
 
 @pytest.mark.skipif(os.getuid() != 0, reason="needs root")
-def test_manifest_generates_sbom(tmp_path, build_container):
-    output_dir = tmp_path / "output"
-    output_dir.mkdir()
-    subprocess.check_call(podman_run + [
-        "-v", f"{output_dir}:/output",
-        build_container,
-        "manifest",
-        "minimal-raw",
-        "--distro", "centos-9",
-        "--with-sbom",
-    ], stdout=subprocess.DEVNULL)
-    arch = platform.machine()
-    fn = f"centos-9-minimal-raw-{arch}/centos-9-minimal-raw-{arch}.image-os.spdx.json"
-    image_sbom_json_path = output_dir / fn
-    assert image_sbom_json_path.exists()
-    fn = f"centos-9-minimal-raw-{arch}/centos-9-minimal-raw-{arch}.buildroot-build.spdx.json"
-    buildroot_sbom_json_path = output_dir / fn
-    assert buildroot_sbom_json_path.exists()
-    sbom_json = json.loads(image_sbom_json_path.read_text())
-    # smoke test that we have glibc in the json doc
-    assert "glibc" in [s["name"] for s in sbom_json["packages"]], f"missing glibc in {sbom_json}"
-
-
-@pytest.mark.skipif(os.getuid() != 0, reason="needs root")
 def test_manifest_generates_rpmlist(tmp_path, build_container):
     output_dir = tmp_path / "output"
     output_dir.mkdir()

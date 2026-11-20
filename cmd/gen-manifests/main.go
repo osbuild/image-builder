@@ -348,7 +348,7 @@ func makeManifestJob(
 				}
 			}
 		} else {
-			depsolvedSets, err = manifestmock.Depsolve(common.Must(mf.GetPackageSetChains()), archName, bc, false)
+			depsolvedSets, err = manifestmock.Depsolve(common.Must(mf.GetPackageSetChains()), archName, bc)
 			if err != nil {
 				err = fmt.Errorf("[%s] manifestmock depsolve failed: %s", filename, err.Error())
 				return

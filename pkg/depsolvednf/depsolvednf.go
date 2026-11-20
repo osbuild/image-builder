@@ -30,7 +30,6 @@ import (
 
 	"github.com/osbuild/image-builder/pkg/rhsm"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 // BaseSolver defines the basic solver configuration without platform
@@ -156,8 +155,6 @@ type Solver struct {
 	subscriptions    *rhsm.Subscriptions
 	subscriptionsErr error
 
-	sbomType sbom.StandardType
-
 	// Stderr is the stderr output from osbuild-depsolve-dnf, if unset os.Stderr
 	// will be used.
 	//
@@ -177,7 +174,6 @@ type DepsolveResult struct {
 	Transactions TransactionList
 	Modules      []rpmmd.ModuleSpec
 	Repos        []rpmmd.RepoConfig
-	SBOM         *sbom.Document
 	Solver       string
 }
 
@@ -264,16 +260,11 @@ func collectRepos(pkgSets []rpmmd.PackageSet) []rpmmd.RepoConfig {
 	return repos
 }
 
-// Set the SBOM type to generate with the depsolve.
-func (s *Solver) SetSBOMType(sbomType sbom.StandardType) {
-	s.sbomType = sbomType
-}
-
 // Depsolve the list of required package sets with explicit excludes using
 // their associated repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
-func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) (*DepsolveResult, error) {
+func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) (*DepsolveResult, error) {
 	if err := validatePackageSetRepoChain(pkgSets); err != nil {
 		return nil, err
 	}
@@ -284,7 +275,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 	}
 
 	cfg := s.solverCfg()
-	reqData, err := activeHandler.makeDepsolveRequest(cfg, pkgSets, sbomType)
+	reqData, err := activeHandler.makeDepsolveRequest(cfg, pkgSets)
 	if err != nil {
 		return nil, fmt.Errorf("makeDepsolveRequest failed: %w", err)
 	}
@@ -319,19 +310,10 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 		applyRHSMSecrets(transaction, allRepos)
 	}
 
-	var sbomDoc *sbom.Document
-	if sbomType != sbom.StandardTypeNone {
-		sbomDoc, err = sbom.NewDocument(sbomType, resultRaw.SBOMRaw)
-		if err != nil {
-			return nil, fmt.Errorf("creating SBOM document failed: %w", err)
-		}
-	}
-
 	return &DepsolveResult{
 		Transactions: resultRaw.Transactions,
 		Modules:      resultRaw.Modules,
 		Repos:        resultRaw.Repos,
-		SBOM:         sbomDoc,
 		Solver:       resultRaw.Solver,
 	}, nil
 }
@@ -341,7 +323,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 func (s *Solver) DepsolveAll(pkgSetsMap map[string][]rpmmd.PackageSet) (map[string]DepsolveResult, error) {
 	results := make(map[string]DepsolveResult, len(pkgSetsMap))
 	for name, pkgSet := range pkgSetsMap {
-		res, err := s.Depsolve(pkgSet, s.sbomType)
+		res, err := s.Depsolve(pkgSet)
 		if err != nil {
 			return nil, fmt.Errorf("error depsolving package sets for %q: %w", name, err)
 		}

@@ -210,7 +210,7 @@ func makeISOManifest(c *ManifestConfig, solver *depsolvednf.Solver, cacheRoot st
 	}
 
 	for name, pkgSet := range pkgSetChains {
-		res, err := solver.Depsolve(pkgSet, 0)
+		res, err := solver.Depsolve(pkgSet)
 		if err != nil {
 			return nil, fmt.Errorf("cannot depsolve: %w", err)
 		}

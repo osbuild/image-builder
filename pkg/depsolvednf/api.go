@@ -1,24 +1,18 @@
 package depsolvednf
 
 import (
-	"encoding/json"
-
 	"github.com/osbuild/image-builder/pkg/rhsm"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
 )
 
 // depsolveResultRaw is the internal result type returned by handlers.
 // It contains packages with mtls secrets set (from response SSLClientKey),
 // but NOT rhsm secrets (applied by Solver from rpmmd.RepoConfig.RHSM).
-// It also contains raw SBOM data (Solver is responsible for creating
-// sbom.Document).
 type depsolveResultRaw struct {
 	Transactions TransactionList
 	Modules      []rpmmd.ModuleSpec
 	Repos        []rpmmd.RepoConfig
 	Solver       string
-	SBOMRaw      json.RawMessage
 }
 
 // apiHandler defines the interface for API version implementations.
@@ -26,7 +20,7 @@ type depsolveResultRaw struct {
 // and response parsing for the osbuild-depsolve-dnf API.
 type apiHandler interface {
 	// makeDepsolveRequest builds the depsolve request as serialized JSON.
-	makeDepsolveRequest(cfg *solverConfig, pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) ([]byte, error)
+	makeDepsolveRequest(cfg *solverConfig, pkgSets []rpmmd.PackageSet) ([]byte, error)
 
 	// makeDumpRequest builds the metadata dump request as serialized JSON.
 	makeDumpRequest(cfg *solverConfig, repos []rpmmd.RepoConfig) ([]byte, error)

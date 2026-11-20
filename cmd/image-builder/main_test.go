@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -521,6 +522,98 @@ func TestBuildIntegrationHappy(t *testing.T) {
 	assertJsonContains(t, string(manifest), `"image":{"name":"resolved-cnt-registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"`)
 }
 
+type spdxChecksum struct {
+	Algorithm     string `json:"algorithm"`
+	ChecksumValue string `json:"checksumValue"`
+}
+
+type spdxPackage struct {
+	SPDXID    string         `json:"SPDXID"`
+	FileName  string         `json:"packageFileName"`
+	Name      string         `json:"name"`
+	Checksums []spdxChecksum `json:"checksums"`
+}
+
+type spdxRelationship struct {
+	Element string `json:"spdxElementId"`
+	Related string `json:"relatedSpdxElement"`
+	Type    string `json:"relationshipType"`
+}
+
+type spdxDoc struct {
+	SPDXVersion   string             `json:"spdxVersion"`
+	Name          string             `json:"name"`
+	Packages      []spdxPackage      `json:"packages"`
+	Relationships []spdxRelationship `json:"relationships"`
+}
+
+func spdxPackageNamed(t *testing.T, doc spdxDoc, name string) spdxPackage {
+	t.Helper()
+	for _, pkg := range doc.Packages {
+		if pkg.Name == name {
+			return pkg
+		}
+	}
+	t.Fatalf("package %q not in SBOM", name)
+	return spdxPackage{}
+}
+
+func TestBuildIntegrationWithSBOM(t *testing.T) {
+	mockSBOMManifestGeneration(t)
+
+	tmpdir := t.TempDir()
+	outputDir := filepath.Join(tmpdir, "output")
+	restore := main.MockOsArgs([]string{
+		"build",
+		"qcow2",
+		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
+		"--distro", "centos-9",
+		"--arch", "x86_64",
+		"--cache", tmpdir,
+		"--output-dir", outputDir,
+		"--with-sbom",
+		"--output-name", "custom",
+	})
+	defer restore()
+
+	testutil.MockCommand(t, "osbuild", makeFakeOsbuildScript())
+
+	err := main.Run()
+	require.NoError(t, err)
+
+	assertImageSBOM(t, filepath.Join(outputDir, "custom.spdx.json"), "custom", filepath.Join(outputDir, "custom.qcow2"))
+}
+
+func mockSBOMManifestGeneration(t *testing.T) {
+	t.Helper()
+	t.Cleanup(main.MockManifestgenDepsolver(fakeDepsolve))
+	t.Cleanup(main.MockManifestgenContainerResolver(fakeContainerResolver))
+	t.Cleanup(main.MockNewRepoRegistry(testrepos.New))
+}
+
+func assertImageSBOM(t *testing.T, path, name, imagePath string) {
+	t.Helper()
+	image, err := os.ReadFile(imagePath)
+	require.NoError(t, err)
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	var doc spdxDoc
+	require.NoError(t, json.Unmarshal(data, &doc))
+	assert.Equal(t, "SPDX-2.3", doc.SPDXVersion)
+	assert.Equal(t, name, doc.Name)
+	imagePkg := spdxPackageNamed(t, doc, name)
+	assert.Equal(t, filepath.Base(imagePath), imagePkg.FileName)
+	assert.Equal(t, []spdxChecksum{{Algorithm: "SHA256", ChecksumValue: fmt.Sprintf("%x", sha256.Sum256(image))}}, imagePkg.Checksums)
+	for _, pkg := range doc.Packages {
+		assert.NotEqual(t, "qemu-img", pkg.Name)
+	}
+	assert.Contains(t, doc.Relationships, spdxRelationship{
+		Element: imagePkg.SPDXID,
+		Related: spdxPackageNamed(t, doc, "chrony").SPDXID,
+		Type:    "CONTAINS",
+	})
+}
+
 func TestBuildIntegrationArgs(t *testing.T) {
 	restore := main.MockManifestgenDepsolver(fakeDepsolve)
 	defer restore()
@@ -550,19 +643,6 @@ func TestBuildIntegrationArgs(t *testing.T) {
 		}, {
 			[]string{"--with-buildlog"},
 			[]string{prefix + ".buildlog"},
-			"",
-		}, {
-			[]string{"--with-sbom"},
-			[]string{prefix + ".buildroot-build.spdx.json",
-				prefix + ".image-os.spdx.json",
-			},
-			"",
-		}, {
-			[]string{"--with-manifest", "--with-sbom"},
-			[]string{prefix + ".buildroot-build.spdx.json",
-				prefix + ".image-os.spdx.json",
-				prefix + ".osbuild-manifest.json",
-			},
 			"",
 		},
 		{
@@ -772,43 +852,6 @@ osbuild-stage-output
 			}
 		})
 	}
-}
-
-func TestManifestIntegrationWithSBOMWithOutputDir(t *testing.T) {
-	restore := main.MockManifestgenDepsolver(fakeDepsolve)
-	defer restore()
-
-	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
-	defer restore()
-
-	outputDir := filepath.Join(t.TempDir(), "output-dir")
-
-	restore = main.MockNewRepoRegistry(testrepos.New)
-	defer restore()
-
-	restore = main.MockOsArgs([]string{
-		"manifest",
-		"qcow2",
-		"--arch=x86_64",
-		"--distro=centos-9",
-		fmt.Sprintf("--blueprint=%s", makeTestBlueprint(t, testBlueprint)),
-		"--with-sbom",
-		"--output-dir", outputDir,
-	})
-	defer restore()
-
-	var fakeStdout bytes.Buffer
-	restore = main.MockOsStdout(&fakeStdout)
-	defer restore()
-
-	err := main.Run()
-	assert.NoError(t, err)
-
-	sboms, err := filepath.Glob(filepath.Join(outputDir, "*.spdx.json"))
-	assert.NoError(t, err)
-	assert.Equal(t, len(sboms), 2)
-	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.buildroot-build.spdx.json"), sboms[0])
-	assert.Equal(t, filepath.Join(outputDir, "centos-9-qcow2-x86_64.image-os.spdx.json"), sboms[1])
 }
 
 func TestDescribeImageSmoke(t *testing.T) {
@@ -1074,7 +1117,6 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 		// have exactly the same result (once the depsolving is mocked)
 		"--output-name=foo.n.0.qcow2",
 		"--with-manifest",
-		"--with-sbom",
 		"--with-buildlog",
 	})
 	defer restore()
@@ -1086,8 +1128,6 @@ func TestBuildIntegrationOutputFilename(t *testing.T) {
 	assert.NoError(t, err)
 
 	expectedFiles := []string{
-		"foo.n.0.buildroot-build.spdx.json",
-		"foo.n.0.image-os.spdx.json",
 		"foo.n.0.osbuild-manifest.json",
 		"foo.n.0.buildlog",
 		"foo.n.0.qcow2",
@@ -1380,7 +1420,7 @@ func fakeDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarningsO
 	if depsolveWarningsOutput != nil {
 		_, _ = depsolveWarningsOutput.Write([]byte(`fake depsolve output`))
 	}
-	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil, true)
+	depsolvedSets, err := manifestmock.Depsolve(packageSets, arch, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1631,6 +1671,40 @@ func TestResolveExtras(t *testing.T) {
 
 	_, err = main.ResolveExtras([]string{"sysext:nonexistent"}, available)
 	assert.EqualError(t, err, `unknown extra "sysext:nonexistent"`)
+}
+
+func TestBuildWithSBOMRejectsUnsupported(t *testing.T) {
+	restore := main.MockNewRepoRegistry(testrepos.New)
+	defer restore()
+
+	for _, tc := range []struct {
+		name     string
+		args     []string
+		expected string
+	}{
+		{
+			name:     "with-extra",
+			args:     []string{"build", "qcow2", "--distro", "centos-9", "--with-sbom", "--with-extra", "sysext:nginx"},
+			expected: "--with-sbom cannot be combined with --with-extra",
+		},
+		{
+			name:     "bootc",
+			args:     []string{"build", "qcow2", "--bootc-ref", "quay.io/example/bootc:latest", "--with-sbom"},
+			expected: "--with-sbom cannot be used with --bootc-ref",
+		},
+		{
+			name:     "ostree",
+			args:     []string{"build", "edge-commit", "--distro", "centos-9", "--with-sbom"},
+			expected: "ostree-based image type",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			restore := main.MockOsArgs(tc.args)
+			defer restore()
+
+			assert.ErrorContains(t, main.Run(), tc.expected)
+		})
+	}
 }
 
 func TestBuildWithExtraRejectsEarlyOnUnknown(t *testing.T) {

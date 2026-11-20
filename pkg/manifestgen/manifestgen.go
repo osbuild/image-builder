@@ -1,8 +1,6 @@
 package manifestgen
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -28,9 +26,6 @@ import (
 )
 
 const (
-	defaultDepsolverSBOMType = sbom.StandardTypeSpdx
-	defaultSBOMExt           = "spdx.json"
-
 	defaultDepsolveCacheDir = "osbuild-depsolve-dnf"
 )
 
@@ -49,11 +44,6 @@ type Options struct {
 	// RpmDownloader allows to switch between the librepo and
 	// libcurl download backends.
 	RpmDownloader osbuild.RpmDownloader
-
-	// SBOMWriter will be called for each generated SBOM the
-	// filename contains the suggest filename string and the
-	// content can be read
-	SBOMWriter SBOMWriterFunc
 
 	// WarningsOutput will receive any warnings that are part of
 	// the manifest generation. If it is unset any warnings will
@@ -85,6 +75,10 @@ type Options struct {
 	UseBootstrapContainer bool
 
 	RPMListWriter RPMListWriterFunc
+
+	// SBOMPackages makes Generate return the resolved payload RPMs in
+	// Result.Packages, for SBOM generation.
+	SBOMPackages bool
 }
 
 // Generator can generate an osbuild manifest from a given repository
@@ -96,7 +90,6 @@ type Generator struct {
 	containerResolver      ContainerResolverFunc
 	commitResolver         CommitResolverFunc
 	flatpakResolver        FlatpakResolverFunc
-	sbomWriter             SBOMWriterFunc
 	warningsOutput         io.Writer
 	depsolveWarningsOutput io.Writer
 
@@ -109,6 +102,7 @@ type Generator struct {
 
 	useBootstrapContainer bool
 	rpmlistWriter         RPMListWriterFunc
+	sbomPackages          bool
 }
 
 // New will create a new manifest generator
@@ -124,13 +118,13 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		containerResolver:      opts.ContainerResolver,
 		commitResolver:         opts.CommitResolver,
 		rpmDownloader:          opts.RpmDownloader,
-		sbomWriter:             opts.SBOMWriter,
 		warningsOutput:         opts.WarningsOutput,
 		depsolveWarningsOutput: opts.DepsolveWarningsOutput,
 		customSeed:             opts.CustomSeed,
 		overrideRepos:          opts.OverrideRepos,
 		useBootstrapContainer:  opts.UseBootstrapContainer,
 		rpmlistWriter:          opts.RPMListWriter,
+		sbomPackages:           opts.SBOMPackages,
 	}
 	if mg.depsolve == nil {
 		mg.depsolve = DefaultDepsolve
@@ -157,9 +151,14 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 	return mg, nil
 }
 
+type Result struct {
+	Manifest []byte
+	Packages []sbom.Package
+}
+
 // Generate will generate a new manifest for the given distro/imageType/arch
 // combination.
-func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType, imgOpts *distro.ImageOptions) ([]byte, error) {
+func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType, imgOpts *distro.ImageOptions) (Result, error) {
 	if imgOpts == nil {
 		imgOpts = &distro.ImageOptions{}
 	}
@@ -174,7 +173,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 		var err error
 		repos, err = mg.reporegistry.ReposByImageTypeName(dist.Name(), a.Name(), imgType.Name())
 		if err != nil {
-			return nil, err
+			return Result{}, err
 		}
 	}
 	// To support "user" a.k.a. "3rd party" repositories, these
@@ -183,19 +182,19 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 	// for the given image type, see e.g. distro/rhel/imagetype.go:Manifest()
 	preManifest, warnings, err := imgType.Manifest(bp, *imgOpts, repos, mg.customSeed)
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	if len(warnings) > 0 {
 		warn := strings.Join(warnings, "\n")
 		if mg.warningsOutput != nil {
 			fmt.Fprint(mg.warningsOutput, warn)
 		} else {
-			return nil, fmt.Errorf("Warnings during manifest creation:\n%v", warn)
+			return Result{}, fmt.Errorf("Warnings during manifest creation:\n%v", warn)
 		}
 	}
 	pkgSetChains, err := preManifest.GetPackageSetChains()
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	solver := depsolvednf.NewSolver(dist.ModulePlatformID(), dist.Releasever(), a.Name(), dist.Name(), mg.cacheDir)
 	if dd, ok := dist.(distro.CustomDepsolverDistro); ok {
@@ -204,7 +203,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 		archi := common.Must(arch.FromString(a.Name()))
 		customSolver, cleanupFunc, err := dd.Depsolver(mg.cacheDir, archi)
 		if err != nil {
-			return nil, err
+			return Result{}, err
 		}
 		if customSolver != nil {
 			solver = customSolver
@@ -217,28 +216,28 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 	}
 	depsolved, err := mg.depsolve(solver, mg.cacheDir, mg.depsolveWarningsOutput, pkgSetChains, dist, a.Name())
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	containerSpecs, err := mg.containerResolver(preManifest.GetContainerSourceSpecs(), a.Name())
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 	for _, specs := range containerSpecs {
 		for _, spec := range specs {
 			if spec.Arch.String() != a.Name() {
-				return nil, fmt.Errorf("%w: %q != %q", ErrContainerArchMismatch, spec.Arch, a.Name())
+				return Result{}, fmt.Errorf("%w: %q != %q", ErrContainerArchMismatch, spec.Arch, a.Name())
 			}
 		}
 	}
 
 	commitSpecs, err := mg.commitResolver(preManifest.GetOSTreeSourceSpecs())
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 
 	flatpakSpecs, err := mg.flatpakResolver(preManifest.GetFlatpakSourceSpecs())
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 
 	opts := &manifest.SerializeOptions{
@@ -247,10 +246,10 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 
 	mf, err := preManifest.Serialize(depsolved, containerSpecs, commitSpecs, flatpakSpecs, opts)
 	if err != nil {
-		return nil, err
+		return Result{}, err
 	}
 
-	if mg.sbomWriter != nil || mg.rpmlistWriter != nil {
+	if mg.rpmlistWriter != nil {
 		uniquePackages := make(map[string]rpmmd.Package)
 		// XXX: this is very similar to
 		// osbuild-composer:jobimpl-osbuild.go, see if code
@@ -263,33 +262,35 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 			case slices.Contains(preManifest.BuildPipelines(), plName):
 				pipelinePurpose = "buildroot"
 			}
-			// XXX: sync with image-builder-cli:build.go name generation - can we have a shared helper?
-			imageName := fmt.Sprintf("%s-%s-%s", dist.Name(), imgType.Name(), a.Name())
-			if mg.sbomWriter != nil {
-				sbomDocOutputFilename := fmt.Sprintf("%s.%s-%s.%s", imageName, pipelinePurpose, plName, defaultSBOMExt)
-				var buf bytes.Buffer
-				enc := json.NewEncoder(&buf)
-				if err := enc.Encode(depsolvedPipeline.SBOM.Document); err != nil {
-					return nil, err
-				}
-				if err := mg.sbomWriter(sbomDocOutputFilename, &buf, depsolvedPipeline.SBOM.DocType); err != nil {
-					return nil, err
-				}
-			}
-
-			if mg.rpmlistWriter != nil && pipelinePurpose == "image" {
+			if pipelinePurpose == "image" {
 				addUniquePackagesFromPipeline(uniquePackages, depsolvedPipeline)
 			}
 		}
-
-		if mg.rpmlistWriter != nil {
-			if err := writeRPMList(mg.rpmlistWriter, uniquePackages); err != nil {
-				return nil, err
-			}
+		if err := writeRPMList(mg.rpmlistWriter, uniquePackages); err != nil {
+			return Result{}, err
 		}
 	}
 
-	return mf, nil
+	var packages []sbom.Package
+	if mg.sbomPackages {
+		packages = sbomInventory(preManifest.PayloadPipelines(), depsolved)
+	}
+
+	return Result{Manifest: mf, Packages: packages}, nil
+}
+
+func sbomInventory(payload []string, depsolved map[string]depsolvednf.DepsolveResult) []sbom.Package {
+	var packages []sbom.Package
+	for _, plName := range payload {
+		pipeline, ok := depsolved[plName]
+		if !ok {
+			continue
+		}
+		for _, pkg := range pipeline.Transactions.AllPackages() {
+			packages = append(packages, sbom.PackageFromRPMMD(pkg))
+		}
+	}
+	return packages
 }
 
 func addUniquePackagesFromPipeline(unique map[string]rpmmd.Package, pipeline depsolvednf.DepsolveResult) {
@@ -342,12 +343,6 @@ func DefaultDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarnin
 		solver.Stderr = depsolveWarningsOutput
 	}
 
-	// Always generate Spdx SBOMs for now, this makes the
-	// default depsolve slightly slower but it means we
-	// need no extra argument here to select the SBOM
-	// type. Once we have more types than Spdx of course
-	// we need to add a option to select the type.
-	solver.SetSBOMType(sbom.StandardTypeSpdx)
 	return solver.DepsolveAll(packageSets)
 }
 
@@ -359,8 +354,6 @@ type (
 	CommitResolverFunc func(commitSources map[string][]ostree.SourceSpec) (map[string][]ostree.CommitSpec, error)
 
 	FlatpakResolverFunc func(flatpakSources map[string][]flatpak.SourceSpec) (map[string][]flatpak.Spec, error)
-
-	SBOMWriterFunc func(filename string, content io.Reader, docType sbom.StandardType) error
 
 	RPMListWriterFunc func(filename string, content io.Reader) error
 )

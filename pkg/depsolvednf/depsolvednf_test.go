@@ -17,7 +17,6 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/internal/mocks/rpmrepo"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -148,7 +147,6 @@ func TestSolverDepsolve(t *testing.T) {
 		packages [][]string
 		repos    []rpmmd.RepoConfig
 		rootDir  string
-		sbomType sbom.StandardType
 		err      bool
 		expMsg   string
 	}
@@ -216,13 +214,6 @@ func TestSolverDepsolve(t *testing.T) {
 			err:      true,
 			expMsg:   "this-package-does-not-exist",
 		},
-		"chain-with-sbom": {
-			// chain depsolve of the same packages in order should produce the same result (at least in this case)
-			packages: [][]string{{"kernel"}, {"vim-minimal", "tmux", "zsh"}},
-			repos:    []rpmmd.RepoConfig{s.RepoConfig},
-			sbomType: sbom.StandardTypeSpdx,
-			err:      false,
-		},
 	}
 
 	for _, h := range getTestHandlers() {
@@ -240,7 +231,7 @@ func TestSolverDepsolve(t *testing.T) {
 
 					solver := newTestSolver(t)
 					solver.SetRootDir(tc.rootDir)
-					actualResult, err := solver.Depsolve(pkgsets, tc.sbomType)
+					actualResult, err := solver.Depsolve(pkgsets)
 					if tc.err {
 						assert.Error(err)
 						assert.Contains(err.Error(), tc.expMsg)
@@ -251,15 +242,6 @@ func TestSolverDepsolve(t *testing.T) {
 					}
 
 					h.assertDepsolveResult(t, pkgsets, *actualResult)
-
-					// NOTE: The SBOM document is not stable due to UUIDs, so we need to take it from the result
-					if tc.sbomType != sbom.StandardTypeNone {
-						require.NotNil(t, actualResult.SBOM)
-						assert.Equal(sbom.StandardTypeSpdx, actualResult.SBOM.DocType)
-						assert.NotEmpty(actualResult.SBOM.Document)
-					} else {
-						assert.Nil(actualResult.SBOM)
-					}
 				})
 			}
 		})
@@ -274,7 +256,6 @@ func TestSolverDepsolveAll(t *testing.T) {
 
 	type testCase struct {
 		packageSets map[string][]rpmmd.PackageSet
-		sbomType    sbom.StandardType
 		// slice of message fragments which are all expected to be in the error
 		expErrs []string
 		// slice of message fragments which are all expected to be in the error (when using dnf5)
@@ -403,36 +384,6 @@ func TestSolverDepsolveAll(t *testing.T) {
 			expErrs:  []string{"error depsolving package sets for \"second\"", "missing packages: does-not-exist"},
 			expErrs5: []string{"error depsolving package sets for \"second\"", "No match for argument: does-not-exist"},
 		},
-		"multi-chain-with-sbom": {
-			// two chain depsolves for different pipelines with sbom
-			packageSets: map[string][]rpmmd.PackageSet{
-				"first": {
-					{
-						Include:         []string{"kernel", "tmux"},
-						Repositories:    []rpmmd.RepoConfig{s.RepoConfig},
-						InstallWeakDeps: true,
-					},
-					{
-						Include:         []string{"vim-minimal", "zsh"},
-						Repositories:    []rpmmd.RepoConfig{s.RepoConfig},
-						InstallWeakDeps: true,
-					},
-				},
-				"second": {
-					{
-						Include:         []string{"kernel"},
-						Repositories:    []rpmmd.RepoConfig{s.RepoConfig},
-						InstallWeakDeps: true,
-					},
-					{
-						Include:         []string{"vim-minimal", "tmux", "zsh"},
-						Repositories:    []rpmmd.RepoConfig{s.RepoConfig},
-						InstallWeakDeps: true,
-					},
-				},
-			},
-			sbomType: sbom.StandardTypeSpdx,
-		},
 	}
 
 	dnf5 := usingDNF5(t)
@@ -448,7 +399,6 @@ func TestSolverDepsolveAll(t *testing.T) {
 					tc := testCases[tcName]
 
 					solver := NewSolver("platform:el9", "9", "x86_64", "rhel9.0", tmpdir)
-					solver.SetSBOMType(tc.sbomType)
 					res, err := solver.DepsolveAll(tc.packageSets)
 					if len(tc.expErrs) != 0 {
 						assert.Error(err)
@@ -472,14 +422,6 @@ func TestSolverDepsolveAll(t *testing.T) {
 						assert.NotNil(pipelineResult)
 
 						h.assertDepsolveResult(t, tc.packageSets[pipelineName], pipelineResult)
-
-						if tc.sbomType != sbom.StandardTypeNone {
-							require.NotNil(t, pipelineResult.SBOM)
-							assert.Equal(sbom.StandardTypeSpdx, pipelineResult.SBOM.DocType)
-							assert.NotEmpty(pipelineResult.SBOM.Document)
-						} else {
-							assert.Nil(pipelineResult.SBOM)
-						}
 					}
 				})
 			}
@@ -1039,7 +981,7 @@ func TestErrorRepoInfo(t *testing.T) {
 							Exclude:      nil,
 							Repositories: []rpmmd.RepoConfig{tc.repo},
 						},
-					}, sbom.StandardTypeNone)
+					})
 					assert.Error(err)
 					expMsg := tc.expMsg
 					if dnf5 {
@@ -1105,7 +1047,7 @@ exit 1
 
 			solver := NewSolver("platform:f38", "38", "x86_64", "fedora-38", t.TempDir())
 			solver.depsolveDNFCmd = []string{fakeSolverPath}
-			res, err := solver.Depsolve(nil, sbom.StandardTypeNone)
+			res, err := solver.Depsolve(nil)
 
 			assert.EqualError(t, err, `DNF error occurred: InternalError: osbuild-depsolve-dnf output was empty: running the depsolver failed: exit status 1`)
 			assert.Nil(t, res)
@@ -1133,7 +1075,7 @@ echo '{"solver": "zypper"}'
 			solver := NewSolver("platform:f38", "38", "x86_64", "fedora-38", "/tmp/cache")
 			solver.Stderr = &capturedStderr
 			solver.depsolveDNFCmd = []string{fakeSolverPath}
-			res, err := solver.Depsolve(nil, sbom.StandardTypeNone)
+			res, err := solver.Depsolve(nil)
 			assert.NoError(t, err)
 			assert.NotNil(t, res)
 			assert.Equal(t, "output-on-stderr\n", capturedStderr.String())
@@ -1180,7 +1122,7 @@ func TestDepsolverSubscriptionsError(t *testing.T) {
 				},
 			}
 			solver.SetRootDir(rootDir)
-			_, err := solver.Depsolve(pkgsets, 0)
+			_, err := solver.Depsolve(pkgsets)
 			assert.EqualError(t, err, "This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources (error details: no matching key and certificate pair)")
 		})
 	}
