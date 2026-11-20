@@ -911,7 +911,6 @@
         size: "500 MiB"
       - &server_partition_table_part_boot
         <<: *default_partition_table_part_boot
-        type: *xboot_ldr_partition_guid
         payload:
           <<: *default_partition_table_part_boot_payload
           type: "xfs"
@@ -940,7 +939,6 @@
         size: "100 MiB"
       - &cloud_partition_table_part_boot
         <<: *default_partition_table_part_boot
-        type: *xboot_ldr_partition_guid
         payload:
           <<: *default_partition_table_part_boot_payload
           type: "ext4"
@@ -1117,7 +1115,6 @@
           - *default_partition_table_part_efi
           - &minimal_raw_partition_table_part_boot
             <<: *default_partition_table_part_boot
-            type: *xboot_ldr_partition_guid
           - &minimal_raw_partition_table_part_root
             <<: *default_partition_table_part_root
       aarch64: &minimal_raw_partition_table_aarch64
