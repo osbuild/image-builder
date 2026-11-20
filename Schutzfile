@@ -6,7 +6,7 @@
         "ref": "quay.io/centos-bootc/bootc-image-builder@sha256:9893e7209e5f449b86ababfd2ee02a58cca2e5990f77b06c3539227531fc8120"
       },
       "osbuild": {
-        "commit": "2e15f7a0a6dde4086ac1541f4737a07e3f56c0d5"
+        "commit": "bb744646c48002a0e10ed217ebd7b10c8e8c2ed3"
       }
     },
     "gitlab-ci-runner-for": {
@@ -84,17 +84,17 @@
           {
             "title": "baseos",
             "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20261013"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20261108"
           },
           {
             "title": "appstream",
             "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20261013"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20261108"
           },
           {
             "title": "crb",
             "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-crb-20261013"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-crb-20261108"
           }
         ],
         "aarch64": [
