@@ -1,0 +1,44 @@
+---
+nightly-image:
+  stage: build
+  tags:
+    - terraform
+  timeout: 2h
+  resource_group: nightly-$DISTRO-$ARCH-$IMAGE_TYPE
+  parallel:
+    matrix:
+      # Add a row for each release, architecture, or image type.
+      - DISTRO: rhel-10.3
+        ARCH: x86_64
+        IMAGE_TYPE: qcow2
+        RUNNER: aws/fedora-44-x86_64
+  script:
+    - sudo -E ./test/scripts/setup-osbuild-repo
+    - sudo ./test/scripts/install-dependencies
+    - sudo dnf install -y subscription-manager
+    - go build -o ./bin/image-builder ./cmd/image-builder
+    - |
+      set -euo pipefail
+      cleanup() {
+          status=$?
+          # Report cleanup failure without hiding a build failure.
+          if ! sudo subscription-manager unregister && [[ "$status" -eq 0 ]]; then
+              status=1
+          fi
+          exit "$status"
+      }
+
+      if [[ "$DISTRO" == rhel-* ]] && ! sudo subscription-manager identity >/dev/null 2>&1; then
+          : "${SUBSCRIPTION_ORG:?Set SUBSCRIPTION_ORG for RHEL CDN access}"
+          : "${SUBSCRIPTION_ACTIVATION_KEY:?Set SUBSCRIPTION_ACTIVATION_KEY for RHEL CDN access}"
+          trap cleanup EXIT
+          sudo subscription-manager register \
+              --org="$SUBSCRIPTION_ORG" --activationkey="$SUBSCRIPTION_ACTIVATION_KEY"
+      fi
+
+      # Use CLI defaults; output and cache disappear with the disposable runner.
+      sudo ./bin/image-builder build "$IMAGE_TYPE" --distro "$DISTRO" --arch "$ARCH"
+      if [[ "$IMAGE_TYPE" == qcow2 ]]; then
+          image_name="$DISTRO-$IMAGE_TYPE-$ARCH"
+          sudo test -s "$image_name/$image_name.qcow2"
+      fi
