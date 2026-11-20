@@ -1,0 +1,53 @@
+---
+name: Nightly images
+
+on:  # yamllint disable-line rule:truthy
+  schedule:
+    # Every day at 00:30 UTC.
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-images-trigger
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    if: github.repository == 'osbuild/image-builder'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure GitLab SSH access
+        env:
+          GITLAB_SSH_KEY: ${{ secrets.IMAGEBUILDER_BOT_GITLAB_SSH_KEY }}
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$GITLAB_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+
+      - name: Start GitLab build
+        shell: bash
+        run: |
+          git remote add gitlab git@gitlab.com:redhat/services/products/image-builder/ci/images.git
+          git fetch gitlab
+          git config user.name imagebuilder-bot
+          git config user.email imagebuilder-bot@users.noreply.github.com
+
+          # Select the nightly pipeline only in this GitLab-bound copy.
+          cp .gitlab/nightly-images.yml .gitlab-ci.yml
+          git add .gitlab-ci.yml
+          git commit -m "Nightly images: ${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git push --force-with-lease gitlab HEAD:nightly-images
+
+          echo 'Build submitted. Follow the [GitLab build status and logs](https://gitlab.com/redhat/services/products/image-builder/ci/images/-/pipelines?ref=nightly-images).' >> "$GITHUB_STEP_SUMMARY"
