@@ -4,6 +4,10 @@ This directory contains the supported distributions and the image
 definitions in YAML that are used by the "images" library to build
 disk or installer images for rpm based distributions.
 
+RPM builds load these files from `/usr/share/image-builder/definitions`,
+provided by a package satisfying `image-builder-defs`, such as
+`image-builder-core-defs`. From source builds embed them in the executable.
+
 ## Overview
 
 The definitions start with ".yaml" files that contain details

@@ -1,6 +1,6 @@
 # Official distribution repositories
 
-This directory contains the official distribution repositories that are embedded in the `osbuild/images` go module. These repositories can be and are used by applications that use the `osbuild/images` go module to build images. For example, the `osbuild/osbuild-composer` and `osbuild/image-builder-cli` use these repositories.
+This directory contains the official distribution repositories. RPM builds of image-builder load them from `/usr/share/image-builder/repositories`, provided by a package satisfying `image-builder-defs`, such as `image-builder-core-defs`. From source builds embed all repository files in the executable directly.
 
 ## RHEL-8 repositories GPG keys note
 The `osbuild/images` go module supports distro cross-building. This means that you can build images for a different distribution than the one you are running on. For example, you can build a RHEL-8 image on RHEL-9. Nevertheless, the supported combinations are controlled by the end users of the `osbuild/images` go module.

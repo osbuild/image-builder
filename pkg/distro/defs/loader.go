@@ -44,6 +44,14 @@ var (
 // this can be overriden in tests
 var defaultDataFS fs.FS = distrodefs.Data
 
+// DefaultSource describes the default definitions source, including overrides.
+func DefaultSource() string {
+	if overrideDir := experimentalflags.String("yamldir"); overrideDir != "" {
+		return overrideDir
+	}
+	return distrodefs.Source()
+}
+
 func dataFS() fs.FS {
 	dataFS := defaultDataFS
 	if overrideDir := experimentalflags.String("yamldir"); overrideDir != "" {
@@ -61,7 +69,7 @@ func NewLoader(fsys fs.FS) *Loader {
 	return &Loader{fs: fsys}
 }
 
-// BuiltinLoader returns a Loader for the embedded distrodefs FS,
+// BuiltinLoader returns a Loader for the default distrodefs FS,
 // with the experimental yamldir override applied if it exists
 func BuiltinLoader() *Loader {
 	return NewLoader(dataFS())
