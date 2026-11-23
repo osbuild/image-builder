@@ -23,3 +23,15 @@ func NewBlockingResolverWithTestClient(arch string, f func(string) (*Client, err
 func ClientSysctx(cl *Client) *types.SystemContext {
 	return cl.sysCtx
 }
+
+// The Client doesn't have a public method for setting the store to a
+// non-default location when resolving local images. Use this for tests.
+func SetClientStore(cl *Client, store string) {
+	cl.store = store
+}
+
+// The Client doesn't have a public method for setting the runroot to a
+// non-default location when resolving local images. Use this for tests.
+func SetClientRunroot(cl *Client, runroot string) {
+	cl.runroot = runroot
+}
