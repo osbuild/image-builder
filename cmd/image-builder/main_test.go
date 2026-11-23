@@ -242,6 +242,8 @@ func TestManifestIntegrationSmoke(t *testing.T) {
 func TestManifestPartitioningMode(t *testing.T) {
 	restore := main.MockManifestgenDepsolver(fakeDepsolve)
 	defer restore()
+	restore = main.MockManifestgenContainerResolver(fakeContainerResolver)
+	defer restore()
 	restore = main.MockNewRepoRegistry(testrepos.New)
 	defer restore()
 
