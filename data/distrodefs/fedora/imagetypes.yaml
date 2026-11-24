@@ -59,30 +59,20 @@
       - anaconda-dracut
       - anaconda-install-img-deps
       - audit
-      - bind-utils
       - bridge-utils
       - bzip2
       - cryptsetup
       - default-fonts-other-sans
-      - dump
       - ethtool
-      - fpaste
-      - ftp
-      - gdb-gdbserver
-      - gdisk
       - glibc-all-langpacks
       - google-noto-sans-cjk-fonts
       - grubby
       - hdparm
-      - hexedit
       - initscripts
       - ipmitool
       - kernel
       - kernel-modules-extra
-      - less
       - mt-st
-      - mtr
-      - nano-default-editor
       - net-tools
       - nfs-utils
       - nmap-ncat
@@ -92,20 +82,34 @@
       - pigz
       - plymouth
       - prefixdevname
-      - python3-pyatspi
       - rdma-core
       - rng-tools
       - rsyslog
       - selinux-policy-targeted
+      - usbutils
+      - volume_key
+      - xfsdump
+
+      # Debugging, bug reporting, and accessibility tools.
+      - fpaste
+      - gdb-gdbserver
+      - python3-pyatspi
+
+      # Editors, network and disk tools, system diagnostics, and SPICE guest integration.
+      - bind-utils
+      - dump
+      - ftp
+      - gdisk
+      - hexedit
+      - less
+      - mtr
+      - nano-default-editor
       - sg3_utils
       - spice-vdagent
       - strace
-      - usbutils
       - vconfig
       - vim-minimal
-      - volume_key
       - wget2-wget
-      - xfsdump
     conditions:
       "x86_64 specific anaconda pkgs":
         when:
