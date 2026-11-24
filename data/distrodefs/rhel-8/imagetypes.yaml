@@ -1585,7 +1585,7 @@ image_types:
         - "console=ttyS0,115200n8"
         - "net.ifnames=0"
         - "crashkernel=auto"
-      conditions:
+      conditions: &qcow2_image_config_conditions
         "tweak the rhsm config on rhel":
           when:
             distro_name: "rhel"
@@ -2654,6 +2654,14 @@ image_types:
           config:
             datasource_list:
               - "Oracle"
+      conditions:
+        <<: *qcow2_image_config_conditions
+        "rhel needs the rhel release rpm gpg key":
+          when:
+            distro_name: "rhel"
+          shallow_merge:
+            gpgkey_files:
+              - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
     partition_table:
       x86_64:
         type: "gpt"
