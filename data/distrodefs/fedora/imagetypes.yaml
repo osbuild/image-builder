@@ -51,153 +51,9 @@
       - "geolite2-country"
       - "plymouth"
 
-  anaconda_pkgset: &anaconda_pkgset
-    include:
-      - "aajohan-comfortaa-fonts"
-      - "abattis-cantarell-fonts"
-      - "alsa-firmware"
-      - "alsa-tools-firmware"
-      - "anaconda"
-      - "anaconda-dracut"
-      - "anaconda-install-img-deps"
-      - "atheros-firmware"
-      - "audit"
-      - "bind-utils"
-      - "bitmap-fangsongti-fonts"
-      - "brcmfmac-firmware"
-      - "bzip2"
-      - "cryptsetup"
-      - "curl"
-      - "dbus-x11"
-      - "dejavu-sans-fonts"
-      - "dejavu-sans-mono-fonts"
-      - "device-mapper-persistent-data"
-      - "dnf"
-      - "dracut-config-generic"
-      - "dracut-network"
-      - "ethtool"
-      - "fcoe-utils"
-      - "ftp"
-      - "gdb-gdbserver"
-      - "gdisk"
-      - "glibc-all-langpacks"
-      - "gnome-kiosk"
-      - "google-noto-sans-cjk-ttc-fonts"
-      - "grubby"
-      - "gsettings-desktop-schemas"
-      - "hdparm"
-      - "hexedit"
-      - "hostname"
-      - "initscripts"
-      - "ipmitool"
-      - "iwlwifi-dvm-firmware"
-      - "iwlwifi-mvm-firmware"
-      - "jomolhari-fonts"
-      - "kacst-farsi-fonts"
-      - "kacst-qurn-fonts"
-      - "kbd"
-      - "kbd-misc"
-      - "kdump-anaconda-addon"
-      - "kernel"
-      - "khmeros-base-fonts"
-      - "less"
-      - "libblockdev-lvm-dbus"
-      - "libibverbs"
-      - "libreport-plugin-bugzilla"
-      - "libreport-plugin-reportuploader"
-      - "librsvg2"
-      - "linux-firmware"
-      - "lldpad"
-      - "lohit-assamese-fonts"
-      - "lohit-bengali-fonts"
-      - "lohit-devanagari-fonts"
-      - "lohit-gujarati-fonts"
-      - "lohit-gurmukhi-fonts"
-      - "lohit-kannada-fonts"
-      - "lohit-odia-fonts"
-      - "lohit-tamil-fonts"
-      - "lohit-telugu-fonts"
-      - "lsof"
-      - "madan-fonts"
-      - "mtr"
-      - "mt-st"
-      - "net-tools"
-      - "nfs-utils"
-      - "nmap-ncat"
-      - "nm-connection-editor"
-      - "nss-tools"
-      - "openssh-clients"
-      - "openssh-server"
-      - "ostree"
-      - "pciutils"
-      - "perl-interpreter"
-      - "pigz"
-      - "plymouth"
-      - "prefixdevname"
-      - "python3-pyatspi"
-      - "rdma-core"
-      - "realtek-firmware"
-      - "rit-meera-new-fonts"
-      - "rng-tools"
-      - "rpcbind"
-      - "rpm-ostree"
-      - "rsync"
-      - "rsyslog"
-      - "selinux-policy-targeted"
-      - "sg3_utils"
-      - "sil-abyssinica-fonts"
-      - "sil-padauk-fonts"
-      - "sil-scheherazade-new-fonts"
-      - "smartmontools"
-      - "spice-vdagent"
-      - "strace"
-      - "systemd"
-      - "tar"
-      - "thai-scalable-waree-fonts"
-      - "udisks2"
-      - "udisks2-iscsi"
-      - "usbutils"
-      - "vim-minimal"
-      - "volume_key"
-      - "wget"
-      - "xfsdump"
-      - "xfsprogs"
-      - "xorg-x11-drivers"
-      - "xorg-x11-fonts-misc"
-      - "xorg-x11-server-Xorg"
-      - "xorg-x11-xauth"
-      - "metacity"
-      - "xrdb"
-      - "xz"
-    conditions:
-      "grub common packages anaconda pkgs":
-        when:
-          # grub2 is used on all architectures, except s390x
-          not_arch: "s390x"
-        append:
-          include:
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
-      "x86_64 specific anaconda pkgs":
-        when:
-          arch: "x86_64"
-        append:
-          include:
-            - "biosdevname"
-            - "dmidecode"
-            - "efibootmgr"
-            - "grub2-tools-efi"
-            - "memtest86+"
-      "aarch64 specific anaconda pkgs":
-        when:
-          arch: "aarch64"
-        append:
-          include:
-            - "dmidecode"
-            - "efibootmgr"
-
-  network_installer_pkgset: &network_installer_pkgset
+  # Package set used for the Anaconda installer environment; this is shared across all installers
+  # that have this.
+  anaconda_installer_pkgset: &anaconda_installer_pkgset
     include:
       - anaconda
       - anaconda-install-img-deps
@@ -1384,7 +1240,7 @@
       kernel_options:
     package_sets:
       installer:
-        - *network_installer_pkgset
+        - *anaconda_installer_pkgset
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
@@ -2079,7 +1935,7 @@ image_types:
       kernel_options:
     package_sets:
       installer:
-        - *anaconda_pkgset
+        - *anaconda_installer_pkgset
         - include:
             - "fedora-release-iot"
     platforms:
@@ -2229,7 +2085,7 @@ image_types:
       os:
         - *minimal_raw_pkgset
       installer:
-        - *anaconda_pkgset
+        - *anaconda_installer_pkgset
     blueprint:
       supported_options:
         - "distro"
@@ -2600,7 +2456,7 @@ image_types:
       locale: "en_US.UTF-8"
     package_sets:
       installer:
-        - *network_installer_pkgset
+        - *anaconda_installer_pkgset
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
@@ -2634,7 +2490,7 @@ image_types:
     name_aliases: []
     package_sets:
       installer:
-        - *network_installer_pkgset
+        - *anaconda_installer_pkgset
         - include:
             - fedora-release-server
 
@@ -2963,7 +2819,7 @@ image_types:
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
     package_sets:
       installer:
-        - *network_installer_pkgset
+        - *anaconda_installer_pkgset
         - include:
             - "fedora-release-kinoite"
     installer_config:
@@ -3018,7 +2874,7 @@ image_types:
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/silverblue"
     package_sets:
       installer:
-        - *network_installer_pkgset
+        - *anaconda_installer_pkgset
         - include:
             - "fedora-release-silverblue"
     installer_config:
@@ -3089,7 +2945,7 @@ image_types:
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/sericea"
     package_sets:
       installer:
-        - *network_installer_pkgset
+        - *anaconda_installer_pkgset
         - include:
             - "fedora-release-sway-atomic"
 
@@ -3102,7 +2958,7 @@ image_types:
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/onyx"
     package_sets:
       installer:
-        - *network_installer_pkgset
+        - *anaconda_installer_pkgset
         - include:
             - "fedora-release-budgie-atomic"
 
@@ -3115,7 +2971,7 @@ image_types:
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/cosmic-atomic"
     package_sets:
       installer:
-        - *network_installer_pkgset
+        - *anaconda_installer_pkgset
         - include:
             - "fedora-release-cosmic-atomic"
 
