@@ -46,7 +46,7 @@ distros:
           - ami-nvidia
       "ami-nvidia is not available for unreleased versions":
         when:
-          version_greater_or_equal: "10.3"
+          version_greater_or_equal: "10.4"
         ignore_image_types:
           - ami-nvidia
       "handle PQC for rhel only":
