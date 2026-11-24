@@ -579,6 +579,9 @@
       - "dbus-broker"
     default_menu: 1
     install_weak_deps: false
+    iso_files:
+      - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
+      - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
     conditions: &default_installer_conditions
       "below fedora 45 we use lorax":
         when:
@@ -1373,9 +1376,6 @@
       erofs_options: *atomic_erofs_options
     installer_config: &atomic_installer_installer_config_common
       <<: *default_installer_config
-      iso_files:
-        - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
-        - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
       payload:
         location: "rootfs"
         kickstart: "interactive-defaults"
@@ -2585,9 +2585,6 @@ image_types:
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
       <<: *default_installer_config
-      iso_files:
-        - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
-        - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
       conditions:
         <<: *default_installer_conditions
         "riscv64 needs device tree blobs on the ISO":
