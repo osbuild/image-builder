@@ -56,79 +56,79 @@
   anaconda_installer_pkgset: &anaconda_installer_pkgset
     include:
       - anaconda
+      - anaconda-dracut
       - anaconda-install-img-deps
-      - ostree
-      - rpm-ostree
-      - pigz
+      - audit
       - audit
       - bind-utils
+      - bind-utils
+      - bridge-utils
+      - bzip2
+      - cryptsetup
+      - curl
+      - default-fonts-core-sans
+      - default-fonts-other-sans
+      - device-mapper-persistent-data
+      - dracut-config-generic
+      - dracut-network
+      - dump
+      - ethtool
+      - fpaste
+      - ftp
+      - gdb-gdbserver
+      - gdisk
+      - glibc-all-langpacks
+      - google-noto-sans-cjk-fonts
+      - grubby
+      - hdparm
+      - hexedit
+      - initscripts
+      - ipmitool
+      - kbd
+      - kbd-misc
       - kernel
       - kernel-modules
       - kernel-modules-extra
-      - grubby
-      - glibc-all-langpacks
-      - plymouth
-      - anaconda-dracut
-      - dracut-network
-      - dracut-config-generic
-      - initscripts
-      - cryptsetup
-      - rpcbind
-      - kbd
-      - kbd-misc
-      - tar
-      - xz
-      - curl
-      - bzip2
-      - rsyslog
-      - device-mapper-persistent-data
-      - xfsdump
-      - volume_key
-      - nss-tools
-      - selinux-policy-targeted
-      - audit
-      - ethtool
-      - openssh-server
-      - nfs-utils
-      - openssh-clients
-      - net-tools
-      - bridge-utils
-      - nmap-ncat
-      - prefixdevname
-      - pciutils
-      - usbutils
-      - ipmitool
-      - mt-st
-      - smartmontools
-      - hdparm
-      - rdma-core
-      - rng-tools
-      - nvme-cli
-      - default-fonts-core-sans
-      - default-fonts-other-sans
-      - google-noto-sans-cjk-fonts
-      - gdb-gdbserver
+      - less
       - libreport-plugin-bugzilla
       - libreport-plugin-reportuploader
-      - fpaste
-      - python3-pyatspi
+      - lsof
+      - mt-st
+      - mtr
       - nano
       - nano-default-editor
-      - vim-minimal
-      - strace
-      - lsof
-      - dump
-      - less
-      - wget2-wget
+      - net-tools
+      - nfs-utils
+      - nmap-ncat
+      - nss-tools
+      - nvme-cli
+      - openssh-clients
+      - openssh-server
+      - ostree
+      - pciutils
+      - pigz
+      - plymouth
+      - prefixdevname
+      - python3-pyatspi
+      - rdma-core
+      - rng-tools
+      - rpcbind
+      - rpm-ostree
       - rsync
-      - bind-utils
-      - ftp
-      - mtr
-      - vconfig
-      - spice-vdagent
-      - gdisk
-      - hexedit
+      - rsyslog
+      - selinux-policy-targeted
       - sg3_utils
+      - smartmontools
+      - spice-vdagent
+      - strace
+      - tar
+      - usbutils
+      - vconfig
+      - vim-minimal
+      - volume_key
+      - wget2-wget
+      - xfsdump
+      - xz
     conditions:
       "x86_64 specific anaconda pkgs":
         when:
