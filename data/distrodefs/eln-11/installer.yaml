@@ -131,11 +131,6 @@
           boot_type: "s390-iso"
 
   default_installer_config: &default_installer_config
-    enabled_anaconda_modules:
-      - "org.fedoraproject.Anaconda.Modules.Network"
-      - "org.fedoraproject.Anaconda.Modules.Payloads"
-      - "org.fedoraproject.Anaconda.Modules.Runtime"
-      - "org.fedoraproject.Anaconda.Modules.Storage"
     additional_dracut_modules:
       - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
       - "net-lib"
