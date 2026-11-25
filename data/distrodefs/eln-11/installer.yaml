@@ -331,7 +331,12 @@ image_types:
       supported_options:
         - "distro"
         - "customizations.fips"
+        - "customizations.group"
+        - "customizations.installer"
+        - "customizations.iso"
+        - "customizations.kernel.append"
         - "customizations.locale"
+        - "customizations.user"
 
   "image-installer":
     filename: "installer.iso"
