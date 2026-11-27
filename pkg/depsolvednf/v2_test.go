@@ -1,14 +1,12 @@
 package depsolvednf
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
-	"github.com/osbuild/image-builder/pkg/sbom"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -245,7 +243,6 @@ func TestV2HandlerMakeDepsolveRequest(t *testing.T) {
 	testCases := []struct {
 		name        string
 		packageSets []rpmmd.PackageSet
-		withSbom    bool
 		wantJSON    string
 	}{
 		{
@@ -551,43 +548,6 @@ func TestV2HandlerMakeDepsolveRequest(t *testing.T) {
 				}
 			}`, baseOS.Hash(), appstream.Hash(), priorityRepo.Hash()),
 		},
-		{
-			name: "2 transactions + withSbom flag",
-			packageSets: []rpmmd.PackageSet{
-				{
-					Include:         []string{"pkg1"},
-					Exclude:         []string{"pkg2"},
-					Repositories:    []rpmmd.RepoConfig{baseOS, appstream},
-					InstallWeakDeps: true,
-				},
-				{
-					Include:      []string{"pkg3"},
-					Repositories: []rpmmd.RepoConfig{baseOS, appstream},
-				},
-			},
-			withSbom: true,
-			wantJSON: fmt.Sprintf(`{
-				"api_version": 2,
-				"command": "depsolve",
-				"module_platform_id": "platform:el8",
-				"releasever": "8",
-				"arch": "x86_64",
-				"cachedir": "/cache",
-				"arguments": {
-					"repos": [
-						{"id": %[1]q, "name": "baseos", "baseurl": ["https://example.org/baseos"]},
-						{"id": %[2]q, "name": "appstream", "baseurl": ["https://example.org/appstream"]}
-					],
-					"transactions": [
-						{"package-specs": ["pkg1"], "exclude-specs": ["pkg2"], "repo-ids": [%[1]q, %[2]q], "install_weak_deps": true},
-						{"package-specs": ["pkg3"], "repo-ids": [%[1]q, %[2]q], "install_weak_deps": false}
-					],
-					"root_dir": "/root",
-					"optional-metadata": ["filelists"],
-					"sbom": {"type": "spdx"}
-				}
-			}`, baseOS.Hash(), appstream.Hash()),
-		},
 	}
 
 	cfg := &solverConfig{
@@ -601,12 +561,7 @@ func TestV2HandlerMakeDepsolveRequest(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			var sbomType sbom.StandardType
-			if tt.withSbom {
-				sbomType = sbom.StandardTypeSpdx
-			}
-
-			rawReq, err := v2Handler.makeDepsolveRequest(cfg, tt.packageSets, sbomType)
+			rawReq, err := v2Handler.makeDepsolveRequest(cfg, tt.packageSets)
 			require.NoError(t, err)
 			require.NotEmpty(t, rawReq)
 			assert.JSONEq(t, tt.wantJSON, string(rawReq))
@@ -1539,30 +1494,6 @@ func TestV2HandlerToRPMMDRelDepList(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-}
-
-func TestV2HandlerParseDepsolveResultWithSBOM(t *testing.T) {
-	v2Handler := newV2Handler()
-
-	input := `{
-		"solver": "dnf5",
-		"transactions": [],
-		"repos": {},
-		"modules": {},
-		"sbom": {"spdxVersion": "SPDX-2.3", "name": "test"}
-	}`
-
-	result, err := v2Handler.parseDepsolveResult([]byte(input))
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	require.NotNil(t, result.SBOMRaw)
-
-	// Verify SBOM is preserved as raw JSON
-	var sbomData map[string]interface{}
-	err = json.Unmarshal(result.SBOMRaw, &sbomData)
-	require.NoError(t, err)
-	assert.Equal(t, "SPDX-2.3", sbomData["spdxVersion"])
-	assert.Equal(t, "test", sbomData["name"])
 }
 
 func TestV2HandlerParseDepsolveResultWithModules(t *testing.T) {

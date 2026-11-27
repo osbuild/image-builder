@@ -170,13 +170,6 @@ $ ls *.osbuild-manifest.json
 fedora-43-server-qcow2-x86_64.osbuild-manifest.json
 ```
 
-`--with-sbom` places an [SPDX](https://spdx.dev/) Software Bill of Materials document alongside the image.
-
-```console
-$ sudo image-builder build --with-sbom --distro fedora-43 server-qcow2
-# ...
-```
-
 `--with-buildlog` writes the full osbuild build log to `<basename>.buildlog` in the output directory. This can be useful for debugging failed or unexpected builds.
 
 ```console
@@ -196,6 +189,30 @@ Metrics:
 	build: org.osbuild.rpm: 15s
 	os: org.osbuild.selinux: 5s
 ```
+
+#### SBOM
+
+`--with-sbom` writes one SPDX 2.3 JSON SBOM as `<basename>.spdx.json` alongside the built image in the output directory. The SBOM is rooted at the built image, identified by its SHA-256 digest, and lists its RPM packages rather than producing separate SBOMs per pipeline.
+
+```console
+$ sudo image-builder build --with-sbom --distro fedora-43 server-qcow2
+# ...
+$ ls fedora-43-server-qcow2-x86_64/*.spdx.json
+fedora-43-server-qcow2-x86_64/fedora-43-server-qcow2-x86_64.spdx.json
+```
+
+For a multi-step build, pass `--with-sbom` to `task init`; it's saved with the task's other options. `task build-image` writes the SBOM alongside the image in the task's working directory:
+
+```console
+$ image-builder task init --distro fedora-43 --image-type server-qcow2 --with-sbom ./my-task
+$ image-builder task prefetch ./my-task
+$ sudo image-builder task build-image ./my-task
+# ...
+```
+
+The `manifest` command does not support `--with-sbom`: SBOM output requires a built image.
+
+SBOMs are supported for package-based (RPM) images only, not bootc or OSTree images, and cannot be combined with `--with-extra`. Embedded container inventory and Flatpaks are not included.
 
 ### ostree
 

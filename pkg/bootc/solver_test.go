@@ -79,7 +79,7 @@ func TestDepsolveDNFWorks(t *testing.T) {
 			Include:      []string{"coreutils"},
 			Repositories: repoConfigs(t, sourceInfo),
 		},
-	}, 0)
+	})
 	require.NoError(t, err)
 	assert.True(t, len(res.Transactions.AllPackages()) > 0)
 }
@@ -159,7 +159,7 @@ func TestDepsolveDNFWorkWithSubscribedContent(t *testing.T) {
 			Include:      []string{"coreutils"},
 			Repositories: repoConfigs(t, sourceInfo),
 		},
-	}, 0)
+	})
 	require.NoError(t, err)
 	assert.True(t, len(res.Transactions.AllPackages()) > 0)
 }
