@@ -783,6 +783,39 @@ func ostreeDeploymentCustomizations(
 	return deploymentConf, nil
 }
 
+func initramfsCustomizations(t *imageType, bp *blueprint.Blueprint, pkgSet rpmmd.PackageSet, payloadRepos []rpmmd.RepoConfig) (manifest.InitramfsTreeCustomizations, error) {
+	isc := manifest.InitramfsTreeCustomizations{}
+	cfg := t.getDefaultImageConfig()
+	customizations := bp.Customizations
+	dirs, err := blueprint.DirectoryCustomizationsToFsNodeDirectories(customizations.GetDirectories())
+	if err != nil {
+		return isc, err
+	}
+	files, err := blueprint.FileCustomizationsToFsNodeFiles(customizations.GetFiles())
+	if err != nil {
+		return isc, err
+	}
+	isc.Directories = slices.Concat(cfg.Directories, dirs)
+	isc.Files = slices.Concat(cfg.Files, files)
+	isc.Symlinks = cfg.Symlinks
+	isc.EnabledServices = cfg.EnabledServices
+	isc.DisabledServices = cfg.DisabledServices
+	isc.MaskedServices = cfg.MaskedServices
+
+	pkgSet.Repositories = slices.Concat(pkgSet.Repositories, payloadRepos)
+	if cfg.InstallWeakDeps != nil {
+		pkgSet.InstallWeakDeps = *cfg.InstallWeakDeps
+	}
+	isc.PackageSet = pkgSet
+
+	isc.BaseRPMOptions.GPGKeysFromTree = cfg.GPGKeyFiles
+	isc.BaseRPMOptions.InstallLangs = cfg.InstallLangs
+	if cfg.ExcludeDocs != nil {
+		isc.BaseRPMOptions.Exclude = &osbuild.Exclude{Docs: *cfg.ExcludeDocs}
+	}
+	return isc, nil
+}
+
 func buildOptions(t distro.ImageType) *manifest.BuildOptions {
 	buildOpts := &manifest.BuildOptions{}
 	if tweaks := t.Arch().Distro().GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.IgnoreBuildImportFailures {
@@ -869,6 +902,21 @@ func diskImage(t *imageType,
 		img.OSNick = t.Arch().Distro().Codename()
 	}
 
+	return img, nil
+}
+
+func initramfsImage(t *imageType, bp *blueprint.Blueprint, _ distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet, payloadRepos []rpmmd.RepoConfig,
+	_ []container.SourceSpec, _ *rand.Rand) (image.ImageKind, error) {
+	img := image.NewInitramfs(t.platform, t.Filename())
+	img.BuildOptions = buildOptions(t)
+	img.Compression = t.compression
+
+	var err error
+	img.Customizations, err = initramfsCustomizations(t, bp, packageSets["initramfs"], payloadRepos)
+	if err != nil {
+		return nil, err
+	}
 	return img, nil
 }
 
