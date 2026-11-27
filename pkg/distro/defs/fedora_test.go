@@ -314,6 +314,7 @@ func TestFedoraImageType_Name(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
+				"initramfs",
 				"generic-ami",
 				"minimal-installer",
 				"iot-commit",
@@ -492,6 +493,7 @@ func TestFedoraArchitecture_ListImageTypes(t *testing.T) {
 		{
 			arch: "x86_64",
 			imgNames: []string{
+				"initramfs",
 				"generic-ami",
 				"generic-container",
 				"minimal-installer",

@@ -3155,3 +3155,36 @@ image_types:
     ostree:
       <<: *ostree_atomic
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/silverblue"
+
+  ### For integration testing purposes only
+
+  initramfs:
+    filename: "initrd.img"
+    mime_type: "application/octet-stream"
+    image_func: "initramfs"
+    compression: "zstd"
+    exports: ["initramfs"]
+    platforms:
+      - arch: "x86_64"
+    package_sets:
+      initramfs:
+        - include:
+            - "bash"
+            - "util-linux-core"
+            - "systemd"
+            - "systemd-udev"
+    image_config:
+      exclude_docs: true
+      install_langs: ["C.UTF-8"]
+      install_weak_deps: false
+      files:
+        - path: "/etc/initrd-release"
+          data: |
+            ID=fedora
+      symlinks:
+        - path: "/init"
+          target: "usr/lib/systemd/systemd"
+    blueprint:
+      supported_options:
+        - "customizations.directories"
+        - "customizations.files"

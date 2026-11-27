@@ -106,6 +106,9 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 		"container":         true,
 		"generic-container": true,
 
+		// Standalone initramfs images do not install a kernel or honor kernel customizations.
+		"initramfs": true,
+
 		// image installer on Fedora doesn't support kernel customizations
 		// on RHEL we support kernel name
 		// TODO: Remove when we unify the allowed options

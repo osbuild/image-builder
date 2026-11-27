@@ -892,5 +892,33 @@
         "minimal-raw-xz"
       ]
     }
+  },
+  {
+    "path": "./configs/empty.json",
+    "filters": {
+      "distros": [
+        "fedora*"
+      ],
+      "arches": [
+        "x86_64"
+      ],
+      "image-types": [
+        "initramfs"
+      ]
+    }
+  },
+  {
+    "path": "./configs/initramfs-smoke.json",
+    "filters": {
+      "distros": [
+        "fedora*"
+      ],
+      "arches": [
+        "x86_64"
+      ],
+      "image-types": [
+        "initramfs"
+      ]
+    }
   }
 ]
