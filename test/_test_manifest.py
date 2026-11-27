@@ -91,19 +91,23 @@ def test_manifest_seeded_is_the_same(build_container, use_seed_arg):
         assert len(manifests) == 3
 
 
-def test_manifest_bootc_build_container(build_container):
+@pytest.mark.parametrize("target_ref", [None, "quay.io/example/os:stable"])
+def test_manifest_bootc_build_container(build_container, target_ref):
     bootc_ref = "quay.io/centos-bootc/centos-bootc:stream9"
     bootc_build_container_ref = "quay.io/centos-bootc/centos-bootc:stream10"
     subprocess.check_call(["podman", "pull", bootc_ref])
     subprocess.check_call(["podman", "pull", bootc_build_container_ref])
 
-    output = subprocess.check_output(podman_run + [
+    args = podman_run + [
         build_container,
         "manifest",
         "qcow2",
         "--bootc-ref", bootc_ref,
         "--bootc-build-ref", bootc_build_container_ref
-    ], text=True)
+    ]
+    if target_ref:
+        args.extend(["--bootc-target-ref", target_ref])
+    output = subprocess.check_output(args, text=True)
     manifest = json.loads(output)
     assert len(manifest["sources"]["org.osbuild.containers-storage"]["items"]) == 2
     assert bootc_ref in output
@@ -120,7 +124,9 @@ def test_manifest_bootc_build_container(build_container):
                     if p["name"] == "image"][0]
     cnt_deploy = [st for st in img_pipeline["stages"]
                   if st["type"] == "org.osbuild.bootc.install-to-filesystem"][0]
-    assert cnt_deploy["options"]["target-imgref"] == "quay.io/centos-bootc/centos-bootc:stream9"
+    assert cnt_deploy["options"]["target-imgref"] == (target_ref or bootc_ref)
+    refs = cnt_deploy["inputs"]["images"]["references"]
+    assert next(iter(refs.values()))["name"] == bootc_ref
 
 
 def test_container_manifest_bootc_iso_smoke(build_container):

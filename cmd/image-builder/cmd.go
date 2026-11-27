@@ -222,6 +222,7 @@ func manifestFlags(cmd *cobra.Command) error {
 	flagSet.String("ostree-parent", "", `OSTREE parent`)
 	flagSet.String("ostree-url", "", `OSTREE url`)
 	flagSet.String("bootc-ref", "", `bootc container ref`)
+	flagSet.String("bootc-target-ref", "", `container ref to record for bootc updates (defaults to --bootc-ref)`)
 	flagSet.String("bootc-variant", "", `deployment variant to use for the bootc container`)
 	flagSet.String("bootc-build-ref", "", `bootc build container ref`)
 	flagSet.String("bootc-installer-payload-ref", "", `bootc installer payload ref`)

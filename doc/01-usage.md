@@ -235,6 +235,14 @@ $ sudo image-builder build --bootc-ref quay.io/centos-bootc/centos:stream10 qcow
 # ...
 ```
 
+#### `bootc-target-ref`
+
+You can use `--bootc-target-ref` to configure a different container reference for bootc updates on the booted system. The image is built from `--bootc-ref` and when omitted, the target defaults to `--bootc-ref`. This can be used if you have a local build of a container, but you want booted systems to fetch from a registry.
+
+```shell
+sudo image-builder build --bootc-ref localhost/example:latest --bootc-target-ref quay.io/example/os:latest qcow2
+```
+
 #### `bootc-build-ref`
 
 By default `image-builder` uses the container passed in `--bootc-ref` as the buildroot for the build. If your container does not contain the necessary tooling to turn it into other artifacts then you can explicitly pick a container to use as a buildroot with `--bootc-build-ref`.

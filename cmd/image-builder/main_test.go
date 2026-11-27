@@ -135,6 +135,14 @@ func TestListImagesErrorsOnExtraArgs(t *testing.T) {
 	assert.EqualError(t, err, `unknown command "extra-arg" for "image-builder list"`)
 }
 
+func TestBootcTargetRefRequiresBootcRef(t *testing.T) {
+	restore := main.MockOsArgs([]string{"manifest", "qcow2", "--bootc-target-ref=example.com/os:latest"})
+	defer restore()
+
+	err := main.Run()
+	assert.EqualError(t, err, "cannot use --bootc-target-ref without --bootc-ref")
+}
+
 func TestBootcAnacondaIsoNotSupportedForImageBuilder(t *testing.T) {
 	restore := main.MockNewRepoRegistry(testrepos.New)
 	defer restore()

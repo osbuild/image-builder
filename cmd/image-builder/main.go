@@ -398,6 +398,13 @@ func getImage(cmd *cobra.Command, imageType string) (*imagefilter.Result, error)
 	if bootcRef != "" && distroStr != "" {
 		return nil, fmt.Errorf("cannot use --distro with --bootc-ref")
 	}
+	bootcTargetRef, err := cmd.Flags().GetString("bootc-target-ref")
+	if err != nil {
+		return nil, err
+	}
+	if bootcTargetRef != "" && bootcRef == "" {
+		return nil, fmt.Errorf("cannot use --bootc-target-ref without --bootc-ref")
+	}
 	bootcVariant, err := cmd.Flags().GetString("bootc-variant")
 	if err != nil {
 		return nil, err
@@ -626,6 +633,10 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 	if bootcRef != "" && distroStr != "" {
 		return nil, fmt.Errorf("cannot use --distro with --bootc-ref")
 	}
+	bootcTargetRef, err := cmd.Flags().GetString("bootc-target-ref")
+	if err != nil {
+		return nil, err
+	}
 	bootcInstallerPayloadRef, err := cmd.Flags().GetString("bootc-installer-payload-ref")
 	if err != nil {
 		return nil, err
@@ -722,6 +733,7 @@ func generateManifest(pbar progress.ProgressBar, cmd *cobra.Command, args []stri
 		Size:             imageSize.Uint64(),
 		PartitioningMode: partition.PartitioningMode(partitioningMode),
 		Bootc: &distro.BootcImageOptions{
+			TargetRef:                bootcTargetRef,
 			InstallerPayloadRef:      bootcInstallerPayloadRef,
 			OmitDefaultKernelArgs:    bootcOmitDefaultKernelArgs,
 			UseRemoteContainerSource: bootcRemote,

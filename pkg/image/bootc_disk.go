@@ -17,6 +17,7 @@ type BootcDiskImage struct {
 	Base
 
 	PartitionTable *disk.PartitionTable
+	TargetRef      string
 
 	ContainerSource      *container.SourceSpec
 	BuildContainerSource *container.SourceSpec
@@ -116,6 +117,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	rawImage.Bootloader = img.Bootloader
 	rawImage.UnifiedKernel = img.UnifiedKernel
 	rawImage.Aboot = img.Aboot
+	rawImage.TargetRef = img.TargetRef
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.OSCustomizations = img.OSCustomizations
 	rawImage.DiskCustomizations = img.DiskCustomizations

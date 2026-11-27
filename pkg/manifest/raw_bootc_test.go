@@ -82,6 +82,17 @@ func TestRawBootcImageSerialize(t *testing.T) {
 	assert.Equal(t, "quay.io/centos-bootc/centos-bootc-dev:stream9", opts.TargetImgref)
 }
 
+func TestRawBootcImageTargetRef(t *testing.T) {
+	pipeline := makeFakeRawBootcPipeline()
+	pipeline.TargetRef = "quay.io/example/os:stable"
+	result, err := pipeline.Serialize()
+	require.NoError(t, err)
+	stage := findStage("org.osbuild.bootc.install-to-filesystem", result.Stages)
+	require.NotNil(t, stage)
+	opts := stage.Options.(*osbuild.BootcInstallToFilesystemOptions)
+	assert.Equal(t, pipeline.TargetRef, opts.TargetImgref)
+}
+
 func TestRawBootcImageSerializeMountsValidated(t *testing.T) {
 	mani := manifest.New()
 	runner := &runner.Linux{}
