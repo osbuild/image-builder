@@ -41,6 +41,34 @@ func SshRun(ip, user, key, hostsfile string, command ...string) error {
 	return nil
 }
 
+// SshRunUntilReady runs an SSH command repeatedly until user authentication
+// succeeds. It is useful while cloud-init or a guest agent is still
+// provisioning the user and its authorized key.
+func SshRunUntilReady(ip, user, key, hostsfile string, command ...string) error {
+	const retryInterval = 5 * time.Second
+	const retries = 24
+
+	var err error
+	for attempt := 0; attempt <= retries; attempt++ {
+		err = SshRun(ip, user, key, hostsfile, command...)
+		if err == nil {
+			return nil
+		}
+		if attempt < retries {
+			time.Sleep(retryInterval)
+		}
+	}
+	return fmt.Errorf("SSH authentication did not succeed within 2 minutes: %w", err)
+}
+
+func IsRegularFile(path string) bool {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return fileInfo.Mode().IsRegular()
+}
+
 func ScpFile(ip, user, key, hostsfile, source, dest string) error {
 	_, _, err := run("scp", "-i", key, "-o", fmt.Sprintf("UserKnownHostsFile=%s", hostsfile), "--", source, fmt.Sprintf("%s@%s:%s", user, ip, dest))
 	if err != nil {
