@@ -861,6 +861,24 @@ func TestAnacondaISOTreeSerializeWithContainer(t *testing.T) {
 		assert.NoError(t, checkRawKickstartForContainer(sp.Stages, userks))
 	})
 
+	t.Run("user-kickstart-kernel-options", func(t *testing.T) {
+		userks := "bootloader --append='vconsole.keymap=ch'\n"
+		pipeline := newTestAnacondaISOTree(manifest.Grub2UEFIOnlyISOBoot)
+		pipeline.Kickstart = &kickstart.Options{
+			Path:                testKsPath,
+			KernelOptionsAppend: []string{"console=ttyS0,114800n8"},
+			UserFile: &kickstart.File{
+				Contents: userks,
+			},
+		}
+		sp, err := manifest.SerializeWith(pipeline, manifest.Inputs{Containers: []container.Spec{containerPayload}})
+		assert.NoError(t, err)
+		kickstartSt := findStage("org.osbuild.kickstart", sp.Stages)
+		assert.NotNil(t, kickstartSt)
+		opts := kickstartSt.Options.(*osbuild.KickstartStageOptions)
+		assert.Equal(t, "console=ttyS0,114800n8", opts.Bootloader.Append)
+	})
+
 	t.Run("remove-payload-signtures", func(t *testing.T) {
 		pipeline := newTestAnacondaISOTree(manifest.Grub2UEFIOnlyISOBoot)
 		pipeline.Kickstart = &kickstart.Options{Path: testKsPath}
