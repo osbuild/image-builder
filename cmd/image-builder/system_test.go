@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	main "github.com/osbuild/image-builder/cmd/image-builder"
+	"github.com/osbuild/image-builder/data/distrodefs"
 )
 
 func runSystemRaw(t *testing.T) map[string]interface{} {
@@ -67,6 +68,8 @@ func TestSystemSubcommandYAML(t *testing.T) {
 			assert.Contains(t, output, "path:")
 			assert.Contains(t, output, "size:")
 			assert.Contains(t, output, "max-size:")
+			assert.Contains(t, output, "definitions:")
+			assert.Contains(t, output, "source:")
 		})
 	}
 }
@@ -82,6 +85,26 @@ func TestSystemSubcommandJSON(t *testing.T) {
 	assert.NotEmpty(t, cache["path"])
 	assert.Equal(t, float64(12345), cache["size"])
 	assert.Contains(t, cache, "max-size")
+	sys := raw["system"].(map[string]interface{})
+	definitions := sys["definitions"].(map[string]interface{})
+	assert.Equal(t, distrodefs.Source(), definitions["source"])
+}
+
+func TestSystemDefinitionsSourceOverrides(t *testing.T) {
+	t.Setenv("IMAGE_BUILDER_EXPERIMENTAL", "yamldir=/experimental/definitions")
+	raw := runSystemRaw(t)
+	sys := raw["system"].(map[string]interface{})
+	assert.Equal(t, "/experimental/definitions", sys["definitions"].(map[string]interface{})["source"])
+
+	restore := main.MockOsArgs([]string{"system", "--format=json", "--force-defs-dir=/forced/definitions"})
+	defer restore()
+	var output bytes.Buffer
+	restore = main.MockOsStdout(&output)
+	defer restore()
+	require.NoError(t, main.Run())
+	require.NoError(t, json.Unmarshal(output.Bytes(), &raw))
+	sys = raw["system"].(map[string]interface{})
+	assert.Equal(t, "/forced/definitions", sys["definitions"].(map[string]interface{})["source"])
 }
 
 func TestSystemSubcommandUnsupportedFormat(t *testing.T) {

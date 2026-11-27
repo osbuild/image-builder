@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	"go.yaml.in/yaml/v3"
+
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 )
 
 type cacheMaxSize struct {
@@ -44,6 +46,9 @@ type systemStatus struct {
 			Size    int64        `yaml:"size" json:"size"`
 			MaxSize cacheMaxSize `yaml:"max-size" json:"max-size"`
 		} `yaml:"cache" json:"cache"`
+		Definitions struct {
+			Source string `yaml:"source" json:"source"`
+		} `yaml:"definitions" json:"definitions"`
 	} `yaml:"system" json:"system"`
 }
 
@@ -80,8 +85,12 @@ func readCacheMaxSize(cacheDir string) cacheMaxSize {
 	return cacheMaxSize{set: true, value: n}
 }
 
-func readSystemStatus() *systemStatus {
+func readSystemStatus(forceDefsDir string) *systemStatus {
 	ss := &systemStatus{}
+	ss.System.Definitions.Source = defs.DefaultSource()
+	if forceDefsDir != "" {
+		ss.System.Definitions.Source = forceDefsDir
+	}
 	ss.System.Cache.Path = getCacheDir()
 	ss.System.Cache.MaxSize = readCacheMaxSize(ss.System.Cache.Path)
 	size, err := dirSize(ss.System.Cache.Path)
@@ -92,19 +101,19 @@ func readSystemStatus() *systemStatus {
 	return ss
 }
 
-func prettySystemStatus() string {
+func prettySystemStatus(forceDefsDir string) string {
 	var b strings.Builder
 
 	enc := yaml.NewEncoder(&b)
 	enc.SetIndent(2)
 
-	_ = enc.Encode(readSystemStatus())
+	_ = enc.Encode(readSystemStatus(forceDefsDir))
 
 	return b.String()
 }
 
-func jsonSystemStatus() string {
-	b, err := json.MarshalIndent(readSystemStatus(), "", "  ")
+func jsonSystemStatus(forceDefsDir string) string {
+	b, err := json.MarshalIndent(readSystemStatus(forceDefsDir), "", "  ")
 	if err != nil {
 		return fmt.Sprintf(`{"error": "%s"}`, err)
 	}
