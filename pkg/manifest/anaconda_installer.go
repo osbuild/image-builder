@@ -793,7 +793,7 @@ func (p *AnacondaInstaller) dracutStageOptions() (*osbuild.DracutStageOptions, e
 		// Lorax calls the boot.iso dracut with:
 		// --nomdadmconf --nolvmconf --xz --install '/.buildstamp' --no-early-microcode
 		// --add 'fips anaconda pollcdrom qemu qemu-net prefixdevname-tools'
-		options.Install = []string{"./buildstamp"}
+		options.Install = []string{"/.buildstamp"}
 		options.AddModules = append(options.AddModules, []string{
 			"fips",
 			"anaconda",
