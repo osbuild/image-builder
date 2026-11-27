@@ -228,7 +228,7 @@
     "path": "./configs/empty.json",
     "filters": {
       "distros": [
-        "rhel-10.2"
+        "rhel-10.*"
       ],
       "image-types": [
         "ami-nvidia"
