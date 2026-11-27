@@ -531,7 +531,6 @@ func TestGetManifestLocal(t *testing.T) {
 }
 
 func TestResolveFromRemoteIndexPull(t *testing.T) {
-	t.Skip()
 	// This test verifies that a specific container image ID can be resolved
 	// successfully after pulling a specific manifest list from a registry and
 	// both the pull and the resolution rely on the manifest list digest.

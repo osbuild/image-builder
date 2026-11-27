@@ -435,15 +435,55 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 	return r, err
 }
 
-func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
-	target := cl.Target.String()
-	if instanceDigest != "" {
-		imageId, err := cl.getLocalImageID(instanceDigest.String())
-		if err != nil {
-			return RawManifest{}, err
+// getInstanceManifest retrieves the manifest that matches name@digest and, if
+// that fails, falls back to the getLocalImageID() function, which searches
+// through all images and returns the one that has a matching digest.
+func (cl *Client) getInstanceManifest(instance digest.Digest) (RawManifest, error) {
+	target := fmt.Sprintf("%s@%s", cl.Target.Name(), instance)
+	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+	if err != nil {
+		// If the target is a locally built manifest list, the instance is unnamed and
+		// can only be retrieved by the image ID alone. Get the image ID and then
+		// inspect it to get the manifest.
+		imageID, err2 := cl.getLocalImageID(instance.String())
+		if err2 != nil {
+			// bubble up both errors for more complete tracing and troubleshooting
+			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to get local image ID: %w", cl.Target.Name(), instance, err, err2)
 		}
-		target = fmt.Sprintf("@%s", imageId)
+		target = fmt.Sprintf("@%s", imageID)
+		data, err2 = cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+		if err2 != nil {
+			// bubble up both errors for more complete tracing and troubleshooting
+			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to inspect image %s: %w", cl.Target.Name(), instance, err, imageID, err2)
+		}
 	}
+	mime, err := parseMediaType(data)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	r := RawManifest{
+		Data:     data,
+		MimeType: mime,
+		Arch:     a,
+	}
+	return r, nil
+}
+
+// getLocalManifest retrieves the manifest for the target from the local store.
+// If instanceDigest is not empty, it retrieves the manifest for the image that
+// matches that digest.
+func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
+	if instanceDigest != "" {
+		return cl.getInstanceManifest(instanceDigest)
+	}
+
+	target := cl.Target.String()
 	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
 	if err != nil {
 		return RawManifest{}, err
