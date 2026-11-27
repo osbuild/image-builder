@@ -84,6 +84,14 @@ var GuestOsFeaturesRHEL90 []*computepb.GuestOsFeature = []*computepb.GuestOsFeat
 // Guest OS Features for RHEL-10 images.
 var GuestOsFeaturesRHEL10 []*computepb.GuestOsFeature = GuestOsFeaturesRHEL9
 
+// Guest OS Features for Fedora images.
+var GuestOsFeaturesFedora []*computepb.GuestOsFeature = []*computepb.GuestOsFeature{
+	{Type: common.ToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_GVNIC.String())},
+}
+
 // GuestOsFeaturesByDistro returns the the list of Guest OS Features, which
 // should be used when importing an image of the specified distribution.
 //
@@ -117,6 +125,9 @@ func GuestOsFeaturesByDistro(distroName string) []*computepb.GuestOsFeature {
 		fallthrough
 	case strings.HasPrefix(distroName, "rhel-10"):
 		return GuestOsFeaturesRHEL10
+
+	case strings.HasPrefix(distroName, "fedora"):
+		return GuestOsFeaturesFedora
 
 	default:
 		return nil
@@ -153,12 +164,6 @@ func (g *GCP) ComputeImageInsert(
 	}
 	defer imagesClient.Close()
 
-	operationsClient, err := compute.NewGlobalOperationsRESTClient(ctx, option.WithCredentials(g.creds))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Compute Engine Operations client: %v", err)
-	}
-	defer operationsClient.Close()
-
 	imgInsertReq := &computepb.InsertImageRequest{
 		Project: g.GetProjectID(),
 		ImageResource: &computepb.Image{
@@ -177,30 +182,8 @@ func (g *GCP) ComputeImageInsert(
 		return nil, fmt.Errorf("failed to insert provided image into GCE: %v", err)
 	}
 
-	// wait for the operation to finish
-	var operationResource *computepb.Operation
-	for {
-		waitOperationReq := &computepb.WaitGlobalOperationRequest{
-			Operation: operation.Proto().GetName(),
-			Project:   g.GetProjectID(),
-		}
-
-		operationResource, err = operationsClient.Wait(ctx, waitOperationReq)
-		if err != nil {
-			return nil, fmt.Errorf("failed to wait for an Image Import operation: %v", err)
-		}
-
-		// The operation finished
-		if operationResource.GetStatus() != computepb.Operation_RUNNING && operationResource.GetStatus() != computepb.Operation_PENDING {
-			break
-		}
-	}
-
-	// If the operation failed, the HttpErrorStatusCode is set to a non-zero value
-	if operationStatusCode := operationResource.GetHttpErrorStatusCode(); operationStatusCode != 0 {
-		operationErrorMsg := operationResource.GetHttpErrorMessage()
-		operationErrors := operationResource.GetError().GetErrors()
-		return nil, fmt.Errorf("failed to insert image into GCE. HTTPErrorCode:%d HTTPErrorMsg:%v Errors:%v", operationStatusCode, operationErrorMsg, operationErrors)
+	if err := g.waitGlobalOperation(ctx, g.GetProjectID(), operation.Proto().GetName()); err != nil {
+		return nil, fmt.Errorf("failed to wait for image import: %w", err)
 	}
 
 	getImageReq := &computepb.GetImageRequest{

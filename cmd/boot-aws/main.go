@@ -276,17 +276,6 @@ func doRunExec(a *awscloud.AWS, command []string, flags *pflag.FlagSet, res *res
 		return err
 	}
 
-	isFile := func(path string) bool {
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			// ignore error and assume it's not a path
-			return false
-		}
-
-		// Check if it's a regular file
-		return fileInfo.Mode().IsRegular()
-	}
-
 	// copy every argument that is a file to the remote host (basename only)
 	// and construct remote command
 	// NOTE: this wont work with directories or with multiple args in different
@@ -294,7 +283,7 @@ func doRunExec(a *awscloud.AWS, command []string, flags *pflag.FlagSet, res *res
 	remoteCommand := make([]string, len(command))
 	for idx := range command {
 		arg := command[idx]
-		if isFile(arg) {
+		if test.IsRegularFile(arg) {
 			// scp the file and add it to the remote command by its base name
 			remotePath := filepath.Base(arg)
 			remoteCommand[idx] = remotePath

@@ -304,17 +304,6 @@ func doRunExec(command []string, flags *pflag.FlagSet, res *resources) error {
 		return err
 	}
 
-	isFile := func(path string) bool {
-		fileInfo, err := os.Stat(path)
-		if err != nil {
-			// ignore error and assume it's not a path
-			return false
-		}
-
-		// Check if it's a regular file
-		return fileInfo.Mode().IsRegular()
-	}
-
 	windows, err := isWindows(flags)
 	if err != nil {
 		return err
@@ -341,7 +330,7 @@ func doRunExec(command []string, flags *pflag.FlagSet, res *resources) error {
 	remoteCommand := make([]string, len(command))
 	for idx := range command {
 		arg := command[idx]
-		if isFile(arg) {
+		if test.IsRegularFile(arg) {
 			// scp the file and add it to the remote command by its base name
 			remotePath := filepath.Base(arg)
 			remoteCommand[idx] = remotePath
