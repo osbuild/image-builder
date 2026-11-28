@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -25,16 +25,21 @@ func (cl *Client) skopeoInspect(ctx context.Context, target string) ([]byte, err
 	cmd.Args = append(cmd.Args, target)
 
 	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
 	cmd.Stdout = stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = stderr
 	cmd.WaitDelay = 5 * time.Second
 
 	if err := cmd.Run(); err != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
-			// the base error in this case isn't informative, so wrap and return the context error
-			return nil, fmt.Errorf("skopeo inspect %s: %w", target, ctxErr)
+			// the base error in this case isn't informative, so wrap and return the context error instead
+			err = ctxErr
 		}
-		return nil, err
+		retErr := fmt.Errorf("skopeo inspect %s: %w", target, err)
+		if errMsg := strings.TrimSpace(stderr.String()); errMsg != "" {
+			retErr = fmt.Errorf("skopeo inspect %s: %s (%w)", target, errMsg, err)
+		}
+		return nil, retErr
 	}
 	return stdout.Bytes(), nil
 }
