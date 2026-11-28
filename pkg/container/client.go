@@ -637,17 +637,23 @@ func (cl *Client) getLocalImageID(ctx context.Context, digest string) (string, e
 	store := cl.store
 
 	cmd := exec.CommandContext(ctx, "podman", "--root", store, "--runroot", cl.runroot, "image", "ls", "--format=json")
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &stderr
 	cmd.WaitDelay = 5 * time.Second
 	if err := cmd.Run(); err != nil {
 		cmdLine := strings.Join(cmd.Args, " ")
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			// the base error in this case isn't informative, so wrap and return the context error
-			return "", fmt.Errorf("command failed: %s: %w", cmdLine, ctxErr)
+			err = ctxErr
 		}
-		return "", fmt.Errorf("command failed: %s: %w", cmdLine, err)
+
+		retErr := fmt.Errorf("%s: %w", cmdLine, err)
+		if errMsg := strings.TrimSpace(stderr.String()); errMsg != "" {
+			retErr = fmt.Errorf("%s: %s (%w)", cmdLine, errMsg, err)
+		}
+
+		return "", retErr
 	}
 
 	// parse output into a minimal struct with just the info we need
