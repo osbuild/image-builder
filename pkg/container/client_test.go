@@ -467,22 +467,7 @@ func TestGetManifest(t *testing.T) {
 }
 
 func TestGetManifestLocal(t *testing.T) {
-	currentUser, err := user.Current()
-	assert.NoError(t, err)
-
-	if !*forceLocal {
-		// local resolver tests aren't forced, so we can skip
-		// them if the user is not root or the podman executable
-		// is not installed
-		if currentUser.Uid != "0" {
-			t.Skip("User is not root, skipping test")
-		}
-
-		_, err = exec.LookPath("podman")
-		if err != nil {
-			t.Skip("Podman not available, skipping test")
-		}
-	}
+	checkLocalResolverSkipConditions(t)
 
 	containerFile, err := os.CreateTemp(t.TempDir(), "Containerfile")
 	assert.NoError(t, err)
