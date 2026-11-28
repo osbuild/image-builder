@@ -352,6 +352,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 
 	osc.Files = append(osc.Files, imageConfig.Files...)
 	osc.Directories = append(osc.Directories, imageConfig.Directories...)
+	osc.Symlinks = imageConfig.Symlinks
 
 	if imageConfig.NoBLS != nil {
 		osc.NoBLS = *imageConfig.NoBLS
@@ -753,6 +754,7 @@ func ostreeDeploymentCustomizations(
 	if err != nil {
 		return manifest.OSTreeDeploymentCustomizations{}, err
 	}
+	deploymentConf.Symlinks = imageConfig.Symlinks
 
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {

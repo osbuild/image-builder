@@ -888,6 +888,22 @@ image_types:
 	})
 }
 
+func TestImageConfigSymlinks(t *testing.T) {
+	it := makeTestImageType(t, `
+image_types:
+  test_type:
+    image_config:
+      symlinks:
+        - path: /init
+          target: usr/lib/systemd/systemd
+`)
+	cfg := it.ImageConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+	require.NotNil(t, cfg)
+	require.Len(t, cfg.Symlinks, 1)
+	assert.Equal(t, "/init", cfg.Symlinks[0].Path)
+	assert.Equal(t, "usr/lib/systemd/systemd", cfg.Symlinks[0].Target)
+}
+
 func TestDefsDistroImageConfigSystemdBoot(t *testing.T) {
 	fakeDistroYaml := `
 distros:
@@ -2287,4 +2303,33 @@ func TestExportsWithExtrasFiles(t *testing.T) {
 
 	_, _, err = it.ExportsWithExtras([]string{"file:nonexistent"})
 	assert.EqualError(t, err, `unknown extra "file:nonexistent"`)
+}
+
+func TestImageConfigSymlinksConditions(t *testing.T) {
+	it := makeTestImageType(t, `
+image_types:
+  test_type:
+    image_config:
+      symlinks:
+        - path: /default
+          target: relative-target
+      conditions:
+        replacement:
+          when:
+            arch: aarch64
+          shallow_merge:
+            symlinks:
+              - path: /replacement
+                target: ../target
+        clear:
+          when:
+            arch: s390x
+          shallow_merge:
+            symlinks: []
+`)
+	id := distro.ID{Name: "test-distro", MajorVersion: 1}
+	assert.Equal(t, "/default", it.ImageConfig(id, "x86_64").Symlinks[0].Path)
+	assert.Equal(t, "/replacement", it.ImageConfig(id, "aarch64").Symlinks[0].Path)
+	assert.Empty(t, it.ImageConfig(id, "s390x").Symlinks)
+	assert.Equal(t, "/default", it.ImageConfig(id, "x86_64").Symlinks[0].Path)
 }

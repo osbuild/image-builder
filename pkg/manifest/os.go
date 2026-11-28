@@ -169,6 +169,9 @@ type OSCustomizations struct {
 	// directories defined here are always added at the end of the pipeline.
 	Directories []*fsnode.Directory
 
+	// Custom symbolic links to create after custom directories and files.
+	Symlinks []*fsnode.Symlink
+
 	// Custom files to create in the image. The stages for the files defined
 	// here are always added at the end of the pipeline.
 	Files []*fsnode.File
@@ -972,6 +975,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	if len(p.OSCustomizations.Files) > 0 {
 		p.addStagesForAllFilesAndInlineData(&pipeline, p.OSCustomizations.Files)
 	}
+	pipeline.AddStages(osbuild.GenSymlinkNodesStages(p.OSCustomizations.Symlinks)...)
 
 	enabledServices := []string{}
 	disabledServices := []string{}

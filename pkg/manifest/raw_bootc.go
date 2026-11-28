@@ -361,6 +361,12 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 			postStages = append(postStages, stages...)
 		}
 
+		for _, stage := range osbuild.GenSymlinkNodesStages(p.OSCustomizations.Symlinks) {
+			stage.Mounts = mounts
+			stage.Devices = devices
+			postStages = append(postStages, stage)
+		}
+
 		// The ignition stamp must be created after bootc install, otherwise bootc will error out
 		// because the boot partition is not empty.
 		// That's why we have to pass `mount://boot/` and can't write to `tree://boot/`.

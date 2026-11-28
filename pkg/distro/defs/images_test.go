@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
@@ -270,4 +271,18 @@ func TestDefaultTargetOverride(t *testing.T) {
 			assert.Equal(t, tc.expected, osc.DefaultTarget)
 		})
 	}
+}
+
+func TestSymlinksCustomizations(t *testing.T) {
+	it := isoTestImageType()
+	it.imageConfig.Symlinks = []*fsnode.Symlink{{Path: "/etc/link", Target: "../target"}}
+	osc, err := osCustomizations(it, rpmmd.PackageSet{}, distro.ImageOptions{}, nil, &blueprint.Blueprint{})
+	require.NoError(t, err)
+	assert.Equal(t, it.imageConfig.Symlinks, osc.Symlinks)
+
+	it.bootable = true
+	it.ostree.Name = "test"
+	deployment, err := ostreeDeploymentCustomizations(it, nil)
+	require.NoError(t, err)
+	assert.Equal(t, it.imageConfig.Symlinks, deployment.Symlinks)
 }
