@@ -399,6 +399,26 @@ func (m RawManifest) Digest() (digest.Digest, error) {
 	return manifest.Digest(m.Data)
 }
 
+// newRawManifest initialises a [RawManifest] from the data.
+func (cl *Client) newRawManifest(data []byte) (RawManifest, error) {
+	mime, err := parseMediaType(data)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	r := RawManifest{
+		Data:     data,
+		MimeType: mime,
+		Arch:     a,
+	}
+	return r, nil
+}
+
 // GetManifest fetches the raw manifest data from the server or local storage.
 // If digest is not empty it will retrieve the manifest for the image that
 // matches the digest.
@@ -418,22 +438,7 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 		return RawManifest{}, err
 	}
 
-	mime, err := parseMediaType(data)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	r := RawManifest{
-		Data:     data,
-		MimeType: mime,
-		Arch:     a,
-	}
-	return r, err
+	return cl.newRawManifest(data)
 }
 
 // getInstanceManifest retrieves the manifest that matches name@digest and, if
@@ -464,22 +469,8 @@ func (cl *Client) getInstanceManifest(ctx context.Context, instance digest.Diges
 			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to inspect image %s: %w", cl.Target.Name(), instance, err, imageID, err2)
 		}
 	}
-	mime, err := parseMediaType(data)
-	if err != nil {
-		return RawManifest{}, err
-	}
 
-	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	r := RawManifest{
-		Data:     data,
-		MimeType: mime,
-		Arch:     a,
-	}
-	return r, nil
+	return cl.newRawManifest(data)
 }
 
 // getLocalManifest retrieves the manifest for the target from the local store.
@@ -496,22 +487,7 @@ func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Di
 		return RawManifest{}, err
 	}
 
-	mime, err := parseMediaType(data)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	r := RawManifest{
-		Data:     data,
-		MimeType: mime,
-		Arch:     a,
-	}
-	return r, err
+	return cl.newRawManifest(data)
 }
 
 type manifestList interface {
