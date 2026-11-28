@@ -468,6 +468,12 @@ func (cl *Client) getInstanceManifest(ctx context.Context, instance digest.Diges
 			// bubble up both errors for more complete tracing and troubleshooting
 			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to inspect image %s: %w", cl.Target.Name(), instance, err, imageID, err2)
 		}
+		// show the deprecation warning to the user only if
+		// getLocalImageID() was successfully used to retrieve the desired
+		// manifest, otherwise they might get the warning even in cases
+		// where we run the function as a fallback to unrelated error
+		// conditions
+		fmt.Fprintf(os.Stderr, "WARNING: resolving unnamed instance %s (image %s) from locally-built manifest list is deprecated and will not be supported in future versions; name the instance to use it directly, e.g. 'podman tag %s <name>'\n", instance.String(), imageID, imageID)
 	}
 
 	return cl.newRawManifest(data)
@@ -621,17 +627,13 @@ func (cl *Client) Resolve(ctx context.Context, name string, local bool) (Spec, e
 	return spec, nil
 }
 
+// getLocalImageID is used to resolve unnamed instances of locally-built
+// manifest lists. It relies on shelling out to podman to list all local images
+// and searches through them to find a matching digest, then returns the image
+// ID of the matching image.
+//
+// Deprecated: Users should name/tag the instance they want to use.
 func (cl *Client) getLocalImageID(ctx context.Context, digest string) (string, error) {
-	// TODO: consider dropping this functionality altogether
-	//
-	// This function is only useful if:
-	//  - There is a manifest list in the local store.  This occurs after
-	//  building multi-arch images locally.
-	//  - The user doesn't know the image ID.
-	//
-	// If a user tries to resolve an image in the local storage using the name
-	// of a manifest list, we can return an error suggesting that they can look
-	// up the image ID and use that instead.
 	store := cl.store
 
 	cmd := exec.CommandContext(ctx, "podman", "--root", store, "--runroot", cl.runroot, "image", "ls", "--format=json")
