@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/opencontainers/go-digest"
@@ -467,22 +468,7 @@ func TestGetManifest(t *testing.T) {
 }
 
 func TestGetManifestLocal(t *testing.T) {
-	currentUser, err := user.Current()
-	assert.NoError(t, err)
-
-	if !*forceLocal {
-		// local resolver tests aren't forced, so we can skip
-		// them if the user is not root or the podman executable
-		// is not installed
-		if currentUser.Uid != "0" {
-			t.Skip("User is not root, skipping test")
-		}
-
-		_, err = exec.LookPath("podman")
-		if err != nil {
-			t.Skip("Podman not available, skipping test")
-		}
-	}
+	checkLocalResolverSkipConditions(t)
 
 	containerFile, err := os.CreateTemp(t.TempDir(), "Containerfile")
 	assert.NoError(t, err)
@@ -542,6 +528,73 @@ func TestGetManifestLocal(t *testing.T) {
 			assert.Equal(digest.String(), imageDigest)
 		})
 	}
+}
+
+func TestResolveFromRemoteIndexPull(t *testing.T) {
+	// This test verifies that a specific container image ID can be resolved
+	// successfully after pulling a specific manifest list from a registry and
+	// both the pull and the resolution rely on the manifest list digest.
+	// See https://github.com/osbuild/image-builder/issues/2835 for minimal
+	// reproducers and a more detailed description of the issue.
+
+	checkLocalResolverSkipConditions(t)
+	require := require.New(t)
+
+	containerName := "library/list-digest-pull-test"
+
+	registry := testregistry.New()
+	defer registry.Close()
+
+	// create a manifest list in the registry
+	listDigest, images, err := registry.PopulateWithManifestList(containerName)
+	require.NoError(err)
+
+	// Pull a container using the list digest.
+	// This only pulls the container that matches the host architecture.
+	// Should be <registry>/library/list-digest-pull-test@<list digest>
+	pullRef := fmt.Sprintf("%s@%s", registry.GetRef(containerName), listDigest)
+
+	tmpStorage := t.TempDir()
+	tmpRunroot := t.TempDir()
+	cmd := exec.Command(
+		"podman",
+		"--root", tmpStorage, // keep the system storage clean
+		"--runroot", tmpRunroot,
+		"pull",
+		"--tls-verify=false",
+		pullRef,
+	)
+	require.NoError(cmd.Run())
+	defer func() {
+		cmd := exec.Command("podman",
+			"--root", tmpStorage,
+			"--runroot", tmpRunroot,
+			"image", "rm", "--all")
+		assert.NoError(t, cmd.Run())
+	}()
+
+	client, err := container.NewClient(pullRef)
+	require.NoError(err)
+	require.NotNil(client)
+
+	client.SkipTLSVerify()
+	container.SetClientStore(client, tmpStorage)
+	container.SetClientRunroot(client, tmpRunroot)
+
+	ctx := t.Context()
+
+	// This is an arbitrary name that the user chooses for the container after
+	// it's embedded in the image. We only need to test that it's propagated
+	// correctly to the resolved spec.
+	reqName := "some-other-name"
+	spec, err := client.Resolve(ctx, reqName, true)
+	require.NoError(err)
+
+	hostArch := runtime.GOARCH
+	require.Equal(images[hostArch].Digest(), spec.Digest)
+	require.Equal(images[hostArch].ImageID(), spec.ImageID)
+	require.Equal(listDigest, spec.ListDigest)
+	require.Equal(reqName, spec.LocalName)
 }
 
 func getManifestListAndImageDigests(t *testing.T, storage string, manifestName string) (string, []string) {

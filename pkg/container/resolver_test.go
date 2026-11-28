@@ -23,6 +23,28 @@ var forceLocal = flag.Bool(
 	"force local resolver, making them fail instead of skip if podman isn't installed or the user is not root",
 )
 
+func checkLocalResolverSkipConditions(t *testing.T) {
+	t.Helper()
+	currentUser, err := user.Current()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !*forceLocal {
+		// local resolver tests aren't forced, so we can skip
+		// them if the user is not root or the podman executable
+		// is not installed
+		if currentUser.Uid != "0" {
+			t.Skip("User is not root, skipping test")
+		}
+
+		_, err = exec.LookPath("podman")
+		if err != nil {
+			t.Skip("Podman not available, skipping test")
+		}
+	}
+}
+
 func TestResolver(t *testing.T) {
 	require := require.New(t)
 
@@ -149,22 +171,7 @@ func TestResolverErrorIncludesSource(t *testing.T) {
 }
 
 func TestResolverLocalManifest(t *testing.T) {
-	currentUser, err := user.Current()
-	assert.NoError(t, err)
-
-	if !*forceLocal {
-		// local resolver tests aren't forced, so we can skip
-		// them if the user is not root or the podman executable
-		// is not installed
-		if currentUser.Uid != "0" {
-			t.Skip("User is not root, skipping test")
-		}
-
-		_, err = exec.LookPath("podman")
-		if err != nil {
-			t.Skip("Podman not available, skipping test")
-		}
-	}
+	checkLocalResolverSkipConditions(t)
 
 	containerFile, err := os.CreateTemp(t.TempDir(), "Containerfile")
 	assert.NoError(t, err)

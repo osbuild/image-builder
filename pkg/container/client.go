@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -398,6 +399,26 @@ func (m RawManifest) Digest() (digest.Digest, error) {
 	return manifest.Digest(m.Data)
 }
 
+// newRawManifest initialises a [RawManifest] from the data.
+func (cl *Client) newRawManifest(data []byte) (RawManifest, error) {
+	mime, err := parseMediaType(data)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
+	if err != nil {
+		return RawManifest{}, err
+	}
+
+	r := RawManifest{
+		Data:     data,
+		MimeType: mime,
+		Arch:     a,
+	}
+	return r, nil
+}
+
 // GetManifest fetches the raw manifest data from the server or local storage.
 // If digest is not empty it will retrieve the manifest for the image that
 // matches the digest.
@@ -412,59 +433,67 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 		target = fmt.Sprintf("%s@%s", nameFromRef(target), instanceDigest.String())
 	}
 
-	data, err := cl.skopeoInspect("docker://" + target)
+	data, err := cl.skopeoInspect(ctx, "docker://"+target)
 	if err != nil {
 		return RawManifest{}, err
 	}
 
-	mime, err := parseMediaType(data)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	r := RawManifest{
-		Data:     data,
-		MimeType: mime,
-		Arch:     a,
-	}
-	return r, err
+	return cl.newRawManifest(data)
 }
 
-func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
-	target := cl.Target.String()
-	if instanceDigest != "" {
-		imageId, err := cl.getLocalImageID(instanceDigest.String())
-		if err != nil {
+// getInstanceManifest retrieves the manifest that matches name@digest and, if
+// that fails, falls back to the getLocalImageID() function, which searches
+// through all images and returns the one that has a matching digest.
+func (cl *Client) getInstanceManifest(ctx context.Context, instance digest.Digest) (RawManifest, error) {
+	target := fmt.Sprintf("%s@%s", cl.Target.Name(), instance)
+	data, err := cl.skopeoInspectLocalStorage(ctx, target)
+	if err != nil {
+		if ctx.Err() != nil {
+			// if we failed because of the context, fail early since the
+			// context is no longer valid now
 			return RawManifest{}, err
 		}
-		target = fmt.Sprintf("@%s", imageId)
+
+		// If the target is a locally built manifest list, the instance is unnamed and
+		// can only be retrieved by the image ID alone. Get the image ID and then
+		// inspect it to get the manifest.
+		imageID, err2 := cl.getLocalImageID(ctx, instance.String())
+		if err2 != nil {
+			// bubble up both errors for more complete tracing and troubleshooting
+			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to get local image ID: %w", cl.Target.Name(), instance, err, err2)
+		}
+		target = fmt.Sprintf("@%s", imageID)
+		data, err2 = cl.skopeoInspectLocalStorage(ctx, target)
+		if err2 != nil {
+			// bubble up both errors for more complete tracing and troubleshooting
+			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to inspect image %s: %w", cl.Target.Name(), instance, err, imageID, err2)
+		}
+		// show the deprecation warning to the user only if
+		// getLocalImageID() was successfully used to retrieve the desired
+		// manifest, otherwise they might get the warning even in cases
+		// where we run the function as a fallback to unrelated error
+		// conditions
+		fmt.Fprintf(os.Stderr, "WARNING: resolving unnamed instance %s (image %s) from locally-built manifest list is deprecated and will not be supported in future versions; name the instance to use it directly, e.g. 'podman tag %s <name>'\n", instance.String(), imageID, imageID)
 	}
-	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+
+	return cl.newRawManifest(data)
+}
+
+// getLocalManifest retrieves the manifest for the target from the local store.
+// If instanceDigest is not empty, it retrieves the manifest for the image that
+// matches that digest.
+func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
+	if instanceDigest != "" {
+		return cl.getInstanceManifest(ctx, instanceDigest)
+	}
+
+	target := cl.Target.String()
+	data, err := cl.skopeoInspectLocalStorage(ctx, target)
 	if err != nil {
 		return RawManifest{}, err
 	}
 
-	mime, err := parseMediaType(data)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	a, err := arch.FromString(cl.sysCtx.ArchitectureChoice)
-	if err != nil {
-		return RawManifest{}, err
-	}
-
-	r := RawManifest{
-		Data:     data,
-		MimeType: mime,
-		Arch:     a,
-	}
-	return r, err
+	return cl.newRawManifest(data)
 }
 
 type manifestList interface {
@@ -598,25 +627,33 @@ func (cl *Client) Resolve(ctx context.Context, name string, local bool) (Spec, e
 	return spec, nil
 }
 
-func (cl *Client) getLocalImageID(digest string) (string, error) {
-	// TODO: consider dropping this functionality altogether
-	//
-	// This function is only useful if:
-	//  - There is a manifest list in the local store.  This occurs after
-	//  building multi-arch images locally.
-	//  - The user doesn't know the image ID.
-	//
-	// If a user tries to resolve an image in the local storage using the name
-	// of a manifest list, we can return an error suggesting that they can look
-	// up the image ID and use that instead.
+// getLocalImageID is used to resolve unnamed instances of locally-built
+// manifest lists. It relies on shelling out to podman to list all local images
+// and searches through them to find a matching digest, then returns the image
+// ID of the matching image.
+//
+// Deprecated: Users should name/tag the instance they want to use.
+func (cl *Client) getLocalImageID(ctx context.Context, digest string) (string, error) {
 	store := cl.store
 
-	cmd := exec.Command("podman", "--root", store, "--runroot", cl.runroot, "image", "ls", "--format=json")
-	var stdout bytes.Buffer
+	cmd := exec.CommandContext(ctx, "podman", "--root", store, "--runroot", cl.runroot, "image", "ls", "--format=json")
+	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &stderr
+	cmd.WaitDelay = 5 * time.Second
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("command failed: %s: %w", strings.Join(cmd.Args, " "), err)
+		cmdLine := strings.Join(cmd.Args, " ")
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			// the base error in this case isn't informative, so wrap and return the context error
+			err = ctxErr
+		}
+
+		retErr := fmt.Errorf("%s: %w", cmdLine, err)
+		if errMsg := strings.TrimSpace(stderr.String()); errMsg != "" {
+			retErr = fmt.Errorf("%s: %s (%w)", cmdLine, errMsg, err)
+		}
+
+		return "", retErr
 	}
 
 	// parse output into a minimal struct with just the info we need
