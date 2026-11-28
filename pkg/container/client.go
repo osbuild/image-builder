@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/sys/unix"
 
@@ -412,7 +413,7 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 		target = fmt.Sprintf("%s@%s", nameFromRef(target), instanceDigest.String())
 	}
 
-	data, err := cl.skopeoInspect("docker://" + target)
+	data, err := cl.skopeoInspect(ctx, "docker://"+target)
 	if err != nil {
 		return RawManifest{}, err
 	}
@@ -438,20 +439,26 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 // getInstanceManifest retrieves the manifest that matches name@digest and, if
 // that fails, falls back to the getLocalImageID() function, which searches
 // through all images and returns the one that has a matching digest.
-func (cl *Client) getInstanceManifest(instance digest.Digest) (RawManifest, error) {
+func (cl *Client) getInstanceManifest(ctx context.Context, instance digest.Digest) (RawManifest, error) {
 	target := fmt.Sprintf("%s@%s", cl.Target.Name(), instance)
-	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+	data, err := cl.skopeoInspect(ctx, fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
 	if err != nil {
+		if ctx.Err() != nil {
+			// if we failed because of the context, fail early since the
+			// context is no longer valid now
+			return RawManifest{}, err
+		}
+
 		// If the target is a locally built manifest list, the instance is unnamed and
 		// can only be retrieved by the image ID alone. Get the image ID and then
 		// inspect it to get the manifest.
-		imageID, err2 := cl.getLocalImageID(instance.String())
+		imageID, err2 := cl.getLocalImageID(ctx, instance.String())
 		if err2 != nil {
 			// bubble up both errors for more complete tracing and troubleshooting
 			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to get local image ID: %w", cl.Target.Name(), instance, err, err2)
 		}
 		target = fmt.Sprintf("@%s", imageID)
-		data, err2 = cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+		data, err2 = cl.skopeoInspect(ctx, fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
 		if err2 != nil {
 			// bubble up both errors for more complete tracing and troubleshooting
 			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to inspect image %s: %w", cl.Target.Name(), instance, err, imageID, err2)
@@ -480,11 +487,11 @@ func (cl *Client) getInstanceManifest(instance digest.Digest) (RawManifest, erro
 // matches that digest.
 func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Digest) (RawManifest, error) {
 	if instanceDigest != "" {
-		return cl.getInstanceManifest(instanceDigest)
+		return cl.getInstanceManifest(ctx, instanceDigest)
 	}
 
 	target := cl.Target.String()
-	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+	data, err := cl.skopeoInspect(ctx, fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
 	if err != nil {
 		return RawManifest{}, err
 	}
@@ -638,7 +645,7 @@ func (cl *Client) Resolve(ctx context.Context, name string, local bool) (Spec, e
 	return spec, nil
 }
 
-func (cl *Client) getLocalImageID(digest string) (string, error) {
+func (cl *Client) getLocalImageID(ctx context.Context, digest string) (string, error) {
 	// TODO: consider dropping this functionality altogether
 	//
 	// This function is only useful if:
@@ -651,12 +658,18 @@ func (cl *Client) getLocalImageID(digest string) (string, error) {
 	// up the image ID and use that instead.
 	store := cl.store
 
-	cmd := exec.Command("podman", "--root", store, "--runroot", cl.runroot, "image", "ls", "--format=json")
+	cmd := exec.CommandContext(ctx, "podman", "--root", store, "--runroot", cl.runroot, "image", "ls", "--format=json")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = os.Stderr
+	cmd.WaitDelay = 5 * time.Second
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("command failed: %s: %w", strings.Join(cmd.Args, " "), err)
+		cmdLine := strings.Join(cmd.Args, " ")
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			// the base error in this case isn't informative, so wrap and return the context error
+			return "", fmt.Errorf("command failed: %s: %w", cmdLine, ctxErr)
+		}
+		return "", fmt.Errorf("command failed: %s: %w", cmdLine, err)
 	}
 
 	// parse output into a minimal struct with just the info we need

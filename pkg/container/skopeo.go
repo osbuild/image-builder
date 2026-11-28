@@ -2,15 +2,17 @@ package container
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 )
 
 // Inspect a target ref, either local or remote, returning its manifest. Uses
 // 'skopeo'.
-func (cl *Client) skopeoInspect(target string) ([]byte, error) {
-	cmd := exec.Command("skopeo", "inspect", "--raw")
+func (cl *Client) skopeoInspect(ctx context.Context, target string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, "skopeo", "inspect", "--raw")
 
 	if tls := cl.GetTLSVerify(); tls != nil && !*tls {
 		cmd.Args = append(cmd.Args, "--tls-verify=false")
@@ -24,10 +26,14 @@ func (cl *Client) skopeoInspect(target string) ([]byte, error) {
 
 	stdout := new(bytes.Buffer)
 	cmd.Stdout = stdout
-
 	cmd.Stderr = os.Stderr
+	cmd.WaitDelay = 5 * time.Second
 
 	if err := cmd.Run(); err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			// the base error in this case isn't informative, so wrap and return the context error
+			return nil, fmt.Errorf("skopeo inspect %s: %w", target, ctxErr)
+		}
 		return nil, err
 	}
 	return stdout.Bytes(), nil
