@@ -8,6 +8,7 @@ import (
 // The Zstd pipeline compresses a raw image file using zstd.
 type Zstd struct {
 	Base
+	Level    int
 	filename string
 
 	imgPipeline FilePipeline
@@ -42,8 +43,10 @@ func (p *Zstd) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
+	options := osbuild.NewZstdStageOptions(p.Filename())
+	options.Level = p.Level
 	pipeline.AddStage(osbuild.NewZstdStage(
-		osbuild.NewZstdStageOptions(p.Filename()),
+		options,
 		osbuild.NewZstdStageInputs(osbuild.NewFilesInputPipelineObjectRef(p.imgPipeline.Name(), p.imgPipeline.Export().Filename(), nil)),
 	))
 

@@ -3,6 +3,8 @@ package osbuild
 type ZstdStageOptions struct {
 	// Filename for zstd archive
 	Filename string `json:"filename"`
+	// Compression level; omitted to use the stage default.
+	Level int `json:"level,omitempty"`
 }
 
 func (ZstdStageOptions) isStageOptions() {}
