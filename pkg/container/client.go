@@ -446,7 +446,7 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 // through all images and returns the one that has a matching digest.
 func (cl *Client) getInstanceManifest(ctx context.Context, instance digest.Digest) (RawManifest, error) {
 	target := fmt.Sprintf("%s@%s", cl.Target.Name(), instance)
-	data, err := cl.skopeoInspect(ctx, fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+	data, err := cl.skopeoInspectLocalStorage(ctx, target)
 	if err != nil {
 		if ctx.Err() != nil {
 			// if we failed because of the context, fail early since the
@@ -463,7 +463,7 @@ func (cl *Client) getInstanceManifest(ctx context.Context, instance digest.Diges
 			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to get local image ID: %w", cl.Target.Name(), instance, err, err2)
 		}
 		target = fmt.Sprintf("@%s", imageID)
-		data, err2 = cl.skopeoInspect(ctx, fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+		data, err2 = cl.skopeoInspectLocalStorage(ctx, target)
 		if err2 != nil {
 			// bubble up both errors for more complete tracing and troubleshooting
 			return RawManifest{}, fmt.Errorf("failed to get manifest for %s@%s: %w; failed to inspect image %s: %w", cl.Target.Name(), instance, err, imageID, err2)
@@ -482,7 +482,7 @@ func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Di
 	}
 
 	target := cl.Target.String()
-	data, err := cl.skopeoInspect(ctx, fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+	data, err := cl.skopeoInspectLocalStorage(ctx, target)
 	if err != nil {
 		return RawManifest{}, err
 	}

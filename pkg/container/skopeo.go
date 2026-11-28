@@ -38,3 +38,10 @@ func (cl *Client) skopeoInspect(ctx context.Context, target string) ([]byte, err
 	}
 	return stdout.Bytes(), nil
 }
+
+// skopeoInspectLocalStorage constructs an image name with the
+// containers-storage transport for the given target, inspects it using skopeo,
+// and returns the manifest.
+func (cl *Client) skopeoInspectLocalStorage(ctx context.Context, target string) ([]byte, error) {
+	return cl.skopeoInspect(ctx, fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
+}
