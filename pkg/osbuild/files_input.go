@@ -15,6 +15,8 @@ type FilesInput struct {
 	References FilesInputRef `json:"references"`
 }
 
+func (FilesInput) isInput() {}
+
 const InputTypeFiles string = "org.osbuild.files"
 
 func NewFilesInput(references FilesInputRef) *FilesInput {

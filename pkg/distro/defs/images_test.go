@@ -10,7 +10,11 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/customizations/firmware"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/kernelmodules"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
@@ -270,4 +274,80 @@ func TestDefaultTargetOverride(t *testing.T) {
 			assert.Equal(t, tc.expected, osc.DefaultTarget)
 		})
 	}
+}
+
+func TestInitramfsExternalContent(t *testing.T) {
+	it := isoTestImageType()
+	it.imageConfig.KernelModules = &kernelmodules.KernelModules{From: "os"}
+	it.imageConfig.Firmware = &firmware.Firmware{From: "firmware-source"}
+	img, err := initramfsImage(it, &blueprint.Blueprint{}, distro.ImageOptions{}, nil, nil, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, it.imageConfig.KernelModules, img.(*image.Initramfs).Customizations.KernelModules)
+	assert.Equal(t, it.imageConfig.Firmware, img.(*image.Initramfs).Customizations.Firmware)
+}
+
+func TestInitramfsServices(t *testing.T) {
+	it := isoTestImageType()
+	it.imageConfig.EnabledServices = []string{"systemd-sysext-sysroot.service", "systemd-confext-sysroot.service"}
+	it.imageConfig.DisabledServices = []string{"systemd-homed.service"}
+	it.imageConfig.MaskedServices = []string{"initrd-cleanup.service"}
+	img, err := initramfsImage(it, &blueprint.Blueprint{}, distro.ImageOptions{}, nil, nil, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, it.imageConfig.EnabledServices, img.(*image.Initramfs).Customizations.EnabledServices)
+	assert.Equal(t, it.imageConfig.DisabledServices, img.(*image.Initramfs).Customizations.DisabledServices)
+	assert.Equal(t, it.imageConfig.MaskedServices, img.(*image.Initramfs).Customizations.MaskedServices)
+}
+
+func TestInitramfsInstallLangs(t *testing.T) {
+	for _, langs := range [][]string{nil, {"C.UTF-8"}, {"en", "nl"}} {
+		t.Run(fmt.Sprintf("langs=%v", langs), func(t *testing.T) {
+			it := isoTestImageType()
+			it.imageConfig.InstallLangs = langs
+			img, err := initramfsImage(it, &blueprint.Blueprint{}, distro.ImageOptions{}, nil, nil, nil, nil)
+			require.NoError(t, err)
+			assert.Equal(t, langs, img.(*image.Initramfs).Customizations.BaseRPMOptions.InstallLangs)
+		})
+	}
+}
+
+func TestInitramfsPackageSelection(t *testing.T) {
+	for _, kernel := range []*blueprint.KernelCustomization{
+		nil,
+		{Name: "kernel-custom", Version: "1.2.3"},
+	} {
+		t.Run(fmt.Sprintf("kernel=%v", kernel), func(t *testing.T) {
+			bp := &blueprint.Blueprint{
+				Packages:       []blueprint.Package{{Name: "blueprint-package"}},
+				Modules:        []blueprint.Package{{Name: "blueprint-module"}},
+				EnabledModules: []blueprint.EnabledModule{{Name: "nodejs", Stream: "22"}},
+				Customizations: &blueprint.Customizations{Kernel: kernel},
+			}
+			packageSets := map[string]rpmmd.PackageSet{
+				"initramfs": {Include: []string{"systemd"}},
+			}
+			img, err := initramfsImage(isoTestImageType(), bp, distro.ImageOptions{}, packageSets, nil, nil, nil)
+			require.NoError(t, err)
+			pkgSet := img.(*image.Initramfs).Customizations.PackageSet
+			assert.Equal(t, []string{"systemd"}, pkgSet.Include)
+			assert.Empty(t, pkgSet.EnabledModules)
+		})
+	}
+}
+
+func TestSymlinksCustomizations(t *testing.T) {
+	it := isoTestImageType()
+	it.imageConfig.Symlinks = []*fsnode.Symlink{{Path: "/etc/link", Target: "../target"}}
+	osc, err := osCustomizations(it, rpmmd.PackageSet{}, distro.ImageOptions{}, nil, &blueprint.Blueprint{})
+	require.NoError(t, err)
+	assert.Equal(t, it.imageConfig.Symlinks, osc.Symlinks)
+
+	initramfs, err := initramfsImage(it, &blueprint.Blueprint{}, distro.ImageOptions{}, nil, nil, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, it.imageConfig.Symlinks, initramfs.(*image.Initramfs).Customizations.Symlinks)
+
+	it.bootable = true
+	it.ostree.Name = "test"
+	deployment, err := ostreeDeploymentCustomizations(it, nil)
+	require.NoError(t, err)
+	assert.Equal(t, it.imageConfig.Symlinks, deployment.Symlinks)
 }

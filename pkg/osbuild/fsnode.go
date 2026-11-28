@@ -8,6 +8,20 @@ import (
 	"github.com/osbuild/image-builder/pkg/hashutil"
 )
 
+// GenSymlinkNodesStages creates symbolic links in declaration order.
+func GenSymlinkNodesStages(links []*fsnode.Symlink) []*Stage {
+	if len(links) == 0 {
+		return nil
+	}
+	paths := make([]LnStagePath, 0, len(links))
+	for _, link := range links {
+		paths = append(paths, LnStagePath{
+			Target: link.Target, LinkName: "tree://" + link.Path, Symbolic: true,
+		})
+	}
+	return []*Stage{NewLnStage(&LnStageOptions{Paths: paths})}
+}
+
 // GenFileNodesStages generates the stages for a list of file nodes.
 // It generates the following stages:
 //   - copy stage with all the files that need to be created by copying their

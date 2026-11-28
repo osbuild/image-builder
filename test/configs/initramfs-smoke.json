@@ -1,0 +1,26 @@
+{
+  "name": "initramfs-smoke",
+  "blueprint": {
+    "name": "initramfs-smoke",
+    "description": "Standalone initramfs with an executable smoke-test init.",
+    "version": "1.0",
+    "customizations": {
+      "directories": [
+        {
+          "path": "/etc"
+        }
+      ],
+      "files": [
+        {
+          "path": "/etc/initrd-release",
+          "data": "ID=initramfs-smoke"
+        },
+        {
+          "path": "/init",
+          "mode": "0755",
+          "data": "#!/usr/bin/bash\n/usr/bin/mount -t devtmpfs devtmpfs /dev\nexec >/dev/console 2>&1\nif [[ $(</etc/initrd-release) == ID=initramfs-smoke ]]; then\n    printf 'image-builder initramfs: PASS\\n'\nelse\n    printf 'image-builder initramfs: FAIL\\n'\nfi\n/usr/bin/mount -t proc proc /proc\nprintf o >/proc/sysrq-trigger\nread -r -t 60 _ </dev/console\n"
+        }
+      ]
+    }
+  }
+}

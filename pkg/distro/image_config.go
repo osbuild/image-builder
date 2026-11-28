@@ -5,7 +5,9 @@ import (
 	"reflect"
 
 	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/customizations/firmware"
 	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/kernelmodules"
 	"github.com/osbuild/image-builder/pkg/customizations/oci"
 	"github.com/osbuild/image-builder/pkg/customizations/ostreeserver"
 	"github.com/osbuild/image-builder/pkg/customizations/shell"
@@ -98,7 +100,8 @@ type ImageConfig struct {
 
 	Files       []*fsnode.File
 	Directories []*fsnode.Directory
-	Hostonly    *bool `yaml:"hostonly,omitempty"`
+	Symlinks    []*fsnode.Symlink `yaml:"symlinks,omitempty"`
+	Hostonly    *bool             `yaml:"hostonly,omitempty"`
 
 	// KernelOptionsBootloader controls whether kernel command line options
 	// should be specified in the bootloader grubenv configuration. Otherwise
@@ -136,6 +139,12 @@ type ImageConfig struct {
 	// InstallLangs determines which locales are installed by RPM, the default
 	// is `all`.
 	InstallLangs []string `yaml:"install_langs,omitempty"`
+
+	// KernelModules copies the resolved kernel's modules from another pipeline into an initramfs.
+	KernelModules *kernelmodules.KernelModules `yaml:"kernel_modules,omitempty"`
+
+	// Firmware copies /usr/lib/firmware from another pipeline into an initramfs.
+	Firmware *firmware.Firmware `yaml:"firmware,omitempty"`
 
 	// How to handle the /etc/machine-id file, when set to true it causes the
 	// machine id to be set to 'uninitialized' which causes ConditionFirstboot

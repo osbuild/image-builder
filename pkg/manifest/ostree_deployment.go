@@ -34,6 +34,7 @@ type OSTreeDeploymentCustomizations struct {
 	IgnitionPlatform string
 
 	Directories []*fsnode.Directory
+	Symlinks    []*fsnode.Symlink
 	Files       []*fsnode.File
 
 	FIPS bool
@@ -489,6 +490,10 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 
 	if len(p.Files) > 0 {
 		p.addStagesForAllFilesAndInlineData(&pipeline, p.Files, ref)
+	}
+	for _, stage := range osbuild.GenSymlinkNodesStages(p.Symlinks) {
+		stage.MountOSTree(p.osName, ref, 0)
+		pipeline.AddStage(stage)
 	}
 
 	if len(p.EnabledServices) != 0 || len(p.DisabledServices) != 0 {

@@ -184,6 +184,8 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 		it.image = ostreeSimplifiedInstallerImage
 	case "tar":
 		it.image = tarImage
+	case "initramfs":
+		it.image = initramfsImage
 	case "network-installer":
 		it.image = networkInstallerImage
 	case "pxe_tar":
