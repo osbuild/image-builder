@@ -798,6 +798,8 @@ func initramfsCustomizations(t *imageType, bp *blueprint.Blueprint, pkgSet rpmmd
 	isc.Directories = slices.Concat(cfg.Directories, dirs)
 	isc.Files = slices.Concat(cfg.Files, files)
 	isc.Symlinks = cfg.Symlinks
+	isc.KernelModules = cfg.KernelModules
+	isc.Firmware = cfg.Firmware
 	isc.EnabledServices = cfg.EnabledServices
 	isc.DisabledServices = cfg.DisabledServices
 	isc.MaskedServices = cfg.MaskedServices

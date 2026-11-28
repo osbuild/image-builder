@@ -10,7 +10,9 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/customizations/firmware"
 	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/kernelmodules"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
@@ -272,6 +274,16 @@ func TestDefaultTargetOverride(t *testing.T) {
 			assert.Equal(t, tc.expected, osc.DefaultTarget)
 		})
 	}
+}
+
+func TestInitramfsExternalContent(t *testing.T) {
+	it := isoTestImageType()
+	it.imageConfig.KernelModules = &kernelmodules.KernelModules{From: "os"}
+	it.imageConfig.Firmware = &firmware.Firmware{From: "firmware-source"}
+	img, err := initramfsImage(it, &blueprint.Blueprint{}, distro.ImageOptions{}, nil, nil, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, it.imageConfig.KernelModules, img.(*image.Initramfs).Customizations.KernelModules)
+	assert.Equal(t, it.imageConfig.Firmware, img.(*image.Initramfs).Customizations.Firmware)
 }
 
 func TestInitramfsServices(t *testing.T) {

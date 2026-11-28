@@ -888,6 +888,23 @@ image_types:
 	})
 }
 
+func TestImageConfigKernelModulesAndFirmware(t *testing.T) {
+	it := makeTestImageType(t, `
+image_types:
+  test_type:
+    image_config:
+      kernel_modules:
+        from: os
+      firmware:
+        from: firmware-source
+`)
+	cfg := it.ImageConfig(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+	require.NotNil(t, cfg.KernelModules)
+	assert.Equal(t, "os", cfg.KernelModules.From)
+	require.NotNil(t, cfg.Firmware)
+	assert.Equal(t, "firmware-source", cfg.Firmware.From)
+}
+
 func TestImageConfigSymlinks(t *testing.T) {
 	it := makeTestImageType(t, `
 image_types:

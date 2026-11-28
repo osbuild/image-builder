@@ -495,6 +495,11 @@ func (p *OS) getOSTreeCommits() []ostree.CommitSpec {
 	return []ostree.CommitSpec{*p.ostreeParentSpec}
 }
 
+// KernelVersion returns the kernel release resolved during manifest serialization.
+func (p *OS) KernelVersion() string {
+	return p.kernelVer
+}
+
 func (p *OS) getPackageSpecs() rpmmd.PackageList {
 	if p.depsolveResult == nil {
 		return nil

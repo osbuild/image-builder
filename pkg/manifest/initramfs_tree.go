@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/osbuild/image-builder/pkg/customizations/firmware"
 	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/kernelmodules"
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/platform"
@@ -20,6 +22,8 @@ type InitramfsTreeCustomizations struct {
 	EnabledServices  []string
 	DisabledServices []string
 	MaskedServices   []string
+	KernelModules    *kernelmodules.KernelModules
+	Firmware         *firmware.Firmware
 }
 
 // InitramfsTree builds the early userspace filesystem for an initramfs.
@@ -48,6 +52,9 @@ func (p *InitramfsTree) Platform() platform.Platform {
 
 func (p *InitramfsTree) getBuildPackages(Distro) ([]string, error) {
 	packages := []string{"rpm"}
+	if p.Customizations.KernelModules != nil || p.Customizations.Firmware != nil {
+		packages = append(packages, "coreutils")
+	}
 	if len(p.Customizations.EnabledServices)+len(p.Customizations.DisabledServices)+len(p.Customizations.MaskedServices) > 0 {
 		packages = append(packages, "systemd")
 	}
@@ -91,6 +98,28 @@ func (p *InitramfsTree) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 	pipeline.AddStages(rpmStages...)
+	if p.Customizations.KernelModules != nil {
+		stage, err := p.kernelModulesStage()
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+		pipeline.AddStage(stage)
+	}
+	if p.Customizations.Firmware != nil {
+		source, err := p.sourceTree(p.Customizations.Firmware.From, "firmware")
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+		pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+			Paths: []osbuild.MkdirStagePath{{Path: "tree:///usr/lib/firmware", Parents: true, ExistOk: true}},
+		}))
+		pipeline.AddStage(osbuild.NewCopyStageSimple(&osbuild.CopyStageOptions{
+			Paths: []osbuild.CopyStagePath{{
+				From: "input://firmware/usr/lib/firmware/",
+				To:   "tree:///usr/lib/firmware/",
+			}},
+		}, osbuild.NewPipelineTreeInputs("firmware", source.Name())))
+	}
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 		Paths: []osbuild.MkdirStagePath{
 			{Path: "tree:///dev", ExistOk: true},
@@ -110,6 +139,43 @@ func (p *InitramfsTree) serialize() (osbuild.Pipeline, error) {
 		}))
 	}
 	return pipeline, nil
+}
+
+func (p *InitramfsTree) kernelModulesStage() (*osbuild.Stage, error) {
+	from := p.Customizations.KernelModules.From
+	source, err := p.sourceTree(from, "kernel_modules")
+	if err != nil {
+		return nil, err
+	}
+	kernelSource, ok := source.(interface{ KernelVersion() string })
+	if !ok {
+		return nil, fmt.Errorf("kernel_modules source %q does not provide a kernel tree", from)
+	}
+	version := kernelSource.KernelVersion()
+	if version == "" {
+		return nil, fmt.Errorf("kernel_modules source %q has no resolved kernel version", from)
+	}
+	return osbuild.NewKernelModulesCopyStage(version, from), nil
+}
+
+func (p *InitramfsTree) sourceTree(from, customization string) (TreePipeline, error) {
+	if from == "" {
+		return nil, fmt.Errorf("%s.from must name a source pipeline", customization)
+	}
+	for _, source := range p.Manifest().pipelines {
+		if source == p {
+			break
+		}
+		if source.Name() != from {
+			continue
+		}
+		tree, ok := source.(TreePipeline)
+		if !ok {
+			return nil, fmt.Errorf("%s source %q does not provide a directory tree", customization, from)
+		}
+		return tree, nil
+	}
+	return nil, fmt.Errorf("%s source %q must precede pipeline %q", customization, from, p.Name())
 }
 
 func (p *InitramfsTree) getInline() []string {
